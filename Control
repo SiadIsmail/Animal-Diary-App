@@ -1,12 +1,5 @@
 
 
-class Animal
-{
-    public string name;
-    public int age;
-    public string animalType;
-}
-
 Animal animal = new Animal();
 
 Console.WriteLine("Enter the name of the animal:");
@@ -19,3 +12,11 @@ animal.animalType = Console.ReadLine();
 Console.WriteLine("The animal's name is: " + animal.name);
 Console.WriteLine("The animal's age is: " + animal.age);    
 Console.WriteLine("The animal's type is: " + animal.animalType);
+
+
+class Animal
+{
+    public string name;
+    public int age;
+    public string animalType;
+}
