@@ -1,11 +1,14 @@
 ﻿namespace Animal_Diary_App;
 
+using Animal_Diary_App.Data;
+
 public partial class AppShell : Shell
 {
 	public AppShell()
 	{
 		InitializeComponent();
-		Routing.Register(nameof(PetAgePage), typeof(Animal_Diary_App.Data.PetAgePage));
-		Routing.Register(nameof(PetTypePage), typeof(Animal_Diary_App.Data.PetTypePage));
+		Routing.RegisterRoute(nameof(PetAgePage), typeof(PetAgePage));
+		Routing.RegisterRoute(nameof(PetTypePage), typeof(PetTypePage));
+		
 	}
 }

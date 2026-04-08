@@ -12,6 +12,6 @@ public partial class PetAgePage : ContentPage
 	private async void OnEntryCompleted(object sender, EventArgs e)
 	{
 		string animalName = entry.Text;
-		await Shell.Current.GoToAsync(nameof(PetAgePage));
+		await Shell.Current.GoToAsync(nameof(PetTypePage));
 	}
 }

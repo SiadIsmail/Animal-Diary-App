@@ -3,12 +3,12 @@
     x:Class="Animal_Diary_App.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:Animal_Diary_App"
+    xmlns:data="clr-namespace:Animal_Diary_App.Data"
     Title="Animal_Diary_App">
 
     <ShellContent
         Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
+        ContentTemplate="{DataTemplate data:MainPage}"
         Route="MainPage" />
 
 </Shell>
