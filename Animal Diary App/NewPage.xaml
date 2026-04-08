@@ -19,7 +19,7 @@
                 SemanticProperties.HeadingLevel="Level1"/>
 
             <Label
-                Text="Whats your animal called?"
+                Text="How old are they?"
                 Style="{StaticResource SubHeadline}"
                 SemanticProperties.HeadingLevel="Level2"
                 SemanticProperties.Description="Welcome to dot net Multi platform App U I"/>

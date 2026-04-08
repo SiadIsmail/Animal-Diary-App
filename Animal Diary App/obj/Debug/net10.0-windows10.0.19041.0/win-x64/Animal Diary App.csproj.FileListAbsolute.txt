@@ -1,3 +1,15 @@
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Animal Diary App.csproj.AssemblyReference.cache
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauiimage.inputs
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauifont.inputs
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauisplash.inputs
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauimanifest.stamp
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Platforms\Windows\App.g.i.cs
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Platforms\Windows\App.g.cs
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\XamlTypeInfo.g.cs
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Platforms\Windows\App.xaml
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Platforms\Windows\App.xbf
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\XamlSaveStateFile.xml
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Animal Diary App.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\Platforms\Windows\App.xbf
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\AboutAssets.txt
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\splashSplashScreen.scale-100.png
@@ -7,6 +19,11 @@ C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net1
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\splashSplashScreen.scale-400.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\OpenSans-Regular.ttf
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\OpenSans-Semibold.ttf
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-400.png
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-200.png
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-150.png
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-125.png
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-100.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\appiconLargeTile.scale-400.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\appiconLargeTile.scale-200.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\appiconLargeTile.scale-150.png
@@ -53,11 +70,6 @@ C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net1
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\appiconLogo.scale-125.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\appiconLogo.scale-100.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\appicon.ico
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-400.png
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-200.png
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-150.png
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-125.png
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dotnet_bot.scale-100.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\CoreMessagingXP.dll
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dcompi.dll
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\dwmcorei.dll
@@ -417,18 +429,6 @@ C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net1
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\Microsoft.Web.WebView2.Core.Projection.dll
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\Microsoft.UI.pri
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\Microsoft.UI.Xaml.Controls.pri
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Animal Diary App.csproj.AssemblyReference.cache
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauiimage.inputs
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauifont.inputs
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauisplash.inputs
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauimanifest.stamp
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Platforms\Windows\App.g.i.cs
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Platforms\Windows\App.g.cs
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\XamlTypeInfo.g.cs
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Platforms\Windows\App.xaml
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Platforms\Windows\App.xbf
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\XamlSaveStateFile.xml
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Animal Diary App.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\sp\splashSplashScreen.scale-100.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\sp\splashSplashScreen.scale-125.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\sp\splashSplashScreen.scale-150.png
@@ -438,6 +438,11 @@ C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net1
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauifont.stamp
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\f\OpenSans-Regular.ttf
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\f\OpenSans-Semibold.ttf
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-400.png
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-200.png
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-150.png
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-125.png
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-100.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\appiconLargeTile.scale-400.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\appiconLargeTile.scale-200.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\appiconLargeTile.scale-150.png
@@ -484,11 +489,6 @@ C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net1
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\appiconLogo.scale-125.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\appiconLogo.scale-100.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\appicon.ico
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-400.png
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-200.png
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-150.png
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-125.png
-C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\dotnet_bot.scale-100.png
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauiimage.stamp
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\mauiimage.outputs
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Animal Diary App.AssemblyInfoInputs.cache

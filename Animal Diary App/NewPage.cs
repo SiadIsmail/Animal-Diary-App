@@ -12,6 +12,6 @@ public partial class MainPage : ContentPage
 	private void OnEntryCompleted(object sender, EventArgs e)
 	{
 		string animalName = entry.Text;
-		await Shell.Current.GoToAsync("menuPage");
+		await Shell.Current.GoToAsync("NewPage");
 	}
 }
