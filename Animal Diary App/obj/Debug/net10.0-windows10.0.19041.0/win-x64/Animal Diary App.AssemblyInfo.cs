@@ -17,7 +17,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Animal Diary App")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+aa1f25113ab2520776bfbbf36d186bfeb0e6a326")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+04f53cc1ec5d0a13ea4c138749df4d441da0f758")]
 [assembly: System.Reflection.AssemblyProductAttribute("Animal Diary App")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Animal Diary App")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

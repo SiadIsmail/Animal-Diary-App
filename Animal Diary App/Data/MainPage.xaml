@@ -4,34 +4,47 @@
              x:Class="Animal_Diary_App.Data.MainPage">
 
     <ScrollView>
-        <Grid>
-            <Image Source="dotnet_bot.png"
-                   Aspect="AspectFill"/>
+        <VerticalStackLayout
+            Padding="24,20"
+            Spacing="20">
+            <Grid
+                ColumnDefinitions="Auto,*"
+                ColumnSpacing="14"
+                VerticalOptions="Center">
+                <Image
+                    Source="animal1.jpg"
+                    Aspect="AspectFit"
+                    WidthRequest="64"
+                    HeightRequest="64"
+                    VerticalOptions="Center">
+                    <Image.WidthRequest>
+                        <OnIdiom x:TypeArguments="x:Double"
+                                 Phone="65"
+                                 Tablet="75"
+                                 Desktop="100" />
+                    </Image.WidthRequest>
+                    <Image.HeightRequest>
+                        <OnIdiom x:TypeArguments="x:Double"
+                                 Phone="65"
+                                 Tablet="75"
+                                 Desktop="100" />
+                    </Image.HeightRequest>
+                </Image>
 
-
-
-            <VerticalStackLayout
-                Padding="30,0"
-                Spacing="25">
-
-                <Label
-                    Text="Hello!"
-                    Style="{StaticResource Headline}"
-                    SemanticProperties.HeadingLevel="Level1"/>
-
-                <Label
-                    Text="Whats your animal called?"
-                    Style="{StaticResource SubHeadline}"
-                    SemanticProperties.HeadingLevel="Level2"
-                    SemanticProperties.Description="Welcome to dot net Multi platform App U I"/>
-
-                <Entry
-                    x:Name="entry"
-                    Placeholder="Enter text"
-                    Completed="OnEntryCompleted"
-                    SemanticProperties.Description="Type your name here"/>
-            </VerticalStackLayout>
-        </Grid>
+                <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                    <Label
+                        Text="Charlinus"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        LineBreakMode="WordWrap" />
+                    <Label
+                        Text="Ratte, extrem fett"
+                        FontSize="15"
+                        TextColor="#666666"
+                        LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+            </Grid>
+        </VerticalStackLayout>
     </ScrollView>
 
 </ContentPage>

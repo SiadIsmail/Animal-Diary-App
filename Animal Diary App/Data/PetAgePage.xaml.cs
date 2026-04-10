@@ -2,7 +2,7 @@
 
 public partial class PetAgePage : ContentPage
 {
-	int count = 0;
+	
 
 	public PetAgePage()
 	{
@@ -11,7 +11,7 @@ public partial class PetAgePage : ContentPage
 
 	private async void OnEntryCompleted(object sender, EventArgs e)
 	{
-		string animalName = entry.Text;
+		string PetAge = entry.Text;
 		await Shell.Current.GoToAsync(nameof(PetTypePage));
 	}
 }

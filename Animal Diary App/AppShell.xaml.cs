@@ -9,6 +9,7 @@ public partial class AppShell : Shell
 		InitializeComponent();
 		Routing.RegisterRoute(nameof(PetAgePage), typeof(PetAgePage));
 		Routing.RegisterRoute(nameof(PetTypePage), typeof(PetTypePage));
+		Routing.RegisterRoute(nameof(WelcomePage), typeof(WelcomePage));
 		
 	}
 }

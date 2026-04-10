@@ -1,0 +1,12 @@
+class Pet
+	{
+		string EnteredPetName;
+		string EnteredPetType;
+		int EnteredPetAge;
+	}
+	Pet NewPet = new Pet()
+	{
+		EnteredPetName = PetName;
+		EnteredPetType = PetType;
+		EnteredPetAge = PetAge;
+	}

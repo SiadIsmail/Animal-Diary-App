@@ -517,3 +517,5 @@ C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net1
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\qualifiers.txt
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\qualifiers.txt.intermediate
 C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\MultipleQualifiersPerDimensionFound.txt
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\animal1.scale-100.jpg
+C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\animal1.scale-100.jpg

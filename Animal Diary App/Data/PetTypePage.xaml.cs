@@ -2,16 +2,20 @@
 
 public partial class PetTypePage : ContentPage
 {
-	int count = 0;
+
 
 	public PetTypePage()
 	{
 		InitializeComponent();
 	}
-
+	
 	private async void OnEntryCompleted(object sender, EventArgs e)
 	{
-		string animalName = entry.Text;
-		
+		string PetType = entry.Text;
+		await Shell.Current.GoToAsync(nameof(MainPage));
 	}
+
+
+
+
 }
