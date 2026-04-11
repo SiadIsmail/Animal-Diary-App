@@ -1,5 +1,5 @@
 ﻿using Animal_Diary_App.Data.Models.Commands;
-
+using Animal_Diary_App.Data;
 namespace Animal_Diary_App.Data;
 
 public partial class MainPage : ContentPage
@@ -8,7 +8,7 @@ public partial class MainPage : ContentPage
     {
         InitializeComponent();
 
-        var addPetCommand = new AddPetCommand();
-        var testPet = addPetCommand.Execute("Milo", "Dog", 3);
+        var testPet = AddPetCommand.AddPet("Milo", "Dog", PetAgePage.PetAge);
+        
     }
 }

@@ -10,6 +10,7 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute(nameof(PetAgePage), typeof(PetAgePage));
 		Routing.RegisterRoute(nameof(PetTypePage), typeof(PetTypePage));
 		Routing.RegisterRoute(nameof(WelcomePage), typeof(WelcomePage));
+		Routing.RegisterRoute(nameof(MainPage), typeof(MainPage));
 		
 	}
 }

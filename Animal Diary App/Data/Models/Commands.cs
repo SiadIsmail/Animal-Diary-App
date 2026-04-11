@@ -4,7 +4,7 @@ namespace Animal_Diary_App.Data.Models.Commands;
 
 public class AddPetCommand
 {
-    public Pet Execute(string petName, string petType, int petAge)
+    public static Pet AddPet(string petName, string petType, int petAge)
     {
         return new Pet
         {
