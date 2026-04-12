@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Animal Diary App")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+c95a6cfe544ce2836a63d1fc63c0c07cb8b4f5ab")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+4734eb2b628a28e1645474b53587b678d32eaafc")]
 [assembly: System.Reflection.AssemblyProductAttribute("Animal Diary App")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Animal Diary App")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

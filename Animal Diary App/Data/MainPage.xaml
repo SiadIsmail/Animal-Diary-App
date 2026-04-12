@@ -33,11 +33,13 @@
 
                 <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
                     <Label
+                        x:Name="PetNameLabel"
                         Text="Charlinus"
                         FontSize="22"
                         FontAttributes="Bold"
                         LineBreakMode="WordWrap" />
                     <Label
+                        x:Name="PetDetailsLabel"
                         Text="Ratte, extrem fett"
                         FontSize="15"
                         TextColor="#666666"
