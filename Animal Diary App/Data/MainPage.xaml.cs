@@ -17,14 +17,20 @@ public partial class MainPage : ContentPage
                 petViewModel.EnteredPetName,
                 petViewModel.EnteredPetType,
                 petViewModel.ParsedPetAge.Value);
+            PetNameLabel.Text = petViewModel.EnteredPetName;
+            PetDetailsLabel.Text = $"{petViewModel.EnteredPetType}, {petViewModel.ParsedPetAge} years old";
 
-            // Show final values to prove all pages contributed to one shared model.
-            PetNameLabel.Text = testPet.EnteredPetName;
-            PetDetailsLabel.Text = $"{testPet.EnteredPetType}, {testPet.EnteredPetAge} years old";
+
         }
         else
         {
             PetDetailsLabel.Text = "Age must be a valid number.";
         }
+
+    }
+    
+    async void OnCalendarClicked(object sender, EventArgs args)
+    {
+        await Shell.Current.GoToAsync($"/{nameof(CalendarPage)}");
     }
 }

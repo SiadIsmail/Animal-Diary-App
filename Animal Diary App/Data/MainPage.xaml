@@ -21,32 +21,42 @@
                         <OnIdiom x:TypeArguments="x:Double"
                                  Phone="65"
                                  Tablet="75"
-                                 Desktop="100" />
+                                 Desktop="100"/>
                     </Image.WidthRequest>
                     <Image.HeightRequest>
                         <OnIdiom x:TypeArguments="x:Double"
                                  Phone="65"
                                  Tablet="75"
-                                 Desktop="100" />
+                                 Desktop="100"/>
                     </Image.HeightRequest>
                 </Image>
 
-                <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                <VerticalStackLayout Grid.Column="1"
+                                     Spacing="4"
+                                     VerticalOptions="Center">
                     <Label
                         x:Name="PetNameLabel"
                         Text="Charlinus"
                         FontSize="22"
                         FontAttributes="Bold"
-                        LineBreakMode="WordWrap" />
+                        LineBreakMode="WordWrap"/>
                     <Label
                         x:Name="PetDetailsLabel"
-                        Text="Ratte, extrem fett"
+                        Text="Ratte, extrem feasdasdwasdasdtt"
                         FontSize="15"
                         TextColor="#666666"
-                        LineBreakMode="WordWrap" />
+                        LineBreakMode="WordWrap"/>
                 </VerticalStackLayout>
             </Grid>
+
         </VerticalStackLayout>
+        <HorizontalStackLayout VerticalOptions="End">
+            <Button
+                Text="Main"/>
+            <Button
+                Text="Calendar"
+                Clicked="OnCalendarClicked"/>
+        </HorizontalStackLayout>
     </ScrollView>
 
 </ContentPage>
