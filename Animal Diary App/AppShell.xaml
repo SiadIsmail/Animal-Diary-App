@@ -6,9 +6,13 @@
     xmlns:data="clr-namespace:Animal_Diary_App.Data"
     Title="Animal_Diary_App">
 
+    
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate data:MainPage}"
-        Route="MainPage" />
+        Route="WelcomePage"
+        ContentTemplate="{DataTemplate data:WelcomePage}"/>
 
+    
+    <ShellContent
+        Route="MainPage"
+        ContentTemplate="{DataTemplate data:MainPage}"/>
 </Shell>

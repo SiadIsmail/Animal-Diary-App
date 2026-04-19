@@ -13,7 +13,7 @@ public partial class CalendarPage : ContentPage
 	}
     async void OnMainClicked(object sender, EventArgs args)
     {
-        await Shell.Current.GoToAsync($"///{nameof(MainPage)}");
+        await Shell.Current.GoToAsync($"///{nameof(MainPage)}", true);
     }
     
 	

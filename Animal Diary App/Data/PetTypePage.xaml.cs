@@ -1,4 +1,5 @@
 ﻿namespace Animal_Diary_App.Data;
+
 using Animal_Diary_App.Data.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,7 +12,7 @@ public partial class PetTypePage : ContentPage
 		InitializeComponent();
 		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<PetViewModel>() ?? new PetViewModel();
 	}
-	
+
 	private async void OnEntryCompleted(object? sender, EventArgs e)
 	{
 		if (BindingContext is PetViewModel petViewModel)
@@ -19,7 +20,7 @@ public partial class PetTypePage : ContentPage
 			petViewModel.EnteredPetType = entry.Text ?? string.Empty;
 		}
 
-		await Shell.Current.GoToAsync(nameof(MainPage));
+		await Shell.Current.GoToAsync("//MainPage");
 	}
 
 
