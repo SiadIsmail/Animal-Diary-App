@@ -14,3 +14,15 @@ public class AddPetCommand
         };
     }
 }
+
+public class AddCalendarEntryCommand
+{
+    public static PetDiaryEntry AddCalendarEntry(DateTime date, string mood)
+    {
+        return new PetDiaryEntry
+        {
+            Date = date,
+            Mood = mood
+        };
+    }
+}

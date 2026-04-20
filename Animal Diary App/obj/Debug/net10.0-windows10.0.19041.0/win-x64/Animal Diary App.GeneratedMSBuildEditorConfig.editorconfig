@@ -48,51 +48,51 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/CalendarPage.xaml]
+[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/CalendarPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
-build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.CalendarPage.xaml
-build_metadata.AdditionalFiles.TargetPath = Data\CalendarPage.xaml
-build_metadata.AdditionalFiles.RelativePath = Data\CalendarPage.xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.CalendarPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Data\View\CalendarPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Data\View\CalendarPage.xaml
 build_metadata.AdditionalFiles.Inflator = SourceGen
 build_metadata.AdditionalFiles.NoWarn = 
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/MainPage.xaml]
+[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/MainPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
-build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.MainPage.xaml
-build_metadata.AdditionalFiles.TargetPath = Data\MainPage.xaml
-build_metadata.AdditionalFiles.RelativePath = Data\MainPage.xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.MainPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Data\View\MainPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Data\View\MainPage.xaml
 build_metadata.AdditionalFiles.Inflator = SourceGen
 build_metadata.AdditionalFiles.NoWarn = 
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/PetAgePage.xaml]
+[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/PetAgePage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
-build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.PetAgePage.xaml
-build_metadata.AdditionalFiles.TargetPath = Data\PetAgePage.xaml
-build_metadata.AdditionalFiles.RelativePath = Data\PetAgePage.xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.PetAgePage.xaml
+build_metadata.AdditionalFiles.TargetPath = Data\View\PetAgePage.xaml
+build_metadata.AdditionalFiles.RelativePath = Data\View\PetAgePage.xaml
 build_metadata.AdditionalFiles.Inflator = SourceGen
 build_metadata.AdditionalFiles.NoWarn = 
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/PetTypePage.xaml]
+[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/PetTypePage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
-build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.PetTypePage.xaml
-build_metadata.AdditionalFiles.TargetPath = Data\PetTypePage.xaml
-build_metadata.AdditionalFiles.RelativePath = Data\PetTypePage.xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.PetTypePage.xaml
+build_metadata.AdditionalFiles.TargetPath = Data\View\PetTypePage.xaml
+build_metadata.AdditionalFiles.RelativePath = Data\View\PetTypePage.xaml
 build_metadata.AdditionalFiles.Inflator = SourceGen
 build_metadata.AdditionalFiles.NoWarn = 
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/WelcomePage.xaml]
+[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/WelcomePage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
-build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.WelcomePage.xaml
-build_metadata.AdditionalFiles.TargetPath = Data\WelcomePage.xaml
-build_metadata.AdditionalFiles.RelativePath = Data\WelcomePage.xaml
+build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.WelcomePage.xaml
+build_metadata.AdditionalFiles.TargetPath = Data\View\WelcomePage.xaml
+build_metadata.AdditionalFiles.RelativePath = Data\View\WelcomePage.xaml
 build_metadata.AdditionalFiles.Inflator = SourceGen
 build_metadata.AdditionalFiles.NoWarn = 
 build_metadata.AdditionalFiles.EnableDiagnostics = 

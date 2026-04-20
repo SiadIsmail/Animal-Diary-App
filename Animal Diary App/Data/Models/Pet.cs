@@ -6,3 +6,8 @@ public class Pet
     public string EnteredPetType { get; set; } = string.Empty;
     public int EnteredPetAge { get; set; }
 }
+public class PetDiaryEntry
+{
+    public DateTime Date { get; set; }
+    public string Mood { get; set; } = string.Empty;
+}

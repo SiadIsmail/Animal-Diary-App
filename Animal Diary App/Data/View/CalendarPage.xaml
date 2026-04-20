@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Animal_Diary_App.Data.View.CalendarPage">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="24,20"
+            Spacing="20">
+            <Entry
+                x:Name="entry"
+                Placeholder="Enter text"
+                Completed="OnEntryCompleted"
+                SemanticProperties.Description="How is your Pet feeling right now?"/>
+            <HorizontalStackLayout VerticalOptions="End">
+                <Button
+                    Text="Main"
+                    Clicked="OnMainClicked"/>
+                <Button
+                    Text="Calendar"/>
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

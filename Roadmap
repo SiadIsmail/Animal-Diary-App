@@ -135,28 +135,7 @@
 
 ---
 
-### Phase 7: Present it on your CV
-1. Highlight your learning
-   - “Built a console prototype in C# to model animal health tracking”
-   - “Migrated business logic into a .NET MAUI app for Windows and Android”
-   - “Implemented data persistence, medication scheduling, sickness logs, and mood tracking”
-
-2. Mention technologies
-   - C#, .NET, JSON persistence, .NET MAUI
-   - Console app → cross-platform UI app
-
-3. Emphasize outcomes
-   - “Prepared app architecture for future mobile/desktop extension”
-   - “Created reusable domain and service layers for UI migration”
-
----
-
-## Suggested milestone plan
-
-1. Week 1: console prototype + persistence
-2. Week 2: polish console app + add more tracking features
-3. Week 3: extract shared library + MAUI layout design
-4. Week 4: build MAUI version and verify Windows + Android support
-5. Week 5: add polish, docs, and CV-ready summary
-
-This roadmap should give you a clear path from a simple console learning project to a polished MAUI app suitable for your portfolio.
+User picks date (View + Model)
+User enters mood(View)
+Mood gets documented (ViewModel)
+User can see the entered Mood (ViewModel + View)

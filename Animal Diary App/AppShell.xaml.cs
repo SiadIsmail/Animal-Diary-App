@@ -1,6 +1,6 @@
 ﻿namespace Animal_Diary_App;
 
-using Animal_Diary_App.Data;
+using Animal_Diary_App.Data.View;
 
 public partial class AppShell : Shell
 {

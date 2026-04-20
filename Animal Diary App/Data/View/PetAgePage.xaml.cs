@@ -1,24 +1,23 @@
-﻿namespace Animal_Diary_App.Data;
-
+﻿namespace Animal_Diary_App.Data.View;
 using Animal_Diary_App.Data.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
-
-public partial class WelcomePage : ContentPage
+public partial class PetAgePage : ContentPage
 {
+	
 
-	public WelcomePage()
+	public PetAgePage()
 	{
 		InitializeComponent();
 		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<PetViewModel>() ?? new PetViewModel();
 	}
 
-	private async void OnEntryCompleted(object? sender, EventArgs e)
+	public async void OnEntryCompleted(object? sender, EventArgs e)
 	{
 		if (BindingContext is PetViewModel petViewModel)
 		{
-			petViewModel.EnteredPetName = entry.Text ?? string.Empty;
+			petViewModel.EnteredPetAge = entry.Text ?? string.Empty;
 		}
 
-		await Shell.Current.GoToAsync(nameof(PetAgePage));
+		await Shell.Current.GoToAsync(nameof(PetTypePage));
 	}
 }
