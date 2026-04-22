@@ -28995,11 +28995,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\kmlax\\source\\Animal-Diary-App-1\\Animal Diary App\\Animal Diary App.csproj",
+      "projectUniqueName": "C:\\Users\\kmlax\\source\\Repos\\Animal-Diary-App\\Animal Diary App\\Animal Diary App.csproj",
       "projectName": "Animal Diary App",
-      "projectPath": "C:\\Users\\kmlax\\source\\Animal-Diary-App-1\\Animal Diary App\\Animal Diary App.csproj",
+      "projectPath": "C:\\Users\\kmlax\\source\\Repos\\Animal-Diary-App\\Animal Diary App\\Animal Diary App.csproj",
       "packagesPath": "C:\\Users\\kmlax\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\kmlax\\source\\Animal-Diary-App-1\\Animal Diary App\\obj\\",
+      "outputPath": "C:\\Users\\kmlax\\source\\Repos\\Animal-Diary-App\\Animal Diary App\\obj\\",
       "projectStyle": "PackageReference",
       "crossTargeting": true,
       "fallbackFolders": [
