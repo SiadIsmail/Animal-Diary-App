@@ -20,7 +20,7 @@ public partial class CalendarPage : ContentPage
 	{
 		if (BindingContext is CalendarViewModel calendarViewModel)
 		{
-			calendarViewModel.EnteredMood = entry.Text ?? string.Empty;
+			calendarViewModel.SaveEntry();
 		}
 	}
 

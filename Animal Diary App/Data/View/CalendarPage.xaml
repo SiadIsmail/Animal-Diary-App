@@ -10,6 +10,7 @@
             <Entry
                 x:Name="entry"
                 Placeholder="Enter text"
+                Text="{Binding EnteredMood}"
                 Completed="OnEntryCompleted"
                 SemanticProperties.Description="How is your Pet feeling right now?"/>
             <HorizontalStackLayout VerticalOptions="End">

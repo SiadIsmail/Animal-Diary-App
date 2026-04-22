@@ -11,3 +11,4 @@ public class PetDiaryEntry
     public DateTime Date { get; set; }
     public string Mood { get; set; } = string.Empty;
 }
+

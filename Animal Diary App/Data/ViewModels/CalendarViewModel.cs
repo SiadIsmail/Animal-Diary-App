@@ -5,26 +5,37 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 public class CalendarViewModel : INotifyPropertyChanged
 {
-        public event PropertyChangedEventHandler PropertyChanged;
-	public string enteredMood { get; set; } = string.Empty;
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    private string enteredMood = string.Empty;
 
     public string EnteredMood
     {
         get => enteredMood;
         set
         {
-            if (enteredMood == value)
-            {
-                return;
-            }
-
+            if (enteredMood == value) return;
             enteredMood = value;
             OnPropertyChanged();
         }
     }
-    
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+
+  
+    public List<PetDiaryEntry> Entries { get; set; } = new();
+
+    public void SaveEntry()
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        var entry = new PetDiaryEntry
+        {
+            Date = DateTime.Now,
+            Mood = EnteredMood
+        };
+
+        Entries.Add(entry);
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
