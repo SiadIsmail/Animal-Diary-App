@@ -139,3 +139,10 @@ User picks date (View + Model)
 User enters mood(View)
 Mood gets documented (ViewModel)
 User can see the entered Mood (ViewModel + View)
+
+Refactor the code
+
+Polish enough to where you can have a simple flow:
+Create a pet, choose a date, add an entry (mood)
+
+create a login system + simple local saving of entries and pets in Sql
