@@ -35,14 +35,12 @@
                                      Spacing="4"
                                      VerticalOptions="Center">
                     <Label
-                        x:Name="PetNameLabel"
-                        Text="Charlinus"
+                        Text="{Binding PetName}"
                         FontSize="22"
                         FontAttributes="Bold"
                         LineBreakMode="WordWrap"/>
                     <Label
-                        x:Name="PetDetailsLabel"
-                        Text="Ratte, extrem feasdasdwasdasdtt"
+                        Text="{Binding PetDetails}"
                         FontSize="15"
                         TextColor="#666666"
                         LineBreakMode="WordWrap"/>
