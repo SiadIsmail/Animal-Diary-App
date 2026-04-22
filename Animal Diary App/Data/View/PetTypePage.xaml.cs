@@ -15,11 +15,6 @@ public partial class PetTypePage : ContentPage
 
 	private async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		if (BindingContext is PetViewModel petViewModel)
-		{
-			petViewModel.EnteredPetType = entry.Text ?? string.Empty;
-		}
-
 		await Shell.Current.GoToAsync("//MainPage");
 	}
 

@@ -14,7 +14,7 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = Animal_Diary_App
-build_property.ProjectDir = C:\Users\kmlax\Documents\Arbeit\Animal-Diary-App\Animal Diary App\
+build_property.ProjectDir = c:\Users\kmlax\source\Animal-Diary-App-1\Animal Diary App\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTAotOptimizerEnabled = true
@@ -28,7 +28,7 @@ build_property.CsWinRTUseWindowsUIXamlProjections = false
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/App.xaml]
+[c:/Users/kmlax/source/Animal-Diary-App-1/Animal Diary App/App.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.App.xaml
 build_metadata.AdditionalFiles.TargetPath = App.xaml
@@ -38,7 +38,7 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/AppShell.xaml]
+[c:/Users/kmlax/source/Animal-Diary-App-1/Animal Diary App/AppShell.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.AppShell.xaml
 build_metadata.AdditionalFiles.TargetPath = AppShell.xaml
@@ -48,7 +48,7 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/CalendarPage.xaml]
+[c:/Users/kmlax/source/Animal-Diary-App-1/Animal Diary App/Data/View/CalendarPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.CalendarPage.xaml
 build_metadata.AdditionalFiles.TargetPath = Data\View\CalendarPage.xaml
@@ -58,7 +58,7 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/MainPage.xaml]
+[c:/Users/kmlax/source/Animal-Diary-App-1/Animal Diary App/Data/View/MainPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.MainPage.xaml
 build_metadata.AdditionalFiles.TargetPath = Data\View\MainPage.xaml
@@ -68,7 +68,7 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/PetAgePage.xaml]
+[c:/Users/kmlax/source/Animal-Diary-App-1/Animal Diary App/Data/View/PetAgePage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.PetAgePage.xaml
 build_metadata.AdditionalFiles.TargetPath = Data\View\PetAgePage.xaml
@@ -78,7 +78,7 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/PetTypePage.xaml]
+[c:/Users/kmlax/source/Animal-Diary-App-1/Animal Diary App/Data/View/PetTypePage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.PetTypePage.xaml
 build_metadata.AdditionalFiles.TargetPath = Data\View\PetTypePage.xaml
@@ -88,7 +88,7 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Data/View/WelcomePage.xaml]
+[c:/Users/kmlax/source/Animal-Diary-App-1/Animal Diary App/Data/View/WelcomePage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Data.View.WelcomePage.xaml
 build_metadata.AdditionalFiles.TargetPath = Data\View\WelcomePage.xaml
@@ -98,7 +98,7 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Resources/Styles/Colors.xaml]
+[c:/Users/kmlax/source/Animal-Diary-App-1/Animal Diary App/Resources/Styles/Colors.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Resources.Styles.Colors.xaml
 build_metadata.AdditionalFiles.TargetPath = Resources\Styles\Colors.xaml
@@ -108,7 +108,7 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
-[C:/Users/kmlax/Documents/Arbeit/Animal-Diary-App/Animal Diary App/Resources/Styles/Styles.xaml]
+[c:/Users/kmlax/source/Animal-Diary-App-1/Animal Diary App/Resources/Styles/Styles.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = Animal_Diary_App.Resources.Styles.Styles.xaml
 build_metadata.AdditionalFiles.TargetPath = Resources\Styles\Styles.xaml

@@ -13,11 +13,6 @@ public partial class PetAgePage : ContentPage
 
 	public async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		if (BindingContext is PetViewModel petViewModel)
-		{
-			petViewModel.EnteredPetAge = entry.Text ?? string.Empty;
-		}
-
 		await Shell.Current.GoToAsync(nameof(PetTypePage));
 	}
 }

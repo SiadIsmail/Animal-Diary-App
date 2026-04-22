@@ -27,6 +27,7 @@
             <Entry
                 x:Name="entry"
                 Placeholder="Enter text"
+                Text="{Binding EnteredPetType}"
                 Completed="OnEntryCompleted"
                 SemanticProperties.Description="Type your name here"/>
         </VerticalStackLayout>
