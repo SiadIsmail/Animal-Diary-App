@@ -6,7 +6,6 @@ Eine Work-in-Progress Mobile-App mit .NET MAUI zur strukturierten Erfassung von 
 
 Ziel der App ist es, wichtige Daten rund ums Haustier alltagstauglich zu dokumentieren, z. B. Gewicht, Stimmung, Medikamentengaben und weitere Gesundheitsnotizen. Langfristig soll ein exportierbarer Bericht (PDF) entstehen, der direkt bei Tierarztbesuchen genutzt werden kann.
 
-Aktuell befindet sich das Projekt noch in einer fruehen Phase. Der bisherige Fokus liegt auf einem stabilen technischen Grundgeruest mit Navigation, gemeinsamem Zustand und klarer Struktur.
 
 ## Projektstaerken im aktuellen Stand
 
@@ -16,15 +15,6 @@ Aktuell befindet sich das Projekt noch in einer fruehen Phase. Der bisherige Fok
 - Sauberer Einstieg in Dependency Injection mit dem MAUI Service Container.
 - Aktive Weiterentwicklung mit klarem WIP-Status und ausbaubarer Roadmap.
 
-## Features (aktueller Stand)
-
-- Mehrseitiger Eingabeprozess fuer:
-	- Haustiername
-	- Tierart
-	- Alter
-- Navigation via MAUI Shell-Routing.
-- Validierung des Alters (String -> Zahl) im ViewModel.
-- Zusammenfuehrung und Anzeige der finalen Daten auf der Hauptseite.
 
 ## Produktvision
 
@@ -40,29 +30,6 @@ Aktuell befindet sich das Projekt noch in einer fruehen Phase. Der bisherige Fok
 - Dependency Injection: `Microsoft.Extensions.DependencyInjection`
 - Logging (Debug): `Microsoft.Extensions.Logging.Debug`
 
-## Projektstruktur (vereinfacht)
-
-```text
-Animal Diary App/
-	Data/
-		WelcomePage.xaml(.cs)
-		PetTypePage.xaml(.cs)
-		PetAgePage.xaml(.cs)
-		MainPage.xaml(.cs)
-		Models/
-			Pet.cs
-			Commands.cs
-		ViewModels/
-			PetViewModel.cs
-	AppShell.xaml(.cs)
-	MauiProgram.cs
-```
-
-## Architektur in Kurzform
-
-- `PetViewModel` wird als Singleton registriert und ueber DI in Seiten genutzt.
-- Die Eingabeseiten befuellen denselben Zustand (`EnteredPetName`, `EnteredPetType`, `EnteredPetAge`).
-- Auf der Hauptseite werden die Werte ausgelesen, das Alter geparst und ein `Pet`-Objekt erzeugt.
 
 ## Setup und Start
 
@@ -80,10 +47,6 @@ dotnet build "Animal Diary App/Animal Diary App.csproj"
 
 Hinweis: Das Projekt ist auf mehrere Zielplattformen konfiguriert. Die verfuegbaren Targets haengen vom Host-Betriebssystem und den installierten Workloads ab.
 
-## Aktueller Status
-
-WIP: Die Basisfunktionalitaet steht. Der Fokus der naechsten Schritte liegt auf UX-Verbesserungen, robusterer Validierung und Persistenz.
-
 ## Geplante Erweiterungen
 
 - Lokale Datenspeicherung (z. B. SQLite)
@@ -99,6 +62,7 @@ WIP: Die Basisfunktionalitaet steht. Der Fokus der naechsten Schritte liegt auf 
 Dieses Projekt ist bewusst als Lern- und Portfolio-Projekt angelegt, mit Fokus auf:
 
 - saubere C#-Grundlagen
+- SQL Grundlagen und Servers
 - MAUI App-Struktur und Navigation
 - zustandsbasiertes Denken im UI-Kontext
 - iteratives, nachvollziehbares Weiterentwickeln
