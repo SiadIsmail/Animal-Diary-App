@@ -7,14 +7,14 @@
     Title="Animal_Diary_App">
 
 
+    <ShellContent
+        Route="CalendarPage"
+        ContentTemplate="{DataTemplate data:CalendarPage}"/>
+
 
     <ShellContent
         Route="WelcomePage"
         ContentTemplate="{DataTemplate data:WelcomePage}"/>
-
-    <ShellContent
-        Route="CalendarPage"
-        ContentTemplate="{DataTemplate data:CalendarPage}"/>
 
 
 </Shell>

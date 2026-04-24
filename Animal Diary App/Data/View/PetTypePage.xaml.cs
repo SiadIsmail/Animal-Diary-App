@@ -15,7 +15,7 @@ public partial class PetTypePage : ContentPage
 
 	private async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		await Shell.Current.GoToAsync("//MainPage");
+		await Shell.Current.GoToAsync(nameof(MainPage));
 	}
 
 

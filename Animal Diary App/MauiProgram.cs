@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Animal_Diary_App.Data.ViewModels;
+using Syncfusion.Maui.Core.Hosting;
 
 namespace Animal_Diary_App;
 
@@ -8,6 +9,7 @@ public static class MauiProgram
 	public static MauiApp CreateMauiApp()
 	{
 		var builder = MauiApp.CreateBuilder();
+		builder.ConfigureSyncfusionCore();
 		builder
 			.UseMauiApp<App>()
 			.ConfigureFonts(fonts =>
