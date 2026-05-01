@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Data.Services;
 using Syncfusion.Maui.Core.Hosting;
 
 namespace Animal_Diary_App;
@@ -21,6 +22,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PetViewModel>();
 		builder.Services.AddSingleton<CalendarViewModel>();
 		builder.Services.AddSingleton<MainPageViewModel>();
+		builder.Services.AddSingleton<PetDatabase>();
+
 
 #if DEBUG
 		builder.Logging.AddDebug();

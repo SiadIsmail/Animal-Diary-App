@@ -8,9 +8,9 @@ public class AddPetCommand
     {
         return new Pet
         {
-            EnteredPetName = petName,
-            EnteredPetType = petType,
-            EnteredPetAge = petAge
+            Name = petName,
+            Type = petType,
+            Age = petAge
         };
     }
 }

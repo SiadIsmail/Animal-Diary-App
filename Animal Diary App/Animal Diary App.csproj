@@ -73,6 +73,7 @@
 	<ItemGroup>
 	  <Folder Include="Data\View\" />
 	  <PackageReference Include="Syncfusion.Maui.Calendar" Version="33.2.3" />
+	  <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 	</ItemGroup>
 
 </Project>

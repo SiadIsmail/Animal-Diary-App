@@ -4,57 +4,39 @@
              x:Class="Animal_Diary_App.Data.View.MainPage">
 
     <ScrollView>
-        <VerticalStackLayout
-            Padding="24,20"
-            Spacing="20">
-            <Grid
-                ColumnDefinitions="Auto,*"
-                ColumnSpacing="14"
-                VerticalOptions="Center">
-                <Image
-                    Source="animal1.jpg"
-                    Aspect="AspectFit"
-                    WidthRequest="64"
-                    HeightRequest="64"
-                    VerticalOptions="Center">
-                    <Image.WidthRequest>
-                        <OnIdiom x:TypeArguments="x:Double"
-                                 Phone="65"
-                                 Tablet="75"
-                                 Desktop="100"/>
-                    </Image.WidthRequest>
-                    <Image.HeightRequest>
-                        <OnIdiom x:TypeArguments="x:Double"
-                                 Phone="65"
-                                 Tablet="75"
-                                 Desktop="100"/>
-                    </Image.HeightRequest>
-                </Image>
+        <VerticalStackLayout Padding="24,20"
+                             Spacing="20">
+            <CollectionView ItemsSource="{Binding Pets}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="14"
+                              VerticalOptions="Center">
+                            <VerticalStackLayout Padding="24,20"
+                                                 Spacing="20">
+                                <Label Text="{Binding Name}"
+                                       FontSize="22"
+                                       FontAttributes="Bold"/>
 
-                <VerticalStackLayout Grid.Column="1"
-                                     Spacing="4"
-                                     VerticalOptions="Center">
-                    <Label
-                        Text="{Binding PetName}"
-                        FontSize="22"
-                        FontAttributes="Bold"
-                        LineBreakMode="WordWrap"/>
-                    <Label
-                        Text="{Binding PetDetails}"
-                        FontSize="15"
-                        TextColor="#666666"
-                        LineBreakMode="WordWrap"/>
-                </VerticalStackLayout>
-            </Grid>
+                                <Label Text="{Binding Type}"
+                                       FontSize="15"
+                                       TextColor="#666666"/>
 
-        
-        <HorizontalStackLayout VerticalOptions="End">
-            <Button
-                Text="Main"/>
-            <Button
-                Text="Calendar"
-                Clicked="OnCalendarClicked"/>
-        </HorizontalStackLayout>
+                                <Label Text="{Binding Age}"
+                                       FontSize="15"
+                                       TextColor="#666666"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <HorizontalStackLayout VerticalOptions="End">
+                <Button Text="Main"/>
+                <Button Text="Calendar"
+                        Clicked="OnCalendarClicked"/>
+            </HorizontalStackLayout>
+
         </VerticalStackLayout>
     </ScrollView>
 

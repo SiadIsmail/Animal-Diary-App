@@ -1,5 +1,7 @@
 ﻿namespace Animal_Diary_App.Data.View;
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Data.Services;
+
 using Microsoft.Extensions.DependencyInjection;
 public partial class PetAgePage : ContentPage
 {
@@ -8,7 +10,7 @@ public partial class PetAgePage : ContentPage
 	public PetAgePage()
 	{
 		InitializeComponent();
-		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<PetViewModel>() ?? new PetViewModel();
+		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<PetViewModel>() ?? new PetViewModel(new PetDatabase());
 	}
 
 	public async void OnEntryCompleted(object? sender, EventArgs e)
