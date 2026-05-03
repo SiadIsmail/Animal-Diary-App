@@ -15,7 +15,7 @@ public partial class CalendarPage : ContentPage
 	}
 	async void OnMainClicked(object sender, EventArgs args)
 	{
-		await Shell.Current.GoToAsync($"/{nameof(MainPage)}", true);
+		await Navigation.PushAsync(new MainPage());
 	}
 	private async void OnEntryCompleted(object? sender, EventArgs e)
 	{

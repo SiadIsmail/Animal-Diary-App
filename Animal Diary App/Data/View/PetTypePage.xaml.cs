@@ -18,7 +18,7 @@ public partial class PetTypePage : ContentPage
 	{
 		var viewModel = (PetViewModel)BindingContext;
 		await viewModel.SavePetAsync();
-		await Shell.Current.GoToAsync(nameof(MainPage));
+		await Navigation.PushAsync(new MainPage());
 	}
 
 

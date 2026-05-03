@@ -15,6 +15,6 @@ public partial class WelcomePage : ContentPage
 
 	private async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		await Shell.Current.GoToAsync(nameof(PetAgePage));
+		await Navigation.PushAsync(new PetAgePage());
 	}
 }

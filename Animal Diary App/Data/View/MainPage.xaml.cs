@@ -21,6 +21,6 @@ public partial class MainPage : ContentPage
 
     async void OnCalendarClicked(object sender, EventArgs args)
     {
-        await Shell.Current.GoToAsync($"/{nameof(CalendarPage)}", true);
+        await Navigation.PushAsync(new CalendarPage());
     }
 }

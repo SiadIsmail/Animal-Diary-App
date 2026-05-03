@@ -4,8 +4,11 @@
              x:Class="Animal_Diary_App.Data.View.MainPage">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24,20"
-                             Spacing="20">
+        <Grid>
+            <Image Source="hintergrund_blau.png"
+                   Aspect="AspectFill"
+                   HorizontalOptions="Fill"
+                   VerticalOptions="Fill"/>
             <CollectionView ItemsSource="{Binding Pets}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
@@ -14,6 +17,10 @@
                               VerticalOptions="Center">
                             <VerticalStackLayout Padding="24,20"
                                                  Spacing="20">
+                                <Image Source="animal1.jpg"
+                                       WidthRequest="200"
+                                       HeightRequest="200"
+                                       Aspect="AspectFit"/>
                                 <Label Text="{Binding Name}"
                                        FontSize="22"
                                        FontAttributes="Bold"/>
@@ -30,14 +37,12 @@
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-
             <HorizontalStackLayout VerticalOptions="End">
                 <Button Text="Main"/>
                 <Button Text="Calendar"
                         Clicked="OnCalendarClicked"/>
             </HorizontalStackLayout>
-
-        </VerticalStackLayout>
+        </Grid>
     </ScrollView>
 
 </ContentPage>

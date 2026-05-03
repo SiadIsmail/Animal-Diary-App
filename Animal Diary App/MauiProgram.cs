@@ -23,6 +23,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<CalendarViewModel>();
 		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<PetDatabase>();
+		builder.Services.AddSingleton<App>();
 
 
 #if DEBUG
