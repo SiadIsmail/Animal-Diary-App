@@ -12,19 +12,10 @@ Aktuell befindet sich das Projekt noch in einer fruehen Phase. Der bisherige Fok
 
 - Plattformuebergreifende Entwicklung: Ein Code-Stand fuer Android, iOS, macOS (Mac Catalyst) und Windows.
 - Solide Architektur-Basis: Trennung von Views, ViewModel und Modellen.
-- Nachvollziehbarer Datenfluss: Mehrere Seiten schreiben in ein gemeinsames `PetViewModel`, finale Ausgabe in der Hauptansicht.
+- Nachvollziehbarer Datenfluss: Mehrere Seiten schreiben in ein gemeinsames PetViewModel, finale Ausgabe in der Hauptansicht.
 - Sauberer Einstieg in Dependency Injection mit dem MAUI Service Container.
+- Lokale Datenspeicherung mit SQLite.
 - Aktive Weiterentwicklung mit klarem WIP-Status und ausbaubarer Roadmap.
-
-## Features (aktueller Stand)
-
-- Mehrseitiger Eingabeprozess fuer:
-	- Haustiername
-	- Tierart
-	- Alter
-- Navigation via MAUI Shell-Routing.
-- Validierung des Alters (String -> Zahl) im ViewModel.
-- Zusammenfuehrung und Anzeige der finalen Daten auf der Hauptseite.
 
 ## Produktvision
 
@@ -36,33 +27,10 @@ Aktuell befindet sich das Projekt noch in einer fruehen Phase. Der bisherige Fok
 
 - Sprache: C#
 - UI/Framework: .NET MAUI (XAML + Code-Behind)
-- Muster: MVVM-light (INotifyPropertyChanged im ViewModel)
+- Muster: MVVM
 - Dependency Injection: `Microsoft.Extensions.DependencyInjection`
 - Logging (Debug): `Microsoft.Extensions.Logging.Debug`
-
-## Projektstruktur (vereinfacht)
-
-```text
-Animal Diary App/
-	Data/
-		WelcomePage.xaml(.cs)
-		PetTypePage.xaml(.cs)
-		PetAgePage.xaml(.cs)
-		MainPage.xaml(.cs)
-		Models/
-			Pet.cs
-			Commands.cs
-		ViewModels/
-			PetViewModel.cs
-	AppShell.xaml(.cs)
-	MauiProgram.cs
-```
-
-## Architektur in Kurzform
-
-- `PetViewModel` wird als Singleton registriert und ueber DI in Seiten genutzt.
-- Die Eingabeseiten befuellen denselben Zustand (`EnteredPetName`, `EnteredPetType`, `EnteredPetAge`).
-- Auf der Hauptseite werden die Werte ausgelesen, das Alter geparst und ein `Pet`-Objekt erzeugt.
+- Datenbank: SQLite (lokale Persistenz)
 
 ## Setup und Start
 
@@ -86,12 +54,9 @@ WIP: Die Basisfunktionalitaet steht. Der Fokus der naechsten Schritte liegt auf 
 
 ## Geplante Erweiterungen
 
-- Lokale Datenspeicherung (z. B. SQLite)
 - Tracking von Gewicht, Stimmung und Medikamentengaben
-- Bearbeiten/Loeschen von Eintraegen
 - Bessere Eingabevalidierung und Fehlermeldungen
 - PDF-Export fuer Tierarzttermine
-- Unit-Tests fuer ViewModel-Logik
 - UI-Polish und Accessibility-Verbesserungen
 
 ## Entwicklungsfokus
