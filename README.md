@@ -11,10 +11,10 @@ Ziel der App ist es, wichtige Daten rund ums Haustier alltagstauglich zu dokumen
 
 - Plattformuebergreifende Entwicklung: Ein Code-Stand fuer Android, iOS, macOS (Mac Catalyst) und Windows.
 - Solide Architektur-Basis: Trennung von Views, ViewModel und Modellen.
-- Nachvollziehbarer Datenfluss: Mehrere Seiten schreiben in ein gemeinsames `PetViewModel`, finale Ausgabe in der Hauptansicht.
+- Nachvollziehbarer Datenfluss: Mehrere Seiten schreiben in ein gemeinsames PetViewModel, finale Ausgabe in der Hauptansicht.
 - Sauberer Einstieg in Dependency Injection mit dem MAUI Service Container.
+- Lokale Datenspeicherung mit SQLite.
 - Aktive Weiterentwicklung mit klarem WIP-Status und ausbaubarer Roadmap.
-
 
 ## Produktvision
 
@@ -26,10 +26,10 @@ Ziel der App ist es, wichtige Daten rund ums Haustier alltagstauglich zu dokumen
 
 - Sprache: C#
 - UI/Framework: .NET MAUI (XAML + Code-Behind)
-- Muster: MVVM-light (INotifyPropertyChanged im ViewModel)
+- Muster: MVVM
 - Dependency Injection: `Microsoft.Extensions.DependencyInjection`
 - Logging (Debug): `Microsoft.Extensions.Logging.Debug`
-
+- Datenbank: SQLite (lokale Persistenz)
 
 ## Setup und Start
 
@@ -49,12 +49,9 @@ Hinweis: Das Projekt ist auf mehrere Zielplattformen konfiguriert. Die verfuegba
 
 ## Geplante Erweiterungen
 
-- Lokale Datenspeicherung (z. B. SQLite)
 - Tracking von Gewicht, Stimmung und Medikamentengaben
-- Bearbeiten/Loeschen von Eintraegen
 - Bessere Eingabevalidierung und Fehlermeldungen
 - PDF-Export fuer Tierarzttermine
-- Unit-Tests fuer ViewModel-Logik
 - UI-Polish und Accessibility-Verbesserungen
 
 ## Entwicklungsfokus
