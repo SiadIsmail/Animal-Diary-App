@@ -7,13 +7,6 @@ using System.Runtime.CompilerServices;
 
 public class PetViewModel : INotifyPropertyChanged
 {
-    private readonly PetDatabase _database;
-
-    public PetViewModel(PetDatabase database)
-    {
-        _database = database;
-    }
-
     public event PropertyChangedEventHandler? PropertyChanged;
     private string enteredPetName = string.Empty;
 
@@ -66,6 +59,13 @@ public class PetViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(ParsedPetAge));
         }
     }
+
+    private readonly PetDatabase _database;
+
+    public PetViewModel(PetDatabase database)
+    {
+        _database = database;
+    }
     public async Task SavePetAsync()
     {
         if (ParsedPetAge == null)
@@ -96,7 +96,7 @@ public class PetViewModel : INotifyPropertyChanged
         var allPets = await _database.GetPetsAsync();
 
         var latestPet = allPets
-            .OrderByDescending(p => p.Id) 
+            .OrderByDescending(p => p.Id)
             .FirstOrDefault();
 
         Pets = latestPet != null

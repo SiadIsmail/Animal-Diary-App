@@ -9,7 +9,7 @@ public class Pet
     public string Type { get; set; } = string.Empty;
     public int Age { get; set; }
 }
-public class PetDiaryEntry
+public class PetEntry
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }

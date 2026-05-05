@@ -2,6 +2,7 @@
 
 using Syncfusion.Maui.Calendar;
 using Animal_Diary_App.Data.Models;
+using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,7 +12,7 @@ public partial class CalendarPage : ContentPage
 	public CalendarPage()
 	{
 		InitializeComponent();
-		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<CalendarViewModel>() ?? new CalendarViewModel();
+		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<CalendarViewModel>() ?? new CalendarViewModel(new PetEntryDatabase());
 	}
 	async void OnMainClicked(object sender, EventArgs args)
 	{
@@ -19,14 +20,14 @@ public partial class CalendarPage : ContentPage
 	}
 	private async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		if (BindingContext is CalendarViewModel calendarViewModel)
-		{
-			calendarViewModel.SaveEntry();
-		}
+		var viewModel = (CalendarViewModel)BindingContext;
+		await viewModel.SavePetEntryAsync();
+		await viewModel.LoadEntriesAsync();
 	}
 	private async void Button_Clicked(object sender, System.EventArgs e)
 	{
 		this.calendar.IsOpen = true;
 	}
 	
+
 }

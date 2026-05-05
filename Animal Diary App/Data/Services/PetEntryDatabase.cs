@@ -1,0 +1,29 @@
+namespace Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Models;
+using SQLite;
+
+public class PetEntryDatabase
+{
+    private SQLiteAsyncConnection database;
+    public async Task Init()
+    {
+        if (database != null)
+            return;
+
+        database = new SQLiteAsyncConnection("petsentries.db");
+        await database.CreateTableAsync<PetEntry>();
+    }
+
+    public async Task SavePetEntryAsync(PetEntry PetEntry)
+    {
+        await Init();
+        await database.InsertAsync(PetEntry);
+    }
+
+    public async Task<List<PetEntry>> GetPetEntriesAsync()
+    {
+        await Init();
+        return await database.Table<PetEntry>().ToListAsync();
+    }
+
+}

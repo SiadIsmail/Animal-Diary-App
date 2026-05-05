@@ -7,9 +7,6 @@
         <Grid>
             <Image Source="dotnet_bot.png"
                    Aspect="AspectFill"/>
-
-
-
             <VerticalStackLayout
                 Padding="30,0"
                 Spacing="25">

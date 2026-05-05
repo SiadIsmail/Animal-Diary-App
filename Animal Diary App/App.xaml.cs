@@ -12,7 +12,7 @@ public partial class App : Application
 		InitializeComponent();
 		_database = database;
 
-		MainPage = new ContentPage(); // temporary placeholder
+		MainPage = new ContentPage(); 
 
 		DecideStartPage();
 

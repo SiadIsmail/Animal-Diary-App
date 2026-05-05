@@ -1,12 +1,14 @@
 namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Models;
-using Animal_Diary_App.Data.Models.Commands;
+using Animal_Diary_App.Data.Services;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+
 public class CalendarViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
+
 
     private string enteredMood = string.Empty;
     private DateTime currentSelectedDate = DateTime.Now;
@@ -17,10 +19,10 @@ public class CalendarViewModel : INotifyPropertyChanged
         {
             currentSelectedDate = value;
             OnPropertyChanged();
-            
+
         }
     }
-    
+
     public string EnteredMood
     {
         get => enteredMood;
@@ -33,17 +35,30 @@ public class CalendarViewModel : INotifyPropertyChanged
     }
 
 
-    public List<PetDiaryEntry> Entries { get; set; } = new();
+    public List<PetEntry> Entries { get; set; } = new();
+    private readonly PetEntryDatabase _database;
 
-    public void SaveEntry()
+    public CalendarViewModel(PetEntryDatabase database)
     {
-        var entry = new PetDiaryEntry
+        _database = database;
+    }
+
+    public async Task SavePetEntryAsync()
+    {
+        var entry = new PetEntry
         {
+            PetId = 1,
             Date = CurrentSelectedDate,
             Mood = EnteredMood
         };
 
-        Entries.Add(entry);
+        await _database.SavePetEntryAsync(entry);
+    }
+
+    public async Task LoadEntriesAsync()
+    {
+        Entries = await _database.GetPetEntriesAsync();
+        OnPropertyChanged(nameof(Entries));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

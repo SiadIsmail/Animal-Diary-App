@@ -28,6 +28,22 @@
                    FontSize="18"
                    HorizontalOptions="FillAndExpand"
                    Completed="OnEntryCompleted"/>
+            <CollectionView ItemsSource="{Binding petsentries}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="14"
+                              VerticalOptions="Center">
+                            <Label Text="{Binding Date, StringFormat='Date: {0:d}'}"
+                                   FontSize="18"
+                                   HorizontalOptions="Center"/>
+                            <Label Text="{Binding Mood}"
+                                   FontSize="18"
+                                   HorizontalOptions="Center"/>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
             <HorizontalStackLayout
                 VerticalOptions="End">

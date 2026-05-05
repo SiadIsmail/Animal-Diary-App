@@ -37,11 +37,18 @@
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-            <HorizontalStackLayout VerticalOptions="End">
-                <Button Text="Main"/>
+            <Grid RowDefinitions="*,Auto"
+                  ColumnDefinitions="*,*"
+                  VerticalOptions="End">
+                <Button Text="Main"
+                        Grid.Row="1"
+                        Grid.Column="0"/>
+
                 <Button Text="Calendar"
-                        Clicked="OnCalendarClicked"/>
-            </HorizontalStackLayout>
+                        Clicked="OnCalendarClicked"
+                        Grid.Row="1"
+                        Grid.Column="1"/>
+            </Grid>
         </Grid>
     </ScrollView>
 
