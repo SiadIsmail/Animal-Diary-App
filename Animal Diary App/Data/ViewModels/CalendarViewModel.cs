@@ -4,24 +4,26 @@ using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using SQLite;
 
 public class CalendarViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
 
-
-    private string enteredMood = string.Empty;
-    private DateTime currentSelectedDate = DateTime.Now;
+    private DateTime currentSelectedDate = DateTime.Now.Date;
     public DateTime CurrentSelectedDate
     {
         get => currentSelectedDate;
         set
         {
-            currentSelectedDate = value;
+            currentSelectedDate = value.Date;
             OnPropertyChanged();
+            _ = LoadEntriesAsync();
 
         }
     }
+
+    private string enteredMood = string.Empty;
 
     public string EnteredMood
     {
@@ -30,6 +32,17 @@ public class CalendarViewModel : INotifyPropertyChanged
         {
             if (enteredMood == value) return;
             enteredMood = value;
+            OnPropertyChanged();
+        }
+    }
+    private string shownMood = string.Empty;
+    public string ShownMood
+    {
+        get => shownMood;
+        set
+        {
+            if (shownMood == value) return;
+            shownMood = value;
             OnPropertyChanged();
         }
     }
@@ -57,11 +70,14 @@ public class CalendarViewModel : INotifyPropertyChanged
 
     public async Task LoadEntriesAsync()
     {
-        Entries = await _database.GetPetEntriesAsync();
-        var CurrentMood = CurrentSelectedDate
-        var MoodEntry = await db.Table(PetEntry)
-        
-        OnPropertyChanged(nameof(Entries));
+        var MoodEntry = await _database.GetPetEntryByDateAsync(CurrentSelectedDate);
+        if (MoodEntry == null)
+        {
+            ShownMood = string.Empty;
+            return;
+        }
+        ShownMood = MoodEntry.Mood;
+        return;
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

@@ -11,7 +11,7 @@ Ziel der App ist es, wichtige Daten rund ums Haustier alltagstauglich zu dokumen
 
 - Plattformuebergreifende Entwicklung: Ein Code-Stand fuer Android, iOS, macOS (Mac Catalyst) und Windows.
 - Solide Architektur-Basis: Trennung von Views, ViewModel und Modellen.
-- Nachvollziehbarer Datenfluss: Mehrere Seiten schreiben in ein gemeinsames PetViewModel, finale Ausgabe in der Hauptansicht.
+- Nachvollziehbarer Datenfluss
 - Sauberer Einstieg in Dependency Injection mit dem MAUI Service Container.
 - Lokale Datenspeicherung mit SQLite.
 - Aktive Weiterentwicklung mit klarem WIP-Status und ausbaubarer Roadmap.
@@ -66,4 +66,4 @@ Dieses Projekt ist bewusst als Lern- und Portfolio-Projekt angelegt, mit Fokus a
 
 ## Kontakt
 
-Wenn du mehr ueber meinen Entwicklungsansatz, Lernfortschritt oder die geplanten naechsten Schritte erfahren moechtest, freue ich mich ueber den Austausch.
+Wenn Sie mehr ueber meinen Entwicklungsansatz, Lernfortschritt oder die geplanten naechsten Schritte erfahren moechtest, freue ich mich ueber den Austausch.

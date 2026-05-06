@@ -23,27 +23,17 @@
             <Label  Text="{Binding CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
                     FontSize="18"
                     HorizontalOptions="Center"/>
+
             <Entry Placeholder="Enter your pet's mood for the day"
                    Text="{Binding EnteredMood}"
                    FontSize="18"
                    HorizontalOptions="FillAndExpand"
                    Completed="OnEntryCompleted"/>
-            <CollectionView ItemsSource="{Binding petsentries}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid ColumnDefinitions="Auto,*"
-                              ColumnSpacing="14"
-                              VerticalOptions="Center">
-                            <Label Text="{Binding Date, StringFormat='Date: {0:d}'}"
-                                   FontSize="18"
-                                   HorizontalOptions="Center"/>
-                            <Label Text="{Binding Mood}"
-                                   FontSize="18"
-                                   HorizontalOptions="Center"/>
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+
+            <Label Text="{Binding ShownMood}"
+                   FontSize="18"
+                   HorizontalOptions="Center"/>
+
 
             <HorizontalStackLayout
                 VerticalOptions="End">

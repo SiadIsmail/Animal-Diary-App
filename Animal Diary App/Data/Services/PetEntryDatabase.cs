@@ -26,4 +26,10 @@ public class PetEntryDatabase
         return await database.Table<PetEntry>().ToListAsync();
     }
 
+    public async Task<PetEntry> GetPetEntryByDateAsync(DateTime date)
+    {
+        await Init();
+        return await database.Table<PetEntry>().Where(e => e.Date == date).FirstOrDefaultAsync();
+    }
+
 }
