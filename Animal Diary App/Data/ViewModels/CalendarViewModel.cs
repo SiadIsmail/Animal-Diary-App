@@ -58,6 +58,9 @@ public class CalendarViewModel : INotifyPropertyChanged
     public async Task LoadEntriesAsync()
     {
         Entries = await _database.GetPetEntriesAsync();
+        var CurrentMood = CurrentSelectedDate
+        var MoodEntry = await db.Table(PetEntry)
+        
         OnPropertyChanged(nameof(Entries));
     }
 
