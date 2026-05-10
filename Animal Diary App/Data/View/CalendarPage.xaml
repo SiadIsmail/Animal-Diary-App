@@ -3,21 +3,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:calendar="clr-namespace:Syncfusion.Maui.Calendar;assembly=Syncfusion.Maui.Calendar"
              x:Class="Animal_Diary_App.Data.View.CalendarPage">
-
-    <ScrollView>
+    <Grid>
+        <Image Source="hintergrund_blau.png"
+               Aspect="AspectFill"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill"/>
         <VerticalStackLayout
             Padding="24,20"
             Spacing="20">
 
-            <Button Text="Open Calendar"
-                    x:Name="calendarButton"
-                    Clicked="Button_Clicked"/>
+
 
             <calendar:SfCalendar
                 x:Name="calendar"
                 View="Month"
-                BackgroundColor="#FFE7E720"
-                Mode="Dialog"
+                BackgroundColor="#FF20A5E7"
                 SelectedDate="{Binding CurrentSelectedDate, Mode=TwoWay}"/>
 
             <Label  Text="{Binding CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
@@ -39,19 +39,20 @@
                    FontSize="18"
                    HorizontalOptions="Center"/>
 
-
-            <HorizontalStackLayout
-                VerticalOptions="End">
-
-                <Button
-                    Text="Main"
-                    Clicked="OnMainClicked"/>
-
-                <Button
-                    Text="Calendar"/>
-
-            </HorizontalStackLayout>
         </VerticalStackLayout>
-    </ScrollView>
+
+        <Grid RowDefinitions="*,Auto"
+              ColumnDefinitions="*,*"
+              VerticalOptions="End">
+            <Button Text="Main"
+                    Grid.Row="1"
+                    Grid.Column="0"/>
+
+            <Button Text="Calendar"
+                    Grid.Row="1"
+                    Grid.Column="1"/>
+
+        </Grid>
+    </Grid>
 
 </ContentPage>

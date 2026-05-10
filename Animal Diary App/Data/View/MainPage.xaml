@@ -3,53 +3,51 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Animal_Diary_App.Data.View.MainPage">
 
-    <ScrollView>
-        <Grid>
-            <Image Source="hintergrund_blau.png"
-                   Aspect="AspectFill"
-                   HorizontalOptions="Fill"
-                   VerticalOptions="Fill"/>
-            <CollectionView ItemsSource="{Binding Pets}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid ColumnDefinitions="Auto,*"
-                              ColumnSpacing="14"
-                              VerticalOptions="Center">
-                            <VerticalStackLayout Padding="24,20"
-                                                 Spacing="20">
-                                <Image Source="animal1.jpg"
-                                       WidthRequest="200"
-                                       HeightRequest="200"
-                                       Aspect="AspectFit"/>
-                                <Label Text="{Binding Name}"
-                                       FontSize="22"
-                                       FontAttributes="Bold"/>
+    <Grid>
+        <Image Source="hintergrund_blau.png"
+               Aspect="AspectFill"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill"/>
+        <CollectionView ItemsSource="{Binding Pets}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="14"
+                          VerticalOptions="Center">
+                        <VerticalStackLayout Padding="24,20"
+                                             Spacing="20">
+                            <Image Source="animal1.jpg"
+                                   WidthRequest="200"
+                                   HeightRequest="200"
+                                   Aspect="AspectFit"/>
+                            <Label Text="{Binding Name}"
+                                   FontSize="22"
+                                   FontAttributes="Bold"/>
 
-                                <Label Text="{Binding Type}"
-                                       FontSize="15"
-                                       TextColor="#666666"/>
+                            <Label Text="{Binding Type}"
+                                   FontSize="15"
+                                   TextColor="#666666"/>
 
-                                <Label Text="{Binding Age}"
-                                       FontSize="15"
-                                       TextColor="#666666"/>
-                            </VerticalStackLayout>
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-            <Grid RowDefinitions="*,Auto"
-                  ColumnDefinitions="*,*"
-                  VerticalOptions="End">
-                <Button Text="Main"
-                        Grid.Row="1"
-                        Grid.Column="0"/>
+                            <Label Text="{Binding Age}"
+                                   FontSize="15"
+                                   TextColor="#666666"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Grid RowDefinitions="*,Auto"
+              ColumnDefinitions="*,*"
+              VerticalOptions="End">
+            <Button Text="Main"
+                    Grid.Row="1"
+                    Grid.Column="0"/>
 
-                <Button Text="Calendar"
-                        Clicked="OnCalendarClicked"
-                        Grid.Row="1"
-                        Grid.Column="1"/>
-            </Grid>
+            <Button Text="Calendar"
+                    Clicked="OnCalendarClicked"
+                    Grid.Row="1"
+                    Grid.Column="1"/>
         </Grid>
-    </ScrollView>
+    </Grid>
 
 </ContentPage>

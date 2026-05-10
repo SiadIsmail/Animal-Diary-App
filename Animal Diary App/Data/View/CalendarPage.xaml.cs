@@ -31,10 +31,6 @@ public partial class CalendarPage : ContentPage
 		await viewModel.LoadEntriesAsync();
 	}
 	
-	private async void Button_Clicked(object sender, System.EventArgs e)
-	{
-		this.calendar.IsOpen = true;
-	}
 	
 
 }
