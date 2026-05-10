@@ -23,16 +23,39 @@
             <Label  Text="{Binding CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
                     FontSize="18"
                     HorizontalOptions="Center"/>
+            <HorizontalStackLayout Spacing="10"
+                                   HorizontalOptions="Center">
+                <Button Text="+Mood"
+                        FontSize="24"
+                        WidthRequest="150"
+                        HeightRequest="50"
+                        CornerRadius="25"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding IsMoodAddButtonVisible}"
+                        Command="{Binding ShowMoodInputCommand}"/>
 
+                <Button Text="+Weight"
+                        FontSize="24"
+                        WidthRequest="150"
+                        HeightRequest="50"
+                        CornerRadius="25"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding IsWeightAddButtonVisible}"
+                        Command="{Binding ShowWeightInputCommand}"/>
+            </HorizontalStackLayout>
             <Entry Placeholder="Enter your pet's mood for the day!"
                    Text="{Binding EnteredMood}"
                    FontSize="18"
                    HorizontalOptions="FillAndExpand"
+                   IsVisible="{Binding IsMoodInputVisible}"
                    Completed="OnMoodEntryCompleted"/>
             <Entry Placeholder="Enter your pet's weight today!"
                    Text="{Binding EnteredWeight}"
                    FontSize="18"
                    HorizontalOptions="FillAndExpand"
+                   IsVisible="{Binding IsWeightInputVisible}"
                    Completed="OnWeightEntryCompleted"/>
 
             <Label Text="{Binding ShownMood}"
@@ -46,7 +69,8 @@
               VerticalOptions="End">
             <Button Text="Main"
                     Grid.Row="1"
-                    Grid.Column="0"/>
+                    Grid.Column="0"
+                    Clicked="OnMainClicked"/>
 
             <Button Text="Calendar"
                     Grid.Row="1"
