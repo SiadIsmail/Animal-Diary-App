@@ -18,9 +18,11 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
-
+			
+		builder.Services.AddSingleton<MainViewModel>();
 		builder.Services.AddSingleton<PetViewModel>();
 		builder.Services.AddSingleton<CalendarViewModel>();
+		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<PetEntryDatabase>();
 		builder.Services.AddSingleton<PetDatabase>();
 		builder.Services.AddSingleton<App>();

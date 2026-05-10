@@ -58,7 +58,7 @@
                    IsVisible="{Binding IsWeightInputVisible}"
                    Completed="OnWeightEntryCompleted"/>
 
-            <Label Text="{Binding ShownMood}"
+            <Label Text="{Binding ShownMood, StringFormat='Mood: {0}'}"
                    FontSize="18"
                    HorizontalOptions="Center"/>
 

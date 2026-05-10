@@ -4,41 +4,86 @@
              x:Class="Animal_Diary_App.Data.View.MainPage">
 
     <Grid>
+
+        <!-- Background -->
         <Image Source="hintergrund_blau.png"
                Aspect="AspectFill"
                HorizontalOptions="Fill"
-               VerticalOptions="Fill"/>
-        <CollectionView ItemsSource="{Binding Pets}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="14"
-                          VerticalOptions="Center">
-                        <VerticalStackLayout Padding="24,20"
-                                             Spacing="20">
-                            <Image Source="animal1.jpg"
-                                   WidthRequest="200"
-                                   HeightRequest="200"
-                                   Aspect="AspectFit"/>
-                            <Label Text="{Binding Name}"
-                                   FontSize="22"
-                                   FontAttributes="Bold"/>
+               VerticalOptions="Fill"
+               InputTransparent="True"/>
 
-                            <Label Text="{Binding Type}"
-                                   FontSize="15"
-                                   TextColor="#666666"/>
+        <!-- Main Content -->
+        <ScrollView>
 
-                            <Label Text="{Binding Age}"
-                                   FontSize="15"
-                                   TextColor="#666666"/>
-                        </VerticalStackLayout>
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+            <VerticalStackLayout Padding="24,20"
+                                 Spacing="24">
+
+                <CollectionView ItemsSource="{Binding PetVM.Pets}"
+                                SelectionMode="None">
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+
+                            <Frame Padding="20"
+                                   CornerRadius="20"
+                                   HasShadow="True"
+                                   BackgroundColor="#AA5E72CC"
+                                   BorderColor="#DDDDDD">
+
+                                <VerticalStackLayout Spacing="12"
+                                                     HorizontalOptions="Center">
+
+                                    <Image Source="animal1.jpg"
+                                           WidthRequest="200"
+                                           HeightRequest="200"
+                                           Aspect="AspectFit"
+                                           HorizontalOptions="Center"/>
+
+                                    <Label Text="{Binding Name}"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           HorizontalTextAlignment="Center"/>
+
+                                    <Label Text="{Binding Type}"
+                                           FontSize="16"
+                                           TextColor="#666666"
+                                           HorizontalTextAlignment="Center"/>
+
+                                    <Label Text="{Binding Age, StringFormat='{0} years old'}"
+                                           FontSize="16"
+                                           TextColor="#666666"
+                                           HorizontalTextAlignment="Center"/>
+
+                                </VerticalStackLayout>
+
+                            </Frame>
+
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                </CollectionView>
+
+                <Frame Padding="16"
+                       CornerRadius="16"
+                       BackgroundColor="#AA5E72CC"
+                       BorderColor="#DDDDDD">
+
+                    <Label Text="{Binding MainPageVM.LatestWeight, StringFormat='Latest weight: {0} kg'}"
+                           FontSize="16"
+                           HorizontalTextAlignment="Center"
+                           TextColor="#666666"/>
+
+                </Frame>
+
+            </VerticalStackLayout>
+
+        </ScrollView>
+
+        <!-- Bottom Navigation -->
         <Grid RowDefinitions="*,Auto"
               ColumnDefinitions="*,*"
               VerticalOptions="End">
+
             <Button Text="Main"
                     Grid.Row="1"
                     Grid.Column="0"/>
@@ -47,7 +92,9 @@
                     Clicked="OnCalendarClicked"
                     Grid.Row="1"
                     Grid.Column="1"/>
+
         </Grid>
+
     </Grid>
 
 </ContentPage>
