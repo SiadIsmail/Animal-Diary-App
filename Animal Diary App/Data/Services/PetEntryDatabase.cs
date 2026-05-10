@@ -20,6 +20,12 @@ public class PetEntryDatabase
         await database.InsertAsync(PetEntry);
     }
 
+    public async Task UpdatePetEntryAsync(PetEntry PetEntry)
+    {
+        await Init();
+        await database.UpdateAsync(PetEntry);
+    }
+
     public async Task<List<PetEntry>> GetPetEntriesAsync()
     {
         await Init();

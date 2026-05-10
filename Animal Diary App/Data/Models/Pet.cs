@@ -16,5 +16,7 @@ public class PetEntry
     public int PetId { get; set; }
     public DateTime Date { get; set; }
     public string Mood { get; set; } = string.Empty;
+
+    public decimal Weight { get; set; }
 }
 

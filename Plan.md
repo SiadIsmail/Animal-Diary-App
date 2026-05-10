@@ -1,8 +1,6 @@
-Nimm das letzte Datum
-Hole die letzte Entry mit diesem datum
+User in Calendarpage:
 
-SelectedDate = x
-
-Get Entry mit Date = x
-
-Show Entry
+Picks Mood OR Weight Entry
+(Could have something like 2 Plus signs with the Words Mood and Weight)
+Save the entry
+Show the Entry
