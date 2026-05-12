@@ -5,6 +5,7 @@ using Animal_Diary_App.Data.Services;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Globalization;
+using System.Windows.Input;
 using SQLite;
 
 public class CalendarViewModel : INotifyPropertyChanged
@@ -144,6 +145,65 @@ public class CalendarViewModel : INotifyPropertyChanged
         ShownMood = MoodEntry.Mood;
         return;
     }
+
+    private bool isMoodAddButtonVisible = true;
+    public bool IsMoodAddButtonVisible
+    {
+        get => isMoodAddButtonVisible;
+        set { isMoodAddButtonVisible = value; OnPropertyChanged(); }
+    }
+    private bool isMoodInputVisible = false;
+    public bool IsMoodInputVisible
+    {
+        get => isMoodInputVisible;
+        set { isMoodInputVisible = value; OnPropertyChanged(); }
+    }
+
+    private bool isWeightAddButtonVisible = true;
+    public bool IsWeightAddButtonVisible
+    {
+        get => isWeightAddButtonVisible;
+        set { isWeightAddButtonVisible = value; OnPropertyChanged(); }
+    }
+    private bool isWeightInputVisible = false;
+    public bool IsWeightInputVisible
+    {
+        get => isWeightInputVisible;
+        set { isWeightInputVisible = value; OnPropertyChanged(); }
+    }
+    public ICommand ShowMoodInputCommand => new Command(() =>
+{
+    IsMoodAddButtonVisible = false;
+    IsMoodInputVisible = true;
+});
+
+    public ICommand ShowWeightInputCommand => new Command(() =>
+    {
+        IsWeightAddButtonVisible = false;
+        IsWeightInputVisible = true;
+    });
+
+
+    public ICommand OnMoodEntryCompleted => new Command(async () =>
+    {
+        IsMoodAddButtonVisible = true;
+        IsMoodInputVisible = false;
+        await SavePetMoodEntryAsync();
+        await LoadEntriesAsync();
+        EnteredMood = "";
+
+    });
+
+    public ICommand OnWeightEntryCompleted => new Command(async () =>
+    {
+        IsWeightAddButtonVisible = true;
+        IsWeightInputVisible = false;
+        await SavePetWeightEntryAsync();
+        await LoadEntriesAsync();
+        EnteredWeight = "";
+
+    });
+
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
     {

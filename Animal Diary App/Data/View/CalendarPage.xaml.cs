@@ -20,21 +20,17 @@ public partial class CalendarPage : ContentPage
 	}
 	private async void OnMoodEntryCompleted(object? sender, EventArgs e)
 	{
-		var viewModel = (CalendarViewModel)BindingContext;
-		await viewModel.SavePetMoodEntryAsync();
-		await viewModel.LoadEntriesAsync();
+		var vm = (CalendarViewModel)BindingContext;
+		vm.OnMoodEntryCompleted.Execute(null);
 	}
+
+
 	private async void OnWeightEntryCompleted(object? sender, EventArgs e)
 	{
-		var viewModel = (CalendarViewModel)BindingContext;
-		await viewModel.SavePetWeightEntryAsync();
-		await viewModel.LoadEntriesAsync();
+		var vm = (CalendarViewModel)BindingContext;
+		vm.OnWeightEntryCompleted.Execute(null);
 	}
-	
-	private async void Button_Clicked(object sender, System.EventArgs e)
-	{
-		this.calendar.IsOpen = true;
-	}
-	
+
+
 
 }

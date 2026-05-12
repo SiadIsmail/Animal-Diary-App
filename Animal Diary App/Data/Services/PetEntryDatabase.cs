@@ -10,7 +10,8 @@ public class PetEntryDatabase
         if (database != null)
             return;
 
-        database = new SQLiteAsyncConnection("petsentries.db");
+        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "petsentries.db");
+        database = new SQLiteAsyncConnection(dbPath);
         await database.CreateTableAsync<PetEntry>();
     }
 
