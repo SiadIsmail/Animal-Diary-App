@@ -2,68 +2,61 @@
 
 Eine Work-in-Progress Mobile-App mit .NET MAUI zur strukturierten Erfassung von Haustier- und Gesundheitsdaten.
 
-## Kurzprofil
+## Kurzbeschreibung
 
-Ziel der App ist es, wichtige Daten rund ums Haustier alltagstauglich zu dokumentieren, z. B. Gewicht, Stimmung, Medikamentengaben und weitere Gesundheitsnotizen. Langfristig soll ein exportierbarer Bericht (PDF) entstehen, der direkt bei Tierarztbesuchen genutzt werden kann.
+Die App ermöglicht die einfache Dokumentation wichtiger Haustierdaten wie Gewicht, Stimmung und Medikamentengaben. Ziel ist eine langfristige Verlaufserfassung sowie ein exportierbarer PDF-Bericht für Tierarztbesuche.
 
+## Aktueller Stand
 
-## Projektstaerken im aktuellen Stand
-
-- Plattformuebergreifende Entwicklung: Ein Code-Stand fuer Android, iOS, macOS (Mac Catalyst) und Windows.
-- Solide Architektur-Basis: Trennung von Views, ViewModel und Modellen.
-- Nachvollziehbarer Datenfluss: Mehrere Seiten schreiben in ein gemeinsames PetViewModel, finale Ausgabe in der Hauptansicht.
-- Sauberer Einstieg in Dependency Injection mit dem MAUI Service Container.
-- Lokale Datenspeicherung mit SQLite.
-- Aktive Weiterentwicklung mit klarem WIP-Status und ausbaubarer Roadmap.
-
-## Produktvision
-
-- Dokumentation von Gesundheitsdaten wie Gewicht, Stimmung und Medikamente.
-- Verlauf ueber die Zeit zur besseren Einschaetzung von Veraenderungen.
-- Export als strukturierter PDF-Bericht zur Weitergabe an Tieraerztinnen und Tieraerzte.
+- Plattformübergreifende Entwicklung mit .NET MAUI (Android, iOS, Windows, macOS)
+- MVVM-basierte Architektur mit klarer Trennung von View, ViewModel und Model
+- Lokale Datenspeicherung mit SQLite
+- Erste DI-Integration über Microsoft Dependency Injection
+- Kalenderbasierte Datenerfassung für Tageswerte (Gewicht, Stimmung)
+- Dynamische UI mit Eingabefeldern, Zustandswechseln und Validierung
+- Laufende UI-Optimierung für mobile Endgeräte
 
 ## Technischer Stack
 
 - Sprache: C#
-- UI/Framework: .NET MAUI (XAML + Code-Behind)
-- Muster: MVVM
-- Dependency Injection: `Microsoft.Extensions.DependencyInjection`
-- Logging (Debug): `Microsoft.Extensions.Logging.Debug`
-- Datenbank: SQLite (lokale Persistenz)
+- UI: .NET MAUI (XAML + Code-Behind)
+- Architektur: MVVM
+- Datenbank: SQLite (lokal)
+- Dependency Injection: Microsoft.Extensions.DependencyInjection
+- Logging: Microsoft.Extensions.Logging.Debug
 
-## Setup und Start
+## Funktionen (aktuell implementiert)
 
-Voraussetzungen:
+- Erfassung von Haustieren
+- Speicherung und Anzeige von Gewichts- und Stimmungsdaten
+- Kalenderbasierte Auswahl von Einträgen
+- Dynamische Eingabeformulare mit Zustandsteuerung
+- Lokale Persistenz über SQLite
 
-- .NET SDK mit MAUI-Workload (passend zu .NET 10 Target Frameworks im Projekt)
-- Visual Studio 2022 (oder neuer) mit MAUI-Unterstuetzung
+## Ziel des Projekts
 
-Projekt starten (Beispiel):
-
-```bash
-dotnet restore
-dotnet build "Animal Diary App/Animal Diary App.csproj"
-```
-
-Hinweis: Das Projekt ist auf mehrere Zielplattformen konfiguriert. Die verfuegbaren Targets haengen vom Host-Betriebssystem und den installierten Workloads ab.
+- Alltagsnahe Dokumentation von Haustiergesundheit
+- Übersichtlicher Verlauf wichtiger Gesundheitswerte
+- Vorbereitung eines PDF-Exports für Tierarztbesuche
 
 ## Geplante Erweiterungen
 
-- Tracking von Gewicht, Stimmung und Medikamentengaben
-- Bessere Eingabevalidierung und Fehlermeldungen
-- PDF-Export fuer Tierarzttermine
-- UI-Polish und Accessibility-Verbesserungen
+- Medikamenten-Tracking
+- Verbesserte Validierung und Fehlerhandling
+- PDF-Export für Tierarztberichte
+- Erweiterte Visualisierung von Verlaufsdaten
+- UI/UX-Polish und Accessibility-Verbesserungen
 
 ## Entwicklungsfokus
 
-Dieses Projekt ist bewusst als Lern- und Portfolio-Projekt angelegt, mit Fokus auf:
+Dieses Projekt dient als Lern- und Portfolioarbeit mit Fokus auf:
 
-- saubere C#-Grundlagen
-- SQL Grundlagen und Servers
-- MAUI App-Struktur und Navigation
-- zustandsbasiertes Denken im UI-Kontext
-- iteratives, nachvollziehbares Weiterentwickeln
+- saubere C#-Architektur
+- MAUI Cross-Platform Entwicklung
+- MVVM-Pattern und Datenflussverständnis
+- Datenbanken (SQLite)
+- iteratives Refactoring und UI-Design
 
-## Kontakt
+## Hinweis
 
-Wenn du mehr ueber meinen Entwicklungsansatz, Lernfortschritt oder die geplanten naechsten Schritte erfahren moechtest, freue ich mich ueber den Austausch.
+Das Projekt befindet sich aktiv in Entwicklung (WIP) und wird kontinuierlich erweitert und refaktoriert.

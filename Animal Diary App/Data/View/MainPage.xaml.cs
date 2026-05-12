@@ -6,17 +6,18 @@ using Animal_Diary_App.Data.Services;
 
 public partial class MainPage : ContentPage
 {
+    private MainViewModel vm;
     public MainPage()
     {
         InitializeComponent();
-        BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<PetViewModel>() ?? new PetViewModel(new PetDatabase());
+        vm = new MainViewModel();
+
+        BindingContext = vm;
     }
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-
-        var viewModel = (PetViewModel)BindingContext;
-        await viewModel.LoadPetsAsync();
+        await vm.LoadAsync();
     }
 
     async void OnCalendarClicked(object sender, EventArgs args)

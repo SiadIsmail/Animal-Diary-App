@@ -4,59 +4,111 @@
              xmlns:calendar="clr-namespace:Syncfusion.Maui.Calendar;assembly=Syncfusion.Maui.Calendar"
              x:Class="Animal_Diary_App.Data.View.CalendarPage">
 
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="24,20"
-            Spacing="20">
+        <Grid>
 
-            <Button Text="Open Calendar"
-                    x:Name="calendarButton"
-                    Clicked="Button_Clicked"/>
+                <!-- Background -->
+                <Image Source="hintergrund_blau.png"
+                       Aspect="AspectFill"
+                       HorizontalOptions="Fill"
+                       VerticalOptions="Fill"
+                       InputTransparent="True"/>
 
-            <calendar:SfCalendar
-                x:Name="calendar"
-                View="Month"
-                BackgroundColor="#FFE7E720"
-                Mode="Dialog"
-                SelectedDate="{Binding CurrentSelectedDate, Mode=TwoWay}"/>
+                <!-- Main Content -->
 
-            <Label  Text="{Binding CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
-                    FontSize="18"
-                    HorizontalOptions="Center"/>
-            <Entry Placeholder="Enter your pet's mood for the day"
-                   Text="{Binding EnteredMood}"
-                   FontSize="18"
-                   HorizontalOptions="FillAndExpand"
-                   Completed="OnEntryCompleted"/>
-            <CollectionView ItemsSource="{Binding petsentries}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid ColumnDefinitions="Auto,*"
-                              ColumnSpacing="14"
-                              VerticalOptions="Center">
-                            <Label Text="{Binding Date, StringFormat='Date: {0:d}'}"
-                                   FontSize="18"
-                                   HorizontalOptions="Center"/>
-                            <Label Text="{Binding Mood}"
-                                   FontSize="18"
-                                   HorizontalOptions="Center"/>
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                <VerticalStackLayout Padding="24,20"
+                                     Spacing="24">
 
-            <HorizontalStackLayout
-                VerticalOptions="End">
+                        <!-- Calendar Card -->
 
-                <Button
-                    Text="Main"
-                    Clicked="OnMainClicked"/>
 
-                <Button
-                    Text="Calendar"/>
+                        <VerticalStackLayout Spacing="16">
 
-            </HorizontalStackLayout>
-        </VerticalStackLayout>
-    </ScrollView>
+                                <calendar:SfCalendar
+                                        x:Name="calendar"
+                                        View="Month"
+                                        BackgroundColor="#FF20A5E7"
+                                        SelectedDate="{Binding CurrentSelectedDate, Mode=TwoWay}"/>
+
+                                <Label Text="{Binding CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"
+                                       HorizontalTextAlignment="Center"/>
+
+                        </VerticalStackLayout>
+
+
+                        <!-- Action Buttons -->
+                        <HorizontalStackLayout Spacing="14"
+                                               HorizontalOptions="Center">
+
+                                <Button Text="+ Mood"
+                                        FontSize="20"
+                                        WidthRequest="150"
+                                        HeightRequest="50"
+                                        CornerRadius="25"
+                                        IsVisible="{Binding IsMoodAddButtonVisible}"
+                                        Command="{Binding ShowMoodInputCommand}"/>
+
+                                <Button Text="+ Weight"
+                                        FontSize="20"
+                                        WidthRequest="150"
+                                        HeightRequest="50"
+                                        CornerRadius="25"
+                                        IsVisible="{Binding IsWeightAddButtonVisible}"
+                                        Command="{Binding ShowWeightInputCommand}"/>
+
+                        </HorizontalStackLayout>
+
+                        <!-- Mood Input -->
+
+                        <Entry Placeholder="Enter your pet's mood for the day"
+                               Text="{Binding EnteredMood}"
+                               FontSize="18"
+                               Completed="OnMoodEntryCompleted"
+                               IsVisible="{Binding IsMoodInputVisible}"/>
+
+
+
+                        <!-- Weight Input -->
+
+                        <Entry Placeholder="Enter your pet's weight today"
+                               Text="{Binding EnteredWeight}"
+                               FontSize="18"
+                               Keyboard="Numeric"
+                               Completed="OnWeightEntryCompleted"
+                               IsVisible="{Binding IsWeightInputVisible}"/>
+
+
+                        <!-- Current Mood Display -->
+
+
+                        <Label Text="{Binding ShownMood, StringFormat='Mood: {0}'}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"/>
+
+
+                </VerticalStackLayout>
+
+
+                <!-- Bottom Navigation -->
+                <Grid RowDefinitions="*,Auto"
+                      ColumnDefinitions="*,*"
+                      VerticalOptions="End">
+
+                        <Button Text="Main"
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Clicked="OnMainClicked"/>
+
+                        <Button Text="Calendar"
+                                Grid.Row="1"
+                                Grid.Column="1"/>
+
+                </Grid>
+
+        </Grid>
 
 </ContentPage>
