@@ -25,7 +25,7 @@
             <Entry
                 x:Name="entry"
                 Placeholder="Enter text"
-                Text="{Binding EnteredPetName}"
+                Text="{Binding PetVM.EnteredPetName}"
                 Completed="OnEntryCompleted"
                 SemanticProperties.Description="Type your name here"/>
         </VerticalStackLayout>

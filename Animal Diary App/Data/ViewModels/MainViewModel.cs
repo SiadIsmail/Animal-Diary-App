@@ -9,19 +9,13 @@ public class MainViewModel
     public MainPageViewModel MainPageVM { get; }
     public PetViewModel PetVM { get; }
 
-    private readonly PetDatabase petdatabase;
-    private readonly PetEntryDatabase petentrydatabase;
-
-
-    public MainViewModel()
+    public MainViewModel(PetService petService, PetEntryService petEntryService)
     {
-        petdatabase = new PetDatabase();
-        petentrydatabase = new PetEntryDatabase();
+        
 
-
-        CalendarVM = new CalendarViewModel(petentrydatabase);
-        MainPageVM = new MainPageViewModel(petentrydatabase);
-        PetVM = new PetViewModel(petdatabase);
+        CalendarVM = new CalendarViewModel(petEntryService);
+        MainPageVM = new MainPageViewModel(petEntryService);
+        PetVM = new PetViewModel(petService);
     }
     public async Task LoadAsync()
     {

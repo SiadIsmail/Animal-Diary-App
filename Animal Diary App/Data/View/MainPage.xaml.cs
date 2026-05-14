@@ -7,11 +7,10 @@ using Animal_Diary_App.Data.Services;
 public partial class MainPage : ContentPage
 {
     private MainViewModel vm;
-    public MainPage()
+    public MainPage(MainViewModel mainViewModel)
     {
         InitializeComponent();
-        vm = new MainViewModel();
-
+        vm = mainViewModel;
         BindingContext = vm;
     }
     protected override async void OnAppearing()
@@ -22,6 +21,6 @@ public partial class MainPage : ContentPage
 
     async void OnCalendarClicked(object sender, EventArgs args)
     {
-        await Navigation.PushAsync(new CalendarPage());
+        await Navigation.PushAsync(new CalendarPage(vm));
     }
 }

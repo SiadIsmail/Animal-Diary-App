@@ -60,12 +60,13 @@ public class PetViewModel : INotifyPropertyChanged
         }
     }
 
-    private readonly PetDatabase _database;
+    private readonly PetService _petService;
 
-    public PetViewModel(PetDatabase database)
+    public PetViewModel(PetService petService)
     {
-        _database = database;
+        _petService = petService;
     }
+    
     public async Task SavePetAsync()
     {
         if (ParsedPetAge == null)
@@ -77,7 +78,7 @@ public class PetViewModel : INotifyPropertyChanged
             Type = EnteredPetType,
             Age = ParsedPetAge.Value
         };
-        await _database.SavePetAsync(pet);
+        await _petService.SavePetAsync(pet);
     }
     List<Pet> pets = new List<Pet>();
 
@@ -93,7 +94,7 @@ public class PetViewModel : INotifyPropertyChanged
 
     public async Task LoadPetsAsync()
     {
-        var allPets = await _database.GetPetsAsync();
+        var allPets = await _petService.GetPetsAsync();
 
         var latestPet = allPets
             .OrderByDescending(p => p.Id)

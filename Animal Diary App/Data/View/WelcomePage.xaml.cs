@@ -7,14 +7,16 @@ using Animal_Diary_App.Data.Services;
 public partial class WelcomePage : ContentPage
 {
 
-	public WelcomePage()
+	private MainViewModel vm;
+	public WelcomePage(MainViewModel mainViewModel)
 	{
 		InitializeComponent();
-		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<PetViewModel>() ?? new PetViewModel(new PetDatabase());
+		vm = mainViewModel;
+		BindingContext = vm;
 	}
 
 	private async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		await Navigation.PushAsync(new PetAgePage());
+		await Navigation.PushAsync(new PetAgePage(vm));
 	}
 }

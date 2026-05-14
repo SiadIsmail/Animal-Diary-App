@@ -27,9 +27,9 @@
                                         x:Name="calendar"
                                         View="Month"
                                         BackgroundColor="#FF20A5E7"
-                                        SelectedDate="{Binding CurrentSelectedDate, Mode=TwoWay}"/>
+                                        SelectedDate="{Binding CalendarVM.CurrentSelectedDate, Mode=TwoWay}"/>
 
-                                <Label Text="{Binding CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
+                                <Label Text="{Binding CalendarVM.CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
                                        FontSize="18"
                                        FontAttributes="Bold"
                                        HorizontalOptions="Center"
@@ -47,43 +47,57 @@
                                         WidthRequest="150"
                                         HeightRequest="50"
                                         CornerRadius="25"
-                                        IsVisible="{Binding IsMoodAddButtonVisible}"
-                                        Command="{Binding ShowMoodInputCommand}"/>
+                                        IsVisible="{Binding CalendarVM.IsMoodAddButtonVisible}"
+                                        Command="{Binding CalendarVM.ShowMoodInputCommand}"/>
 
                                 <Button Text="+ Weight"
                                         FontSize="20"
                                         WidthRequest="150"
                                         HeightRequest="50"
                                         CornerRadius="25"
-                                        IsVisible="{Binding IsWeightAddButtonVisible}"
-                                        Command="{Binding ShowWeightInputCommand}"/>
+                                        IsVisible="{Binding CalendarVM.IsWeightAddButtonVisible}"
+                                        Command="{Binding CalendarVM.ShowWeightInputCommand}"/>
+
+                                <Button Text="+ Medication"
+                                        FontSize="20"
+                                        WidthRequest="150"
+                                        HeightRequest="50"
+                                        CornerRadius="25"/>
+
 
                         </HorizontalStackLayout>
 
                         <!-- Mood Input -->
 
                         <Entry Placeholder="Enter your pet's mood for the day"
-                               Text="{Binding EnteredMood}"
+                               Text="{Binding CalendarVM.EnteredMood}"
                                FontSize="18"
                                Completed="OnMoodEntryCompleted"
-                               IsVisible="{Binding IsMoodInputVisible}"/>
+                               IsVisible="{Binding CalendarVM.IsMoodInputVisible}"/>
 
 
 
                         <!-- Weight Input -->
 
                         <Entry Placeholder="Enter your pet's weight today"
-                               Text="{Binding EnteredWeight}"
+                               Text="{Binding CalendarVM.EnteredWeight}"
                                FontSize="18"
                                Keyboard="Numeric"
                                Completed="OnWeightEntryCompleted"
-                               IsVisible="{Binding IsWeightInputVisible}"/>
-
+                               IsVisible="{Binding CalendarVM.IsWeightInputVisible}"/>
+                        <HorizontalStackLayout HorizontalOptions="Center">
+                                <Entry Placeholder="Enter the taken medication name"
+                                       FontSize="18"
+                                       Keyboard="Numeric"/>
+                                <Entry Placeholder="dosage"
+                                       FontSize="18"
+                                       Keyboard="Numeric"/>
+                        </HorizontalStackLayout>
 
                         <!-- Current Mood Display -->
 
 
-                        <Label Text="{Binding ShownMood, StringFormat='Mood: {0}'}"
+                        <Label Text="{Binding CalendarVM.ShownMood, StringFormat='Mood: {0}'}"
                                FontSize="18"
                                FontAttributes="Bold"
                                HorizontalOptions="Center"

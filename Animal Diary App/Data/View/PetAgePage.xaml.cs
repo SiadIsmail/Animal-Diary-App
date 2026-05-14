@@ -1,20 +1,24 @@
 ﻿namespace Animal_Diary_App.Data.View;
+
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
 
 using Microsoft.Extensions.DependencyInjection;
+using Windows.Networking.Vpn;
+
 public partial class PetAgePage : ContentPage
 {
-	
 
-	public PetAgePage()
+	private MainViewModel vm;
+	public PetAgePage(MainViewModel mainViewModel)
 	{
 		InitializeComponent();
-		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<PetViewModel>() ?? new PetViewModel(new PetDatabase());
+		vm = mainViewModel;
+		BindingContext = vm;
 	}
 
 	public async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		await Navigation.PushAsync(new PetTypePage());
+		await Navigation.PushAsync(new PetTypePage(vm));
 	}
 }

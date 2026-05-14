@@ -8,27 +8,35 @@ using Microsoft.Extensions.DependencyInjection;
 
 public partial class CalendarPage : ContentPage
 {
+	private MainViewModel vm;
 
-	public CalendarPage()
+	public CalendarPage(MainViewModel mainViewModel)
 	{
 		InitializeComponent();
-		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<CalendarViewModel>() ?? new CalendarViewModel(new PetEntryDatabase());
+		vm = mainViewModel;
+		BindingContext = vm;
 	}
+	
+	protected override async void OnAppearing()
+	{
+		base.OnAppearing();
+
+		await vm.CalendarVM.StartCalendarPageCommand();
+	}
+
 	async void OnMainClicked(object sender, EventArgs args)
 	{
-		await Navigation.PushAsync(new MainPage());
+		await Navigation.PushAsync(new MainPage(vm));
 	}
 	private async void OnMoodEntryCompleted(object? sender, EventArgs e)
 	{
-		var vm = (CalendarViewModel)BindingContext;
-		vm.OnMoodEntryCompleted.Execute(null);
+		vm.CalendarVM.OnMoodEntryCompleted.Execute(null);
 	}
 
 
 	private async void OnWeightEntryCompleted(object? sender, EventArgs e)
 	{
-		var vm = (CalendarViewModel)BindingContext;
-		vm.OnWeightEntryCompleted.Execute(null);
+		vm.CalendarVM.OnWeightEntryCompleted.Execute(null);
 	}
 
 

@@ -2,6 +2,7 @@ namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Helpers;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Globalization;
@@ -63,21 +64,21 @@ public class CalendarViewModel : INotifyPropertyChanged
 
 
     public List<PetEntry> Entries { get; set; } = new();
-    private readonly PetEntryDatabase _database;
+    private readonly PetEntryService _petEntryService;
 
-    public CalendarViewModel(PetEntryDatabase database)
+    public CalendarViewModel(PetEntryService petEntryService)
     {
-        _database = database;
+        _petEntryService = petEntryService;
     }
 
 
     public async Task SavePetMoodEntryAsync()
     {
-        var ExistingEntry = await _database.GetPetEntryByDateAsync(CurrentSelectedDate);
+        var ExistingEntry = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
         if (ExistingEntry != null)
         {
             ExistingEntry.Mood = EnteredMood;
-            await _database.UpdatePetEntryAsync(ExistingEntry);
+            await _petEntryService.UpdatePetEntryAsync(ExistingEntry);
             return;
         }
         var entry = new PetEntry
@@ -87,7 +88,7 @@ public class CalendarViewModel : INotifyPropertyChanged
             Mood = EnteredMood
         };
 
-        await _database.SavePetEntryAsync(entry);
+        await _petEntryService.SavePetEntryAsync(entry);
     }
     decimal weight = 0;
 
@@ -107,13 +108,12 @@ public class CalendarViewModel : INotifyPropertyChanged
 
         return true;
     }
-
+    
     public async Task SavePetWeightEntryAsync()
     {
-        var ExistingEntry = await _database.GetPetEntryByDateAsync(CurrentSelectedDate);
-        weight = TryParseEnteredWeight(out weight) ? weight : 0;
+        var ExistingEntry = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
 
-        if (weight == 0)
+        if (!InputParser.TryParsePositive(EnteredWeight, out weight))
         {
             Console.WriteLine("Invalid weight entry, skipping save.");
             return;
@@ -121,7 +121,7 @@ public class CalendarViewModel : INotifyPropertyChanged
         if (ExistingEntry != null)
         {
             ExistingEntry.Weight = weight;
-            await _database.UpdatePetEntryAsync(ExistingEntry);
+            await _petEntryService.UpdatePetEntryAsync(ExistingEntry);
             return;
         }
         var entry = new PetEntry
@@ -131,12 +131,12 @@ public class CalendarViewModel : INotifyPropertyChanged
             Weight = weight,
         };
 
-        await _database.SavePetEntryAsync(entry);
+        await _petEntryService.SavePetEntryAsync(entry);
     }
 
     public async Task LoadEntriesAsync()
     {
-        var MoodEntry = await _database.GetPetEntryByDateAsync(CurrentSelectedDate);
+        var MoodEntry = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
         if (MoodEntry == null)
         {
             ShownMood = string.Empty;
@@ -203,6 +203,15 @@ public class CalendarViewModel : INotifyPropertyChanged
         EnteredWeight = "";
 
     });
+
+    public async Task StartCalendarPageCommand()
+    {
+        IsMoodAddButtonVisible = true;
+        IsMoodInputVisible = false;
+        IsWeightAddButtonVisible = true;
+        IsWeightInputVisible = false;
+    }
+
 
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

@@ -18,11 +18,11 @@ public class MainPageViewModel : INotifyPropertyChanged
 
 
     public List<PetEntry> Entries { get; set; } = new();
-    private readonly PetEntryDatabase _database;
+    private readonly PetEntryService _petEntryService;
 
-    public MainPageViewModel(PetEntryDatabase database)
+   public MainPageViewModel(PetEntryService petEntryService)
     {
-        _database = database;
+        _petEntryService = petEntryService;
     }
     
     private decimal latestWeight;
@@ -39,7 +39,7 @@ public class MainPageViewModel : INotifyPropertyChanged
     private PetEntry? EntryToday;
     public async Task LoadLatestWeightAsync()
     {
-        EntryToday = await _database.GetPetEntriesAsync().ContinueWith(t => t.Result.OrderByDescending(e => e.Date).FirstOrDefault());
+        EntryToday = await _petEntryService.GetPetEntriesAsync().ContinueWith(t => t.Result.OrderByDescending(e => e.Date).FirstOrDefault());
         if (EntryToday != null)
         {
             LatestWeight = EntryToday.Weight;

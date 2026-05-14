@@ -1,34 +1,34 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.View;
+using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Models;
 namespace Animal_Diary_App;
 
 public partial class App : Application
 {
-	private readonly PetDatabase _database;
-	public App(PetDatabase database)
+	private readonly PetService _petService;
+	private readonly MainViewModel _vm;
+
+	public App(PetService petService, MainViewModel vm, AppDatabase database)
 	{
-		InitializeComponent();
-		_database = database;
+		InitializeComponent(); // Refactor this to be have the start up be in a ViewModel -R
+		_ = database.InitAsync();
+		_petService = petService;
+		_vm = vm;
 
-		MainPage = new ContentPage(); 
+		MainPage = new ContentPage();
 
-		DecideStartPage();
-
-
+		_ = DecideStartPage(_vm, _petService);
 	}
 
-	public async void DecideStartPage()
+	private async Task DecideStartPage(MainViewModel vm, PetService petService)
 	{
-		var pets = await _database.GetPetsAsync();
+		var pets = await petService.GetPetsAsync();
+
 		if (pets.Count == 0)
-		{
-			MainPage = new NavigationPage(new WelcomePage());
-		}
+			MainPage = new NavigationPage(new WelcomePage(vm));
 		else
-		{
-			MainPage = new NavigationPage(new MainPage());
-		}
+			MainPage = new NavigationPage(new MainPage(vm));
 	}
 }

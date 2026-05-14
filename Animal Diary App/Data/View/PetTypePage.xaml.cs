@@ -8,17 +8,18 @@ public partial class PetTypePage : ContentPage
 {
 
 
-	public PetTypePage()
+	private MainViewModel vm;
+	public PetTypePage(MainViewModel mainViewModel)
 	{
 		InitializeComponent();
-		BindingContext = App.Current?.Handler?.MauiContext?.Services.GetService<PetViewModel>() ?? new PetViewModel(new PetDatabase());
+		vm = mainViewModel;
+		BindingContext = vm;
 	}
 
 	private async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		var viewModel = (PetViewModel)BindingContext;
-		await viewModel.SavePetAsync();
-		await Navigation.PushAsync(new MainPage());
+		await vm.PetVM.SavePetAsync(); //Refactor this to be in the view model, not the view -R
+		await Navigation.PushAsync(new MainPage(vm));
 	}
 
 

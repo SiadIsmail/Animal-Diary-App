@@ -24,11 +24,19 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
 
-                            <Frame Padding="20"
-                                   CornerRadius="20"
-                                   HasShadow="True"
-                                   BackgroundColor="#AA5E72CC"
-                                   BorderColor="#DDDDDD">
+                            <Border Padding="20"
+                                    Background="#AA5E72CC"
+                                    Stroke="#DDDDDD">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="20"/>
+                                </Border.StrokeShape>
+
+                                <Border.Shadow>
+                                    <Shadow Opacity="0.3"
+                                            Radius="10"
+                                            Offset="0,4"/>
+                                </Border.Shadow>
 
                                 <VerticalStackLayout Spacing="12"
                                                      HorizontalOptions="Center">
@@ -56,24 +64,33 @@
 
                                 </VerticalStackLayout>
 
-                            </Frame>
+                            </Border>
 
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
 
                 </CollectionView>
 
-                <Frame Padding="16"
-                       CornerRadius="16"
-                       BackgroundColor="#AA5E72CC"
-                       BorderColor="#DDDDDD">
+                <Border Padding="16"
+                        Background="#AA5E72CC"
+                        Stroke="#DDDDDD">
+
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20"/>
+                    </Border.StrokeShape>
+
+                    <Border.Shadow>
+                        <Shadow Opacity="0.3"
+                                Radius="10"
+                                Offset="0,4"/>
+                    </Border.Shadow>
 
                     <Label Text="{Binding MainPageVM.LatestWeight, StringFormat='Latest weight: {0} kg'}"
                            FontSize="16"
                            HorizontalTextAlignment="Center"
                            TextColor="#666666"/>
 
-                </Frame>
+                </Border>
 
             </VerticalStackLayout>
 
