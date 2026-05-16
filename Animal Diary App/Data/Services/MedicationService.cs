@@ -10,4 +10,9 @@ public class MedicationService
     {
         _db = database.Connection;
     }
+
+    public async Task SaveMedicationEntryAsync(MedicationLog medicationLog)
+    {
+        await _db.InsertAsync(medicationLog);
+    }
 }

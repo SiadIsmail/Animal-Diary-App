@@ -2,7 +2,7 @@ namespace Animal_Diary_App.Helpers;
 
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-public class ButtonCondition : INotifyPropertyChanged
+public class EntrySection : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null)
@@ -30,4 +30,16 @@ public class ButtonCondition : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+    public static void ShowInput(EntrySection section)
+    {
+        section.IsAddButtonVisible = false;
+        section.IsInputVisible = true;
+    }
+    public static void HideInput(EntrySection section)
+    {
+        section.IsAddButtonVisible = true;
+        section.IsInputVisible = false;
+    }
 }
+
+

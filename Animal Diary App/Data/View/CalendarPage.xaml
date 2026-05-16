@@ -24,10 +24,17 @@
                         <VerticalStackLayout Spacing="16">
 
                                 <calendar:SfCalendar
-                                        x:Name="calendar"
-                                        View="Month"
+                                        x:Name="Calendar"
                                         BackgroundColor="#FF20A5E7"
-                                        SelectedDate="{Binding CalendarVM.CurrentSelectedDate, Mode=TwoWay}"/>
+                                        SelectedDate="{Binding CalendarVM.CurrentSelectedDate, Mode=TwoWay}"
+                                        HeightRequest="170"
+                                        VerticalOptions="Start"
+                                        ShowTrailingAndLeadingDates="False">
+
+                                        <calendar:SfCalendar.MonthView>
+                                                <calendar:CalendarMonthView NumberOfVisibleWeeks="1"/>
+                                        </calendar:SfCalendar.MonthView>
+                                </calendar:SfCalendar>
 
                                 <Label Text="{Binding CalendarVM.CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
                                        FontSize="18"
@@ -47,7 +54,7 @@
                                         WidthRequest="150"
                                         HeightRequest="50"
                                         CornerRadius="25"
-                                        IsVisible="{Binding CalendarVM.IsMoodAddButtonVisible}"
+                                        IsVisible="{Binding CalendarVM.MoodSection.IsAddButtonVisible}"
                                         Command="{Binding CalendarVM.ShowMoodInputCommand}"/>
 
                                 <Button Text="+ Weight"
@@ -55,14 +62,17 @@
                                         WidthRequest="150"
                                         HeightRequest="50"
                                         CornerRadius="25"
-                                        IsVisible="{Binding CalendarVM.IsWeightAddButtonVisible}"
+                                        IsVisible="{Binding CalendarVM.WeightSection.IsAddButtonVisible}"
                                         Command="{Binding CalendarVM.ShowWeightInputCommand}"/>
 
                                 <Button Text="+ Medication"
                                         FontSize="20"
                                         WidthRequest="150"
                                         HeightRequest="50"
-                                        CornerRadius="25"/>
+                                        CornerRadius="25"
+                                        IsVisible="{Binding CalendarVM.MedicationSection.IsAddButtonVisible}"
+                                        Command="{Binding CalendarVM.ShowMedicationInputCommand}"/>
+
 
 
                         </HorizontalStackLayout>
@@ -73,7 +83,7 @@
                                Text="{Binding CalendarVM.EnteredMood}"
                                FontSize="18"
                                Completed="OnMoodEntryCompleted"
-                               IsVisible="{Binding CalendarVM.IsMoodInputVisible}"/>
+                               IsVisible="{Binding CalendarVM.MoodSection.IsInputVisible}"/>
 
 
 
@@ -84,14 +94,26 @@
                                FontSize="18"
                                Keyboard="Numeric"
                                Completed="OnWeightEntryCompleted"
-                               IsVisible="{Binding CalendarVM.IsWeightInputVisible}"/>
-                        <HorizontalStackLayout HorizontalOptions="Center">
+                               IsVisible="{Binding CalendarVM.WeightSection.IsInputVisible}"/>
+
+
+                        <!-- Medication Input -->
+
+                        <HorizontalStackLayout HorizontalOptions="Center"
+                                               IsVisible="{Binding CalendarVM.MedicationSection.IsInputVisible}">
                                 <Entry Placeholder="Enter the taken medication name"
+                                       Text="{Binding MedicationVM.EnteredMedicationName}"
                                        FontSize="18"
                                        Keyboard="Numeric"/>
                                 <Entry Placeholder="dosage"
+                                       Text="{Binding MedicationVM.EnteredDosage}"
                                        FontSize="18"
                                        Keyboard="Numeric"/>
+                                <Button Text="Save"
+                                        FontSize="20"
+                                        CornerRadius="25"
+                                        Command="{Binding CalendarVM.SaveMedicationEntryCommand}"/>
+
                         </HorizontalStackLayout>
 
                         <!-- Current Mood Display -->

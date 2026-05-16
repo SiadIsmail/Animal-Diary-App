@@ -3,6 +3,7 @@ namespace Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Helpers;
+using Animal_Diary_App.Helpers;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Globalization;
@@ -62,13 +63,15 @@ public class CalendarViewModel : INotifyPropertyChanged
         }
     }
 
-
-    public List<PetEntry> Entries { get; set; } = new();
     private readonly PetEntryService _petEntryService;
+    public MedicationViewModel MedicationVM { get; }
 
-    public CalendarViewModel(PetEntryService petEntryService)
+    public CalendarViewModel(
+    PetEntryService petEntryService,
+    MedicationViewModel medicationVM)
     {
         _petEntryService = petEntryService;
+        MedicationVM = medicationVM;
     }
 
 
@@ -92,23 +95,7 @@ public class CalendarViewModel : INotifyPropertyChanged
     }
     decimal weight = 0;
 
-    private bool TryParseEnteredWeight(out decimal weight)
-    {
-        if (!decimal.TryParse(EnteredWeight, NumberStyles.Any, CultureInfo.CurrentCulture, out weight))
-        {
-            Console.WriteLine("Please enter a valid number");
-            return false;
-        }
 
-        if (weight <= 0)
-        {
-            Console.WriteLine("Weight must be greater than 0");
-            return false;
-        }
-
-        return true;
-    }
-    
     public async Task SavePetWeightEntryAsync()
     {
         var ExistingEntry = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
@@ -146,72 +133,55 @@ public class CalendarViewModel : INotifyPropertyChanged
         return;
     }
 
-    private bool isMoodAddButtonVisible = true;
-    public bool IsMoodAddButtonVisible
-    {
-        get => isMoodAddButtonVisible;
-        set { isMoodAddButtonVisible = value; OnPropertyChanged(); }
-    }
-    private bool isMoodInputVisible = false;
-    public bool IsMoodInputVisible
-    {
-        get => isMoodInputVisible;
-        set { isMoodInputVisible = value; OnPropertyChanged(); }
-    }
+    public EntrySection MoodSection { get; } = new();
+    public EntrySection WeightSection { get; } = new();
+    public EntrySection MedicationSection { get; } = new();
 
-    private bool isWeightAddButtonVisible = true;
-    public bool IsWeightAddButtonVisible
+
+    public async Task InitCalendarPageAsync()
     {
-        get => isWeightAddButtonVisible;
-        set { isWeightAddButtonVisible = value; OnPropertyChanged(); }
-    }
-    private bool isWeightInputVisible = false;
-    public bool IsWeightInputVisible
-    {
-        get => isWeightInputVisible;
-        set { isWeightInputVisible = value; OnPropertyChanged(); }
+        EntrySection.HideInput(MoodSection);
+        EntrySection.HideInput(WeightSection);
+        EntrySection.HideInput(MedicationSection);
     }
     public ICommand ShowMoodInputCommand => new Command(() =>
-{
-    IsMoodAddButtonVisible = false;
-    IsMoodInputVisible = true;
-});
-
-    public ICommand ShowWeightInputCommand => new Command(() =>
     {
-        IsWeightAddButtonVisible = false;
-        IsWeightInputVisible = true;
+        EntrySection.ShowInput(MoodSection);
     });
-
-
-    public ICommand OnMoodEntryCompleted => new Command(async () =>
+    public ICommand OnMoodEntryCompleted =>
+    new Command(async () =>
     {
-        IsMoodAddButtonVisible = true;
-        IsMoodInputVisible = false;
+        EntrySection.HideInput(MoodSection);
         await SavePetMoodEntryAsync();
         await LoadEntriesAsync();
         EnteredMood = "";
+    });
 
+    public ICommand ShowWeightInputCommand => new Command(() =>
+    {
+        EntrySection.ShowInput(WeightSection);
     });
 
     public ICommand OnWeightEntryCompleted => new Command(async () =>
     {
-        IsWeightAddButtonVisible = true;
-        IsWeightInputVisible = false;
+        EntrySection.HideInput(WeightSection);
         await SavePetWeightEntryAsync();
         await LoadEntriesAsync();
         EnteredWeight = "";
-
     });
 
-    public async Task StartCalendarPageCommand()
-    {
-        IsMoodAddButtonVisible = true;
-        IsMoodInputVisible = false;
-        IsWeightAddButtonVisible = true;
-        IsWeightInputVisible = false;
-    }
 
+
+    public ICommand ShowMedicationInputCommand => new Command(() =>
+    {
+        EntrySection.ShowInput(MedicationSection);
+    });
+
+    public ICommand SaveMedicationEntryCommand => new Command(async () =>
+    {
+        await MedicationVM.SaveMedicationEntryAsync();
+        EntrySection.HideInput(MedicationSection);
+    });
 
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

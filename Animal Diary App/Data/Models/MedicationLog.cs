@@ -7,5 +7,5 @@ public class MedicationLog
     public int Id { get; set; }
     public DateTime TakenAt { get; set; }
     public string MedicationName { get; set; } = string.Empty;
-    public string Dosage { get; set; } = string.Empty;
+    public decimal Dosage { get; set; } = 0;
 }

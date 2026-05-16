@@ -22,6 +22,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<MainViewModel>();
 		builder.Services.AddSingleton<PetViewModel>();
 		builder.Services.AddSingleton<CalendarViewModel>();
+		builder.Services.AddSingleton<MedicationViewModel>();
 		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<AppDatabase>();
 		builder.Services.AddSingleton<PetEntryService>();

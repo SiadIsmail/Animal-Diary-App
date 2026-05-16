@@ -16,12 +16,13 @@ public partial class CalendarPage : ContentPage
 		vm = mainViewModel;
 		BindingContext = vm;
 	}
-	
+
+		
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
 
-		await vm.CalendarVM.StartCalendarPageCommand();
+		await vm.CalendarVM.InitCalendarPageAsync();
 	}
 
 	async void OnMainClicked(object sender, EventArgs args)

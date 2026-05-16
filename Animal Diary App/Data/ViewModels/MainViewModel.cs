@@ -8,14 +8,19 @@ public class MainViewModel
     public CalendarViewModel CalendarVM { get; }
     public MainPageViewModel MainPageVM { get; }
     public PetViewModel PetVM { get; }
+    public MedicationViewModel MedicationVM { get; }
 
-    public MainViewModel(PetService petService, PetEntryService petEntryService)
+    public MainViewModel(
+ CalendarViewModel calendarVM,
+ MainPageViewModel mainPageVM,
+ PetViewModel petVM,
+ MedicationViewModel medicationVM)
     {
-        
+        MainPageVM = mainPageVM;
+        PetVM = petVM;
+        MedicationVM = medicationVM;
+        CalendarVM = calendarVM;
 
-        CalendarVM = new CalendarViewModel(petEntryService);
-        MainPageVM = new MainPageViewModel(petEntryService);
-        PetVM = new PetViewModel(petService);
     }
     public async Task LoadAsync()
     {
