@@ -1,10 +1,11 @@
-# Animal Diary App
+# AnimalDiary – Chronische Tiergesundheit & Medikamentenmanagement
 
-Eine Work-in-Progress Mobile-App mit .NET MAUI zur strukturierten Erfassung von Haustier- und Gesundheitsdaten.
+ Eine mobile App für Besitzer chronisch kranker Haustiere. Gebaut mit .NET MAUI.
 
-## Kurzbeschreibung
 
-Die App ermöglicht die einfache Dokumentation wichtiger Haustierdaten wie Gewicht, Stimmung und Medikamentengaben. Ziel ist eine langfristige Verlaufserfassung sowie ein exportierbarer PDF-Bericht für Tierarztbesuche.
+## Hintergrund
+
+Wer ein Tier mit Diabetes, Niereninsuffizienz, Epilepsie oder einer anderen Dauererkrankung pflegt, weiß: Symptome, Medikamentengaben und Gewichtsverläufe lassen sich mit Notizzetteln und Erinnerungen kaum zuverlässig dokumentieren. AnimalDiary schafft dafür eine strukturierte, ruhige Grundlage und bereitet die gesammelten Daten direkt für den nächsten Tierarztbesuch auf.
 
 ## Aktueller Stand
 

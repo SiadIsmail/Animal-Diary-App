@@ -6,11 +6,8 @@ using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Helpers;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Globalization;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
-using SQLite;
-using Windows.Media.Capture.Core;
 
 public class CalendarViewModel : INotifyPropertyChanged
 {
@@ -176,7 +173,6 @@ public class CalendarViewModel : INotifyPropertyChanged
         EntrySection.HideInput(MoodSection);
         EntrySection.HideInput(WeightSection);
         EntrySection.HideInput(MedicationSection);
-        CurrentPetId = 1; // Default to first pet, or handle as needed -R
         await LoadEntriesAsync();
         await LoadPetsAsync();
     }
@@ -218,7 +214,7 @@ public class CalendarViewModel : INotifyPropertyChanged
         await MedicationVM.SaveMedicationEntryAsync();
         EntrySection.HideInput(MedicationSection);
     });
-    public int CurrentPetId { get; set; }
+    public int CurrentPetId = 1;
     public ICommand SelectPetCommand => new Command<Pet>(async pet =>
     {
         foreach (var p in Pets)
