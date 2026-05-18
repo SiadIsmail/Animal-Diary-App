@@ -14,13 +14,64 @@
                        InputTransparent="True"/>
 
                 <!-- Main Content -->
-
                 <VerticalStackLayout Padding="24,20"
                                      Spacing="24">
 
-                        <!-- Calendar Card -->
+                        <!-- Pet Selector Chips -->
+                        <ScrollView Orientation="Horizontal"
+                                    HorizontalScrollBarVisibility="Never">
+                                <HorizontalStackLayout Spacing="10"
+                                                       BindableLayout.ItemsSource="{Binding CalendarVM.Pets}">
+                                        <BindableLayout.ItemTemplate>
+                                                <DataTemplate>
+                                                        <Border StrokeThickness="2"
+                                                                StrokeShape="RoundRectangle 20"
+                                                                Padding="14,8">
+                                                                <!-- ? Chip selected state: bind Stroke/BackgroundColor to something like
+                                     IsSelected on each pet, e.g. Stroke="{Binding IsSelected, Converter=...}"
+                                     You'll need a bool-to-color converter or handle this in code-behind -->
+                                                                <Border.Triggers>
+                                                                        <DataTrigger TargetType="Border"
+                                                                                     Binding="{Binding IsSelected}"
+                                                                                     Value="True">
+                                                                                <Setter Property="BackgroundColor"
+                                                                                        Value="#FF20A5E7"/>
+                                                                                <Setter Property="Stroke"
+                                                                                        Value="#FF20A5E7"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger TargetType="Border"
+                                                                                     Binding="{Binding IsSelected}"
+                                                                                     Value="False">
+                                                                                <Setter Property="BackgroundColor"
+                                                                                        Value="Transparent"/>
+                                                                                <Setter Property="Stroke"
+                                                                                        Value="White"/>
+                                                                        </DataTrigger>
+                                                                </Border.Triggers>
+                                                                <Border.GestureRecognizers>
+                                                                        <TapGestureRecognizer
+                                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectPetCommand}"
+                                                                                CommandParameter="{Binding .}"/>
+                                                                </Border.GestureRecognizers>
+                                                                <HorizontalStackLayout Spacing="6">
+                                                                        <!-- ? Pet avatar/icon: bind Source to pet.AvatarImage or similar -->
+                                                                        <Image Source="{Binding AvatarImage}"
+                                                                               WidthRequest="24"
+                                                                               HeightRequest="24"
+                                                                               VerticalOptions="Center"/>
+                                                                        <Label Text="{Binding Name}"
+                                                                               FontSize="15"
+                                                                               FontAttributes="Bold"
+                                                                               TextColor="White"
+                                                                               VerticalOptions="Center"/>
+                                                                </HorizontalStackLayout>
+                                                        </Border>
+                                                </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                </HorizontalStackLayout>
+                        </ScrollView>
 
-
+                        <!-- Calendar -->
                         <VerticalStackLayout Spacing="16">
 
                                 <calendar:SfCalendar
@@ -30,7 +81,6 @@
                                         HeightRequest="170"
                                         VerticalOptions="Start"
                                         ShowTrailingAndLeadingDates="False">
-
                                         <calendar:SfCalendar.MonthView>
                                                 <calendar:CalendarMonthView NumberOfVisibleWeeks="1"/>
                                         </calendar:SfCalendar.MonthView>
@@ -43,52 +93,46 @@
                                        HorizontalTextAlignment="Center"/>
 
                         </VerticalStackLayout>
+                        <ScrollView Orientation="Horizontal"
+                                    HorizontalScrollBarVisibility="Never">
+                                <!-- Action Buttons -->
+                                <HorizontalStackLayout Spacing="14"
+                                                       HorizontalOptions="Center">
 
+                                        <Button Text="+ Mood"
+                                                FontSize="20"
+                                                WidthRequest="150"
+                                                HeightRequest="50"
+                                                CornerRadius="25"
+                                                IsVisible="{Binding CalendarVM.MoodSection.IsAddButtonVisible}"
+                                                Command="{Binding CalendarVM.ShowMoodInputCommand}"/>
 
-                        <!-- Action Buttons -->
-                        <HorizontalStackLayout Spacing="14"
-                                               HorizontalOptions="Center">
+                                        <Button Text="+ Weight"
+                                                FontSize="20"
+                                                WidthRequest="150"
+                                                HeightRequest="50"
+                                                CornerRadius="25"
+                                                IsVisible="{Binding CalendarVM.WeightSection.IsAddButtonVisible}"
+                                                Command="{Binding CalendarVM.ShowWeightInputCommand}"/>
 
-                                <Button Text="+ Mood"
-                                        FontSize="20"
-                                        WidthRequest="150"
-                                        HeightRequest="50"
-                                        CornerRadius="25"
-                                        IsVisible="{Binding CalendarVM.MoodSection.IsAddButtonVisible}"
-                                        Command="{Binding CalendarVM.ShowMoodInputCommand}"/>
+                                        <Button Text="+ Medication"
+                                                FontSize="20"
+                                                WidthRequest="150"
+                                                HeightRequest="50"
+                                                CornerRadius="25"
+                                                IsVisible="{Binding CalendarVM.MedicationSection.IsAddButtonVisible}"
+                                                Command="{Binding CalendarVM.ShowMedicationInputCommand}"/>
 
-                                <Button Text="+ Weight"
-                                        FontSize="20"
-                                        WidthRequest="150"
-                                        HeightRequest="50"
-                                        CornerRadius="25"
-                                        IsVisible="{Binding CalendarVM.WeightSection.IsAddButtonVisible}"
-                                        Command="{Binding CalendarVM.ShowWeightInputCommand}"/>
-
-                                <Button Text="+ Medication"
-                                        FontSize="20"
-                                        WidthRequest="150"
-                                        HeightRequest="50"
-                                        CornerRadius="25"
-                                        IsVisible="{Binding CalendarVM.MedicationSection.IsAddButtonVisible}"
-                                        Command="{Binding CalendarVM.ShowMedicationInputCommand}"/>
-
-
-
-                        </HorizontalStackLayout>
-
+                                </HorizontalStackLayout>
+                        </ScrollView>
                         <!-- Mood Input -->
-
                         <Entry Placeholder="Enter your pet's mood for the day"
                                Text="{Binding CalendarVM.EnteredMood}"
                                FontSize="18"
                                Completed="OnMoodEntryCompleted"
                                IsVisible="{Binding CalendarVM.MoodSection.IsInputVisible}"/>
 
-
-
                         <!-- Weight Input -->
-
                         <Entry Placeholder="Enter your pet's weight today"
                                Text="{Binding CalendarVM.EnteredWeight}"
                                FontSize="18"
@@ -96,15 +140,12 @@
                                Completed="OnWeightEntryCompleted"
                                IsVisible="{Binding CalendarVM.WeightSection.IsInputVisible}"/>
 
-
                         <!-- Medication Input -->
-
                         <HorizontalStackLayout HorizontalOptions="Center"
                                                IsVisible="{Binding CalendarVM.MedicationSection.IsInputVisible}">
                                 <Entry Placeholder="Enter the taken medication name"
                                        Text="{Binding MedicationVM.EnteredMedicationName}"
-                                       FontSize="18"
-                                       Keyboard="Numeric"/>
+                                       FontSize="18"/>
                                 <Entry Placeholder="dosage"
                                        Text="{Binding MedicationVM.EnteredDosage}"
                                        FontSize="18"
@@ -113,21 +154,68 @@
                                         FontSize="20"
                                         CornerRadius="25"
                                         Command="{Binding CalendarVM.SaveMedicationEntryCommand}"/>
-
                         </HorizontalStackLayout>
 
-                        <!-- Current Mood Display -->
+                        <!-- Day Overview Card -->
+                        <ScrollView>
+                                <Border BackgroundColor="#CC1A8FC4"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 16"
+                                        Padding="20,16">
+                                        <VerticalStackLayout Spacing="12">
 
+                                                <Label Text="Today's Overview"
+                                                       FontSize="16"
+                                                       FontAttributes="Bold"
+                                                       TextColor="White"
+                                                       Opacity="0.75"/>
 
-                        <Label Text="{Binding CalendarVM.ShownMood, StringFormat='Mood: {0}'}"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center"
-                               HorizontalTextAlignment="Center"/>
+                                                <!-- Mood Row -->
+                                                <HorizontalStackLayout Spacing="10">
+                                                        <Label Text="😊"
+                                                               FontSize="20"
+                                                               VerticalOptions="Center"/>
+                                                        <Label Text="Mood"
+                                                               FontSize="15"
+                                                               TextColor="White"
+                                                               Opacity="0.75"
+                                                               VerticalOptions="Center"
+                                                               WidthRequest="70"/>
+                                                        <Label Text="{Binding CalendarVM.ShownMood}"
+                                                               FontSize="15"
+                                                               FontAttributes="Bold"
+                                                               TextColor="White"
+                                                               VerticalOptions="Center"/>
+                                                </HorizontalStackLayout>
 
+                                                <!-- Divider -->
+                                                <BoxView HeightRequest="1"
+                                                         BackgroundColor="White"
+                                                         Opacity="0.2"/>
+
+                                                <!-- Weight Row -->
+                                                <HorizontalStackLayout Spacing="10">
+                                                        <Label Text="⚖️"
+                                                               FontSize="20"
+                                                               VerticalOptions="Center"/>
+                                                        <Label Text="Weight"
+                                                               FontSize="15"
+                                                               TextColor="White"
+                                                               Opacity="0.75"
+                                                               VerticalOptions="Center"
+                                                               WidthRequest="70"/>
+                                                        <Label Text="{Binding CalendarVM.ShownWeight}"
+                                                               FontSize="15"
+                                                               FontAttributes="Bold"
+                                                               TextColor="White"
+                                                               VerticalOptions="Center"/>
+                                                </HorizontalStackLayout>
+
+                                        </VerticalStackLayout>
+                                </Border>
+                        </ScrollView>
 
                 </VerticalStackLayout>
-
 
                 <!-- Bottom Navigation -->
                 <Grid RowDefinitions="*,Auto"

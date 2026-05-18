@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Globalization;
 using System.Windows.Input;
+using System.Collections.ObjectModel;
 using SQLite;
 
 public class CalendarViewModel : INotifyPropertyChanged
@@ -62,19 +63,44 @@ public class CalendarViewModel : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+    private string shownWeight = string.Empty;
+    public string ShownWeight
+    {
+        get => shownWeight;
+        set
+        {
+            if (shownWeight == value) return;
+            shownWeight = value;
+            OnPropertyChanged();
+        }
+    }
 
     private readonly PetEntryService _petEntryService;
+    private readonly PetService _petService;
     public MedicationViewModel MedicationVM { get; }
 
     public CalendarViewModel(
     PetEntryService petEntryService,
-    MedicationViewModel medicationVM)
+    MedicationViewModel medicationVM, PetService petService)
     {
         _petEntryService = petEntryService;
+        _petService = petService;
         MedicationVM = medicationVM;
+        
+    }
+    public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
+
+private async Task LoadPetsAsync()
+{
+    var petsFromDb = await _petService.GetPetsAsync();
+
+    foreach (var pet in petsFromDb)
+    {
+        Pets.Add(pet);
     }
 
-
+    
+}
     public async Task SavePetMoodEntryAsync()
     {
         var ExistingEntry = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
@@ -123,13 +149,16 @@ public class CalendarViewModel : INotifyPropertyChanged
 
     public async Task LoadEntriesAsync()
     {
-        var MoodEntry = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
-        if (MoodEntry == null)
+        var Entries = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
+
+        if (Entries == null)
         {
             ShownMood = string.Empty;
+            ShownWeight = string.Empty;
             return;
         }
-        ShownMood = MoodEntry.Mood;
+        ShownMood = Entries.Mood;
+        ShownWeight = Entries.Weight.ToString();
         return;
     }
 
@@ -143,6 +172,7 @@ public class CalendarViewModel : INotifyPropertyChanged
         EntrySection.HideInput(MoodSection);
         EntrySection.HideInput(WeightSection);
         EntrySection.HideInput(MedicationSection);
+        await LoadPetsAsync();
     }
     public ICommand ShowMoodInputCommand => new Command(() =>
     {
