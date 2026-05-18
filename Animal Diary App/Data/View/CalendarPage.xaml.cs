@@ -21,15 +21,16 @@ public partial class CalendarPage : ContentPage
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
-		MainThread.BeginInvokeOnMainThread(async () =>
-			{
-				await vm.CalendarVM.InitCalendarPageAsync();
-			});
+
+		if (vm.CalendarVM.Pets.Count == 0)
+			await vm.CalendarVM.PrepareDataAsync();
+		else
+			await vm.CalendarVM.RefreshEntriesAsync();
 	}
 
 	async void OnMainClicked(object sender, EventArgs args)
 	{
-		await Navigation.PushAsync(new MainPage(vm));
+		await Navigation.PopAsync();
 	}
 	private async void OnMoodEntryCompleted(object? sender, EventArgs e)
 	{

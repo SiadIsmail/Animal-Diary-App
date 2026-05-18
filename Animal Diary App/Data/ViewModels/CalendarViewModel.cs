@@ -19,10 +19,13 @@ public class CalendarViewModel : INotifyPropertyChanged
         get => currentSelectedDate;
         set
         {
-            currentSelectedDate = value.Date;
+            var newDate = value.Date;
+            if (currentSelectedDate == newDate)
+                return;
+
+            currentSelectedDate = newDate;
             OnPropertyChanged();
             _ = LoadEntriesAsync();
-
         }
     }
 
@@ -97,11 +100,12 @@ public class CalendarViewModel : INotifyPropertyChanged
         {
             Pets.Add(pet);
         }
-        if (petsFromDb.Any())
-        {
-            Pets[CurrentPetId - 1].IsSelected = true;
-        }
+        if (petsFromDb.Count == 0)
+            return;
 
+        var selected = petsFromDb.FirstOrDefault(p => p.Id == CurrentPetId) ?? petsFromDb[0];
+        CurrentPetId = selected.Id;
+        selected.IsSelected = true;
     }
     public async Task SavePetMoodEntryAsync()
     {
@@ -168,13 +172,29 @@ public class CalendarViewModel : INotifyPropertyChanged
     public EntrySection MedicationSection { get; } = new();
 
 
-    public async Task InitCalendarPageAsync()
+    /// <summary>
+    /// Loads pets and entries. Call from Main while that page is visible so Calendar opens ready.
+    /// </summary>
+    public async Task PrepareDataAsync()
+    {
+        ResetInputSections();
+        await Task.WhenAll(LoadPetsAsync(), LoadEntriesAsync());
+    }
+
+    /// <summary>
+    /// Light refresh when returning to Calendar (entries only; pets already loaded).
+    /// </summary>
+    public async Task RefreshEntriesAsync()
+    {
+        ResetInputSections();
+        await LoadEntriesAsync();
+    }
+
+    private void ResetInputSections()
     {
         EntrySection.HideInput(MoodSection);
         EntrySection.HideInput(WeightSection);
         EntrySection.HideInput(MedicationSection);
-        await LoadEntriesAsync();
-        await LoadPetsAsync();
     }
     public ICommand ShowMoodInputCommand => new Command(() =>
     {

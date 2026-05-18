@@ -7,6 +7,8 @@ using Animal_Diary_App.Data.Services;
 public partial class MainPage : ContentPage
 {
     private MainViewModel vm;
+    private CalendarPage? calendarPage;
+
     public MainPage(MainViewModel mainViewModel)
     {
         InitializeComponent();
@@ -21,6 +23,7 @@ public partial class MainPage : ContentPage
 
     async void OnCalendarClicked(object sender, EventArgs args)
     {
-        await Navigation.PushAsync(new CalendarPage(vm));
+        calendarPage ??= new CalendarPage(vm);
+        await Navigation.PushAsync(calendarPage);
     }
 }

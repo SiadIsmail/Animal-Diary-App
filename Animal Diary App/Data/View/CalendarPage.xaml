@@ -71,12 +71,6 @@
                                                                                FontAttributes="Bold"
                                                                                TextColor="White"
                                                                                VerticalOptions="Center"/>
-
-                                                                        <Label Text="{Binding IsSelected}"
-                                                                               FontSize="15"
-                                                                               FontAttributes="Bold"
-                                                                               TextColor="White"
-                                                                               VerticalOptions="Center"/>
                                                                 </HorizontalStackLayout>
                                                         </Border>
                                                 </DataTemplate>
