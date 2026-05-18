@@ -26,7 +26,7 @@ public partial class App : Application
 	{
 		var pets = await petService.GetPetsAsync();
 
-		if (pets.Count == 3)
+		if (pets.Count == 1)
 			MainPage = new NavigationPage(new WelcomePage(vm));
 		else
 			MainPage = new NavigationPage(new MainPage(vm));

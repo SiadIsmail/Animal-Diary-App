@@ -2,7 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:calendar="clr-namespace:Syncfusion.Maui.Calendar;assembly=Syncfusion.Maui.Calendar"
-             x:Class="Animal_Diary_App.Data.View.CalendarPage">
+             x:Class="Animal_Diary_App.Data.View.CalendarPage"
+             NavigationPage.HasNavigationBar="False">
 
         <Grid>
 
@@ -35,17 +36,17 @@
                                                                                      Binding="{Binding IsSelected}"
                                                                                      Value="True">
                                                                                 <Setter Property="BackgroundColor"
-                                                                                        Value="#FF20A5E7"/>
+                                                                                        Value="#FF24AA41"/>
                                                                                 <Setter Property="Stroke"
-                                                                                        Value="#FF20A5E7"/>
+                                                                                        Value="#FF084F12"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger TargetType="Border"
                                                                                      Binding="{Binding IsSelected}"
                                                                                      Value="False">
                                                                                 <Setter Property="BackgroundColor"
-                                                                                        Value="Transparent"/>
+                                                                                        Value="#00CBE504"/>
                                                                                 <Setter Property="Stroke"
-                                                                                        Value="White"/>
+                                                                                        Value="#FF560E87"/>
                                                                         </DataTrigger>
                                                                 </Border.Triggers>
                                                                 <Border.GestureRecognizers>
@@ -54,12 +55,24 @@
                                                                                 CommandParameter="{Binding .}"/>
                                                                 </Border.GestureRecognizers>
                                                                 <HorizontalStackLayout Spacing="6">
-                                                                        <!-- ? Pet avatar/icon: bind Source to pet.AvatarImage or similar -->
+                                                                        <!--   ? Pet avatar/icon: bind Source to pet.AvatarImage or similar 
                                                                         <Image Source="{Binding AvatarImage}"
                                                                                WidthRequest="24"
                                                                                HeightRequest="24"
-                                                                               VerticalOptions="Center"/>
+                                                                               VerticalOptions="Center"/>-->
                                                                         <Label Text="{Binding Name}"
+                                                                               FontSize="15"
+                                                                               FontAttributes="Bold"
+                                                                               TextColor="White"
+                                                                               VerticalOptions="Center"/>
+
+                                                                        <Label Text="{Binding Age, StringFormat='({0} yrs)'}"
+                                                                               FontSize="15"
+                                                                               FontAttributes="Bold"
+                                                                               TextColor="White"
+                                                                               VerticalOptions="Center"/>
+
+                                                                        <Label Text="{Binding IsSelected}"
                                                                                FontSize="15"
                                                                                FontAttributes="Bold"
                                                                                TextColor="White"
@@ -204,7 +217,7 @@
                                                                Opacity="0.75"
                                                                VerticalOptions="Center"
                                                                WidthRequest="70"/>
-                                                        <Label Text="{Binding CalendarVM.ShownWeight}"
+                                                        <Label Text="{Binding CalendarVM.ShownWeight, StringFormat='{0} kg'}"
                                                                FontSize="15"
                                                                FontAttributes="Bold"
                                                                TextColor="White"

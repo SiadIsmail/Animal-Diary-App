@@ -1,10 +1,11 @@
 namespace Animal_Diary_App.Data.Services;
+
 using Animal_Diary_App.Data.Models;
 using SQLite;
 
 public class PetEntryService
 {
-   private readonly SQLiteAsyncConnection _db;
+    private readonly SQLiteAsyncConnection _db;
 
     public PetEntryService(AppDatabase database)
     {
@@ -30,5 +31,8 @@ public class PetEntryService
     {
         return await _db.Table<PetEntry>().Where(e => e.Date == date).FirstOrDefaultAsync();
     }
-
+    public async Task<PetEntry> GetPetEntryByDateAndPetIdAsync(DateTime date, int petId)
+    {
+        return await _db.Table<PetEntry>().Where(e => e.Date == date && e.PetId == petId).FirstOrDefaultAsync();
+    }
 }

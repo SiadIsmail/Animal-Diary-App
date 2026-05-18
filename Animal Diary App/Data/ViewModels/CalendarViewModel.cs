@@ -10,10 +10,11 @@ using System.Globalization;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
 using SQLite;
+using Windows.Media.Capture.Core;
 
 public class CalendarViewModel : INotifyPropertyChanged
 {
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     private DateTime currentSelectedDate = DateTime.Now.Date;
     public DateTime CurrentSelectedDate
@@ -86,24 +87,28 @@ public class CalendarViewModel : INotifyPropertyChanged
         _petEntryService = petEntryService;
         _petService = petService;
         MedicationVM = medicationVM;
-        
+
     }
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
-private async Task LoadPetsAsync()
-{
-    var petsFromDb = await _petService.GetPetsAsync();
-
-    foreach (var pet in petsFromDb)
+    private async Task LoadPetsAsync()
     {
-        Pets.Add(pet);
-    }
+        Pets.Clear();
+        var petsFromDb = await _petService.GetPetsAsync();
 
-    
-}
+        foreach (var pet in petsFromDb)
+        {
+            Pets.Add(pet);
+        }
+        if (petsFromDb.Any())
+        {
+            Pets[CurrentPetId - 1].IsSelected = true;
+        }
+
+    }
     public async Task SavePetMoodEntryAsync()
     {
-        var ExistingEntry = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
+        var ExistingEntry = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
         if (ExistingEntry != null)
         {
             ExistingEntry.Mood = EnteredMood;
@@ -112,7 +117,7 @@ private async Task LoadPetsAsync()
         }
         var entry = new PetEntry
         {
-            PetId = 1,     // Assuming a single pet for simplicity, Should refactor to support multiple pets in the future R-
+            PetId = CurrentPetId,
             Date = CurrentSelectedDate,
             Mood = EnteredMood
         };
@@ -124,7 +129,7 @@ private async Task LoadPetsAsync()
 
     public async Task SavePetWeightEntryAsync()
     {
-        var ExistingEntry = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
+        var ExistingEntry = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
 
         if (!InputParser.TryParsePositive(EnteredWeight, out weight))
         {
@@ -139,7 +144,7 @@ private async Task LoadPetsAsync()
         }
         var entry = new PetEntry
         {
-            PetId = 1,     // Assuming a single pet for simplicity, Should refactor to support multiple pets in the future R-
+            PetId = CurrentPetId,
             Date = CurrentSelectedDate,
             Weight = weight,
         };
@@ -149,8 +154,7 @@ private async Task LoadPetsAsync()
 
     public async Task LoadEntriesAsync()
     {
-        var Entries = await _petEntryService.GetPetEntryByDateAsync(CurrentSelectedDate);
-
+        var Entries = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
         if (Entries == null)
         {
             ShownMood = string.Empty;
@@ -172,6 +176,8 @@ private async Task LoadPetsAsync()
         EntrySection.HideInput(MoodSection);
         EntrySection.HideInput(WeightSection);
         EntrySection.HideInput(MedicationSection);
+        CurrentPetId = 1; // Default to first pet, or handle as needed -R
+        await LoadEntriesAsync();
         await LoadPetsAsync();
     }
     public ICommand ShowMoodInputCommand => new Command(() =>
@@ -212,6 +218,19 @@ private async Task LoadPetsAsync()
         await MedicationVM.SaveMedicationEntryAsync();
         EntrySection.HideInput(MedicationSection);
     });
+    public int CurrentPetId { get; set; }
+    public ICommand SelectPetCommand => new Command<Pet>(async pet =>
+    {
+        foreach (var p in Pets)
+        {
+            p.IsSelected = false;
+        }
+        pet.IsSelected = true;
+        CurrentPetId = pet.Id;
+        await LoadEntriesAsync();
+        Console.WriteLine($"Selected pet: {pet.Name}");
+    });
+
 
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

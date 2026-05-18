@@ -3,9 +3,6 @@
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
 
-using Microsoft.Extensions.DependencyInjection;
-using Windows.Networking.Vpn;
-
 public partial class PetAgePage : ContentPage
 {
 
