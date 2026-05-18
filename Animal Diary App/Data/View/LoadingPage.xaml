@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Animal_Diary_App.Data.View.LoadingPage"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid>
+        <Image Source="hintergrund_blau.png"
+               Aspect="AspectFill"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill"/>
+
+        <VerticalStackLayout VerticalOptions="Center"
+                           HorizontalOptions="Center"
+                           Spacing="16">
+            <ActivityIndicator IsRunning="True"
+                               Color="White"
+                               HeightRequest="48"
+                               WidthRequest="48"/>
+            <Label Text="Loading..."
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+    </Grid>
+
+</ContentPage>

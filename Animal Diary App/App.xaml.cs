@@ -1,34 +1,52 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Animal_Diary_App.Data.Services;
+﻿using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.View;
 using Animal_Diary_App.Data.ViewModels;
-using Animal_Diary_App.Data.Models;
+
 namespace Animal_Diary_App;
 
 public partial class App : Application
 {
 	private readonly PetService _petService;
 	private readonly MainViewModel _vm;
+	private readonly AppDatabase _database;
 
 	public App(PetService petService, MainViewModel vm, AppDatabase database)
 	{
-		InitializeComponent(); // Refactor this to be have the start up be in a ViewModel -R
-		_ = database.InitAsync();
+		InitializeComponent();
 		_petService = petService;
 		_vm = vm;
+		_database = database;
 
-		MainPage = new ContentPage();
+		MainPage = new LoadingPage();
 
-		_ = DecideStartPage(_vm, _petService);
+		_ = StartAsync();
 	}
 
-	private async Task DecideStartPage(MainViewModel vm, PetService petService)
+	private async Task StartAsync()
 	{
-		var pets = await petService.GetPetsAsync();
+		try
+		{
+			await _database.EnsureInitializedAsync();
 
-		if (pets.Count == 1)
-			MainPage = new NavigationPage(new WelcomePage(vm));
-		else
-			MainPage = new NavigationPage(new MainPage(vm));
+			var pets = await _petService.GetPetsAsync();
+
+			MainPage = pets.Count == 0
+				? new NavigationPage(new WelcomePage(_vm))
+				: new NavigationPage(new MainPage(_vm));
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine(ex);
+			MainPage = new ContentPage
+			{
+				Content = new Label
+				{
+					Text = "Could not start the app. Please restart.",
+					Margin = 24,
+					HorizontalTextAlignment = TextAlignment.Center,
+					VerticalTextAlignment = TextAlignment.Center
+				}
+			};
+		}
 	}
 }

@@ -3,6 +3,8 @@ using Animal_Diary_App.Data.Models;
 public class AppDatabase
 {
     private readonly SQLiteAsyncConnection _db;
+    private Task? _initializeTask;
+
     public AppDatabase()
     {
         var path = Path.Combine(FileSystem.AppDataDirectory, "appdata.db");
@@ -11,10 +13,16 @@ public class AppDatabase
 
     public SQLiteAsyncConnection Connection => _db;
 
-    public async Task InitAsync()
+    public Task EnsureInitializedAsync()
     {
-        await _db.CreateTableAsync<Pet>();
-        await _db.CreateTableAsync<MedicationLog>();
-        await _db.CreateTableAsync<PetEntry>();
+        return _initializeTask ??= InitAsync();
+    }
+
+    private async Task InitAsync()
+    {
+        await Task.WhenAll(
+            _db.CreateTableAsync<Pet>(),
+            _db.CreateTableAsync<MedicationLog>(),
+            _db.CreateTableAsync<PetEntry>());
     }
 }
