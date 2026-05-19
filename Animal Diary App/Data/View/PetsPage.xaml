@@ -11,7 +11,8 @@
                Aspect="AspectFill"
                HorizontalOptions="Fill"
                VerticalOptions="Fill"
-               InputTransparent="True"/>
+               InputTransparent="True"
+               Grid.RowSpan="2"/>
 
         <!-- Main content -->
         <ScrollView Margin="0,0,0,60">
@@ -189,26 +190,89 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- ── Bottom Navigation — mirrors CalendarPage exactly ── -->
-        <Grid RowDefinitions="*,Auto"
-              ColumnDefinitions="*,*,*"
-              VerticalOptions="End">
+        <!-- BOTTOM NAVIGATION -->
+        <Border Grid.Row="1"
+                Margin="0"
+                Padding="12,10,12,20"
+                BackgroundColor="#E6C4A8E0"
+                StrokeThickness="0"
+                VerticalOptions="End">
 
-            <Button Text="Main"
-                    Grid.Row="1"
-                    Grid.Column="0"
-                    Clicked="OnMainClicked"/>
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="24,24,0,0"/>
+            </Border.StrokeShape>
 
-            <Button Text="Calendar"
-                    Grid.Row="1"
-                    Grid.Column="1"
-                    Clicked="OnCalendarClicked"/>
+            <Border.Shadow>
+                <Shadow Brush="#30000000"
+                        Offset="0,-2"
+                        Radius="10"
+                        Opacity="0.18"/>
+            </Border.Shadow>
 
-            <Button Text="Pets"
-                    Grid.Row="1"
-                    Grid.Column="2"/> 
+            <Grid ColumnDefinitions="*,*,*">
 
-        </Grid>
+                <!-- MAIN -->
+                <Grid>
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnMainClicked"/>
+                    </Grid.GestureRecognizers>
+
+                    <VerticalStackLayout HorizontalOptions="Center"
+                                         Spacing="2">
+
+                        <Label Text="🏠"
+                               FontSize="20"
+                               HorizontalTextAlignment="Center"/>
+
+                        <Label Text="Main"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               TextColor="#4A1580"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- CALENDAR -->
+                <Grid Grid.Column="1">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCalendarClicked"/>
+                    </Grid.GestureRecognizers>
+
+                    <VerticalStackLayout HorizontalOptions="Center"
+                                         Spacing="2">
+
+                        <Label Text="📅"
+                               FontSize="20"
+                               HorizontalTextAlignment="Center"/>
+
+                        <Label Text="Calendar"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               TextColor="#7A5D99"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- PETS -->
+                <Grid Grid.Column="2">
+
+                    <VerticalStackLayout HorizontalOptions="Center"
+                                         Spacing="2">
+
+                        <Label Text="🐾"
+                               FontSize="20"
+                               HorizontalTextAlignment="Center"/>
+
+                        <Label Text="Pets"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               TextColor="#7A5D99"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+            </Grid>
+        </Border>
 
     </Grid>
 

@@ -19,12 +19,25 @@ public class MainPageViewModel : INotifyPropertyChanged
 
     public List<PetEntry> Entries { get; set; } = new();
     private readonly PetEntryService _petEntryService;
+    private readonly PetService _petService;
+    private Pet activePet;
+    public Pet ActivePet
+    {
+        get => activePet;
+        set
+        {
+            if (activePet == value) return;
+            activePet = value;
+            OnPropertyChanged();
+        }
+    }
 
-   public MainPageViewModel(PetEntryService petEntryService)
+    public MainPageViewModel(PetEntryService petEntryService, PetService petService)
     {
         _petEntryService = petEntryService;
+        _petService = petService;
     }
-    
+
     private decimal latestWeight;
     public decimal LatestWeight
     {
@@ -44,5 +57,10 @@ public class MainPageViewModel : INotifyPropertyChanged
         {
             LatestWeight = EntryToday.Weight;
         }
+    }
+    public async Task LoadCurrentPet()
+    {
+        ActivePet = await _petService.GetPetByIdAsync(1);
+       
     }
 }

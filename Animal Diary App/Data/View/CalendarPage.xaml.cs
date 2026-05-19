@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 public partial class CalendarPage : ContentPage
 {
 	private MainViewModel vm;
+	private PetsPage? petPage;
 
 	public CalendarPage(MainViewModel mainViewModel)
 	{
@@ -31,6 +32,11 @@ public partial class CalendarPage : ContentPage
 	async void OnMainClicked(object sender, EventArgs args)
 	{
 		await Navigation.PopAsync();
+	}
+	async void OnPetsClicked(object sender, EventArgs args)
+	{
+		petPage ??= new PetsPage(vm);
+		await Navigation.PushAsync(petPage);
 	}
 	private async void OnMoodEntryCompleted(object? sender, EventArgs e)
 	{

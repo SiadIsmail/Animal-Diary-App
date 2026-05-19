@@ -9,6 +9,7 @@ public class MainViewModel
     public MainPageViewModel MainPageVM { get; }
     public PetViewModel PetVM { get; }
     public MedicationViewModel MedicationVM { get; }
+    
 
     public MainViewModel(
  CalendarViewModel calendarVM,
@@ -20,12 +21,12 @@ public class MainViewModel
         PetVM = petVM;
         MedicationVM = medicationVM;
         CalendarVM = calendarVM;
-
     }
     public async Task LoadAsync()
     {
         await PetVM.LoadPetsAsync();
         await Task.WhenAll(
+            MainPageVM.LoadCurrentPet(),
             MainPageVM.LoadLatestWeightAsync(),
             CalendarVM.PrepareDataAsync());
     }
