@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Animal_Diary_App.Data.View.PetsPage"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid>
+
+        <!-- Background — same as CalendarPage -->
+        <Image Source="hintergrund_blau.png"
+               Aspect="AspectFill"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill"
+               InputTransparent="True"/>
+
+        <!-- Main content -->
+        <ScrollView Margin="0,0,0,60">
+            <VerticalStackLayout Padding="24,20"
+                                 Spacing="24">
+
+                <!-- ── Page title ── -->
+                <Label Text="Pets"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center"/>
+
+                <!-- ══ MY PETS ══ -->
+                <VerticalStackLayout Spacing="10">
+
+                    <Label Text="MY PETS"
+                           FontSize="12"
+                           TextColor="White"
+                           Opacity="0.7"
+                           CharacterSpacing="1.2"/>
+
+                    <!-- Pet list — same #CC1A8FC4 card as Day Overview -->
+                    <VerticalStackLayout Spacing="10"
+                                         BindableLayout.ItemsSource="{Binding PetsVM.Pets}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Border BackgroundColor="#CC1A8FC4"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 16"
+                                        Padding="20,14">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.PetsVM.OpenPetDetailCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+
+                                        <!-- Emoji avatar bubble -->
+                                        <Border Grid.Column="0"
+                                                BackgroundColor="#331A8FC4"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 22"
+                                                WidthRequest="44"
+                                                HeightRequest="44"
+                                                VerticalOptions="Center"
+                                                Margin="0,0,14,0">
+                                            <!-- ? Bind to PetModel.Emoji -->
+                                            <Label Text="{Binding Emoji}"
+                                                   FontSize="22"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"/>
+                                        </Border>
+
+                                        <!-- Name + subtitle -->
+                                        <VerticalStackLayout Grid.Column="1"
+                                                             VerticalOptions="Center"
+                                                             Spacing="2">
+                                            <!-- ? Bind to PetModel.Name -->
+                                            <Label Text="{Binding Name}"
+                                                   FontSize="16"
+                                                   FontAttributes="Bold"
+                                                   TextColor="White"/>
+                                            <!-- ? Bind to PetModel.Subtitle e.g. "Persian · 4 years · active" -->
+                                            <Label Text="{Binding Subtitle}"
+                                                   FontSize="13"
+                                                   TextColor="White"
+                                                   Opacity="0.7"/>
+                                        </VerticalStackLayout>
+
+                                        <!-- Chevron -->
+                                        <Label Grid.Column="2"
+                                               Text="›"
+                                               FontSize="24"
+                                               TextColor="White"
+                                               Opacity="0.7"
+                                               VerticalOptions="Center"/>
+
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <!-- Add Pet — same pill button style as + Mood / + Weight -->
+                    <Button Text="+ Add Pet"
+                            FontSize="20"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            HorizontalOptions="Center"
+                            WidthRequest="200"
+                            Command="{Binding PetsVM.AddPetCommand}"/>
+
+                </VerticalStackLayout>
+
+                <!-- ══ MEDICATIONS ══ -->
+                <VerticalStackLayout Spacing="10">
+
+                    <Label Text="MEDICATIONS"
+                           FontSize="12"
+                           TextColor="White"
+                           Opacity="0.7"
+                           CharacterSpacing="1.2"/>
+
+                    <!-- Medication list -->
+                    <VerticalStackLayout Spacing="10"
+                                         BindableLayout.ItemsSource="{Binding PetsVM.Medications}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Border BackgroundColor="#CC1A8FC4"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 16"
+                                        Padding="20,14">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.PetsVM.OpenMedicationDetailCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+
+                                        <!-- Pill icon bubble -->
+                                        <Border Grid.Column="0"
+                                                BackgroundColor="#331A8FC4"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 8"
+                                                WidthRequest="36"
+                                                HeightRequest="36"
+                                                VerticalOptions="Center"
+                                                Margin="0,0,14,0">
+                                            <Label Text="💊"
+                                                   FontSize="18"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"/>
+                                        </Border>
+
+                                        <VerticalStackLayout Grid.Column="1"
+                                                             VerticalOptions="Center"
+                                                             Spacing="2">
+                                            <!-- ? Bind to MedicationModel.Name -->
+                                            <Label Text="{Binding Name}"
+                                                   FontSize="15"
+                                                   FontAttributes="Bold"
+                                                   TextColor="White"/>
+                                            <!-- ? Bind to MedicationModel.Schedule e.g. "Twice daily · Mochi" -->
+                                            <Label Text="{Binding Schedule}"
+                                                   FontSize="13"
+                                                   TextColor="White"
+                                                   Opacity="0.7"/>
+                                        </VerticalStackLayout>
+
+                                        <Label Grid.Column="2"
+                                               Text="›"
+                                               FontSize="24"
+                                               TextColor="White"
+                                               Opacity="0.7"
+                                               VerticalOptions="Center"/>
+
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <!-- Add Medication — same pill style -->
+                    <Button Text="+ Add Medication"
+                            FontSize="20"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            HorizontalOptions="Center"
+                            WidthRequest="220"
+                            Command="{Binding PetsVM.AddMedicationCommand}"/>
+
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ── Bottom Navigation — mirrors CalendarPage exactly ── -->
+        <Grid RowDefinitions="*,Auto"
+              ColumnDefinitions="*,*,*"
+              VerticalOptions="End">
+
+            <Button Text="Main"
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Clicked="OnMainClicked"/>
+
+            <Button Text="Calendar"
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Clicked="OnCalendarClicked"/>
+
+            <Button Text="Pets"
+                    Grid.Row="1"
+                    Grid.Column="2"/> 
+
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

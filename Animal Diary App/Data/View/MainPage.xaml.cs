@@ -8,6 +8,7 @@ public partial class MainPage : ContentPage
 {
     private MainViewModel vm;
     private CalendarPage? calendarPage;
+    private PetsPage? petPage;
 
     public MainPage(MainViewModel mainViewModel)
     {
@@ -25,5 +26,11 @@ public partial class MainPage : ContentPage
     {
         calendarPage ??= new CalendarPage(vm);
         await Navigation.PushAsync(calendarPage);
+    }
+
+    async void OnPetsClicked(object sender, EventArgs args)
+    {
+        petPage ??= new PetsPage(vm);
+        await Navigation.PushAsync(petPage);
     }
 }

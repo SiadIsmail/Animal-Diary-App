@@ -100,7 +100,7 @@
 
         <!-- Bottom Navigation -->
         <Grid RowDefinitions="*,Auto"
-              ColumnDefinitions="*,*"
+              ColumnDefinitions="*,*,*"
               VerticalOptions="End">
 
             <Button Text="Main"
@@ -111,6 +111,10 @@
                     Clicked="OnCalendarClicked"
                     Grid.Row="1"
                     Grid.Column="1"/>
+            <Button Text="Pets"
+                    Clicked="OnPetsClicked"
+                    Grid.Row="1"
+                    Grid.Column="2"/>
 
         </Grid>
 
