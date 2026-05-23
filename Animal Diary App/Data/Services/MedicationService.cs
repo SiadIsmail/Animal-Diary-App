@@ -1,6 +1,8 @@
 namespace Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Models;
 using SQLite;
+using System.Collections.Generic;
+using System.Linq;
 
 public class MedicationService
 {
@@ -11,8 +13,15 @@ public class MedicationService
         _db = database.Connection;
     }
 
-    public async Task SaveMedicationEntryAsync(MedicationLog medicationLog)
+    public async Task SaveMedicationAsync(Medication medication)
     {
-        await _db.InsertAsync(medicationLog);
+        await _db.InsertAsync(medication);
     }
+
+    /*public async Task<List<MedicationLog>> GetMedicationLogsAsync()
+    {
+        return await _db.Table<MedicationLog>()
+            .OrderByDescending(m => m.TakenAt)
+            .ToListAsync();
+    }*/
 }

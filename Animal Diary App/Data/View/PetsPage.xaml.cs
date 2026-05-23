@@ -6,7 +6,6 @@ using Animal_Diary_App.Data.Services;
 public partial class PetsPage : ContentPage
 {
 	private CalendarPage? calendarPage;
-	private MainPage? mainPage;
 
 	private MainViewModel vm;
 	public PetsPage(MainViewModel mainViewModel)
@@ -23,8 +22,7 @@ public partial class PetsPage : ContentPage
 
 	async void OnMainClicked(object sender, EventArgs args)
 	{
-		mainPage ??= new MainPage(vm);
-		await Navigation.PushAsync(mainPage);
+		await Navigation.PopAsync();
 	}
 	async void OnCalendarClicked(object sender, EventArgs args)
 	{
@@ -32,4 +30,14 @@ public partial class PetsPage : ContentPage
 		await Navigation.PushAsync(calendarPage);
 	}
 
+	async void OnAddPetClicked(object sender, EventArgs args)
+	{
+		await Navigation.PushAsync(new PetTypePage(vm));
+	}
+
+	async void OnAddMedicationClicked(object sender, EventArgs args)
+	{
+		await Navigation.PushAsync(new MedicationsPage(vm));
+	}
 }
+

@@ -3,9 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:calendar="clr-namespace:Syncfusion.Maui.Calendar;assembly=Syncfusion.Maui.Calendar"
              x:Class="Animal_Diary_App.Data.View.CalendarPage"
-             NavigationPage.HasNavigationBar="False">
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="#DCEBF5">
 
-        <Grid>
+        <Grid RowDefinitions="*,Auto">
 
                 <!-- Background -->
                 <Image Source="hintergrund_blau.png"
@@ -16,7 +17,7 @@
                        Grid.RowSpan="2"/>
 
                 <!-- Main Content -->
-                <VerticalStackLayout Padding="24,20"
+                <VerticalStackLayout Grid.Row="0" Padding="24,20"
                                      Spacing="24">
 
                         <!-- Pet Selector Chips -->
@@ -84,7 +85,7 @@
 
                                 <calendar:SfCalendar
                                         x:Name="Calendar"
-                                        BackgroundColor="#FF20A5E7"
+                                        BackgroundColor="#5B9BB8"
                                         SelectedDate="{Binding CalendarVM.CurrentSelectedDate, Mode=TwoWay}"
                                         HeightRequest="170"
                                         VerticalOptions="Start"
@@ -112,6 +113,8 @@
                                                 WidthRequest="150"
                                                 HeightRequest="50"
                                                 CornerRadius="25"
+                                                BackgroundColor="#5B9BB8"
+                                                TextColor="White"
                                                 IsVisible="{Binding CalendarVM.MoodSection.IsAddButtonVisible}"
                                                 Command="{Binding CalendarVM.ShowMoodInputCommand}"/>
 
@@ -120,6 +123,8 @@
                                                 WidthRequest="150"
                                                 HeightRequest="50"
                                                 CornerRadius="25"
+                                                BackgroundColor="#5B9BB8"
+                                                TextColor="White"
                                                 IsVisible="{Binding CalendarVM.WeightSection.IsAddButtonVisible}"
                                                 Command="{Binding CalendarVM.ShowWeightInputCommand}"/>
 
@@ -128,6 +133,8 @@
                                                 WidthRequest="150"
                                                 HeightRequest="50"
                                                 CornerRadius="25"
+                                                BackgroundColor="#5B9BB8"
+                                                TextColor="White"
                                                 IsVisible="{Binding CalendarVM.MedicationSection.IsAddButtonVisible}"
                                                 Command="{Binding CalendarVM.ShowMedicationInputCommand}"/>
 
@@ -166,17 +173,23 @@
 
                         <!-- Day Overview Card -->
                         <ScrollView>
-                                <Border BackgroundColor="#CC1A8FC4"
+                                <Border BackgroundColor="#5B9BB8"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 16"
                                         Padding="20,16">
+                                        <Border.Shadow>
+                                            <Shadow Brush="#40000000"
+                                                    Offset="0,8"
+                                                    Radius="18"
+                                                    Opacity="0.35"/>
+                                        </Border.Shadow>
                                         <VerticalStackLayout Spacing="12">
 
                                                 <Label Text="Today's Overview"
                                                        FontSize="16"
                                                        FontAttributes="Bold"
                                                        TextColor="White"
-                                                       Opacity="0.75"/>
+                                                       Opacity="0.85"/>
 
                                                 <!-- Mood Row -->
                                                 <HorizontalStackLayout Spacing="10">

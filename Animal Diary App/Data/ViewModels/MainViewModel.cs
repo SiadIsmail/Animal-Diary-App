@@ -28,6 +28,7 @@ public class MainViewModel
         await Task.WhenAll(
             MainPageVM.LoadCurrentPet(),
             MainPageVM.LoadLatestWeightAsync(),
-            CalendarVM.PrepareDataAsync());
+            CalendarVM.PrepareDataAsync()
+            );
     }
 }

@@ -22,7 +22,7 @@ public class AppDatabase
     {
         await Task.WhenAll(
             _db.CreateTableAsync<Pet>(),
-            _db.CreateTableAsync<MedicationLog>(),
+            _db.CreateTableAsync<Medication>(),
             _db.CreateTableAsync<PetEntry>());
     }
 }

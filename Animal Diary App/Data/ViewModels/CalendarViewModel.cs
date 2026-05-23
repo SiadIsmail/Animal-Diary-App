@@ -229,11 +229,6 @@ public class CalendarViewModel : INotifyPropertyChanged
         EntrySection.ShowInput(MedicationSection);
     });
 
-    public ICommand SaveMedicationEntryCommand => new Command(async () =>
-    {
-        await MedicationVM.SaveMedicationEntryAsync();
-        EntrySection.HideInput(MedicationSection);
-    });
     public int CurrentPetId = 1;
     public ICommand SelectPetCommand => new Command<Pet>(async pet =>
     {

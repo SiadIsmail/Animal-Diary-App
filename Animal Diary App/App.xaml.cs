@@ -30,7 +30,7 @@ public partial class App : Application
 
 			var pets = await _petService.GetPetsAsync();
 
-			MainPage = pets.Count == 0
+			MainPage = pets.Count == 1
 				? new NavigationPage(new WelcomePage(_vm))
 				: new NavigationPage(new MainPage(_vm));
 		}

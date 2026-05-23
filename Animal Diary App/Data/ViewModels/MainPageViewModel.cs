@@ -20,7 +20,7 @@ public class MainPageViewModel : INotifyPropertyChanged
     public List<PetEntry> Entries { get; set; } = new();
     private readonly PetEntryService _petEntryService;
     private readonly PetService _petService;
-    private Pet activePet;
+    private Pet activePet = new Pet();
     public Pet ActivePet
     {
         get => activePet;
