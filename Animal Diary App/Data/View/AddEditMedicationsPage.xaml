@@ -144,7 +144,7 @@
 
                     <!-- Frequency picker -->
                     <VerticalStackLayout Spacing="5">
-                        <Label Text="FREQUENCY"
+                        <Label Text="Times per day"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -157,12 +157,12 @@
                             <!-- ? bind to MedicationVM.DraftMedication.Frequency
                                  Items: Once daily, Twice daily, Three times daily,
                                         Every other day, Weekly, As needed -->
-                            <Picker Title="Select frequency"
-                                    SelectedItem="{Binding MedicationVM.MedicationDraft.Frequency}"
-                                    ItemsSource="{Binding MedicationVM.FrequencyOptions}"
-                                    FontSize="14"
-                                    TextColor="#1C3D52"
-                                    Margin="10,0"/>
+                            <Picker
+                                SelectedItem="{Binding MedicationVM.MedicationDraft.Frequency}"
+                                ItemsSource="{Binding MedicationVM.FrequencyOptions}"
+                                FontSize="14"
+                                TextColor="#1C3D52"
+                                Margin="10,0"/>
                         </Border>
                     </VerticalStackLayout>
 

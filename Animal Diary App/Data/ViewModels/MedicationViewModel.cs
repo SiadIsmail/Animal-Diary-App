@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Collections.Generic;
 public class MedicationViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -38,6 +39,15 @@ public class MedicationViewModel : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+    public List<int> FrequencyOptions { get; } = new()
+    {
+        1,
+        2,
+        3,
+        4,
+        5
+    };
+
     private Medication medicationDraft = new();
     public Medication MedicationDraft
     {
