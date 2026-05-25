@@ -31,7 +31,7 @@ public partial class CalendarPage : ContentPage
 
 	async void OnMainClicked(object? sender, EventArgs args)
 	{
-		await Navigation.PopAsync();
+		await Navigation.PushAsync(new MainPage(vm));
 	}
 	async void OnPetsClicked(object? sender, EventArgs args)
 	{

@@ -17,12 +17,12 @@ public partial class PetsPage : ContentPage
 
 	public async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		await Navigation.PushAsync(new PetTypePage(vm));
+		await Navigation.PushAsync(new CreatePetPage(vm));
 	}
 
 	async void OnMainClicked(object? sender, EventArgs args)
 	{
-		await Navigation.PopAsync();
+		await Navigation.PushAsync(new MainPage(vm));
 	}
 	async void OnCalendarClicked(object? sender, EventArgs args)
 	{
@@ -32,12 +32,12 @@ public partial class PetsPage : ContentPage
 
 	async void OnAddPetClicked(object? sender, EventArgs args)
 	{
-		await Navigation.PushAsync(new PetTypePage(vm));
+		await Navigation.PushAsync(new CreatePetPage(vm));
 	}
 
 	async void OnAddMedicationClicked(object? sender, EventArgs args)
 	{
-		await Navigation.PushAsync(new MedicationsPage(vm));
+		await Navigation.PushAsync(new AddEditMedicationsPage(vm));
 	}
 }
 

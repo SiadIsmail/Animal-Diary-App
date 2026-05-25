@@ -258,7 +258,7 @@
 
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer
-                                    Command="{Binding PetVM.AddPetCommand}"/>
+                                    Tapped="OnAddPetClicked"/>
                             </Border.GestureRecognizers>
 
                             <VerticalStackLayout Spacing="8">

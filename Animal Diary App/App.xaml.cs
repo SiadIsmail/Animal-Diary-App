@@ -43,7 +43,7 @@ public partial class App : Application
 				await _activePetService.LoadActivePetAsync(activePet.Id);
 			}
 
-			var page = pets.Count == 1
+			var page = pets.Count == 0
 				? new NavigationPage(new WelcomePage(_vm))
 				: new NavigationPage(new MainPage(_vm));
 

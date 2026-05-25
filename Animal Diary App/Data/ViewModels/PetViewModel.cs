@@ -37,6 +37,28 @@ public class PetViewModel : BaseViewModel
         }
     }
 
+    private PetTypeOption? selectedPetType;
+    public PetTypeOption? SelectedPetType
+    {
+        get => selectedPetType;
+        set
+        {
+            if (SetProperty(ref selectedPetType, value))
+            {
+                UpdatePetTypeSelection();
+            }
+        }
+    }
+
+    public ObservableCollection<PetTypeOption> PetTypeOptions { get; set; } = new();
+
+    private bool showCustomPetType;
+    public bool ShowCustomPetType
+    {
+        get => showCustomPetType;
+        set => SetProperty(ref showCustomPetType, value);
+    }
+
     private readonly PetService _petService;
     private readonly ActivePetService _activePetService;
 
@@ -74,6 +96,8 @@ public class PetViewModel : BaseViewModel
         ExportReportCommand = new Command(() => Console.WriteLine("Export report"));
         OpenMedicationDetailCommand = new Command(() => Console.WriteLine("Open medication details"));
 
+        InitializePetTypeOptions();
+
         _activePetService.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(ActivePet))
@@ -83,6 +107,32 @@ public class PetViewModel : BaseViewModel
                 OnPropertyChanged(nameof(ActivePetSubtitle));
             }
         };
+    }
+
+    private void InitializePetTypeOptions()
+    {
+        PetTypeOptions.Clear();
+        PetTypeOptions.Add(new PetTypeOption { Name = "Dog", Emoji = "🐶" });
+        PetTypeOptions.Add(new PetTypeOption { Name = "Cat", Emoji = "🐱" });
+        PetTypeOptions.Add(new PetTypeOption { Name = "Bird", Emoji = "🐦" });
+        PetTypeOptions.Add(new PetTypeOption { Name = "Rabbit", Emoji = "🐰" });
+        PetTypeOptions.Add(new PetTypeOption { Name = "Fish", Emoji = "🐠" });
+        PetTypeOptions.Add(new PetTypeOption { Name = "Other", Emoji = "🐾" });
+    }
+
+    private void UpdatePetTypeSelection()
+    {
+        foreach (var petType in PetTypeOptions)
+        {
+            petType.IsSelected = petType == SelectedPetType;
+        }
+
+        ShowCustomPetType = SelectedPetType?.Name == "Other";
+
+        if (SelectedPetType != null && SelectedPetType.Name != "Other")
+        {
+            EnteredPetType = SelectedPetType.Name;
+        }
     }
     
     public async Task SavePetAsync()

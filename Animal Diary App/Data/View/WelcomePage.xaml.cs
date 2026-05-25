@@ -17,6 +17,6 @@ public partial class WelcomePage : ContentPage
 
 	private async void OnEntryCompleted(object? sender, EventArgs e)
 	{
-		await Navigation.PushAsync(new PetTypePage(vm));
+		await Navigation.PushAsync(new CreatePetPage(vm));
 	}
 }
