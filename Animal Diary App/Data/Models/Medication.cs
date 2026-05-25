@@ -8,4 +8,6 @@ public class Medication
     public int PetId { get; set; }
     public string Name { get; set; } = string.Empty;
     public decimal Dosage { get; set; } = 0;
+    public string Notes { get; set; } = string.Empty;
+    public bool IsArchived { get; set; } = false;
 }

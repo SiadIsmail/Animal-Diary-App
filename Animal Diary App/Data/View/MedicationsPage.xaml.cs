@@ -4,8 +4,6 @@ namespace Animal_Diary_App.Data.View;
 public partial class MedicationsPage : ContentPage
 {
     private MainViewModel vm;
-    private CalendarPage? calendarPage;
-    private PetsPage? petPage;
 
     public MedicationsPage(MainViewModel mainViewModel)
     {
@@ -13,13 +11,17 @@ public partial class MedicationsPage : ContentPage
         vm = mainViewModel;
         BindingContext = vm;
     }
-
-    async void OnBackClicked(object sender, EventArgs args)
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await vm.MedicationVM.LoadFilteredMedicationAsync();
+    }
+    async void OnBackClicked(object? sender, EventArgs args)
     {
         await Navigation.PopAsync();
     }
 
-    async void OnAddMedicationClicked(object sender, EventArgs args)
+    async void OnAddMedicationClicked(object? sender, EventArgs args)
     {
         await Navigation.PushAsync(new AddEditMedicationsPage(vm));
     }

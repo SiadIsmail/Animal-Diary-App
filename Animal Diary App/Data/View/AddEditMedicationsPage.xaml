@@ -57,7 +57,7 @@
 
                     <!-- ? bind Text to MedicationVM.SheetTitle
                          e.g. "Add Medication" or "Edit Medication" -->
-                    <Label Text="? Add Medication"
+                    <Label Text="Add Medication"
                            FontSize="18"
                            FontAttributes="Bold"
                            TextColor="#1C3D52"
@@ -142,70 +142,150 @@
 
                     </Grid>
 
-                    <!-- Frequency picker -->
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Times per day"
+                    <!-- WEEKDAY SELECTOR -->
+
+                    <VerticalStackLayout Spacing="8">
+
+                        <Label Text="MEDICATION DAYS"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
+
+                        <CollectionView
+                            ItemsSource="{Binding MedicationVM.Days}"
+                            ItemsLayout="HorizontalList"
+                            SelectionMode="None"
+                            HeightRequest="60">
+
+                            <CollectionView.ItemTemplate>
+
+                                <DataTemplate>
+
+                                    <Border
+                                        WidthRequest="42"
+                                        HeightRequest="42"
+                                        Stroke="#D0C8E0"
+                                        StrokeThickness="1"
+                                        BackgroundColor="White"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="21"/>
+                                        </Border.StrokeShape>
+
+                                        <Border.GestureRecognizers>
+
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MedicationVM.ToggleDayCommand}"
+                                                CommandParameter="{Binding .}"/>
+
+                                        </Border.GestureRecognizers>
+
+                                        <Border.Triggers>
+
+                                            <DataTrigger
+                                                TargetType="Border"
+                                                Binding="{Binding IsSelected}"
+                                                Value="True">
+
+                                                <Setter Property="BackgroundColor"
+                                                        Value="#9B6FCC"/>
+
+                                                <Setter Property="Stroke"
+                                                        Value="#9B6FCC"/>
+
+                                            </DataTrigger>
+
+                                        </Border.Triggers>
+
+                                        <Label
+                                            Text="{Binding DisplayName}"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"
+                                            TextColor="#1C3D52"
+                                            FontAttributes="Bold"
+                                            FontSize="13"/>
+
+                                    </Border>
+
+                                </DataTemplate>
+
+                            </CollectionView.ItemTemplate>
+
+                        </CollectionView>
+
+                    </VerticalStackLayout>
+
+
+                    <!-- TIMES PER DAY -->
+
+                    <VerticalStackLayout Spacing="5">
+
+                        <Label Text="TIMES PER DAY"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               TextColor="#5A7990"/>
+
                         <Border BackgroundColor="#FFFFFF"
                                 Stroke="#D0C8E0"
                                 StrokeThickness="1">
+
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="14"/>
                             </Border.StrokeShape>
-                            <!-- ? bind to MedicationVM.DraftMedication.Frequency
-                                 Items: Once daily, Twice daily, Three times daily,
-                                        Every other day, Weekly, As needed -->
+
                             <Picker
-                                SelectedItem="{Binding MedicationVM.MedicationDraft.Frequency}"
+                                SelectedItem="{Binding MedicationVM.SelectedFrequency}"
                                 ItemsSource="{Binding MedicationVM.FrequencyOptions}"
                                 FontSize="14"
                                 TextColor="#1C3D52"
                                 Margin="10,0"/>
+
                         </Border>
+
                     </VerticalStackLayout>
 
-                    <!-- Times row — shown dynamically based on frequency -->
-                    <!-- ? IsVisible bind to MedicationVM.DraftMedication.ShowTimePickers -->
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="TIME(S)"
-                               FontSize="10"
-                               FontAttributes="Bold"
-                               TextColor="#5A7990"/>
 
-                        <!-- Repeating time pickers — up to 3 -->
-                        <!-- For simplicity these are static; wire dynamically if preferred -->
-                        <Border BackgroundColor="#FFFFFF"
-                                Stroke="#D0C8E0"
-                                StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14"/>
-                            </Border.StrokeShape>
-                            <!-- ? bind to MedicationVM.DraftMedication.Time1 -->
-                            <TimePicker Time="{Binding MedicationVM.MedicationDraft.Time1}"
-                                        Format="HH:mm"
-                                        FontSize="14"
-                                        TextColor="#1C3D52"
-                                        Margin="14,8"/>
-                        </Border>
+                    <!-- DYNAMIC TIME PICKERS -->
 
-                        <!-- Second time — only visible for Twice+ daily -->
-                        <!-- ? IsVisible bind to MedicationVM.DraftMedication.ShowTime2 -->
-                        <Border BackgroundColor="#FFFFFF"
-                                Stroke="#D0C8E0"
-                                StrokeThickness="1"
-                                IsVisible="{Binding MedicationVM.DraftMedication.ShowTime2}">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14"/>
-                            </Border.StrokeShape>
-                            <!-- ? bind to MedicationVM.DraftMedication.Time2 -->
-                            <TimePicker Time="{Binding MedicationVM.MedicationDraft.Time2}"
-                                        Format="HH:mm"
-                                        FontSize="14"
-                                        TextColor="#1C3D52"
-                                        Margin="14,8"/>
-                        </Border>
+                    <VerticalStackLayout
+                        Spacing="10"
+                        BindableLayout.ItemsSource="{Binding MedicationVM.Times}">
+
+                        <BindableLayout.ItemTemplate>
+
+                            <DataTemplate>
+
+                                <VerticalStackLayout Spacing="5">
+
+                                    <Label Text="TIME"
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           TextColor="#5A7990"/>
+
+                                    <Border BackgroundColor="#FFFFFF"
+                                            Stroke="#D0C8E0"
+                                            StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="14"/>
+                                        </Border.StrokeShape>
+
+                                        <TimePicker
+                                            Time="{Binding Time}"
+                                            Format="HH:mm"
+                                            FontSize="14"
+                                            TextColor="#1C3D52"
+                                            Margin="14,8"/>
+
+                                    </Border>
+
+                                </VerticalStackLayout>
+
+                            </DataTemplate>
+
+                        </BindableLayout.ItemTemplate>
 
                     </VerticalStackLayout>
 
@@ -223,8 +303,8 @@
                             </Border.StrokeShape>
                             <!-- ? bind to MedicationVM.DraftMedication.AssignedPet
                                  ItemsSource from PetVM.Pets -->
-                            <Picker Title="Select pet"
-                                    SelectedItem="{Binding MedicationVM.MedicationDraft.AssignedPet}"
+                            <Picker 
+                                    SelectedItem="{Binding MedicationVM.SelectedMedicationDraftPet}"
                                     ItemsSource="{Binding PetVM.Pets}"
                                     ItemDisplayBinding="{Binding Name}"
                                     FontSize="14"

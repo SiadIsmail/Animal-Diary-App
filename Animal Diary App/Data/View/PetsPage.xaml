@@ -213,7 +213,7 @@
                                     FontSize="16"
                                     HeightRequest="46"
                                     CornerRadius="23"
-                                    HorizontalOptions="FillAndExpand"
+                                    HorizontalOptions="Fill"
                                     BackgroundColor="#4A6172"
                                     TextColor="White"
                                     Command="{Binding PetVM.OpenActivePetProfileCommand}"/>

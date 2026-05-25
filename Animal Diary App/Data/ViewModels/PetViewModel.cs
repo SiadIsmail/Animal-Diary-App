@@ -3,28 +3,16 @@ namespace Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Models;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
 
-public class PetViewModel : INotifyPropertyChanged
+public class PetViewModel : BaseViewModel
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
     private string enteredPetName = string.Empty;
 
     public string EnteredPetName
     {
         get => enteredPetName;
-        set
-        {
-            if (enteredPetName == value)
-            {
-                return;
-            }
-
-            enteredPetName = value;
-            OnPropertyChanged();
-        }
+        set => SetProperty(ref enteredPetName, value);
     }
 
     private string enteredPetType = string.Empty;
@@ -32,16 +20,7 @@ public class PetViewModel : INotifyPropertyChanged
     public string EnteredPetType
     {
         get => enteredPetType;
-        set
-        {
-            if (enteredPetType == value)
-            {
-                return;
-            }
-
-            enteredPetType = value;
-            OnPropertyChanged();
-        }
+        set => SetProperty(ref enteredPetType, value);
     }
 
     private string enteredPetAge = string.Empty;
@@ -51,35 +30,22 @@ public class PetViewModel : INotifyPropertyChanged
         get => enteredPetAge;
         set
         {
-            if (enteredPetAge == value)
+            if (SetProperty(ref enteredPetAge, value))
             {
-                return;
+                OnPropertyChanged(nameof(ParsedPetAge));
             }
-
-            enteredPetAge = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(ParsedPetAge));
         }
     }
 
     private readonly PetService _petService;
+    private readonly ActivePetService _activePetService;
 
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
-    private Pet activePet = new Pet();
     public Pet ActivePet
     {
-        get => activePet;
-        private set
-        {
-            if (activePet == value)
-                return;
-
-            activePet = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(ActivePetEmoji));
-            OnPropertyChanged(nameof(ActivePetSubtitle));
-        }
+        get => _activePetService.ActivePet;
+        private set => _activePetService.ActivePet = value;
     }
 
     public string ActivePetEmoji => GetEmojiForType(ActivePet.Type);
@@ -96,14 +62,27 @@ public class PetViewModel : INotifyPropertyChanged
     public ICommand ExportReportCommand { get; }
     public ICommand OpenMedicationDetailCommand { get; }
 
-    public PetViewModel(PetService petService)
+    public PetViewModel(PetService petService, ActivePetService activePetService)
     {
         _petService = petService;
+        _activePetService = activePetService;
         SelectPetCommand = new Command<Pet>(SelectPet);
         AddPetCommand = new Command(() => Console.WriteLine("AddPetCommand executed"));
+        OpenActivePetProfileCommand = new Command(() => Console.WriteLine("Open active pet profile"));
         EditActivePetCommand = new Command(() => Console.WriteLine($"Edit pet {ActivePet.Name}"));
         OpenDocumentsCommand = new Command(() => Console.WriteLine("Open documents"));
         ExportReportCommand = new Command(() => Console.WriteLine("Export report"));
+        OpenMedicationDetailCommand = new Command(() => Console.WriteLine("Open medication details"));
+
+        _activePetService.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ActivePet))
+            {
+                OnPropertyChanged(nameof(ActivePet));
+                OnPropertyChanged(nameof(ActivePetEmoji));
+                OnPropertyChanged(nameof(ActivePetSubtitle));
+            }
+        };
     }
     
     public async Task SavePetAsync()
@@ -135,7 +114,9 @@ public class PetViewModel : INotifyPropertyChanged
 
         if (Pets.Count > 0)
         {
-            SelectPet(Pets[0]);
+            var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
+            var petToSelect = Pets.FirstOrDefault(p => p.Id == savedPetId) ?? Pets[0];
+            SelectPet(petToSelect);
         }
     }
 
@@ -170,10 +151,5 @@ public class PetViewModel : INotifyPropertyChanged
             "fish" => "🐠",
             _ => "🐾",
         };
-    }
-
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

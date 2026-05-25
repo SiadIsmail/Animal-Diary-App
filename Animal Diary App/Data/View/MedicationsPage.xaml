@@ -118,7 +118,7 @@
 
                 <!-- ── SECTION LABEL ── -->
                 <!-- ? bind Text to MedicationVM.SectionLabel e.g. "2 Active Medications" -->
-                <Label Text="? Active Medications"
+                <Label Text="Active Medications"
                        FontSize="11"
                        FontAttributes="Bold"
                        TextColor="#5A7990"

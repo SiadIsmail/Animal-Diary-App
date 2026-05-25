@@ -28,6 +28,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PetEntryService>();
 		builder.Services.AddSingleton<PetService>();
 		builder.Services.AddSingleton<MedicationService>();
+		builder.Services.AddSingleton<ActivePetService>();
 		builder.Services.AddSingleton<App>();
 
 

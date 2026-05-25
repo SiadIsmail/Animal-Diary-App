@@ -17,6 +17,12 @@ public class MedicationService
     {
         await _db.InsertAsync(medication);
     }
+    public async Task<List<Medication>> GetMedicationsByPetIdAsync(int id)
+    {
+        return await _db.Table<Medication>()
+            .Where(m => m.PetId == id)
+            .ToListAsync();
+    }
 
     /*public async Task<List<MedicationLog>> GetMedicationLogsAsync()
     {

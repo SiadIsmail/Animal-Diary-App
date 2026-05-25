@@ -19,13 +19,13 @@ public partial class MainPage : ContentPage
         await vm.LoadAsync();
     }
 
-    async void OnCalendarClicked(object sender, EventArgs args)
+    async void OnCalendarClicked(object? sender, EventArgs args)
     {
         calendarPage ??= new CalendarPage(vm);
         await Navigation.PushAsync(calendarPage);
     }
 
-    async void OnPetsClicked(object sender, EventArgs args)
+    async void OnPetsClicked(object? sender, EventArgs args)
     {
         petPage ??= new PetsPage(vm);
         await Navigation.PushAsync(petPage);

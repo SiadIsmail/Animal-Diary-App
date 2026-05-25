@@ -20,22 +20,22 @@ public partial class PetsPage : ContentPage
 		await Navigation.PushAsync(new PetTypePage(vm));
 	}
 
-	async void OnMainClicked(object sender, EventArgs args)
+	async void OnMainClicked(object? sender, EventArgs args)
 	{
 		await Navigation.PopAsync();
 	}
-	async void OnCalendarClicked(object sender, EventArgs args)
+	async void OnCalendarClicked(object? sender, EventArgs args)
 	{
 		calendarPage ??= new CalendarPage(vm);
 		await Navigation.PushAsync(calendarPage);
 	}
 
-	async void OnAddPetClicked(object sender, EventArgs args)
+	async void OnAddPetClicked(object? sender, EventArgs args)
 	{
 		await Navigation.PushAsync(new PetTypePage(vm));
 	}
 
-	async void OnAddMedicationClicked(object sender, EventArgs args)
+	async void OnAddMedicationClicked(object? sender, EventArgs args)
 	{
 		await Navigation.PushAsync(new MedicationsPage(vm));
 	}
