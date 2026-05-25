@@ -26,4 +26,5 @@ public class AppDatabase
             _db.CreateTableAsync<PetEntry>(),
             _db.CreateTableAsync<AppSettings>());
     }
+
 }

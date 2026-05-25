@@ -9,7 +9,7 @@ public class MainViewModel
     public MainPageViewModel MainPageVM { get; }
     public PetViewModel PetVM { get; }
     public MedicationViewModel MedicationVM { get; }
-    
+
 
     public MainViewModel(
  CalendarViewModel calendarVM,

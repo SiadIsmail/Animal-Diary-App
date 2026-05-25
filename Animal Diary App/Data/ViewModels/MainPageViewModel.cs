@@ -12,6 +12,7 @@ public class MainPageViewModel : BaseViewModel
     private readonly PetEntryService _petEntryService;
     private readonly PetService _petService;
     private readonly ActivePetService _activePetService;
+    private readonly SettingsService _SettingsService;
 
     public Pet ActivePet
     {
@@ -19,11 +20,12 @@ public class MainPageViewModel : BaseViewModel
         set => _activePetService.ActivePet = value;
     }
 
-    public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService)
+    public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService)
     {
         _petEntryService = petEntryService;
         _petService = petService;
         _activePetService = activePetService;
+        _SettingsService = settingsService;
 
         _activePetService.PropertyChanged += (s, e) =>
         {
@@ -53,4 +55,5 @@ public class MainPageViewModel : BaseViewModel
     {
         ActivePet = await _petService.GetPetByIdAsync(1);
     }
+
 }

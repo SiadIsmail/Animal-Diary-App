@@ -37,13 +37,13 @@
                       ColumnSpacing="12">
 
                     <!-- Back button — hidden on first launch -->
-                    <!-- ? IsVisible="{Binding PetVM.ShowBackButton}" -->
+                    <!-- ? IsVisible="{Binding PetVM.ShowBackButton}" 
                     <Border WidthRequest="38"
                             HeightRequest="38"
                             BackgroundColor="#40FFFFFF"
                             Stroke="#50FFFFFF"
                             StrokeThickness="1"
-                            IsVisible="{Binding PetVM.ShowBackButton}">
+                            IsVisible="{Binding PetVM.ShowPetCreationBackButton}">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="19"/>
                         </Border.StrokeShape>
@@ -56,14 +56,14 @@
                                TextColor="#1C3D52"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
-                    </Border>
+                    </Border> 
 
-                    <!-- Spacer when back hidden -->
+                     Spacer when back hidden 
                     <BoxView Grid.Column="0"
                              WidthRequest="38"
                              HeightRequest="38"
                              Color="Transparent"
-                             IsVisible="{Binding PetVM.HideBackButton}"/>
+                             IsVisible="{Binding PetVM.HideBackButton}"/>-->
 
                     <!-- Title -->
                     <!-- ? bind Text to PetVM.PageTitle -->

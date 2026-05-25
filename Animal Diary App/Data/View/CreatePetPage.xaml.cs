@@ -12,6 +12,11 @@ public partial class CreatePetPage : ContentPage
         vm = mainViewModel;
         BindingContext = vm;
     }
+     protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await vm.PetVM.CheckAndSetFirstLaunchAsync();
+    }
 
     async void OnBackClicked(object? sender, EventArgs args)
     {

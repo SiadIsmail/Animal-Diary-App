@@ -61,6 +61,7 @@ public class PetViewModel : BaseViewModel
 
     private readonly PetService _petService;
     private readonly ActivePetService _activePetService;
+    private readonly SettingsService _SettingsService;
 
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
@@ -84,10 +85,12 @@ public class PetViewModel : BaseViewModel
     public ICommand ExportReportCommand { get; }
     public ICommand OpenMedicationDetailCommand { get; }
 
-    public PetViewModel(PetService petService, ActivePetService activePetService)
+    public PetViewModel(PetService petService, ActivePetService activePetService, SettingsService settingsService)
     {
         _petService = petService;
         _activePetService = activePetService;
+        _SettingsService = settingsService;
+
         SelectPetCommand = new Command<Pet>(SelectPet);
         AddPetCommand = new Command(() => Console.WriteLine("AddPetCommand executed"));
         OpenActivePetProfileCommand = new Command(() => Console.WriteLine("Open active pet profile"));
@@ -134,7 +137,7 @@ public class PetViewModel : BaseViewModel
             EnteredPetType = SelectedPetType.Name;
         }
     }
-    
+
     public async Task SavePetAsync()
     {
         if (ParsedPetAge == null)
@@ -202,4 +205,39 @@ public class PetViewModel : BaseViewModel
             _ => "🐾",
         };
     }
+
+    public async Task<bool> IsFirstLaunchAsync()
+    {
+        return await _SettingsService.GetIsFirstLaunchAsync();
+    }
+    public async Task SetFirstLaunchFalseAsync()
+    {
+        await _SettingsService.SetIsFirstLaunchAsync(false);
+    }
+private bool showPetCreationBackButton;
+    public bool ShowPetCreationBackButton
+    {
+        get => showPetCreationBackButton;
+        set => SetProperty(ref showPetCreationBackButton, value);
+    }
+    private string saveButtonLabel;
+    public string SaveButtonLabel
+    {
+        get => saveButtonLabel;
+        set => SetProperty(ref saveButtonLabel, value);
+    }
+    public async Task CheckAndSetFirstLaunchAsync()
+    {
+        if (await IsFirstLaunchAsync())
+        {
+            SaveButtonLabel = "Let's go!";
+            await SetFirstLaunchFalseAsync();
+        }
+        else
+        {
+            SaveButtonLabel = "Save";
+        }
+    }
+    
+    
 }
