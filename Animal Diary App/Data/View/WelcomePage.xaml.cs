@@ -15,7 +15,7 @@ public partial class WelcomePage : ContentPage
 		BindingContext = vm;
 	}
 
-	private async void OnEntryCompleted(object? sender, EventArgs e)
+	async void OnAddPetClicked(object? sender, EventArgs args)
 	{
 		await Navigation.PushAsync(new CreatePetPage(vm));
 	}
