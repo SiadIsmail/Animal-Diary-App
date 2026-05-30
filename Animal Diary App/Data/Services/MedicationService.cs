@@ -23,6 +23,17 @@ public class MedicationService
             .Where(m => m.PetId == id)
             .ToListAsync();
     }
+    public async Task<List<MedicationSchedule>> GetMedicationSchedulesByMedicationIdAsync(int id)
+    {
+        return await _db.Table<MedicationSchedule>()
+            .Where(s => s.MedicationId == id)
+            .ToListAsync();
+    }
+
+    public async Task SaveMedicationScheduleAsync(MedicationSchedule schedule)
+    {
+        await _db.InsertAsync(schedule);
+    }
 
     /*public async Task<List<MedicationLog>> GetMedicationLogsAsync()
     {

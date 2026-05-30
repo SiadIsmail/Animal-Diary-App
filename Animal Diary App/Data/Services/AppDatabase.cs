@@ -24,7 +24,10 @@ public class AppDatabase
             _db.CreateTableAsync<Pet>(),
             _db.CreateTableAsync<Medication>(),
             _db.CreateTableAsync<PetEntry>(),
-            _db.CreateTableAsync<AppSettings>());
+            _db.CreateTableAsync<AppSettings>(),
+            _db.CreateTableAsync<MedicationSchedule>(),
+            _db.CreateTableAsync<MedicationTime>()
+            );
     }
 
 }

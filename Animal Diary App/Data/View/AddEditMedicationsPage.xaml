@@ -273,7 +273,8 @@
                                         </Border.StrokeShape>
 
                                         <TimePicker
-                                            Time="{Binding Time}"
+                                            Time="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                   Path=BindingContext.MedicationVM.SelectedTime}"
                                             Format="HH:mm"
                                             FontSize="14"
                                             TextColor="#1C3D52"
@@ -303,13 +304,13 @@
                             </Border.StrokeShape>
                             <!-- ? bind to MedicationVM.DraftMedication.AssignedPet
                                  ItemsSource from PetVM.Pets -->
-                            <Picker 
-                                    SelectedItem="{Binding MedicationVM.SelectedMedicationDraftPet}"
-                                    ItemsSource="{Binding PetVM.Pets}"
-                                    ItemDisplayBinding="{Binding Name}"
-                                    FontSize="14"
-                                    TextColor="#1C3D52"
-                                    Margin="10,0"/>
+                            <Picker
+                                SelectedItem="{Binding MedicationVM.SelectedMedicationDraftPet}"
+                                ItemsSource="{Binding PetVM.Pets}"
+                                ItemDisplayBinding="{Binding Name}"
+                                FontSize="14"
+                                TextColor="#1C3D52"
+                                Margin="10,0"/>
                         </Border>
                     </VerticalStackLayout>
 

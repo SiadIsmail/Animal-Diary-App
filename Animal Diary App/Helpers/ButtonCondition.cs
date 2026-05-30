@@ -1,14 +1,9 @@
 namespace Animal_Diary_App.Helpers;
-
+using Animal_Diary_App.Data.ViewModels;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-public class EntrySection : INotifyPropertyChanged
+public class EntrySection : BaseViewModel
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
-    private void OnPropertyChanged([CallerMemberName] string? name = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
     private bool isAddButtonVisible = true;
     public bool IsAddButtonVisible
     {
@@ -30,8 +25,12 @@ public class EntrySection : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
-    public static void ShowInput(EntrySection section)
+
+    
+    public static void ShowInput(EntrySection section, EntrySection entrySection1, EntrySection entrySection2)
     {
+        HideInput(entrySection1);
+        HideInput(entrySection2);
         section.IsAddButtonVisible = false;
         section.IsInputVisible = true;
     }

@@ -68,6 +68,7 @@ public class ActivePetService : INotifyPropertyChanged
             var setting = await _db.Connection.FindAsync<AppSettings>(ActivePetIdKey);
             if (setting != null && int.TryParse(setting.Value, out var petId))
             {
+                Console.WriteLine($"Loaded active pet ID: {petId}");
                 return petId;
             }
         }

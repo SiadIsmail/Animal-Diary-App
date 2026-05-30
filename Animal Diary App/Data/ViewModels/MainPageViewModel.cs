@@ -51,9 +51,7 @@ public class MainPageViewModel : BaseViewModel
             LatestWeight = EntryToday.Weight;
         }
     }
-    public async Task LoadCurrentPet()
-    {
-        ActivePet = await _petService.GetPetByIdAsync(1);
-    }
+    //public async Task LoadCurrentPet()
+   //////}
 
 }

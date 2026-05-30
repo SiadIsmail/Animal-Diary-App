@@ -176,7 +176,7 @@ public class CalendarViewModel : BaseViewModel
     }
     public ICommand ShowMoodInputCommand => new Command(() =>
     {
-        EntrySection.ShowInput(MoodSection);
+        EntrySection.ShowInput(MoodSection, WeightSection, MedicationSection);
     });
     public ICommand OnMoodEntryCompleted =>
     new Command(async () =>
@@ -189,7 +189,7 @@ public class CalendarViewModel : BaseViewModel
 
     public ICommand ShowWeightInputCommand => new Command(() =>
     {
-        EntrySection.ShowInput(WeightSection);
+        EntrySection.ShowInput(WeightSection, MoodSection, MedicationSection);
     });
 
     public ICommand OnWeightEntryCompleted => new Command(async () =>
@@ -204,7 +204,7 @@ public class CalendarViewModel : BaseViewModel
 
     public ICommand ShowMedicationInputCommand => new Command(() =>
     {
-        EntrySection.ShowInput(MedicationSection);
+        EntrySection.ShowInput(MedicationSection, MoodSection, WeightSection);
     });
 
     public int CurrentPetId

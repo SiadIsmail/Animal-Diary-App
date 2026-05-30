@@ -195,7 +195,7 @@
                                                 <Border.StrokeShape>
                                                     <RoundRectangle CornerRadius="10"/>
                                                 </Border.StrokeShape>
-                                                <Label Text="{Binding FrequencyLabel}"
+                                                <Label Text="{Binding FrequencyDisplay}"
                                                        FontSize="10"
                                                        FontAttributes="Bold"
                                                        TextColor="#5A2FA0"/>
@@ -233,7 +233,7 @@
                                                    IsVisible="{Binding HasFoodNote}"/>
 
                                             <!-- ? bind to MedicationModel.FoodNote e.g. "with food" -->
-                                            <Label Text="{Binding FoodNote}"
+                                            <Label Text="{Binding Note}"
                                                    FontSize="11"
                                                    TextColor="#7B91A1"
                                                    IsVisible="{Binding HasFoodNote}"/>

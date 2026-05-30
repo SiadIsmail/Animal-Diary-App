@@ -42,23 +42,37 @@ public class MedicationViewModel : BaseViewModel
         5
     };
 
+
     private int selectedFrequency;
     public int SelectedFrequency
     {
         get => selectedFrequency;
         set => SetProperty(ref selectedFrequency, value);
     }
-    public ObservableCollection<Medication> FilteredMedications { get; set; } = new ObservableCollection<Medication>();
+    public ObservableCollection<FilteredMedication> FilteredMedications { get; set; } = new ObservableCollection<FilteredMedication>();
 
 
     public async Task LoadFilteredMedicationAsync()
     {
         FilteredMedications.Clear();
-        List<Medication> medicationFromDb = await _medicationService.GetMedicationsByPetIdAsync(1);
+        List<Medication> medicationFromDb = await _medicationService.GetMedicationsByPetIdAsync(await _activePetService.GetSavedActivePetIdAsync());
 
         foreach (var medication in medicationFromDb)
         {
-            FilteredMedications.Add(medication);
+            var schedules = await _medicationService.GetMedicationSchedulesByMedicationIdAsync(medication.Id);
+            var times = schedules.Select(s => s.Time).ToList();
+            var frequency = schedules.Count;
+            var pet = await _petService.GetPetByIdAsync(medication.PetId);
+            FilteredMedications.Add(new FilteredMedication
+            {
+                Id = medication.Id,
+                Name = medication.Name,
+                PetName = pet?.Name ?? "Unknown",
+                DoseDisplay = $"{medication.Dosage} mg",
+                FrequencyDisplay = $"{frequency} Times a day",
+                TimesDisplay = times.FirstOrDefault(),
+                Note = medication.Notes
+            });
         }
     }
     private Pet? selectedMedicationDraftPet;
@@ -75,12 +89,16 @@ public class MedicationViewModel : BaseViewModel
     }
 
     private readonly MedicationService _medicationService;
-
+    private readonly ActivePetService _activePetService;
+    private readonly PetService _petService;
     public List<string> UnitOptions { get; } = new() { "mg", "ml", "tablet", "drops" };
 
-    public MedicationViewModel(MedicationService medicationService)
+    public MedicationViewModel(MedicationService medicationService, ActivePetService activePetService, PetService petService)
     {
         _medicationService = medicationService;
+        _activePetService = activePetService;
+        _petService = petService;
+    
 
         Days = new ObservableCollection<DaySelectionItem>
         {
@@ -92,12 +110,24 @@ public class MedicationViewModel : BaseViewModel
             new () { Day = DayOfWeek.Saturday, DisplayName = "Sa" },
             new () { Day = DayOfWeek.Sunday, DisplayName = "Su" }
         };
+        Times = new ObservableCollection<MedicationSchedule>
+        {
+            new MedicationSchedule
+            {
+        Time = new TimeSpan(8, 0, 0)
+            }
+        };
 
         ToggleDayCommand = new Command<DaySelectionItem>(ToggleDay);
     }
 
 
-
+    private TimeSpan selectedTime;
+    public TimeSpan SelectedTime
+    {
+        get => selectedTime;
+        set => SetProperty(ref selectedTime, value);
+    }
 
     public async Task SaveMedicationCommandasync()
     {
@@ -109,6 +139,20 @@ public class MedicationViewModel : BaseViewModel
             Notes = MedicationDraft.Notes
         };
         await _medicationService.SaveMedicationAsync(newMedication);
+        var selectedDays = Days.Where(d => d.IsSelected).ToList();
+        foreach (var day in selectedDays)
+        {
+
+            var schedule = new MedicationSchedule
+            {
+                MedicationId = newMedication.Id,
+                Day = day.Day,
+                Time = SelectedTime
+            };
+
+            await _medicationService.SaveMedicationScheduleAsync(schedule);
+
+        }
         ClearMedicationDraft();
         OnMedicationSaved?.Invoke(this, EventArgs.Empty);
     }
@@ -129,8 +173,10 @@ public class MedicationViewModel : BaseViewModel
         {
             day.IsSelected = false;
         }
+
         Times.Clear();
     }
+
 
     public event EventHandler? OnMedicationSaved;
 
@@ -138,7 +184,7 @@ public class MedicationViewModel : BaseViewModel
 
     public ICommand ToggleDayCommand { get; set; }
 
-    public ObservableCollection<MedicationTimeItem> Times { get; set; } = new();
+    public ObservableCollection<MedicationSchedule> Times { get; set; } = new();
 
     private void ToggleDay(DaySelectionItem item)
     {

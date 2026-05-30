@@ -26,7 +26,7 @@ public class MainViewModel
     {
         await PetVM.LoadPetsAsync();
         await Task.WhenAll(
-            MainPageVM.LoadCurrentPet(),
+        //    MainPageVM.LoadCurrentPet(),
             MainPageVM.LoadLatestWeightAsync(),
             CalendarVM.PrepareDataAsync()
             );

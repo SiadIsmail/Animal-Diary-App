@@ -37,7 +37,7 @@ public partial class PetsPage : ContentPage
 
 	async void OnAddMedicationClicked(object? sender, EventArgs args)
 	{
-		await Navigation.PushAsync(new AddEditMedicationsPage(vm));
+		await Navigation.PushAsync(new MedicationsPage(vm));
 	}
 }
 
