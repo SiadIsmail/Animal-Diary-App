@@ -28,10 +28,10 @@
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
 		<!-- Display name -->
-		<ApplicationTitle>My Animal Diary</ApplicationTitle>
+		<ApplicationTitle>Felova</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.animaldiaryapp</ApplicationId>
+		<ApplicationId>com.felova.app</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
