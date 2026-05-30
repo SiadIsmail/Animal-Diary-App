@@ -88,6 +88,10 @@
                                    PlaceholderColor="#A0B0BC"
                                    Margin="14,0"/>
                         </Border>
+                        <Label Text="{Binding MedicationVM.MedicationNameError}"
+                               FontSize="11"
+                               TextColor="#E83E5F"
+                               IsVisible="{Binding MedicationVM.MedicationNameError, Converter={StaticResource StringToBoolConverter}}"/>
                     </VerticalStackLayout>
 
                     <!-- Dose + unit side by side -->
@@ -114,6 +118,10 @@
                                        PlaceholderColor="#A0B0BC"
                                        Margin="14,0"/>
                             </Border>
+                            <Label Text="{Binding MedicationVM.DosageError}"
+                                   FontSize="11"
+                                   TextColor="#E83E5F"
+                                   IsVisible="{Binding MedicationVM.DosageError, Converter={StaticResource StringToBoolConverter}}"/>
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Grid.Column="1"
@@ -215,6 +223,11 @@
 
                         </CollectionView>
 
+                        <Label Text="{Binding MedicationVM.DaysError}"
+                               FontSize="11"
+                               TextColor="#E83E5F"
+                               IsVisible="{Binding MedicationVM.DaysError, Converter={StaticResource StringToBoolConverter}}"/>
+
                     </VerticalStackLayout>
 
 
@@ -236,13 +249,15 @@
                             </Border.StrokeShape>
 
                             <Picker
-                                SelectedItem="{Binding MedicationVM.SelectedFrequency}"
                                 ItemsSource="{Binding MedicationVM.FrequencyOptions}"
+                                SelectedItem="{Binding MedicationVM.SelectedFrequency}"
                                 FontSize="14"
                                 TextColor="#1C3D52"
                                 Margin="10,0"/>
 
                         </Border>
+
+
 
                     </VerticalStackLayout>
 
@@ -287,8 +302,8 @@
                             </DataTemplate>
 
                         </BindableLayout.ItemTemplate>
-
                     </VerticalStackLayout>
+
 
                     <!-- Assigned pet -->
                     <VerticalStackLayout Spacing="5">
@@ -302,16 +317,18 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="14"/>
                             </Border.StrokeShape>
-                            <!-- ? bind to MedicationVM.DraftMedication.AssignedPet
-                                 ItemsSource from PetVM.Pets -->
                             <Picker
-                                SelectedItem="{Binding MedicationVM.SelectedMedicationDraftPet}"
                                 ItemsSource="{Binding PetVM.Pets}"
+                                SelectedItem="{Binding PetVM.SelectedPet}"
                                 ItemDisplayBinding="{Binding Name}"
                                 FontSize="14"
                                 TextColor="#1C3D52"
                                 Margin="10,0"/>
                         </Border>
+                        <Label Text="{Binding MedicationVM.PetError}"
+                               FontSize="11"
+                               TextColor="#E83E5F"
+                               IsVisible="{Binding MedicationVM.PetError, Converter={StaticResource StringToBoolConverter}}"/>
                     </VerticalStackLayout>
 
                     <!-- Food note (optional) -->
@@ -349,7 +366,8 @@
                             <RoundRectangle CornerRadius="16"/>
                         </Border.StrokeShape>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnBackClicked"/>
+                            <TapGestureRecognizer
+                                Command="{Binding MedicationVM.CancelMedicationCommand}"/>
                         </Border.GestureRecognizers>
                         <Label Text="Cancel"
                                FontSize="14"
@@ -359,10 +377,12 @@
                                Padding="0,13"/>
                     </Border>
 
-                    <!-- Save — purple, matches primary actions throughout app -->
+                    <!-- Save -->
                     <Border Grid.Column="1"
                             BackgroundColor="#9B6FCC"
-                            StrokeThickness="0">
+                            StrokeThickness="0"
+                            Opacity="{Binding MedicationVM.CanSaveMedication, Converter={StaticResource BoolToOpacityConverter}}"
+                            IsEnabled="{Binding MedicationVM.CanSaveMedication}">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="16"/>
                         </Border.StrokeShape>
@@ -373,7 +393,8 @@
                                     Opacity="0.35"/>
                         </Border.Shadow>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding MedicationVM.SaveMedicationCommand}"/>
+                            <TapGestureRecognizer
+                                Command="{Binding MedicationVM.SaveMedicationCommand}"/>
                         </Border.GestureRecognizers>
                         <Label Text="Save"
                                FontSize="14"

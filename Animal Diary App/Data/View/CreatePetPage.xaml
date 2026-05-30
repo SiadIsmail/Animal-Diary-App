@@ -166,14 +166,18 @@
                                             <DataTrigger TargetType="Border"
                                                          Binding="{Binding IsSelected}"
                                                          Value="True">
-                                                <Setter Property="BackgroundColor" Value="#9B6FCC"/>
-                                                <Setter Property="Stroke" Value="#7A4FA8"/>
+                                                <Setter Property="BackgroundColor"
+                                                        Value="#9B6FCC"/>
+                                                <Setter Property="Stroke"
+                                                        Value="#7A4FA8"/>
                                             </DataTrigger>
                                             <DataTrigger TargetType="Border"
                                                          Binding="{Binding IsSelected}"
                                                          Value="False">
-                                                <Setter Property="BackgroundColor" Value="#50FFFFFF"/>
-                                                <Setter Property="Stroke" Value="#60FFFFFF"/>
+                                                <Setter Property="BackgroundColor"
+                                                        Value="#50FFFFFF"/>
+                                                <Setter Property="Stroke"
+                                                        Value="#60FFFFFF"/>
                                             </DataTrigger>
                                         </Border.Triggers>
 
@@ -221,7 +225,19 @@
                                PlaceholderColor="#7B91A1"
                                Margin="16,0"/>
                     </Border>
+                    <Label Text="{Binding PetVM.PetTypeError}"
+                           FontSize="11"
+                           TextColor="#E83E5F"
+                           IsVisible="{Binding PetVM.PetTypeError, Converter={StaticResource StringToBoolConverter}}"/>
                 </VerticalStackLayout>
+
+                <!-- Generic pet type validation error (shown when predefined type selected) -->
+                <Label Text="{Binding PetVM.PetTypeError}"
+                       FontSize="11"
+                       TextColor="#E83E5F"
+                       IsVisible="{Binding PetVM.PetTypeError, Converter={StaticResource StringToBoolConverter}}"
+                       Margin="2,0,0,0"/>
+
 
                 <!-- ── FORM CARD ── -->
                 <!-- Name + age live together in one card, matches MainPage card language -->
@@ -262,6 +278,10 @@
                                        PlaceholderColor="#7B91A1"
                                        Margin="16,0"/>
                             </Border>
+                            <Label Text="{Binding PetVM.PetNameError}"
+                                   FontSize="11"
+                                   TextColor="#E83E5F"
+                                   IsVisible="{Binding PetVM.PetNameError, Converter={StaticResource StringToBoolConverter}}"/>
                         </VerticalStackLayout>
 
                         <!-- Divider -->
@@ -291,6 +311,10 @@
                                        PlaceholderColor="#7B91A1"
                                        Margin="16,0"/>
                             </Border>
+                            <Label Text="{Binding PetVM.PetAgeError}"
+                                   FontSize="11"
+                                   TextColor="#E83E5F"
+                                   IsVisible="{Binding PetVM.PetAgeError, Converter={StaticResource StringToBoolConverter}}"/>
                         </VerticalStackLayout>
 
                     </VerticalStackLayout>
@@ -372,7 +396,9 @@
                 <!-- ? ColumnSpan bind logic: spans 2 columns on first launch, 1 on add-pet -->
                 <Border Grid.Column="1"
                         BackgroundColor="#9B6FCC"
-                        StrokeThickness="0">
+                        StrokeThickness="0"
+                        Opacity="{Binding PetVM.CanSavePet, Converter={StaticResource BoolToOpacityConverter}}"
+                        IsEnabled="{Binding PetVM.CanSavePet}">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="16"/>
                     </Border.StrokeShape>
@@ -383,7 +409,8 @@
                                 Opacity="0.4"/>
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnSaveClicked"/>
+                        <TapGestureRecognizer
+                            Tapped="OnSaveClicked"/>
                     </Border.GestureRecognizers>
                     <!-- ? bind Text to PetVM.SaveButtonLabel
                          "Let's go! 🐾" on first launch, "Add Pet" otherwise -->

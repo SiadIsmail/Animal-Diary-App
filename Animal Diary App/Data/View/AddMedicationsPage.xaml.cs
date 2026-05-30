@@ -18,7 +18,11 @@ public partial class AddEditMedicationsPage : ContentPage
             await Navigation.PopAsync();
         };
     }
-
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await vm.MedicationVM.SetSelectedMedicationDraftAsync();
+    }
     async void OnBackClicked(object? sender, EventArgs args)
     {
         await Navigation.PopAsync();

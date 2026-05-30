@@ -22,14 +22,28 @@ public class MedicationViewModel : BaseViewModel
     public string EnteredMedicationName
     {
         get => enteredMedicationName;
-        set => SetProperty(ref enteredMedicationName, value);
+        set
+        {
+            if (SetProperty(ref enteredMedicationName, value))
+            {
+                OnPropertyChanged(nameof(CanSaveMedication));
+                ValidateMedicationName();
+            }
+        }
     }
 
     private string enteredDosage = string.Empty;
     public string EnteredDosage
     {
         get => enteredDosage;
-        set => SetProperty(ref enteredDosage, value);
+        set
+        {
+            if (SetProperty(ref enteredDosage, value))
+            {
+                OnPropertyChanged(nameof(CanSaveMedication));
+                ValidateDosage();
+            }
+        }
     }
 
 
@@ -47,8 +61,90 @@ public class MedicationViewModel : BaseViewModel
     public int SelectedFrequency
     {
         get => selectedFrequency;
-        set => SetProperty(ref selectedFrequency, value);
+        set
+        {
+            if (SetProperty(ref selectedFrequency, value))
+            {
+                OnPropertyChanged(nameof(CanSaveMedication));
+            }
+        }
     }
+    // Validation error messages
+    private string medicationNameError = string.Empty;
+    public string MedicationNameError
+    {
+        get => medicationNameError;
+        set => SetProperty(ref medicationNameError, value);
+    }
+
+    private string dosageError = string.Empty;
+    public string DosageError
+    {
+        get => dosageError;
+        set => SetProperty(ref dosageError, value);
+    }
+
+    private string daysError = string.Empty;
+    public string DaysError
+    {
+        get => daysError;
+        set => SetProperty(ref daysError, value);
+    }
+
+    private string petError = string.Empty;
+    public string PetError
+    {
+        get => petError;
+        set => SetProperty(ref petError, value);
+    }
+
+    // Validation logic
+    private bool IsMedicationNameValid => !string.IsNullOrWhiteSpace(MedicationDraft.Name);
+
+    private bool IsDosageValid
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(MedicationDraft.Dosage.ToString()))
+                return false;
+            return decimal.TryParse(MedicationDraft.Dosage.ToString(), out var dose) && dose > 0;
+        }
+    }
+
+    private bool AnyDaySelected => Days.Any(d => d.IsSelected);
+
+    private bool IsPetSelected => SelectedMedicationDraftPet != null;
+
+    // Composite validation - true only if all required fields valid
+    public bool CanSaveMedication =>
+        IsMedicationNameValid &&
+        IsDosageValid &&
+        AnyDaySelected &&
+        IsPetSelected;
+
+    private void ValidateMedicationName()
+    {
+        MedicationNameError = string.IsNullOrWhiteSpace(MedicationDraft.Name)
+            ? "Medication name is required"
+            : string.Empty;
+    }
+
+    private void ValidateDosage()
+    {
+        if (string.IsNullOrWhiteSpace(MedicationDraft.Dosage.ToString()))
+        {
+            DosageError = "Dosage is required";
+        }
+        else if (!decimal.TryParse(MedicationDraft.Dosage.ToString(), out var dose) || dose <= 0)
+        {
+            DosageError = "Dosage must be a positive number";
+        }
+        else
+        {
+            DosageError = string.Empty;
+        }
+    }
+
     public ObservableCollection<FilteredMedication> FilteredMedications { get; set; } = new ObservableCollection<FilteredMedication>();
 
 
@@ -79,13 +175,48 @@ public class MedicationViewModel : BaseViewModel
     public Pet? SelectedMedicationDraftPet
     {
         get => selectedMedicationDraftPet;
-        set => SetProperty(ref selectedMedicationDraftPet, value);
+        set
+        {
+            if (SetProperty(ref selectedMedicationDraftPet, value))
+            {
+                OnPropertyChanged(nameof(CanSaveMedication));
+                ValidatePetSelection();
+            }
+        }
     }
     private Medication medicationDraft = new();
     public Medication MedicationDraft
     {
         get => medicationDraft;
-        set => SetProperty(ref medicationDraft, value);
+        set
+        {
+            if (SetProperty(ref medicationDraft, value))
+            {
+                // Subscribe to nested property changes
+                if (medicationDraft != null)
+                {
+                    medicationDraft.PropertyChanged -= OnMedicationDraftPropertyChanged;
+                    medicationDraft.PropertyChanged += OnMedicationDraftPropertyChanged;
+                }
+                OnPropertyChanged(nameof(CanSaveMedication));
+                ValidateMedicationName();
+                ValidateDosage();
+            }
+        }
+    }
+
+    private void OnMedicationDraftPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Medication.Name))
+        {
+            ValidateMedicationName();
+            OnPropertyChanged(nameof(CanSaveMedication));
+        }
+        else if (e.PropertyName == nameof(Medication.Dosage))
+        {
+            ValidateDosage();
+            OnPropertyChanged(nameof(CanSaveMedication));
+        }
     }
 
     private readonly MedicationService _medicationService;
@@ -98,7 +229,7 @@ public class MedicationViewModel : BaseViewModel
         _medicationService = medicationService;
         _activePetService = activePetService;
         _petService = petService;
-    
+
 
         Days = new ObservableCollection<DaySelectionItem>
         {
@@ -119,8 +250,17 @@ public class MedicationViewModel : BaseViewModel
         };
 
         ToggleDayCommand = new Command<DaySelectionItem>(ToggleDay);
-    }
 
+        // Set defaults
+        SelectedFrequency = 1;
+        SelectedTime = new TimeSpan(8, 0, 0);  // 8:00 AM
+        //SelectedMedicationDraftPet = ;  // Set active pet as default
+    }
+public async Task SetSelectedMedicationDraftAsync()
+    {
+       SelectedMedicationDraftPet = await _petService.GetPetByIdAsync(await _activePetService.GetSavedActivePetIdAsync());
+       Console.WriteLine($"Set SelectedMedicationDraftPet to active pet: {SelectedMedicationDraftPet?.Name}");
+    }
 
     private TimeSpan selectedTime;
     public TimeSpan SelectedTime
@@ -131,11 +271,24 @@ public class MedicationViewModel : BaseViewModel
 
     public async Task SaveMedicationCommandasync()
     {
+        // Validate before saving
+        ValidateMedicationName();
+        ValidateDosage();
+        ValidatePetSelection();
+        ValidateDaysSelected();
+
+        // Prevent save if validation fails
+        if (!CanSaveMedication)
+        {
+            return;
+        }
+
         var newMedication = new Medication
         {
             Name = MedicationDraft.Name,
             Dosage = ParseDosage(),
-            PetId = SelectedMedicationDraftPet?.Id ?? 0,
+            Unit = MedicationDraft.Unit,
+            PetId = SelectedMedicationDraftPet!.Id,
             Notes = MedicationDraft.Notes
         };
         await _medicationService.SaveMedicationAsync(newMedication);
@@ -161,20 +314,27 @@ public class MedicationViewModel : BaseViewModel
     {
         await SaveMedicationCommandasync();
     });
+    public ICommand CancelMedicationCommand => new Command(() =>
+    {
+        ClearMedicationDraft();
+        OnMedicationSaved?.Invoke(this, EventArgs.Empty);
+    });
 
     private void ClearMedicationDraft()
     {
         MedicationDraft = new();
         EnteredMedicationName = string.Empty;
         EnteredDosage = string.Empty;
-        SelectedMedicationDraftPet = null;
-        SelectedFrequency = 0;
+        SelectedMedicationDraftPet = _activePetService.ActivePet;  // Reset to active pet
+        SelectedFrequency = 1;  // Reset to 1
+        SelectedTime = new TimeSpan(8, 0, 0);  // Reset to 8:00 AM
         foreach (var day in Days)
         {
             day.IsSelected = false;
         }
 
         Times.Clear();
+        Times.Add(new MedicationSchedule { Time = new TimeSpan(8, 0, 0) });
     }
 
 
@@ -192,5 +352,21 @@ public class MedicationViewModel : BaseViewModel
             return;
 
         item.IsSelected = !item.IsSelected;
+        OnPropertyChanged(nameof(CanSaveMedication));
+        ValidateDaysSelected();
+    }
+
+    private void ValidatePetSelection()
+    {
+        PetError = SelectedMedicationDraftPet == null
+            ? "Please select a pet for this medication"
+            : string.Empty;
+    }
+
+    private void ValidateDaysSelected()
+    {
+        DaysError = !AnyDaySelected
+            ? "Please select at least one day"
+            : string.Empty;
     }
 }

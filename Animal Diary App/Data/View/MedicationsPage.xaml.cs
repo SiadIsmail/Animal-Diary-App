@@ -14,6 +14,7 @@ public partial class MedicationsPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        await vm.PetVM.LoadPetsAsync();
         await vm.MedicationVM.LoadFilteredMedicationAsync();
     }
     async void OnBackClicked(object? sender, EventArgs args)
