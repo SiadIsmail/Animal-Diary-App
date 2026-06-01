@@ -312,7 +312,7 @@ public class MedicationViewModel : BaseViewModel
         }
         ClearMedicationDraft();
         OnMedicationSaved?.Invoke(this, EventArgs.Empty);
-        await LocalNotificationCenter.Current.RequestNotificationPermission();
+        await _notificationService.RequestNotificationPermission();
         await _notificationService.ScheduleNotification("Medication Reminder", "Give Max his insulin", DateTime.Now.AddSeconds(10)); // Example: Schedule notification for 10 seconds from now
     }
 

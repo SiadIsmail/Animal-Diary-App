@@ -24,4 +24,12 @@ public class NotificationService : INotificationService
 
         await LocalNotificationCenter.Current.Show(request);
     }
+    public async Task RequestNotificationPermission()
+    {
+        var status = await LocalNotificationCenter.Current.RequestNotificationPermission();
+        if (!status)
+        {
+            // Handle permission denial (e.g., show an alert to the user)
+        }
+    }
 }
