@@ -145,10 +145,12 @@ public class PetViewModel : BaseViewModel
         _SettingsService = settingsService;
 
         SelectPetCommand = new Command<Pet>(SelectPet);
+        AddPetCommand = new Command(async () => await SavePetAsync());
         OpenActivePetProfileCommand = new Command(() => Console.WriteLine("Open active pet profile"));
         EditActivePetCommand = new Command(() => Console.WriteLine($"Edit pet {ActivePet.Name}"));
         OpenDocumentsCommand = new Command(() => Console.WriteLine("Open documents"));
         ExportReportCommand = new Command(() => Console.WriteLine("Export report"));
+        OpenMedicationDetailCommand = new Command(() => Console.WriteLine("Open medication detail"));
         InitializePetTypeOptions();
 
         _activePetService.PropertyChanged += (s, e) =>
@@ -202,14 +204,14 @@ public class PetViewModel : BaseViewModel
         {
             Name = EnteredPetName.Trim(),
             Type = EnteredPetType.Trim(),
-            Age = ParsedPetAge.Value
+            Age = ParsedPetAge!.Value
         };
 
         await _petService.SavePetAsync(pet);
         Pets.Add(pet);
         SelectPet(pet);
     }
-    private Pet selectedPet;
+    private Pet selectedPet = null!;
     public Pet SelectedPet
     {
         get => selectedPet;
@@ -290,7 +292,7 @@ public class PetViewModel : BaseViewModel
         get => showPetCreationBackButton;
         set => SetProperty(ref showPetCreationBackButton, value);
     }
-    private string saveButtonLabel;
+    private string saveButtonLabel = string.Empty;
     public string SaveButtonLabel
     {
         get => saveButtonLabel;
