@@ -7,6 +7,7 @@ using Animal_Diary_App.Data.Services.Data.Device;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Collections.Generic;
+using Plugin.LocalNotification;
 
 
 public class MedicationViewModel : BaseViewModel
@@ -311,6 +312,7 @@ public class MedicationViewModel : BaseViewModel
         }
         ClearMedicationDraft();
         OnMedicationSaved?.Invoke(this, EventArgs.Empty);
+        await LocalNotificationCenter.Current.RequestNotificationPermission();
         await _notificationService.ScheduleNotification("Medication Reminder", "Give Max his insulin", DateTime.Now.AddSeconds(10)); // Example: Schedule notification for 10 seconds from now
     }
 
@@ -321,6 +323,7 @@ public class MedicationViewModel : BaseViewModel
     public ICommand CancelMedicationCommand => new Command(() =>
     {
         ClearMedicationDraft();
+
         OnMedicationSaved?.Invoke(this, EventArgs.Empty);
     });
 
