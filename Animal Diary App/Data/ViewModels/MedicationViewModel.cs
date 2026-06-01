@@ -7,7 +7,6 @@ using Animal_Diary_App.Data.Services.Data.Device;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Collections.Generic;
-using Plugin.LocalNotification;
 
 
 public class MedicationViewModel : BaseViewModel

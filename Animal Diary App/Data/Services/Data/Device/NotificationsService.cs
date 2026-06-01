@@ -1,8 +1,5 @@
 namespace Animal_Diary_App.Data.Services.Data.Device;
 
-using Animal_Diary_App.Data.Models;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using Plugin.LocalNotification;
 public class NotificationService : INotificationService
 {
