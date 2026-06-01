@@ -3,10 +3,11 @@ namespace Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Helpers;
-using Animal_Diary_App.Helpers;
+using Animal_Diary_App.Data.Services.Data.Device;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Collections.Generic;
+
 
 public class MedicationViewModel : BaseViewModel
 {
@@ -222,13 +223,15 @@ public class MedicationViewModel : BaseViewModel
     private readonly MedicationService _medicationService;
     private readonly ActivePetService _activePetService;
     private readonly PetService _petService;
+    private readonly INotificationService _notificationService;
     public List<string> UnitOptions { get; } = new() { "mg", "ml", "tablet", "drops" };
 
-    public MedicationViewModel(MedicationService medicationService, ActivePetService activePetService, PetService petService)
+    public MedicationViewModel(MedicationService medicationService, ActivePetService activePetService, PetService petService, INotificationService notificationService)
     {
         _medicationService = medicationService;
         _activePetService = activePetService;
         _petService = petService;
+        _notificationService = notificationService;
 
 
         Days = new ObservableCollection<DaySelectionItem>
@@ -256,10 +259,10 @@ public class MedicationViewModel : BaseViewModel
         SelectedTime = new TimeSpan(8, 0, 0);  // 8:00 AM
         //SelectedMedicationDraftPet = ;  // Set active pet as default
     }
-public async Task SetSelectedMedicationDraftAsync()
+    public async Task SetSelectedMedicationDraftAsync()
     {
-       SelectedMedicationDraftPet = await _petService.GetPetByIdAsync(await _activePetService.GetSavedActivePetIdAsync());
-       Console.WriteLine($"Set SelectedMedicationDraftPet to active pet: {SelectedMedicationDraftPet?.Name}");
+        SelectedMedicationDraftPet = await _petService.GetPetByIdAsync(await _activePetService.GetSavedActivePetIdAsync());
+        Console.WriteLine($"Set SelectedMedicationDraftPet to active pet: {SelectedMedicationDraftPet?.Name}");
     }
 
     private TimeSpan selectedTime;
@@ -308,6 +311,7 @@ public async Task SetSelectedMedicationDraftAsync()
         }
         ClearMedicationDraft();
         OnMedicationSaved?.Invoke(this, EventArgs.Empty);
+        await _notificationService.ScheduleNotification("Medication Reminder", "Give Max his insulin", DateTime.Now.AddSeconds(10)); // Example: Schedule notification for 10 seconds from now
     }
 
     public ICommand SaveMedicationCommand => new Command(async () =>
@@ -369,4 +373,6 @@ public async Task SetSelectedMedicationDraftAsync()
             ? "Please select at least one day"
             : string.Empty;
     }
+
+
 }
