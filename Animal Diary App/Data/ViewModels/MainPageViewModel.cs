@@ -4,6 +4,7 @@ using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using System.Globalization;
 using System.Windows.Input;
+using System.Collections.ObjectModel;
 using SQLite;
 
 public class MainPageViewModel : BaseViewModel
@@ -14,18 +15,21 @@ public class MainPageViewModel : BaseViewModel
     private readonly ActivePetService _activePetService;
     private readonly SettingsService _SettingsService;
 
+    public MoodTimelineViewModel MoodTimeline { get; }
+
     public Pet ActivePet
     {
         get => _activePetService.ActivePet;
         set => _activePetService.ActivePet = value;
     }
 
-    public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService)
+    public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService, MoodTimelineViewModel moodTimeline)
     {
         _petEntryService = petEntryService;
         _petService = petService;
         _activePetService = activePetService;
         _SettingsService = settingsService;
+        MoodTimeline = moodTimeline;
 
         _activePetService.PropertyChanged += (s, e) =>
         {
@@ -42,6 +46,16 @@ public class MainPageViewModel : BaseViewModel
         get => latestWeight;
         set => SetProperty(ref latestWeight, value);
     }
+
+    public ObservableCollection<ChartDataPoint> WeightChartData { get; } = new();
+
+    private bool hasSufficientWeightData;
+    public bool HasSufficientWeightData
+    {
+        get => hasSufficientWeightData;
+        set => SetProperty(ref hasSufficientWeightData, value);
+    }
+
     private PetEntry? EntryToday;
     public async Task LoadLatestWeightAsync()
     {
@@ -51,7 +65,31 @@ public class MainPageViewModel : BaseViewModel
             LatestWeight = EntryToday.Weight;
         }
     }
-    //public async Task LoadCurrentPet()
-   //////}
 
+    public async Task LoadWeightChartAsync()
+    {
+        if (ActivePet == null) return;
+
+        WeightChartData.Clear();
+        var entries = await _petEntryService.GetLast30DaysWeightEntriesAsync(ActivePet.Id);
+
+        foreach (var entry in entries)
+        {
+            WeightChartData.Add(new ChartDataPoint { Date = entry.Date, Value = entry.Weight });
+        }
+
+        HasSufficientWeightData = entries.Count >= 2;
+    }
+
+    public async Task LoadMoodTimelineAsync()
+    {
+        if (ActivePet == null) return;
+        await MoodTimeline.LoadLast30DaysAsync(ActivePet.Id);
+    }
+
+    public ICommand NavigateToMoodDateCommand => new Command<DateTime>(async date =>
+    {
+        // This command would be used to navigate to the calendar on a specific date if needed
+        Console.WriteLine($"Tapped mood date: {date:M/d/yyyy}");
+    });
 }

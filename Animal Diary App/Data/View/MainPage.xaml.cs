@@ -17,6 +17,8 @@ public partial class MainPage : ContentPage
     {
         base.OnAppearing();
         await vm.LoadAsync();
+        await vm.MainPageVM.LoadWeightChartAsync();
+        await vm.MainPageVM.LoadMoodTimelineAsync();
     }
 
     async void OnCalendarClicked(object? sender, EventArgs args)

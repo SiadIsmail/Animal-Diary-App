@@ -32,6 +32,14 @@ public class CalendarViewModel : BaseViewModel
         get => enteredMood;
         set => SetProperty(ref enteredMood, value);
     }
+
+    private MoodLevel selectedMoodLevel = MoodLevel.None;
+    public MoodLevel SelectedMoodLevel
+    {
+        get => selectedMoodLevel;
+        set => SetProperty(ref selectedMoodLevel, value);
+    }
+
     private string enteredWeight = string.Empty;
 
     public string EnteredWeight
@@ -90,7 +98,8 @@ public class CalendarViewModel : BaseViewModel
         var ExistingEntry = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
         if (ExistingEntry != null)
         {
-            ExistingEntry.Mood = EnteredMood;
+            ExistingEntry.MoodLevel = (int)SelectedMoodLevel;
+            ExistingEntry.Mood = SelectedMoodLevel.GetDisplayName();
             await _petEntryService.UpdatePetEntryAsync(ExistingEntry);
             return;
         }
@@ -98,7 +107,8 @@ public class CalendarViewModel : BaseViewModel
         {
             PetId = CurrentPetId,
             Date = CurrentSelectedDate,
-            Mood = EnteredMood
+            MoodLevel = (int)SelectedMoodLevel,
+            Mood = SelectedMoodLevel.GetDisplayName()
         };
 
         await _petEntryService.SavePetEntryAsync(entry);
@@ -138,10 +148,12 @@ public class CalendarViewModel : BaseViewModel
         {
             ShownMood = string.Empty;
             ShownWeight = string.Empty;
+            SelectedMoodLevel = MoodLevel.None;
             return;
         }
         ShownMood = Entries.Mood;
         ShownWeight = Entries.Weight.ToString();
+        SelectedMoodLevel = (MoodLevel)Entries.MoodLevel;
         return;
     }
 
@@ -184,7 +196,7 @@ public class CalendarViewModel : BaseViewModel
         EntrySection.HideInput(MoodSection);
         await SavePetMoodEntryAsync();
         await LoadEntriesAsync();
-        EnteredMood = "";
+        SelectedMoodLevel = MoodLevel.None;
     });
 
     public ICommand ShowWeightInputCommand => new Command(() =>
@@ -224,6 +236,14 @@ public class CalendarViewModel : BaseViewModel
         }
     }
 
+    public ICommand SelectMoodCommand => new Command<string>(mood =>
+    {
+        if (int.TryParse(mood, out var moodValue))
+        {
+            SelectedMoodLevel = (MoodLevel)moodValue;
+        }
+    });
+
     public ICommand SelectPetCommand => new Command<Pet>(async pet =>
     {
         foreach (var p in Pets)
@@ -236,3 +256,4 @@ public class CalendarViewModel : BaseViewModel
         Console.WriteLine($"Selected pet: {pet.Name}");
     });
 }
+

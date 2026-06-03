@@ -64,3 +64,122 @@ public class BoolToOpacityConverter : IValueConverter
         return value;
     }
 }
+
+public class InvertedBoolConverter : IValueConverter
+{
+    public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        if (value is bool boolValue)
+            return !boolValue;
+        return true;
+    }
+
+    public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        if (value is bool boolValue)
+            return !boolValue;
+        return false;
+    }
+}
+
+public class WeightToHeightConverter : IValueConverter
+{
+    public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        if (value is decimal weight)
+        {
+            return Math.Max(2, (double)weight * 1.5);
+        }
+        return 10.0;
+    }
+
+    public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        return value;
+    }
+}
+
+public class WeightMaxConverter : IValueConverter
+{
+    public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        if (value is System.Collections.IEnumerable enumerable && enumerable is not string)
+        {
+            var weights = new System.Collections.Generic.List<decimal>();
+            foreach (var item in enumerable)
+            {
+                if (item is Animal_Diary_App.Data.ViewModels.ChartDataPoint point)
+                    weights.Add(point.Value);
+            }
+
+            if (weights.Count == 0)
+                return "0";
+
+            var max = weights.Max();
+            return ((int)Math.Ceiling(max)).ToString();
+        }
+        return "0";
+    }
+
+    public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        return value;
+    }
+}
+
+public class WeightMidConverter : IValueConverter
+{
+    public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        if (value is System.Collections.IEnumerable enumerable && enumerable is not string)
+        {
+            var weights = new System.Collections.Generic.List<decimal>();
+            foreach (var item in enumerable)
+            {
+                if (item is Animal_Diary_App.Data.ViewModels.ChartDataPoint point)
+                    weights.Add(point.Value);
+            }
+
+            if (weights.Count == 0)
+                return "0";
+
+            var max = weights.Max();
+            var mid = max / 2;
+            return mid.ToString("F1");
+        }
+        return "0";
+    }
+
+    public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        return value;
+    }
+}
+
+public class WeightMinConverter : IValueConverter
+{
+    public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        if (value is System.Collections.IEnumerable enumerable && enumerable is not string)
+        {
+            var weights = new System.Collections.Generic.List<decimal>();
+            foreach (var item in enumerable)
+            {
+                if (item is Animal_Diary_App.Data.ViewModels.ChartDataPoint point)
+                    weights.Add(point.Value);
+            }
+
+            if (weights.Count == 0)
+                return "0";
+
+            var min = weights.Min();
+            return ((int)Math.Floor(min)).ToString();
+        }
+        return "0";
+    }
+
+    public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        return value;
+    }
+}

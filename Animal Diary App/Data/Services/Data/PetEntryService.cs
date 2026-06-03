@@ -35,4 +35,22 @@ public class PetEntryService
     {
         return await _db.Table<PetEntry>().Where(e => e.Date == date && e.PetId == petId).FirstOrDefaultAsync();
     }
+
+    public async Task<List<PetEntry>> GetLast30DaysWeightEntriesAsync(int petId)
+    {
+        var thirtyDaysAgo = DateTime.Now.AddDays(-30).Date;
+        return await _db.Table<PetEntry>()
+            .Where(e => e.PetId == petId && e.Weight > 0 && e.Date >= thirtyDaysAgo)
+            .OrderBy(e => e.Date)
+            .ToListAsync();
+    }
+
+    public async Task<List<PetEntry>> GetLast30DaysMoodEntriesAsync(int petId)
+    {
+        var thirtyDaysAgo = DateTime.Now.AddDays(-30).Date;
+        return await _db.Table<PetEntry>()
+            .Where(e => e.PetId == petId && e.MoodLevel > 0 && e.Date >= thirtyDaysAgo)
+            .OrderBy(e => e.Date)
+            .ToListAsync();
+    }
 }
