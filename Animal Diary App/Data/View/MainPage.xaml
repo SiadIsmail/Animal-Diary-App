@@ -267,57 +267,31 @@
 
                 </Grid>
 
-                <!-- WEIGHT CHART - TEMPORARILY DISABLED FOR DEBUGGING -->
-                <!-- <view:WeightChartView/> -->
+                <view:WeightChartView/>
 
-                <!-- MOOD TIMELINE - TEMPORARILY DISABLED FOR DEBUGGING -->
-                <!--
-                <VerticalStackLayout Spacing="10"
-                                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
-
-                    <Label Text="MOOD HISTORY"
-                           FontSize="11"
-                           FontAttributes="Bold"
-                           TextColor="#5A7990"/>
-
-                    <Border BackgroundColor="#40FFFFFF"
-                            Stroke="#50FFFFFF"
-                            StrokeThickness="1"
-                            Padding="12,8"
-                            StrokeShape="RoundRectangle 16">
-
-                        <ScrollView Orientation="Horizontal"
-                                    HorizontalScrollBarVisibility="Never">
-
-                            <HorizontalStackLayout Spacing="2"
-                                                   BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
-
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
+                    <Label Text="MOOD HISTORY" FontSize="11" FontAttributes="Bold" TextColor="#5A7990"/>
+                    <Border BackgroundColor="#40FFFFFF" Stroke="#50FFFFFF" StrokeThickness="1" Padding="12,8" StrokeShape="RoundRectangle 16">
+                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                            <HorizontalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate>
-                                        <Border WidthRequest="16"
-                                                HeightRequest="16"
-                                                BackgroundColor="{Binding MoodColor}"
-                                                StrokeThickness="0"
-                                                Margin="2,2,2,2"
-                                                StrokeShape="RoundRectangle 3">
-
+                                        <Border WidthRequest="16" HeightRequest="16" BackgroundColor="{Binding MoodColor}" StrokeThickness="0" Margin="2,2,2,2" StrokeShape="RoundRectangle 3">
                                             <Border.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MainPageVM.NavigateToMoodDateCommand}"
-                                                                      CommandParameter="{Binding Date}"/>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MainPageVM.NavigateToMoodDateCommand}" CommandParameter="{Binding Date}"/>
                                             </Border.GestureRecognizers>
-
                                         </Border>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
-
                             </HorizontalStackLayout>
-
                         </ScrollView>
-
                     </Border>
-
                 </VerticalStackLayout>
-                -->
+
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData, Converter={StaticResource InvertedBoolConverter}}" Padding="16" VerticalOptions="Start">
+                    <Label Text="😊" FontSize="32" HorizontalTextAlignment="Center"/>
+                    <Label Text="Start tracking your pet's mood in the calendar" FontSize="12" TextColor="#6D8291" HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="10">
 

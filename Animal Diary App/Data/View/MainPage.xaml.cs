@@ -17,9 +17,8 @@ public partial class MainPage : ContentPage
     {
         base.OnAppearing();
         await vm.LoadAsync();
-        // TODO: Debug why these are causing startup failure
-        // await vm.MainPageVM.LoadWeightChartAsync();
-        // await vm.MainPageVM.LoadMoodTimelineAsync();
+        await vm.MainPageVM.LoadWeightChartAsync();
+        await vm.MainPageVM.LoadMoodTimelineAsync();
     }
 
     async void OnCalendarClicked(object? sender, EventArgs args)
