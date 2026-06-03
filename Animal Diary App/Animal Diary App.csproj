@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net10.0-android</TargetFrameworks>
+		<TargetFrameworks>net9.0-android</TargetFrameworks>
 		<TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('linux'))">$(TargetFrameworks);net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
 
@@ -28,14 +28,14 @@
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
 		<!-- Display name -->
-		<ApplicationTitle>My Animal Diary</ApplicationTitle>
+		<ApplicationTitle>Felova</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.animaldiaryapp</ApplicationId>
+		<ApplicationId>com.felova.app</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>1</ApplicationVersion>
+		<ApplicationDisplayVersion>1.2.2</ApplicationDisplayVersion>
+		<ApplicationVersion>2</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>None</WindowsPackageType>
@@ -71,9 +71,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Data\View\" />
-	  <PackageReference Include="Syncfusion.Maui.Calendar" Version="33.2.3" />
-	  <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+		<Folder Include="Data\View\" />
+		<PackageReference Include="Syncfusion.Maui.Calendar" Version="33.2.3" />
+		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+		<PackageReference Include="Plugin.LocalNotification" Version="12.0.2" />
 	</ItemGroup>
 
 </Project>

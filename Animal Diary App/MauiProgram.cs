@@ -2,7 +2,7 @@
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
 using Syncfusion.Maui.Core.Hosting;
-
+using Animal_Diary_App.Data.Services.Data.Device;
 namespace Animal_Diary_App;
 
 public static class MauiProgram
@@ -28,7 +28,10 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PetEntryService>();
 		builder.Services.AddSingleton<PetService>();
 		builder.Services.AddSingleton<MedicationService>();
+		builder.Services.AddSingleton<ActivePetService>();
+		builder.Services.AddSingleton<SettingsService>();
 		builder.Services.AddSingleton<App>();
+		builder.Services.AddSingleton<INotificationService, NotificationService>();
 
 
 #if DEBUG

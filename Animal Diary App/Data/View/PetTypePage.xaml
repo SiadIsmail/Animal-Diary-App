@@ -22,11 +22,21 @@
                 SemanticProperties.Description="Welcome to dot net Multi platform App U I"/>
 
             <Entry
-                x:Name="entry"
                 Placeholder="Enter text"
                 Text="{Binding PetVM.EnteredPetType}"
+                SemanticProperties.Description="Type your pet's type here"/>
+
+            <Label
+                Text="How old are they?"
+                Style="{StaticResource SubHeadline}"
+                SemanticProperties.HeadingLevel="Level2"
+                SemanticProperties.Description="Welcome to dot net Multi platform App U I"/>
+
+            <Entry
+                Placeholder="Enter text"
+                Text="{Binding PetVM.EnteredPetAge}"
                 Completed="OnEntryCompleted"
-                SemanticProperties.Description="Type your name here"/>
+                SemanticProperties.Description="Type your pet's age here"/>
         </VerticalStackLayout>
     </Grid>
 

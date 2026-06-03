@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Animal_Diary_App.Data.View.MedicationsPage"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="#DCEBF5">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Background -->
+        <Image Source="hintergrund_blau.png"
+               Aspect="AspectFill"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill"
+               InputTransparent="True"
+               Grid.RowSpan="2"/>
+
+        <!-- ══════════════════════════════════
+             MAIN CONTENT
+        ══════════════════════════════════ -->
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20,16,20,120"
+                                 Spacing="18">
+
+                <!-- ── PAGE HEADER ── -->
+                <Grid ColumnDefinitions="Auto,*,Auto"
+                      ColumnSpacing="12"
+                      VerticalOptions="Center">
+
+                    <!-- Back button -->
+                    <Border WidthRequest="38"
+                            HeightRequest="38"
+                            BackgroundColor="#40FFFFFF"
+                            Stroke="#50FFFFFF"
+                            StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="19"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnBackClicked"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="‹"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="#1C3D52"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Border>
+
+                    <Label Grid.Column="1"
+                           Text="Medications"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="#1C3D52"
+                           VerticalOptions="Center"/>
+
+                </Grid>
+
+                <!-- ── ACTIVE / ARCHIVED TOGGLE ── -->
+                <!-- ? bind SelectedTab to MedicationVM.ActiveTab ("active" | "archived") -->
+                <Border BackgroundColor="#30FFFFFF"
+                        Stroke="#40FFFFFF"
+                        StrokeThickness="1"
+                        Padding="4">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20"/>
+                    </Border.StrokeShape>
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="0">
+
+                        <!-- Active tab -->
+                        <!-- ? IsVisible/background bind to MedicationVM.ActiveTab == "active" -->
+                        <Border BackgroundColor="#9B6FCC"
+                                StrokeThickness="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="16"/>
+                            </Border.StrokeShape>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding MedicationVM.SetActiveTabCommand}"
+                                                      CommandParameter="active"/>
+                            </Border.GestureRecognizers>
+                            <Border.Shadow>
+                                <Shadow Brush="#20000000"
+                                        Offset="0,2"
+                                        Radius="6"
+                                        Opacity="0.2"/>
+                            </Border.Shadow>
+                            <Label Text="Active"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalTextAlignment="Center"
+                                   Padding="0,8"/>
+                        </Border>
+
+                        <!-- Archived tab -->
+                        <Border Grid.Column="1"
+                                BackgroundColor="Transparent"
+                                StrokeThickness="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="16"/>
+                            </Border.StrokeShape>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding MedicationVM.SetActiveTabCommand}"
+                                                      CommandParameter="archived"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="Archived"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="#7A5D99"
+                                   HorizontalTextAlignment="Center"
+                                   Padding="0,8"/>
+                        </Border>
+
+                    </Grid>
+                </Border>
+
+                <!-- ── SECTION LABEL ── -->
+                <!-- ? bind Text to MedicationVM.SectionLabel e.g. "2 Active Medications" -->
+                <Label Text="{Binding PetVM.SelectedPet.Name, StringFormat='Medications for {0}'}"
+                       FontSize="11"
+                       FontAttributes="Bold"
+                       TextColor="#5A7990"
+                       Margin="2,0,0,0"/>
+
+                <!-- ══════════════════════════════════
+                     MEDICATION LIST
+                     ? bind ItemsSource to MedicationVM.FilteredMedications
+                     (filtered by active/archived tab)
+                ══════════════════════════════════ -->
+                <CollectionView ItemsSource="{Binding MedicationVM.FilteredMedications}"
+                                SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+
+                            <!-- Medication card — matches MainPage card language -->
+                            <Border Padding="16"
+                                    Margin="0,0,0,12"
+                                    BackgroundColor="#35FFFFFF"
+                                    Stroke="#45FFFFFF"
+                                    StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="20"/>
+                                </Border.StrokeShape>
+                                <Border.Shadow>
+                                    <Shadow Brush="#20000000"
+                                            Offset="0,4"
+                                            Radius="10"
+                                            Opacity="0.15"/>
+                                </Border.Shadow>
+
+                                <Grid ColumnDefinitions="Auto,*,Auto"
+                                      ColumnSpacing="14">
+
+                                    <!-- Pill icon box — purple tint, matches v2 -->
+                                    <Border WidthRequest="46"
+                                            HeightRequest="46"
+                                            BackgroundColor="#30C4A8E0"
+                                            StrokeThickness="0"
+                                            VerticalOptions="Start">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="13"/>
+                                        </Border.StrokeShape>
+                                        <Label Text="💊"
+                                               FontSize="20"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"/>
+                                    </Border>
+
+                                    <!-- Medication details -->
+                                    <VerticalStackLayout Grid.Column="1"
+                                                         Spacing="4"
+                                                         VerticalOptions="Center">
+
+                                        <!-- ? bind to MedicationModel.Name -->
+                                        <Label Text="{Binding Name}"
+                                               FontSize="15"
+                                               FontAttributes="Bold"
+                                               TextColor="#1C3D52"/>
+
+                                        <!-- ? bind to MedicationModel.DoseDisplay e.g. "2.5mg" -->
+                                        <Label Text="{Binding DoseDisplay}"
+                                               FontSize="12"
+                                               TextColor="#5A7990"/>
+
+                                        <!-- Schedule row: frequency + time -->
+                                        <Grid ColumnDefinitions="Auto,Auto"
+                                              ColumnSpacing="8">
+
+                                            <!-- ? bind to MedicationModel.FrequencyLabel e.g. "Twice daily" -->
+                                            <Border BackgroundColor="#25C4A8E0"
+                                                    Padding="8,3"
+                                                    StrokeThickness="0">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10"/>
+                                                </Border.StrokeShape>
+                                                <Label Text="{Binding FrequencyDisplay}"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#5A2FA0"/>
+                                            </Border>
+
+                                            <!-- ? bind to MedicationModel.TimesDisplay e.g. "08:00 · 20:00" -->
+                                            <Border Grid.Column="1"
+                                                    BackgroundColor="#25C4A8E0"
+                                                    Padding="8,3"
+                                                    StrokeThickness="0">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10"/>
+                                                </Border.StrokeShape>
+                                                <Label Text="{Binding TimesDisplay}"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#5A2FA0"/>
+                                            </Border>
+
+                                        </Grid>
+
+                                        <!-- Pet + food note row -->
+                                        <HorizontalStackLayout Spacing="6">
+
+                                            <!-- ? bind to MedicationModel.PetName -->
+                                            <Label Text="{Binding PetName}"
+                                                   FontSize="11"
+                                                   TextColor="#7B91A1"/>
+
+                                            <!-- Separator dot — only show if FoodNote exists -->
+                                            <!-- ? IsVisible bind to MedicationModel.HasFoodNote -->
+                                            <Label Text="·"
+                                                   FontSize="11"
+                                                   TextColor="#7B91A1"
+                                                   IsVisible="{Binding HasFoodNote}"/>
+
+                                            <!-- ? bind to MedicationModel.FoodNote e.g. "with food" -->
+                                            <Label Text="{Binding Note}"
+                                                   FontSize="11"
+                                                   TextColor="#7B91A1"
+                                                   IsVisible="{Binding HasFoodNote}"/>
+
+                                        </HorizontalStackLayout>
+
+                                    </VerticalStackLayout>
+
+                                    <!-- Action column -->
+                                    <VerticalStackLayout Grid.Column="2"
+                                                         Spacing="8"
+                                                         VerticalOptions="Center">
+
+                                        <!-- Edit button -->
+                                        <Border WidthRequest="34"
+                                                HeightRequest="34"
+                                                BackgroundColor="#30C4A8E0"
+                                                StrokeThickness="0">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="17"/>
+                                            </Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MedicationVM.EditMedicationCommand}"
+                                                    CommandParameter="{Binding .}"/>
+                                            </Border.GestureRecognizers>
+                                            <Label Text="✏️"
+                                                   FontSize="14"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"/>
+                                        </Border>
+
+                                        <!-- Archive / Restore button -->
+                                        <!-- ? bind tooltip/icon to MedicationModel.IsArchived -->
+                                        <!-- Shows archive icon for active, restore icon for archived -->
+                                        <Border WidthRequest="34"
+                                                HeightRequest="34"
+                                                BackgroundColor="#25E07060"
+                                                StrokeThickness="0">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="17"/>
+                                            </Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MedicationVM.ArchiveMedicationCommand}"
+                                                    CommandParameter="{Binding .}"/>
+                                            </Border.GestureRecognizers>
+                                            <!-- ? swap emoji via converter: IsArchived → "↩️" else "🗃️" -->
+                                            <Label Text="🗃️"
+                                                   FontSize="14"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"/>
+                                        </Border>
+
+                                    </VerticalStackLayout>
+
+                                </Grid>
+                            </Border>
+
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                    <!-- Empty state -->
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout HorizontalOptions="Center"
+                                             Spacing="10"
+                                             Padding="0,32">
+                            <Label Text="💊"
+                                   FontSize="40"
+                                   HorizontalTextAlignment="Center"
+                                   Opacity="0.4"/>
+                            <!-- ? bind Text to MedicationVM.EmptyStateMessage
+                                 e.g. "No active medications" or "No archived medications" -->
+                            <Label Text="No medications yet"
+                                   FontSize="15"
+                                   FontAttributes="Bold"
+                                   TextColor="#5A7990"
+                                   HorizontalTextAlignment="Center"
+                                   Opacity="0.7"/>
+                            <Label Text="Tap + Add below to get started"
+                                   FontSize="12"
+                                   TextColor="#7B91A1"
+                                   HorizontalTextAlignment="Center"
+                                   Opacity="0.6"/>
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
+
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ══════════════════════════════════
+             BOTTOM NAVIGATION
+             — identical structure to MainPage
+        ══════════════════════════════════ -->
+        <Border Grid.Row="1"
+                Padding="12,10,12,20"
+                BackgroundColor="#E6C4A8E0"
+                StrokeThickness="0"
+                VerticalOptions="End">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="24,24,0,0"/>
+            </Border.StrokeShape>
+            <Border.Shadow>
+                <Shadow Brush="#30000000"
+                        Offset="0,-2"
+                        Radius="10"
+                        Opacity="0.18"/>
+            </Border.Shadow>
+
+            <Grid ColumnDefinitions="*">
+
+                <!-- + ADD — primary action, wider slot -->
+                <!-- ? Command bind to MedicationVM.AddMedicationCommand -->
+                <Border Grid.Column="0"
+                        Grid.ColumnSpan="1"
+                        BackgroundColor="#9B6FCC"
+                        StrokeThickness="0"
+                        Margin="0,0,8,0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="16"/>
+                    </Border.StrokeShape>
+                    <Border.Shadow>
+                        <Shadow Brush="#409B6FCC"
+                                Offset="0,3"
+                                Radius="8"
+                                Opacity="0.35"/>
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAddMedicationClicked"/>
+                    </Border.GestureRecognizers>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                                         Spacing="2"
+                                         Padding="0,8">
+                        <Label Text="+"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="Add"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </Border>
+
+    </Grid>
+
+</ContentPage>

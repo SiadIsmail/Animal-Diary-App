@@ -1,0 +1,108 @@
+namespace Animal_Diary_App.Data.Models;
+
+using SQLite;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+public class Medication : INotifyPropertyChanged
+{
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    [PrimaryKey, AutoIncrement]
+    public int Id { get; set; }
+
+    public int PetId { get; set; }
+
+    private string name = string.Empty;
+    public string Name
+    {
+        get => name;
+        set
+        {
+            if (name != value)
+            {
+                name = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private decimal dosage;
+    public decimal Dosage
+    {
+        get => dosage;
+        set
+        {
+            if (dosage != value)
+            {
+                dosage = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private string notes = string.Empty;
+    public string Notes
+    {
+        get => notes;
+        set
+        {
+            if (notes != value)
+            {
+                notes = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private string unit = "mg";
+    public string Unit
+    {
+        get => unit;
+        set
+        {
+            if (unit != value)
+            {
+                unit = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public bool IsArchived { get; set; } = false;
+}
+
+public class MedicationSchedule
+{
+    [PrimaryKey, AutoIncrement]
+    public int Id { get; set; }
+    public int MedicationId { get; set; }
+    public DayOfWeek Day { get; set; }
+    public TimeSpan Time { get; set; }
+
+
+}
+
+public class MedicationTime
+{
+    [PrimaryKey, AutoIncrement]
+    public int Id { get; set; }
+    public int MedicationId { get; set; }
+}
+
+public class FilteredMedication
+{
+    [PrimaryKey, AutoIncrement]
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string PetName { get; set; } = string.Empty;
+    public string DoseDisplay { get; set; } = string.Empty;
+    public string FrequencyDisplay { get; set; } = string.Empty;
+    public TimeSpan TimesDisplay { get; set; }
+    public string Note { get; set; } = string.Empty;
+}

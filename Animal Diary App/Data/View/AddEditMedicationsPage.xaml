@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    AddEditMedicationsPage.xaml
+    ─────────────────────────────────────────────────────────
+    Use as a ContentPage pushed modally, or as a .NET MAUI
+    BottomSheet (e.g. via the Community Toolkit or a custom
+    partial-height modal). The page is self-contained.
+
+    Open for ADD:  pass empty MedicationVM.DraftMedication
+    Open for EDIT: pass populated MedicationVM.DraftMedication
+    ? MedicationVM.IsEditing (bool) controls title + save label
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Animal_Diary_App.Data.View.AddEditMedicationsPage"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="Transparent">
+
+    <!-- Semi-transparent scrim — tapping it dismisses the sheet -->
+    <Grid>
+        <BoxView BackgroundColor="#60000000"
+                 InputTransparent="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnBackClicked"/>
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <!-- ── Sheet itself, anchored to bottom ── -->
+        <Border BackgroundColor="#F0EBF8"
+                StrokeThickness="0"
+                VerticalOptions="End"
+                Padding="20,0,20,32">
+
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="28,28,0,0"/>
+            </Border.StrokeShape>
+
+            <Border.Shadow>
+                <Shadow Brush="#40000000"
+                        Offset="0,-4"
+                        Radius="20"
+                        Opacity="0.25"/>
+            </Border.Shadow>
+
+            <VerticalStackLayout Spacing="18">
+
+                <!-- Handle + title -->
+                <VerticalStackLayout Spacing="14"
+                                     Padding="0,14,0,0">
+
+                    <!-- Drag handle -->
+                    <BoxView WidthRequest="40"
+                             HeightRequest="4"
+                             CornerRadius="2"
+                             BackgroundColor="#C4A8E0"
+                             HorizontalOptions="Center"/>
+
+                    <!-- ? bind Text to MedicationVM.SheetTitle
+                         e.g. "Add Medication" or "Edit Medication" -->
+                    <Label Text="Add Medication"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="#1C3D52"
+                           HorizontalOptions="Center"/>
+
+                </VerticalStackLayout>
+
+                <!-- ── FORM FIELDS ── -->
+                <VerticalStackLayout Spacing="12">
+
+                    <!-- Medication name -->
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="MEDICATION NAME"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               TextColor="#5A7990"/>
+                        <Border BackgroundColor="#FFFFFF"
+                                Stroke="#D0C8E0"
+                                StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14"/>
+                            </Border.StrokeShape>
+                            <!-- ? bind to MedicationVM.DraftMedication.Name -->
+                            <Entry Placeholder="e.g. Methimazole"
+                                   Text="{Binding MedicationVM.MedicationDraft.Name}"
+                                   FontSize="14"
+                                   TextColor="#1C3D52"
+                                   PlaceholderColor="#A0B0BC"
+                                   Margin="14,0"/>
+                        </Border>
+                        <Label Text="{Binding MedicationVM.MedicationNameError}"
+                               FontSize="11"
+                               TextColor="#E83E5F"
+                               IsVisible="{Binding MedicationVM.MedicationNameError, Converter={StaticResource StringToBoolConverter}}"/>
+                    </VerticalStackLayout>
+
+                    <!-- Dose + unit side by side -->
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="10">
+
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="DOSE"
+                                   FontSize="10"
+                                   FontAttributes="Bold"
+                                   TextColor="#5A7990"/>
+                            <Border BackgroundColor="#FFFFFF"
+                                    Stroke="#D0C8E0"
+                                    StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="14"/>
+                                </Border.StrokeShape>
+                                <!-- ? bind to MedicationVM.DraftMedication.Dose -->
+                                <Entry Placeholder="2.5"
+                                       Text="{Binding MedicationVM.MedicationDraft.Dosage}"
+                                       Keyboard="Numeric"
+                                       FontSize="14"
+                                       TextColor="#1C3D52"
+                                       PlaceholderColor="#A0B0BC"
+                                       Margin="14,0"/>
+                            </Border>
+                            <Label Text="{Binding MedicationVM.DosageError}"
+                                   FontSize="11"
+                                   TextColor="#E83E5F"
+                                   IsVisible="{Binding MedicationVM.DosageError, Converter={StaticResource StringToBoolConverter}}"/>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="5"
+                                             WidthRequest="90">
+                            <Label Text="UNIT"
+                                   FontSize="10"
+                                   FontAttributes="Bold"
+                                   TextColor="#5A7990"/>
+                            <Border BackgroundColor="#FFFFFF"
+                                    Stroke="#D0C8E0"
+                                    StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="14"/>
+                                </Border.StrokeShape>
+                                <!-- ? bind to MedicationVM.DraftMedication.Unit
+                                     Items: mg, ml, tablet, drops -->
+                                <Picker Title="mg"
+                                        SelectedItem="{Binding MedicationVM.MedicationDraft.Unit}"
+                                        ItemsSource="{Binding MedicationVM.UnitOptions}"
+                                        FontSize="14"
+                                        TextColor="#1C3D52"
+                                        Margin="10,0"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                    </Grid>
+
+                    <!-- WEEKDAY SELECTOR -->
+
+                    <VerticalStackLayout Spacing="8">
+
+                        <Label Text="MEDICATION DAYS"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               TextColor="#5A7990"/>
+
+                        <CollectionView
+                            ItemsSource="{Binding MedicationVM.Days}"
+                            ItemsLayout="HorizontalList"
+                            SelectionMode="None"
+                            HeightRequest="60">
+
+                            <CollectionView.ItemTemplate>
+
+                                <DataTemplate>
+
+                                    <Border
+                                        WidthRequest="42"
+                                        HeightRequest="42"
+                                        Stroke="#D0C8E0"
+                                        StrokeThickness="1"
+                                        BackgroundColor="White"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="21"/>
+                                        </Border.StrokeShape>
+
+                                        <Border.GestureRecognizers>
+
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MedicationVM.ToggleDayCommand}"
+                                                CommandParameter="{Binding .}"/>
+
+                                        </Border.GestureRecognizers>
+
+                                        <Border.Triggers>
+
+                                            <DataTrigger
+                                                TargetType="Border"
+                                                Binding="{Binding IsSelected}"
+                                                Value="True">
+
+                                                <Setter Property="BackgroundColor"
+                                                        Value="#9B6FCC"/>
+
+                                                <Setter Property="Stroke"
+                                                        Value="#9B6FCC"/>
+
+                                            </DataTrigger>
+
+                                        </Border.Triggers>
+
+                                        <Label
+                                            Text="{Binding DisplayName}"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"
+                                            TextColor="#1C3D52"
+                                            FontAttributes="Bold"
+                                            FontSize="13"/>
+
+                                    </Border>
+
+                                </DataTemplate>
+
+                            </CollectionView.ItemTemplate>
+
+                        </CollectionView>
+
+                        <Label Text="{Binding MedicationVM.DaysError}"
+                               FontSize="11"
+                               TextColor="#E83E5F"
+                               IsVisible="{Binding MedicationVM.DaysError, Converter={StaticResource StringToBoolConverter}}"/>
+
+                    </VerticalStackLayout>
+
+
+                    <!-- TIMES PER DAY -->
+
+                    <VerticalStackLayout Spacing="5">
+
+                        <Label Text="TIMES PER DAY"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               TextColor="#5A7990"/>
+
+                        <Border BackgroundColor="#FFFFFF"
+                                Stroke="#D0C8E0"
+                                StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14"/>
+                            </Border.StrokeShape>
+
+                            <Picker
+                                ItemsSource="{Binding MedicationVM.FrequencyOptions}"
+                                SelectedItem="{Binding MedicationVM.SelectedFrequency}"
+                                FontSize="14"
+                                TextColor="#1C3D52"
+                                Margin="10,0"/>
+
+                        </Border>
+
+
+
+                    </VerticalStackLayout>
+
+
+                    <!-- DYNAMIC TIME PICKERS -->
+
+                    <VerticalStackLayout
+                        Spacing="10"
+                        BindableLayout.ItemsSource="{Binding MedicationVM.Times}">
+
+                        <BindableLayout.ItemTemplate>
+
+                            <DataTemplate>
+
+                                <VerticalStackLayout Spacing="5">
+
+                                    <Label Text="TIME"
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           TextColor="#5A7990"/>
+
+                                    <Border BackgroundColor="#FFFFFF"
+                                            Stroke="#D0C8E0"
+                                            StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="14"/>
+                                        </Border.StrokeShape>
+
+                                        <TimePicker
+                                            Time="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                   Path=BindingContext.MedicationVM.SelectedTime}"
+                                            Format="HH:mm"
+                                            FontSize="14"
+                                            TextColor="#1C3D52"
+                                            Margin="14,8"/>
+
+                                    </Border>
+
+                                </VerticalStackLayout>
+
+                            </DataTemplate>
+
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+
+                    <!-- Assigned pet -->
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="FOR PET"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               TextColor="#5A7990"/>
+                        <Border BackgroundColor="#FFFFFF"
+                                Stroke="#D0C8E0"
+                                StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14"/>
+                            </Border.StrokeShape>
+                            <Picker
+                                ItemsSource="{Binding PetVM.Pets}"
+                                SelectedItem="{Binding PetVM.SelectedPet}"
+                                ItemDisplayBinding="{Binding Name}"
+                                FontSize="14"
+                                TextColor="#1C3D52"
+                                Margin="10,0"/>
+                        </Border>
+                        <Label Text="{Binding MedicationVM.PetError}"
+                               FontSize="11"
+                               TextColor="#E83E5F"
+                               IsVisible="{Binding MedicationVM.PetError, Converter={StaticResource StringToBoolConverter}}"/>
+                    </VerticalStackLayout>
+
+                    <!-- Food note (optional) -->
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="NOTES (OPTIONAL)"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               TextColor="#5A7990"/>
+                        <Border BackgroundColor="#FFFFFF"
+                                Stroke="#D0C8E0"
+                                StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14"/>
+                            </Border.StrokeShape>
+                            <!-- ? bind to MedicationVM.DraftMedication.Notes -->
+                            <Entry Placeholder="e.g. with food, after meal…"
+                                   Text="{Binding MedicationVM.MedicationDraft.Notes}"
+                                   FontSize="14"
+                                   TextColor="#1C3D52"
+                                   PlaceholderColor="#A0B0BC"
+                                   Margin="14,0"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+
+                <!-- ── ACTION BUTTONS ── -->
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="12">
+
+                    <!-- Cancel -->
+                    <Border BackgroundColor="#40C4A8E0"
+                            StrokeThickness="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="16"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding MedicationVM.CancelMedicationCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="Cancel"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="#7A5D99"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,13"/>
+                    </Border>
+
+                    <!-- Save -->
+                    <Border Grid.Column="1"
+                            BackgroundColor="#9B6FCC"
+                            StrokeThickness="0"
+                            Opacity="{Binding MedicationVM.CanSaveMedication, Converter={StaticResource BoolToOpacityConverter}}"
+                            IsEnabled="{Binding MedicationVM.CanSaveMedication}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="16"/>
+                        </Border.StrokeShape>
+                        <Border.Shadow>
+                            <Shadow Brush="#409B6FCC"
+                                    Offset="0,3"
+                                    Radius="8"
+                                    Opacity="0.35"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding MedicationVM.SaveMedicationCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="Save"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,13"/>
+                    </Border>
+
+                </Grid>
+
+            </VerticalStackLayout>
+        </Border>
+
+    </Grid>
+
+</ContentPage>

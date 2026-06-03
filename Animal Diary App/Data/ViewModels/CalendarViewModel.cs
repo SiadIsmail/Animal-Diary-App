@@ -4,15 +4,11 @@ using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Helpers;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
 
-public class CalendarViewModel : INotifyPropertyChanged
+public class CalendarViewModel : BaseViewModel
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     private DateTime currentSelectedDate = DateTime.Now.Date;
     public DateTime CurrentSelectedDate
     {
@@ -34,60 +30,41 @@ public class CalendarViewModel : INotifyPropertyChanged
     public string EnteredMood
     {
         get => enteredMood;
-        set
-        {
-            if (enteredMood == value) return;
-            enteredMood = value;
-            OnPropertyChanged();
-        }
+        set => SetProperty(ref enteredMood, value);
     }
     private string enteredWeight = string.Empty;
 
     public string EnteredWeight
     {
-        get => enteredWeight.ToString();
-        set
-        {
-            if (enteredWeight == value) return;
-            enteredWeight = value;
-            OnPropertyChanged();
-        }
+        get => enteredWeight;
+        set => SetProperty(ref enteredWeight, value);
     }
     private string shownMood = string.Empty;
     public string ShownMood
     {
         get => shownMood;
-        set
-        {
-            if (shownMood == value) return;
-            shownMood = value;
-            OnPropertyChanged();
-        }
+        set => SetProperty(ref shownMood, value);
     }
     private string shownWeight = string.Empty;
     public string ShownWeight
     {
         get => shownWeight;
-        set
-        {
-            if (shownWeight == value) return;
-            shownWeight = value;
-            OnPropertyChanged();
-        }
+        set => SetProperty(ref shownWeight, value);
     }
 
     private readonly PetEntryService _petEntryService;
     private readonly PetService _petService;
+    private readonly ActivePetService _activePetService;
     public MedicationViewModel MedicationVM { get; }
 
     public CalendarViewModel(
     PetEntryService petEntryService,
-    MedicationViewModel medicationVM, PetService petService)
+    MedicationViewModel medicationVM, PetService petService, ActivePetService activePetService)
     {
         _petEntryService = petEntryService;
         _petService = petService;
+        _activePetService = activePetService;
         MedicationVM = medicationVM;
-
     }
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
@@ -103,8 +80,9 @@ public class CalendarViewModel : INotifyPropertyChanged
         if (petsFromDb.Count == 0)
             return;
 
-        var selected = petsFromDb.FirstOrDefault(p => p.Id == CurrentPetId) ?? petsFromDb[0];
-        CurrentPetId = selected.Id;
+        var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
+        var selected = Pets.FirstOrDefault(p => p.Id == savedPetId) ?? petsFromDb[0];
+        _activePetService.ActivePet = selected;
         selected.IsSelected = true;
     }
     public async Task SavePetMoodEntryAsync()
@@ -198,7 +176,7 @@ public class CalendarViewModel : INotifyPropertyChanged
     }
     public ICommand ShowMoodInputCommand => new Command(() =>
     {
-        EntrySection.ShowInput(MoodSection);
+        EntrySection.ShowInput(MoodSection, WeightSection, MedicationSection);
     });
     public ICommand OnMoodEntryCompleted =>
     new Command(async () =>
@@ -211,7 +189,7 @@ public class CalendarViewModel : INotifyPropertyChanged
 
     public ICommand ShowWeightInputCommand => new Command(() =>
     {
-        EntrySection.ShowInput(WeightSection);
+        EntrySection.ShowInput(WeightSection, MoodSection, MedicationSection);
     });
 
     public ICommand OnWeightEntryCompleted => new Command(async () =>
@@ -226,15 +204,26 @@ public class CalendarViewModel : INotifyPropertyChanged
 
     public ICommand ShowMedicationInputCommand => new Command(() =>
     {
-        EntrySection.ShowInput(MedicationSection);
+        EntrySection.ShowInput(MedicationSection, MoodSection, WeightSection);
     });
 
-    public ICommand SaveMedicationEntryCommand => new Command(async () =>
+    public int CurrentPetId
     {
-        await MedicationVM.SaveMedicationEntryAsync();
-        EntrySection.HideInput(MedicationSection);
-    });
-    public int CurrentPetId = 1;
+        get => _activePetService.ActivePet?.Id ?? 0;
+        private set
+        {
+            if (CurrentPetId != value)
+            {
+                var pet = Pets.FirstOrDefault(p => p.Id == value);
+                if (pet != null)
+                {
+                    _activePetService.ActivePet = pet;
+                    OnPropertyChanged();
+                }
+            }
+        }
+    }
+
     public ICommand SelectPetCommand => new Command<Pet>(async pet =>
     {
         foreach (var p in Pets)
@@ -242,16 +231,8 @@ public class CalendarViewModel : INotifyPropertyChanged
             p.IsSelected = false;
         }
         pet.IsSelected = true;
-        CurrentPetId = pet.Id;
+        _activePetService.ActivePet = pet;
         await LoadEntriesAsync();
         Console.WriteLine($"Selected pet: {pet.Name}");
     });
-
-
-
-    private void OnPropertyChanged([CallerMemberName] string? name = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
-
 }

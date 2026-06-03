@@ -1,21 +1,32 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:calendar="clr-namespace:Syncfusion.Maui.Calendar;assembly=Syncfusion.Maui.Calendar"
              x:Class="Animal_Diary_App.Data.View.CalendarPage"
-             NavigationPage.HasNavigationBar="False">
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="#DCEBF5">
+        <ContentPage.Resources>
+                <ResourceDictionary>
+                        <helpers:ZeroToWeightPlaceholderConverter x:Key="ZeroWeightPlaceholderConverter"/>
+                        <helpers:EmptyToMoodPlaceholderConverter x:Key="EmptyMoodPlaceholderConverter"/>
 
-        <Grid>
+                </ResourceDictionary>
+        </ContentPage.Resources>
+
+        <Grid RowDefinitions="*,Auto">
 
                 <!-- Background -->
                 <Image Source="hintergrund_blau.png"
                        Aspect="AspectFill"
                        HorizontalOptions="Fill"
                        VerticalOptions="Fill"
-                       InputTransparent="True"/>
+                       InputTransparent="True"
+                       Grid.RowSpan="2"/>
 
                 <!-- Main Content -->
-                <VerticalStackLayout Padding="24,20"
+                <VerticalStackLayout Grid.Row="0"
+                                     Padding="24,20"
                                      Spacing="24">
 
                         <!-- Pet Selector Chips -->
@@ -83,7 +94,7 @@
 
                                 <calendar:SfCalendar
                                         x:Name="Calendar"
-                                        BackgroundColor="#FF20A5E7"
+                                        BackgroundColor="#5B9BB8"
                                         SelectedDate="{Binding CalendarVM.CurrentSelectedDate, Mode=TwoWay}"
                                         HeightRequest="170"
                                         VerticalOptions="Start"
@@ -111,6 +122,8 @@
                                                 WidthRequest="150"
                                                 HeightRequest="50"
                                                 CornerRadius="25"
+                                                BackgroundColor="#5B9BB8"
+                                                TextColor="White"
                                                 IsVisible="{Binding CalendarVM.MoodSection.IsAddButtonVisible}"
                                                 Command="{Binding CalendarVM.ShowMoodInputCommand}"/>
 
@@ -119,16 +132,10 @@
                                                 WidthRequest="150"
                                                 HeightRequest="50"
                                                 CornerRadius="25"
+                                                BackgroundColor="#5B9BB8"
+                                                TextColor="White"
                                                 IsVisible="{Binding CalendarVM.WeightSection.IsAddButtonVisible}"
                                                 Command="{Binding CalendarVM.ShowWeightInputCommand}"/>
-
-                                        <Button Text="+ Medication"
-                                                FontSize="20"
-                                                WidthRequest="150"
-                                                HeightRequest="50"
-                                                CornerRadius="25"
-                                                IsVisible="{Binding CalendarVM.MedicationSection.IsAddButtonVisible}"
-                                                Command="{Binding CalendarVM.ShowMedicationInputCommand}"/>
 
                                 </HorizontalStackLayout>
                         </ScrollView>
@@ -147,35 +154,26 @@
                                Completed="OnWeightEntryCompleted"
                                IsVisible="{Binding CalendarVM.WeightSection.IsInputVisible}"/>
 
-                        <!-- Medication Input -->
-                        <HorizontalStackLayout HorizontalOptions="Center"
-                                               IsVisible="{Binding CalendarVM.MedicationSection.IsInputVisible}">
-                                <Entry Placeholder="Enter the taken medication name"
-                                       Text="{Binding MedicationVM.EnteredMedicationName}"
-                                       FontSize="18"/>
-                                <Entry Placeholder="dosage"
-                                       Text="{Binding MedicationVM.EnteredDosage}"
-                                       FontSize="18"
-                                       Keyboard="Numeric"/>
-                                <Button Text="Save"
-                                        FontSize="20"
-                                        CornerRadius="25"
-                                        Command="{Binding CalendarVM.SaveMedicationEntryCommand}"/>
-                        </HorizontalStackLayout>
 
                         <!-- Day Overview Card -->
                         <ScrollView>
-                                <Border BackgroundColor="#CC1A8FC4"
+                                <Border BackgroundColor="#5B9BB8"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 16"
                                         Padding="20,16">
+                                        <Border.Shadow>
+                                                <Shadow Brush="#40000000"
+                                                        Offset="0,8"
+                                                        Radius="18"
+                                                        Opacity="0.35"/>
+                                        </Border.Shadow>
                                         <VerticalStackLayout Spacing="12">
 
                                                 <Label Text="Today's Overview"
                                                        FontSize="16"
                                                        FontAttributes="Bold"
                                                        TextColor="White"
-                                                       Opacity="0.75"/>
+                                                       Opacity="0.85"/>
 
                                                 <!-- Mood Row -->
                                                 <HorizontalStackLayout Spacing="10">
@@ -192,7 +190,25 @@
                                                                FontSize="15"
                                                                FontAttributes="Bold"
                                                                TextColor="White"
-                                                               VerticalOptions="Center"/>
+                                                               VerticalOptions="Center">
+                                                                <Label.Triggers>
+
+                                                                        <DataTrigger
+                                                                                TargetType="Label"
+                                                                                Binding="{Binding CalendarVM.ShownMood}"
+                                                                                Value="">
+
+                                                                                <Setter Property="Text"
+                                                                                        Value="No mood recorded yet..."/>
+                                                                                <Setter Property="Opacity"
+                                                                                        Value="0.5"/>
+                                                                                <Setter Property="FontAttributes"
+                                                                                        Value="Italic"/>
+
+                                                                        </DataTrigger>
+
+                                                                </Label.Triggers>
+                                                        </Label>
                                                 </HorizontalStackLayout>
 
                                                 <!-- Divider -->
@@ -215,7 +231,25 @@
                                                                FontSize="15"
                                                                FontAttributes="Bold"
                                                                TextColor="White"
-                                                               VerticalOptions="Center"/>
+                                                               VerticalOptions="Center">
+                                                                <Label.Triggers>
+
+                                                                        <DataTrigger
+                                                                                TargetType="Label"
+                                                                                Binding="{Binding CalendarVM.ShownWeight}"
+                                                                                Value="">
+
+                                                                                <Setter Property="Text"
+                                                                                        Value="No weight recorded yet..."/>
+                                                                                <Setter Property="Opacity"
+                                                                                        Value="0.5"/>
+                                                                                <Setter Property="FontAttributes"
+                                                                                        Value="Italic"/>
+
+                                                                        </DataTrigger>
+
+                                                                </Label.Triggers>
+                                                        </Label>
                                                 </HorizontalStackLayout>
 
                                         </VerticalStackLayout>
@@ -224,21 +258,90 @@
 
                 </VerticalStackLayout>
 
-                <!-- Bottom Navigation -->
-                <Grid RowDefinitions="*,Auto"
-                      ColumnDefinitions="*,*"
-                      VerticalOptions="End">
+                <!-- BOTTOM NAVIGATION -->
+                <Border Grid.Row="1"
+                        Margin="0"
+                        Padding="12,10,12,20"
+                        BackgroundColor="#E6C4A8E0"
+                        StrokeThickness="0"
+                        VerticalOptions="End">
 
-                        <Button Text="Main"
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                Clicked="OnMainClicked"/>
+                        <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="24,24,0,0"/>
+                        </Border.StrokeShape>
 
-                        <Button Text="Calendar"
-                                Grid.Row="1"
-                                Grid.Column="1"/>
+                        <Border.Shadow>
+                                <Shadow Brush="#30000000"
+                                        Offset="0,-2"
+                                        Radius="10"
+                                        Opacity="0.18"/>
+                        </Border.Shadow>
 
-                </Grid>
+                        <Grid ColumnDefinitions="*,*,*">
+
+                                <!-- MAIN -->
+                                <Grid>
+                                        <Grid.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnMainClicked"/>
+                                        </Grid.GestureRecognizers>
+
+                                        <VerticalStackLayout HorizontalOptions="Center"
+                                                             Spacing="2">
+
+                                                <Label Text="🏠"
+                                                       FontSize="20"
+                                                       HorizontalTextAlignment="Center"/>
+
+                                                <Label Text="Main"
+                                                       FontSize="11"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#4A1580"
+                                                       HorizontalTextAlignment="Center"/>
+                                        </VerticalStackLayout>
+                                </Grid>
+
+                                <!-- CALENDAR -->
+                                <Grid Grid.Column="1">
+
+
+                                        <VerticalStackLayout HorizontalOptions="Center"
+                                                             Spacing="2">
+
+                                                <Label Text="📅"
+                                                       FontSize="20"
+                                                       HorizontalTextAlignment="Center"/>
+
+                                                <Label Text="Calendar"
+                                                       FontSize="11"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#7A5D99"
+                                                       HorizontalTextAlignment="Center"/>
+                                        </VerticalStackLayout>
+                                </Grid>
+
+                                <!-- PETS -->
+                                <Grid Grid.Column="2">
+                                        <Grid.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnPetsClicked"/>
+                                        </Grid.GestureRecognizers>
+
+                                        <VerticalStackLayout HorizontalOptions="Center"
+                                                             Spacing="2">
+
+                                                <Label Text="🐾"
+                                                       FontSize="20"
+                                                       HorizontalTextAlignment="Center"/>
+
+                                                <Label Text="Pets"
+                                                       FontSize="11"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#7A5D99"
+                                                       HorizontalTextAlignment="Center"/>
+                                        </VerticalStackLayout>
+                                </Grid>
+
+                        </Grid>
+                </Border>
 
         </Grid>
 

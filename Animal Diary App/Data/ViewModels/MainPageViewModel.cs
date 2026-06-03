@@ -2,39 +2,45 @@ namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Globalization;
 using System.Windows.Input;
 using SQLite;
 
-public class MainPageViewModel : INotifyPropertyChanged
+public class MainPageViewModel : BaseViewModel
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
-    private void OnPropertyChanged([CallerMemberName] string? name = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
-
-
     public List<PetEntry> Entries { get; set; } = new();
     private readonly PetEntryService _petEntryService;
+    private readonly PetService _petService;
+    private readonly ActivePetService _activePetService;
+    private readonly SettingsService _SettingsService;
 
-   public MainPageViewModel(PetEntryService petEntryService)
+    public Pet ActivePet
+    {
+        get => _activePetService.ActivePet;
+        set => _activePetService.ActivePet = value;
+    }
+
+    public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService)
     {
         _petEntryService = petEntryService;
+        _petService = petService;
+        _activePetService = activePetService;
+        _SettingsService = settingsService;
+
+        _activePetService.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ActivePet))
+            {
+                OnPropertyChanged(nameof(ActivePet));
+            }
+        };
     }
-    
+
     private decimal latestWeight;
     public decimal LatestWeight
     {
         get => latestWeight;
-        set
-        {
-            if (latestWeight == value) return;
-            latestWeight = value;
-            OnPropertyChanged();
-        }
+        set => SetProperty(ref latestWeight, value);
     }
     private PetEntry? EntryToday;
     public async Task LoadLatestWeightAsync()
@@ -45,4 +51,7 @@ public class MainPageViewModel : INotifyPropertyChanged
             LatestWeight = EntryToday.Weight;
         }
     }
+    //public async Task LoadCurrentPet()
+   //////}
+
 }

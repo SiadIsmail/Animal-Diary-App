@@ -26,4 +26,11 @@ public class PetService
     {
         return await _db.Table<Pet>().ToListAsync();
     }
+
+    public async Task<Pet> GetPetByIdAsync(int id)
+    {
+        return await _db.Table<Pet>()
+            .Where(p => p.Id == id)
+            .FirstOrDefaultAsync();
+    }
 }
