@@ -312,7 +312,13 @@ public class MedicationViewModel : BaseViewModel
         ClearMedicationDraft();
         OnMedicationSaved?.Invoke(this, EventArgs.Empty);
         await _notificationService.RequestNotificationPermission();
-        await _notificationService.ScheduleNotification("Medication Reminder", "Give Max his insulin", DateTime.Now.AddSeconds(10)); // Example: Schedule notification for 10 seconds from now
+        var notifyTime = DateTime.Today.Add(selectedTime);
+
+        if (notifyTime <= DateTime.Now)
+        {
+            notifyTime = notifyTime.AddDays(1);
+        }
+        await _notificationService.ScheduleDailyNotification(newMedication.Id, "Medication Reminder", "Give " + SelectedMedicationDraftPet?.Name + " his " + newMedication.Name, notifyTime);
     }
 
     public ICommand SaveMedicationCommand => new Command(async () =>

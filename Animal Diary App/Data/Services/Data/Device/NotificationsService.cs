@@ -3,19 +3,20 @@ namespace Animal_Diary_App.Data.Services.Data.Device;
 using Plugin.LocalNotification;
 public class NotificationService : INotificationService
 {
-    public async Task ScheduleNotification(
+    public async Task ScheduleDailyNotification(int id,
         string title,
         string message,
         DateTime notifyTime)
     {
         var request = new NotificationRequest
         {
-            NotificationId = new Random().Next(1000, 9999),
+            NotificationId = id,
             Title = title,
             Description = message,
             Schedule = new NotificationRequestSchedule
             {
-                NotifyTime = notifyTime
+                NotifyTime = notifyTime,
+                RepeatType = NotificationRepeat.Daily
             }
         };
 
