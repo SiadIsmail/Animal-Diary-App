@@ -267,10 +267,11 @@
 
                 </Grid>
 
-                <!-- WEIGHT CHART -->
-                <view:WeightChartView/>
+                <!-- WEIGHT CHART - TEMPORARILY DISABLED FOR DEBUGGING -->
+                <!-- <view:WeightChartView/> -->
 
-                <!-- MOOD TIMELINE -->
+                <!-- MOOD TIMELINE - TEMPORARILY DISABLED FOR DEBUGGING -->
+                <!--
                 <VerticalStackLayout Spacing="10"
                                      IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
 
@@ -316,25 +317,8 @@
                     </Border>
 
                 </VerticalStackLayout>
+                -->
 
-                <!-- MOOD TIMELINE EMPTY STATE -->
-                <VerticalStackLayout Spacing="8"
-                                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData, Converter={StaticResource InvertedBoolConverter}}"
-                                     Padding="16"
-                                     VerticalOptions="Start">
-
-                    <Label Text="😊"
-                           FontSize="32"
-                           HorizontalTextAlignment="Center"/>
-
-                    <Label Text="Start tracking your pet's mood in the calendar"
-                           FontSize="12"
-                           TextColor="#6D8291"
-                           HorizontalTextAlignment="Center"/>
-
-                </VerticalStackLayout>
-
-                <!-- RECENT ACTIVITY -->
                 <VerticalStackLayout Spacing="10">
 
                     <Label Text="RECENT ACTIVITY"

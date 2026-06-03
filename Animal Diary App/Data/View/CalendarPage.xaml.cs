@@ -39,6 +39,11 @@ public partial class CalendarPage : ContentPage
 		await Navigation.PushAsync(petPage);
 	}
 
+	private async void OnMoodEntryCompleted(object? sender, EventArgs e)
+	{
+		vm.CalendarVM.OnMoodEntryCompleted.Execute(null);
+	}
+
 	private async void OnWeightEntryCompleted(object? sender, EventArgs e)
 	{
 		vm.CalendarVM.OnWeightEntryCompleted.Execute(null);
