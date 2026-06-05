@@ -48,7 +48,7 @@
 
                     </VerticalStackLayout>
 
-                    <!-- ? settings command -->
+                    <!-- Settings button -->
                     <Border Grid.Column="1"
                             WidthRequest="38"
                             HeightRequest="38"
@@ -61,11 +61,15 @@
                             <RoundRectangle CornerRadius="19"/>
                         </Border.StrokeShape>
 
-                        <Image Source="settings.png"
-                               WidthRequest="18"
-                               HeightRequest="18"
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.OpenSettingsCommand}"/>
+                        </Border.GestureRecognizers>
+
+                        <Label Text="⚙️"
+                               FontSize="18"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
+
                     </Border>
 
                 </Grid>
@@ -269,56 +273,59 @@
                     </Border>
 
                 </Grid>
+                <VerticalStackLayout
+                    IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
+                    <Label Text="Mood"
+                           FontSize="10"
+                           FontAttributes="Bold"
+                           CharacterSpacing="1.5"
+                           TextColor="#2E6B85"/>
 
-                <Label Text="Mood"
-                       FontSize="10"
-                       FontAttributes="Bold"
-                       CharacterSpacing="1.5"
-                       TextColor="#2E6B85"/>
+                    <!-- MOOD TIMELINE -->
+                    <Border BackgroundColor="#40FFFFFF"
+                            Stroke="#50FFFFFF"
+                            StrokeThickness="1"
+                            Padding="12,8"
+                            StrokeShape="RoundRectangle 16">
 
-                <!-- MOOD TIMELINE -->
-                <Border BackgroundColor="#40FFFFFF"
-                        Stroke="#50FFFFFF"
-                        StrokeThickness="1"
-                        Padding="12,8"
-                        StrokeShape="RoundRectangle 16">
+                        <VerticalStackLayout Spacing="8">
 
-                    <VerticalStackLayout Spacing="8">
+                            <Label Text="Last 30 days"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   TextColor="#2E6B85"/>
 
-                        <Label Text="Last 30 days"
-                               FontSize="11"
-                               FontAttributes="Bold"
-                               TextColor="#2E6B85"/>
+                            <FlexLayout Direction="Row"
+                                        Wrap="NoWrap"
+                                        AlignItems="Center"
+                                        BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
 
-                        <FlexLayout Direction="Row"
-                                    Wrap="NoWrap"
-                                    AlignItems="Center"
-                                    BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border HeightRequest="26"
+                                                Margin="1,0"
+                                                BackgroundColor="{Binding MoodColor}"
+                                                StrokeThickness="0"
+                                                FlexLayout.Grow="1"
+                                                StrokeShape="RoundRectangle 3">
 
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate>
-                                    <Border HeightRequest="26"
-                                            Margin="1,0"
-                                            BackgroundColor="{Binding MoodColor}"
-                                            StrokeThickness="0"
-                                            FlexLayout.Grow="1"
-                                            StrokeShape="RoundRectangle 3">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MainPageVM.NavigateToMoodDateCommand}"
+                                                    CommandParameter="{Binding Date}"/>
+                                            </Border.GestureRecognizers>
 
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MainPageVM.NavigateToMoodDateCommand}"
-                                                CommandParameter="{Binding Date}"/>
-                                        </Border.GestureRecognizers>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
 
-                                    </Border>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
+                            </FlexLayout>
 
-                        </FlexLayout>
+                        </VerticalStackLayout>
 
-                    </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
 
-                </Border>
 
                 <VerticalStackLayout Spacing="8"
                                      IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData, Converter={StaticResource InvertedBoolConverter}}"
@@ -493,6 +500,10 @@
 
             </Grid>
         </Border>
+
+        <!-- Settings panel overlay — last child renders on top of everything -->
+        <view:SettingsPanelView Grid.RowSpan="2"
+                                IsPanelOpen="{Binding SettingsVM.IsPanelOpen, Mode=TwoWay}"/>
 
     </Grid>
 

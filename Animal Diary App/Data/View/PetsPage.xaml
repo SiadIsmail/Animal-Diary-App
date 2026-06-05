@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
              x:Class="Animal_Diary_App.Data.View.PetsPage"
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="#DCEBF5">
@@ -21,6 +22,42 @@
 
             <VerticalStackLayout Padding="24,20"
                                  Spacing="24">
+
+                <!-- Header -->
+                <Grid ColumnDefinitions="*,Auto"
+                      VerticalOptions="Center">
+
+                    <Label Text="My Pets"
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="#1C3D52"
+                           VerticalOptions="Center"/>
+
+                    <!-- Settings button -->
+                    <Border Grid.Column="1"
+                            WidthRequest="38"
+                            HeightRequest="38"
+                            BackgroundColor="#55FFFFFF"
+                            StrokeThickness="0"
+                            HorizontalOptions="End"
+                            VerticalOptions="Center">
+
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="19"/>
+                        </Border.StrokeShape>
+
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.OpenSettingsCommand}"/>
+                        </Border.GestureRecognizers>
+
+                        <Label Text="⚙️"
+                               FontSize="18"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+
+                    </Border>
+
+                </Grid>
 
                 <!-- ═════════════════════════════ -->
                 <!-- PET SWITCHER -->
@@ -579,6 +616,10 @@
             </Grid>
 
         </Border>
+
+        <!-- Settings panel overlay — last child renders on top of everything -->
+        <view:SettingsPanelView Grid.RowSpan="2"
+                                IsPanelOpen="{Binding SettingsVM.IsPanelOpen, Mode=TwoWay}"/>
 
     </Grid>
 
