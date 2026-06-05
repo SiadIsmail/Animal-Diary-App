@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Animal_Diary_App.Data.View.WeightChartView">
+             x:Class="Animal_Diary_App.Data.View.WeightChartView"
+             xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <helpers:WeightToHeightConverter x:Key="WeightToHeightConverter"/>
+            <helpers:WeightMaxConverter x:Key="WeightMaxConverter"/>
+            <helpers:WeightMidConverter x:Key="WeightMidConverter"/>
+            <helpers:WeightMinConverter x:Key="WeightMinConverter"/>
+            <helpers:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+        </ResourceDictionary>
+    </ContentView.Resources>
 
     <VerticalStackLayout Spacing="12">
         <!-- Header -->
         <Label Text="WEIGHT TREND"
-               FontSize="11"
+               FontSize="10"
                FontAttributes="Bold"
-               TextColor="#5A7990"/>
+               CharacterSpacing="1.5"
+               TextColor="#2E6B85"/>
 
         <!-- Chart Container -->
         <Border BackgroundColor="#40FFFFFF"
