@@ -298,6 +298,7 @@
                             <FlexLayout Direction="Row"
                                         Wrap="NoWrap"
                                         AlignItems="Center"
+                                        HeightRequest="26"
                                         BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
 
                                 <BindableLayout.ItemTemplate>

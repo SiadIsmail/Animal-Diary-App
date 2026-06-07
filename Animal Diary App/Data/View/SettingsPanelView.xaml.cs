@@ -28,11 +28,20 @@ public partial class SettingsPanelView : ContentView
 
     private async void AnimatePanel(bool open)
     {
+        // Off-screen offset. Fall back to the requested width when the panel
+        // has not been measured yet (typical on the first open on Android).
+        double offset = (SettingsPanel.Width > 0 ? SettingsPanel.Width : SettingsPanel.WidthRequest) + 20;
+
         if (open)
         {
             RootOverlay.IsVisible = true;
-            SettingsPanel.TranslationX = 300;
+            SettingsPanel.TranslationX = offset;
             DimmingOverlay.Opacity = 0;
+
+            // Give Android one layout/render pass before animating the panel
+            // that was just made visible; otherwise TranslateTo is skipped and
+            // the panel never slides in (only the dimming overlay shows).
+            await Task.Delay(16);
 
             await Task.WhenAll(
                 SettingsPanel.TranslateTo(0, 0, 260, Easing.CubicOut),
@@ -41,7 +50,7 @@ public partial class SettingsPanelView : ContentView
         else
         {
             await Task.WhenAll(
-                SettingsPanel.TranslateTo(300, 0, 210, Easing.CubicIn),
+                SettingsPanel.TranslateTo(offset, 0, 210, Easing.CubicIn),
                 DimmingOverlay.FadeTo(0, 180));
 
             RootOverlay.IsVisible = false;
