@@ -44,15 +44,15 @@
                                FontSize="14"
                                FontAttributes="Bold"
                                TextColor="#4A6172"
-                               Opacity="0.9"/>
+                               Opacity="0.7"/>
 
                     </VerticalStackLayout>
 
-                    <!-- ? settings command -->
+                    <!-- Settings button -->
                     <Border Grid.Column="1"
                             WidthRequest="38"
                             HeightRequest="38"
-                            BackgroundColor="#666CDC66"
+                            BackgroundColor="#55FFFFFF"
                             StrokeThickness="0"
                             HorizontalOptions="End"
                             VerticalOptions="Center">
@@ -61,11 +61,15 @@
                             <RoundRectangle CornerRadius="19"/>
                         </Border.StrokeShape>
 
-                        <Image Source="settings.png"
-                               WidthRequest="18"
-                               HeightRequest="18"
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.OpenSettingsCommand}"/>
+                        </Border.GestureRecognizers>
+
+                        <Label Text="⚙️"
+                               FontSize="18"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
+
                     </Border>
 
                 </Grid>
@@ -130,13 +134,14 @@
                                              VerticalOptions="Center">
 
                             <Label Text="{Binding MainPageVM.ActivePet.Name}"
-                                   FontSize="24"
+                                   FontSize="20"
                                    FontFamily="Georgia"
                                    FontAttributes="Bold"
                                    TextColor="White"/>
 
                             <Label FontSize="12"
-                                   TextColor="#DCEBF5">
+                                   TextColor="White"
+                                   Opacity="0.72">
 
                                 <Label.FormattedText>
                                     <FormattedString>
@@ -208,7 +213,7 @@
                             StrokeThickness="1">
 
                         <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="20"/>
+                            <RoundRectangle CornerRadius="16"/>
                         </Border.StrokeShape>
 
                         <VerticalStackLayout Spacing="6">
@@ -216,10 +221,11 @@
                             <Label Text="WEIGHT"
                                    FontSize="10"
                                    FontAttributes="Bold"
-                                   TextColor="#5A7990"/>
+                                   CharacterSpacing="1.5"
+                                   TextColor="#2E6B85"/>
 
                             <Label Text="{Binding MainPageVM.LatestWeight, StringFormat='{0} kg'}"
-                                   FontSize="22"
+                                   FontSize="18"
                                    FontAttributes="Bold"
                                    TextColor="#1C3D52"/>
 
@@ -240,7 +246,7 @@
                             StrokeThickness="1">
 
                         <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="20"/>
+                            <RoundRectangle CornerRadius="16"/>
                         </Border.StrokeShape>
 
                         <VerticalStackLayout Spacing="6">
@@ -248,11 +254,12 @@
                             <Label Text="MOOD"
                                    FontSize="10"
                                    FontAttributes="Bold"
-                                   TextColor="#5A7990"/>
+                                   CharacterSpacing="1.5"
+                                   TextColor="#2E6B85"/>
 
                             <!-- ? latest mood binding -->
                             <Label Text="Happy 😊(Placeholder)"
-                                   FontSize="22"
+                                   FontSize="18"
                                    FontAttributes="Bold"
                                    TextColor="#1C3D52"/>
 
@@ -266,65 +273,84 @@
                     </Border>
 
                 </Grid>
-
-                <!-- WEIGHT CHART - TEMPORARILY DISABLED FOR DEBUGGING -->
-                <!-- <view:WeightChartView/> -->
-
-                <!-- MOOD TIMELINE - TEMPORARILY DISABLED FOR DEBUGGING -->
-                <!--
-                <VerticalStackLayout Spacing="10"
-                                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
-
-                    <Label Text="MOOD HISTORY"
-                           FontSize="11"
+                <VerticalStackLayout
+                    IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
+                    <Label Text="Mood"
+                           FontSize="10"
                            FontAttributes="Bold"
-                           TextColor="#5A7990"/>
+                           CharacterSpacing="1.5"
+                           TextColor="#2E6B85"/>
 
+                    <!-- MOOD TIMELINE -->
                     <Border BackgroundColor="#40FFFFFF"
                             Stroke="#50FFFFFF"
                             StrokeThickness="1"
                             Padding="12,8"
                             StrokeShape="RoundRectangle 16">
 
-                        <ScrollView Orientation="Horizontal"
-                                    HorizontalScrollBarVisibility="Never">
+                        <VerticalStackLayout Spacing="8">
 
-                            <HorizontalStackLayout Spacing="2"
-                                                   BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
+                            <Label Text="Last 30 days"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   TextColor="#2E6B85"/>
+
+                            <FlexLayout Direction="Row"
+                                        Wrap="NoWrap"
+                                        AlignItems="Center"
+                                        HeightRequest="26"
+                                        BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
 
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate>
-                                        <Border WidthRequest="16"
-                                                HeightRequest="16"
+                                        <Border HeightRequest="26"
+                                                Margin="1,0"
                                                 BackgroundColor="{Binding MoodColor}"
                                                 StrokeThickness="0"
-                                                Margin="2,2,2,2"
+                                                FlexLayout.Grow="1"
                                                 StrokeShape="RoundRectangle 3">
 
                                             <Border.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MainPageVM.NavigateToMoodDateCommand}"
-                                                                      CommandParameter="{Binding Date}"/>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MainPageVM.NavigateToMoodDateCommand}"
+                                                    CommandParameter="{Binding Date}"/>
                                             </Border.GestureRecognizers>
 
                                         </Border>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
 
-                            </HorizontalStackLayout>
+                            </FlexLayout>
 
-                        </ScrollView>
+                        </VerticalStackLayout>
 
                     </Border>
-
                 </VerticalStackLayout>
-                -->
+
+
+                <VerticalStackLayout Spacing="8"
+                                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData, Converter={StaticResource InvertedBoolConverter}}"
+                                     Padding="16"
+                                     VerticalOptions="Start">
+                    <Label Text="😊"
+                           FontSize="32"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Text="Start tracking your pet's mood in the calendar"
+                           FontSize="12"
+                           TextColor="#6D8291"
+                           HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+
+                <!-- WEIGHT CHART -->
+                <view:WeightChartView/>
 
                 <VerticalStackLayout Spacing="10">
 
                     <Label Text="RECENT ACTIVITY"
-                           FontSize="11"
+                           FontSize="10"
                            FontAttributes="Bold"
-                           TextColor="#5A7990"/>
+                           CharacterSpacing="1.5"
+                           TextColor="#2E6B85"/>
 
                     <!-- This should eventually become a CollectionView -->
                     <!-- ? recent activity collection -->
@@ -362,7 +388,7 @@
 
                                 <!-- ? medication binding -->
                                 <Label Text="Medication given"
-                                       FontSize="14"
+                                       FontSize="13"
                                        FontAttributes="Bold"
                                        TextColor="#1C3D52"/>
 
@@ -447,7 +473,7 @@
                         <Label Text="Calendar"
                                FontSize="11"
                                FontAttributes="Bold"
-                               TextColor="#7A5D99"
+                               TextColor="#664A1580"
                                HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
                 </Grid>
@@ -468,13 +494,17 @@
                         <Label Text="Pets"
                                FontSize="11"
                                FontAttributes="Bold"
-                               TextColor="#7A5D99"
+                               TextColor="#664A1580"
                                HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
                 </Grid>
 
             </Grid>
         </Border>
+
+        <!-- Settings panel overlay — last child renders on top of everything -->
+        <view:SettingsPanelView Grid.RowSpan="2"
+                                IsPanelOpen="{Binding SettingsVM.IsPanelOpen, Mode=TwoWay}"/>
 
     </Grid>
 

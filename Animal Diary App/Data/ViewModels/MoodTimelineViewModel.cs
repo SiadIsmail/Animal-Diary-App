@@ -19,7 +19,7 @@ public class MoodTimelineViewModel
 
     public ObservableCollection<MoodTimelineDay> TimelineDays { get; } = new();
 
-    private bool hasMoodData;
+    private bool hasMoodData = true;
     public bool HasMoodData
     {
         get => hasMoodData;
@@ -30,6 +30,9 @@ public class MoodTimelineViewModel
     {
         _petEntryService = petEntryService;
     }
+
+    public double BarWidth =>
+    DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density / 30.0;
 
     public async Task LoadLast30DaysAsync(int petId)
     {

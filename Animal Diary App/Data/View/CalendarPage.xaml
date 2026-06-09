@@ -26,8 +26,8 @@
 
                 <!-- Main Content -->
                 <VerticalStackLayout Grid.Row="0"
-                                     Padding="24,20"
-                                     Spacing="24">
+                                     Padding="20,16"
+                                     Spacing="16">
 
                         <!-- Pet Selector Chips -->
                         <ScrollView Orientation="Horizontal"
@@ -47,17 +47,17 @@
                                                                                      Binding="{Binding IsSelected}"
                                                                                      Value="True">
                                                                                 <Setter Property="BackgroundColor"
-                                                                                        Value="#FF24AA41"/>
+                                                                                        Value="#809B6FCC"/>
                                                                                 <Setter Property="Stroke"
-                                                                                        Value="#FF084F12"/>
+                                                                                        Value="#B39B6FCC"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger TargetType="Border"
                                                                                      Binding="{Binding IsSelected}"
                                                                                      Value="False">
                                                                                 <Setter Property="BackgroundColor"
-                                                                                        Value="#00CBE504"/>
+                                                                                        Value="#339B6FCC"/>
                                                                                 <Setter Property="Stroke"
-                                                                                        Value="#FF560E87"/>
+                                                                                        Value="#599B6FCC"/>
                                                                         </DataTrigger>
                                                                 </Border.Triggers>
                                                                 <Border.GestureRecognizers>
@@ -72,15 +72,15 @@
                                                                                HeightRequest="24"
                                                                                VerticalOptions="Center"/>-->
                                                                         <Label Text="{Binding Name}"
-                                                                               FontSize="15"
+                                                                               FontSize="13"
                                                                                FontAttributes="Bold"
-                                                                               TextColor="White"
+                                                                               TextColor="#4A1580"
                                                                                VerticalOptions="Center"/>
 
                                                                         <Label Text="{Binding Age, StringFormat='({0} yrs)'}"
-                                                                               FontSize="15"
+                                                                               FontSize="13"
                                                                                FontAttributes="Bold"
-                                                                               TextColor="White"
+                                                                               TextColor="#4A1580"
                                                                                VerticalOptions="Center"/>
                                                                 </HorizontalStackLayout>
                                                         </Border>
@@ -105,8 +105,9 @@
                                 </calendar:SfCalendar>
 
                                 <Label Text="{Binding CalendarVM.CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
-                                       FontSize="18"
+                                       FontSize="13"
                                        FontAttributes="Bold"
+                                       TextColor="#2E6B85"
                                        HorizontalOptions="Center"
                                        HorizontalTextAlignment="Center"/>
 
@@ -118,33 +119,129 @@
                                                        HorizontalOptions="Center">
 
                                         <Button Text="+ Mood"
-                                                FontSize="20"
-                                                WidthRequest="150"
-                                                HeightRequest="50"
-                                                CornerRadius="25"
-                                                BackgroundColor="#5B9BB8"
-                                                TextColor="White"
+                                                FontSize="13"
+                                                WidthRequest="120"
+                                                HeightRequest="40"
+                                                CornerRadius="20"
+                                                BackgroundColor="#CCC4A8E0"
+                                                TextColor="#4A1580"
                                                 IsVisible="{Binding CalendarVM.MoodSection.IsAddButtonVisible}"
                                                 Command="{Binding CalendarVM.ShowMoodInputCommand}"/>
 
                                         <Button Text="+ Weight"
-                                                FontSize="20"
-                                                WidthRequest="150"
-                                                HeightRequest="50"
-                                                CornerRadius="25"
-                                                BackgroundColor="#5B9BB8"
-                                                TextColor="White"
+                                                FontSize="13"
+                                                WidthRequest="120"
+                                                HeightRequest="40"
+                                                CornerRadius="20"
+                                                BackgroundColor="#CCC4A8E0"
+                                                TextColor="#4A1580"
                                                 IsVisible="{Binding CalendarVM.WeightSection.IsAddButtonVisible}"
                                                 Command="{Binding CalendarVM.ShowWeightInputCommand}"/>
 
                                 </HorizontalStackLayout>
                         </ScrollView>
                         <!-- Mood Input - TEMPORARILY DISABLED FOR DEBUGGING -->
-                        <Entry Placeholder="Enter your pet's mood for the day"
-                               Text="{Binding CalendarVM.EnteredMood}"
-                               FontSize="18"
-                               Completed="OnMoodEntryCompleted"
-                               IsVisible="{Binding CalendarVM.MoodSection.IsInputVisible}"/>
+                        <VerticalStackLayout IsVisible="{Binding CalendarVM.MoodSection.IsInputVisible}"
+                                             Spacing="12">
+                                <Label Text="How is your pet feeling today?"
+                                       FontSize="13"
+                                       FontAttributes="Bold"
+                                       TextColor="#1C3D52"/>
+
+                                <HorizontalStackLayout Spacing="8"
+                                                       HorizontalOptions="Center">
+                                        <Border Padding="12,10"
+                                                BackgroundColor="#D06060"
+                                                StrokeThickness="2"
+                                                StrokeShape="RoundRectangle 12">
+                                                <Border.Triggers>
+                                                        <DataTrigger TargetType="Border"
+                                                                     Binding="{Binding CalendarVM.SelectedMoodLevel}"
+                                                                     Value="1">
+                                                                <Setter Property="Stroke" Value="#FFFFFF"/>
+                                                                <Setter Property="BackgroundColor" Value="#BE4A4A"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger TargetType="Border"
+                                                                     Binding="{Binding CalendarVM.SelectedMoodLevel}"
+                                                                     Value="0">
+                                                                <Setter Property="Stroke" Value="#D06060"/>
+                                                        </DataTrigger>
+                                                </Border.Triggers>
+                                                <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                                                              CommandParameter="1"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="😢" FontSize="20" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                        </Border>
+                                        <Border Padding="12,10" BackgroundColor="#E88A6A" StrokeThickness="2" StrokeShape="RoundRectangle 12">
+                                                <Border.Triggers>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="2">
+                                                                <Setter Property="Stroke" Value="#FFFFFF"/>
+                                                                <Setter Property="BackgroundColor" Value="#D07050"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="0">
+                                                                <Setter Property="Stroke" Value="#E88A6A"/>
+                                                        </DataTrigger>
+                                                </Border.Triggers>
+                                                <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                                                              CommandParameter="2"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="😟" FontSize="20" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                        </Border>
+                                        <Border Padding="12,10" BackgroundColor="#F0C060" StrokeThickness="2" StrokeShape="RoundRectangle 12">
+                                                <Border.Triggers>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="3">
+                                                                <Setter Property="Stroke" Value="#FFFFFF"/>
+                                                                <Setter Property="BackgroundColor" Value="#D9A840"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="0">
+                                                                <Setter Property="Stroke" Value="#F0C060"/>
+                                                        </DataTrigger>
+                                                </Border.Triggers>
+                                                <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                                                              CommandParameter="3"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="😐" FontSize="20" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                        </Border>
+                                        <Border Padding="12,10" BackgroundColor="#7EC8A0" StrokeThickness="2" StrokeShape="RoundRectangle 12">
+                                                <Border.Triggers>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="4">
+                                                                <Setter Property="Stroke" Value="#FFFFFF"/>
+                                                                <Setter Property="BackgroundColor" Value="#5BAA80"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="0">
+                                                                <Setter Property="Stroke" Value="#7EC8A0"/>
+                                                        </DataTrigger>
+                                                </Border.Triggers>
+                                                <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                                                              CommandParameter="4"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="😊" FontSize="20" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                        </Border>
+                                        <Border Padding="12,10" BackgroundColor="#5BBF8A" StrokeThickness="2" StrokeShape="RoundRectangle 12">
+                                                <Border.Triggers>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="5">
+                                                                <Setter Property="Stroke" Value="#FFFFFF"/>
+                                                                <Setter Property="BackgroundColor" Value="#3A9A6A"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="0">
+                                                                <Setter Property="Stroke" Value="#5BBF8A"/>
+                                                        </DataTrigger>
+                                                </Border.Triggers>
+                                                <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                                                              CommandParameter="5"/>
+                                                </Border.GestureRecognizers>
+                                                <Label Text="😄" FontSize="20" VerticalOptions="Center" HorizontalOptions="Center"/>
+                                        </Border>
+                                </HorizontalStackLayout>
+                                <Button Text="Confirm Mood" FontSize="13" HeightRequest="40" CornerRadius="20"
+                                        BackgroundColor="#CCC4A8E0" TextColor="#4A1580"
+                                        Command="{Binding CalendarVM.OnMoodEntryCompleted}"/>
+                        </VerticalStackLayout>
 
                         <Entry Placeholder="Enter your pet's weight today"
                                Text="{Binding CalendarVM.EnteredWeight}"
@@ -168,9 +265,10 @@
                                         </Border.Shadow>
                                         <VerticalStackLayout Spacing="12">
 
-                                                <Label Text="Today's Overview"
-                                                       FontSize="16"
+                                                <Label Text="TODAY'S OVERVIEW"
+                                                       FontSize="10"
                                                        FontAttributes="Bold"
+                                                       CharacterSpacing="1.5"
                                                        TextColor="White"
                                                        Opacity="0.85"/>
 
@@ -180,13 +278,13 @@
                                                                FontSize="20"
                                                                VerticalOptions="Center"/>
                                                         <Label Text="Mood"
-                                                               FontSize="15"
+                                                               FontSize="13"
                                                                TextColor="White"
                                                                Opacity="0.75"
                                                                VerticalOptions="Center"
                                                                WidthRequest="70"/>
                                                         <Label Text="{Binding CalendarVM.ShownMood}"
-                                                               FontSize="15"
+                                                               FontSize="13"
                                                                FontAttributes="Bold"
                                                                TextColor="White"
                                                                VerticalOptions="Center">
@@ -221,13 +319,13 @@
                                                                FontSize="20"
                                                                VerticalOptions="Center"/>
                                                         <Label Text="Weight"
-                                                               FontSize="15"
+                                                               FontSize="13"
                                                                TextColor="White"
                                                                Opacity="0.75"
                                                                VerticalOptions="Center"
                                                                WidthRequest="70"/>
                                                         <Label Text="{Binding CalendarVM.ShownWeight, StringFormat='{0} kg'}"
-                                                               FontSize="15"
+                                                               FontSize="13"
                                                                FontAttributes="Bold"
                                                                TextColor="White"
                                                                VerticalOptions="Center">
@@ -294,7 +392,7 @@
                                                 <Label Text="Main"
                                                        FontSize="11"
                                                        FontAttributes="Bold"
-                                                       TextColor="#4A1580"
+                                                       TextColor="#664A1580"
                                                        HorizontalTextAlignment="Center"/>
                                         </VerticalStackLayout>
                                 </Grid>
@@ -313,7 +411,7 @@
                                                 <Label Text="Calendar"
                                                        FontSize="11"
                                                        FontAttributes="Bold"
-                                                       TextColor="#7A5D99"
+                                                       TextColor="#4A1580"
                                                        HorizontalTextAlignment="Center"/>
                                         </VerticalStackLayout>
                                 </Grid>
@@ -334,7 +432,7 @@
                                                 <Label Text="Pets"
                                                        FontSize="11"
                                                        FontAttributes="Bold"
-                                                       TextColor="#7A5D99"
+                                                       TextColor="#664A1580"
                                                        HorizontalTextAlignment="Center"/>
                                         </VerticalStackLayout>
                                 </Grid>

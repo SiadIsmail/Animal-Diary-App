@@ -49,6 +49,11 @@ public class MainPageViewModel : BaseViewModel
 
     public ObservableCollection<ChartDataPoint> WeightChartData { get; } = new();
 
+    // Drawing area height (in device-independent units) the bars are scaled into.
+    public const double ChartHeight = 140;
+    // Smallest visible bar so the lowest entry is never a flat line.
+    private const double MinBarHeight = 14;
+
     private bool hasSufficientWeightData;
     public bool HasSufficientWeightData
     {
@@ -73,9 +78,27 @@ public class MainPageViewModel : BaseViewModel
         WeightChartData.Clear();
         var entries = await _petEntryService.GetLast30DaysWeightEntriesAsync(ActivePet.Id);
 
+        // Normalize bar heights against the data range so even small
+        // weight differences are clearly visible in the chart.
+        decimal axisMin = 0, axisMax = 0;
+        if (entries.Count > 0)
+        {
+            axisMin = Math.Floor(entries.Min(e => e.Weight));
+            axisMax = Math.Ceiling(entries.Max(e => e.Weight));
+            if (axisMax <= axisMin) axisMax = axisMin + 1;
+        }
+
         foreach (var entry in entries)
         {
-            WeightChartData.Add(new ChartDataPoint { Date = entry.Date, Value = entry.Weight });
+            double fraction = (double)((entry.Weight - axisMin) / (axisMax - axisMin));
+            double barHeight = MinBarHeight + fraction * (ChartHeight - MinBarHeight);
+
+            WeightChartData.Add(new ChartDataPoint
+            {
+                Date = entry.Date,
+                Value = entry.Weight,
+                BarHeight = barHeight
+            });
         }
 
         HasSufficientWeightData = entries.Count >= 2;

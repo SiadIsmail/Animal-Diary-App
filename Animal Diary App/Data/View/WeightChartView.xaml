@@ -1,118 +1,128 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Animal_Diary_App.Data.View.WeightChartView">
+             x:Class="Animal_Diary_App.Data.View.WeightChartView"
+             xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <helpers:WeightMaxConverter x:Key="WeightMaxConverter"/>
+            <helpers:WeightMidConverter x:Key="WeightMidConverter"/>
+            <helpers:WeightMinConverter x:Key="WeightMinConverter"/>
+            <helpers:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+        </ResourceDictionary>
+    </ContentView.Resources>
 
-    <VerticalStackLayout Spacing="12">
-        <!-- Header -->
-        <Label Text="WEIGHT TREND"
-               FontSize="11"
-               FontAttributes="Bold"
-               TextColor="#5A7990"/>
+    <VerticalStackLayout Spacing="8">
 
-        <!-- Chart Container -->
-        <Border BackgroundColor="#40FFFFFF"
-                Stroke="#50FFFFFF"
-                StrokeThickness="1"
-                Padding="16"
-                StrokeShape="RoundRectangle 20">
+        <!-- Has Data -->
+        <VerticalStackLayout Spacing="8"
+                             IsVisible="{Binding MainPageVM.HasSufficientWeightData}">
 
-            <Grid RowDefinitions="*,Auto"
-                  ColumnDefinitions="Auto,*"
-                  RowSpacing="8"
-                  ColumnSpacing="8">
+            <!-- Header (matches the other section headers) -->
+            <Label Text="WEIGHT TREND"
+                   FontSize="10"
+                   FontAttributes="Bold"
+                   CharacterSpacing="1.5"
+                   TextColor="#2E6B85"/>
 
-                <!-- Y-Axis Labels -->
-                <VerticalStackLayout Grid.Row="0"
-                                     Grid.Column="0"
-                                     Spacing="0"
-                                     VerticalOptions="Fill"
-                                     Padding="0,0,8,0">
+            <!-- Chart Card (matches the mood timeline card) -->
+            <Border BackgroundColor="#40FFFFFF"
+                    Stroke="#50FFFFFF"
+                    StrokeThickness="1"
+                    Padding="12,10"
+                    StrokeShape="RoundRectangle 16">
 
-                    <Label Text="{Binding MainPageVM.WeightChartData, Converter={StaticResource WeightMaxConverter}}"
-                           FontSize="9"
-                           TextColor="#6D8291"
-                           VerticalOptions="Start"
-                           HorizontalTextAlignment="End"/>
+                <VerticalStackLayout Spacing="10">
 
-                    <Label Text="{Binding MainPageVM.WeightChartData, Converter={StaticResource WeightMidConverter}}"
-                           FontSize="9"
-                           TextColor="#6D8291"
-                           VerticalOptions="Center"
-                           HorizontalTextAlignment="End"/>
+                    <Label Text="Last 30 days"
+                           FontSize="11"
+                           FontAttributes="Bold"
+                           TextColor="#2E6B85"/>
 
-                    <Label Text="{Binding MainPageVM.WeightChartData, Converter={StaticResource WeightMinConverter}}"
-                           FontSize="9"
-                           TextColor="#6D8291"
-                           VerticalOptions="End"
-                           HorizontalTextAlignment="End"/>
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="10">
+
+                        <!-- Y-Axis Labels (spread evenly across the chart height) -->
+                        <Grid Grid.Column="0"
+                              RowDefinitions="*,*,*"
+                              HeightRequest="140"
+                              WidthRequest="28"
+                              VerticalOptions="Start">
+
+                            <Label Grid.Row="0"
+                                   Text="{Binding MainPageVM.WeightChartData, Converter={StaticResource WeightMaxConverter}}"
+                                   FontSize="9"
+                                   TextColor="#6D8291"
+                                   VerticalOptions="Start"
+                                   HorizontalTextAlignment="End"
+                                   HorizontalOptions="End"/>
+
+                            <Label Grid.Row="1"
+                                   Text="{Binding MainPageVM.WeightChartData, Converter={StaticResource WeightMidConverter}}"
+                                   FontSize="9"
+                                   TextColor="#6D8291"
+                                   VerticalOptions="Center"
+                                   HorizontalTextAlignment="End"
+                                   HorizontalOptions="End"/>
+
+                            <Label Grid.Row="2"
+                                   Text="{Binding MainPageVM.WeightChartData, Converter={StaticResource WeightMinConverter}}"
+                                   FontSize="9"
+                                   TextColor="#6D8291"
+                                   VerticalOptions="End"
+                                   HorizontalTextAlignment="End"
+                                   HorizontalOptions="End"/>
+                        </Grid>
+
+                        <!-- Chart Area: bars + aligned date labels in one scroll -->
+                        <ScrollView Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalScrollBarVisibility="Never">
+
+                            <HorizontalStackLayout Spacing="6"
+                                                   BindableLayout.ItemsSource="{Binding MainPageVM.WeightChartData}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <VerticalStackLayout Spacing="4"
+                                                             WidthRequest="32">
+
+                                            <!-- Bar (bottom-aligned in a fixed-height plot area) -->
+                                            <Grid HeightRequest="140">
+                                                <BoxView WidthRequest="22"
+                                                         HeightRequest="{Binding BarHeight}"
+                                                         Color="#5B9BB8"
+                                                         CornerRadius="4"
+                                                         HorizontalOptions="Center"
+                                                         VerticalOptions="End"/>
+                                            </Grid>
+
+                                            <!-- Weight value -->
+                                            <Label Text="{Binding ValueLabel}"
+                                                   FontSize="8"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#1C3D52"
+                                                   HorizontalTextAlignment="Center"
+                                                   HorizontalOptions="Center"/>
+
+                                            <!-- Date -->
+                                            <Label Text="{Binding DateLabel}"
+                                                   FontSize="8"
+                                                   TextColor="#6D8291"
+                                                   HorizontalTextAlignment="Center"
+                                                   HorizontalOptions="Center"/>
+                                        </VerticalStackLayout>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </HorizontalStackLayout>
+
+                        </ScrollView>
+
+                    </Grid>
+
                 </VerticalStackLayout>
 
-                <!-- Chart Area -->
-                <Grid Grid.Row="0"
-                      Grid.Column="1"
-                      RowDefinitions="*"
-                      ColumnDefinitions="*"
-                      HeightRequest="120">
-
-                    <!-- Grid Lines -->
-                    <BoxView BackgroundColor="#E0E0E0"
-                             Opacity="0.2"
-                             VerticalOptions="Fill"
-                             HorizontalOptions="Fill"/>
-
-                    <!-- Data Points -->
-                    <CollectionView ItemsSource="{Binding MainPageVM.WeightChartData}"
-                                    SelectionMode="None"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill">
-                        <CollectionView.ItemsLayout>
-                            <LinearItemsLayout Orientation="Horizontal"
-                                               ItemSpacing="2"/>
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <VerticalStackLayout Spacing="0"
-                                                     HorizontalOptions="Fill"
-                                                     VerticalOptions="Fill">
-
-                                    <!-- Bar -->
-                                    <BoxView BackgroundColor="#5B9BB8"
-                                             HeightRequest="{Binding Value, Converter={StaticResource WeightToHeightConverter}}"
-                                             VerticalOptions="End"
-                                             CornerRadius="2"/>
-
-                                </VerticalStackLayout>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-
-                </Grid>
-
-                <!-- X-Axis Labels -->
-                <ScrollView Grid.Row="1"
-                            Grid.Column="1"
-                            Orientation="Horizontal"
-                            HorizontalScrollBarVisibility="Never">
-
-                    <HorizontalStackLayout Spacing="2"
-                                           BindableLayout.ItemsSource="{Binding MainPageVM.WeightChartData}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate>
-                                <Label Text="{Binding DateLabel}"
-                                       FontSize="8"
-                                       TextColor="#6D8291"
-                                       WidthRequest="24"
-                                       HorizontalTextAlignment="Center"/>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </HorizontalStackLayout>
-
-                </ScrollView>
-
-            </Grid>
-
-        </Border>
+            </Border>
+        </VerticalStackLayout>
 
         <!-- No Data State -->
         <VerticalStackLayout Spacing="8"

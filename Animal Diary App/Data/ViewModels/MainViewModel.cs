@@ -9,18 +9,21 @@ public class MainViewModel
     public MainPageViewModel MainPageVM { get; }
     public PetViewModel PetVM { get; }
     public MedicationViewModel MedicationVM { get; }
+    public SettingsViewModel SettingsVM { get; }
 
 
     public MainViewModel(
  CalendarViewModel calendarVM,
  MainPageViewModel mainPageVM,
  PetViewModel petVM,
- MedicationViewModel medicationVM)
+ MedicationViewModel medicationVM,
+ SettingsViewModel settingsVM)
     {
         MainPageVM = mainPageVM;
         PetVM = petVM;
         MedicationVM = medicationVM;
         CalendarVM = calendarVM;
+        SettingsVM = settingsVM;
     }
     public async Task LoadAsync()
     {

@@ -143,9 +143,11 @@ public class WeightMidConverter : IValueConverter
             if (weights.Count == 0)
                 return "0";
 
-            var max = weights.Max();
-            var mid = max / 2;
-            return mid.ToString("F1");
+            var axisMin = Math.Floor(weights.Min());
+            var axisMax = Math.Ceiling(weights.Max());
+            if (axisMax <= axisMin) axisMax = axisMin + 1;
+            var mid = (axisMin + axisMax) / 2;
+            return mid.ToString("0.#");
         }
         return "0";
     }
