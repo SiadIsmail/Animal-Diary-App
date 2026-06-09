@@ -1,33 +1,59 @@
 namespace Animal_Diary_App.Data.Services.Data.Device;
 
 using Plugin.LocalNotification;
+
+/// <summary>
+/// <see cref="INotificationService"/> implementation backed by
+/// Plugin.LocalNotification. This is the single point of contact with the
+/// plugin so the rest of the app stays plugin-agnostic.
+/// </summary>
 public class NotificationService : INotificationService
 {
-    public async Task ScheduleDailyNotification(int id,
-        string title,
-        string message,
-        DateTime notifyTime)
-    {
-        var request = new NotificationRequest
-        {
-            NotificationId = id,
-            Title = title,
-            Description = message,
-            Schedule = new NotificationRequestSchedule
-            {
-                NotifyTime = notifyTime,
-                RepeatType = NotificationRepeat.Daily
-            }
-        };
-
-        await LocalNotificationCenter.Current.Show(request);
-    }
     public async Task RequestNotificationPermission()
     {
         var status = await LocalNotificationCenter.Current.RequestNotificationPermission();
         if (!status)
         {
-            // Handle permission denial (e.g., show an alert to the user)
+            // Permission denied — reminders simply won't fire. We fail quietly
+            // rather than nag; the user can re-enable notifications in settings.
         }
     }
+
+    public async Task ScheduleNotification(NotificationContent content)
+    {
+        var request = new NotificationRequest
+        {
+            NotificationId = content.Id,
+            Title = content.Title,
+            Description = content.Message,
+            Schedule = new NotificationRequestSchedule
+            {
+                NotifyTime = content.NotifyTime,
+                RepeatType = MapRepeat(content.Recurrence)
+            }
+        };
+
+        await LocalNotificationCenter.Current.Show(request);
+    }
+
+    public Task CancelNotification(int id)
+    {
+        LocalNotificationCenter.Current.Cancel(id);
+        return Task.CompletedTask;
+    }
+
+    public Task CancelNotifications(IEnumerable<int> ids)
+    {
+        var array = ids?.ToArray() ?? Array.Empty<int>();
+        if (array.Length > 0)
+            LocalNotificationCenter.Current.Cancel(array);
+        return Task.CompletedTask;
+    }
+
+    private static NotificationRepeat MapRepeat(NotificationRecurrence recurrence) => recurrence switch
+    {
+        NotificationRecurrence.Daily => NotificationRepeat.Daily,
+        NotificationRecurrence.Weekly => NotificationRepeat.Weekly,
+        _ => NotificationRepeat.No
+    };
 }

@@ -262,11 +262,15 @@
                     </VerticalStackLayout>
 
 
-                    <!-- DYNAMIC TIME PICKERS -->
+                    <!-- DYNAMIC TIME PICKERS
+                         One picker per reminder time. The number of items is
+                         driven by MedicationVM.SelectedFrequency, which keeps
+                         MedicationVM.ReminderTimes in sync (1–5 entries). Each
+                         TimePicker is bound to its own slot's Time. -->
 
                     <VerticalStackLayout
                         Spacing="10"
-                        BindableLayout.ItemsSource="{Binding MedicationVM.Times}">
+                        BindableLayout.ItemsSource="{Binding MedicationVM.ReminderTimes}">
 
                         <BindableLayout.ItemTemplate>
 
@@ -274,7 +278,7 @@
 
                                 <VerticalStackLayout Spacing="5">
 
-                                    <Label Text="TIME"
+                                    <Label Text="{Binding Label}"
                                            FontSize="10"
                                            FontAttributes="Bold"
                                            TextColor="#5A7990"/>
@@ -288,8 +292,7 @@
                                         </Border.StrokeShape>
 
                                         <TimePicker
-                                            Time="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
-                   Path=BindingContext.MedicationVM.SelectedTime}"
+                                            Time="{Binding Time}"
                                             Format="HH:mm"
                                             FontSize="14"
                                             TextColor="#1C3D52"

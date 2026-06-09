@@ -3,6 +3,8 @@ using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
 using Syncfusion.Maui.Core.Hosting;
 using Animal_Diary_App.Data.Services.Data.Device;
+using Animal_Diary_App.Data.Services.Notifications;
+using Plugin.LocalNotification;
 namespace Animal_Diary_App;
 
 public static class MauiProgram
@@ -13,6 +15,7 @@ public static class MauiProgram
 		builder.ConfigureSyncfusionCore();
 		builder
 			.UseMauiApp<App>()
+			.UseLocalNotification()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -34,7 +37,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<SettingsService>();
 		builder.Services.AddSingleton<AppResetService>();
 		builder.Services.AddSingleton<App>();
-		builder.Services.AddSingleton<INotificationService, NotificationService>();
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Data.Device.INotificationService, NotificationService>();
+		builder.Services.AddSingleton<MedicationReminderScheduler>();
 
 
 #if DEBUG

@@ -103,6 +103,11 @@ public class FilteredMedication
     public string PetName { get; set; } = string.Empty;
     public string DoseDisplay { get; set; } = string.Empty;
     public string FrequencyDisplay { get; set; } = string.Empty;
-    public TimeSpan TimesDisplay { get; set; }
+
+    /// <summary>All reminder times for the day, e.g. "08:00 · 20:00".</summary>
+    public string TimesDisplay { get; set; } = string.Empty;
     public string Note { get; set; } = string.Empty;
+
+    /// <summary>Whether this medication has an optional note worth showing.</summary>
+    public bool HasFoodNote => !string.IsNullOrWhiteSpace(Note);
 }
