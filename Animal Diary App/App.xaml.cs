@@ -55,13 +55,15 @@ public partial class App : Application
 				Application.Current.Windows[0].Page = page;
 			}
 
-			// Catch up any doses missed while the app/device was off and re-arm
-			// all future reminders. Runs off the UI path so startup isn't blocked.
+			// Re-arm all future reminders on launch. resendMissed:false — the
+			// device was on, so the OS already delivered any past reminders;
+			// re-sending here would duplicate them. Missed-dose re-sending is the
+			// boot receiver's job. Runs off the UI path so startup isn't blocked.
 			_ = Task.Run(async () =>
 			{
 				try
 				{
-					await _reminderScheduler.CatchUpAndRefreshAsync();
+					await _reminderScheduler.CatchUpAndRefreshAsync(resendMissed: false);
 				}
 				catch (Exception ex)
 				{

@@ -158,12 +158,17 @@ public class MedicationReminderScheduler
 
     /// <summary>
     /// Run on every app launch and on device boot. Two jobs:
-    ///   1. Resolve every pending occurrence whose time has already passed —
-    ///      re-sending any that fired while the device was off (missed doses).
+    ///   1. Resolve every pending occurrence whose time has already passed.
     ///   2. Re-materialize and re-arm all future occurrences (so reminders
     ///      survive reboots, process death, and OEM alarm clearing).
+    ///
+    /// <paramref name="resendMissed"/> should be <c>true</c> on **device boot**
+    /// only. On a reboot, doses scheduled during the off period never fired and
+    /// must be re-sent (medication safety). On a normal app launch it is
+    /// <c>false</c>: the device was on, so the OS already delivered those
+    /// notifications — re-sending would spam duplicates every time the app opens.
     /// </summary>
-    public async Task CatchUpAndRefreshAsync()
+    public async Task CatchUpAndRefreshAsync(bool resendMissed = true)
     {
         var now = DateTime.Now;
         var lastSeen = GetLastSeen(now);
@@ -178,14 +183,14 @@ public class MedicationReminderScheduler
         var missedToResend = new List<ReminderInstance>();
         foreach (var inst in pendingPast)
         {
-            // If the trigger fell after the app was last confirmed alive, the OS
-            // almost certainly could not deliver it (device off / rebooting), so
-            // we must re-send it. Otherwise assume the OS delivered it and just
-            // mark it handled to avoid a duplicate.
-            if (inst.ScheduledTime > lastSeen)
+            // On boot: anything scheduled within the off window (after the app was
+            // last confirmed alive) could not have fired — re-send it. Otherwise
+            // assume the OS delivered it and just mark it handled.
+            var missed = resendMissed && inst.ScheduledTime > lastSeen;
+            if (missed)
                 missedToResend.Add(inst);
 
-            inst.Status = inst.ScheduledTime > lastSeen ? ReminderStatus.Missed : ReminderStatus.Fired;
+            inst.Status = missed ? ReminderStatus.Missed : ReminderStatus.Fired;
             await _instances.UpdateAsync(inst);
         }
 
