@@ -24,6 +24,12 @@ public static class NotificationIds
     private const int WeightCheckInBase = 3_000_000;
     private const int AppointmentBase = 4_000_000;
 
+    // Instance-based scheduling: each materialized ReminderInstance gets a unique
+    // OS notification id derived from its database id. Missed-dose catch-up
+    // notifications get their own range keyed by medication id.
+    private const int InstanceBase = 100_000_000;
+    private const int MissedDoseBase = 200_000_000;
+
     /// <summary>ID for the <paramref name="slot"/>-th daily reminder of a medication.</summary>
     public static int MedicationReminder(int medicationId, int slot)
         => MedicationBase + medicationId * SlotsPerEntity + slot;
@@ -34,6 +40,12 @@ public static class NotificationIds
         for (var slot = 0; slot < SlotsPerEntity; slot++)
             yield return MedicationReminder(medicationId, slot);
     }
+
+    /// <summary>Unique OS notification id for a materialized reminder instance.</summary>
+    public static int ForInstance(int instanceId) => InstanceBase + instanceId;
+
+    /// <summary>Notification id for a medication's coalesced "missed dose" catch-up.</summary>
+    public static int MissedDose(int medicationId) => MissedDoseBase + medicationId;
 
     // ── Reserved for future reminder types ───────────────────────────────
     public static int MoodCheckIn(int petId) => MoodCheckInBase + petId * SlotsPerEntity;

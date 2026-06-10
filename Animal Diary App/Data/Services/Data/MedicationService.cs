@@ -43,6 +43,12 @@ public class MedicationService
             .Where(m => m.PetId == id)
             .ToListAsync();
     }
+
+    /// <summary>All medications across every pet (used by the global reminder refresh).</summary>
+    public async Task<List<Medication>> GetAllMedicationsAsync()
+    {
+        return await _db.Table<Medication>().ToListAsync();
+    }
     public async Task<List<MedicationSchedule>> GetMedicationSchedulesByMedicationIdAsync(int id)
     {
         return await _db.Table<MedicationSchedule>()

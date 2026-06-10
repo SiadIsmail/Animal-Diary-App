@@ -30,10 +30,29 @@ public static class NotificationMessages
             $"A quick reminder: {pet}'s {med} is due.",
             $"Don't forget {pet}'s {med} — they're counting on you 🐾",
             $"A little nudge: {pet}'s {med} is ready when you are.",
-            $"{pet}'s {med} is due now. You've got this 💜"
+            $"{pet}'s {med} is due now. You've got this 💜",
+            $"Fio is a cutie patootie and so is {pet}! Time for {med} ❤️"
         };
 
         return phrasings[Math.Abs(slot) % phrasings.Length];
+    }
+
+    /// <summary>Title for a catch-up reminder about dose(s) missed while the device was unavailable.</summary>
+    public static string MedicationMissedTitle(string petName)
+        => $"Missed dose for {SafePet(petName)}";
+
+    /// <summary>
+    /// Body for a missed-dose catch-up. Kept gentle and reassuring — the goal is
+    /// to surface a missed medication without alarming the carer.
+    /// </summary>
+    public static string MedicationMissedBody(string petName, string medicationName, int count)
+    {
+        var pet = SafePet(petName);
+        var med = string.IsNullOrWhiteSpace(medicationName) ? "medication" : medicationName.Trim();
+
+        return count <= 1
+            ? $"{pet}'s {med} reminder was missed while your device was off. Please check when you have a moment ❤️"
+            : $"{pet} has {count} missed {med} reminders from while your device was off. Please check on them ❤️";
     }
 
     // ── Reserved for future reminder types ───────────────────────────────

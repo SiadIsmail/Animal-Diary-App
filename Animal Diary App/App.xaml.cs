@@ -1,4 +1,5 @@
 ﻿using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Data.View;
 using Animal_Diary_App.Data.ViewModels;
 
@@ -10,14 +11,16 @@ public partial class App : Application
 	private readonly MainViewModel _vm;
 	private readonly AppDatabase _database;
 	private readonly ActivePetService _activePetService;
+	private readonly MedicationReminderScheduler _reminderScheduler;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler)
 	{
 		InitializeComponent();
 		_petService = petService;
 		_vm = vm;
 		_database = database;
 		_activePetService = activePetService;
+		_reminderScheduler = reminderScheduler;
 
 		_ = StartAsync();
 	}
@@ -51,6 +54,20 @@ public partial class App : Application
 			{
 				Application.Current.Windows[0].Page = page;
 			}
+
+			// Catch up any doses missed while the app/device was off and re-arm
+			// all future reminders. Runs off the UI path so startup isn't blocked.
+			_ = Task.Run(async () =>
+			{
+				try
+				{
+					await _reminderScheduler.CatchUpAndRefreshAsync();
+				}
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine(ex);
+				}
+			});
 		}
 		catch (Exception ex)
 		{

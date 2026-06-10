@@ -38,6 +38,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AppResetService>();
 		builder.Services.AddSingleton<App>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Data.Device.INotificationService, NotificationService>();
+		builder.Services.AddSingleton<ReminderInstanceService>();
 		builder.Services.AddSingleton<MedicationReminderScheduler>();
 
 

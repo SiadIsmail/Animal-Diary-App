@@ -208,17 +208,12 @@ public class MedicationViewModel : BaseViewModel
         medication.IsArchived = !medication.IsArchived;
         await _medicationService.UpdateMedicationAsync(medication);
 
+        // Archiving cancels reminders; restoring re-materializes them from the
+        // saved schedule. SyncMedicationAsync handles the archived case too.
         if (medication.IsArchived)
-        {
-            await _reminderScheduler.CancelAsync(medication.Id);
-        }
+            await _reminderScheduler.CancelMedicationAsync(medication.Id);
         else
-        {
-            var schedules = await _medicationService.GetMedicationSchedulesByMedicationIdAsync(medication.Id);
-            var times = schedules.Select(s => s.Time).Distinct().OrderBy(t => t).ToList();
-            var pet = await _petService.GetPetByIdAsync(medication.PetId);
-            await _reminderScheduler.ScheduleAsync(medication, pet?.Name ?? string.Empty, times);
-        }
+            await _reminderScheduler.SyncMedicationAsync(medication.Id);
 
         await LoadFilteredMedicationAsync();
     });
@@ -349,15 +344,13 @@ public class MedicationViewModel : BaseViewModel
             }
         }
 
-        // Hand the reminder times to the notification system. Capture the pet
-        // name now, before ClearMedicationDraft resets the draft state.
-        var petName = pet.Name;
-
         ClearMedicationDraft();
         OnMedicationSaved?.Invoke(this, EventArgs.Empty);
 
+        // The scheduler reads the just-saved schedule rules and materializes
+        // concrete reminder occurrences from them.
         await _reminderScheduler.RequestPermissionAsync();
-        await _reminderScheduler.ScheduleAsync(newMedication, petName, reminderTimes);
+        await _reminderScheduler.SyncMedicationAsync(newMedication.Id);
     }
 
     public ICommand SaveMedicationCommand => new Command(async () =>
