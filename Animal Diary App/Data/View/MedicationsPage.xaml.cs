@@ -21,9 +21,4 @@ public partial class MedicationsPage : ContentPage
     {
         await Navigation.PopAsync();
     }
-
-    async void OnAddMedicationClicked(object? sender, EventArgs args)
-    {
-        await Navigation.PushAsync(new AddEditMedicationsPage(vm));
-    }
 }

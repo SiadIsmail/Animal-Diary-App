@@ -17,8 +17,7 @@
                Grid.RowSpan="2"/>
 
         <!-- MAIN CONTENT -->
-        <ScrollView Grid.Row="0"
-                    Margin="0,0,0,80">
+        <ScrollView Grid.Row="0">
 
             <VerticalStackLayout Padding="24,20"
                                  Spacing="24">
@@ -418,103 +417,6 @@
                         </Border>
 
                     </Grid>
-
-                </VerticalStackLayout>
-
-                <!-- ═════════════════════════════ -->
-                <!-- ACTIVE PET MEDICATIONS -->
-                <!-- ═════════════════════════════ -->
-
-                <VerticalStackLayout Spacing="10">
-
-                    <Grid ColumnDefinitions="*,Auto">
-
-                        <Label Text="CURRENT PET MEDICATIONS"
-                               FontSize="10"
-                               FontAttributes="Bold"
-                               TextColor="#2E6B85"
-                               CharacterSpacing="1.5"/>
-
-                        <!-- ? Optional -->
-                        <Label Grid.Column="1"
-                               Text="View All"
-                               FontSize="12"
-                               FontAttributes="Bold"
-                               TextColor="#4A1580"/>
-
-                    </Grid>
-
-                    <VerticalStackLayout Spacing="10"
-                                         BindableLayout.ItemsSource="{Binding MedicationVM.MedicationLogs}">
-
-                        <BindableLayout.ItemTemplate>
-
-                            <DataTemplate>
-
-                                <Border BackgroundColor="#40FFFFFF"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 16"
-                                        Padding="18,14">
-
-                                    <Border.GestureRecognizers>
-
-                                        <TapGestureRecognizer
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MedicationVM.OpenMedicationDetailCommand}"
-                                            CommandParameter="{Binding .}"/>
-
-                                    </Border.GestureRecognizers>
-
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-
-                                        <!-- Icon -->
-                                        <Border Grid.Column="0"
-                                                BackgroundColor="#2E9B6FCC"
-                                                StrokeThickness="0"
-                                                StrokeShape="RoundRectangle 10"
-                                                WidthRequest="42"
-                                                HeightRequest="42"
-                                                VerticalOptions="Center"
-                                                Margin="0,0,14,0">
-
-                                            <Label Text="💊"
-                                                   FontSize="20"
-                                                   HorizontalOptions="Center"
-                                                   VerticalOptions="Center"/>
-
-                                        </Border>
-
-                                        <!-- Info -->
-                                        <VerticalStackLayout Grid.Column="1"
-                                                             Spacing="2"
-                                                             VerticalOptions="Center">
-
-                                            <Label Text="{Binding Name}"
-                                                   FontSize="13"
-                                                   FontAttributes="Bold"
-                                                   TextColor="#1C3D52"/>
-
-                                            <Label Text="{Binding Schedule}"
-                                                   FontSize="11"
-                                                   TextColor="#6D8291"/>
-
-                                        </VerticalStackLayout>
-
-                                        <!-- Chevron -->
-                                        <Label Grid.Column="2"
-                                               Text="›"
-                                               FontSize="24"
-                                               TextColor="#5A9BB5"
-                                               VerticalOptions="Center"/>
-
-                                    </Grid>
-
-                                </Border>
-
-                            </DataTemplate>
-
-                        </BindableLayout.ItemTemplate>
-
-                    </VerticalStackLayout>
 
                 </VerticalStackLayout>
 

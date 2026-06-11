@@ -49,6 +49,39 @@ public class MedicationViewModel : BaseViewModel
     }
 
 
+    // ── Add/Edit sheet state ──────────────────────────────────────────────
+    // The Add/Edit medication form is shown as a slide-up sheet overlaying the
+    // Medications page. This flag drives its visibility (and the scrim/dim +
+    // slide animation wired up in the view).
+    private bool isAddEditSheetVisible;
+    public bool IsAddEditSheetVisible
+    {
+        get => isAddEditSheetVisible;
+        set => SetProperty(ref isAddEditSheetVisible, value);
+    }
+
+    // True while editing an existing medication (vs. adding a new one). Drives
+    // the sheet title and the save-button label ("Override" vs. "Save").
+    private bool isEditingMedication;
+    public bool IsEditingMedication
+    {
+        get => isEditingMedication;
+        set
+        {
+            if (SetProperty(ref isEditingMedication, value))
+            {
+                OnPropertyChanged(nameof(SheetTitle));
+                OnPropertyChanged(nameof(SaveButtonText));
+            }
+        }
+    }
+
+    // Id of the medication currently being edited (null when adding).
+    private int? editingMedicationId;
+
+    public string SheetTitle => IsEditingMedication ? "Edit Medication" : "Add Medication";
+    public string SaveButtonText => IsEditingMedication ? "Override" : "Save";
+
     public List<int> FrequencyOptions { get; } = new()
     {
         1,
@@ -217,6 +250,70 @@ public class MedicationViewModel : BaseViewModel
 
         await LoadFilteredMedicationAsync();
     });
+
+    /// <summary>
+    /// Open the slide-up sheet to add a new medication. Starts from a blank
+    /// draft seeded with the active pet.
+    /// </summary>
+    public ICommand AddMedicationCommand => new Command(async () =>
+    {
+        ClearMedicationDraft();
+        editingMedicationId = null;
+        IsEditingMedication = false;
+        await SetSelectedMedicationDraftAsync();
+        IsAddEditSheetVisible = true;
+    });
+
+    /// <summary>
+    /// Open the slide-up sheet to edit an existing medication. Loads the saved
+    /// values (name, dose, unit, notes, days and reminder times) into the draft
+    /// so the form opens pre-filled; saving overrides the original.
+    /// </summary>
+    public ICommand EditMedicationCommand => new Command<FilteredMedication>(async filtered =>
+    {
+        if (filtered == null)
+            return;
+
+        var medication = await _medicationService.GetMedicationByIdAsync(filtered.Id);
+        if (medication == null)
+            return;
+
+        editingMedicationId = medication.Id;
+        IsEditingMedication = true;
+
+        // Pre-fill the draft from the saved medication.
+        MedicationDraft = new Medication
+        {
+            Id = medication.Id,
+            PetId = medication.PetId,
+            Name = medication.Name,
+            Dosage = medication.Dosage,
+            Unit = medication.Unit,
+            Notes = medication.Notes,
+            IsArchived = medication.IsArchived
+        };
+        SelectedMedicationDraftPet = await _petService.GetPetByIdAsync(medication.PetId);
+
+        // Rebuild day + reminder-time selections from the saved schedule rows.
+        var schedules = await _medicationService.GetMedicationSchedulesByMedicationIdAsync(medication.Id);
+        var selectedDays = schedules.Select(s => s.Day).Distinct().ToHashSet();
+        foreach (var day in Days)
+            day.IsSelected = selectedDays.Contains(day.Day);
+
+        var distinctTimes = schedules.Select(s => s.Time).Distinct().OrderBy(t => t).ToList();
+
+        // Setting the frequency rebuilds the reminder-time slots; then overwrite
+        // each slot with the saved time.
+        SelectedFrequency = Math.Clamp(distinctTimes.Count, 1, MedicationReminderScheduler.MaxReminderTimes);
+        for (var i = 0; i < ReminderTimes.Count && i < distinctTimes.Count; i++)
+            ReminderTimes[i].Time = distinctTimes[i];
+
+        ValidateDaysSelected();
+        OnPropertyChanged(nameof(CanSaveMedication));
+
+        IsAddEditSheetVisible = true;
+    });
+
     private Pet? selectedMedicationDraftPet;
     public Pet? SelectedMedicationDraftPet
     {
@@ -318,15 +415,39 @@ public class MedicationViewModel : BaseViewModel
 
         var pet = SelectedMedicationDraftPet!;
 
-        var newMedication = new Medication
+        int medicationId;
+
+        if (IsEditingMedication && editingMedicationId.HasValue)
         {
-            Name = MedicationDraft.Name,
-            Dosage = ParseDosage(),
-            Unit = MedicationDraft.Unit,
-            PetId = pet.Id,
-            Notes = MedicationDraft.Notes
-        };
-        await _medicationService.SaveMedicationAsync(newMedication);
+            // Override the existing medication in place.
+            var existing = await _medicationService.GetMedicationByIdAsync(editingMedicationId.Value);
+            if (existing == null)
+                return;
+
+            existing.Name = MedicationDraft.Name;
+            existing.Dosage = ParseDosage();
+            existing.Unit = MedicationDraft.Unit;
+            existing.PetId = pet.Id;
+            existing.Notes = MedicationDraft.Notes;
+            await _medicationService.UpdateMedicationAsync(existing);
+
+            // Replace the schedule rows wholesale so removed days/times disappear.
+            await _medicationService.DeleteSchedulesForMedicationAsync(existing.Id);
+            medicationId = existing.Id;
+        }
+        else
+        {
+            var newMedication = new Medication
+            {
+                Name = MedicationDraft.Name,
+                Dosage = ParseDosage(),
+                Unit = MedicationDraft.Unit,
+                PetId = pet.Id,
+                Notes = MedicationDraft.Notes
+            };
+            await _medicationService.SaveMedicationAsync(newMedication);
+            medicationId = newMedication.Id;
+        }
 
         // Persist a schedule row for every (selected day × reminder time).
         var reminderTimes = ReminderTimes.Select(t => t.Time).ToList();
@@ -337,7 +458,7 @@ public class MedicationViewModel : BaseViewModel
             {
                 await _medicationService.SaveMedicationScheduleAsync(new MedicationSchedule
                 {
-                    MedicationId = newMedication.Id,
+                    MedicationId = medicationId,
                     Day = day.Day,
                     Time = time
                 });
@@ -345,12 +466,17 @@ public class MedicationViewModel : BaseViewModel
         }
 
         ClearMedicationDraft();
-        OnMedicationSaved?.Invoke(this, EventArgs.Empty);
+        editingMedicationId = null;
+        IsEditingMedication = false;
+        IsAddEditSheetVisible = false;
 
         // The scheduler reads the just-saved schedule rules and materializes
-        // concrete reminder occurrences from them.
+        // concrete reminder occurrences from them. SyncMedicationAsync is
+        // idempotent, so it doubles as the "update after edit" path.
         await _reminderScheduler.RequestPermissionAsync();
-        await _reminderScheduler.SyncMedicationAsync(newMedication.Id);
+        await _reminderScheduler.SyncMedicationAsync(medicationId);
+
+        await LoadFilteredMedicationAsync();
     }
 
     public ICommand SaveMedicationCommand => new Command(async () =>
@@ -360,8 +486,9 @@ public class MedicationViewModel : BaseViewModel
     public ICommand CancelMedicationCommand => new Command(() =>
     {
         ClearMedicationDraft();
-
-        OnMedicationSaved?.Invoke(this, EventArgs.Empty);
+        editingMedicationId = null;
+        IsEditingMedication = false;
+        IsAddEditSheetVisible = false;
     });
 
     private void ClearMedicationDraft()
@@ -379,8 +506,6 @@ public class MedicationViewModel : BaseViewModel
         SyncReminderTimesToFrequency();
     }
 
-
-    public event EventHandler? OnMedicationSaved;
 
     public ObservableCollection<DaySelectionItem> Days { get; set; }
 
