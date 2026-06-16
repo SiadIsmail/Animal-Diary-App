@@ -443,7 +443,8 @@ public class MedicationViewModel : BaseViewModel
                 Dosage = ParseDosage(),
                 Unit = MedicationDraft.Unit,
                 PetId = pet.Id,
-                Notes = MedicationDraft.Notes
+                Notes = MedicationDraft.Notes,
+                CreatedAt = DateTime.Now
             };
             await _medicationService.SaveMedicationAsync(newMedication);
             medicationId = newMedication.Id;

@@ -75,6 +75,13 @@ public class Medication : INotifyPropertyChanged
     }
 
     public bool IsArchived { get; set; } = false;
+
+    /// <summary>
+    /// When the medication was created. Bounds the missed-dose reconciliation so
+    /// it never fabricates "missed" entries for dates before the medication
+    /// existed. Pre-existing rows default to <see cref="DateTime.MinValue"/>.
+    /// </summary>
+    public DateTime CreatedAt { get; set; }
 }
 
 public class MedicationSchedule

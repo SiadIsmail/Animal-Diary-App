@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers"
-             xmlns:calendar="clr-namespace:Syncfusion.Maui.Calendar;assembly=Syncfusion.Maui.Calendar"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              x:Class="Animal_Diary_App.Data.View.CalendarPage"
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="#DCEBF5">
@@ -92,17 +92,10 @@
                         <!-- Calendar -->
                         <VerticalStackLayout Spacing="16">
 
-                                <calendar:SfCalendar
+                                <controls:WeekCalendarView
                                         x:Name="Calendar"
-                                        BackgroundColor="#5B9BB8"
                                         SelectedDate="{Binding CalendarVM.CurrentSelectedDate, Mode=TwoWay}"
-                                        HeightRequest="170"
-                                        VerticalOptions="Start"
-                                        ShowTrailingAndLeadingDates="False">
-                                        <calendar:SfCalendar.MonthView>
-                                                <calendar:CalendarMonthView NumberOfVisibleWeeks="1"/>
-                                        </calendar:SfCalendar.MonthView>
-                                </calendar:SfCalendar>
+                                        Activities="{Binding CalendarVM.WeekActivities}"/>
 
                                 <Label Text="{Binding CalendarVM.CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
                                        FontSize="13"
@@ -348,6 +341,140 @@
                                                                 </Label.Triggers>
                                                         </Label>
                                                 </HorizontalStackLayout>
+
+                                                <!-- Divider -->
+                                                <BoxView HeightRequest="1"
+                                                         BackgroundColor="White"
+                                                         Opacity="0.2"/>
+
+                                                <!-- Medications Row -->
+                                                <HorizontalStackLayout Spacing="10">
+                                                        <Label Text="💊"
+                                                               FontSize="20"
+                                                               VerticalOptions="Center"/>
+                                                        <Label Text="Medications"
+                                                               FontSize="13"
+                                                               TextColor="White"
+                                                               Opacity="0.75"
+                                                               VerticalOptions="Center"/>
+                                                </HorizontalStackLayout>
+
+                                                <!-- Empty state -->
+                                                <Label Text="No medications scheduled for this day"
+                                                       FontSize="13"
+                                                       FontAttributes="Italic"
+                                                       TextColor="White"
+                                                       Opacity="0.5"
+                                                       IsVisible="{Binding CalendarVM.HasNoDoses}"/>
+
+                                                <!-- Dose checklist -->
+                                                <VerticalStackLayout Spacing="8"
+                                                                     BindableLayout.ItemsSource="{Binding CalendarVM.DosesForSelectedDate}">
+                                                        <BindableLayout.ItemTemplate>
+                                                                <DataTemplate>
+                                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                                                                              ColumnSpacing="10">
+
+                                                                                <!-- Time -->
+                                                                                <Label Grid.Column="0"
+                                                                                       Text="{Binding TimeDisplay}"
+                                                                                       FontSize="13"
+                                                                                       FontAttributes="Bold"
+                                                                                       TextColor="White"
+                                                                                       VerticalOptions="Center"
+                                                                                       WidthRequest="44"/>
+
+                                                                                <!-- Name + dose + status -->
+                                                                                <VerticalStackLayout Grid.Column="1"
+                                                                                                     Spacing="1"
+                                                                                                     VerticalOptions="Center">
+                                                                                        <Label Text="{Binding MedName}"
+                                                                                               FontSize="13"
+                                                                                               FontAttributes="Bold"
+                                                                                               TextColor="White"/>
+                                                                                        <HorizontalStackLayout Spacing="5">
+                                                                                                <Label Text="{Binding DoseDisplay}"
+                                                                                                       FontSize="11"
+                                                                                                       TextColor="White"
+                                                                                                       Opacity="0.75"/>
+                                                                                                <Label Text="·"
+                                                                                                       FontSize="11"
+                                                                                                       TextColor="White"
+                                                                                                       Opacity="0.75"/>
+                                                                                                <Label Text="{Binding StatusText}"
+                                                                                                       FontSize="11"
+                                                                                                       TextColor="White"
+                                                                                                       Opacity="0.75"/>
+                                                                                        </HorizontalStackLayout>
+                                                                                </VerticalStackLayout>
+
+                                                                                <!-- Skip (secondary) -->
+                                                                                <Border Grid.Column="2"
+                                                                                        IsVisible="{Binding ShowSkip}"
+                                                                                        Padding="10,5"
+                                                                                        BackgroundColor="#33FFFFFF"
+                                                                                        StrokeThickness="0"
+                                                                                        VerticalOptions="Center">
+                                                                                        <Border.StrokeShape>
+                                                                                                <RoundRectangle CornerRadius="12"/>
+                                                                                        </Border.StrokeShape>
+                                                                                        <Border.GestureRecognizers>
+                                                                                                <TapGestureRecognizer
+                                                                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SkipDoseCommand}"
+                                                                                                        CommandParameter="{Binding .}"/>
+                                                                                        </Border.GestureRecognizers>
+                                                                                        <Label Text="Skip"
+                                                                                               FontSize="11"
+                                                                                               FontAttributes="Bold"
+                                                                                               TextColor="White"/>
+                                                                                </Border>
+
+                                                                                <!-- Taken check (primary, one tap) -->
+                                                                                <Border Grid.Column="3"
+                                                                                        WidthRequest="34"
+                                                                                        HeightRequest="34"
+                                                                                        BackgroundColor="Transparent"
+                                                                                        Stroke="White"
+                                                                                        StrokeThickness="2"
+                                                                                        VerticalOptions="Center">
+                                                                                        <Border.StrokeShape>
+                                                                                                <RoundRectangle CornerRadius="17"/>
+                                                                                        </Border.StrokeShape>
+                                                                                        <Border.Triggers>
+                                                                                                <DataTrigger TargetType="Border"
+                                                                                                             Binding="{Binding CanToggle}"
+                                                                                                             Value="False">
+                                                                                                        <Setter Property="Opacity" Value="0.4"/>
+                                                                                                </DataTrigger>
+                                                                                                <DataTrigger TargetType="Border"
+                                                                                                             Binding="{Binding IsSkipped}"
+                                                                                                             Value="True">
+                                                                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                                                                </DataTrigger>
+                                                                                                <DataTrigger TargetType="Border"
+                                                                                                             Binding="{Binding IsTaken}"
+                                                                                                             Value="True">
+                                                                                                        <Setter Property="BackgroundColor" Value="#5BBF8A"/>
+                                                                                                        <Setter Property="Stroke" Value="#5BBF8A"/>
+                                                                                                </DataTrigger>
+                                                                                        </Border.Triggers>
+                                                                                        <Border.GestureRecognizers>
+                                                                                                <TapGestureRecognizer
+                                                                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.ToggleDoseTakenCommand}"
+                                                                                                        CommandParameter="{Binding .}"/>
+                                                                                        </Border.GestureRecognizers>
+                                                                                        <Label Text="{Binding StatusGlyph}"
+                                                                                               FontSize="16"
+                                                                                               FontAttributes="Bold"
+                                                                                               TextColor="White"
+                                                                                               HorizontalOptions="Center"
+                                                                                               VerticalOptions="Center"/>
+                                                                                </Border>
+
+                                                                        </Grid>
+                                                                </DataTemplate>
+                                                        </BindableLayout.ItemTemplate>
+                                                </VerticalStackLayout>
 
                                         </VerticalStackLayout>
                                 </Border>

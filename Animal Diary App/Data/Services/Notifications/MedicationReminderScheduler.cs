@@ -44,17 +44,23 @@ public class MedicationReminderScheduler
     private readonly MedicationService _medicationService;
     private readonly PetService _petService;
     private readonly ReminderInstanceService _instances;
+    private readonly MedicationDoseLogService _doseLogService;
+    private readonly MedicationDoseReconciler _doseReconciler;
 
     public MedicationReminderScheduler(
         INotificationService notifications,
         MedicationService medicationService,
         PetService petService,
-        ReminderInstanceService instances)
+        ReminderInstanceService instances,
+        MedicationDoseLogService doseLogService,
+        MedicationDoseReconciler doseReconciler)
     {
         _notifications = notifications;
         _medicationService = medicationService;
         _petService = petService;
         _instances = instances;
+        _doseLogService = doseLogService;
+        _doseReconciler = doseReconciler;
     }
 
     /// <summary>Ask the OS for permission to post notifications (no-op if already granted).</summary>
@@ -98,7 +104,7 @@ public class MedicationReminderScheduler
         foreach (var schedule in schedules)
         {
             var slot = distinctTimes.IndexOf(schedule.Time);
-            foreach (var when in ExpandOccurrences(schedule.Day, schedule.Time, now, horizonEnd))
+            foreach (var when in MedicationScheduleExpander.Expand(schedule.Day, schedule.Time, now, horizonEnd))
                 occurrences.Add((when, slot));
         }
 
@@ -187,6 +193,17 @@ public class MedicationReminderScheduler
             // last confirmed alive) could not have fired — re-send it. Otherwise
             // assume the OS delivered it and just mark it handled.
             var missed = resendMissed && inst.ScheduledTime > lastSeen;
+
+            // ...unless the carer already logged this dose as taken or skipped —
+            // then there's nothing to chase, so suppress the re-send.
+            if (missed)
+            {
+                var doseStatus = await _doseLogService.GetStatusAsync(
+                    inst.MedicationId, inst.ScheduledTime.Date, inst.ScheduledTime.TimeOfDay);
+                if (doseStatus == DoseStatus.Taken || doseStatus == DoseStatus.Skipped)
+                    missed = false;
+            }
+
             if (missed)
                 missedToResend.Add(inst);
 
@@ -206,8 +223,31 @@ public class MedicationReminderScheduler
                 await SyncMedicationAsync(med.Id);
         }
 
+        // Record durable "missed" adherence for past doses never logged.
+        await _doseReconciler.ReconcileMissedAsync(now);
+
         await PruneHistoryAsync(now);
         SetLastSeen(now);
+    }
+
+    /// <summary>
+    /// Called when the carer marks a dose taken/skipped in the calendar: cancels
+    /// that occurrence's still-pending reminder so it can't fire late or be
+    /// re-sent by a later boot catch-up.
+    /// </summary>
+    public async Task MarkDoseHandledAsync(int medicationId, DateTime date, TimeSpan time)
+    {
+        var match = (await _instances.GetByMedicationAsync(medicationId))
+            .FirstOrDefault(i => i.Status == ReminderStatus.Pending
+                && i.ScheduledTime.Date == date.Date
+                && i.ScheduledTime.TimeOfDay == time);
+
+        if (match == null)
+            return;
+
+        await _notifications.CancelNotification(match.NotificationId);
+        match.Status = ReminderStatus.Cancelled;
+        await _instances.UpdateAsync(match);
     }
 
     private async Task ResendMissedAsync(List<ReminderInstance> missed, DateTime now)
@@ -245,25 +285,6 @@ public class MedicationReminderScheduler
 
         foreach (var inst in stale)
             await _instances.DeleteAsync(inst);
-    }
-
-    /// <summary>
-    /// All occurrences of <paramref name="day"/> at <paramref name="time"/> in
-    /// the window (<paramref name="from"/>, <paramref name="until"/>], computed in
-    /// local wall-clock time.
-    /// </summary>
-    private static IEnumerable<DateTime> ExpandOccurrences(DayOfWeek day, TimeSpan time, DateTime from, DateTime until)
-    {
-        var daysUntil = ((int)day - (int)from.DayOfWeek + 7) % 7;
-        var candidate = from.Date.AddDays(daysUntil).Add(time);
-        if (candidate <= from)
-            candidate = candidate.AddDays(7);
-
-        while (candidate <= until)
-        {
-            yield return candidate;
-            candidate = candidate.AddDays(7);
-        }
     }
 
     private static DateTime GetLastSeen(DateTime fallback)

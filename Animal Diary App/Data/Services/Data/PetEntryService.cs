@@ -36,6 +36,17 @@ public class PetEntryService
         return await _db.Table<PetEntry>().Where(e => e.Date == date && e.PetId == petId).FirstOrDefaultAsync();
     }
 
+    /// <summary>All entries for a pet within an inclusive date range (date-only).
+    /// Used to render month-grid activity dots (weight + mood) in one query.</summary>
+    public async Task<List<PetEntry>> GetPetEntriesByPetIdAndRangeAsync(int petId, DateTime start, DateTime end)
+    {
+        var from = start.Date;
+        var to = end.Date;
+        return await _db.Table<PetEntry>()
+            .Where(e => e.PetId == petId && e.Date >= from && e.Date <= to)
+            .ToListAsync();
+    }
+
     public async Task<List<PetEntry>> GetLast30DaysWeightEntriesAsync(int petId)
     {
         var thirtyDaysAgo = DateTime.Now.AddDays(-30).Date;
