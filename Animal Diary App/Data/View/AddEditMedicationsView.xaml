@@ -14,6 +14,7 @@
 -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.AddEditMedicationsView"
              x:Name="Root"
              IsVisible="False"
@@ -72,7 +73,7 @@
                            HorizontalOptions="Center"/>
 
                     <!-- Editing indicator — only shown when overriding an existing med -->
-                    <Label Text="You're editing an existing medication"
+                    <Label Text="{loc:Translate MedEdit_EditingNote}"
                            FontSize="12"
                            FontAttributes="Italic"
                            TextColor="#7A5D99"
@@ -89,7 +90,7 @@
 
                     <!-- Medication name -->
                     <VerticalStackLayout Spacing="5">
-                        <Label Text="MEDICATION NAME"
+                        <Label Text="{loc:Translate MedEdit_NameLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -99,7 +100,7 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="14"/>
                             </Border.StrokeShape>
-                            <Entry Placeholder="e.g. Methimazole"
+                            <Entry Placeholder="{loc:Translate MedEdit_NamePlaceholder}"
                                    Text="{Binding MedicationVM.MedicationDraft.Name}"
                                    FontSize="14"
                                    TextColor="#1C3D52"
@@ -117,7 +118,7 @@
                           ColumnSpacing="10">
 
                         <VerticalStackLayout Spacing="5">
-                            <Label Text="DOSE"
+                            <Label Text="{loc:Translate MedEdit_DoseLabel}"
                                    FontSize="10"
                                    FontAttributes="Bold"
                                    TextColor="#5A7990"/>
@@ -144,7 +145,7 @@
                         <VerticalStackLayout Grid.Column="1"
                                              Spacing="5"
                                              WidthRequest="90">
-                            <Label Text="UNIT"
+                            <Label Text="{loc:Translate MedEdit_UnitLabel}"
                                    FontSize="10"
                                    FontAttributes="Bold"
                                    TextColor="#5A7990"/>
@@ -169,7 +170,7 @@
 
                     <VerticalStackLayout Spacing="8">
 
-                        <Label Text="MEDICATION DAYS"
+                        <Label Text="{loc:Translate MedEdit_DaysLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -250,7 +251,7 @@
 
                     <VerticalStackLayout Spacing="5">
 
-                        <Label Text="TIMES PER DAY"
+                        <Label Text="{loc:Translate MedEdit_TimesPerDayLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -325,7 +326,7 @@
 
                     <!-- Assigned pet -->
                     <VerticalStackLayout Spacing="5">
-                        <Label Text="FOR PET"
+                        <Label Text="{loc:Translate MedEdit_ForPetLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -351,7 +352,7 @@
 
                     <!-- Food note (optional) -->
                     <VerticalStackLayout Spacing="5">
-                        <Label Text="NOTES (OPTIONAL)"
+                        <Label Text="{loc:Translate MedEdit_NotesLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -361,7 +362,7 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="14"/>
                             </Border.StrokeShape>
-                            <Entry Placeholder="e.g. with food, after meal…"
+                            <Entry Placeholder="{loc:Translate MedEdit_NotesPlaceholder}"
                                    Text="{Binding MedicationVM.MedicationDraft.Notes}"
                                    FontSize="14"
                                    TextColor="#1C3D52"
@@ -388,7 +389,7 @@
                             <TapGestureRecognizer
                                 Command="{Binding MedicationVM.CancelMedicationCommand}"/>
                         </Border.GestureRecognizers>
-                        <Label Text="Cancel"
+                        <Label Text="{loc:Translate Common_Cancel}"
                                FontSize="14"
                                FontAttributes="Bold"
                                TextColor="#7A5D99"

@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Helpers;
 using System.Windows.Input;
 
 public class SettingsViewModel : BaseViewModel
@@ -23,15 +24,39 @@ public class SettingsViewModel : BaseViewModel
     public ICommand OpenSettingsCommand { get; }
     public ICommand CloseSettingsCommand { get; }
     public ICommand DeleteAllDataCommand { get; }
+    public ICommand SetLanguageCommand { get; }
 
     private readonly AppResetService _appResetService;
+    private readonly SettingsService _settingsService;
 
-    public SettingsViewModel(AppResetService appResetService)
+    public SettingsViewModel(AppResetService appResetService, SettingsService settingsService)
     {
         _appResetService = appResetService;
+        _settingsService = settingsService;
         OpenSettingsCommand = new Command(() => IsPanelOpen = true);
         CloseSettingsCommand = new Command(() => IsPanelOpen = false);
         DeleteAllDataCommand = new Command(async () => await OnDeleteAllDataAsync());
+        SetLanguageCommand = new Command<string>(async code => await SetLanguageAsync(code));
+    }
+
+    /// <summary>Two-letter code of the active language ("en" / "de").</summary>
+    public string CurrentLanguage => LocalizationManager.Instance.CurrentLanguage;
+
+    // Convenience flags for highlighting the selected language chip in the panel.
+    public bool IsGerman => CurrentLanguage == "de";
+    public bool IsEnglish => CurrentLanguage != "de";
+
+    private async Task SetLanguageAsync(string languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode) || languageCode == CurrentLanguage)
+            return;
+
+        LocalizationManager.Instance.SetLanguage(languageCode);
+        await _settingsService.SetLanguageAsync(languageCode);
+
+        OnPropertyChanged(nameof(CurrentLanguage));
+        OnPropertyChanged(nameof(IsGerman));
+        OnPropertyChanged(nameof(IsEnglish));
     }
 
     private async Task OnDeleteAllDataAsync()

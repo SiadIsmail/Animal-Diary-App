@@ -50,4 +50,45 @@ public class SettingsService
             System.Diagnostics.Debug.WriteLine($"Error saving first launch setting: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Returns the saved two-letter language code ("en" / "de"), or null when the
+    /// user has not yet chosen one. A null result is what gates the first-launch
+    /// language-selection screen.
+    /// </summary>
+    public async Task<string?> GetLanguageAsync()
+    {
+        try
+        {
+            var setting = await _db.FindAsync<AppSettings>("Language");
+            return string.IsNullOrWhiteSpace(setting?.Value) ? null : setting!.Value;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error retrieving language setting: {ex.Message}");
+            return null;
+        }
+    }
+
+    public async Task SetLanguageAsync(string languageCode)
+    {
+        try
+        {
+            var setting = await _db.FindAsync<AppSettings>("Language");
+            if (setting == null)
+            {
+                setting = new AppSettings { Key = "Language", Value = languageCode };
+                await _db.InsertAsync(setting);
+            }
+            else
+            {
+                setting.Value = languageCode;
+                await _db.UpdateAsync(setting);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error saving language setting: {ex.Message}");
+        }
+    }
 }

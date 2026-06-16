@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.SettingsPanelView">
 
     <Grid x:Name="RootOverlay"
@@ -44,7 +45,7 @@
                 <Grid ColumnDefinitions="*,Auto"
                       Margin="0,0,0,20">
 
-                    <Label Text="Settings"
+                    <Label Text="{loc:Translate Settings_Title}"
                            FontSize="24"
                            FontAttributes="Bold"
                            TextColor="#1C3D52"
@@ -82,8 +83,74 @@
                          BackgroundColor="#25000000"
                          Margin="0,0,0,28"/>
 
+                <!-- ── LANGUAGE SECTION ── -->
+                <Label Text="{loc:Translate Settings_LanguageSection}"
+                       FontSize="10"
+                       FontAttributes="Bold"
+                       CharacterSpacing="1.5"
+                       TextColor="#7B91A1"
+                       Margin="0,0,0,12"/>
+
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="10"
+                      Margin="0,0,0,28">
+
+                    <!-- Deutsch -->
+                    <Border Grid.Column="0"
+                            BackgroundColor="#40FFFFFF"
+                            Stroke="#60FFFFFF"
+                            StrokeThickness="1.5"
+                            StrokeShape="RoundRectangle 14"
+                            Padding="0,12">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border"
+                                         Binding="{Binding SettingsVM.IsGerman}"
+                                         Value="True">
+                                <Setter Property="BackgroundColor" Value="#809B6FCC"/>
+                                <Setter Property="Stroke" Value="#B39B6FCC"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.SetLanguageCommand}"
+                                                  CommandParameter="de"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="🇩🇪 Deutsch"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="#1C3D52"
+                               HorizontalTextAlignment="Center"/>
+                    </Border>
+
+                    <!-- English -->
+                    <Border Grid.Column="1"
+                            BackgroundColor="#40FFFFFF"
+                            Stroke="#60FFFFFF"
+                            StrokeThickness="1.5"
+                            StrokeShape="RoundRectangle 14"
+                            Padding="0,12">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border"
+                                         Binding="{Binding SettingsVM.IsEnglish}"
+                                         Value="True">
+                                <Setter Property="BackgroundColor" Value="#809B6FCC"/>
+                                <Setter Property="Stroke" Value="#B39B6FCC"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.SetLanguageCommand}"
+                                                  CommandParameter="en"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="🇬🇧 English"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="#1C3D52"
+                               HorizontalTextAlignment="Center"/>
+                    </Border>
+
+                </Grid>
+
                 <!-- Section label -->
-                <Label Text="DATA"
+                <Label Text="{loc:Translate Settings_DataSection}"
                        FontSize="10"
                        FontAttributes="Bold"
                        CharacterSpacing="1.5"
@@ -122,12 +189,12 @@
                                              Spacing="2"
                                              VerticalOptions="Center">
 
-                            <Label Text="Delete All Data"
+                            <Label Text="{loc:Translate Settings_DeleteAllData}"
                                    FontSize="14"
                                    FontAttributes="Bold"
                                    TextColor="#C0392B"/>
 
-                            <Label Text="Reset app to initial state"
+                            <Label Text="{loc:Translate Settings_ResetSubtitle}"
                                    FontSize="11"
                                    TextColor="#D07070"/>
 

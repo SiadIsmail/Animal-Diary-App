@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.PetTypePage">
 
 
@@ -11,29 +12,29 @@
             Padding="30,0"
             Spacing="25">
             <Label
-                Text="Hello!"
+                Text="{loc:Translate PetTypePage_Hello}"
                 Style="{StaticResource Headline}"
                 SemanticProperties.HeadingLevel="Level1"/>
 
             <Label
-                Text="What type of animal do you have?"
+                Text="{loc:Translate PetTypePage_WhatType}"
                 Style="{StaticResource SubHeadline}"
                 SemanticProperties.HeadingLevel="Level2"
                 SemanticProperties.Description="Welcome to dot net Multi platform App U I"/>
 
             <Entry
-                Placeholder="Enter text"
+                Placeholder="{loc:Translate Common_EnterText}"
                 Text="{Binding PetVM.EnteredPetType}"
                 SemanticProperties.Description="Type your pet's type here"/>
 
             <Label
-                Text="How old are they?"
+                Text="{loc:Translate PetTypePage_HowOld}"
                 Style="{StaticResource SubHeadline}"
                 SemanticProperties.HeadingLevel="Level2"
                 SemanticProperties.Description="Welcome to dot net Multi platform App U I"/>
 
             <Entry
-                Placeholder="Enter text"
+                Placeholder="{loc:Translate Common_EnterText}"
                 Text="{Binding PetVM.EnteredPetAge}"
                 Completed="OnEntryCompleted"
                 SemanticProperties.Description="Type your pet's age here"/>

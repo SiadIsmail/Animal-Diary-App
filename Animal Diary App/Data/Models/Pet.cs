@@ -16,6 +16,10 @@ public class Pet : INotifyPropertyChanged
     public string Name { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public int Age { get; set; }
+
+    /// <summary>Localized age label, e.g. "(3 yrs)" / "(3 J.)". Used by calendar chips.</summary>
+    [Ignore]
+    public string AgeDisplay => Animal_Diary_App.Helpers.LocalizationManager.Instance.Format("Common_AgeYearsShort", Age);
     private bool _isSelected;
     public bool IsSelected
     {

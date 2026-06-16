@@ -25,6 +25,7 @@ public class CalendarViewModel : BaseViewModel
 
             currentSelectedDate = newDate;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedDateDisplay));
             _ = LoadEntriesAsync();
             _ = LoadDosesAsync();
             if (weekChanged)
@@ -66,14 +67,46 @@ public class CalendarViewModel : BaseViewModel
     public string ShownMood
     {
         get => shownMood;
-        set => SetProperty(ref shownMood, value);
+        set
+        {
+            if (SetProperty(ref shownMood, value))
+            {
+                OnPropertyChanged(nameof(ShownMoodDisplay));
+                OnPropertyChanged(nameof(HasMood));
+            }
+        }
     }
     private string shownWeight = string.Empty;
     public string ShownWeight
     {
         get => shownWeight;
-        set => SetProperty(ref shownWeight, value);
+        set
+        {
+            if (SetProperty(ref shownWeight, value))
+            {
+                OnPropertyChanged(nameof(ShownWeightDisplay));
+                OnPropertyChanged(nameof(HasWeight));
+            }
+        }
     }
+
+    /// <summary>Localized "Selected Date: …" label for the calendar.</summary>
+    public string SelectedDateDisplay =>
+        LocalizationManager.Instance.Format("Calendar_SelectedDate", CurrentSelectedDate);
+
+    public bool HasMood => !string.IsNullOrEmpty(ShownMood);
+
+    /// <summary>Recorded mood, or a localized placeholder when none is logged.</summary>
+    public string ShownMoodDisplay =>
+        HasMood ? ShownMood : LocalizationManager.Instance.GetString("Calendar_NoMood");
+
+    public bool HasWeight => !string.IsNullOrEmpty(ShownWeight);
+
+    /// <summary>Recorded weight (with unit), or a localized placeholder when none is logged.</summary>
+    public string ShownWeightDisplay =>
+        HasWeight
+            ? ShownWeight + LocalizationManager.Instance.GetString("Common_KgSuffix")
+            : LocalizationManager.Instance.GetString("Calendar_NoWeight");
 
     private readonly PetEntryService _petEntryService;
     private readonly PetService _petService;
@@ -174,8 +207,10 @@ public class CalendarViewModel : BaseViewModel
             SelectedMoodLevel = MoodLevel.None;
             return;
         }
-        ShownMood = Entries.Mood;
-        ShownWeight = Entries.Weight.ToString();
+        // Derive the displayed mood from the stored level so it always renders in
+        // the active language (the stored Mood string may be in another language).
+        ShownMood = Entries.MoodLevel > 0 ? ((MoodLevel)Entries.MoodLevel).GetDisplayName() : string.Empty;
+        ShownWeight = Entries.Weight > 0 ? Entries.Weight.ToString() : string.Empty;
         SelectedMoodLevel = (MoodLevel)Entries.MoodLevel;
         return;
     }

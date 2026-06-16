@@ -25,7 +25,7 @@ public class ReminderTimeSlot : BaseViewModel
     }
 
     /// <summary>Field heading shown above the picker, e.g. "REMINDER 2".</summary>
-    public string Label => $"REMINDER {Index + 1}";
+    public string Label => Animal_Diary_App.Helpers.LocalizationManager.Instance.Format("MedEdit_ReminderLabel", Index + 1);
 
     private TimeSpan time;
     public TimeSpan Time

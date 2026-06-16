@@ -62,11 +62,18 @@ public class DoseItem : BaseViewModel
         _ => string.Empty
     };
 
-    public string StatusText => Status switch
+    public string StatusText
     {
-        DoseStatus.Taken => ResolvedAt.HasValue ? $"Taken · {ResolvedAt.Value:HH:mm}" : "Taken",
-        DoseStatus.Skipped => "Skipped",
-        DoseStatus.Missed => "Missed",
-        _ => CanToggle ? "Not taken" : "Upcoming"
-    };
+        get
+        {
+            var loc = Animal_Diary_App.Helpers.LocalizationManager.Instance;
+            return Status switch
+            {
+                DoseStatus.Taken => ResolvedAt.HasValue ? loc.Format("Dose_TakenAt", ResolvedAt.Value) : loc.GetString("Dose_Taken"),
+                DoseStatus.Skipped => loc.GetString("Dose_Skipped"),
+                DoseStatus.Missed => loc.GetString("Dose_Missed"),
+                _ => loc.GetString(CanToggle ? "Dose_NotTaken" : "Dose_Upcoming")
+            };
+        }
+    }
 }

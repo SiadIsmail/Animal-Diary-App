@@ -1,7 +1,9 @@
-﻿using Animal_Diary_App.Data.Services;
+using System.Globalization;
+using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Data.View;
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Helpers;
 
 namespace Animal_Diary_App;
 
@@ -12,8 +14,9 @@ public partial class App : Application
 	private readonly AppDatabase _database;
 	private readonly ActivePetService _activePetService;
 	private readonly MedicationReminderScheduler _reminderScheduler;
+	private readonly SettingsService _settingsService;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, SettingsService settingsService)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -21,6 +24,7 @@ public partial class App : Application
 		_database = database;
 		_activePetService = activePetService;
 		_reminderScheduler = reminderScheduler;
+		_settingsService = settingsService;
 
 		_ = StartAsync();
 	}
@@ -46,13 +50,38 @@ public partial class App : Application
 				await _activePetService.LoadActivePetAsync(activePet.Id);
 			}
 
-			var page = pets.Count == 0
+			// Build the post-onboarding landing page lazily so it inflates *after*
+			// the chosen language has been applied.
+			Page BuildNextPage() => pets.Count == 0
 				? new NavigationPage(new WelcomePage(_vm))
 				: new NavigationPage(new MainPage(_vm));
 
+			var savedLanguage = await _settingsService.GetLanguageAsync();
+
+			Page firstPage;
+			if (savedLanguage != null)
+			{
+				// Returning user: apply their saved language and go straight in.
+				LocalizationManager.Instance.SetLanguage(savedLanguage);
+				firstPage = BuildNextPage();
+			}
+			else
+			{
+				// First launch: seed the UI culture from the device (so the picker
+				// reads naturally) then ask the user which language they want.
+				var deviceLanguage = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de" ? "de" : "en";
+				LocalizationManager.Instance.SetLanguage(deviceLanguage);
+
+				firstPage = new LanguageSelectionPage(_settingsService, code =>
+				{
+					if (Application.Current?.Windows.Count > 0)
+						Application.Current.Windows[0].Page = BuildNextPage();
+				});
+			}
+
 			if (Application.Current?.Windows.Count > 0)
 			{
-				Application.Current.Windows[0].Page = page;
+				Application.Current.Windows[0].Page = firstPage;
 			}
 
 			// Re-arm all future reminders on launch. resendMissed:false — the
@@ -80,7 +109,7 @@ public partial class App : Application
 				{
 					Content = new Label
 					{
-						Text = "Could not start the app. Please restart.",
+						Text = LocalizationManager.Instance.GetString("App_StartError"),
 						Margin = 24,
 						HorizontalTextAlignment = TextAlignment.Center,
 						VerticalTextAlignment = TextAlignment.Center

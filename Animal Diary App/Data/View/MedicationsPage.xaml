@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.MedicationsPage"
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="#DCEBF5">
@@ -49,7 +50,7 @@
                     </Border>
 
                     <Label Grid.Column="1"
-                           Text="Medications"
+                           Text="{loc:Translate Med_Title}"
                            FontSize="20"
                            FontAttributes="Bold"
                            TextColor="#1C3D52"
@@ -87,7 +88,7 @@
                                         Radius="6"
                                         Opacity="0.2"/>
                             </Border.Shadow>
-                            <Label Text="Active"
+                            <Label Text="{loc:Translate Med_Active}"
                                    FontSize="13"
                                    FontAttributes="Bold"
                                    TextColor="White"
@@ -106,7 +107,7 @@
                                 <TapGestureRecognizer Command="{Binding MedicationVM.SetActiveTabCommand}"
                                                       CommandParameter="archived"/>
                             </Border.GestureRecognizers>
-                            <Label Text="Archived"
+                            <Label Text="{loc:Translate Med_Archived}"
                                    FontSize="13"
                                    FontAttributes="Bold"
                                    TextColor="#7A5D99"
@@ -119,7 +120,7 @@
 
                 <!-- ── SECTION LABEL ── -->
                 <!-- ? bind Text to MedicationVM.SectionLabel e.g. "2 Active Medications" -->
-                <Label Text="{Binding PetVM.SelectedPet.Name, StringFormat='Medications for {0}'}"
+                <Label Text="{Binding PetVM.MedicationsHeader}"
                        FontSize="11"
                        FontAttributes="Bold"
                        TextColor="#5A7990"
@@ -308,13 +309,13 @@
                                    Opacity="0.4"/>
                             <!-- ? bind Text to MedicationVM.EmptyStateMessage
                                  e.g. "No active medications" or "No archived medications" -->
-                            <Label Text="No medications yet"
+                            <Label Text="{loc:Translate Med_EmptyTitle}"
                                    FontSize="15"
                                    FontAttributes="Bold"
                                    TextColor="#5A7990"
                                    HorizontalTextAlignment="Center"
                                    Opacity="0.7"/>
-                            <Label Text="Tap + Add below to get started"
+                            <Label Text="{loc:Translate Med_EmptySubtitle}"
                                    FontSize="12"
                                    TextColor="#7B91A1"
                                    HorizontalTextAlignment="Center"
@@ -375,7 +376,7 @@
                                FontAttributes="Bold"
                                TextColor="White"
                                HorizontalTextAlignment="Center"/>
-                        <Label Text="Add"
+                        <Label Text="{loc:Translate Common_Add}"
                                FontSize="11"
                                FontAttributes="Bold"
                                TextColor="White"

@@ -2,6 +2,7 @@ namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Models;
+using Animal_Diary_App.Helpers;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -128,7 +129,11 @@ public class PetViewModel : BaseViewModel
 
     public string ActivePetSubtitle => ActivePet == null
         ? string.Empty
-        : $"{ActivePet.Type} · {ActivePet.Age} yrs";
+        : LocalizationManager.Instance.Format("Pet_SubtitleFormat", PetTypeNames.Localize(ActivePet.Type), ActivePet.Age);
+
+    /// <summary>Localized "Medications for {pet}" header shown on the Medications page.</summary>
+    public string MedicationsHeader =>
+        LocalizationManager.Instance.Format("Med_ForPet", SelectedPet?.Name ?? string.Empty);
 
     public ICommand SelectPetCommand { get; }
     public ICommand AddPetCommand { get; }
@@ -219,6 +224,7 @@ public class PetViewModel : BaseViewModel
         {
             if (SetProperty(ref selectedPet, value))
             {
+                OnPropertyChanged(nameof(MedicationsHeader));
                 SelectPet(value); // updates ActivePetService + visuals
             }
         }
@@ -324,7 +330,7 @@ public class PetViewModel : BaseViewModel
         SelectedPetType != null ? SelectedPetType.Emoji : "🐾";
 
     public string PreviewName =>
-        !string.IsNullOrWhiteSpace(EnteredPetName) ? EnteredPetName : "Your pet";
+        !string.IsNullOrWhiteSpace(EnteredPetName) ? EnteredPetName : LocalizationManager.Instance.GetString("CreatePet_PreviewName");
     public async Task CheckAndSetFirstLaunchAsync()
     {
         bool isFirstLaunchValue = await IsFirstLaunchAsync();
@@ -332,15 +338,15 @@ public class PetViewModel : BaseViewModel
 
         if (isFirstLaunchValue)
         {
-            SaveButtonLabel = "Let's go! 🐾";
-            PageTitle = "Meet your first pet 🐾";
+            SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_FirstLaunchSave");
+            PageTitle = LocalizationManager.Instance.GetString("CreatePet_FirstLaunchTitle");
             ShowBackButton = false;
             await SetFirstLaunchFalseAsync();
         }
         else
         {
-            SaveButtonLabel = "Add Pet";
-            PageTitle = "Add a Pet";
+            SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_AddSave");
+            PageTitle = LocalizationManager.Instance.GetString("CreatePet_AddTitle");
             ShowBackButton = true;
         }
     }
@@ -348,7 +354,7 @@ public class PetViewModel : BaseViewModel
     private void ValidatePetName()
     {
         PetNameError = string.IsNullOrWhiteSpace(EnteredPetName)
-            ? "Pet name is required"
+            ? LocalizationManager.Instance.GetString("Validation_PetNameRequired")
             : string.Empty;
     }
 
@@ -356,11 +362,11 @@ public class PetViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(EnteredPetType))
         {
-            PetTypeError = "Pet type is required";
+            PetTypeError = LocalizationManager.Instance.GetString("Validation_PetTypeRequired");
         }
         else if (SelectedPetType?.Name == "Other" && string.IsNullOrWhiteSpace(EnteredPetType.Trim()))
         {
-            PetTypeError = "Please describe your pet's type";
+            PetTypeError = LocalizationManager.Instance.GetString("Validation_PetTypeDescribe");
         }
         else
         {
@@ -372,11 +378,11 @@ public class PetViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(EnteredPetAge))
         {
-            PetAgeError = "Pet age is required";
+            PetAgeError = LocalizationManager.Instance.GetString("Validation_PetAgeRequired");
         }
         else if (!int.TryParse(EnteredPetAge, out var age) || age < 0)
         {
-            PetAgeError = "Pet age must be a valid positive number";
+            PetAgeError = LocalizationManager.Instance.GetString("Validation_PetAgeInvalid");
         }
         else
         {

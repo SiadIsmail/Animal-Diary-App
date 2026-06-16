@@ -5,6 +5,7 @@ using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Data.Services.Data.Device;
 using Animal_Diary_App.Data.Services.Notifications;
+using Animal_Diary_App.Helpers;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Collections.Generic;
@@ -79,8 +80,8 @@ public class MedicationViewModel : BaseViewModel
     // Id of the medication currently being edited (null when adding).
     private int? editingMedicationId;
 
-    public string SheetTitle => IsEditingMedication ? "Edit Medication" : "Add Medication";
-    public string SaveButtonText => IsEditingMedication ? "Override" : "Save";
+    public string SheetTitle => LocalizationManager.Instance.GetString(IsEditingMedication ? "MedEdit_EditTitle" : "MedEdit_AddTitle");
+    public string SaveButtonText => LocalizationManager.Instance.GetString(IsEditingMedication ? "MedEdit_Override" : "MedEdit_Save");
 
     public List<int> FrequencyOptions { get; } = new()
     {
@@ -161,7 +162,7 @@ public class MedicationViewModel : BaseViewModel
     private void ValidateMedicationName()
     {
         MedicationNameError = string.IsNullOrWhiteSpace(MedicationDraft.Name)
-            ? "Medication name is required"
+            ? LocalizationManager.Instance.GetString("Validation_MedNameRequired")
             : string.Empty;
     }
 
@@ -169,11 +170,11 @@ public class MedicationViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(MedicationDraft.Dosage.ToString()))
         {
-            DosageError = "Dosage is required";
+            DosageError = LocalizationManager.Instance.GetString("Validation_DosageRequired");
         }
         else if (!decimal.TryParse(MedicationDraft.Dosage.ToString(), out var dose) || dose <= 0)
         {
-            DosageError = "Dosage must be a positive number";
+            DosageError = LocalizationManager.Instance.GetString("Validation_DosagePositive");
         }
         else
         {
@@ -215,9 +216,11 @@ public class MedicationViewModel : BaseViewModel
             {
                 Id = medication.Id,
                 Name = medication.Name,
-                PetName = pet?.Name ?? "Unknown",
+                PetName = pet?.Name ?? LocalizationManager.Instance.GetString("Med_Unknown"),
                 DoseDisplay = $"{medication.Dosage} {medication.Unit}",
-                FrequencyDisplay = timesPerDay <= 1 ? "Once daily" : $"{timesPerDay}× daily",
+                FrequencyDisplay = timesPerDay <= 1
+                    ? LocalizationManager.Instance.GetString("Med_OnceDaily")
+                    : LocalizationManager.Instance.Format("Med_TimesDaily", timesPerDay),
                 TimesDisplay = string.Join(" · ", distinctTimes.Select(t => t.ToString(@"hh\:mm"))),
                 Note = medication.Notes
             });
@@ -376,15 +379,16 @@ public class MedicationViewModel : BaseViewModel
         _reminderScheduler = reminderScheduler;
 
 
+        var loc = LocalizationManager.Instance;
         Days = new ObservableCollection<DaySelectionItem>
         {
-            new () { Day = DayOfWeek.Monday, DisplayName = "Mo" },
-            new () { Day = DayOfWeek.Tuesday, DisplayName = "Tu" },
-            new () { Day = DayOfWeek.Wednesday, DisplayName = "We" },
-            new () { Day = DayOfWeek.Thursday, DisplayName = "Th" },
-            new () { Day = DayOfWeek.Friday, DisplayName = "Fr" },
-            new () { Day = DayOfWeek.Saturday, DisplayName = "Sa" },
-            new () { Day = DayOfWeek.Sunday, DisplayName = "Su" }
+            new () { Day = DayOfWeek.Monday, DisplayName = loc.GetString("Day_Mon") },
+            new () { Day = DayOfWeek.Tuesday, DisplayName = loc.GetString("Day_Tue") },
+            new () { Day = DayOfWeek.Wednesday, DisplayName = loc.GetString("Day_Wed") },
+            new () { Day = DayOfWeek.Thursday, DisplayName = loc.GetString("Day_Thu") },
+            new () { Day = DayOfWeek.Friday, DisplayName = loc.GetString("Day_Fri") },
+            new () { Day = DayOfWeek.Saturday, DisplayName = loc.GetString("Day_Sat") },
+            new () { Day = DayOfWeek.Sunday, DisplayName = loc.GetString("Day_Sun") }
         };
 
         ToggleDayCommand = new Command<DaySelectionItem>(ToggleDay);
@@ -564,14 +568,14 @@ public class MedicationViewModel : BaseViewModel
     private void ValidatePetSelection()
     {
         PetError = SelectedMedicationDraftPet == null
-            ? "Please select a pet for this medication"
+            ? LocalizationManager.Instance.GetString("Validation_SelectPet")
             : string.Empty;
     }
 
     private void ValidateDaysSelected()
     {
         DaysError = !AnyDaySelected
-            ? "Please select at least one day"
+            ? LocalizationManager.Instance.GetString("Validation_SelectDay")
             : string.Empty;
     }
 
