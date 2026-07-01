@@ -2,7 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers"
-             xmlns:calendar="clr-namespace:Syncfusion.Maui.Calendar;assembly=Syncfusion.Maui.Calendar"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              x:Class="Animal_Diary_App.Data.View.CalendarPage"
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="#DCEBF5">
@@ -77,7 +78,7 @@
                                                                                TextColor="#4A1580"
                                                                                VerticalOptions="Center"/>
 
-                                                                        <Label Text="{Binding Age, StringFormat='({0} yrs)'}"
+                                                                        <Label Text="{Binding AgeDisplay}"
                                                                                FontSize="13"
                                                                                FontAttributes="Bold"
                                                                                TextColor="#4A1580"
@@ -92,19 +93,12 @@
                         <!-- Calendar -->
                         <VerticalStackLayout Spacing="16">
 
-                                <calendar:SfCalendar
+                                <controls:WeekCalendarView
                                         x:Name="Calendar"
-                                        BackgroundColor="#5B9BB8"
                                         SelectedDate="{Binding CalendarVM.CurrentSelectedDate, Mode=TwoWay}"
-                                        HeightRequest="170"
-                                        VerticalOptions="Start"
-                                        ShowTrailingAndLeadingDates="False">
-                                        <calendar:SfCalendar.MonthView>
-                                                <calendar:CalendarMonthView NumberOfVisibleWeeks="1"/>
-                                        </calendar:SfCalendar.MonthView>
-                                </calendar:SfCalendar>
+                                        Activities="{Binding CalendarVM.WeekActivities}"/>
 
-                                <Label Text="{Binding CalendarVM.CurrentSelectedDate, StringFormat='Selected Date: {0:d}'}"
+                                <Label Text="{Binding CalendarVM.SelectedDateDisplay}"
                                        FontSize="13"
                                        FontAttributes="Bold"
                                        TextColor="#2E6B85"
@@ -118,7 +112,7 @@
                                 <HorizontalStackLayout Spacing="14"
                                                        HorizontalOptions="Center">
 
-                                        <Button Text="+ Mood"
+                                        <Button Text="{loc:Translate Calendar_MoodAdd}"
                                                 FontSize="13"
                                                 WidthRequest="120"
                                                 HeightRequest="40"
@@ -128,7 +122,7 @@
                                                 IsVisible="{Binding CalendarVM.MoodSection.IsAddButtonVisible}"
                                                 Command="{Binding CalendarVM.ShowMoodInputCommand}"/>
 
-                                        <Button Text="+ Weight"
+                                        <Button Text="{loc:Translate Calendar_WeightAdd}"
                                                 FontSize="13"
                                                 WidthRequest="120"
                                                 HeightRequest="40"
@@ -143,7 +137,7 @@
                         <!-- Mood Input - TEMPORARILY DISABLED FOR DEBUGGING -->
                         <VerticalStackLayout IsVisible="{Binding CalendarVM.MoodSection.IsInputVisible}"
                                              Spacing="12">
-                                <Label Text="How is your pet feeling today?"
+                                <Label Text="{loc:Translate Calendar_HowFeeling}"
                                        FontSize="13"
                                        FontAttributes="Bold"
                                        TextColor="#1C3D52"/>
@@ -238,12 +232,12 @@
                                                 <Label Text="😄" FontSize="20" VerticalOptions="Center" HorizontalOptions="Center"/>
                                         </Border>
                                 </HorizontalStackLayout>
-                                <Button Text="Confirm Mood" FontSize="13" HeightRequest="40" CornerRadius="20"
+                                <Button Text="{loc:Translate Calendar_ConfirmMood}" FontSize="13" HeightRequest="40" CornerRadius="20"
                                         BackgroundColor="#CCC4A8E0" TextColor="#4A1580"
                                         Command="{Binding CalendarVM.OnMoodEntryCompleted}"/>
                         </VerticalStackLayout>
 
-                        <Entry Placeholder="Enter your pet's weight today"
+                        <Entry Placeholder="{loc:Translate Calendar_WeightPlaceholder}"
                                Text="{Binding CalendarVM.EnteredWeight}"
                                FontSize="18"
                                Keyboard="Numeric"
@@ -265,7 +259,7 @@
                                         </Border.Shadow>
                                         <VerticalStackLayout Spacing="12">
 
-                                                <Label Text="TODAY'S OVERVIEW"
+                                                <Label Text="{loc:Translate Calendar_TodaysOverview}"
                                                        FontSize="10"
                                                        FontAttributes="Bold"
                                                        CharacterSpacing="1.5"
@@ -277,13 +271,13 @@
                                                         <Label Text="😊"
                                                                FontSize="20"
                                                                VerticalOptions="Center"/>
-                                                        <Label Text="Mood"
+                                                        <Label Text="{loc:Translate Main_MoodLabel}"
                                                                FontSize="13"
                                                                TextColor="White"
                                                                Opacity="0.75"
                                                                VerticalOptions="Center"
                                                                WidthRequest="70"/>
-                                                        <Label Text="{Binding CalendarVM.ShownMood}"
+                                                        <Label Text="{Binding CalendarVM.ShownMoodDisplay}"
                                                                FontSize="13"
                                                                FontAttributes="Bold"
                                                                TextColor="White"
@@ -292,11 +286,9 @@
 
                                                                         <DataTrigger
                                                                                 TargetType="Label"
-                                                                                Binding="{Binding CalendarVM.ShownMood}"
-                                                                                Value="">
+                                                                                Binding="{Binding CalendarVM.HasMood}"
+                                                                                Value="False">
 
-                                                                                <Setter Property="Text"
-                                                                                        Value="No mood recorded yet..."/>
                                                                                 <Setter Property="Opacity"
                                                                                         Value="0.5"/>
                                                                                 <Setter Property="FontAttributes"
@@ -318,13 +310,13 @@
                                                         <Label Text="⚖️"
                                                                FontSize="20"
                                                                VerticalOptions="Center"/>
-                                                        <Label Text="Weight"
+                                                        <Label Text="{loc:Translate Calendar_Weight}"
                                                                FontSize="13"
                                                                TextColor="White"
                                                                Opacity="0.75"
                                                                VerticalOptions="Center"
                                                                WidthRequest="70"/>
-                                                        <Label Text="{Binding CalendarVM.ShownWeight, StringFormat='{0} kg'}"
+                                                        <Label Text="{Binding CalendarVM.ShownWeightDisplay}"
                                                                FontSize="13"
                                                                FontAttributes="Bold"
                                                                TextColor="White"
@@ -333,11 +325,9 @@
 
                                                                         <DataTrigger
                                                                                 TargetType="Label"
-                                                                                Binding="{Binding CalendarVM.ShownWeight}"
-                                                                                Value="">
+                                                                                Binding="{Binding CalendarVM.HasWeight}"
+                                                                                Value="False">
 
-                                                                                <Setter Property="Text"
-                                                                                        Value="No weight recorded yet..."/>
                                                                                 <Setter Property="Opacity"
                                                                                         Value="0.5"/>
                                                                                 <Setter Property="FontAttributes"
@@ -348,6 +338,140 @@
                                                                 </Label.Triggers>
                                                         </Label>
                                                 </HorizontalStackLayout>
+
+                                                <!-- Divider -->
+                                                <BoxView HeightRequest="1"
+                                                         BackgroundColor="White"
+                                                         Opacity="0.2"/>
+
+                                                <!-- Medications Row -->
+                                                <HorizontalStackLayout Spacing="10">
+                                                        <Label Text="💊"
+                                                               FontSize="20"
+                                                               VerticalOptions="Center"/>
+                                                        <Label Text="{loc:Translate Calendar_Medications}"
+                                                               FontSize="13"
+                                                               TextColor="White"
+                                                               Opacity="0.75"
+                                                               VerticalOptions="Center"/>
+                                                </HorizontalStackLayout>
+
+                                                <!-- Empty state -->
+                                                <Label Text="{loc:Translate Calendar_NoMedications}"
+                                                       FontSize="13"
+                                                       FontAttributes="Italic"
+                                                       TextColor="White"
+                                                       Opacity="0.5"
+                                                       IsVisible="{Binding CalendarVM.HasNoDoses}"/>
+
+                                                <!-- Dose checklist -->
+                                                <VerticalStackLayout Spacing="8"
+                                                                     BindableLayout.ItemsSource="{Binding CalendarVM.DosesForSelectedDate}">
+                                                        <BindableLayout.ItemTemplate>
+                                                                <DataTemplate>
+                                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                                                                              ColumnSpacing="10">
+
+                                                                                <!-- Time -->
+                                                                                <Label Grid.Column="0"
+                                                                                       Text="{Binding TimeDisplay}"
+                                                                                       FontSize="13"
+                                                                                       FontAttributes="Bold"
+                                                                                       TextColor="White"
+                                                                                       VerticalOptions="Center"
+                                                                                       WidthRequest="44"/>
+
+                                                                                <!-- Name + dose + status -->
+                                                                                <VerticalStackLayout Grid.Column="1"
+                                                                                                     Spacing="1"
+                                                                                                     VerticalOptions="Center">
+                                                                                        <Label Text="{Binding MedName}"
+                                                                                               FontSize="13"
+                                                                                               FontAttributes="Bold"
+                                                                                               TextColor="White"/>
+                                                                                        <HorizontalStackLayout Spacing="5">
+                                                                                                <Label Text="{Binding DoseDisplay}"
+                                                                                                       FontSize="11"
+                                                                                                       TextColor="White"
+                                                                                                       Opacity="0.75"/>
+                                                                                                <Label Text="·"
+                                                                                                       FontSize="11"
+                                                                                                       TextColor="White"
+                                                                                                       Opacity="0.75"/>
+                                                                                                <Label Text="{Binding StatusText}"
+                                                                                                       FontSize="11"
+                                                                                                       TextColor="White"
+                                                                                                       Opacity="0.75"/>
+                                                                                        </HorizontalStackLayout>
+                                                                                </VerticalStackLayout>
+
+                                                                                <!-- Skip (secondary) -->
+                                                                                <Border Grid.Column="2"
+                                                                                        IsVisible="{Binding ShowSkip}"
+                                                                                        Padding="10,5"
+                                                                                        BackgroundColor="#33FFFFFF"
+                                                                                        StrokeThickness="0"
+                                                                                        VerticalOptions="Center">
+                                                                                        <Border.StrokeShape>
+                                                                                                <RoundRectangle CornerRadius="12"/>
+                                                                                        </Border.StrokeShape>
+                                                                                        <Border.GestureRecognizers>
+                                                                                                <TapGestureRecognizer
+                                                                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SkipDoseCommand}"
+                                                                                                        CommandParameter="{Binding .}"/>
+                                                                                        </Border.GestureRecognizers>
+                                                                                        <Label Text="{loc:Translate Calendar_Skip}"
+                                                                                               FontSize="11"
+                                                                                               FontAttributes="Bold"
+                                                                                               TextColor="White"/>
+                                                                                </Border>
+
+                                                                                <!-- Taken check (primary, one tap) -->
+                                                                                <Border Grid.Column="3"
+                                                                                        WidthRequest="34"
+                                                                                        HeightRequest="34"
+                                                                                        BackgroundColor="Transparent"
+                                                                                        Stroke="White"
+                                                                                        StrokeThickness="2"
+                                                                                        VerticalOptions="Center">
+                                                                                        <Border.StrokeShape>
+                                                                                                <RoundRectangle CornerRadius="17"/>
+                                                                                        </Border.StrokeShape>
+                                                                                        <Border.Triggers>
+                                                                                                <DataTrigger TargetType="Border"
+                                                                                                             Binding="{Binding CanToggle}"
+                                                                                                             Value="False">
+                                                                                                        <Setter Property="Opacity" Value="0.4"/>
+                                                                                                </DataTrigger>
+                                                                                                <DataTrigger TargetType="Border"
+                                                                                                             Binding="{Binding IsSkipped}"
+                                                                                                             Value="True">
+                                                                                                        <Setter Property="Opacity" Value="0.6"/>
+                                                                                                </DataTrigger>
+                                                                                                <DataTrigger TargetType="Border"
+                                                                                                             Binding="{Binding IsTaken}"
+                                                                                                             Value="True">
+                                                                                                        <Setter Property="BackgroundColor" Value="#5BBF8A"/>
+                                                                                                        <Setter Property="Stroke" Value="#5BBF8A"/>
+                                                                                                </DataTrigger>
+                                                                                        </Border.Triggers>
+                                                                                        <Border.GestureRecognizers>
+                                                                                                <TapGestureRecognizer
+                                                                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.ToggleDoseTakenCommand}"
+                                                                                                        CommandParameter="{Binding .}"/>
+                                                                                        </Border.GestureRecognizers>
+                                                                                        <Label Text="{Binding StatusGlyph}"
+                                                                                               FontSize="16"
+                                                                                               FontAttributes="Bold"
+                                                                                               TextColor="White"
+                                                                                               HorizontalOptions="Center"
+                                                                                               VerticalOptions="Center"/>
+                                                                                </Border>
+
+                                                                        </Grid>
+                                                                </DataTemplate>
+                                                        </BindableLayout.ItemTemplate>
+                                                </VerticalStackLayout>
 
                                         </VerticalStackLayout>
                                 </Border>
@@ -389,7 +513,7 @@
                                                        FontSize="20"
                                                        HorizontalTextAlignment="Center"/>
 
-                                                <Label Text="Main"
+                                                <Label Text="{loc:Translate Nav_Main}"
                                                        FontSize="11"
                                                        FontAttributes="Bold"
                                                        TextColor="#664A1580"
@@ -408,7 +532,7 @@
                                                        FontSize="20"
                                                        HorizontalTextAlignment="Center"/>
 
-                                                <Label Text="Calendar"
+                                                <Label Text="{loc:Translate Nav_Calendar}"
                                                        FontSize="11"
                                                        FontAttributes="Bold"
                                                        TextColor="#4A1580"
@@ -429,7 +553,7 @@
                                                        FontSize="20"
                                                        HorizontalTextAlignment="Center"/>
 
-                                                <Label Text="Pets"
+                                                <Label Text="{loc:Translate Nav_Pets}"
                                                        FontSize="11"
                                                        FontAttributes="Bold"
                                                        TextColor="#664A1580"

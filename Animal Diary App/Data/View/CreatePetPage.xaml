@@ -11,6 +11,7 @@
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.CreatePetPage"
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="#DCEBF5">
@@ -85,7 +86,7 @@
 
                 <!-- ── WELCOME SUBTITLE (first launch only) ── -->
                 <!-- ? IsVisible bind to PetVM.IsFirstLaunch -->
-                <Label Text="Tell us about your animal. You can always edit this later."
+                <Label Text="{loc:Translate CreatePet_Subtitle}"
                        FontSize="14"
                        TextColor="#5A7990"
                        HorizontalTextAlignment="Center"
@@ -136,7 +137,7 @@
                 <!-- ── PET TYPE SELECTOR ── -->
                 <VerticalStackLayout Spacing="10">
 
-                    <Label Text="WHAT KIND OF ANIMAL?"
+                    <Label Text="{loc:Translate CreatePet_WhatAnimal}"
                            FontSize="10"
                            FontAttributes="Bold"
                            TextColor="#5A7990"
@@ -188,8 +189,8 @@
                                                VerticalOptions="Center"/>
                                     </Border>
 
-                                    <!-- ? bind to PetTypeOption.Name -->
-                                    <Label Text="{Binding Name}"
+                                    <!-- ? bind to PetTypeOption.Name (localized for display) -->
+                                    <Label Text="{Binding DisplayName}"
                                            FontSize="10"
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
@@ -206,7 +207,7 @@
                 <!-- ? IsVisible bind to PetVM.ShowCustomPetType -->
                 <VerticalStackLayout Spacing="5"
                                      IsVisible="{Binding PetVM.ShowCustomPetType}">
-                    <Label Text="DESCRIBE YOUR PET'S TYPE"
+                    <Label Text="{loc:Translate CreatePet_DescribeType}"
                            FontSize="10"
                            FontAttributes="Bold"
                            TextColor="#5A7990"
@@ -218,7 +219,7 @@
                             <RoundRectangle CornerRadius="16"/>
                         </Border.StrokeShape>
                         <!-- ? bind to PetVM.EnteredPetType -->
-                        <Entry Placeholder="e.g. Hamster, Iguana…"
+                        <Entry Placeholder="{loc:Translate CreatePet_CustomTypePlaceholder}"
                                Text="{Binding PetVM.EnteredPetType}"
                                FontSize="14"
                                TextColor="#1C3D52"
@@ -259,7 +260,7 @@
 
                         <!-- Pet name -->
                         <VerticalStackLayout Spacing="6">
-                            <Label Text="PET NAME"
+                            <Label Text="{loc:Translate CreatePet_NameLabel}"
                                    FontSize="10"
                                    FontAttributes="Bold"
                                    TextColor="#5A7990"/>
@@ -270,7 +271,7 @@
                                     <RoundRectangle CornerRadius="14"/>
                                 </Border.StrokeShape>
                                 <!-- ? bind to PetVM.EnteredPetName -->
-                                <Entry Placeholder="e.g. Mochi, Fofo…"
+                                <Entry Placeholder="{loc:Translate CreatePet_NamePlaceholder}"
                                        Text="{Binding PetVM.EnteredPetName}"
                                        FontSize="15"
                                        FontAttributes="Bold"
@@ -291,7 +292,7 @@
 
                         <!-- Age -->
                         <VerticalStackLayout Spacing="6">
-                            <Label Text="AGE (YEARS)"
+                            <Label Text="{loc:Translate CreatePet_AgeLabel}"
                                    FontSize="10"
                                    FontAttributes="Bold"
                                    TextColor="#5A7990"/>
@@ -302,7 +303,7 @@
                                     <RoundRectangle CornerRadius="14"/>
                                 </Border.StrokeShape>
                                 <!-- ? bind to PetVM.EnteredPetAge -->
-                                <Entry Placeholder="e.g. 3"
+                                <Entry Placeholder="{loc:Translate CreatePet_AgePlaceholder}"
                                        Text="{Binding PetVM.EnteredPetAge}"
                                        Keyboard="Numeric"
                                        FontSize="15"
@@ -336,11 +337,11 @@
                                VerticalOptions="Center"/>
                         <VerticalStackLayout Spacing="2"
                                              VerticalOptions="Center">
-                            <Label Text="Conditions &amp; diagnoses"
+                            <Label Text="{loc:Translate CreatePet_ConditionsTitle}"
                                    FontSize="12"
                                    FontAttributes="Bold"
                                    TextColor="#1C3D52"/>
-                            <Label Text="You can add health conditions from the pet profile later"
+                            <Label Text="{loc:Translate CreatePet_ConditionsSubtitle}"
                                    FontSize="11"
                                    TextColor="#5A7990"/>
                         </VerticalStackLayout>
@@ -384,7 +385,7 @@
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBackClicked"/>
                     </Border.GestureRecognizers>
-                    <Label Text="Cancel"
+                    <Label Text="{loc:Translate Common_Cancel}"
                            FontSize="14"
                            FontAttributes="Bold"
                            TextColor="#7A5D99"

@@ -1,35 +1,43 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-    AddEditMedicationsPage.xaml
+    AddEditMedicationsView.xaml
     ─────────────────────────────────────────────────────────
-    Use as a ContentPage pushed modally, or as a .NET MAUI
-    BottomSheet (e.g. via the Community Toolkit or a custom
-    partial-height modal). The page is self-contained.
+    A slide-up bottom sheet for adding OR editing a medication. It is embedded
+    as an overlay inside MedicationsPage (spanning all rows) so the page behind
+    stays visible and is dimmed by the scrim while the sheet is open.
 
-    Open for ADD:  pass empty MedicationVM.DraftMedication
-    Open for EDIT: pass populated MedicationVM.DraftMedication
-    ? MedicationVM.IsEditing (bool) controls title + save label
+    Visibility + slide/fade animation are driven by
+    MedicationVM.IsAddEditSheetVisible (see the code-behind). The form binds the
+    same MedicationVM draft properties used for both add and edit; the title and
+    save-button label switch via MedicationVM.SheetTitle / SaveButtonText, and an
+    "editing" indicator shows when MedicationVM.IsEditingMedication is true.
 -->
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Animal_Diary_App.Data.View.AddEditMedicationsPage"
-             NavigationPage.HasNavigationBar="False"
-             BackgroundColor="Transparent">
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             x:Class="Animal_Diary_App.Data.View.AddEditMedicationsView"
+             x:Name="Root"
+             IsVisible="False"
+             InputTransparent="False">
 
-    <!-- Semi-transparent scrim — tapping it dismisses the sheet -->
     <Grid>
-        <BoxView BackgroundColor="#60000000"
+        <!-- Semi-transparent scrim — dims the page behind; tapping it dismisses the sheet -->
+        <BoxView x:Name="Scrim"
+                 BackgroundColor="#60000000"
                  InputTransparent="False">
             <BoxView.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnBackClicked"/>
+                <TapGestureRecognizer Command="{Binding MedicationVM.CancelMedicationCommand}"/>
             </BoxView.GestureRecognizers>
         </BoxView>
 
-        <!-- ── Sheet itself, anchored to bottom ── -->
-        <Border BackgroundColor="#F0EBF8"
+        <!-- ── Sheet itself, anchored to bottom ──
+             Capped to a fraction of the screen height in code-behind so the
+             body scrolls and the footer stays pinned and clickable. -->
+        <Border x:Name="SheetContainer"
+                BackgroundColor="#F0EBF8"
                 StrokeThickness="0"
                 VerticalOptions="End"
-                Padding="20,0,20,32">
+                Padding="20,0,20,28">
 
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="28,28,0,0"/>
@@ -42,10 +50,12 @@
                         Opacity="0.25"/>
             </Border.Shadow>
 
-            <VerticalStackLayout Spacing="18">
+            <Grid RowDefinitions="Auto,*,Auto"
+                  RowSpacing="16">
 
-                <!-- Handle + title -->
-                <VerticalStackLayout Spacing="14"
+                <!-- Handle + title (fixed header) -->
+                <VerticalStackLayout Grid.Row="0"
+                                     Spacing="14"
                                      Padding="0,14,0,0">
 
                     <!-- Drag handle -->
@@ -55,22 +65,32 @@
                              BackgroundColor="#C4A8E0"
                              HorizontalOptions="Center"/>
 
-                    <!-- ? bind Text to MedicationVM.SheetTitle
-                         e.g. "Add Medication" or "Edit Medication" -->
-                    <Label Text="Add Medication"
+                    <!-- "Add Medication" / "Edit Medication" -->
+                    <Label Text="{Binding MedicationVM.SheetTitle}"
                            FontSize="18"
                            FontAttributes="Bold"
                            TextColor="#1C3D52"
                            HorizontalOptions="Center"/>
 
+                    <!-- Editing indicator — only shown when overriding an existing med -->
+                    <Label Text="{loc:Translate MedEdit_EditingNote}"
+                           FontSize="12"
+                           FontAttributes="Italic"
+                           TextColor="#7A5D99"
+                           HorizontalOptions="Center"
+                           IsVisible="{Binding MedicationVM.IsEditingMedication}"/>
+
                 </VerticalStackLayout>
 
-                <!-- ── FORM FIELDS ── -->
-                <VerticalStackLayout Spacing="12">
+                <!-- ── FORM FIELDS (scrollable body) ── -->
+                <ScrollView Grid.Row="1"
+                            VerticalScrollBarVisibility="Never">
+                <VerticalStackLayout Spacing="12"
+                                     Padding="0,0,0,4">
 
                     <!-- Medication name -->
                     <VerticalStackLayout Spacing="5">
-                        <Label Text="MEDICATION NAME"
+                        <Label Text="{loc:Translate MedEdit_NameLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -80,8 +100,7 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="14"/>
                             </Border.StrokeShape>
-                            <!-- ? bind to MedicationVM.DraftMedication.Name -->
-                            <Entry Placeholder="e.g. Methimazole"
+                            <Entry Placeholder="{loc:Translate MedEdit_NamePlaceholder}"
                                    Text="{Binding MedicationVM.MedicationDraft.Name}"
                                    FontSize="14"
                                    TextColor="#1C3D52"
@@ -99,7 +118,7 @@
                           ColumnSpacing="10">
 
                         <VerticalStackLayout Spacing="5">
-                            <Label Text="DOSE"
+                            <Label Text="{loc:Translate MedEdit_DoseLabel}"
                                    FontSize="10"
                                    FontAttributes="Bold"
                                    TextColor="#5A7990"/>
@@ -109,7 +128,6 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="14"/>
                                 </Border.StrokeShape>
-                                <!-- ? bind to MedicationVM.DraftMedication.Dose -->
                                 <Entry Placeholder="2.5"
                                        Text="{Binding MedicationVM.MedicationDraft.Dosage}"
                                        Keyboard="Numeric"
@@ -127,7 +145,7 @@
                         <VerticalStackLayout Grid.Column="1"
                                              Spacing="5"
                                              WidthRequest="90">
-                            <Label Text="UNIT"
+                            <Label Text="{loc:Translate MedEdit_UnitLabel}"
                                    FontSize="10"
                                    FontAttributes="Bold"
                                    TextColor="#5A7990"/>
@@ -137,8 +155,6 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="14"/>
                                 </Border.StrokeShape>
-                                <!-- ? bind to MedicationVM.DraftMedication.Unit
-                                     Items: mg, ml, tablet, drops -->
                                 <Picker Title="mg"
                                         SelectedItem="{Binding MedicationVM.MedicationDraft.Unit}"
                                         ItemsSource="{Binding MedicationVM.UnitOptions}"
@@ -154,7 +170,7 @@
 
                     <VerticalStackLayout Spacing="8">
 
-                        <Label Text="MEDICATION DAYS"
+                        <Label Text="{loc:Translate MedEdit_DaysLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -235,7 +251,7 @@
 
                     <VerticalStackLayout Spacing="5">
 
-                        <Label Text="TIMES PER DAY"
+                        <Label Text="{loc:Translate MedEdit_TimesPerDayLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -262,11 +278,15 @@
                     </VerticalStackLayout>
 
 
-                    <!-- DYNAMIC TIME PICKERS -->
+                    <!-- DYNAMIC TIME PICKERS
+                         One picker per reminder time. The number of items is
+                         driven by MedicationVM.SelectedFrequency, which keeps
+                         MedicationVM.ReminderTimes in sync (1–5 entries). Each
+                         TimePicker is bound to its own slot's Time. -->
 
                     <VerticalStackLayout
                         Spacing="10"
-                        BindableLayout.ItemsSource="{Binding MedicationVM.Times}">
+                        BindableLayout.ItemsSource="{Binding MedicationVM.ReminderTimes}">
 
                         <BindableLayout.ItemTemplate>
 
@@ -274,7 +294,7 @@
 
                                 <VerticalStackLayout Spacing="5">
 
-                                    <Label Text="TIME"
+                                    <Label Text="{Binding Label}"
                                            FontSize="10"
                                            FontAttributes="Bold"
                                            TextColor="#5A7990"/>
@@ -288,8 +308,7 @@
                                         </Border.StrokeShape>
 
                                         <TimePicker
-                                            Time="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
-                   Path=BindingContext.MedicationVM.SelectedTime}"
+                                            Time="{Binding Time}"
                                             Format="HH:mm"
                                             FontSize="14"
                                             TextColor="#1C3D52"
@@ -307,7 +326,7 @@
 
                     <!-- Assigned pet -->
                     <VerticalStackLayout Spacing="5">
-                        <Label Text="FOR PET"
+                        <Label Text="{loc:Translate MedEdit_ForPetLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -333,7 +352,7 @@
 
                     <!-- Food note (optional) -->
                     <VerticalStackLayout Spacing="5">
-                        <Label Text="NOTES (OPTIONAL)"
+                        <Label Text="{loc:Translate MedEdit_NotesLabel}"
                                FontSize="10"
                                FontAttributes="Bold"
                                TextColor="#5A7990"/>
@@ -343,8 +362,7 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="14"/>
                             </Border.StrokeShape>
-                            <!-- ? bind to MedicationVM.DraftMedication.Notes -->
-                            <Entry Placeholder="e.g. with food, after meal…"
+                            <Entry Placeholder="{loc:Translate MedEdit_NotesPlaceholder}"
                                    Text="{Binding MedicationVM.MedicationDraft.Notes}"
                                    FontSize="14"
                                    TextColor="#1C3D52"
@@ -354,9 +372,11 @@
                     </VerticalStackLayout>
 
                 </VerticalStackLayout>
+                </ScrollView>
 
-                <!-- ── ACTION BUTTONS ── -->
-                <Grid ColumnDefinitions="*,*"
+                <!-- ── ACTION BUTTONS (pinned footer) ── -->
+                <Grid Grid.Row="2"
+                      ColumnDefinitions="*,*"
                       ColumnSpacing="12">
 
                     <!-- Cancel -->
@@ -369,7 +389,7 @@
                             <TapGestureRecognizer
                                 Command="{Binding MedicationVM.CancelMedicationCommand}"/>
                         </Border.GestureRecognizers>
-                        <Label Text="Cancel"
+                        <Label Text="{loc:Translate Common_Cancel}"
                                FontSize="14"
                                FontAttributes="Bold"
                                TextColor="#7A5D99"
@@ -377,7 +397,7 @@
                                Padding="0,13"/>
                     </Border>
 
-                    <!-- Save -->
+                    <!-- Save / Override -->
                     <Border Grid.Column="1"
                             BackgroundColor="#9B6FCC"
                             StrokeThickness="0"
@@ -396,7 +416,7 @@
                             <TapGestureRecognizer
                                 Command="{Binding MedicationVM.SaveMedicationCommand}"/>
                         </Border.GestureRecognizers>
-                        <Label Text="Save"
+                        <Label Text="{Binding MedicationVM.SaveButtonText}"
                                FontSize="14"
                                FontAttributes="Bold"
                                TextColor="White"
@@ -406,9 +426,9 @@
 
                 </Grid>
 
-            </VerticalStackLayout>
+            </Grid>
         </Border>
 
     </Grid>
 
-</ContentPage>
+</ContentView>

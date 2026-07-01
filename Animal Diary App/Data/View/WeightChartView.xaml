@@ -2,7 +2,8 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Animal_Diary_App.Data.View.WeightChartView"
-             xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers">
+             xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers">
     <ContentView.Resources>
         <ResourceDictionary>
             <helpers:WeightMaxConverter x:Key="WeightMaxConverter"/>
@@ -19,7 +20,7 @@
                              IsVisible="{Binding MainPageVM.HasSufficientWeightData}">
 
             <!-- Header (matches the other section headers) -->
-            <Label Text="WEIGHT TREND"
+            <Label Text="{loc:Translate Weight_TrendHeader}"
                    FontSize="10"
                    FontAttributes="Bold"
                    CharacterSpacing="1.5"
@@ -34,7 +35,7 @@
 
                 <VerticalStackLayout Spacing="10">
 
-                    <Label Text="Last 30 days"
+                    <Label Text="{loc:Translate Main_Last30Days}"
                            FontSize="11"
                            FontAttributes="Bold"
                            TextColor="#2E6B85"/>
@@ -134,7 +135,7 @@
                    FontSize="32"
                    HorizontalTextAlignment="Center"/>
 
-            <Label Text="Add weight entries to see trends"
+            <Label Text="{loc:Translate Weight_EmptyState}"
                    FontSize="12"
                    TextColor="#6D8291"
                    HorizontalTextAlignment="Center"/>

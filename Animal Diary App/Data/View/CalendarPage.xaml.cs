@@ -1,6 +1,5 @@
 ﻿namespace Animal_Diary_App.Data.View;
 
-using Syncfusion.Maui.Calendar;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.ViewModels;

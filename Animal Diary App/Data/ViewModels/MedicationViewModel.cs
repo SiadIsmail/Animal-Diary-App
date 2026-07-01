@@ -4,6 +4,8 @@ using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Data.Services.Data.Device;
+using Animal_Diary_App.Data.Services.Notifications;
+using Animal_Diary_App.Helpers;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Collections.Generic;
@@ -48,6 +50,39 @@ public class MedicationViewModel : BaseViewModel
     }
 
 
+    // ── Add/Edit sheet state ──────────────────────────────────────────────
+    // The Add/Edit medication form is shown as a slide-up sheet overlaying the
+    // Medications page. This flag drives its visibility (and the scrim/dim +
+    // slide animation wired up in the view).
+    private bool isAddEditSheetVisible;
+    public bool IsAddEditSheetVisible
+    {
+        get => isAddEditSheetVisible;
+        set => SetProperty(ref isAddEditSheetVisible, value);
+    }
+
+    // True while editing an existing medication (vs. adding a new one). Drives
+    // the sheet title and the save-button label ("Override" vs. "Save").
+    private bool isEditingMedication;
+    public bool IsEditingMedication
+    {
+        get => isEditingMedication;
+        set
+        {
+            if (SetProperty(ref isEditingMedication, value))
+            {
+                OnPropertyChanged(nameof(SheetTitle));
+                OnPropertyChanged(nameof(SaveButtonText));
+            }
+        }
+    }
+
+    // Id of the medication currently being edited (null when adding).
+    private int? editingMedicationId;
+
+    public string SheetTitle => LocalizationManager.Instance.GetString(IsEditingMedication ? "MedEdit_EditTitle" : "MedEdit_AddTitle");
+    public string SaveButtonText => LocalizationManager.Instance.GetString(IsEditingMedication ? "MedEdit_Override" : "MedEdit_Save");
+
     public List<int> FrequencyOptions { get; } = new()
     {
         1,
@@ -66,6 +101,7 @@ public class MedicationViewModel : BaseViewModel
         {
             if (SetProperty(ref selectedFrequency, value))
             {
+                SyncReminderTimesToFrequency();
                 OnPropertyChanged(nameof(CanSaveMedication));
             }
         }
@@ -126,7 +162,7 @@ public class MedicationViewModel : BaseViewModel
     private void ValidateMedicationName()
     {
         MedicationNameError = string.IsNullOrWhiteSpace(MedicationDraft.Name)
-            ? "Medication name is required"
+            ? LocalizationManager.Instance.GetString("Validation_MedNameRequired")
             : string.Empty;
     }
 
@@ -134,11 +170,11 @@ public class MedicationViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(MedicationDraft.Dosage.ToString()))
         {
-            DosageError = "Dosage is required";
+            DosageError = LocalizationManager.Instance.GetString("Validation_DosageRequired");
         }
         else if (!decimal.TryParse(MedicationDraft.Dosage.ToString(), out var dose) || dose <= 0)
         {
-            DosageError = "Dosage must be a positive number";
+            DosageError = LocalizationManager.Instance.GetString("Validation_DosagePositive");
         }
         else
         {
@@ -148,30 +184,139 @@ public class MedicationViewModel : BaseViewModel
 
     public ObservableCollection<FilteredMedication> FilteredMedications { get; set; } = new ObservableCollection<FilteredMedication>();
 
+    // Which tab the Medications list is showing: "active" or "archived".
+    private string activeTab = "active";
+    public string ActiveTab
+    {
+        get => activeTab;
+        set => SetProperty(ref activeTab, value);
+    }
+
+    public ICommand SetActiveTabCommand => new Command<string>(async tab =>
+    {
+        if (string.IsNullOrWhiteSpace(tab) || tab == ActiveTab)
+            return;
+        ActiveTab = tab;
+        await LoadFilteredMedicationAsync();
+    });
 
     public async Task LoadFilteredMedicationAsync()
     {
         FilteredMedications.Clear();
+        var showArchived = ActiveTab == "archived";
         List<Medication> medicationFromDb = await _medicationService.GetMedicationsByPetIdAsync(await _activePetService.GetSavedActivePetIdAsync());
 
-        foreach (var medication in medicationFromDb)
+        foreach (var medication in medicationFromDb.Where(m => m.IsArchived == showArchived))
         {
             var schedules = await _medicationService.GetMedicationSchedulesByMedicationIdAsync(medication.Id);
-            var times = schedules.Select(s => s.Time).ToList();
-            var frequency = schedules.Count;
+            var distinctTimes = schedules.Select(s => s.Time).Distinct().OrderBy(t => t).ToList();
+            var timesPerDay = distinctTimes.Count;
             var pet = await _petService.GetPetByIdAsync(medication.PetId);
             FilteredMedications.Add(new FilteredMedication
             {
                 Id = medication.Id,
                 Name = medication.Name,
-                PetName = pet?.Name ?? "Unknown",
-                DoseDisplay = $"{medication.Dosage} mg",
-                FrequencyDisplay = $"{frequency} Times a day",
-                TimesDisplay = times.FirstOrDefault(),
+                PetName = pet?.Name ?? LocalizationManager.Instance.GetString("Med_Unknown"),
+                DoseDisplay = $"{medication.Dosage} {medication.Unit}",
+                FrequencyDisplay = timesPerDay <= 1
+                    ? LocalizationManager.Instance.GetString("Med_OnceDaily")
+                    : LocalizationManager.Instance.Format("Med_TimesDaily", timesPerDay),
+                TimesDisplay = string.Join(" · ", distinctTimes.Select(t => t.ToString(@"hh\:mm"))),
                 Note = medication.Notes
             });
         }
     }
+
+    /// <summary>
+    /// Archive (or restore) a medication. Archiving cancels its reminders;
+    /// restoring re-schedules them from the saved times. Demonstrates the
+    /// notification system's cancel/update lifecycle.
+    /// </summary>
+    public ICommand ArchiveMedicationCommand => new Command<FilteredMedication>(async filtered =>
+    {
+        if (filtered == null)
+            return;
+
+        var medication = await _medicationService.GetMedicationByIdAsync(filtered.Id);
+        if (medication == null)
+            return;
+
+        medication.IsArchived = !medication.IsArchived;
+        await _medicationService.UpdateMedicationAsync(medication);
+
+        // Archiving cancels reminders; restoring re-materializes them from the
+        // saved schedule. SyncMedicationAsync handles the archived case too.
+        if (medication.IsArchived)
+            await _reminderScheduler.CancelMedicationAsync(medication.Id);
+        else
+            await _reminderScheduler.SyncMedicationAsync(medication.Id);
+
+        await LoadFilteredMedicationAsync();
+    });
+
+    /// <summary>
+    /// Open the slide-up sheet to add a new medication. Starts from a blank
+    /// draft seeded with the active pet.
+    /// </summary>
+    public ICommand AddMedicationCommand => new Command(async () =>
+    {
+        ClearMedicationDraft();
+        editingMedicationId = null;
+        IsEditingMedication = false;
+        await SetSelectedMedicationDraftAsync();
+        IsAddEditSheetVisible = true;
+    });
+
+    /// <summary>
+    /// Open the slide-up sheet to edit an existing medication. Loads the saved
+    /// values (name, dose, unit, notes, days and reminder times) into the draft
+    /// so the form opens pre-filled; saving overrides the original.
+    /// </summary>
+    public ICommand EditMedicationCommand => new Command<FilteredMedication>(async filtered =>
+    {
+        if (filtered == null)
+            return;
+
+        var medication = await _medicationService.GetMedicationByIdAsync(filtered.Id);
+        if (medication == null)
+            return;
+
+        editingMedicationId = medication.Id;
+        IsEditingMedication = true;
+
+        // Pre-fill the draft from the saved medication.
+        MedicationDraft = new Medication
+        {
+            Id = medication.Id,
+            PetId = medication.PetId,
+            Name = medication.Name,
+            Dosage = medication.Dosage,
+            Unit = medication.Unit,
+            Notes = medication.Notes,
+            IsArchived = medication.IsArchived
+        };
+        SelectedMedicationDraftPet = await _petService.GetPetByIdAsync(medication.PetId);
+
+        // Rebuild day + reminder-time selections from the saved schedule rows.
+        var schedules = await _medicationService.GetMedicationSchedulesByMedicationIdAsync(medication.Id);
+        var selectedDays = schedules.Select(s => s.Day).Distinct().ToHashSet();
+        foreach (var day in Days)
+            day.IsSelected = selectedDays.Contains(day.Day);
+
+        var distinctTimes = schedules.Select(s => s.Time).Distinct().OrderBy(t => t).ToList();
+
+        // Setting the frequency rebuilds the reminder-time slots; then overwrite
+        // each slot with the saved time.
+        SelectedFrequency = Math.Clamp(distinctTimes.Count, 1, MedicationReminderScheduler.MaxReminderTimes);
+        for (var i = 0; i < ReminderTimes.Count && i < distinctTimes.Count; i++)
+            ReminderTimes[i].Time = distinctTimes[i];
+
+        ValidateDaysSelected();
+        OnPropertyChanged(nameof(CanSaveMedication));
+
+        IsAddEditSheetVisible = true;
+    });
+
     private Pet? selectedMedicationDraftPet;
     public Pet? SelectedMedicationDraftPet
     {
@@ -223,53 +368,39 @@ public class MedicationViewModel : BaseViewModel
     private readonly MedicationService _medicationService;
     private readonly ActivePetService _activePetService;
     private readonly PetService _petService;
-    private readonly INotificationService _notificationService;
+    private readonly MedicationReminderScheduler _reminderScheduler;
     public List<string> UnitOptions { get; } = new() { "mg", "ml", "tablet", "drops" };
 
-    public MedicationViewModel(MedicationService medicationService, ActivePetService activePetService, PetService petService, INotificationService notificationService)
+    public MedicationViewModel(MedicationService medicationService, ActivePetService activePetService, PetService petService, MedicationReminderScheduler reminderScheduler)
     {
         _medicationService = medicationService;
         _activePetService = activePetService;
         _petService = petService;
-        _notificationService = notificationService;
+        _reminderScheduler = reminderScheduler;
 
 
+        var loc = LocalizationManager.Instance;
         Days = new ObservableCollection<DaySelectionItem>
         {
-            new () { Day = DayOfWeek.Monday, DisplayName = "Mo" },
-            new () { Day = DayOfWeek.Tuesday, DisplayName = "Tu" },
-            new () { Day = DayOfWeek.Wednesday, DisplayName = "We" },
-            new () { Day = DayOfWeek.Thursday, DisplayName = "Th" },
-            new () { Day = DayOfWeek.Friday, DisplayName = "Fr" },
-            new () { Day = DayOfWeek.Saturday, DisplayName = "Sa" },
-            new () { Day = DayOfWeek.Sunday, DisplayName = "Su" }
-        };
-        Times = new ObservableCollection<MedicationSchedule>
-        {
-            new MedicationSchedule
-            {
-        Time = new TimeSpan(8, 0, 0)
-            }
+            new () { Day = DayOfWeek.Monday, DisplayName = loc.GetString("Day_Mon") },
+            new () { Day = DayOfWeek.Tuesday, DisplayName = loc.GetString("Day_Tue") },
+            new () { Day = DayOfWeek.Wednesday, DisplayName = loc.GetString("Day_Wed") },
+            new () { Day = DayOfWeek.Thursday, DisplayName = loc.GetString("Day_Thu") },
+            new () { Day = DayOfWeek.Friday, DisplayName = loc.GetString("Day_Fri") },
+            new () { Day = DayOfWeek.Saturday, DisplayName = loc.GetString("Day_Sat") },
+            new () { Day = DayOfWeek.Sunday, DisplayName = loc.GetString("Day_Sun") }
         };
 
         ToggleDayCommand = new Command<DaySelectionItem>(ToggleDay);
 
-        // Set defaults
+        // Set defaults — SelectedFrequency drives how many reminder-time pickers
+        // are shown (see SyncReminderTimesToFrequency).
         SelectedFrequency = 1;
-        SelectedTime = new TimeSpan(8, 0, 0);  // 8:00 AM
-        //SelectedMedicationDraftPet = ;  // Set active pet as default
     }
     public async Task SetSelectedMedicationDraftAsync()
     {
         SelectedMedicationDraftPet = await _petService.GetPetByIdAsync(await _activePetService.GetSavedActivePetIdAsync());
         Console.WriteLine($"Set SelectedMedicationDraftPet to active pet: {SelectedMedicationDraftPet?.Name}");
-    }
-
-    private TimeSpan selectedTime;
-    public TimeSpan SelectedTime
-    {
-        get => selectedTime;
-        set => SetProperty(ref selectedTime, value);
     }
 
     public async Task SaveMedicationCommandasync()
@@ -286,39 +417,71 @@ public class MedicationViewModel : BaseViewModel
             return;
         }
 
-        var newMedication = new Medication
+        var pet = SelectedMedicationDraftPet!;
+
+        int medicationId;
+
+        if (IsEditingMedication && editingMedicationId.HasValue)
         {
-            Name = MedicationDraft.Name,
-            Dosage = ParseDosage(),
-            Unit = MedicationDraft.Unit,
-            PetId = SelectedMedicationDraftPet!.Id,
-            Notes = MedicationDraft.Notes
-        };
-        await _medicationService.SaveMedicationAsync(newMedication);
+            // Override the existing medication in place.
+            var existing = await _medicationService.GetMedicationByIdAsync(editingMedicationId.Value);
+            if (existing == null)
+                return;
+
+            existing.Name = MedicationDraft.Name;
+            existing.Dosage = ParseDosage();
+            existing.Unit = MedicationDraft.Unit;
+            existing.PetId = pet.Id;
+            existing.Notes = MedicationDraft.Notes;
+            await _medicationService.UpdateMedicationAsync(existing);
+
+            // Replace the schedule rows wholesale so removed days/times disappear.
+            await _medicationService.DeleteSchedulesForMedicationAsync(existing.Id);
+            medicationId = existing.Id;
+        }
+        else
+        {
+            var newMedication = new Medication
+            {
+                Name = MedicationDraft.Name,
+                Dosage = ParseDosage(),
+                Unit = MedicationDraft.Unit,
+                PetId = pet.Id,
+                Notes = MedicationDraft.Notes,
+                CreatedAt = DateTime.Now
+            };
+            await _medicationService.SaveMedicationAsync(newMedication);
+            medicationId = newMedication.Id;
+        }
+
+        // Persist a schedule row for every (selected day × reminder time).
+        var reminderTimes = ReminderTimes.Select(t => t.Time).ToList();
         var selectedDays = Days.Where(d => d.IsSelected).ToList();
         foreach (var day in selectedDays)
         {
-
-            var schedule = new MedicationSchedule
+            foreach (var time in reminderTimes)
             {
-                MedicationId = newMedication.Id,
-                Day = day.Day,
-                Time = SelectedTime
-            };
-
-            await _medicationService.SaveMedicationScheduleAsync(schedule);
-
+                await _medicationService.SaveMedicationScheduleAsync(new MedicationSchedule
+                {
+                    MedicationId = medicationId,
+                    Day = day.Day,
+                    Time = time
+                });
+            }
         }
+
         ClearMedicationDraft();
-        OnMedicationSaved?.Invoke(this, EventArgs.Empty);
-        await _notificationService.RequestNotificationPermission();
-        var notifyTime = DateTime.Today.Add(selectedTime);
+        editingMedicationId = null;
+        IsEditingMedication = false;
+        IsAddEditSheetVisible = false;
 
-        if (notifyTime <= DateTime.Now)
-        {
-            notifyTime = notifyTime.AddDays(1);
-        }
-        await _notificationService.ScheduleDailyNotification(newMedication.Id, "Medication Reminder", "Give " + SelectedMedicationDraftPet?.Name + " his " + newMedication.Name, notifyTime);
+        // The scheduler reads the just-saved schedule rules and materializes
+        // concrete reminder occurrences from them. SyncMedicationAsync is
+        // idempotent, so it doubles as the "update after edit" path.
+        await _reminderScheduler.RequestPermissionAsync();
+        await _reminderScheduler.SyncMedicationAsync(medicationId);
+
+        await LoadFilteredMedicationAsync();
     }
 
     public ICommand SaveMedicationCommand => new Command(async () =>
@@ -328,8 +491,9 @@ public class MedicationViewModel : BaseViewModel
     public ICommand CancelMedicationCommand => new Command(() =>
     {
         ClearMedicationDraft();
-
-        OnMedicationSaved?.Invoke(this, EventArgs.Empty);
+        editingMedicationId = null;
+        IsEditingMedication = false;
+        IsAddEditSheetVisible = false;
     });
 
     private void ClearMedicationDraft()
@@ -338,25 +502,58 @@ public class MedicationViewModel : BaseViewModel
         EnteredMedicationName = string.Empty;
         EnteredDosage = string.Empty;
         SelectedMedicationDraftPet = _activePetService.ActivePet;  // Reset to active pet
-        SelectedFrequency = 1;  // Reset to 1
-        SelectedTime = new TimeSpan(8, 0, 0);  // Reset to 8:00 AM
+        SelectedFrequency = 1;  // Reset to 1 (also rebuilds ReminderTimes)
         foreach (var day in Days)
         {
             day.IsSelected = false;
         }
 
-        Times.Clear();
-        Times.Add(new MedicationSchedule { Time = new TimeSpan(8, 0, 0) });
+        SyncReminderTimesToFrequency();
     }
 
-
-    public event EventHandler? OnMedicationSaved;
 
     public ObservableCollection<DaySelectionItem> Days { get; set; }
 
     public ICommand ToggleDayCommand { get; set; }
 
-    public ObservableCollection<MedicationSchedule> Times { get; set; } = new();
+    /// <summary>
+    /// One entry per daily reminder time. The collection is kept in sync with
+    /// <see cref="SelectedFrequency"/> so the UI shows exactly that many
+    /// <see cref="TimePicker"/>s.
+    /// </summary>
+    public ObservableCollection<ReminderTimeSlot> ReminderTimes { get; } = new();
+
+    // Sensible spread of default times as the user adds more daily reminders.
+    private static readonly TimeSpan[] DefaultReminderTimes =
+    {
+        new(8, 0, 0),   // morning
+        new(20, 0, 0),  // evening
+        new(13, 0, 0),  // midday
+        new(17, 0, 0),  // late afternoon
+        new(22, 0, 0)   // night
+    };
+
+    private static TimeSpan DefaultTimeForSlot(int slot)
+        => DefaultReminderTimes[Math.Clamp(slot, 0, DefaultReminderTimes.Length - 1)];
+
+    /// <summary>
+    /// Grow or shrink <see cref="ReminderTimes"/> to match the chosen frequency
+    /// (capped at <see cref="MedicationReminderScheduler.MaxReminderTimes"/>),
+    /// preserving the times the user has already picked.
+    /// </summary>
+    private void SyncReminderTimesToFrequency()
+    {
+        var target = Math.Clamp(SelectedFrequency, 1, MedicationReminderScheduler.MaxReminderTimes);
+
+        while (ReminderTimes.Count > target)
+            ReminderTimes.RemoveAt(ReminderTimes.Count - 1);
+
+        while (ReminderTimes.Count < target)
+            ReminderTimes.Add(new ReminderTimeSlot(ReminderTimes.Count, DefaultTimeForSlot(ReminderTimes.Count)));
+
+        for (var i = 0; i < ReminderTimes.Count; i++)
+            ReminderTimes[i].Index = i;
+    }
 
     private void ToggleDay(DaySelectionItem item)
     {
@@ -371,14 +568,14 @@ public class MedicationViewModel : BaseViewModel
     private void ValidatePetSelection()
     {
         PetError = SelectedMedicationDraftPet == null
-            ? "Please select a pet for this medication"
+            ? LocalizationManager.Instance.GetString("Validation_SelectPet")
             : string.Empty;
     }
 
     private void ValidateDaysSelected()
     {
         DaysError = !AnyDaySelected
-            ? "Please select at least one day"
+            ? LocalizationManager.Instance.GetString("Validation_SelectDay")
             : string.Empty;
     }
 

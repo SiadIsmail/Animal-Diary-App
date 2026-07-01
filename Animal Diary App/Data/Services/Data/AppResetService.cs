@@ -21,6 +21,8 @@ public class AppResetService
         await _db.Connection.DeleteAllAsync<AppSettings>();
         await _db.Connection.DeleteAllAsync<MedicationSchedule>();
         await _db.Connection.DeleteAllAsync<MedicationTime>();
+        await _db.Connection.DeleteAllAsync<ReminderInstance>();
+        await _db.Connection.DeleteAllAsync<MedicationDoseLog>();
 
         MainThread.BeginInvokeOnMainThread(() =>
         {

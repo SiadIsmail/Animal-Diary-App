@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.PetsPage"
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="#DCEBF5">
@@ -17,8 +18,7 @@
                Grid.RowSpan="2"/>
 
         <!-- MAIN CONTENT -->
-        <ScrollView Grid.Row="0"
-                    Margin="0,0,0,80">
+        <ScrollView Grid.Row="0">
 
             <VerticalStackLayout Padding="24,20"
                                  Spacing="24">
@@ -27,7 +27,7 @@
                 <Grid ColumnDefinitions="*,Auto"
                       VerticalOptions="Center">
 
-                    <Label Text="My Pets"
+                    <Label Text="{loc:Translate Pets_Title}"
                            FontSize="22"
                            FontAttributes="Bold"
                            TextColor="#1C3D52"
@@ -209,7 +209,7 @@
                                             Padding="10,4"
                                             Margin="0,0,6,6">
 
-                                        <Label Text="Kidney Stage 1"
+                                        <Label Text="{loc:Translate Pets_KidneyTag}"
                                                FontSize="11"
                                                FontAttributes="Bold"
                                                TextColor="White"/>
@@ -223,7 +223,7 @@
                                             Padding="10,4"
                                             Margin="0,0,6,6">
 
-                                        <Label Text="2 Medications"
+                                        <Label Text="{loc:Translate Pets_MedicationsTag}"
                                                FontSize="11"
                                                FontAttributes="Bold"
                                                TextColor="White"/>
@@ -247,7 +247,7 @@
                         <!-- Action Buttons -->
                         <HorizontalStackLayout Spacing="10">
 
-                            <Button Text="Open Profile"
+                            <Button Text="{loc:Translate Pets_OpenProfile}"
                                     FontSize="13"
                                     HeightRequest="40"
                                     CornerRadius="20"
@@ -256,7 +256,7 @@
                                     TextColor="White"
                                     Command="{Binding PetVM.OpenActivePetProfileCommand}"/>
 
-                            <Button Text="Edit"
+                            <Button Text="{loc:Translate Pets_Edit}"
                                     FontSize="13"
                                     HeightRequest="40"
                                     WidthRequest="90"
@@ -277,7 +277,7 @@
 
                 <VerticalStackLayout Spacing="12">
 
-                    <Label Text="QUICK MANAGEMENT"
+                    <Label Text="{loc:Translate Pets_QuickManagement}"
                            FontSize="10"
                            FontAttributes="Bold"
                            TextColor="#2E6B85"
@@ -304,12 +304,12 @@
                                 <Label Text="🐾"
                                        FontSize="28"/>
 
-                                <Label Text="Add Pet"
+                                <Label Text="{loc:Translate Pets_AddPet}"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="White"/>
 
-                                <Label Text="Create a new pet profile"
+                                <Label Text="{loc:Translate Pets_AddPetSubtitle}"
                                        FontSize="12"
                                        TextColor="White"
                                        Opacity="0.7"/>
@@ -335,12 +335,12 @@
                                 <Label Text="💊"
                                        FontSize="28"/>
 
-                                <Label Text="Medication"
+                                <Label Text="{loc:Translate Pets_Medication}"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="White"/>
 
-                                <Label Text="Manage schedules and doses"
+                                <Label Text="{loc:Translate Pets_MedicationSubtitle}"
                                        FontSize="12"
                                        TextColor="White"
                                        Opacity="0.7"/>
@@ -372,12 +372,12 @@
                                 <Label Text="📄"
                                        FontSize="28"/>
 
-                                <Label Text="Documents"
+                                <Label Text="{loc:Translate Pets_Documents}"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="White"/>
 
-                                <Label Text="Reports, scans and files"
+                                <Label Text="{loc:Translate Pets_DocumentsSubtitle}"
                                        FontSize="12"
                                        TextColor="White"
                                        Opacity="0.7"/>
@@ -403,12 +403,12 @@
                                 <Label Text="📤"
                                        FontSize="28"/>
 
-                                <Label Text="Export"
+                                <Label Text="{loc:Translate Pets_Export}"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="White"/>
 
-                                <Label Text="Generate health PDF"
+                                <Label Text="{loc:Translate Pets_ExportSubtitle}"
                                        FontSize="12"
                                        TextColor="White"
                                        Opacity="0.7"/>
@@ -418,103 +418,6 @@
                         </Border>
 
                     </Grid>
-
-                </VerticalStackLayout>
-
-                <!-- ═════════════════════════════ -->
-                <!-- ACTIVE PET MEDICATIONS -->
-                <!-- ═════════════════════════════ -->
-
-                <VerticalStackLayout Spacing="10">
-
-                    <Grid ColumnDefinitions="*,Auto">
-
-                        <Label Text="CURRENT PET MEDICATIONS"
-                               FontSize="10"
-                               FontAttributes="Bold"
-                               TextColor="#2E6B85"
-                               CharacterSpacing="1.5"/>
-
-                        <!-- ? Optional -->
-                        <Label Grid.Column="1"
-                               Text="View All"
-                               FontSize="12"
-                               FontAttributes="Bold"
-                               TextColor="#4A1580"/>
-
-                    </Grid>
-
-                    <VerticalStackLayout Spacing="10"
-                                         BindableLayout.ItemsSource="{Binding MedicationVM.MedicationLogs}">
-
-                        <BindableLayout.ItemTemplate>
-
-                            <DataTemplate>
-
-                                <Border BackgroundColor="#40FFFFFF"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 16"
-                                        Padding="18,14">
-
-                                    <Border.GestureRecognizers>
-
-                                        <TapGestureRecognizer
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MedicationVM.OpenMedicationDetailCommand}"
-                                            CommandParameter="{Binding .}"/>
-
-                                    </Border.GestureRecognizers>
-
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-
-                                        <!-- Icon -->
-                                        <Border Grid.Column="0"
-                                                BackgroundColor="#2E9B6FCC"
-                                                StrokeThickness="0"
-                                                StrokeShape="RoundRectangle 10"
-                                                WidthRequest="42"
-                                                HeightRequest="42"
-                                                VerticalOptions="Center"
-                                                Margin="0,0,14,0">
-
-                                            <Label Text="💊"
-                                                   FontSize="20"
-                                                   HorizontalOptions="Center"
-                                                   VerticalOptions="Center"/>
-
-                                        </Border>
-
-                                        <!-- Info -->
-                                        <VerticalStackLayout Grid.Column="1"
-                                                             Spacing="2"
-                                                             VerticalOptions="Center">
-
-                                            <Label Text="{Binding Name}"
-                                                   FontSize="13"
-                                                   FontAttributes="Bold"
-                                                   TextColor="#1C3D52"/>
-
-                                            <Label Text="{Binding Schedule}"
-                                                   FontSize="11"
-                                                   TextColor="#6D8291"/>
-
-                                        </VerticalStackLayout>
-
-                                        <!-- Chevron -->
-                                        <Label Grid.Column="2"
-                                               Text="›"
-                                               FontSize="24"
-                                               TextColor="#5A9BB5"
-                                               VerticalOptions="Center"/>
-
-                                    </Grid>
-
-                                </Border>
-
-                            </DataTemplate>
-
-                        </BindableLayout.ItemTemplate>
-
-                    </VerticalStackLayout>
 
                 </VerticalStackLayout>
 
@@ -559,7 +462,7 @@
                                FontSize="20"
                                HorizontalTextAlignment="Center"/>
 
-                        <Label Text="Main"
+                        <Label Text="{loc:Translate Nav_Main}"
                                FontSize="11"
                                FontAttributes="Bold"
                                TextColor="#664A1580"
@@ -583,7 +486,7 @@
                                FontSize="20"
                                HorizontalTextAlignment="Center"/>
 
-                        <Label Text="Calendar"
+                        <Label Text="{loc:Translate Nav_Calendar}"
                                FontSize="11"
                                FontAttributes="Bold"
                                TextColor="#664A1580"
@@ -603,7 +506,7 @@
                                FontSize="20"
                                HorizontalTextAlignment="Center"/>
 
-                        <Label Text="Pets"
+                        <Label Text="{loc:Translate Nav_Pets}"
                                FontSize="11"
                                FontAttributes="Bold"
                                TextColor="#4A1580"

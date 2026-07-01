@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ── Common ── -->
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Common_Add" xml:space="preserve"><value>Add</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Common_EnterText" xml:space="preserve"><value>Enter text</value></data>
+  <data name="Common_YearsSeparator" xml:space="preserve"><value> years · </value></data>
+  <data name="Common_KgSuffix" xml:space="preserve"><value> kg</value></data>
+  <data name="Common_AgeYearsShort" xml:space="preserve"><value>({0} yrs)</value></data>
+
+  <!-- ── Bottom navigation ── -->
+  <data name="Nav_Main" xml:space="preserve"><value>Main</value></data>
+  <data name="Nav_Calendar" xml:space="preserve"><value>Calendar</value></data>
+  <data name="Nav_Pets" xml:space="preserve"><value>Pets</value></data>
+
+  <!-- ── App / Loading ── -->
+  <data name="App_StartError" xml:space="preserve"><value>Could not start the app. Please restart.</value></data>
+  <data name="Loading_Message" xml:space="preserve"><value>Loading...</value></data>
+
+  <!-- ── Language selection ── -->
+  <data name="Language_Title" xml:space="preserve"><value>Choose your language</value></data>
+  <data name="Language_Subtitle" xml:space="preserve"><value>Select your preferred language</value></data>
+  <data name="Language_Continue" xml:space="preserve"><value>Continue</value></data>
+
+  <!-- ── Welcome ── -->
+  <data name="Welcome_Tagline" xml:space="preserve"><value>A health diary for the animals you love</value></data>
+  <data name="Welcome_AddFirstPet" xml:space="preserve"><value>Add my first pet 🐾</value></data>
+  <data name="Welcome_Reassurance" xml:space="preserve"><value>Takes about 30 seconds · you can always edit later</value></data>
+
+  <!-- ── Settings ── -->
+  <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings_DataSection" xml:space="preserve"><value>DATA</value></data>
+  <data name="Settings_DeleteAllData" xml:space="preserve"><value>Delete All Data</value></data>
+  <data name="Settings_ResetSubtitle" xml:space="preserve"><value>Reset app to initial state</value></data>
+  <data name="Settings_LanguageSection" xml:space="preserve"><value>LANGUAGE</value></data>
+  <data name="Settings_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings_LanguageSubtitle" xml:space="preserve"><value>Choose your language</value></data>
+  <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Delete All Data</value></data>
+  <data name="Settings_DeleteConfirmMessage" xml:space="preserve"><value>This will permanently delete all pets, logs, medications, and settings. This cannot be undone.</value></data>
+  <data name="Settings_DeleteConfirmAccept" xml:space="preserve"><value>Delete</value></data>
+
+  <!-- ── Main page ── -->
+  <data name="Main_GreetingMorning" xml:space="preserve"><value>Good morning ☀️</value></data>
+  <data name="Main_Weight" xml:space="preserve"><value>WEIGHT</value></data>
+  <data name="Main_Mood" xml:space="preserve"><value>MOOD</value></data>
+  <data name="Main_MoodLabel" xml:space="preserve"><value>Mood</value></data>
+  <data name="Main_Last30Days" xml:space="preserve"><value>Last 30 days</value></data>
+  <data name="Main_MoodEmptyState" xml:space="preserve"><value>Start tracking your pet's mood in the calendar</value></data>
+  <data name="Main_RecentActivity" xml:space="preserve"><value>RECENT ACTIVITY</value></data>
+  <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Healthy (Placeholder)</value></data>
+  <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Meds 20:00 (Placeholder)</value></data>
+  <data name="Main_StableThisWeek" xml:space="preserve"><value>Stable this week (Placeholder)</value></data>
+  <data name="Main_HappyPlaceholder" xml:space="preserve"><value>Happy 😊 (Placeholder)</value></data>
+  <data name="Main_LoggedToday" xml:space="preserve"><value>Logged today</value></data>
+  <data name="Main_MedicationGiven" xml:space="preserve"><value>Medication given</value></data>
+  <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazole · with food (Placeholder)</value></data>
+
+  <!-- ── Weight chart ── -->
+  <data name="Weight_TrendHeader" xml:space="preserve"><value>WEIGHT TREND</value></data>
+  <data name="Weight_EmptyState" xml:space="preserve"><value>Add weight entries to see trends</value></data>
+
+  <!-- ── Pets page ── -->
+  <data name="Pets_Title" xml:space="preserve"><value>My Pets</value></data>
+  <data name="Pets_KidneyTag" xml:space="preserve"><value>Kidney Stage 1</value></data>
+  <data name="Pets_MedicationsTag" xml:space="preserve"><value>2 Medications</value></data>
+  <data name="Pets_OpenProfile" xml:space="preserve"><value>Open Profile</value></data>
+  <data name="Pets_Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Pets_QuickManagement" xml:space="preserve"><value>QUICK MANAGEMENT</value></data>
+  <data name="Pets_AddPet" xml:space="preserve"><value>Add Pet</value></data>
+  <data name="Pets_AddPetSubtitle" xml:space="preserve"><value>Create a new pet profile</value></data>
+  <data name="Pets_Medication" xml:space="preserve"><value>Medication</value></data>
+  <data name="Pets_MedicationSubtitle" xml:space="preserve"><value>Manage schedules and doses</value></data>
+  <data name="Pets_Documents" xml:space="preserve"><value>Documents</value></data>
+  <data name="Pets_DocumentsSubtitle" xml:space="preserve"><value>Reports, scans and files</value></data>
+  <data name="Pets_Export" xml:space="preserve"><value>Export</value></data>
+  <data name="Pets_ExportSubtitle" xml:space="preserve"><value>Generate health PDF</value></data>
+  <data name="Pet_SubtitleFormat" xml:space="preserve"><value>{0} · {1} yrs</value></data>
+
+  <!-- ── Calendar ── -->
+  <data name="Calendar_SelectedDate" xml:space="preserve"><value>Selected Date: {0:d}</value></data>
+  <data name="Calendar_MoodAdd" xml:space="preserve"><value>+ Mood</value></data>
+  <data name="Calendar_WeightAdd" xml:space="preserve"><value>+ Weight</value></data>
+  <data name="Calendar_HowFeeling" xml:space="preserve"><value>How is your pet feeling today?</value></data>
+  <data name="Calendar_ConfirmMood" xml:space="preserve"><value>Confirm Mood</value></data>
+  <data name="Calendar_WeightPlaceholder" xml:space="preserve"><value>Enter your pet's weight today</value></data>
+  <data name="Calendar_TodaysOverview" xml:space="preserve"><value>TODAY'S OVERVIEW</value></data>
+  <data name="Calendar_NoMood" xml:space="preserve"><value>No mood recorded yet...</value></data>
+  <data name="Calendar_Weight" xml:space="preserve"><value>Weight</value></data>
+  <data name="Calendar_NoWeight" xml:space="preserve"><value>No weight recorded yet...</value></data>
+  <data name="Calendar_Medications" xml:space="preserve"><value>Medications</value></data>
+  <data name="Calendar_NoMedications" xml:space="preserve"><value>No medications scheduled for this day</value></data>
+  <data name="Calendar_Skip" xml:space="preserve"><value>Skip</value></data>
+  <data name="Calendar_MakeWeightEntry" xml:space="preserve"><value>Make a weight entry for today!</value></data>
+  <data name="Calendar_MakeMoodEntry" xml:space="preserve"><value>Make a mood entry for today!</value></data>
+
+  <!-- ── Medications list ── -->
+  <data name="Med_Title" xml:space="preserve"><value>Medications</value></data>
+  <data name="Med_Active" xml:space="preserve"><value>Active</value></data>
+  <data name="Med_Archived" xml:space="preserve"><value>Archived</value></data>
+  <data name="Med_ForPet" xml:space="preserve"><value>Medications for {0}</value></data>
+  <data name="Med_EmptyTitle" xml:space="preserve"><value>No medications yet</value></data>
+  <data name="Med_EmptySubtitle" xml:space="preserve"><value>Tap + Add below to get started</value></data>
+  <data name="Med_OnceDaily" xml:space="preserve"><value>Once daily</value></data>
+  <data name="Med_TimesDaily" xml:space="preserve"><value>{0}× daily</value></data>
+  <data name="Med_Unknown" xml:space="preserve"><value>Unknown</value></data>
+
+  <!-- ── Add / Edit medication sheet ── -->
+  <data name="MedEdit_AddTitle" xml:space="preserve"><value>Add Medication</value></data>
+  <data name="MedEdit_EditTitle" xml:space="preserve"><value>Edit Medication</value></data>
+  <data name="MedEdit_EditingNote" xml:space="preserve"><value>You're editing an existing medication</value></data>
+  <data name="MedEdit_NameLabel" xml:space="preserve"><value>MEDICATION NAME</value></data>
+  <data name="MedEdit_NamePlaceholder" xml:space="preserve"><value>e.g. Methimazole</value></data>
+  <data name="MedEdit_DoseLabel" xml:space="preserve"><value>DOSE</value></data>
+  <data name="MedEdit_UnitLabel" xml:space="preserve"><value>UNIT</value></data>
+  <data name="MedEdit_DaysLabel" xml:space="preserve"><value>MEDICATION DAYS</value></data>
+  <data name="MedEdit_TimesPerDayLabel" xml:space="preserve"><value>TIMES PER DAY</value></data>
+  <data name="MedEdit_ForPetLabel" xml:space="preserve"><value>FOR PET</value></data>
+  <data name="MedEdit_NotesLabel" xml:space="preserve"><value>NOTES (OPTIONAL)</value></data>
+  <data name="MedEdit_NotesPlaceholder" xml:space="preserve"><value>e.g. with food, after meal…</value></data>
+  <data name="MedEdit_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="MedEdit_Override" xml:space="preserve"><value>Override</value></data>
+  <data name="MedEdit_ReminderLabel" xml:space="preserve"><value>REMINDER {0}</value></data>
+
+  <!-- ── Create pet ── -->
+  <data name="CreatePet_FirstLaunchTitle" xml:space="preserve"><value>Meet your first pet 🐾</value></data>
+  <data name="CreatePet_AddTitle" xml:space="preserve"><value>Add a Pet</value></data>
+  <data name="CreatePet_FirstLaunchSave" xml:space="preserve"><value>Let's go! 🐾</value></data>
+  <data name="CreatePet_AddSave" xml:space="preserve"><value>Add Pet</value></data>
+  <data name="CreatePet_Subtitle" xml:space="preserve"><value>Tell us about your animal. You can always edit this later.</value></data>
+  <data name="CreatePet_WhatAnimal" xml:space="preserve"><value>WHAT KIND OF ANIMAL?</value></data>
+  <data name="CreatePet_DescribeType" xml:space="preserve"><value>DESCRIBE YOUR PET'S TYPE</value></data>
+  <data name="CreatePet_CustomTypePlaceholder" xml:space="preserve"><value>e.g. Hamster, Iguana…</value></data>
+  <data name="CreatePet_NameLabel" xml:space="preserve"><value>PET NAME</value></data>
+  <data name="CreatePet_NamePlaceholder" xml:space="preserve"><value>e.g. Mochi, Fofo…</value></data>
+  <data name="CreatePet_AgeLabel" xml:space="preserve"><value>AGE (YEARS)</value></data>
+  <data name="CreatePet_AgePlaceholder" xml:space="preserve"><value>e.g. 3</value></data>
+  <data name="CreatePet_ConditionsTitle" xml:space="preserve"><value>Conditions &amp; diagnoses</value></data>
+  <data name="CreatePet_ConditionsSubtitle" xml:space="preserve"><value>You can add health conditions from the pet profile later</value></data>
+  <data name="CreatePet_PreviewName" xml:space="preserve"><value>Your pet</value></data>
+
+  <!-- ── Pet types ── -->
+  <data name="PetType_Dog" xml:space="preserve"><value>Dog</value></data>
+  <data name="PetType_Cat" xml:space="preserve"><value>Cat</value></data>
+  <data name="PetType_Bird" xml:space="preserve"><value>Bird</value></data>
+  <data name="PetType_Rabbit" xml:space="preserve"><value>Rabbit</value></data>
+  <data name="PetType_Fish" xml:space="preserve"><value>Fish</value></data>
+  <data name="PetType_Other" xml:space="preserve"><value>Other</value></data>
+
+  <!-- ── PetType page (legacy) ── -->
+  <data name="PetTypePage_Hello" xml:space="preserve"><value>Hello!</value></data>
+  <data name="PetTypePage_WhatType" xml:space="preserve"><value>What type of animal do you have?</value></data>
+  <data name="PetTypePage_HowOld" xml:space="preserve"><value>How old are they?</value></data>
+
+  <!-- ── Mood levels ── -->
+  <data name="Mood_Excellent" xml:space="preserve"><value>Excellent</value></data>
+  <data name="Mood_Good" xml:space="preserve"><value>Good</value></data>
+  <data name="Mood_Neutral" xml:space="preserve"><value>Neutral</value></data>
+  <data name="Mood_Bad" xml:space="preserve"><value>Bad</value></data>
+  <data name="Mood_VeryBad" xml:space="preserve"><value>Very Bad</value></data>
+  <data name="Mood_None" xml:space="preserve"><value>No mood</value></data>
+
+  <!-- ── Weekday abbreviations ── -->
+  <data name="Day_Mon" xml:space="preserve"><value>Mo</value></data>
+  <data name="Day_Tue" xml:space="preserve"><value>Tu</value></data>
+  <data name="Day_Wed" xml:space="preserve"><value>We</value></data>
+  <data name="Day_Thu" xml:space="preserve"><value>Th</value></data>
+  <data name="Day_Fri" xml:space="preserve"><value>Fr</value></data>
+  <data name="Day_Sat" xml:space="preserve"><value>Sa</value></data>
+  <data name="Day_Sun" xml:space="preserve"><value>Su</value></data>
+
+  <!-- ── Dose status ── -->
+  <data name="Dose_TakenAt" xml:space="preserve"><value>Taken · {0:HH:mm}</value></data>
+  <data name="Dose_Taken" xml:space="preserve"><value>Taken</value></data>
+  <data name="Dose_Skipped" xml:space="preserve"><value>Skipped</value></data>
+  <data name="Dose_Missed" xml:space="preserve"><value>Missed</value></data>
+  <data name="Dose_NotTaken" xml:space="preserve"><value>Not taken</value></data>
+  <data name="Dose_Upcoming" xml:space="preserve"><value>Upcoming</value></data>
+
+  <!-- ── Validation ── -->
+  <data name="Validation_PetNameRequired" xml:space="preserve"><value>Pet name is required</value></data>
+  <data name="Validation_PetTypeRequired" xml:space="preserve"><value>Pet type is required</value></data>
+  <data name="Validation_PetTypeDescribe" xml:space="preserve"><value>Please describe your pet's type</value></data>
+  <data name="Validation_PetAgeRequired" xml:space="preserve"><value>Pet age is required</value></data>
+  <data name="Validation_PetAgeInvalid" xml:space="preserve"><value>Pet age must be a valid positive number</value></data>
+  <data name="Validation_MedNameRequired" xml:space="preserve"><value>Medication name is required</value></data>
+  <data name="Validation_DosageRequired" xml:space="preserve"><value>Dosage is required</value></data>
+  <data name="Validation_DosagePositive" xml:space="preserve"><value>Dosage must be a positive number</value></data>
+  <data name="Validation_SelectPet" xml:space="preserve"><value>Please select a pet for this medication</value></data>
+  <data name="Validation_SelectDay" xml:space="preserve"><value>Please select at least one day</value></data>
+
+  <!-- ── Notifications ── -->
+  <data name="Notif_SafePet" xml:space="preserve"><value>your pet</value></data>
+  <data name="Notif_DefaultMedication" xml:space="preserve"><value>medication</value></data>
+  <data name="Notif_MedicationTitle" xml:space="preserve"><value>Time for {0}'s medication ❤️</value></data>
+  <data name="Notif_MedicationBody0" xml:space="preserve"><value>It's time for {0}'s {1} ❤️</value></data>
+  <data name="Notif_MedicationBody1" xml:space="preserve"><value>A quick reminder: {0}'s {1} is due.</value></data>
+  <data name="Notif_MedicationBody2" xml:space="preserve"><value>Don't forget {0}'s {1} — they're counting on you 🐾</value></data>
+  <data name="Notif_MedicationBody3" xml:space="preserve"><value>A little nudge: {0}'s {1} is ready when you are.</value></data>
+  <data name="Notif_MedicationBody4" xml:space="preserve"><value>{0}'s {1} is due now. You've got this 💜</value></data>
+  <data name="Notif_MedicationBody5" xml:space="preserve"><value>Fio is a cutie patootie and so is {0}! Time for {1} ❤️</value></data>
+  <data name="Notif_MissedTitle" xml:space="preserve"><value>Missed dose for {0}</value></data>
+  <data name="Notif_MissedBodyOne" xml:space="preserve"><value>{0}'s {1} reminder was missed while your device was off. Please check when you have a moment ❤️</value></data>
+  <data name="Notif_MissedBodyMany" xml:space="preserve"><value>{0} has {1} missed {2} reminders from while your device was off. Please check on them ❤️</value></data>
+  <data name="Notif_MoodCheckInTitle" xml:space="preserve"><value>How is {0} today? 🐾</value></data>
+  <data name="Notif_MoodCheckInBody" xml:space="preserve"><value>Don't forget to log how {0} is feeling today.</value></data>
+  <data name="Notif_WeightCheckInTitle" xml:space="preserve"><value>{0}'s weigh-in</value></data>
+  <data name="Notif_WeightCheckInBody" xml:space="preserve"><value>A quick weigh-in helps you keep {0} healthy and happy.</value></data>
+  <data name="Notif_AppointmentTitle" xml:space="preserve"><value>Upcoming for {0} ❤️</value></data>
+  <data name="Notif_AppointmentBody" xml:space="preserve"><value>A gentle heads-up: {0}'s {1} is coming up.</value></data>
+</root>

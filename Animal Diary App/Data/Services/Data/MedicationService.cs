@@ -17,11 +17,37 @@ public class MedicationService
     {
         await _db.InsertAsync(medication);
     }
+
+    public async Task UpdateMedicationAsync(Medication medication)
+    {
+        await _db.UpdateAsync(medication);
+    }
+
+    /// <summary>Delete a medication together with all of its schedule rows.</summary>
+    public async Task DeleteMedicationAsync(int medicationId)
+    {
+        await DeleteSchedulesForMedicationAsync(medicationId);
+        await _db.DeleteAsync<Medication>(medicationId);
+    }
+
+    public async Task<Medication?> GetMedicationByIdAsync(int id)
+    {
+        return await _db.Table<Medication>()
+            .Where(m => m.Id == id)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<List<Medication>> GetMedicationsByPetIdAsync(int id)
     {
         return await _db.Table<Medication>()
             .Where(m => m.PetId == id)
             .ToListAsync();
+    }
+
+    /// <summary>All medications across every pet (used by the global reminder refresh).</summary>
+    public async Task<List<Medication>> GetAllMedicationsAsync()
+    {
+        return await _db.Table<Medication>().ToListAsync();
     }
     public async Task<List<MedicationSchedule>> GetMedicationSchedulesByMedicationIdAsync(int id)
     {
@@ -33,6 +59,13 @@ public class MedicationService
     public async Task SaveMedicationScheduleAsync(MedicationSchedule schedule)
     {
         await _db.InsertAsync(schedule);
+    }
+
+    /// <summary>Remove every schedule row for a medication (used before re-saving an edit, or on delete).</summary>
+    public async Task DeleteSchedulesForMedicationAsync(int medicationId)
+    {
+        await _db.Table<MedicationSchedule>()
+            .DeleteAsync(s => s.MedicationId == medicationId);
     }
 
     /*public async Task<List<MedicationLog>> GetMedicationLogsAsync()

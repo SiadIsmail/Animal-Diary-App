@@ -12,15 +12,19 @@ public enum MoodLevel
 
 public static class MoodLevelExtensions
 {
-    public static string GetDisplayName(this MoodLevel mood) => mood switch
+    public static string GetDisplayName(this MoodLevel mood)
     {
-        MoodLevel.Excellent => "Excellent",
-        MoodLevel.Good => "Good",
-        MoodLevel.Neutral => "Neutral",
-        MoodLevel.Bad => "Bad",
-        MoodLevel.VeryBad => "Very Bad",
-        _ => "No mood"
-    };
+        var key = mood switch
+        {
+            MoodLevel.Excellent => "Mood_Excellent",
+            MoodLevel.Good => "Mood_Good",
+            MoodLevel.Neutral => "Mood_Neutral",
+            MoodLevel.Bad => "Mood_Bad",
+            MoodLevel.VeryBad => "Mood_VeryBad",
+            _ => "Mood_None"
+        };
+        return LocalizationManager.Instance.GetString(key);
+    }
 
     public static Color GetColor(this MoodLevel mood) => mood switch
     {

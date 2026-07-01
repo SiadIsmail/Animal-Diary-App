@@ -11,6 +11,7 @@
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.WelcomePage"
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="#DCEBF5">
@@ -122,7 +123,7 @@
                    Margin="0,0,0,10"/>
 
             <!-- ── TAGLINE ── -->
-            <Label Text="A health diary for the animals you love"
+            <Label Text="{loc:Translate Welcome_Tagline}"
                    FontSize="15"
                    TextColor="#5A7990"
                    HorizontalTextAlignment="Center"
@@ -166,7 +167,7 @@
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnAddPetClicked"/>
                     </Border.GestureRecognizers>
-                    <Label Text="Add my first pet 🐾"
+                    <Label Text="{loc:Translate Welcome_AddFirstPet}"
                            FontSize="16"
                            FontAttributes="Bold"
                            TextColor="White"
@@ -175,7 +176,7 @@
                 </Border>
 
                 <!-- Reassurance line — no skip, just a soft note -->
-                <Label Text="Takes about 30 seconds · you can always edit later"
+                <Label Text="{loc:Translate Welcome_Reassurance}"
                        FontSize="11"
                        TextColor="#7B91A1"
                        HorizontalTextAlignment="Center"/>

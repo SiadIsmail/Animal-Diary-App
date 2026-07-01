@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             x:Class="Animal_Diary_App.Data.View.Controls.WeekCalendarView"
+             x:Name="Root">
+
+    <Border BackgroundColor="#5B9BB8"
+            StrokeThickness="0"
+            StrokeShape="RoundRectangle 16"
+            Padding="10,12">
+        <VerticalStackLayout Spacing="6">
+
+            <!-- ── Week header: ‹  16 – 22 Jun 2026  › ── -->
+            <Grid ColumnDefinitions="44,*,44"
+                  VerticalOptions="Center">
+
+                <Border Grid.Column="0"
+                        WidthRequest="34"
+                        HeightRequest="34"
+                        BackgroundColor="#33FFFFFF"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 17"
+                        HorizontalOptions="Center">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnPrevWeek"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="‹"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+                </Border>
+
+                <Label Grid.Column="1"
+                       Text="{Binding WeekLabel, Source={x:Reference Root}}"
+                       FontSize="15"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+
+                <Border Grid.Column="2"
+                        WidthRequest="34"
+                        HeightRequest="34"
+                        BackgroundColor="#33FFFFFF"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 17"
+                        HorizontalOptions="Center">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnNextWeek"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="›"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+                </Border>
+            </Grid>
+
+            <!-- ── Day row: 7 cells (Mon–Sun) ── -->
+            <FlexLayout BindableLayout.ItemsSource="{Binding Cells, Source={x:Reference Root}}"
+                        Wrap="Wrap"
+                        Direction="Row"
+                        AlignItems="Start"
+                        JustifyContent="Start">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <Grid FlexLayout.Basis="14.2857%"
+                              Padding="2"
+                              HeightRequest="60">
+                            <Border BackgroundColor="Transparent"
+                                    Stroke="Transparent"
+                                    StrokeThickness="1.5"
+                                    StrokeShape="RoundRectangle 11"
+                                    Padding="0">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding SelectDayCommand, Source={x:Reference Root}}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsToday}" Value="True">
+                                        <Setter Property="Stroke" Value="#FFFFFF"/>
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="#9B6FCC"/>
+                                        <Setter Property="Stroke" Value="#9B6FCC"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+
+                                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                                    <!-- Weekday abbreviation -->
+                                    <Label Text="{Binding WeekdayLabel}"
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           TextColor="White"
+                                           Opacity="0.7"
+                                           HorizontalOptions="Center"/>
+
+                                    <Label Text="{Binding DayNumber}"
+                                           FontSize="15"
+                                           TextColor="White"
+                                           HorizontalOptions="Center">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="FontAttributes" Value="Bold"/>
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+
+                                    <!-- Activity dots -->
+                                    <HorizontalStackLayout Spacing="3"
+                                                           HeightRequest="7"
+                                                           HorizontalOptions="Center"
+                                                           BindableLayout.ItemsSource="{Binding Dots}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <Ellipse WidthRequest="6"
+                                                         HeightRequest="6"
+                                                         Fill="{Binding Fill}"
+                                                         Stroke="{Binding Stroke}"
+                                                         StrokeThickness="{Binding StrokeThickness}"
+                                                         VerticalOptions="Center"/>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </FlexLayout>
+
+        </VerticalStackLayout>
+    </Border>
+</ContentView>

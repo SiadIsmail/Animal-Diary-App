@@ -2,6 +2,7 @@ namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Helpers;
 
 public partial class PetsPage : ContentPage
 {
@@ -21,10 +22,10 @@ public partial class PetsPage : ContentPage
 
         vm.SettingsVM.ConfirmDeleteAllData = () =>
             DisplayAlert(
-                "Delete All Data",
-                "This will permanently delete all pets, logs, medications, and settings. This cannot be undone.",
-                "Delete",
-                "Cancel");
+                LocalizationManager.Instance.GetString("Settings_DeleteConfirmTitle"),
+                LocalizationManager.Instance.GetString("Settings_DeleteConfirmMessage"),
+                LocalizationManager.Instance.GetString("Settings_DeleteConfirmAccept"),
+                LocalizationManager.Instance.GetString("Common_Cancel"));
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
     }

@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
              x:Class="Animal_Diary_App.Data.View.MainPage"
              NavigationPage.HasNavigationBar="False"
@@ -40,7 +41,7 @@
                     <VerticalStackLayout Spacing="2">
 
                         <!-- ? greeting binding -->
-                        <Label Text="Good morning ☀️"
+                        <Label Text="{loc:Translate Main_GreetingMorning}"
                                FontSize="14"
                                FontAttributes="Bold"
                                TextColor="#4A6172"
@@ -148,9 +149,9 @@
                                         <Span Text="{Binding MainPageVM.ActivePet.Type}"/>
                                         <Span Text=" · "/>
                                         <Span Text="{Binding MainPageVM.ActivePet.Age}"/>
-                                        <Span Text=" years · "/>
+                                        <Span Text="{loc:Translate Common_YearsSeparator}"/>
                                         <Span Text="{Binding MainPageVM.LatestWeight}"/>
-                                        <Span Text=" kg"/>
+                                        <Span Text="{loc:Translate Common_KgSuffix}"/>
                                     </FormattedString>
                                 </Label.FormattedText>
 
@@ -172,7 +173,7 @@
                                         <RoundRectangle CornerRadius="20"/>
                                     </Border.StrokeShape>
 
-                                    <Label Text="Healthy (Placeholder)"
+                                    <Label Text="{loc:Translate Main_HealthyPlaceholder}"
                                            FontSize="10"
                                            FontAttributes="Bold"
                                            TextColor="White"/>
@@ -188,7 +189,7 @@
                                     </Border.StrokeShape>
 
                                     <!-- ? medication reminder binding -->
-                                    <Label Text="Meds 20:00(Placeholder)"
+                                    <Label Text="{loc:Translate Main_MedsPlaceholder}"
                                            FontSize="10"
                                            FontAttributes="Bold"
                                            TextColor="#7A4A00"/>
@@ -218,7 +219,7 @@
 
                         <VerticalStackLayout Spacing="6">
 
-                            <Label Text="WEIGHT"
+                            <Label Text="{loc:Translate Main_Weight}"
                                    FontSize="10"
                                    FontAttributes="Bold"
                                    CharacterSpacing="1.5"
@@ -230,7 +231,7 @@
                                    TextColor="#1C3D52"/>
 
                             <!-- ? trend binding -->
-                            <Label Text="Stable this week (Placeholder)"
+                            <Label Text="{loc:Translate Main_StableThisWeek}"
                                    FontSize="11"
                                    TextColor="#6D8291"/>
 
@@ -251,20 +252,20 @@
 
                         <VerticalStackLayout Spacing="6">
 
-                            <Label Text="MOOD"
+                            <Label Text="{loc:Translate Main_Mood}"
                                    FontSize="10"
                                    FontAttributes="Bold"
                                    CharacterSpacing="1.5"
                                    TextColor="#2E6B85"/>
 
                             <!-- ? latest mood binding -->
-                            <Label Text="Happy 😊(Placeholder)"
+                            <Label Text="{loc:Translate Main_HappyPlaceholder}"
                                    FontSize="18"
                                    FontAttributes="Bold"
                                    TextColor="#1C3D52"/>
 
                             <!-- ? date binding -->
-                            <Label Text="Logged today"
+                            <Label Text="{loc:Translate Main_LoggedToday}"
                                    FontSize="11"
                                    TextColor="#6D8291"/>
 
@@ -275,7 +276,7 @@
                 </Grid>
                 <VerticalStackLayout
                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
-                    <Label Text="Mood"
+                    <Label Text="{loc:Translate Main_MoodLabel}"
                            FontSize="10"
                            FontAttributes="Bold"
                            CharacterSpacing="1.5"
@@ -290,7 +291,7 @@
 
                         <VerticalStackLayout Spacing="8">
 
-                            <Label Text="Last 30 days"
+                            <Label Text="{loc:Translate Main_Last30Days}"
                                    FontSize="11"
                                    FontAttributes="Bold"
                                    TextColor="#2E6B85"/>
@@ -335,7 +336,7 @@
                     <Label Text="😊"
                            FontSize="32"
                            HorizontalTextAlignment="Center"/>
-                    <Label Text="Start tracking your pet's mood in the calendar"
+                    <Label Text="{loc:Translate Main_MoodEmptyState}"
                            FontSize="12"
                            TextColor="#6D8291"
                            HorizontalTextAlignment="Center"/>
@@ -346,7 +347,7 @@
 
                 <VerticalStackLayout Spacing="10">
 
-                    <Label Text="RECENT ACTIVITY"
+                    <Label Text="{loc:Translate Main_RecentActivity}"
                            FontSize="10"
                            FontAttributes="Bold"
                            CharacterSpacing="1.5"
@@ -387,13 +388,13 @@
                                                  Spacing="2">
 
                                 <!-- ? medication binding -->
-                                <Label Text="Medication given"
+                                <Label Text="{loc:Translate Main_MedicationGiven}"
                                        FontSize="13"
                                        FontAttributes="Bold"
                                        TextColor="#1C3D52"/>
 
                                 <!-- ? details binding -->
-                                <Label Text="Methimazole · with food(Placeholder)"
+                                <Label Text="{loc:Translate Main_MedicationDetailPlaceholder}"
                                        FontSize="11"
                                        TextColor="#6D8291"/>
 
@@ -449,7 +450,7 @@
                                FontSize="20"
                                HorizontalTextAlignment="Center"/>
 
-                        <Label Text="Main"
+                        <Label Text="{loc:Translate Nav_Main}"
                                FontSize="11"
                                FontAttributes="Bold"
                                TextColor="#4A1580"
@@ -470,7 +471,7 @@
                                FontSize="20"
                                HorizontalTextAlignment="Center"/>
 
-                        <Label Text="Calendar"
+                        <Label Text="{loc:Translate Nav_Calendar}"
                                FontSize="11"
                                FontAttributes="Bold"
                                TextColor="#664A1580"
@@ -491,7 +492,7 @@
                                FontSize="20"
                                HorizontalTextAlignment="Center"/>
 
-                        <Label Text="Pets"
+                        <Label Text="{loc:Translate Nav_Pets}"
                                FontSize="11"
                                FontAttributes="Bold"
                                TextColor="#664A1580"
