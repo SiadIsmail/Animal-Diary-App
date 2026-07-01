@@ -42,6 +42,9 @@ public partial class MainPage : ContentPage
 
     private void OnResetCompleted(object? sender, EventArgs e)
     {
+        // Clear in-memory form drafts so stale inputs don't survive the wipe
+        // (the ViewModels are singletons).
+        vm.ResetDrafts();
         Application.Current!.Windows[0].Page = new NavigationPage(new WelcomePage(vm));
     }
 

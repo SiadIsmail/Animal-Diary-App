@@ -11,7 +11,7 @@ using System.Windows.Input;
 using System.Collections.Generic;
 
 
-public class MedicationViewModel : BaseViewModel
+public class MedicationViewModel : BaseViewModel, IResettableDraft
 {
     private decimal ParseDosage()
     {
@@ -495,6 +495,26 @@ public class MedicationViewModel : BaseViewModel
         IsEditingMedication = false;
         IsAddEditSheetVisible = false;
     });
+
+    /// <summary>
+    /// Full reset of the add/edit medication form: clears the draft, drops any
+    /// in-progress edit, hides the sheet, and wipes validation messages. Used by
+    /// the global data reset (<c>MainViewModel.ResetDrafts</c>); the per-action
+    /// flows use the narrower <see cref="ClearMedicationDraft"/> plus their own
+    /// flag resets.
+    /// </summary>
+    public void ResetDraft()
+    {
+        ClearMedicationDraft();
+        editingMedicationId = null;
+        IsEditingMedication = false;
+        IsAddEditSheetVisible = false;
+
+        MedicationNameError = string.Empty;
+        DosageError = string.Empty;
+        DaysError = string.Empty;
+        PetError = string.Empty;
+    }
 
     private void ClearMedicationDraft()
     {

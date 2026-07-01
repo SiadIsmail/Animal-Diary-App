@@ -11,6 +11,10 @@ public class MainViewModel
     public MedicationViewModel MedicationVM { get; }
     public SettingsViewModel SettingsVM { get; }
 
+    // Child VMs that hold transient form/draft state, cleared together on a
+    // global data reset. New draft forms just implement IResettableDraft and
+    // get added here.
+    private readonly IReadOnlyList<IResettableDraft> _draftViewModels;
 
     public MainViewModel(
  CalendarViewModel calendarVM,
@@ -24,6 +28,19 @@ public class MainViewModel
         MedicationVM = medicationVM;
         CalendarVM = calendarVM;
         SettingsVM = settingsVM;
+
+        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM };
+    }
+
+    /// <summary>
+    /// Clears every form's in-memory draft. Called after a global data reset so
+    /// stale inputs don't survive the wipe (the ViewModels are singletons, so
+    /// their draft state would otherwise persist across the reset).
+    /// </summary>
+    public void ResetDrafts()
+    {
+        foreach (var draft in _draftViewModels)
+            draft.ResetDraft();
     }
     public async Task LoadAsync()
     {

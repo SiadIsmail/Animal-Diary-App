@@ -6,7 +6,7 @@ using Animal_Diary_App.Helpers;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
-public class PetViewModel : BaseViewModel
+public class PetViewModel : BaseViewModel, IResettableDraft
 {
     private string enteredPetName = string.Empty;
 
@@ -215,6 +215,27 @@ public class PetViewModel : BaseViewModel
         await _petService.SavePetAsync(pet);
         Pets.Add(pet);
         SelectPet(pet);
+
+        // Leave the form in a clean state so the next "add pet" starts fresh.
+        ResetDraft();
+    }
+
+    /// <summary>
+    /// Clears the pet-creation form back to a blank draft. The entry setters
+    /// re-run validation as they are cleared, so the error strings are wiped
+    /// last to leave a fresh form with no residual "required" messages.
+    /// </summary>
+    public void ResetDraft()
+    {
+        SelectedPetType = null;
+        EnteredPetName = string.Empty;
+        EnteredPetType = string.Empty;
+        EnteredPetAge = string.Empty;
+        ShowCustomPetType = false;
+
+        PetNameError = string.Empty;
+        PetTypeError = string.Empty;
+        PetAgeError = string.Empty;
     }
     private Pet selectedPet = null!;
     public Pet SelectedPet

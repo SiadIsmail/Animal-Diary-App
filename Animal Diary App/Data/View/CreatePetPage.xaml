@@ -76,16 +76,9 @@
                            VerticalOptions="Center"
                            HorizontalOptions="Center"/>
 
-                    <!-- Spacer right to keep title centered -->
-                    <BoxView Grid.Column="2"
-                             WidthRequest="38"
-                             HeightRequest="38"
-                             Color="Transparent"/>
-
                 </Grid>
 
                 <!-- ── WELCOME SUBTITLE (first launch only) ── -->
-                <!-- ? IsVisible bind to PetVM.IsFirstLaunch -->
                 <Label Text="{loc:Translate CreatePet_Subtitle}"
                        FontSize="14"
                        TextColor="#5A7990"
