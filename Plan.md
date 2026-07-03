@@ -42,3 +42,5 @@ Examples:
 * Epilepsy
 
 ---
+
+User picks one of the common symptoms (Lethargy, Loss of appetite, Vomiting, Diarrhea, Limping)

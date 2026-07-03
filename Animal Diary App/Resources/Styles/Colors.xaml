@@ -41,4 +41,61 @@
     <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+
+    <!-- ============================================================= -->
+    <!-- Felova redesign tokens (see Designs/felova-redesign.html)      -->
+    <!-- ============================================================= -->
+
+    <!-- Surfaces -->
+    <Color x:Key="Paper">#F5F1EA</Color>       <!-- warm porcelain page ground   -->
+    <Color x:Key="PaperDeep">#EFEAE1</Color>   <!-- recessed wells               -->
+    <Color x:Key="Card">#FFFFFF</Color>        <!-- primary card surface         -->
+    <Color x:Key="Cream">#FBF7EF</Color>       <!-- journal / note surface       -->
+    <Color x:Key="Line">#E7E0D4</Color>        <!-- hairline borders             -->
+
+    <!-- Ink / text -->
+    <Color x:Key="Ink">#2C2337</Color>         <!-- primary text — deep plum-ink -->
+    <Color x:Key="InkSecondary">#6C6279</Color><!-- secondary text               -->
+    <Color x:Key="InkTertiary">#A69DB2</Color> <!-- tertiary / metadata          -->
+
+    <!-- Viola — brand accent -->
+    <Color x:Key="Viola">#7657B8</Color>
+    <Color x:Key="ViolaDeep">#5C4197</Color>
+    <Color x:Key="ViolaTint">#F0EBF9</Color>
+    <Color x:Key="ViolaLine">#DCD2EE</Color>
+
+    <!-- Honey — medication / attention -->
+    <Color x:Key="Honey">#D99A3E</Color>
+    <Color x:Key="HoneyTint">#F9EEDB</Color>
+    <Color x:Key="HoneyDeep">#8A5D14</Color>
+
+    <!-- Sage — stable / given / good -->
+    <Color x:Key="Sage">#5F9E82</Color>
+    <Color x:Key="SageTint">#E5F0EA</Color>
+    <Color x:Key="SageDeep">#2E6B50</Color>
+
+    <!-- Clay — alerts, used sparingly -->
+    <Color x:Key="Clay">#C05F5F</Color>
+    <Color x:Key="ClayTint">#F7E5E2</Color>
+
+    <!-- Mood scale -->
+    <Color x:Key="MoodGreat">#4FA085</Color>
+    <Color x:Key="MoodGood">#8CB56E</Color>
+    <Color x:Key="MoodOkay">#DFB253</Color>
+    <Color x:Key="MoodLow">#D68D62</Color>
+    <Color x:Key="MoodUnwell">#C05F5F</Color>
+
+    <!-- Brushes for the common surface / accent tokens -->
+    <SolidColorBrush x:Key="PaperBrush" Color="{StaticResource Paper}"/>
+    <SolidColorBrush x:Key="PaperDeepBrush" Color="{StaticResource PaperDeep}"/>
+    <SolidColorBrush x:Key="CardBrush" Color="{StaticResource Card}"/>
+    <SolidColorBrush x:Key="CreamBrush" Color="{StaticResource Cream}"/>
+    <SolidColorBrush x:Key="LineBrush" Color="{StaticResource Line}"/>
+    <SolidColorBrush x:Key="InkBrush" Color="{StaticResource Ink}"/>
+    <SolidColorBrush x:Key="ViolaBrush" Color="{StaticResource Viola}"/>
+    <SolidColorBrush x:Key="ViolaDeepBrush" Color="{StaticResource ViolaDeep}"/>
+    <SolidColorBrush x:Key="ViolaTintBrush" Color="{StaticResource ViolaTint}"/>
+    <SolidColorBrush x:Key="HoneyBrush" Color="{StaticResource Honey}"/>
+    <SolidColorBrush x:Key="SageBrush" Color="{StaticResource Sage}"/>
+    <SolidColorBrush x:Key="ClayBrush" Color="{StaticResource Clay}"/>
 </ResourceDictionary>
