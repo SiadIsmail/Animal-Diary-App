@@ -2,15 +2,10 @@
 <!--
     AddEditMedicationsView.xaml
     ─────────────────────────────────────────────────────────
-    A slide-up bottom sheet for adding OR editing a medication. It is embedded
-    as an overlay inside MedicationsPage (spanning all rows) so the page behind
-    stays visible and is dimmed by the scrim while the sheet is open.
-
-    Visibility + slide/fade animation are driven by
-    MedicationVM.IsAddEditSheetVisible (see the code-behind). The form binds the
-    same MedicationVM draft properties used for both add and edit; the title and
-    save-button label switch via MedicationVM.SheetTitle / SaveButtonText, and an
-    "editing" indicator shows when MedicationVM.IsEditingMedication is true.
+    Slide-up bottom sheet for adding OR editing a medication, embedded as an
+    overlay inside MedicationsPage. Visibility + slide/fade animation are driven
+    by MedicationVM.IsAddEditSheetVisible via the code-behind, which animates the
+    x:Named Scrim / SheetContainer — keep those names.
 -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -20,410 +15,292 @@
              IsVisible="False"
              InputTransparent="False">
 
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <Style x:Key="FieldLabel" TargetType="Label">
+                <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="CharacterSpacing" Value="0.8"/>
+                <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+            </Style>
+            <Style x:Key="FieldBorder" TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                <Setter Property="Stroke" Value="{StaticResource Line}"/>
+                <Setter Property="StrokeThickness" Value="1"/>
+                <Setter Property="StrokeShape" Value="RoundRectangle 13"/>
+            </Style>
+            <Style x:Key="ErrorLabel" TargetType="Label">
+                <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="TextColor" Value="{StaticResource Clay}"/>
+            </Style>
+        </ResourceDictionary>
+    </ContentView.Resources>
+
     <Grid>
-        <!-- Semi-transparent scrim — dims the page behind; tapping it dismisses the sheet -->
+        <!-- Scrim -->
         <BoxView x:Name="Scrim"
-                 BackgroundColor="#60000000"
+                 BackgroundColor="#66241E2E"
                  InputTransparent="False">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding MedicationVM.CancelMedicationCommand}"/>
             </BoxView.GestureRecognizers>
         </BoxView>
 
-        <!-- ── Sheet itself, anchored to bottom ──
-             Capped to a fraction of the screen height in code-behind so the
-             body scrolls and the footer stays pinned and clickable. -->
+        <!-- Sheet -->
         <Border x:Name="SheetContainer"
-                BackgroundColor="#F0EBF8"
+                BackgroundColor="{StaticResource Paper}"
                 StrokeThickness="0"
+                StrokeShape="RoundRectangle 28,28,0,0"
                 VerticalOptions="End"
                 Padding="20,0,20,28">
 
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="28,28,0,0"/>
-            </Border.StrokeShape>
-
             <Border.Shadow>
-                <Shadow Brush="#40000000"
-                        Offset="0,-4"
-                        Radius="20"
-                        Opacity="0.25"/>
+                <Shadow Brush="#241E2E" Offset="0,-4" Radius="24" Opacity="0.22"/>
             </Border.Shadow>
 
             <Grid RowDefinitions="Auto,*,Auto"
                   RowSpacing="16">
 
-                <!-- Handle + title (fixed header) -->
+                <!-- Header -->
                 <VerticalStackLayout Grid.Row="0"
-                                     Spacing="14"
-                                     Padding="0,14,0,0">
-
-                    <!-- Drag handle -->
-                    <BoxView WidthRequest="40"
+                                     Spacing="12"
+                                     Padding="0,12,0,0">
+                    <BoxView WidthRequest="38"
                              HeightRequest="4"
                              CornerRadius="2"
-                             BackgroundColor="#C4A8E0"
+                             BackgroundColor="{StaticResource Line}"
                              HorizontalOptions="Center"/>
 
-                    <!-- "Add Medication" / "Edit Medication" -->
                     <Label Text="{Binding MedicationVM.SheetTitle}"
-                           FontSize="18"
-                           FontAttributes="Bold"
-                           TextColor="#1C3D52"
+                           FontFamily="{StaticResource FontSerif}"
+                           FontSize="21"
+                           TextColor="{StaticResource Ink}"
                            HorizontalOptions="Center"/>
 
-                    <!-- Editing indicator — only shown when overriding an existing med -->
                     <Label Text="{loc:Translate MedEdit_EditingNote}"
-                           FontSize="12"
+                           FontFamily="{StaticResource FontSerif}"
                            FontAttributes="Italic"
-                           TextColor="#7A5D99"
+                           FontSize="12.5"
+                           TextColor="{StaticResource InkTertiary}"
                            HorizontalOptions="Center"
                            IsVisible="{Binding MedicationVM.IsEditingMedication}"/>
-
                 </VerticalStackLayout>
 
-                <!-- ── FORM FIELDS (scrollable body) ── -->
+                <!-- Form body -->
                 <ScrollView Grid.Row="1"
                             VerticalScrollBarVisibility="Never">
-                <VerticalStackLayout Spacing="12"
-                                     Padding="0,0,0,4">
+                    <VerticalStackLayout Spacing="14" Padding="0,0,0,4">
 
-                    <!-- Medication name -->
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="{loc:Translate MedEdit_NameLabel}"
-                               FontSize="10"
-                               FontAttributes="Bold"
-                               TextColor="#5A7990"/>
-                        <Border BackgroundColor="#FFFFFF"
-                                Stroke="#D0C8E0"
-                                StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14"/>
-                            </Border.StrokeShape>
-                            <Entry Placeholder="{loc:Translate MedEdit_NamePlaceholder}"
-                                   Text="{Binding MedicationVM.MedicationDraft.Name}"
-                                   FontSize="14"
-                                   TextColor="#1C3D52"
-                                   PlaceholderColor="#A0B0BC"
-                                   Margin="14,0"/>
-                        </Border>
-                        <Label Text="{Binding MedicationVM.MedicationNameError}"
-                               FontSize="11"
-                               TextColor="#E83E5F"
-                               IsVisible="{Binding MedicationVM.MedicationNameError, Converter={StaticResource StringToBoolConverter}}"/>
-                    </VerticalStackLayout>
-
-                    <!-- Dose + unit side by side -->
-                    <Grid ColumnDefinitions="*,Auto"
-                          ColumnSpacing="10">
-
-                        <VerticalStackLayout Spacing="5">
-                            <Label Text="{loc:Translate MedEdit_DoseLabel}"
-                                   FontSize="10"
-                                   FontAttributes="Bold"
-                                   TextColor="#5A7990"/>
-                            <Border BackgroundColor="#FFFFFF"
-                                    Stroke="#D0C8E0"
-                                    StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="14"/>
-                                </Border.StrokeShape>
-                                <Entry Placeholder="2.5"
-                                       Text="{Binding MedicationVM.MedicationDraft.Dosage}"
-                                       Keyboard="Numeric"
+                        <!-- Name -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{loc:Translate MedEdit_NameLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBorder}">
+                                <Entry Placeholder="{loc:Translate MedEdit_NamePlaceholder}"
+                                       Text="{Binding MedicationVM.MedicationDraft.Name}"
+                                       FontFamily="{StaticResource FontSans}"
                                        FontSize="14"
-                                       TextColor="#1C3D52"
-                                       PlaceholderColor="#A0B0BC"
+                                       TextColor="{StaticResource Ink}"
+                                       PlaceholderColor="{StaticResource InkTertiary}"
                                        Margin="14,0"/>
                             </Border>
-                            <Label Text="{Binding MedicationVM.DosageError}"
-                                   FontSize="11"
-                                   TextColor="#E83E5F"
-                                   IsVisible="{Binding MedicationVM.DosageError, Converter={StaticResource StringToBoolConverter}}"/>
+                            <Label Text="{Binding MedicationVM.MedicationNameError}"
+                                   Style="{StaticResource ErrorLabel}"
+                                   IsVisible="{Binding MedicationVM.MedicationNameError, Converter={StaticResource StringToBoolConverter}}"/>
                         </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Column="1"
-                                             Spacing="5"
-                                             WidthRequest="90">
-                            <Label Text="{loc:Translate MedEdit_UnitLabel}"
-                                   FontSize="10"
-                                   FontAttributes="Bold"
-                                   TextColor="#5A7990"/>
-                            <Border BackgroundColor="#FFFFFF"
-                                    Stroke="#D0C8E0"
-                                    StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="14"/>
-                                </Border.StrokeShape>
-                                <Picker Title="mg"
-                                        SelectedItem="{Binding MedicationVM.MedicationDraft.Unit}"
-                                        ItemsSource="{Binding MedicationVM.UnitOptions}"
+                        <!-- Dose + unit -->
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="{loc:Translate MedEdit_DoseLabel}" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource FieldBorder}">
+                                    <Entry Placeholder="2.5"
+                                           Text="{Binding MedicationVM.MedicationDraft.Dosage}"
+                                           Keyboard="Numeric"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="14"
+                                           TextColor="{StaticResource Ink}"
+                                           PlaceholderColor="{StaticResource InkTertiary}"
+                                           Margin="14,0"/>
+                                </Border>
+                                <Label Text="{Binding MedicationVM.DosageError}"
+                                       Style="{StaticResource ErrorLabel}"
+                                       IsVisible="{Binding MedicationVM.DosageError, Converter={StaticResource StringToBoolConverter}}"/>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="6" WidthRequest="90">
+                                <Label Text="{loc:Translate MedEdit_UnitLabel}" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource FieldBorder}">
+                                    <Picker Title="mg"
+                                            SelectedItem="{Binding MedicationVM.MedicationDraft.Unit}"
+                                            ItemsSource="{Binding MedicationVM.UnitOptions}"
+                                            FontFamily="{StaticResource FontSans}"
+                                            FontSize="14"
+                                            TextColor="{StaticResource Ink}"
+                                            Margin="10,0"/>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Weekday selector -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{loc:Translate MedEdit_DaysLabel}" Style="{StaticResource FieldLabel}"/>
+                            <CollectionView ItemsSource="{Binding MedicationVM.Days}"
+                                            ItemsLayout="HorizontalList"
+                                            SelectionMode="None"
+                                            HeightRequest="52">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border WidthRequest="42"
+                                                HeightRequest="42"
+                                                Stroke="{StaticResource Line}"
+                                                StrokeThickness="1"
+                                                BackgroundColor="{StaticResource Card}"
+                                                StrokeShape="RoundRectangle 21"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="Center"
+                                                Margin="0,0,7,0">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MedicationVM.ToggleDayCommand}"
+                                                    CommandParameter="{Binding .}"/>
+                                            </Border.GestureRecognizers>
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource Viola}"/>
+                                                    <Setter Property="Stroke" Value="{StaticResource Viola}"/>
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Label Text="{Binding DisplayName}"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontAttributes="Bold"
+                                                   FontSize="13"
+                                                   TextColor="{StaticResource InkSecondary}">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                            <Label Text="{Binding MedicationVM.DaysError}"
+                                   Style="{StaticResource ErrorLabel}"
+                                   IsVisible="{Binding MedicationVM.DaysError, Converter={StaticResource StringToBoolConverter}}"/>
+                        </VerticalStackLayout>
+
+                        <!-- Times per day -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{loc:Translate MedEdit_TimesPerDayLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBorder}">
+                                <Picker ItemsSource="{Binding MedicationVM.FrequencyOptions}"
+                                        SelectedItem="{Binding MedicationVM.SelectedFrequency}"
+                                        FontFamily="{StaticResource FontSans}"
                                         FontSize="14"
-                                        TextColor="#1C3D52"
+                                        TextColor="{StaticResource Ink}"
                                         Margin="10,0"/>
                             </Border>
                         </VerticalStackLayout>
 
-                    </Grid>
-
-                    <!-- WEEKDAY SELECTOR -->
-
-                    <VerticalStackLayout Spacing="8">
-
-                        <Label Text="{loc:Translate MedEdit_DaysLabel}"
-                               FontSize="10"
-                               FontAttributes="Bold"
-                               TextColor="#5A7990"/>
-
-                        <CollectionView
-                            ItemsSource="{Binding MedicationVM.Days}"
-                            ItemsLayout="HorizontalList"
-                            SelectionMode="None"
-                            HeightRequest="60">
-
-                            <CollectionView.ItemTemplate>
-
+                        <!-- Dynamic reminder time pickers -->
+                        <VerticalStackLayout Spacing="10"
+                                             BindableLayout.ItemsSource="{Binding MedicationVM.ReminderTimes}">
+                            <BindableLayout.ItemTemplate>
                                 <DataTemplate>
-
-                                    <Border
-                                        WidthRequest="42"
-                                        HeightRequest="42"
-                                        Stroke="#D0C8E0"
-                                        StrokeThickness="1"
-                                        BackgroundColor="White"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center">
-
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="21"/>
-                                        </Border.StrokeShape>
-
-                                        <Border.GestureRecognizers>
-
-                                            <TapGestureRecognizer
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MedicationVM.ToggleDayCommand}"
-                                                CommandParameter="{Binding .}"/>
-
-                                        </Border.GestureRecognizers>
-
-                                        <Border.Triggers>
-
-                                            <DataTrigger
-                                                TargetType="Border"
-                                                Binding="{Binding IsSelected}"
-                                                Value="True">
-
-                                                <Setter Property="BackgroundColor"
-                                                        Value="#9B6FCC"/>
-
-                                                <Setter Property="Stroke"
-                                                        Value="#9B6FCC"/>
-
-                                            </DataTrigger>
-
-                                        </Border.Triggers>
-
-                                        <Label
-                                            Text="{Binding DisplayName}"
-                                            HorizontalOptions="Center"
-                                            VerticalOptions="Center"
-                                            TextColor="#1C3D52"
-                                            FontAttributes="Bold"
-                                            FontSize="13"/>
-
-                                    </Border>
-
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding Label}" Style="{StaticResource FieldLabel}"/>
+                                        <Border Style="{StaticResource FieldBorder}">
+                                            <TimePicker Time="{Binding Time}"
+                                                        Format="HH:mm"
+                                                        FontFamily="{StaticResource FontSans}"
+                                                        FontSize="14"
+                                                        TextColor="{StaticResource Ink}"
+                                                        Margin="14,8"/>
+                                        </Border>
+                                    </VerticalStackLayout>
                                 </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
 
-                            </CollectionView.ItemTemplate>
+                        <!-- Assigned pet -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{loc:Translate MedEdit_ForPetLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBorder}">
+                                <Picker ItemsSource="{Binding PetVM.Pets}"
+                                        SelectedItem="{Binding PetVM.SelectedPet}"
+                                        ItemDisplayBinding="{Binding Name}"
+                                        FontFamily="{StaticResource FontSans}"
+                                        FontSize="14"
+                                        TextColor="{StaticResource Ink}"
+                                        Margin="10,0"/>
+                            </Border>
+                            <Label Text="{Binding MedicationVM.PetError}"
+                                   Style="{StaticResource ErrorLabel}"
+                                   IsVisible="{Binding MedicationVM.PetError, Converter={StaticResource StringToBoolConverter}}"/>
+                        </VerticalStackLayout>
 
-                        </CollectionView>
-
-                        <Label Text="{Binding MedicationVM.DaysError}"
-                               FontSize="11"
-                               TextColor="#E83E5F"
-                               IsVisible="{Binding MedicationVM.DaysError, Converter={StaticResource StringToBoolConverter}}"/>
-
-                    </VerticalStackLayout>
-
-
-                    <!-- TIMES PER DAY -->
-
-                    <VerticalStackLayout Spacing="5">
-
-                        <Label Text="{loc:Translate MedEdit_TimesPerDayLabel}"
-                               FontSize="10"
-                               FontAttributes="Bold"
-                               TextColor="#5A7990"/>
-
-                        <Border BackgroundColor="#FFFFFF"
-                                Stroke="#D0C8E0"
-                                StrokeThickness="1">
-
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14"/>
-                            </Border.StrokeShape>
-
-                            <Picker
-                                ItemsSource="{Binding MedicationVM.FrequencyOptions}"
-                                SelectedItem="{Binding MedicationVM.SelectedFrequency}"
-                                FontSize="14"
-                                TextColor="#1C3D52"
-                                Margin="10,0"/>
-
-                        </Border>
-
-
+                        <!-- Food note -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{loc:Translate MedEdit_NotesLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBorder}">
+                                <Entry Placeholder="{loc:Translate MedEdit_NotesPlaceholder}"
+                                       Text="{Binding MedicationVM.MedicationDraft.Notes}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       TextColor="{StaticResource Ink}"
+                                       PlaceholderColor="{StaticResource InkTertiary}"
+                                       Margin="14,0"/>
+                            </Border>
+                        </VerticalStackLayout>
 
                     </VerticalStackLayout>
-
-
-                    <!-- DYNAMIC TIME PICKERS
-                         One picker per reminder time. The number of items is
-                         driven by MedicationVM.SelectedFrequency, which keeps
-                         MedicationVM.ReminderTimes in sync (1–5 entries). Each
-                         TimePicker is bound to its own slot's Time. -->
-
-                    <VerticalStackLayout
-                        Spacing="10"
-                        BindableLayout.ItemsSource="{Binding MedicationVM.ReminderTimes}">
-
-                        <BindableLayout.ItemTemplate>
-
-                            <DataTemplate>
-
-                                <VerticalStackLayout Spacing="5">
-
-                                    <Label Text="{Binding Label}"
-                                           FontSize="10"
-                                           FontAttributes="Bold"
-                                           TextColor="#5A7990"/>
-
-                                    <Border BackgroundColor="#FFFFFF"
-                                            Stroke="#D0C8E0"
-                                            StrokeThickness="1">
-
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="14"/>
-                                        </Border.StrokeShape>
-
-                                        <TimePicker
-                                            Time="{Binding Time}"
-                                            Format="HH:mm"
-                                            FontSize="14"
-                                            TextColor="#1C3D52"
-                                            Margin="14,8"/>
-
-                                    </Border>
-
-                                </VerticalStackLayout>
-
-                            </DataTemplate>
-
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
-
-
-                    <!-- Assigned pet -->
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="{loc:Translate MedEdit_ForPetLabel}"
-                               FontSize="10"
-                               FontAttributes="Bold"
-                               TextColor="#5A7990"/>
-                        <Border BackgroundColor="#FFFFFF"
-                                Stroke="#D0C8E0"
-                                StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14"/>
-                            </Border.StrokeShape>
-                            <Picker
-                                ItemsSource="{Binding PetVM.Pets}"
-                                SelectedItem="{Binding PetVM.SelectedPet}"
-                                ItemDisplayBinding="{Binding Name}"
-                                FontSize="14"
-                                TextColor="#1C3D52"
-                                Margin="10,0"/>
-                        </Border>
-                        <Label Text="{Binding MedicationVM.PetError}"
-                               FontSize="11"
-                               TextColor="#E83E5F"
-                               IsVisible="{Binding MedicationVM.PetError, Converter={StaticResource StringToBoolConverter}}"/>
-                    </VerticalStackLayout>
-
-                    <!-- Food note (optional) -->
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="{loc:Translate MedEdit_NotesLabel}"
-                               FontSize="10"
-                               FontAttributes="Bold"
-                               TextColor="#5A7990"/>
-                        <Border BackgroundColor="#FFFFFF"
-                                Stroke="#D0C8E0"
-                                StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14"/>
-                            </Border.StrokeShape>
-                            <Entry Placeholder="{loc:Translate MedEdit_NotesPlaceholder}"
-                                   Text="{Binding MedicationVM.MedicationDraft.Notes}"
-                                   FontSize="14"
-                                   TextColor="#1C3D52"
-                                   PlaceholderColor="#A0B0BC"
-                                   Margin="14,0"/>
-                        </Border>
-                    </VerticalStackLayout>
-
-                </VerticalStackLayout>
                 </ScrollView>
 
-                <!-- ── ACTION BUTTONS (pinned footer) ── -->
+                <!-- Footer actions -->
                 <Grid Grid.Row="2"
                       ColumnDefinitions="*,*"
                       ColumnSpacing="12">
 
-                    <!-- Cancel -->
-                    <Border BackgroundColor="#40C4A8E0"
-                            StrokeThickness="0">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="16"/>
-                        </Border.StrokeShape>
+                    <Border BackgroundColor="{StaticResource ViolaTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 14">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer
-                                Command="{Binding MedicationVM.CancelMedicationCommand}"/>
+                            <TapGestureRecognizer Command="{Binding MedicationVM.CancelMedicationCommand}"/>
                         </Border.GestureRecognizers>
                         <Label Text="{loc:Translate Common_Cancel}"
+                               FontFamily="{StaticResource FontSans}"
                                FontSize="14"
                                FontAttributes="Bold"
-                               TextColor="#7A5D99"
+                               TextColor="{StaticResource ViolaDeep}"
                                HorizontalTextAlignment="Center"
-                               Padding="0,13"/>
+                               Padding="0,14"/>
                     </Border>
 
-                    <!-- Save / Override -->
                     <Border Grid.Column="1"
-                            BackgroundColor="#9B6FCC"
+                            BackgroundColor="{StaticResource Viola}"
                             StrokeThickness="0"
+                            StrokeShape="RoundRectangle 14"
                             Opacity="{Binding MedicationVM.CanSaveMedication, Converter={StaticResource BoolToOpacityConverter}}"
                             IsEnabled="{Binding MedicationVM.CanSaveMedication}">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="16"/>
-                        </Border.StrokeShape>
                         <Border.Shadow>
-                            <Shadow Brush="#409B6FCC"
-                                    Offset="0,3"
-                                    Radius="8"
-                                    Opacity="0.35"/>
+                            <Shadow Brush="#7657B8" Offset="0,3" Radius="10" Opacity="0.3"/>
                         </Border.Shadow>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer
-                                Command="{Binding MedicationVM.SaveMedicationCommand}"/>
+                            <TapGestureRecognizer Command="{Binding MedicationVM.SaveMedicationCommand}"/>
                         </Border.GestureRecognizers>
                         <Label Text="{Binding MedicationVM.SaveButtonText}"
+                               FontFamily="{StaticResource FontSans}"
                                FontSize="14"
                                FontAttributes="Bold"
-                               TextColor="White"
+                               TextColor="{StaticResource White}"
                                HorizontalTextAlignment="Center"
-                               Padding="0,13"/>
+                               Padding="0,14"/>
                     </Border>
-
                 </Grid>
 
             </Grid>

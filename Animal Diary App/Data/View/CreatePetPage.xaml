@@ -3,340 +3,231 @@
     CreatePetPage.xaml
     ─────────────────────────────────────────────────────────
     Used in two contexts:
-      1. First launch — no back button, full welcoming feel
-      2. Add pet from Pets page — back button visible
-
-    ? Set PetVM.IsFirstLaunch (bool) to control back button visibility
-    ? Set PetVM.PageTitle to "Meet your first pet 🐾" or "Add a Pet"
+      1. First launch — no back/cancel button, full welcoming feel
+      2. Add pet from Pets page — cancel button visible
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.CreatePetPage"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="#DCEBF5">
+             BackgroundColor="{StaticResource Paper}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Style x:Key="CardSurface" TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                <Setter Property="Stroke" Value="{StaticResource Line}"/>
+                <Setter Property="StrokeThickness" Value="1"/>
+                <Setter Property="StrokeShape" Value="RoundRectangle 22"/>
+                <Setter Property="Padding" Value="18"/>
+            </Style>
+            <Style x:Key="FieldLabel" TargetType="Label">
+                <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="CharacterSpacing" Value="0.8"/>
+                <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+            </Style>
+            <Style x:Key="FieldBorder" TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                <Setter Property="Stroke" Value="{StaticResource Line}"/>
+                <Setter Property="StrokeThickness" Value="1"/>
+                <Setter Property="StrokeShape" Value="RoundRectangle 13"/>
+            </Style>
+            <Style x:Key="ErrorLabel" TargetType="Label">
+                <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="TextColor" Value="{StaticResource Clay}"/>
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Background — same hintergrund_blau as every other page -->
-        <Image Source="hintergrund_blau.png"
-               Aspect="AspectFill"
-               HorizontalOptions="Fill"
-               VerticalOptions="Fill"
-               InputTransparent="True"
-               Grid.RowSpan="2"/>
-
-        <!-- ══════════════════════════════════
-             SCROLLABLE CONTENT
-        ══════════════════════════════════ -->
+        <!-- ══════════ SCROLLABLE CONTENT ══════════ -->
         <ScrollView Grid.Row="0">
-            <VerticalStackLayout Padding="20,20,20,120"
+            <VerticalStackLayout Padding="22,26,22,24"
                                  Spacing="20">
 
-                <!-- ── HEADER ROW ── -->
-                <Grid ColumnDefinitions="Auto,*,Auto"
-                      ColumnSpacing="12">
+                <!-- Header -->
+                <Label Text="{Binding PetVM.PageTitle}"
+                       FontFamily="{StaticResource FontSerif}"
+                       FontSize="{StaticResource TypeH1}"
+                       TextColor="{StaticResource Ink}"
+                       HorizontalTextAlignment="Center"/>
 
-                    <!-- Back button — hidden on first launch -->
-                    <!-- ? IsVisible="{Binding PetVM.ShowBackButton}" 
-                    <Border WidthRequest="38"
-                            HeightRequest="38"
-                            BackgroundColor="#40FFFFFF"
-                            Stroke="#50FFFFFF"
-                            StrokeThickness="1"
-                            IsVisible="{Binding PetVM.ShowPetCreationBackButton}">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="19"/>
-                        </Border.StrokeShape>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnBackClicked"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="‹"
-                               FontSize="22"
-                               FontAttributes="Bold"
-                               TextColor="#1C3D52"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center"/>
-                    </Border> 
-
-                     Spacer when back hidden 
-                    <BoxView Grid.Column="0"
-                             WidthRequest="38"
-                             HeightRequest="38"
-                             Color="Transparent"
-                             IsVisible="{Binding PetVM.HideBackButton}"/>-->
-
-                    <!-- Title -->
-                    <!-- ? bind Text to PetVM.PageTitle -->
-                    <Label Grid.Column="1"
-                           Text="{Binding PetVM.PageTitle}"
-                           FontSize="20"
-                           FontAttributes="Bold"
-                           TextColor="#1C3D52"
-                           VerticalOptions="Center"
-                           HorizontalOptions="Center"/>
-
-                </Grid>
-
-                <!-- ── WELCOME SUBTITLE (first launch only) ── -->
+                <!-- Welcome subtitle (first launch) -->
                 <Label Text="{loc:Translate CreatePet_Subtitle}"
+                       FontFamily="{StaticResource FontSans}"
                        FontSize="14"
-                       TextColor="#5A7990"
+                       TextColor="{StaticResource InkSecondary}"
                        HorizontalTextAlignment="Center"
                        IsVisible="{Binding PetVM.IsFirstLaunch}"
                        Margin="10,0"/>
 
-                <!-- ── AVATAR PREVIEW ── -->
-                <!-- Large centered emoji showing the currently selected pet type.
-                     Gives the page warmth and makes the type selector feel alive. -->
-                <VerticalStackLayout Spacing="6"
-                                     HorizontalOptions="Center">
-
+                <!-- Avatar preview -->
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
                     <Border WidthRequest="100"
                             HeightRequest="100"
-                            BackgroundColor="#5B9BB8"
-                            Stroke="#70FFFFFF"
+                            Stroke="{StaticResource ViolaLine}"
                             StrokeThickness="2"
+                            StrokeShape="RoundRectangle 50"
                             HorizontalOptions="Center">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="50"/>
-                        </Border.StrokeShape>
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#EFE9F8" Offset="0"/>
+                                <GradientStop Color="#E3D9F2" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
                         <Border.Shadow>
-                            <Shadow Brush="#305B9BB8"
-                                    Offset="0,6"
-                                    Radius="16"
-                                    Opacity="0.35"/>
+                            <Shadow Brush="#241E2E" Offset="0,6" Radius="16" Opacity="0.14"/>
                         </Border.Shadow>
-
-                        <!-- ? bind Text to PetVM.SelectedTypeEmoji
-                             e.g. "🐱", "🐶", "🐰" — updates live as user picks -->
                         <Label Text="{Binding PetVM.SelectedTypeEmoji}"
                                FontSize="52"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
                     </Border>
-
-                    <!-- Pet name preview — shows entered name or "Your pet" placeholder -->
-                    <!-- ? bind Text to PetVM.EnteredPetName, fallback "Your pet" -->
                     <Label Text="{Binding PetVM.PreviewName}"
-                           FontSize="16"
-                           FontAttributes="Bold"
-                           TextColor="#1C3D52"
-                           HorizontalOptions="Center"
-                           Opacity="0.8"/>
-
+                           FontFamily="{StaticResource FontSerif}"
+                           FontSize="18"
+                           TextColor="{StaticResource Ink}"
+                           HorizontalOptions="Center"/>
                 </VerticalStackLayout>
 
-                <!-- ── PET TYPE SELECTOR ── -->
+                <!-- Pet type selector -->
                 <VerticalStackLayout Spacing="10">
-
                     <Label Text="{loc:Translate CreatePet_WhatAnimal}"
-                           FontSize="10"
-                           FontAttributes="Bold"
-                           TextColor="#5A7990"
+                           Style="{StaticResource FieldLabel}"
                            Margin="2,0,0,0"/>
 
-                    <!-- Horizontal emoji picker — preserved from original, restyled -->
                     <CollectionView ItemsSource="{Binding PetVM.PetTypeOptions}"
                                     ItemsLayout="HorizontalList"
                                     SelectionMode="Single"
                                     SelectedItem="{Binding PetVM.SelectedPetType}"
-                                    HeightRequest="90">
+                                    HeightRequest="92">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <VerticalStackLayout Padding="5,0"
-                                                     Spacing="5">
-
+                                <VerticalStackLayout Padding="5,0" Spacing="6">
                                     <Border WidthRequest="58"
                                             HeightRequest="58"
-                                            StrokeThickness="2"
+                                            BackgroundColor="{StaticResource Card}"
+                                            Stroke="{StaticResource Line}"
+                                            StrokeThickness="1.5"
+                                            StrokeShape="RoundRectangle 16"
                                             HorizontalOptions="Center">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="16"/>
-                                        </Border.StrokeShape>
-
-                                        <!-- ? IsSelected drives these triggers -->
                                         <Border.Triggers>
-                                            <DataTrigger TargetType="Border"
-                                                         Binding="{Binding IsSelected}"
-                                                         Value="True">
-                                                <Setter Property="BackgroundColor"
-                                                        Value="#9B6FCC"/>
-                                                <Setter Property="Stroke"
-                                                        Value="#7A4FA8"/>
-                                            </DataTrigger>
-                                            <DataTrigger TargetType="Border"
-                                                         Binding="{Binding IsSelected}"
-                                                         Value="False">
-                                                <Setter Property="BackgroundColor"
-                                                        Value="#50FFFFFF"/>
-                                                <Setter Property="Stroke"
-                                                        Value="#60FFFFFF"/>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource ViolaTint}"/>
+                                                <Setter Property="Stroke" Value="{StaticResource Viola}"/>
                                             </DataTrigger>
                                         </Border.Triggers>
-
-                                        <!-- ? bind to PetTypeOption.Emoji -->
                                         <Label Text="{Binding Emoji}"
                                                FontSize="28"
                                                HorizontalOptions="Center"
                                                VerticalOptions="Center"/>
                                     </Border>
-
-                                    <!-- ? bind to PetTypeOption.Name (localized for display) -->
                                     <Label Text="{Binding DisplayName}"
-                                           FontSize="10"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="10.5"
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
-                                           TextColor="#1C3D52"/>
-
+                                           TextColor="{StaticResource InkSecondary}"/>
                                 </VerticalStackLayout>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
-
                 </VerticalStackLayout>
 
-                <!-- Custom type — only shown when "Other" is selected -->
-                <!-- ? IsVisible bind to PetVM.ShowCustomPetType -->
-                <VerticalStackLayout Spacing="5"
+                <!-- Custom type (Other) -->
+                <VerticalStackLayout Spacing="6"
                                      IsVisible="{Binding PetVM.ShowCustomPetType}">
                     <Label Text="{loc:Translate CreatePet_DescribeType}"
-                           FontSize="10"
-                           FontAttributes="Bold"
-                           TextColor="#5A7990"
+                           Style="{StaticResource FieldLabel}"
                            Margin="2,0,0,0"/>
-                    <Border BackgroundColor="#40FFFFFF"
-                            Stroke="#50FFFFFF"
-                            StrokeThickness="1">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="16"/>
-                        </Border.StrokeShape>
-                        <!-- ? bind to PetVM.EnteredPetType -->
+                    <Border Style="{StaticResource FieldBorder}">
                         <Entry Placeholder="{loc:Translate CreatePet_CustomTypePlaceholder}"
                                Text="{Binding PetVM.EnteredPetType}"
-                               FontSize="14"
-                               TextColor="#1C3D52"
-                               PlaceholderColor="#7B91A1"
-                               Margin="16,0"/>
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="15"
+                               TextColor="{StaticResource Ink}"
+                               PlaceholderColor="{StaticResource InkTertiary}"
+                               Margin="14,0"/>
                     </Border>
                     <Label Text="{Binding PetVM.PetTypeError}"
-                           FontSize="11"
-                           TextColor="#E83E5F"
+                           Style="{StaticResource ErrorLabel}"
                            IsVisible="{Binding PetVM.PetTypeError, Converter={StaticResource StringToBoolConverter}}"/>
                 </VerticalStackLayout>
 
-                <!-- Generic pet type validation error (shown when predefined type selected) -->
+                <!-- Generic pet-type validation error -->
                 <Label Text="{Binding PetVM.PetTypeError}"
-                       FontSize="11"
-                       TextColor="#E83E5F"
+                       Style="{StaticResource ErrorLabel}"
                        IsVisible="{Binding PetVM.PetTypeError, Converter={StaticResource StringToBoolConverter}}"
                        Margin="2,0,0,0"/>
 
-
-                <!-- ── FORM CARD ── -->
-                <!-- Name + age live together in one card, matches MainPage card language -->
-                <Border Padding="18"
-                        BackgroundColor="#35FFFFFF"
-                        Stroke="#45FFFFFF"
-                        StrokeThickness="1">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="22"/>
-                    </Border.StrokeShape>
-                    <Border.Shadow>
-                        <Shadow Brush="#20000000"
-                                Offset="0,4"
-                                Radius="12"
-                                Opacity="0.14"/>
-                    </Border.Shadow>
-
+                <!-- Name + Age card -->
+                <Border Style="{StaticResource CardSurface}">
                     <VerticalStackLayout Spacing="16">
 
-                        <!-- Pet name -->
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{loc:Translate CreatePet_NameLabel}"
-                                   FontSize="10"
-                                   FontAttributes="Bold"
-                                   TextColor="#5A7990"/>
-                            <Border BackgroundColor="#55FFFFFF"
-                                    Stroke="#60FFFFFF"
-                                    StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="14"/>
-                                </Border.StrokeShape>
-                                <!-- ? bind to PetVM.EnteredPetName -->
+                                   Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBorder}">
                                 <Entry Placeholder="{loc:Translate CreatePet_NamePlaceholder}"
                                        Text="{Binding PetVM.EnteredPetName}"
+                                       FontFamily="{StaticResource FontSans}"
                                        FontSize="15"
                                        FontAttributes="Bold"
-                                       TextColor="#1C3D52"
-                                       PlaceholderColor="#7B91A1"
-                                       Margin="16,0"/>
+                                       TextColor="{StaticResource Ink}"
+                                       PlaceholderColor="{StaticResource InkTertiary}"
+                                       Margin="14,0"/>
                             </Border>
                             <Label Text="{Binding PetVM.PetNameError}"
-                                   FontSize="11"
-                                   TextColor="#E83E5F"
+                                   Style="{StaticResource ErrorLabel}"
                                    IsVisible="{Binding PetVM.PetNameError, Converter={StaticResource StringToBoolConverter}}"/>
                         </VerticalStackLayout>
 
-                        <!-- Divider -->
-                        <BoxView HeightRequest="1"
-                                 BackgroundColor="#30AACCDD"
-                                 HorizontalOptions="Fill"/>
+                        <BoxView HeightRequest="1" BackgroundColor="{StaticResource Line}"/>
 
-                        <!-- Age -->
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{loc:Translate CreatePet_AgeLabel}"
-                                   FontSize="10"
-                                   FontAttributes="Bold"
-                                   TextColor="#5A7990"/>
-                            <Border BackgroundColor="#55FFFFFF"
-                                    Stroke="#60FFFFFF"
-                                    StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="14"/>
-                                </Border.StrokeShape>
-                                <!-- ? bind to PetVM.EnteredPetAge -->
+                                   Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBorder}">
                                 <Entry Placeholder="{loc:Translate CreatePet_AgePlaceholder}"
                                        Text="{Binding PetVM.EnteredPetAge}"
                                        Keyboard="Numeric"
+                                       FontFamily="{StaticResource FontSans}"
                                        FontSize="15"
                                        FontAttributes="Bold"
-                                       TextColor="#1C3D52"
-                                       PlaceholderColor="#7B91A1"
-                                       Margin="16,0"/>
+                                       TextColor="{StaticResource Ink}"
+                                       PlaceholderColor="{StaticResource InkTertiary}"
+                                       Margin="14,0"/>
                             </Border>
                             <Label Text="{Binding PetVM.PetAgeError}"
-                                   FontSize="11"
-                                   TextColor="#E83E5F"
+                                   Style="{StaticResource ErrorLabel}"
                                    IsVisible="{Binding PetVM.PetAgeError, Converter={StaticResource StringToBoolConverter}}"/>
                         </VerticalStackLayout>
-
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- ── OPTIONAL: HEALTH CONDITION TAGS ── -->
-                <!-- Shown as a soft hint — user can add conditions now or later -->
-                <!-- ? IsVisible bind to PetVM.ShowConditionHint (true by default) -->
-                <Border Padding="14,12"
-                        BackgroundColor="#25C4A8E0"
-                        Stroke="#35C4A8E0"
-                        StrokeThickness="1">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="16"/>
-                    </Border.StrokeShape>
+                <!-- Conditions hint -->
+                <Border BackgroundColor="{StaticResource ViolaTint}"
+                        Stroke="{StaticResource ViolaLine}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="14,12">
                     <HorizontalStackLayout Spacing="10">
-                        <Label Text="🏷️"
-                               FontSize="18"
-                               VerticalOptions="Center"/>
-                        <VerticalStackLayout Spacing="2"
-                                             VerticalOptions="Center">
+                        <Label Text="🏷️" FontSize="18" VerticalOptions="Center"/>
+                        <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                             <Label Text="{loc:Translate CreatePet_ConditionsTitle}"
-                                   FontSize="12"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12.5"
                                    FontAttributes="Bold"
-                                   TextColor="#1C3D52"/>
+                                   TextColor="{StaticResource Ink}"/>
                             <Label Text="{loc:Translate CreatePet_ConditionsSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
                                    FontSize="11"
-                                   TextColor="#5A7990"/>
+                                   TextColor="{StaticResource InkSecondary}"/>
                         </VerticalStackLayout>
                     </HorizontalStackLayout>
                 </Border>
@@ -344,78 +235,56 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- ══════════════════════════════════
-             BOTTOM ACTION BAR
-             Same structure as MainPage nav bar
-        ══════════════════════════════════ -->
+        <!-- ══════════ BOTTOM ACTION BAR ══════════ -->
         <Border Grid.Row="1"
-                Padding="20,14,20,28"
-                BackgroundColor="#EEC4A8E0"
-                StrokeThickness="0"
+                BackgroundColor="{StaticResource Card}"
+                Stroke="{StaticResource Line}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 24,24,0,0"
+                Padding="20,16,20,28"
                 VerticalOptions="End">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="24,24,0,0"/>
-            </Border.StrokeShape>
-            <Border.Shadow>
-                <Shadow Brush="#30000000"
-                        Offset="0,-2"
-                        Radius="10"
-                        Opacity="0.18"/>
-            </Border.Shadow>
 
             <Grid ColumnDefinitions="*,2*"
                   ColumnSpacing="12">
 
-                <!-- Cancel — ghost style, only shown when not first launch -->
-                <!-- ? IsVisible bind to PetVM.ShowBackButton -->
-                <Border BackgroundColor="#40FFFFFF"
-                        Stroke="#50FFFFFF"
-                        StrokeThickness="1"
+                <!-- Cancel (not first launch) -->
+                <Border BackgroundColor="{StaticResource ViolaTint}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 14"
                         IsVisible="{Binding PetVM.ShowBackButton}">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="16"/>
-                    </Border.StrokeShape>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBackClicked"/>
                     </Border.GestureRecognizers>
                     <Label Text="{loc:Translate Common_Cancel}"
+                           FontFamily="{StaticResource FontSans}"
                            FontSize="14"
                            FontAttributes="Bold"
-                           TextColor="#7A5D99"
+                           TextColor="{StaticResource ViolaDeep}"
                            HorizontalTextAlignment="Center"
-                           Padding="0,13"/>
+                           Padding="0,14"/>
                 </Border>
 
-                <!-- Create Pet — full width when no cancel button (first launch) -->
-                <!-- ? ColumnSpan bind logic: spans 2 columns on first launch, 1 on add-pet -->
+                <!-- Create / Save -->
                 <Border Grid.Column="1"
-                        BackgroundColor="#9B6FCC"
+                        BackgroundColor="{StaticResource Viola}"
                         StrokeThickness="0"
+                        StrokeShape="RoundRectangle 14"
                         Opacity="{Binding PetVM.CanSavePet, Converter={StaticResource BoolToOpacityConverter}}"
                         IsEnabled="{Binding PetVM.CanSavePet}">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="16"/>
-                    </Border.StrokeShape>
                     <Border.Shadow>
-                        <Shadow Brush="#409B6FCC"
-                                Offset="0,4"
-                                Radius="10"
-                                Opacity="0.4"/>
+                        <Shadow Brush="#7657B8" Offset="0,4" Radius="12" Opacity="0.3"/>
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer
-                            Tapped="OnSaveClicked"/>
+                        <TapGestureRecognizer Tapped="OnSaveClicked"/>
                     </Border.GestureRecognizers>
-                    <!-- ? bind Text to PetVM.SaveButtonLabel
-                         "Let's go! 🐾" on first launch, "Add Pet" otherwise -->
                     <Label Text="{Binding PetVM.SaveButtonLabel}"
+                           FontFamily="{StaticResource FontSans}"
                            FontSize="15"
                            FontAttributes="Bold"
-                           TextColor="White"
+                           TextColor="{StaticResource White}"
                            HorizontalTextAlignment="Center"
-                           Padding="0,13"/>
+                           Padding="0,14"/>
                 </Border>
-
             </Grid>
         </Border>
 

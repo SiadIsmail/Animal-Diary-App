@@ -166,6 +166,7 @@
 
   <!-- ── Medications list ── -->
   <data name="Med_Title" xml:space="preserve"><value>Medications</value></data>
+  <data name="Med_Add" xml:space="preserve"><value>Add medication</value></data>
   <data name="Med_Active" xml:space="preserve"><value>Active</value></data>
   <data name="Med_Archived" xml:space="preserve"><value>Archived</value></data>
   <data name="Med_ForPet" xml:space="preserve"><value>Medications for {0}</value></data>
