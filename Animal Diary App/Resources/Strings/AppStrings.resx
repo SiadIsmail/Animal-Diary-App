@@ -116,6 +116,16 @@
   <data name="Main_MedicationGiven" xml:space="preserve"><value>Medication given</value></data>
   <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazole · with food (Placeholder)</value></data>
 
+  <!-- ── Journal (Calendar) header ── -->
+  <data name="Journal_Eyebrow" xml:space="preserve"><value>Health journal</value></data>
+  <data name="Journal_Title" xml:space="preserve"><value>Journal</value></data>
+  <data name="Journal_DayTimeline" xml:space="preserve"><value>DAY TIMELINE</value></data>
+
+  <!-- ── Care (Pets) header ── -->
+  <data name="Care_Eyebrow" xml:space="preserve"><value>Pets &amp; management</value></data>
+  <data name="Care_Title" xml:space="preserve"><value>Care</value></data>
+  <data name="Care_YourPets" xml:space="preserve"><value>YOUR PETS</value></data>
+
   <!-- ── Weight chart ── -->
   <data name="Weight_TrendHeader" xml:space="preserve"><value>WEIGHT TREND</value></data>
   <data name="Weight_EmptyState" xml:space="preserve"><value>Add weight entries to see trends</value></data>

@@ -116,6 +116,16 @@
   <data name="Main_MedicationGiven" xml:space="preserve"><value>Medikament gegeben</value></data>
   <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazol · mit Futter (Platzhalter)</value></data>
 
+  <!-- ── Journal (Calendar) header ── -->
+  <data name="Journal_Eyebrow" xml:space="preserve"><value>Gesundheitstagebuch</value></data>
+  <data name="Journal_Title" xml:space="preserve"><value>Tagebuch</value></data>
+  <data name="Journal_DayTimeline" xml:space="preserve"><value>TAGESVERLAUF</value></data>
+
+  <!-- ── Care (Pets) header ── -->
+  <data name="Care_Eyebrow" xml:space="preserve"><value>Tiere &amp; Verwaltung</value></data>
+  <data name="Care_Title" xml:space="preserve"><value>Pflege</value></data>
+  <data name="Care_YourPets" xml:space="preserve"><value>DEINE TIERE</value></data>
+
   <!-- ── Weight chart ── -->
   <data name="Weight_TrendHeader" xml:space="preserve"><value>GEWICHTSVERLAUF</value></data>
   <data name="Weight_EmptyState" xml:space="preserve"><value>Füge Gewichtseinträge hinzu, um Verläufe zu sehen</value></data>

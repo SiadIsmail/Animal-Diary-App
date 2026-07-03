@@ -35,7 +35,7 @@ public partial class SettingsPanelView : ContentView
         if (open)
         {
             RootOverlay.IsVisible = true;
-            SettingsPanel.TranslationX = offset;
+            SettingsPanel.TranslationX = 0;
             DimmingOverlay.Opacity = 0;
 
             // Give Android one layout/render pass before animating the panel
@@ -44,14 +44,14 @@ public partial class SettingsPanelView : ContentView
             await Task.Delay(16);
 
             await Task.WhenAll(
-                SettingsPanel.TranslateTo(0, 0, 260, Easing.CubicOut),
-                DimmingOverlay.FadeTo(0.5, 200));
+                SettingsPanel.TranslateToAsync(0, 0, 260, Easing.CubicOut),
+                DimmingOverlay.FadeToAsync(0.5, 200));
         }
         else
         {
             await Task.WhenAll(
-                SettingsPanel.TranslateTo(offset, 0, 210, Easing.CubicIn),
-                DimmingOverlay.FadeTo(0, 180));
+                SettingsPanel.TranslateToAsync(offset, 0, 210, Easing.CubicIn),
+                DimmingOverlay.FadeToAsync(0, 180));
 
             RootOverlay.IsVisible = false;
         }

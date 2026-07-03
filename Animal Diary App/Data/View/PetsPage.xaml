@@ -5,519 +5,427 @@
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.PetsPage"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="#DCEBF5">
+             BackgroundColor="{StaticResource Paper}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+
+            <!-- Felova card surface -->
+            <Style x:Key="CardSurface" TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                <Setter Property="Stroke" Value="{StaticResource Line}"/>
+                <Setter Property="StrokeThickness" Value="1"/>
+                <Setter Property="StrokeShape" Value="RoundRectangle 22"/>
+                <Setter Property="Padding" Value="16"/>
+            </Style>
+
+            <!-- Uppercase section eyebrow -->
+            <Style x:Key="SectionLabel" TargetType="Label">
+                <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="CharacterSpacing" Value="1.3"/>
+                <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Background -->
-        <Image Source="hintergrund_blau.png"
-               Aspect="AspectFill"
-               HorizontalOptions="Fill"
-               VerticalOptions="Fill"
-               InputTransparent="True"
-               Grid.RowSpan="2"/>
-
-        <!-- MAIN CONTENT -->
+        <!-- ================= CARE ================= -->
         <ScrollView Grid.Row="0">
 
-            <VerticalStackLayout Padding="24,20"
-                                 Spacing="24">
+            <VerticalStackLayout Padding="22,26,22,20"
+                                 Spacing="22">
 
                 <!-- Header -->
                 <Grid ColumnDefinitions="*,Auto"
                       VerticalOptions="Center">
 
-                    <Label Text="{loc:Translate Pets_Title}"
-                           FontSize="22"
-                           FontAttributes="Bold"
-                           TextColor="#1C3D52"
-                           VerticalOptions="Center"/>
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="{loc:Translate Care_Eyebrow}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               CharacterSpacing="1.3"
+                               TextColor="{StaticResource InkTertiary}"/>
+                        <Label Text="{loc:Translate Care_Title}"
+                               FontFamily="{StaticResource FontSerif}"
+                               FontSize="{StaticResource TypeH1}"
+                               TextColor="{StaticResource Ink}"/>
+                    </VerticalStackLayout>
 
                     <!-- Settings button -->
                     <Border Grid.Column="1"
-                            WidthRequest="38"
-                            HeightRequest="38"
-                            BackgroundColor="#55FFFFFF"
-                            StrokeThickness="0"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            BackgroundColor="{StaticResource Card}"
+                            Stroke="{StaticResource Line}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 20"
                             HorizontalOptions="End"
                             VerticalOptions="Center">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="19"/>
-                        </Border.StrokeShape>
-
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding SettingsVM.OpenSettingsCommand}"/>
                         </Border.GestureRecognizers>
-
                         <Label Text="⚙️"
-                               FontSize="18"
+                               FontSize="17"
+                               TextColor="{StaticResource InkSecondary}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
-
                     </Border>
-
                 </Grid>
 
-                <!-- ═════════════════════════════ -->
-                <!-- PET SWITCHER -->
-                <!-- ═════════════════════════════ -->
+                <!-- ═══════════ YOUR PETS ═══════════ -->
+                <Label Text="{loc:Translate Care_YourPets}"
+                       Style="{StaticResource SectionLabel}"/>
 
-                <VerticalStackLayout Spacing="12">
+                <!-- Pet switcher -->
+                <ScrollView Orientation="Horizontal"
+                            HorizontalScrollBarVisibility="Never">
+                    <HorizontalStackLayout Spacing="8"
+                                           BindableLayout.ItemsSource="{Binding PetVM.Pets}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Border StrokeThickness="1"
+                                        Stroke="{StaticResource Line}"
+                                        BackgroundColor="{StaticResource Card}"
+                                        StrokeShape="RoundRectangle 999"
+                                        Padding="7,7,14,7">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Ink}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.PetVM.SelectPetCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
 
-                    <ScrollView Orientation="Horizontal"
-                                HorizontalScrollBarVisibility="Never">
-
-                        <HorizontalStackLayout Spacing="10"
-                                               BindableLayout.ItemsSource="{Binding PetVM.Pets}">
-
-                            <BindableLayout.ItemTemplate>
-
-                                <DataTemplate>
-
-                                    <Border StrokeThickness="2"
-                                            StrokeShape="RoundRectangle 22"
-                                            Padding="14,10">
-
-                                        <!-- Selected state -->
-                                        <Border.Triggers>
-
-                                            <DataTrigger TargetType="Border"
-                                                         Binding="{Binding IsSelected}"
-                                                         Value="True">
-
-                                                <Setter Property="BackgroundColor"
-                                                        Value="#809B6FCC"/>
-
-                                                <Setter Property="Stroke"
-                                                        Value="#B39B6FCC"/>
-
-                                            </DataTrigger>
-
-                                            <DataTrigger TargetType="Border"
-                                                         Binding="{Binding IsSelected}"
-                                                         Value="False">
-
-                                                <Setter Property="BackgroundColor"
-                                                        Value="#339B6FCC"/>
-
-                                                <Setter Property="Stroke"
-                                                        Value="#599B6FCC"/>
-
-                                            </DataTrigger>
-
-                                        </Border.Triggers>
-
-                                        <Border.GestureRecognizers>
-
-                                            <!-- Single tap = set active pet -->
-                                            <TapGestureRecognizer
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.PetVM.SelectPetCommand}"
-                                                CommandParameter="{Binding .}"/>
-
-                                        </Border.GestureRecognizers>
-
-                                        <HorizontalStackLayout Spacing="8">
-
-                                            <Label Text="{Binding Emoji}"
-                                                   FontSize="15"
+                                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                        <Border WidthRequest="26"
+                                                HeightRequest="26"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 13"
+                                                BackgroundColor="{StaticResource ViolaTint}"
+                                                VerticalOptions="Center">
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="BackgroundColor" Value="#28FFFFFF"/>
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Label Text="🐾"
+                                                   FontSize="12"
+                                                   HorizontalOptions="Center"
                                                    VerticalOptions="Center"/>
+                                        </Border>
 
-                                                <Label Text="{Binding Name}"
-                                                       FontSize="13"
-                                                       FontAttributes="Bold"
-                                                       TextColor="#4A1580"/>
+                                        <Label Text="{Binding Name}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource InkSecondary}"
+                                               VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+                </ScrollView>
 
-                                        </HorizontalStackLayout>
+                <!-- Active pet card -->
+                <Border Style="{StaticResource CardSurface}"
+                        Padding="18">
+                    <VerticalStackLayout Spacing="14">
 
-                                    </Border>
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
 
-                                </DataTemplate>
-
-                            </BindableLayout.ItemTemplate>
-
-                        </HorizontalStackLayout>
-
-                    </ScrollView>
-
-                </VerticalStackLayout>
-
-                <!-- ═════════════════════════════ -->
-                <!-- ACTIVE PET HERO -->
-                <!-- ═════════════════════════════ -->
-
-                <Border BackgroundColor="#5B9BB8"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 28"
-                        Padding="20">
-
-                    <Border.Shadow>
-                        <Shadow Brush="#40000000"
-                                Offset="0,8"
-                                Radius="18"
-                                Opacity="0.35"/>
-                    </Border.Shadow>
-
-                    <VerticalStackLayout Spacing="18">
-
-                        <!-- Top Row -->
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-
-                            <!-- Emoji -->
+                            <!-- Avatar -->
                             <Border Grid.Column="0"
-                                    WidthRequest="72"
-                                    HeightRequest="72"
-                                    BackgroundColor="#38FFFFFF"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 36"
+                                    WidthRequest="60"
+                                    HeightRequest="60"
+                                    Stroke="{StaticResource ViolaLine}"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 30"
                                     VerticalOptions="Center">
-
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#EFE9F8" Offset="0"/>
+                                        <GradientStop Color="#E3D9F2" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
                                 <Label Text="{Binding PetVM.ActivePetEmoji}"
-                                       FontSize="34"
+                                       FontSize="30"
                                        HorizontalOptions="Center"
                                        VerticalOptions="Center"/>
-
                             </Border>
 
                             <!-- Info -->
                             <VerticalStackLayout Grid.Column="1"
-                                                 Margin="16,0,0,0"
                                                  VerticalOptions="Center"
                                                  Spacing="2">
-
                                 <Label Text="{Binding PetVM.ActivePet.Name}"
-                                       FontSize="20"
-                                       FontFamily="Georgia"
-                                       FontAttributes="Bold"
-                                       TextColor="White"/>
-
+                                       FontFamily="{StaticResource FontSerif}"
+                                       FontSize="21"
+                                       TextColor="{StaticResource Ink}"/>
                                 <Label Text="{Binding PetVM.ActivePetSubtitle}"
-                                       FontSize="14"
-                                       TextColor="White"
-                                       Opacity="0.7"/>
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12.5"
+                                       TextColor="{StaticResource InkSecondary}"/>
 
                                 <!-- Tags -->
                                 <FlexLayout Wrap="Wrap"
                                             Direction="Row"
-                                            Margin="0,6,0,0">
-
-                                    <!-- ? Bind conditions/tags collection -->
-                                    <Border BackgroundColor="#33FFFFFF"
-                                            StrokeThickness="1"
-                                            Stroke="#55FFFFFF"
-                                            StrokeShape="RoundRectangle 20"
+                                            Margin="0,8,0,0">
+                                    <Border BackgroundColor="{StaticResource PaperDeep}"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 999"
                                             Padding="10,4"
                                             Margin="0,0,6,6">
-
                                         <Label Text="{loc:Translate Pets_KidneyTag}"
+                                               FontFamily="{StaticResource FontSans}"
                                                FontSize="11"
                                                FontAttributes="Bold"
-                                               TextColor="White"/>
-
+                                               TextColor="{StaticResource InkSecondary}"/>
                                     </Border>
-
-                                    <Border BackgroundColor="#33FFFFFF"
-                                            StrokeThickness="1"
-                                            Stroke="#55FFFFFF"
-                                            StrokeShape="RoundRectangle 20"
+                                    <Border BackgroundColor="{StaticResource ViolaTint}"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 999"
                                             Padding="10,4"
                                             Margin="0,0,6,6">
-
                                         <Label Text="{loc:Translate Pets_MedicationsTag}"
+                                               FontFamily="{StaticResource FontSans}"
                                                FontSize="11"
                                                FontAttributes="Bold"
-                                               TextColor="White"/>
-
+                                               TextColor="{StaticResource ViolaDeep}"/>
                                     </Border>
-
                                 </FlexLayout>
-
                             </VerticalStackLayout>
-
-                            <!-- Manage -->
-                            <Label Grid.Column="2"
-                                   Text="›"
-                                   FontSize="30"
-                                   TextColor="White"
-                                   Opacity="0.7"
-                                   VerticalOptions="Center"/>
-
                         </Grid>
 
-                        <!-- Action Buttons -->
-                        <HorizontalStackLayout Spacing="10">
-
-                            <Button Text="{loc:Translate Pets_OpenProfile}"
+                        <!-- Actions -->
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="9">
+                            <Button Grid.Column="0"
+                                    Text="{loc:Translate Pets_OpenProfile}"
+                                    FontFamily="{StaticResource FontSans}"
                                     FontSize="13"
-                                    HeightRequest="40"
-                                    CornerRadius="20"
-                                    HorizontalOptions="Fill"
-                                    BackgroundColor="#38FFFFFF"
-                                    TextColor="White"
+                                    FontAttributes="Bold"
+                                    HeightRequest="44"
+                                    CornerRadius="14"
+                                    BackgroundColor="{StaticResource Viola}"
+                                    TextColor="{StaticResource White}"
                                     Command="{Binding PetVM.OpenActivePetProfileCommand}"/>
-
-                            <Button Text="{loc:Translate Pets_Edit}"
+                            <Button Grid.Column="1"
+                                    Text="{loc:Translate Pets_Edit}"
+                                    FontFamily="{StaticResource FontSans}"
                                     FontSize="13"
-                                    HeightRequest="40"
-                                    WidthRequest="90"
-                                    CornerRadius="20"
-                                    BackgroundColor="#38FFFFFF"
-                                    TextColor="White"
+                                    FontAttributes="Bold"
+                                    HeightRequest="44"
+                                    WidthRequest="96"
+                                    CornerRadius="14"
+                                    BackgroundColor="{StaticResource ViolaTint}"
+                                    TextColor="{StaticResource ViolaDeep}"
                                     Command="{Binding PetVM.EditActivePetCommand}"/>
-
-                        </HorizontalStackLayout>
-
+                        </Grid>
                     </VerticalStackLayout>
-
                 </Border>
 
-                <!-- ═════════════════════════════ -->
-                <!-- QUICK ACTIONS -->
-                <!-- ═════════════════════════════ -->
+                <!-- Add a pet -->
+                <Border BackgroundColor="{StaticResource Card}"
+                        Stroke="{StaticResource ViolaLine}"
+                        StrokeThickness="1.5"
+                        StrokeDashArray="4,3"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="14">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAddPetClicked"/>
+                    </Border.GestureRecognizers>
+                    <HorizontalStackLayout HorizontalOptions="Center" Spacing="8">
+                        <Label Text="🐾" FontSize="16" VerticalOptions="Center"/>
+                        <Label Text="{loc:Translate Pets_AddPet}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="13.5"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource ViolaDeep}"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Border>
 
-                <VerticalStackLayout Spacing="12">
+                <!-- ═══════════ MANAGE ═══════════ -->
+                <Label Text="{loc:Translate Pets_QuickManagement}"
+                       Style="{StaticResource SectionLabel}"/>
 
-                    <Label Text="{loc:Translate Pets_QuickManagement}"
-                           FontSize="10"
-                           FontAttributes="Bold"
-                           TextColor="#2E6B85"
-                           CharacterSpacing="1.5"/>
+                <Border Style="{StaticResource CardSurface}"
+                        Padding="4">
+                    <VerticalStackLayout>
 
-                    <!-- Row 1 -->
-                    <Grid ColumnDefinitions="*,*"
-                          ColumnSpacing="12">
-
-                        <!-- Add Pet -->
-                        <Border Grid.Column="0"
-                                BackgroundColor="#40FFFFFF"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18"
-                                Padding="18">
-
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Tapped="OnAddPetClicked"/>
-                            </Border.GestureRecognizers>
-
-                            <VerticalStackLayout Spacing="8">
-
-                                <Label Text="🐾"
-                                       FontSize="28"/>
-
-                                <Label Text="{loc:Translate Pets_AddPet}"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="White"/>
-
-                                <Label Text="{loc:Translate Pets_AddPetSubtitle}"
-                                       FontSize="12"
-                                       TextColor="White"
-                                       Opacity="0.7"/>
-
-                            </VerticalStackLayout>
-
-                        </Border>
-
-                        <!-- Add Medication -->
-                        <Border Grid.Column="1"
-                                BackgroundColor="#40FFFFFF"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18"
-                                Padding="18">
-
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Tapped="OnAddMedicationClicked"/>
-                            </Border.GestureRecognizers>
-
-                            <VerticalStackLayout Spacing="8">
-
-                                <Label Text="💊"
-                                       FontSize="28"/>
-
+                        <!-- Medication -->
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="14"
+                              Padding="14,15">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAddMedicationClicked"/>
+                            </Grid.GestureRecognizers>
+                            <Border Grid.Column="0"
+                                    WidthRequest="40" HeightRequest="40"
+                                    BackgroundColor="{StaticResource ViolaTint}"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 13"
+                                    VerticalOptions="Center">
+                                <Label Text="💊" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                 <Label Text="{loc:Translate Pets_Medication}"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="White"/>
-
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14" FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
                                 <Label Text="{loc:Translate Pets_MedicationSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
                                        FontSize="12"
-                                       TextColor="White"
-                                       Opacity="0.7"/>
-
+                                       TextColor="{StaticResource InkSecondary}"/>
                             </VerticalStackLayout>
+                            <Label Grid.Column="2" Text="›"
+                                   FontSize="22" TextColor="{StaticResource InkTertiary}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
 
-                        </Border>
-
-                    </Grid>
-
-                    <!-- Row 2 -->
-                    <Grid ColumnDefinitions="*,*"
-                          ColumnSpacing="12">
+                        <BoxView HeightRequest="1" BackgroundColor="{StaticResource Line}" Margin="14,0"/>
 
                         <!-- Documents -->
-                        <Border Grid.Column="0"
-                                BackgroundColor="#40FFFFFF"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18"
-                                Padding="18">
-
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding PetVM.OpenDocumentsCommand}"/>
-                            </Border.GestureRecognizers>
-
-                            <VerticalStackLayout Spacing="8">
-
-                                <Label Text="📄"
-                                       FontSize="28"/>
-
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="14"
+                              Padding="14,15">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PetVM.OpenDocumentsCommand}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Grid.Column="0"
+                                    WidthRequest="40" HeightRequest="40"
+                                    BackgroundColor="{StaticResource SageTint}"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 13"
+                                    VerticalOptions="Center">
+                                <Label Text="📄" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                 <Label Text="{loc:Translate Pets_Documents}"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="White"/>
-
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14" FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
                                 <Label Text="{loc:Translate Pets_DocumentsSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
                                        FontSize="12"
-                                       TextColor="White"
-                                       Opacity="0.7"/>
-
+                                       TextColor="{StaticResource InkSecondary}"/>
                             </VerticalStackLayout>
+                            <Label Grid.Column="2" Text="›"
+                                   FontSize="22" TextColor="{StaticResource InkTertiary}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
 
-                        </Border>
+                        <BoxView HeightRequest="1" BackgroundColor="{StaticResource Line}" Margin="14,0"/>
 
                         <!-- Export -->
-                        <Border Grid.Column="1"
-                                BackgroundColor="#40FFFFFF"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 18"
-                                Padding="18">
-
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding PetVM.ExportReportCommand}"/>
-                            </Border.GestureRecognizers>
-
-                            <VerticalStackLayout Spacing="8">
-
-                                <Label Text="📤"
-                                       FontSize="28"/>
-
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="14"
+                              Padding="14,15">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PetVM.ExportReportCommand}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Grid.Column="0"
+                                    WidthRequest="40" HeightRequest="40"
+                                    BackgroundColor="{StaticResource HoneyTint}"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 13"
+                                    VerticalOptions="Center">
+                                <Label Text="📤" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                 <Label Text="{loc:Translate Pets_Export}"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="White"/>
-
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14" FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
                                 <Label Text="{loc:Translate Pets_ExportSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
                                        FontSize="12"
-                                       TextColor="White"
-                                       Opacity="0.7"/>
-
+                                       TextColor="{StaticResource InkSecondary}"/>
                             </VerticalStackLayout>
+                            <Label Grid.Column="2" Text="›"
+                                   FontSize="22" TextColor="{StaticResource InkTertiary}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
 
-                        </Border>
-
-                    </Grid>
-
-                </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
 
             </VerticalStackLayout>
-
         </ScrollView>
 
-        <!-- ═════════════════════════════ -->
-        <!-- BOTTOM NAVIGATION -->
-        <!-- ═════════════════════════════ -->
-
+        <!-- ================= TAB BAR ================= -->
         <Border Grid.Row="1"
-                Margin="0"
-                Padding="12,10,12,20"
-                BackgroundColor="#E6C4A8E0"
-                StrokeThickness="0"
+                Margin="16,0,16,16"
+                Padding="7"
+                BackgroundColor="{StaticResource Card}"
+                Stroke="{StaticResource Line}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 24"
                 VerticalOptions="End">
 
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="24,24,0,0"/>
-            </Border.StrokeShape>
-
             <Border.Shadow>
-                <Shadow Brush="#30000000"
-                        Offset="0,-2"
-                        Radius="10"
-                        Opacity="0.18"/>
+                <Shadow Brush="#241E2E" Offset="0,10" Radius="24" Opacity="0.16"/>
             </Border.Shadow>
 
             <Grid ColumnDefinitions="*,*,*">
 
                 <!-- MAIN -->
-                <Grid>
+                <Grid Grid.Column="0" Padding="0,8">
                     <Grid.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnMainClicked"/>
                     </Grid.GestureRecognizers>
-
-                    <VerticalStackLayout HorizontalOptions="Center"
-                                         Spacing="2">
-
-                        <Label Text="🏠"
-                               FontSize="20"
-                               HorizontalTextAlignment="Center"/>
-
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
+                        <Label Text="🏠" FontSize="20" HorizontalTextAlignment="Center"/>
                         <Label Text="{loc:Translate Nav_Main}"
-                               FontSize="11"
-                               FontAttributes="Bold"
-                               TextColor="#664A1580"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="10.5" FontAttributes="Bold"
+                               TextColor="{StaticResource InkTertiary}"
                                HorizontalTextAlignment="Center"/>
-
                     </VerticalStackLayout>
-
                 </Grid>
 
                 <!-- CALENDAR -->
-                <Grid Grid.Column="1">
-
+                <Grid Grid.Column="1" Padding="0,8">
                     <Grid.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnCalendarClicked"/>
                     </Grid.GestureRecognizers>
-
-                    <VerticalStackLayout HorizontalOptions="Center"
-                                         Spacing="2">
-
-                        <Label Text="📅"
-                               FontSize="20"
-                               HorizontalTextAlignment="Center"/>
-
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
+                        <Label Text="📅" FontSize="20" HorizontalTextAlignment="Center"/>
                         <Label Text="{loc:Translate Nav_Calendar}"
-                               FontSize="11"
-                               FontAttributes="Bold"
-                               TextColor="#664A1580"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="10.5" FontAttributes="Bold"
+                               TextColor="{StaticResource InkTertiary}"
                                HorizontalTextAlignment="Center"/>
-
                     </VerticalStackLayout>
-
                 </Grid>
 
-                <!-- PETS -->
-                <Grid Grid.Column="2">
-
-                    <VerticalStackLayout HorizontalOptions="Center"
-                                         Spacing="2">
-
-                        <Label Text="🐾"
-                               FontSize="20"
-                               HorizontalTextAlignment="Center"/>
-
+                <!-- PETS (active) -->
+                <Border Grid.Column="2"
+                        BackgroundColor="{StaticResource ViolaTint}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 17"
+                        Padding="0,8">
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
+                        <Label Text="🐾" FontSize="20" HorizontalTextAlignment="Center"/>
                         <Label Text="{loc:Translate Nav_Pets}"
-                               FontSize="11"
-                               FontAttributes="Bold"
-                               TextColor="#4A1580"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="10.5" FontAttributes="Bold"
+                               TextColor="{StaticResource ViolaDeep}"
                                HorizontalTextAlignment="Center"/>
-
                     </VerticalStackLayout>
-
-                </Grid>
-
+                </Border>
             </Grid>
-
         </Border>
 
         <!-- Settings panel overlay — last child renders on top of everything -->
