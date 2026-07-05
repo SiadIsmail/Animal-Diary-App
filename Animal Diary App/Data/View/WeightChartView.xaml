@@ -6,140 +6,192 @@
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers">
     <ContentView.Resources>
         <ResourceDictionary>
-            <helpers:WeightMaxConverter x:Key="WeightMaxConverter"/>
-            <helpers:WeightMidConverter x:Key="WeightMidConverter"/>
-            <helpers:WeightMinConverter x:Key="WeightMinConverter"/>
             <helpers:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+
+            <Style x:Key="SectionLabel" TargetType="Label">
+                <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="CharacterSpacing" Value="1.3"/>
+                <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+            </Style>
+
+            <!-- One range button; the label + selected accent are set per-instance. -->
+            <Style x:Key="RangeTab" TargetType="Label">
+                <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize" Value="11.5"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="TextColor" Value="{StaticResource InkTertiary}"/>
+                <Setter Property="HorizontalTextAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="0,6"/>
+            </Style>
         </ResourceDictionary>
     </ContentView.Resources>
 
-    <VerticalStackLayout Spacing="8">
+    <VerticalStackLayout Spacing="12">
 
-        <!-- Has Data -->
-        <VerticalStackLayout Spacing="8"
+        <!-- ── Has data ── -->
+        <VerticalStackLayout Spacing="12"
                              IsVisible="{Binding MainPageVM.HasSufficientWeightData}">
 
-            <!-- Header (matches the other section headers) -->
             <Label Text="{loc:Translate Weight_TrendHeader}"
-                   FontSize="10"
-                   FontAttributes="Bold"
-                   CharacterSpacing="1.5"
-                   TextColor="#2E6B85"/>
+                   Style="{StaticResource SectionLabel}"/>
 
-            <!-- Chart Card (matches the mood timeline card) -->
-            <Border BackgroundColor="#40FFFFFF"
-                    Stroke="#50FFFFFF"
+            <Border BackgroundColor="{StaticResource Card}"
+                    Stroke="{StaticResource Line}"
                     StrokeThickness="1"
-                    Padding="12,10"
-                    StrokeShape="RoundRectangle 16">
+                    StrokeShape="RoundRectangle 22"
+                    Padding="16">
+                <VerticalStackLayout Spacing="14">
 
-                <VerticalStackLayout Spacing="10">
+                    <!-- Range selector -->
+                    <Border BackgroundColor="{StaticResource PaperDeep}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 999"
+                            Padding="3">
+                        <Grid ColumnDefinitions="*,*,*,*">
 
-                    <Label Text="{loc:Translate Main_Last30Days}"
-                           FontSize="11"
-                           FontAttributes="Bold"
-                           TextColor="#2E6B85"/>
+                            <Border Grid.Column="0" BackgroundColor="Transparent"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.ChartRangeDays}" Value="14">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding MainPageVM.SetChartRangeCommand}" CommandParameter="14"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="2W" Style="{StaticResource RangeTab}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding MainPageVM.ChartRangeDays}" Value="14">
+                                            <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
 
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="10">
+                            <Border Grid.Column="1" BackgroundColor="Transparent"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.ChartRangeDays}" Value="30">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding MainPageVM.SetChartRangeCommand}" CommandParameter="30"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="1M" Style="{StaticResource RangeTab}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding MainPageVM.ChartRangeDays}" Value="30">
+                                            <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
 
-                        <!-- Y-Axis Labels (spread evenly across the chart height) -->
-                        <Grid Grid.Column="0"
-                              RowDefinitions="*,*,*"
-                              HeightRequest="140"
-                              WidthRequest="28"
-                              VerticalOptions="Start">
+                            <Border Grid.Column="2" BackgroundColor="Transparent"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.ChartRangeDays}" Value="90">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding MainPageVM.SetChartRangeCommand}" CommandParameter="90"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="3M" Style="{StaticResource RangeTab}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding MainPageVM.ChartRangeDays}" Value="90">
+                                            <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
 
-                            <Label Grid.Row="0"
-                                   Text="{Binding MainPageVM.WeightChartData, Converter={StaticResource WeightMaxConverter}}"
-                                   FontSize="9"
-                                   TextColor="#6D8291"
-                                   VerticalOptions="Start"
-                                   HorizontalTextAlignment="End"
-                                   HorizontalOptions="End"/>
-
-                            <Label Grid.Row="1"
-                                   Text="{Binding MainPageVM.WeightChartData, Converter={StaticResource WeightMidConverter}}"
-                                   FontSize="9"
-                                   TextColor="#6D8291"
-                                   VerticalOptions="Center"
-                                   HorizontalTextAlignment="End"
-                                   HorizontalOptions="End"/>
-
-                            <Label Grid.Row="2"
-                                   Text="{Binding MainPageVM.WeightChartData, Converter={StaticResource WeightMinConverter}}"
-                                   FontSize="9"
-                                   TextColor="#6D8291"
-                                   VerticalOptions="End"
-                                   HorizontalTextAlignment="End"
-                                   HorizontalOptions="End"/>
+                            <Border Grid.Column="3" BackgroundColor="Transparent"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.ChartRangeDays}" Value="3650">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding MainPageVM.SetChartRangeCommand}" CommandParameter="3650"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="All" Style="{StaticResource RangeTab}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding MainPageVM.ChartRangeDays}" Value="3650">
+                                            <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
                         </Grid>
+                    </Border>
 
-                        <!-- Chart Area: bars + aligned date labels in one scroll -->
-                        <ScrollView Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    HorizontalScrollBarVisibility="Never">
+                    <!-- Current value + trend -->
+                    <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                        <Label VerticalOptions="Center">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="{Binding MainPageVM.CurrentWeightLabel}"
+                                          FontFamily="{StaticResource FontSerif}"
+                                          FontSize="24"
+                                          TextColor="{StaticResource Ink}"/>
+                                    <Span Text=" kg"
+                                          FontFamily="{StaticResource FontSans}"
+                                          FontSize="13"
+                                          TextColor="{StaticResource InkSecondary}"/>
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
 
-                            <HorizontalStackLayout Spacing="6"
-                                                   BindableLayout.ItemsSource="{Binding MainPageVM.WeightChartData}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate>
-                                        <VerticalStackLayout Spacing="4"
-                                                             WidthRequest="32">
-
-                                            <!-- Bar (bottom-aligned in a fixed-height plot area) -->
-                                            <Grid HeightRequest="140">
-                                                <BoxView WidthRequest="22"
-                                                         HeightRequest="{Binding BarHeight}"
-                                                         Color="#5B9BB8"
-                                                         CornerRadius="4"
-                                                         HorizontalOptions="Center"
-                                                         VerticalOptions="End"/>
-                                            </Grid>
-
-                                            <!-- Weight value -->
-                                            <Label Text="{Binding ValueLabel}"
-                                                   FontSize="8"
-                                                   FontAttributes="Bold"
-                                                   TextColor="#1C3D52"
-                                                   HorizontalTextAlignment="Center"
-                                                   HorizontalOptions="Center"/>
-
-                                            <!-- Date -->
-                                            <Label Text="{Binding DateLabel}"
-                                                   FontSize="8"
-                                                   TextColor="#6D8291"
-                                                   HorizontalTextAlignment="Center"
-                                                   HorizontalOptions="Center"/>
-                                        </VerticalStackLayout>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </HorizontalStackLayout>
-
-                        </ScrollView>
-
+                        <Border Grid.Column="1"
+                                Padding="10,4"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 999"
+                                BackgroundColor="{StaticResource HoneyTint}"
+                                VerticalOptions="Center">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.WeightTrendIsStable}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource SageTint}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label Text="{Binding MainPageVM.WeightTrendLabel}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource HoneyDeep}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding MainPageVM.WeightTrendIsStable}" Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource SageDeep}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
                     </Grid>
 
-                </VerticalStackLayout>
+                    <!-- Line chart -->
+                    <GraphicsView x:Name="ChartSurface"
+                                  HeightRequest="132"
+                                  HorizontalOptions="Fill"/>
 
+                </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>
 
-        <!-- No Data State -->
+        <!-- ── No data ── -->
         <VerticalStackLayout Spacing="8"
-                             IsVisible="{Binding MainPageVM.HasSufficientWeightData, Converter={StaticResource InvertedBoolConverter}}"
                              Padding="16"
-                             VerticalOptions="Center">
-
-            <Label Text="📊"
+                             IsVisible="{Binding MainPageVM.HasSufficientWeightData, Converter={StaticResource InvertedBoolConverter}}">
+            <Label Text="📈"
                    FontSize="32"
                    HorizontalTextAlignment="Center"/>
-
             <Label Text="{loc:Translate Weight_EmptyState}"
+                   FontFamily="{StaticResource FontSans}"
                    FontSize="12"
-                   TextColor="#6D8291"
+                   TextColor="{StaticResource InkSecondary}"
                    HorizontalTextAlignment="Center"/>
-
         </VerticalStackLayout>
 
     </VerticalStackLayout>

@@ -4,9 +4,10 @@
              xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              x:Class="Animal_Diary_App.Data.View.MainPage"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="{StaticResource Paper}">
+             BackgroundColor="#C4E6E3">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -42,6 +43,9 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
+
+        <!-- Water background — bottom layer, spans the whole page -->
+        <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ================= TODAY ================= -->
         <ScrollView Grid.Row="0">

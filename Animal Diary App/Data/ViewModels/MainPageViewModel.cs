@@ -49,10 +49,9 @@ public class MainPageViewModel : BaseViewModel
 
     public ObservableCollection<ChartDataPoint> WeightChartData { get; } = new();
 
-    // Drawing area height (in device-independent units) the bars are scaled into.
-    public const double ChartHeight = 140;
-    // Smallest visible bar so the lowest entry is never a flat line.
-    private const double MinBarHeight = 14;
+    /// <summary>Raised after the weight series is reloaded so the chart surface
+    /// (a GraphicsView) can pull fresh values and invalidate itself.</summary>
+    public event Action? WeightChartUpdated;
 
     private bool hasSufficientWeightData;
     public bool HasSufficientWeightData
@@ -60,6 +59,44 @@ public class MainPageViewModel : BaseViewModel
         get => hasSufficientWeightData;
         set => SetProperty(ref hasSufficientWeightData, value);
     }
+
+    // ── Weight-trend chart state ─────────────────────────────────────────
+    // Selected range in days: 14 (2W) · 30 (1M) · 90 (3M) · 3650 (All).
+    private int chartRangeDays = 30;
+    public int ChartRangeDays
+    {
+        get => chartRangeDays;
+        set
+        {
+            if (SetProperty(ref chartRangeDays, value))
+                _ = LoadWeightChartAsync();
+        }
+    }
+
+    public ICommand SetChartRangeCommand => new Command<string>(days =>
+    {
+        if (int.TryParse(days, out var d))
+            ChartRangeDays = d;
+    });
+
+    // Padded value axis the chart normalizes points into.
+    private double weightAxisMin;
+    public double WeightAxisMin { get => weightAxisMin; set => SetProperty(ref weightAxisMin, value); }
+
+    private double weightAxisMax = 1;
+    public double WeightAxisMax { get => weightAxisMax; set => SetProperty(ref weightAxisMax, value); }
+
+    // Most-recent weight, shown big above the chart.
+    private string currentWeightLabel = "—";
+    public string CurrentWeightLabel { get => currentWeightLabel; set => SetProperty(ref currentWeightLabel, value); }
+
+    // Signed change across the visible range, e.g. "+0.3" / "−0.2" / "±0.0".
+    private string weightTrendLabel = string.Empty;
+    public string WeightTrendLabel { get => weightTrendLabel; set => SetProperty(ref weightTrendLabel, value); }
+
+    // True when the change is negligible → chip reads as calm/sage rather than honey.
+    private bool weightTrendIsStable = true;
+    public bool WeightTrendIsStable { get => weightTrendIsStable; set => SetProperty(ref weightTrendIsStable, value); }
 
     private PetEntry? EntryToday;
     public async Task LoadLatestWeightAsync()
@@ -76,32 +113,47 @@ public class MainPageViewModel : BaseViewModel
         if (ActivePet == null) return;
 
         WeightChartData.Clear();
-        var entries = await _petEntryService.GetLast30DaysWeightEntriesAsync(ActivePet.Id);
-
-        // Normalize bar heights against the data range so even small
-        // weight differences are clearly visible in the chart.
-        decimal axisMin = 0, axisMax = 0;
-        if (entries.Count > 0)
-        {
-            axisMin = Math.Floor(entries.Min(e => e.Weight));
-            axisMax = Math.Ceiling(entries.Max(e => e.Weight));
-            if (axisMax <= axisMin) axisMax = axisMin + 1;
-        }
+        var entries = await _petEntryService.GetWeightEntriesForRangeAsync(ActivePet.Id, ChartRangeDays);
 
         foreach (var entry in entries)
         {
-            double fraction = (double)((entry.Weight - axisMin) / (axisMax - axisMin));
-            double barHeight = MinBarHeight + fraction * (ChartHeight - MinBarHeight);
-
             WeightChartData.Add(new ChartDataPoint
             {
                 Date = entry.Date,
-                Value = entry.Weight,
-                BarHeight = barHeight
+                Value = entry.Weight
             });
         }
 
+        if (entries.Count > 0)
+        {
+            var min = entries.Min(e => e.Weight);
+            var max = entries.Max(e => e.Weight);
+
+            // Pad the axis a little so the line never hugs the top/bottom edge,
+            // and so a perfectly flat series still renders as a centered line.
+            var pad = (max - min) * 0.15m;
+            if (pad < 0.1m) pad = 0.2m;
+            WeightAxisMin = (double)(min - pad);
+            WeightAxisMax = (double)(max + pad);
+
+            var latest = entries[^1].Weight;
+            CurrentWeightLabel = latest.ToString("0.0");
+
+            var diff = latest - entries[0].Weight;
+            WeightTrendIsStable = Math.Abs(diff) < 0.05m;
+            var sign = WeightTrendIsStable ? "±" : diff > 0 ? "+" : "−";
+            WeightTrendLabel = $"{sign}{Math.Abs(diff).ToString("0.0")} kg";
+        }
+        else
+        {
+            CurrentWeightLabel = "—";
+            WeightTrendLabel = string.Empty;
+            WeightAxisMin = 0;
+            WeightAxisMax = 1;
+        }
+
         HasSufficientWeightData = entries.Count >= 2;
+        WeightChartUpdated?.Invoke();
     }
 
     public async Task LoadMoodTimelineAsync()

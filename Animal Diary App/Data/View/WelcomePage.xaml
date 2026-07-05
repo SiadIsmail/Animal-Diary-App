@@ -9,11 +9,15 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              x:Class="Animal_Diary_App.Data.View.WelcomePage"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="{StaticResource Paper}">
+             BackgroundColor="#C4E6E3">
 
     <Grid RowDefinitions="*,Auto">
+
+        <!-- Water background — bottom layer, spans the whole page -->
+        <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ══════════ MAIN CONTENT — vertically centered ══════════ -->
         <VerticalStackLayout Grid.Row="0"

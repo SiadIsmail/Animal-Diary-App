@@ -47,21 +47,21 @@
     <!-- ============================================================= -->
 
     <!-- Surfaces -->
-    <Color x:Key="Paper">#F5F1EA</Color>       <!-- warm porcelain page ground   -->
-    <Color x:Key="PaperDeep">#EFEAE1</Color>   <!-- recessed wells               -->
-    <Color x:Key="Card">#FFFFFF</Color>        <!-- primary card surface         -->
+    <Color x:Key="Paper">#D9EFE9</Color>       <!-- rockpool page ground         -->
+    <Color x:Key="PaperDeep">#C8E4E0</Color>   <!-- recessed wells               -->
+    <Color x:Key="Card">#99FFFFFF</Color>      <!-- primary card surface (60% white) -->
     <Color x:Key="Cream">#FBF7EF</Color>       <!-- journal / note surface       -->
-    <Color x:Key="Line">#E7E0D4</Color>        <!-- hairline borders             -->
+    <Color x:Key="Line">#B3FFFFFF</Color>      <!-- hairline borders (white stroke) -->
 
     <!-- Ink / text -->
-    <Color x:Key="Ink">#2C2337</Color>         <!-- primary text — deep plum-ink -->
-    <Color x:Key="InkSecondary">#6C6279</Color><!-- secondary text               -->
-    <Color x:Key="InkTertiary">#A69DB2</Color> <!-- tertiary / metadata          -->
+    <Color x:Key="Ink">#0D3A3C</Color>         <!-- primary text — blue-green ink -->
+    <Color x:Key="InkSecondary">#3A6A6B</Color><!-- secondary text               -->
+    <Color x:Key="InkTertiary">#7CA2A1</Color> <!-- tertiary / metadata          -->
 
-    <!-- Viola — brand accent -->
-    <Color x:Key="Viola">#7657B8</Color>
-    <Color x:Key="ViolaDeep">#5C4197</Color>
-    <Color x:Key="ViolaTint">#F0EBF9</Color>
+    <!-- Rockpool — brand accent (teal/blue-green) -->
+    <Color x:Key="Viola">#149081</Color>
+    <Color x:Key="ViolaDeep">#0C6A5D</Color>
+    <Color x:Key="ViolaTint">#DCEFEA</Color>
     <Color x:Key="ViolaLine">#DCD2EE</Color>
 
     <!-- Honey — medication / attention -->

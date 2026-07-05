@@ -3,9 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              x:Class="Animal_Diary_App.Data.View.PetsPage"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="{StaticResource Paper}">
+             BackgroundColor="#C4E6E3">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -31,6 +32,9 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
+
+        <!-- Water background — bottom layer, spans the whole page -->
+        <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ================= CARE ================= -->
         <ScrollView Grid.Row="0">

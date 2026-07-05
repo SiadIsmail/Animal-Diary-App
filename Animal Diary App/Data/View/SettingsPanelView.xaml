@@ -9,7 +9,7 @@
 
         <!-- Dimming overlay — tap to close -->
         <BoxView x:Name="DimmingOverlay"
-                 BackgroundColor="#000000"
+                 BackgroundColor="#241E2E"
                  Opacity="0"
                  HorizontalOptions="Fill"
                  VerticalOptions="Fill">
@@ -23,189 +23,152 @@
                 WidthRequest="290"
                 HorizontalOptions="End"
                 VerticalOptions="Fill"
-                BackgroundColor="#EDE4F7"
+                BackgroundColor="{StaticResource Paper}"
                 StrokeThickness="0"
+                StrokeShape="RoundRectangle 24,0,0,24"
                 TranslationX="300">
 
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="24,0,0,24"/>
-            </Border.StrokeShape>
-
             <Border.Shadow>
-                <Shadow Brush="#50000000"
-                        Offset="-6,0"
-                        Radius="24"
-                        Opacity="0.35"/>
+                <Shadow Brush="#241E2E" Offset="-6,0" Radius="28" Opacity="0.28"/>
             </Border.Shadow>
 
-            <VerticalStackLayout Padding="24,52,24,36"
-                                 Spacing="0">
+            <VerticalStackLayout Padding="24,52,24,36" Spacing="0">
 
-                <!-- Header row -->
-                <Grid ColumnDefinitions="*,Auto"
-                      Margin="0,0,0,20">
-
+                <!-- Header -->
+                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,20">
                     <Label Text="{loc:Translate Settings_Title}"
+                           FontFamily="{StaticResource FontSerif}"
                            FontSize="24"
-                           FontAttributes="Bold"
-                           TextColor="#1C3D52"
+                           TextColor="{StaticResource Ink}"
                            VerticalOptions="Center"/>
 
-                    <!-- Close button -->
                     <Border Grid.Column="1"
                             WidthRequest="36"
                             HeightRequest="36"
-                            BackgroundColor="#25000000"
-                            StrokeThickness="0"
+                            BackgroundColor="{StaticResource Card}"
+                            Stroke="{StaticResource Line}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 18"
                             VerticalOptions="Center">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="18"/>
-                        </Border.StrokeShape>
-
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnCloseTapped"/>
                         </Border.GestureRecognizers>
-
                         <Label Text="✕"
                                FontSize="13"
                                FontAttributes="Bold"
-                               TextColor="#4A6172"
+                               TextColor="{StaticResource InkSecondary}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
-
                     </Border>
-
                 </Grid>
 
-                <!-- Divider -->
                 <BoxView HeightRequest="1"
-                         BackgroundColor="#25000000"
+                         BackgroundColor="{StaticResource Line}"
                          Margin="0,0,0,28"/>
 
-                <!-- ── LANGUAGE SECTION ── -->
+                <!-- ── LANGUAGE ── -->
                 <Label Text="{loc:Translate Settings_LanguageSection}"
-                       FontSize="10"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="11"
                        FontAttributes="Bold"
-                       CharacterSpacing="1.5"
-                       TextColor="#7B91A1"
+                       CharacterSpacing="1.3"
+                       TextColor="{StaticResource InkTertiary}"
                        Margin="0,0,0,12"/>
 
                 <Grid ColumnDefinitions="*,*"
                       ColumnSpacing="10"
                       Margin="0,0,0,28">
 
-                    <!-- Deutsch -->
                     <Border Grid.Column="0"
-                            BackgroundColor="#40FFFFFF"
-                            Stroke="#60FFFFFF"
+                            BackgroundColor="{StaticResource Card}"
+                            Stroke="{StaticResource Line}"
                             StrokeThickness="1.5"
                             StrokeShape="RoundRectangle 14"
                             Padding="0,12">
                         <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                         Binding="{Binding SettingsVM.IsGerman}"
-                                         Value="True">
-                                <Setter Property="BackgroundColor" Value="#809B6FCC"/>
-                                <Setter Property="Stroke" Value="#B39B6FCC"/>
+                            <DataTrigger TargetType="Border" Binding="{Binding SettingsVM.IsGerman}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ViolaTint}"/>
+                                <Setter Property="Stroke" Value="{StaticResource Viola}"/>
                             </DataTrigger>
                         </Border.Triggers>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SettingsVM.SetLanguageCommand}"
-                                                  CommandParameter="de"/>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.SetLanguageCommand}" CommandParameter="de"/>
                         </Border.GestureRecognizers>
                         <Label Text="🇩🇪 Deutsch"
+                               FontFamily="{StaticResource FontSans}"
                                FontSize="13"
                                FontAttributes="Bold"
-                               TextColor="#1C3D52"
+                               TextColor="{StaticResource Ink}"
                                HorizontalTextAlignment="Center"/>
                     </Border>
 
-                    <!-- English -->
                     <Border Grid.Column="1"
-                            BackgroundColor="#40FFFFFF"
-                            Stroke="#60FFFFFF"
+                            BackgroundColor="{StaticResource Card}"
+                            Stroke="{StaticResource Line}"
                             StrokeThickness="1.5"
                             StrokeShape="RoundRectangle 14"
                             Padding="0,12">
                         <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                         Binding="{Binding SettingsVM.IsEnglish}"
-                                         Value="True">
-                                <Setter Property="BackgroundColor" Value="#809B6FCC"/>
-                                <Setter Property="Stroke" Value="#B39B6FCC"/>
+                            <DataTrigger TargetType="Border" Binding="{Binding SettingsVM.IsEnglish}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ViolaTint}"/>
+                                <Setter Property="Stroke" Value="{StaticResource Viola}"/>
                             </DataTrigger>
                         </Border.Triggers>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SettingsVM.SetLanguageCommand}"
-                                                  CommandParameter="en"/>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.SetLanguageCommand}" CommandParameter="en"/>
                         </Border.GestureRecognizers>
                         <Label Text="🇬🇧 English"
+                               FontFamily="{StaticResource FontSans}"
                                FontSize="13"
                                FontAttributes="Bold"
-                               TextColor="#1C3D52"
+                               TextColor="{StaticResource Ink}"
                                HorizontalTextAlignment="Center"/>
                     </Border>
-
                 </Grid>
 
-                <!-- Section label -->
+                <!-- ── DATA ── -->
                 <Label Text="{loc:Translate Settings_DataSection}"
-                       FontSize="10"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="11"
                        FontAttributes="Bold"
-                       CharacterSpacing="1.5"
-                       TextColor="#7B91A1"
+                       CharacterSpacing="1.3"
+                       TextColor="{StaticResource InkTertiary}"
                        Margin="0,0,0,12"/>
 
-                <!-- Delete All Data row -->
-                <Border BackgroundColor="#FFEEEE"
+                <Border BackgroundColor="{StaticResource ClayTint}"
                         StrokeThickness="1"
-                        Stroke="#FFCCCC"
+                        Stroke="#EFD3CE"
                         StrokeShape="RoundRectangle 16"
                         Padding="16,14">
-
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding SettingsVM.DeleteAllDataCommand}"/>
                     </Border.GestureRecognizers>
 
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="14">
-
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
                         <Border WidthRequest="42"
                                 HeightRequest="42"
-                                BackgroundColor="#20FF0000"
+                                BackgroundColor="#F2DAD6"
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 12"
                                 VerticalOptions="Center">
-
-                            <Label Text="🗑️"
-                                   FontSize="20"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center"/>
-
+                            <Label Text="🗑️" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center"/>
                         </Border>
 
-                        <VerticalStackLayout Grid.Column="1"
-                                             Spacing="2"
-                                             VerticalOptions="Center">
-
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                             <Label Text="{loc:Translate Settings_DeleteAllData}"
+                                   FontFamily="{StaticResource FontSans}"
                                    FontSize="14"
                                    FontAttributes="Bold"
-                                   TextColor="#C0392B"/>
-
+                                   TextColor="{StaticResource Clay}"/>
                             <Label Text="{loc:Translate Settings_ResetSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
                                    FontSize="11"
-                                   TextColor="#D07070"/>
-
+                                   TextColor="#B07B76"/>
                         </VerticalStackLayout>
-
                     </Grid>
-
                 </Border>
 
             </VerticalStackLayout>
-
         </Border>
 
     </Grid>

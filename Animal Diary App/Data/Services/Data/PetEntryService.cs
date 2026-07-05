@@ -56,6 +56,17 @@ public class PetEntryService
             .ToListAsync();
     }
 
+    /// <summary>Weight entries for a pet over the last <paramref name="days"/> days
+    /// (date-ascending). Powers the weight-trend chart's range selector.</summary>
+    public async Task<List<PetEntry>> GetWeightEntriesForRangeAsync(int petId, int days)
+    {
+        var from = DateTime.Now.AddDays(-days).Date;
+        return await _db.Table<PetEntry>()
+            .Where(e => e.PetId == petId && e.Weight > 0 && e.Date >= from)
+            .OrderBy(e => e.Date)
+            .ToListAsync();
+    }
+
     public async Task<List<PetEntry>> GetLast30DaysMoodEntriesAsync(int petId)
     {
         var thirtyDaysAgo = DateTime.Now.AddDays(-30).Date;
