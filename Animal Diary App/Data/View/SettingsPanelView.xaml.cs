@@ -35,7 +35,7 @@ public partial class SettingsPanelView : ContentView
         if (open)
         {
             RootOverlay.IsVisible = true;
-            SettingsPanel.TranslationX = 0;
+            SettingsPanel.TranslationX = offset;
             DimmingOverlay.Opacity = 0;
 
             // Give Android one layout/render pass before animating the panel
