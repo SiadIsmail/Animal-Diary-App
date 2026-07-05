@@ -28,10 +28,6 @@
                 StrokeShape="RoundRectangle 24,0,0,24"
                 TranslationX="300">
 
-            <Border.Shadow>
-                <Shadow Brush="#241E2E" Offset="-6,0" Radius="28" Opacity="0.28"/>
-            </Border.Shadow>
-
             <VerticalStackLayout Padding="24,52,24,36" Spacing="0">
 
                 <!-- Header -->
