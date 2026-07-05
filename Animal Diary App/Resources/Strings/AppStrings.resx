@@ -70,9 +70,9 @@
   <data name="Common_AgeYearsShort" xml:space="preserve"><value>({0} yrs)</value></data>
 
   <!-- ── Bottom navigation ── -->
-  <data name="Nav_Main" xml:space="preserve"><value>Main</value></data>
-  <data name="Nav_Calendar" xml:space="preserve"><value>Calendar</value></data>
-  <data name="Nav_Pets" xml:space="preserve"><value>Pets</value></data>
+  <data name="Nav_Main" xml:space="preserve"><value>Today</value></data>
+  <data name="Nav_Calendar" xml:space="preserve"><value>Journal</value></data>
+  <data name="Nav_Pets" xml:space="preserve"><value>Care</value></data>
 
   <!-- ── App / Loading ── -->
   <data name="App_StartError" xml:space="preserve"><value>Could not start the app. Please restart.</value></data>
@@ -149,8 +149,8 @@
 
   <!-- ── Calendar ── -->
   <data name="Calendar_SelectedDate" xml:space="preserve"><value>Selected Date: {0:d}</value></data>
-  <data name="Calendar_MoodAdd" xml:space="preserve"><value>+ Mood</value></data>
-  <data name="Calendar_WeightAdd" xml:space="preserve"><value>+ Weight</value></data>
+  <data name="Calendar_MoodAdd" xml:space="preserve"><value>Mood</value></data>
+  <data name="Calendar_WeightAdd" xml:space="preserve"><value>Weight</value></data>
   <data name="Calendar_HowFeeling" xml:space="preserve"><value>How is your pet feeling today?</value></data>
   <data name="Calendar_ConfirmMood" xml:space="preserve"><value>Confirm Mood</value></data>
   <data name="Calendar_WeightPlaceholder" xml:space="preserve"><value>Enter your pet's weight today</value></data>
