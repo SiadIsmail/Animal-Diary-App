@@ -57,9 +57,10 @@
         </Grid>
 
         <!-- ── Week strip: recessed well of 7 cells (Mon–Sun) ── -->
-        <Border BackgroundColor="{StaticResource PaperDeep}"
-                StrokeThickness="0"
-                StrokeShape="RoundRectangle 18"
+        <Border BackgroundColor="{StaticResource Well}"
+                Stroke="{StaticResource GlassLine}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 22,19,18,21"
                 Padding="6">
 
             <FlexLayout BindableLayout.ItemsSource="{Binding Cells, Source={x:Reference Root}}"
@@ -97,21 +98,37 @@
                                            TextColor="{StaticResource InkTertiary}"
                                            HorizontalOptions="Center"/>
 
-                                    <Label Text="{Binding DayNumber}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="15"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource InkSecondary}"
-                                           HorizontalOptions="Center">
-                                        <Label.Triggers>
-                                            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="TextColor" Value="{StaticResource Ink}"/>
-                                            </DataTrigger>
-                                            <DataTrigger TargetType="Label" Binding="{Binding IsToday}" Value="True">
-                                                <Setter Property="TextColor" Value="{StaticResource Viola}"/>
-                                            </DataTrigger>
-                                        </Label.Triggers>
-                                    </Label>
+                                    <!-- Date number with a hand-sketched circle behind it when
+                                         selected (the squiggle-ring from the HTML). The faint
+                                         cell highlight is kept as well so selection never relies
+                                         on the sketch alone. -->
+                                    <Grid WidthRequest="34"
+                                          HeightRequest="30"
+                                          HorizontalOptions="Center">
+                                        <Path Data="M17 2.5 C26 1.5 32 6 31.5 14 C31 23 25 28 16.5 27.5 C8 27 2.5 22 3 14 C3.4 7 9 3.4 15 2.8"
+                                              Stroke="{StaticResource Teal}"
+                                              StrokeThickness="1.6"
+                                              StrokeLineCap="Round"
+                                              IsVisible="{Binding IsSelected}"
+                                              HorizontalOptions="Center"
+                                              VerticalOptions="Center"/>
+                                        <Label Text="{Binding DayNumber}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="15"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource InkSecondary}"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsToday}" Value="True">
+                                                    <Setter Property="TextColor" Value="{StaticResource TealDeep}"/>
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </Grid>
 
                                     <!-- Activity dots -->
                                     <HorizontalStackLayout Spacing="2.5"

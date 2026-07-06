@@ -58,6 +58,21 @@
             </Ellipse.Fill>
         </Ellipse>
 
+        <!-- Layer 4b: warm sand rising from the very bottom edge — the touch of
+             warmth that makes this the "warm" rockpool. Sits above the cool
+             bottom glow, matching the HTML sand radial (painted on top). -->
+        <Ellipse x:Name="BlobSand"
+                 InputTransparent="True"
+                 HorizontalOptions="Start"
+                 VerticalOptions="Start">
+            <Ellipse.Fill>
+                <RadialGradientBrush Center="0.5,0.5" Radius="0.5">
+                    <GradientStop Color="#EDDFC0" Offset="0"/>
+                    <GradientStop Color="#00EDDFC0" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
         <!-- Layer 5: drifting bubbles -->
         <AbsoluteLayout InputTransparent="True"
                         HorizontalOptions="Fill"

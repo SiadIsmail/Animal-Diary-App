@@ -26,6 +26,7 @@ public class CalendarViewModel : BaseViewModel
             currentSelectedDate = newDate;
             OnPropertyChanged();
             OnPropertyChanged(nameof(SelectedDateDisplay));
+            NotifyDerived();
             _ = LoadEntriesAsync();
             _ = LoadDosesAsync();
             if (weekChanged)
@@ -93,6 +94,84 @@ public class CalendarViewModel : BaseViewModel
     /// <summary>Localized "Selected Date: …" label for the calendar.</summary>
     public string SelectedDateDisplay =>
         LocalizationManager.Instance.Format("Calendar_SelectedDate", CurrentSelectedDate);
+
+    // ── Rockpool Journal display helpers (additive, read-only) ───────────
+    // Small derived labels the warm reskin needs; none change the shape of an
+    // existing member. Refreshed together via NotifyDerived() whenever the
+    // selection, active pet, or the day's entries/doses change.
+
+    /// <summary>Active pet's name, or empty when none is selected.</summary>
+    public string ActivePetName => _activePetService.ActivePet?.Name ?? string.Empty;
+
+    /// <summary>Eyebrow: "{Pet}'s health journal".</summary>
+    public string EyebrowText =>
+        LocalizationManager.Instance.Format("Journal_EyebrowFmt", ActivePetName);
+
+    /// <summary>True when the selected date is today.</summary>
+    public bool IsSelectedDateToday => CurrentSelectedDate.Date == DateTime.Now.Date;
+
+    /// <summary>Handwriting relative label: today / yesterday / N days ago / upcoming.</summary>
+    public string RelativeDateLabel
+    {
+        get
+        {
+            var loc = LocalizationManager.Instance;
+            int diff = (DateTime.Now.Date - CurrentSelectedDate.Date).Days;
+            return diff switch
+            {
+                0 => loc.GetString("Journal_RelToday"),
+                1 => loc.GetString("Journal_RelYesterday"),
+                > 1 => loc.Format("Journal_RelDaysAgo", diff),
+                _ => loc.GetString("Journal_RelUpcoming"),
+            };
+        }
+    }
+
+    /// <summary>Italic-serif day heading: "Today, so far…" or "How {Weekday} went".</summary>
+    public string DayHeading =>
+        IsSelectedDateToday
+            ? LocalizationManager.Instance.GetString("Journal_HeadingToday")
+            : LocalizationManager.Instance.Format(
+                "Journal_HeadingPast",
+                CurrentSelectedDate.ToString("dddd", System.Globalization.CultureInfo.CurrentCulture));
+
+    /// <summary>Warm-paper note line: "{Pet} was feeling {mood}" (empty when no mood).</summary>
+    public string MoodNarrative =>
+        HasMood
+            ? LocalizationManager.Instance.Format("Journal_MoodNarrative", ActivePetName, ShownMood)
+            : string.Empty;
+
+    /// <summary>Empty-state headline: "A quiet page for {Pet}".</summary>
+    public string EmptyHeadline =>
+        LocalizationManager.Instance.Format("Journal_EmptyBig", ActivePetName);
+
+    /// <summary>Celebration line shown when the day's whole care routine is done.</summary>
+    public string CelebrationText =>
+        LocalizationManager.Instance.Format("Journal_Celebrate", ActivePetName);
+
+    /// <summary>Nothing logged for the selected day → show the quiet-page empty state.</summary>
+    public bool IsDayEmpty => !HasMood && !HasWeight && DosesForSelectedDate.Count == 0;
+
+    /// <summary>Today's mood, weight and every scheduled dose are all recorded.</summary>
+    public bool AllCareComplete =>
+        IsSelectedDateToday && HasMood && HasWeight
+        && DosesForSelectedDate.Count > 0
+        && DosesForSelectedDate.All(d => d.Status == DoseStatus.Taken);
+
+    /// <summary>Fire change notifications for every derived Journal label at once.</summary>
+    private void NotifyDerived()
+    {
+        OnPropertyChanged(nameof(ActivePetName));
+        OnPropertyChanged(nameof(EyebrowText));
+        OnPropertyChanged(nameof(IsSelectedDateToday));
+        OnPropertyChanged(nameof(RelativeDateLabel));
+        OnPropertyChanged(nameof(DayHeading));
+        OnPropertyChanged(nameof(MoodNarrative));
+        OnPropertyChanged(nameof(EmptyHeadline));
+        OnPropertyChanged(nameof(CelebrationText));
+        OnPropertyChanged(nameof(IsDayEmpty));
+        OnPropertyChanged(nameof(AllCareComplete));
+    }
 
     public bool HasMood => !string.IsNullOrEmpty(ShownMood);
 
@@ -205,6 +284,7 @@ public class CalendarViewModel : BaseViewModel
             ShownMood = string.Empty;
             ShownWeight = string.Empty;
             SelectedMoodLevel = MoodLevel.None;
+            NotifyDerived();
             return;
         }
         // Derive the displayed mood from the stored level so it always renders in
@@ -212,6 +292,7 @@ public class CalendarViewModel : BaseViewModel
         ShownMood = Entries.MoodLevel > 0 ? ((MoodLevel)Entries.MoodLevel).GetDisplayName() : string.Empty;
         ShownWeight = Entries.Weight > 0 ? Entries.Weight.ToString() : string.Empty;
         SelectedMoodLevel = (MoodLevel)Entries.MoodLevel;
+        NotifyDerived();
         return;
     }
 
@@ -271,11 +352,25 @@ public class CalendarViewModel : BaseViewModel
                 }
             }
 
+            // A "handmade" wobble: alternate the pill-icon tilt and cycle the
+            // card corners through three patterns as they go down the timeline.
+            int index = 0;
             foreach (var item in items.OrderBy(i => i.ScheduledTime).ThenBy(i => i.MedName))
+            {
+                item.IconRotation = index % 2 == 0 ? -3 : 2.5;
+                item.CardCorner = (index % 3) switch
+                {
+                    0 => new CornerRadius(17, 14, 15, 18),
+                    1 => new CornerRadius(14, 18, 17, 15),
+                    _ => new CornerRadius(16, 15, 18, 14),
+                };
                 DosesForSelectedDate.Add(item);
+                index++;
+            }
         }
 
         HasNoDoses = DosesForSelectedDate.Count == 0;
+        NotifyDerived();
     }
 
     // ── Week activity dots (visible week) ────────────────────────────────
@@ -500,6 +595,7 @@ public class CalendarViewModel : BaseViewModel
         pet.IsSelected = true;
         _activePetService.ActivePet = pet;
         await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
+        NotifyDerived();
         Console.WriteLine($"Selected pet: {pet.Name}");
     });
 }

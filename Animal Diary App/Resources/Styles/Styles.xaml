@@ -12,13 +12,46 @@
     <x:String x:Key="FontSerif">Fraunces</x:String>
     <x:String x:Key="FontSerifItalic">FrauncesItalic</x:String>
     <x:String x:Key="FontSans">PlusJakartaSans</x:String>
+    <x:String x:Key="FontHand">Caveat</x:String>   <!-- handwriting accents (.hand) — use sparingly -->
 
-    <!-- Corner radii -->
+    <!-- Corner radii (uniform, legacy) -->
     <x:Double x:Key="RadiusSm">12</x:Double>
     <x:Double x:Key="RadiusMd">16</x:Double>
     <x:Double x:Key="RadiusLg">22</x:Double>
     <x:Double x:Key="RadiusSheet">28</x:Double>
     <x:Double x:Key="RadiusPill">999</x:Double>
+
+    <!-- ================================================================= -->
+    <!-- Rockpool · Warm — asymmetric "handmade" corner radii                -->
+    <!-- HTML/CSS order is TL TR BR BL; MAUI CornerRadius is TL TR BL BR,    -->
+    <!-- so the last two values are swapped here to match the HTML visually. -->
+    <!-- ================================================================= -->
+    <!-- Quick-log buttons (mood / weigh-in / meds) -->
+    <CornerRadius x:Key="RadiusQuick1">16,13,14,15</CornerRadius>   <!-- css 16 13 15 14 -->
+    <CornerRadius x:Key="RadiusQuick2">13,16,15,14</CornerRadius>   <!-- css 13 16 14 15 -->
+    <CornerRadius x:Key="RadiusQuick3">15,14,13,16</CornerRadius>   <!-- css 15 14 16 13 -->
+    <!-- Timeline cards (cycle of 3) -->
+    <CornerRadius x:Key="RadiusCard1">17,14,15,18</CornerRadius>    <!-- css 17 14 18 15 -->
+    <CornerRadius x:Key="RadiusCard2">14,18,17,15</CornerRadius>    <!-- css 14 18 15 17 -->
+    <CornerRadius x:Key="RadiusCard3">16,15,18,14</CornerRadius>    <!-- css 16 15 14 18 -->
+    <!-- Mood note (warm paper) -->
+    <CornerRadius x:Key="RadiusNote">3,8,9,4</CornerRadius>         <!-- css 3 8 4 9 -->
+    <!-- Week strip container -->
+    <CornerRadius x:Key="RadiusWeekStrip">22,19,18,21</CornerRadius><!-- css 22 19 21 18 -->
+    <!-- Primary / quiet buttons -->
+    <CornerRadius x:Key="RadiusBtn">15,13,13,16</CornerRadius>      <!-- css 15 13 16 13 -->
+    <!-- Inline "Mark given" button -->
+    <CornerRadius x:Key="RadiusGive">12,10,10,13</CornerRadius>     <!-- css 12 10 13 10 -->
+    <!-- Toast pill -->
+    <CornerRadius x:Key="RadiusToast">18,15,14,17</CornerRadius>    <!-- css 18 15 17 14 -->
+    <!-- Med-log row -->
+    <CornerRadius x:Key="RadiusMedRow">16,13,14,15</CornerRadius>   <!-- css 16 13 15 14 -->
+    <!-- Tab bar shell -->
+    <CornerRadius x:Key="RadiusTabBar">26,23,22,25</CornerRadius>   <!-- css 26 23 25 22 -->
+    <!-- Bottom sheet (top corners only) -->
+    <CornerRadius x:Key="RadiusSheetWarm">30,26,0,0</CornerRadius>  <!-- css 30 26 0 0 -->
+    <!-- Organic icon button (near-circle, faintly wobbled) -->
+    <CornerRadius x:Key="RadiusIconBtn">19,18,18,19</CornerRadius>
 
     <!-- Spacing scale -->
     <x:Double x:Key="Space1">4</x:Double>

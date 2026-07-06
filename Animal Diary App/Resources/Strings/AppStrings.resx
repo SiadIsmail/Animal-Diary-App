@@ -120,6 +120,32 @@
   <data name="Journal_Eyebrow" xml:space="preserve"><value>Health journal</value></data>
   <data name="Journal_Title" xml:space="preserve"><value>Journal</value></data>
   <data name="Journal_DayTimeline" xml:space="preserve"><value>DAY TIMELINE</value></data>
+  <data name="Journal_EyebrowFmt" xml:space="preserve"><value>{0}'s health journal</value></data>
+  <data name="Journal_RelToday" xml:space="preserve"><value>today</value></data>
+  <data name="Journal_RelYesterday" xml:space="preserve"><value>yesterday</value></data>
+  <data name="Journal_RelDaysAgo" xml:space="preserve"><value>{0} days ago</value></data>
+  <data name="Journal_RelUpcoming" xml:space="preserve"><value>upcoming</value></data>
+  <data name="Journal_HeadingToday" xml:space="preserve"><value>Today, so far…</value></data>
+  <data name="Journal_HeadingPast" xml:space="preserve"><value>How {0} went</value></data>
+  <data name="Journal_MoodNarrative" xml:space="preserve"><value>{0} was feeling {1}</value></data>
+  <data name="Journal_EmptyBig" xml:space="preserve"><value>A quiet page for {0}</value></data>
+  <data name="Journal_EmptySub" xml:space="preserve"><value>Nothing logged — quiet days are good days too.</value></data>
+  <data name="Journal_Celebrate" xml:space="preserve"><value>That's everything for today — give {0} a scratch from us.</value></data>
+  <data name="Journal_MoodCheck" xml:space="preserve"><value>Mood check</value></data>
+  <data name="Journal_WeighIn" xml:space="preserve"><value>Weigh-in</value></data>
+  <data name="Journal_Meds" xml:space="preserve"><value>Meds</value></data>
+  <data name="Journal_MoodTitle" xml:space="preserve"><value>Mood</value></data>
+  <data name="Journal_WeightScales" xml:space="preserve"><value>on the scales</value></data>
+  <data name="Journal_MarkGiven" xml:space="preserve"><value>Mark given</value></data>
+  <data name="Journal_JumpToday" xml:space="preserve"><value>Jump to today</value></data>
+  <data name="Toast_MedGiven1" xml:space="preserve"><value>Done — {0} says thanks.</value></data>
+  <data name="Toast_MedGiven2" xml:space="preserve"><value>Marked given. Good human.</value></data>
+  <data name="Toast_MedGiven3" xml:space="preserve"><value>Got it — one less thing to remember.</value></data>
+  <data name="Toast_MoodSaved1" xml:space="preserve"><value>Noted. Thanks for checking in on {0}.</value></data>
+  <data name="Toast_MoodSaved2" xml:space="preserve"><value>Saved to {0}'s journal.</value></data>
+  <data name="Toast_WeightSaved1" xml:space="preserve"><value>Weighed in and written down.</value></data>
+  <data name="Toast_WeightSaved2" xml:space="preserve"><value>Added to {0}'s story.</value></data>
+  <data name="Toast_BackToday" xml:space="preserve"><value>Back to today</value></data>
 
   <!-- ── Care (Pets) header ── -->
   <data name="Care_Eyebrow" xml:space="preserve"><value>Pets &amp; management</value></data>

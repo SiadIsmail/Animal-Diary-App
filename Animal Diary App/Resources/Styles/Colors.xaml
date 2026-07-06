@@ -98,4 +98,73 @@
     <SolidColorBrush x:Key="HoneyBrush" Color="{StaticResource Honey}"/>
     <SolidColorBrush x:Key="SageBrush" Color="{StaticResource Sage}"/>
     <SolidColorBrush x:Key="ClayBrush" Color="{StaticResource Clay}"/>
+
+    <!-- =================================================================== -->
+    <!-- ROCKPOOL · WARM  (Journal reskin — Designs/felova-journal-rockpool-warm.html) -->
+    <!-- Additive tokens: do NOT reuse the older redesign keys above so the   -->
+    <!-- MainPage / PetsPage / MedicationsPage visuals stay unchanged.        -->
+    <!-- Alpha hexes are #AARRGGBB (e.g. 13% => 0x21).                        -->
+    <!-- =================================================================== -->
+
+    <!-- Sea gradient stops + warm sand -->
+    <Color x:Key="SeaHi">#E8F7F1</Color>       <!-- mint highlight            -->
+    <Color x:Key="SeaMid">#C4E6E3</Color>      <!-- aqua mid                  -->
+    <Color x:Key="SeaBlue">#B7DCEC</Color>     <!-- sea blue                  -->
+    <Color x:Key="Sand">#EDDFC0</Color>        <!-- warm sand (bottom glow)   -->
+    <Color x:Key="SeaGradTop">#DDF2EC</Color>  <!-- linear top                -->
+    <Color x:Key="SeaGradBottom">#B6DCD9</Color><!-- linear bottom            -->
+    <Color x:Key="SeaGradGlow">#A8D8CD</Color> <!-- bottom radial glow        -->
+
+    <!-- Ink reuses the shared Ink / InkSecondary / InkTertiary (#0D3A3C /
+         #3A6A6B / #7CA2A1) — identical values, no new keys needed. -->
+
+    <!-- Teal accent (translucent, glass-friendly) -->
+    <Color x:Key="Teal">#149081</Color>
+    <Color x:Key="TealDeep">#0C6A5D</Color>
+    <Color x:Key="TealTint">#21149081</Color>   <!-- 13% -->
+    <Color x:Key="TealLine">#47149081</Color>   <!-- 28% -->
+
+    <!-- Blue — weigh-in accent -->
+    <Color x:Key="Blue">#3E8FB0</Color>
+    <Color x:Key="BlueTint">#243E8FB0</Color>   <!-- 14% -->
+    <Color x:Key="BlueInk">#2A6E8C</Color>      <!-- weigh-in icon fg -->
+
+    <!-- Honey — medication (warm variant, distinct from shared Honey) -->
+    <Color x:Key="HoneyWarm">#D9973C</Color>
+    <Color x:Key="HoneyWarmTint">#29D9973C</Color> <!-- 16% -->
+    <Color x:Key="HoneyWarmDeep">#8A5A12</Color>
+
+    <!-- Warm paper (mood note card) + washi tape -->
+    <Color x:Key="PaperWarm">#FFF9EC</Color>
+    <Color x:Key="NoteInk">#4A4433</Color>      <!-- serif-italic note text  -->
+    <Color x:Key="Washi">#A6BEE2D8</Color>      <!-- 65% mint tape           -->
+
+    <!-- Glass surfaces (frosted whites) -->
+    <Color x:Key="Glass">#99FFFFFF</Color>      <!-- 60% -->
+    <Color x:Key="GlassSoft">#6BFFFFFF</Color>  <!-- 42% -->
+    <Color x:Key="GlassLine">#D9FFFFFF</Color>  <!-- 85% -->
+    <Color x:Key="Well">#57FFFFFF</Color>       <!-- 34% recessed well -->
+
+    <!-- Mood scale (warm variant — matches HTML m-great..m-unwell) -->
+    <Color x:Key="MGreat">#2E9C82</Color>
+    <Color x:Key="MGood">#7DB268</Color>
+    <Color x:Key="MOkay">#DFB253</Color>
+    <Color x:Key="MLow">#D68D62</Color>
+    <Color x:Key="MUnwell">#C05F5F</Color>
+
+    <!-- Brushes for surfaces / strokes used by the Journal -->
+    <SolidColorBrush x:Key="TealBrush" Color="{StaticResource Teal}"/>
+    <SolidColorBrush x:Key="TealDeepBrush" Color="{StaticResource TealDeep}"/>
+    <SolidColorBrush x:Key="TealTintBrush" Color="{StaticResource TealTint}"/>
+    <SolidColorBrush x:Key="TealLineBrush" Color="{StaticResource TealLine}"/>
+    <SolidColorBrush x:Key="BlueBrush" Color="{StaticResource Blue}"/>
+    <SolidColorBrush x:Key="BlueTintBrush" Color="{StaticResource BlueTint}"/>
+    <SolidColorBrush x:Key="HoneyWarmBrush" Color="{StaticResource HoneyWarm}"/>
+    <SolidColorBrush x:Key="HoneyWarmTintBrush" Color="{StaticResource HoneyWarmTint}"/>
+    <SolidColorBrush x:Key="PaperWarmBrush" Color="{StaticResource PaperWarm}"/>
+    <SolidColorBrush x:Key="WashiBrush" Color="{StaticResource Washi}"/>
+    <SolidColorBrush x:Key="GlassBrush" Color="{StaticResource Glass}"/>
+    <SolidColorBrush x:Key="GlassSoftBrush" Color="{StaticResource GlassSoft}"/>
+    <SolidColorBrush x:Key="GlassLineBrush" Color="{StaticResource GlassLine}"/>
+    <SolidColorBrush x:Key="WellBrush" Color="{StaticResource Well}"/>
 </ResourceDictionary>

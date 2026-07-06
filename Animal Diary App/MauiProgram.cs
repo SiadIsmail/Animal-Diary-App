@@ -23,6 +23,7 @@ public static class MauiProgram
 				fonts.AddFont("Fraunces.ttf", "Fraunces");
 				fonts.AddFont("Fraunces-Italic.ttf", "FrauncesItalic");
 				fonts.AddFont("PlusJakartaSans-Regular.ttf", "PlusJakartaSans");
+				fonts.AddFont("Caveat.ttf", "Caveat");
 			});
 
 		builder.Services.AddSingleton<MainViewModel>();

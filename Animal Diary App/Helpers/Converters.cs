@@ -35,6 +35,22 @@ public class EmptyToMoodPlaceholderConverter : IValueConverter
     }
 }
 
+/// <summary>First letter of a string, upper-cased — for the pet-chip avatar
+/// initial (serif italic) in the rockpool Journal.</summary>
+public class FirstLetterConverter : IValueConverter
+{
+    public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        var s = value?.ToString();
+        return string.IsNullOrWhiteSpace(s)
+            ? string.Empty
+            : s.Trim()[..1].ToUpper(culture ?? CultureInfo.CurrentCulture);
+    }
+
+    public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+        => value;
+}
+
 public class StringToBoolConverter : IValueConverter
 {
     public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
