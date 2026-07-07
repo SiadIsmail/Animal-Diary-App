@@ -34,18 +34,20 @@
         <VerticalStackLayout Spacing="12"
                              IsVisible="{Binding MainPageVM.HasSufficientWeightData}">
 
-            <Label Text="{loc:Translate Weight_TrendHeader}"
-                   Style="{StaticResource SectionLabel}"/>
+            <Label Text="{loc:Translate Main_WeighInsHeading}"
+                   FontFamily="{StaticResource FontSerifItalic}"
+                   FontSize="17"
+                   TextColor="{StaticResource Ink}"/>
 
-            <Border BackgroundColor="{StaticResource Card}"
-                    Stroke="{StaticResource Line}"
+            <Border BackgroundColor="{StaticResource Glass}"
+                    Stroke="{StaticResource GlassLine}"
                     StrokeThickness="1"
-                    StrokeShape="RoundRectangle 22"
+                    StrokeShape="RoundRectangle 17,14,15,18"
                     Padding="16">
                 <VerticalStackLayout Spacing="14">
 
                     <!-- Range selector -->
-                    <Border BackgroundColor="{StaticResource PaperDeep}"
+                    <Border BackgroundColor="{StaticResource Well}"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 999"
                             Padding="3">
@@ -55,7 +57,7 @@
                                     StrokeThickness="0" StrokeShape="RoundRectangle 999">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.ChartRangeDays}" Value="14">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -74,7 +76,7 @@
                                     StrokeThickness="0" StrokeShape="RoundRectangle 999">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.ChartRangeDays}" Value="30">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -93,7 +95,7 @@
                                     StrokeThickness="0" StrokeShape="RoundRectangle 999">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.ChartRangeDays}" Value="90">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -112,7 +114,7 @@
                                     StrokeThickness="0" StrokeShape="RoundRectangle 999">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.ChartRangeDays}" Value="3650">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -150,21 +152,21 @@
                                 Padding="10,4"
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 999"
-                                BackgroundColor="{StaticResource HoneyTint}"
+                                BackgroundColor="{StaticResource HoneyWarmTint}"
                                 VerticalOptions="Center">
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.WeightTrendIsStable}" Value="True">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource SageTint}"/>
+                                    <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
                                 </DataTrigger>
                             </Border.Triggers>
                             <Label Text="{Binding MainPageVM.WeightTrendLabel}"
                                    FontFamily="{StaticResource FontSans}"
                                    FontSize="11.5"
                                    FontAttributes="Bold"
-                                   TextColor="{StaticResource HoneyDeep}">
+                                   TextColor="{StaticResource HoneyWarmDeep}">
                                 <Label.Triggers>
                                     <DataTrigger TargetType="Label" Binding="{Binding MainPageVM.WeightTrendIsStable}" Value="True">
-                                        <Setter Property="TextColor" Value="{StaticResource SageDeep}"/>
+                                        <Setter Property="TextColor" Value="{StaticResource TealDeep}"/>
                                     </DataTrigger>
                                 </Label.Triggers>
                             </Label>

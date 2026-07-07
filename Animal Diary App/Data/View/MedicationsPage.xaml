@@ -38,8 +38,8 @@
                     <Border Grid.Column="0"
                             WidthRequest="40"
                             HeightRequest="40"
-                            BackgroundColor="{StaticResource Card}"
-                            Stroke="{StaticResource Line}"
+                            BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 20">
                         <Border.GestureRecognizers>
@@ -66,7 +66,7 @@
                 </Grid>
 
                 <!-- Active / Archived segmented control -->
-                <Border BackgroundColor="{StaticResource PaperDeep}"
+                <Border BackgroundColor="{StaticResource Well}"
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 999"
                         Padding="4">
@@ -78,7 +78,7 @@
                                 StrokeShape="RoundRectangle 999">
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding MedicationVM.ActiveTab}" Value="active">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                                 </DataTrigger>
                             </Border.Triggers>
                             <Border.GestureRecognizers>
@@ -105,7 +105,7 @@
                                 StrokeShape="RoundRectangle 999">
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding MedicationVM.ActiveTab}" Value="archived">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                                 </DataTrigger>
                             </Border.Triggers>
                             <Border.GestureRecognizers>
@@ -140,10 +140,10 @@
                         <DataTemplate>
                             <Border Padding="15,16"
                                     Margin="0,0,0,11"
-                                    BackgroundColor="{StaticResource Card}"
-                                    Stroke="{StaticResource Line}"
+                                    BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}"
                                     StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 20">
+                                    StrokeShape="RoundRectangle 17,14,15,18">
 
                                 <Grid ColumnDefinitions="Auto,*,Auto"
                                       ColumnSpacing="13">
@@ -151,7 +151,7 @@
                                     <!-- Pill icon -->
                                     <Border WidthRequest="46"
                                             HeightRequest="46"
-                                            BackgroundColor="{StaticResource ViolaTint}"
+                                            BackgroundColor="{StaticResource TealTint}"
                                             StrokeThickness="0"
                                             StrokeShape="RoundRectangle 13"
                                             VerticalOptions="Start">
@@ -173,7 +173,7 @@
                                                TextColor="{StaticResource InkSecondary}"/>
 
                                         <HorizontalStackLayout Spacing="6">
-                                            <Border BackgroundColor="{StaticResource ViolaTint}"
+                                            <Border BackgroundColor="{StaticResource TealTint}"
                                                     Padding="8,3"
                                                     StrokeThickness="0"
                                                     StrokeShape="RoundRectangle 999">
@@ -181,9 +181,9 @@
                                                        FontFamily="{StaticResource FontSans}"
                                                        FontSize="10"
                                                        FontAttributes="Bold"
-                                                       TextColor="{StaticResource ViolaDeep}"/>
+                                                       TextColor="{StaticResource TealDeep}"/>
                                             </Border>
-                                            <Border BackgroundColor="{StaticResource HoneyTint}"
+                                            <Border BackgroundColor="{StaticResource HoneyWarmTint}"
                                                     Padding="8,3"
                                                     StrokeThickness="0"
                                                     StrokeShape="RoundRectangle 999">
@@ -191,7 +191,7 @@
                                                        FontFamily="{StaticResource FontSans}"
                                                        FontSize="10"
                                                        FontAttributes="Bold"
-                                                       TextColor="{StaticResource HoneyDeep}"/>
+                                                       TextColor="{StaticResource HoneyWarmDeep}"/>
                                             </Border>
                                         </HorizontalStackLayout>
 
@@ -218,7 +218,7 @@
                                                          VerticalOptions="Center">
                                         <Border WidthRequest="34"
                                                 HeightRequest="34"
-                                                BackgroundColor="{StaticResource ViolaTint}"
+                                                BackgroundColor="{StaticResource TealTint}"
                                                 StrokeThickness="0"
                                                 StrokeShape="RoundRectangle 17">
                                             <Border.GestureRecognizers>
@@ -276,12 +276,12 @@
         <!-- ══════════ STICKY ADD BUTTON ══════════ -->
         <Border Grid.Row="1"
                 Margin="22,0,22,20"
-                BackgroundColor="{StaticResource Viola}"
+                BackgroundColor="{StaticResource Teal}"
                 StrokeThickness="0"
-                StrokeShape="RoundRectangle 16"
+                StrokeShape="RoundRectangle 15,13,13,16"
                 VerticalOptions="End">
             <Border.Shadow>
-                <Shadow Brush="#7657B8" Offset="0,6" Radius="16" Opacity="0.3"/>
+                <Shadow Brush="#149081" Offset="0,6" Radius="16" Opacity="0.3"/>
             </Border.Shadow>
             <Border.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding MedicationVM.AddMedicationCommand}"/>

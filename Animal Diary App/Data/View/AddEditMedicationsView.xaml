@@ -25,8 +25,8 @@
                 <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
             </Style>
             <Style x:Key="FieldBorder" TargetType="Border">
-                <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
-                <Setter Property="Stroke" Value="{StaticResource Line}"/>
+                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
                 <Setter Property="StrokeThickness" Value="1"/>
                 <Setter Property="StrokeShape" Value="RoundRectangle 13"/>
             </Style>
@@ -41,7 +41,7 @@
     <Grid>
         <!-- Scrim -->
         <BoxView x:Name="Scrim"
-                 BackgroundColor="#66241E2E"
+                 BackgroundColor="#660D3A3C"
                  InputTransparent="False">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding MedicationVM.CancelMedicationCommand}"/>
@@ -52,12 +52,12 @@
         <Border x:Name="SheetContainer"
                 BackgroundColor="{StaticResource Paper}"
                 StrokeThickness="0"
-                StrokeShape="RoundRectangle 28,28,0,0"
+                StrokeShape="RoundRectangle 30,26,0,0"
                 VerticalOptions="End"
                 Padding="20,0,20,28">
 
             <Border.Shadow>
-                <Shadow Brush="#241E2E" Offset="0,-4" Radius="24" Opacity="0.22"/>
+                <Shadow Brush="#0D3A3C" Offset="0,-4" Radius="24" Opacity="0.22"/>
             </Border.Shadow>
 
             <Grid RowDefinitions="Auto,*,Auto"
@@ -70,7 +70,7 @@
                     <BoxView WidthRequest="38"
                              HeightRequest="4"
                              CornerRadius="2"
-                             BackgroundColor="{StaticResource Line}"
+                             BackgroundColor="{StaticResource GlassLine}"
                              HorizontalOptions="Center"/>
 
                     <Label Text="{Binding MedicationVM.SheetTitle}"
@@ -154,9 +154,9 @@
                                     <DataTemplate>
                                         <Border WidthRequest="42"
                                                 HeightRequest="42"
-                                                Stroke="{StaticResource Line}"
+                                                Stroke="{StaticResource GlassLine}"
                                                 StrokeThickness="1"
-                                                BackgroundColor="{StaticResource Card}"
+                                                BackgroundColor="{StaticResource Glass}"
                                                 StrokeShape="RoundRectangle 21"
                                                 HorizontalOptions="Center"
                                                 VerticalOptions="Center"
@@ -168,8 +168,8 @@
                                             </Border.GestureRecognizers>
                                             <Border.Triggers>
                                                 <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                                    <Setter Property="BackgroundColor" Value="{StaticResource Viola}"/>
-                                                    <Setter Property="Stroke" Value="{StaticResource Viola}"/>
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                                    <Setter Property="Stroke" Value="{StaticResource Teal}"/>
                                                 </DataTrigger>
                                             </Border.Triggers>
                                             <Label Text="{Binding DisplayName}"
@@ -266,9 +266,9 @@
                       ColumnDefinitions="*,*"
                       ColumnSpacing="12">
 
-                    <Border BackgroundColor="{StaticResource ViolaTint}"
+                    <Border BackgroundColor="{StaticResource TealTint}"
                             StrokeThickness="0"
-                            StrokeShape="RoundRectangle 14">
+                            StrokeShape="RoundRectangle 15,13,13,16">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding MedicationVM.CancelMedicationCommand}"/>
                         </Border.GestureRecognizers>
@@ -276,19 +276,19 @@
                                FontFamily="{StaticResource FontSans}"
                                FontSize="14"
                                FontAttributes="Bold"
-                               TextColor="{StaticResource ViolaDeep}"
+                               TextColor="{StaticResource TealDeep}"
                                HorizontalTextAlignment="Center"
                                Padding="0,14"/>
                     </Border>
 
                     <Border Grid.Column="1"
-                            BackgroundColor="{StaticResource Viola}"
+                            BackgroundColor="{StaticResource Teal}"
                             StrokeThickness="0"
-                            StrokeShape="RoundRectangle 14"
+                            StrokeShape="RoundRectangle 13,16,15,14"
                             Opacity="{Binding MedicationVM.CanSaveMedication, Converter={StaticResource BoolToOpacityConverter}}"
                             IsEnabled="{Binding MedicationVM.CanSaveMedication}">
                         <Border.Shadow>
-                            <Shadow Brush="#7657B8" Offset="0,3" Radius="10" Opacity="0.3"/>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
                         </Border.Shadow>
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding MedicationVM.SaveMedicationCommand}"/>

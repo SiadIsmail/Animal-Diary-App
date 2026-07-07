@@ -15,12 +15,13 @@ public sealed class WeightChartDrawable : IDrawable
     public double Min { get; set; }
     public double Max { get; set; }
 
-    // Felova palette (matches Colors.xaml tokens).
-    private static readonly Color LineColor = Color.FromArgb("#7657B8"); // viola
-    private static readonly Color FillTop = Color.FromArgb("#337657B8"); // viola @ ~20%
-    private static readonly Color FillBottom = Color.FromArgb("#0A7657B8");
-    private static readonly Color GridColor = Color.FromArgb("#E7E0D4"); // line
-    private static readonly Color DotColor = Color.FromArgb("#7657B8");
+    // Rockpool-warm palette: the weigh-in accent is Blue (#3E8FB0), matching
+    // the Journal timeline's weigh-in icon. Geometry is unchanged — colours only.
+    private static readonly Color LineColor = Color.FromArgb("#3E8FB0"); // blue
+    private static readonly Color FillTop = Color.FromArgb("#333E8FB0"); // blue @ ~20%
+    private static readonly Color FillBottom = Color.FromArgb("#0A3E8FB0");
+    private static readonly Color GridColor = Color.FromArgb("#1A0D3A3C"); // ink @ ~10%
+    private static readonly Color DotColor = Color.FromArgb("#3E8FB0");
 
     public void Draw(ICanvas canvas, RectF rect)
     {

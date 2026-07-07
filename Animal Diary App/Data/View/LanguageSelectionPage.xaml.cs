@@ -37,12 +37,12 @@ public partial class LanguageSelectionPage : ContentPage
     {
         var germanSelected = _selectedLanguage == "de";
 
-        // Felova selection accent: viola tint + viola stroke when selected,
-        // plain card + hairline otherwise.
-        var selBg = Color.FromArgb("#F0EBF9");   // viola-tint
-        var selStroke = Color.FromArgb("#7657B8"); // viola
-        var idleBg = Color.FromArgb("#FFFFFF");   // card
-        var idleStroke = Color.FromArgb("#E7E0D4"); // line
+        // Felova selection accent: teal tint + teal stroke when selected,
+        // plain glass + hairline otherwise.
+        var selBg = Color.FromArgb("#21149081");    // teal-tint
+        var selStroke = Color.FromArgb("#149081");  // teal
+        var idleBg = Color.FromArgb("#99FFFFFF");   // glass
+        var idleStroke = Color.FromArgb("#D9FFFFFF"); // glass-line
 
         GermanOption.BackgroundColor = germanSelected ? selBg : idleBg;
         GermanOption.Stroke = germanSelected ? selStroke : idleStroke;

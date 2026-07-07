@@ -51,6 +51,29 @@ public class FirstLetterConverter : IValueConverter
         => value;
 }
 
+/// <summary>Maps a <see cref="MoodLevel"/> (0..5) to a bar height that encodes the
+/// value accurately — this is real signal, so height must track the mood, not
+/// decoration. None (no entry) renders as a short stub. Full scale is 30px.</summary>
+public class MoodToHeightConverter : IValueConverter
+{
+    private const double Min = 6.0;
+    private const double Max = 30.0;
+
+    public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+    {
+        if (value is MoodLevel mood)
+        {
+            // Excellent(5) → 30, VeryBad(1) → ~10.8, None(0) → 6 (stub).
+            int level = (int)mood;
+            return Min + (Max - Min) * (level / 5.0);
+        }
+        return Min;
+    }
+
+    public object? ConvertBack(object? value, Type? targetType, object? parameter, CultureInfo? culture)
+        => value;
+}
+
 public class StringToBoolConverter : IValueConverter
 {
     public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)

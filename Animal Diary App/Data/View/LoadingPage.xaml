@@ -2,26 +2,36 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              x:Class="Animal_Diary_App.Data.View.LoadingPage"
-             NavigationPage.HasNavigationBar="False">
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="#C4E6E3">
 
     <Grid>
-        <Image Source="hintergrund_blau.png"
-               Aspect="AspectFill"
-               HorizontalOptions="Fill"
-               VerticalOptions="Fill"/>
+
+        <!-- Water background — same rockpool wash as every other screen -->
+        <controls:WaterBackground/>
 
         <VerticalStackLayout VerticalOptions="Center"
-                           HorizontalOptions="Center"
-                           Spacing="16">
+                             HorizontalOptions="Center"
+                             Spacing="18">
+
+            <!-- Felova wordmark (current brand mark — no separate logo asset) -->
+            <Label Text="Felova"
+                   FontFamily="{StaticResource FontSerif}"
+                   FontSize="{StaticResource TypeDisplay}"
+                   TextColor="{StaticResource Ink}"
+                   HorizontalTextAlignment="Center"/>
+
             <ActivityIndicator IsRunning="True"
-                               Color="White"
-                               HeightRequest="48"
-                               WidthRequest="48"/>
+                               Color="{StaticResource Teal}"
+                               HeightRequest="34"
+                               WidthRequest="34"/>
+
             <Label Text="{loc:Translate Loading_Message}"
-                   FontSize="18"
-                   FontAttributes="Bold"
-                   TextColor="White"
+                   FontFamily="{StaticResource FontHand}"
+                   FontSize="19"
+                   TextColor="{StaticResource TealDeep}"
                    HorizontalOptions="Center"/>
         </VerticalStackLayout>
     </Grid>

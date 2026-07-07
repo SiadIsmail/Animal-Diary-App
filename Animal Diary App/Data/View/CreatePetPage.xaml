@@ -17,10 +17,10 @@
     <ContentPage.Resources>
         <ResourceDictionary>
             <Style x:Key="CardSurface" TargetType="Border">
-                <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
-                <Setter Property="Stroke" Value="{StaticResource Line}"/>
+                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
                 <Setter Property="StrokeThickness" Value="1"/>
-                <Setter Property="StrokeShape" Value="RoundRectangle 22"/>
+                <Setter Property="StrokeShape" Value="RoundRectangle 17,14,15,18"/>
                 <Setter Property="Padding" Value="18"/>
             </Style>
             <Style x:Key="FieldLabel" TargetType="Label">
@@ -31,8 +31,8 @@
                 <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
             </Style>
             <Style x:Key="FieldBorder" TargetType="Border">
-                <Setter Property="BackgroundColor" Value="{StaticResource Card}"/>
-                <Setter Property="Stroke" Value="{StaticResource Line}"/>
+                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
                 <Setter Property="StrokeThickness" Value="1"/>
                 <Setter Property="StrokeShape" Value="RoundRectangle 13"/>
             </Style>
@@ -74,18 +74,18 @@
                 <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
                     <Border WidthRequest="100"
                             HeightRequest="100"
-                            Stroke="{StaticResource ViolaLine}"
+                            Stroke="{StaticResource GlassLine}"
                             StrokeThickness="2"
                             StrokeShape="RoundRectangle 50"
                             HorizontalOptions="Center">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#EFE9F8" Offset="0"/>
-                                <GradientStop Color="#E3D9F2" Offset="1"/>
+                                <GradientStop Color="{StaticResource SeaHi}" Offset="0"/>
+                                <GradientStop Color="{StaticResource SeaMid}" Offset="1"/>
                             </LinearGradientBrush>
                         </Border.Background>
                         <Border.Shadow>
-                            <Shadow Brush="#241E2E" Offset="0,6" Radius="16" Opacity="0.14"/>
+                            <Shadow Brush="#0D3A3C" Offset="0,6" Radius="16" Opacity="0.14"/>
                         </Border.Shadow>
                         <Label Text="{Binding PetVM.SelectedTypeEmoji}"
                                FontSize="52"
@@ -115,15 +115,15 @@
                                 <VerticalStackLayout Padding="5,0" Spacing="6">
                                     <Border WidthRequest="58"
                                             HeightRequest="58"
-                                            BackgroundColor="{StaticResource Card}"
-                                            Stroke="{StaticResource Line}"
+                                            BackgroundColor="{StaticResource Glass}"
+                                            Stroke="{StaticResource GlassLine}"
                                             StrokeThickness="1.5"
                                             StrokeShape="RoundRectangle 16"
                                             HorizontalOptions="Center">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="BackgroundColor" Value="{StaticResource ViolaTint}"/>
-                                                <Setter Property="Stroke" Value="{StaticResource Viola}"/>
+                                                <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                                <Setter Property="Stroke" Value="{StaticResource Teal}"/>
                                             </DataTrigger>
                                         </Border.Triggers>
                                         <Label Text="{Binding Emoji}"
@@ -191,7 +191,7 @@
                                    IsVisible="{Binding PetVM.PetNameError, Converter={StaticResource StringToBoolConverter}}"/>
                         </VerticalStackLayout>
 
-                        <BoxView HeightRequest="1" BackgroundColor="{StaticResource Line}"/>
+                        <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}"/>
 
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{loc:Translate CreatePet_AgeLabel}"
@@ -215,8 +215,8 @@
                 </Border>
 
                 <!-- Conditions hint -->
-                <Border BackgroundColor="{StaticResource ViolaTint}"
-                        Stroke="{StaticResource ViolaLine}"
+                <Border BackgroundColor="{StaticResource TealTint}"
+                        Stroke="{StaticResource TealLine}"
                         StrokeThickness="1"
                         StrokeShape="RoundRectangle 16"
                         Padding="14,12">
@@ -241,10 +241,10 @@
 
         <!-- ══════════ BOTTOM ACTION BAR ══════════ -->
         <Border Grid.Row="1"
-                BackgroundColor="{StaticResource Card}"
-                Stroke="{StaticResource Line}"
+                BackgroundColor="{StaticResource Glass}"
+                Stroke="{StaticResource GlassLine}"
                 StrokeThickness="1"
-                StrokeShape="RoundRectangle 24,24,0,0"
+                StrokeShape="RoundRectangle 28,24,0,0"
                 Padding="20,16,20,28"
                 VerticalOptions="End">
 
@@ -252,7 +252,7 @@
                   ColumnSpacing="12">
 
                 <!-- Cancel (not first launch) -->
-                <Border BackgroundColor="{StaticResource ViolaTint}"
+                <Border BackgroundColor="{StaticResource TealTint}"
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 14"
                         IsVisible="{Binding PetVM.ShowBackButton}">
@@ -263,20 +263,20 @@
                            FontFamily="{StaticResource FontSans}"
                            FontSize="14"
                            FontAttributes="Bold"
-                           TextColor="{StaticResource ViolaDeep}"
+                           TextColor="{StaticResource TealDeep}"
                            HorizontalTextAlignment="Center"
                            Padding="0,14"/>
                 </Border>
 
                 <!-- Create / Save -->
                 <Border Grid.Column="1"
-                        BackgroundColor="{StaticResource Viola}"
+                        BackgroundColor="{StaticResource Teal}"
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 14"
                         Opacity="{Binding PetVM.CanSavePet, Converter={StaticResource BoolToOpacityConverter}}"
                         IsEnabled="{Binding PetVM.CanSavePet}">
                     <Border.Shadow>
-                        <Shadow Brush="#7657B8" Offset="0,4" Radius="12" Opacity="0.3"/>
+                        <Shadow Brush="#149081" Offset="0,4" Radius="12" Opacity="0.3"/>
                     </Border.Shadow>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnSaveClicked"/>

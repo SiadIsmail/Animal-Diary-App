@@ -108,6 +108,17 @@
   <data name="Main_Last30Days" xml:space="preserve"><value>Last 30 days</value></data>
   <data name="Main_MoodEmptyState" xml:space="preserve"><value>Start tracking your pet's mood in the calendar</value></data>
   <data name="Main_RecentActivity" xml:space="preserve"><value>RECENT ACTIVITY</value></data>
+  <data name="Main_Aside1" xml:space="preserve"><value>another gentle day with {0}</value></data>
+  <data name="Main_Aside2" xml:space="preserve"><value>{0}'s corner of the world</value></data>
+  <data name="Main_Aside3" xml:space="preserve"><value>here's how {0} is doing</value></data>
+  <data name="Main_MoodMonthHeading" xml:space="preserve"><value>How the month has felt</value></data>
+  <data name="Main_WeighInsHeading" xml:space="preserve"><value>The weigh-ins</value></data>
+  <data name="Main_LatelyPrefix" xml:space="preserve"><value>Lately, in </value></data>
+  <data name="Main_LatelySuffix" xml:space="preserve"><value>'s world</value></data>
+  <data name="Main_CareRingLabel" xml:space="preserve"><value>Today's care</value></data>
+  <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Next up</value></data>
+  <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>All caught up</value></data>
+  <data name="Main_AllCaughtUpDetail" xml:space="preserve"><value>Nothing due right now — nicely done.</value></data>
   <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Healthy (Placeholder)</value></data>
   <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Meds 20:00 (Placeholder)</value></data>
   <data name="Main_StableThisWeek" xml:space="preserve"><value>Stable this week (Placeholder)</value></data>

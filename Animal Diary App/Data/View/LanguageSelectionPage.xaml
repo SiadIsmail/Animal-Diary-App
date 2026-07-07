@@ -48,10 +48,10 @@
 
             <!-- Deutsch -->
             <Border x:Name="GermanOption"
-                    BackgroundColor="{StaticResource Card}"
-                    Stroke="{StaticResource Line}"
+                    BackgroundColor="{StaticResource Glass}"
+                    Stroke="{StaticResource GlassLine}"
                     StrokeThickness="2"
-                    StrokeShape="RoundRectangle 16"
+                    StrokeShape="RoundRectangle 16,13,14,15"
                     Padding="18"
                     Margin="0,0,0,12">
                 <Border.GestureRecognizers>
@@ -70,10 +70,10 @@
 
             <!-- English -->
             <Border x:Name="EnglishOption"
-                    BackgroundColor="{StaticResource Card}"
-                    Stroke="{StaticResource Line}"
+                    BackgroundColor="{StaticResource Glass}"
+                    Stroke="{StaticResource GlassLine}"
                     StrokeThickness="2"
-                    StrokeShape="RoundRectangle 16"
+                    StrokeShape="RoundRectangle 13,16,15,14"
                     Padding="18">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnEnglishTapped"/>
@@ -94,11 +94,11 @@
         <!-- ── BOTTOM ACTION ── -->
         <VerticalStackLayout Grid.Row="1"
                              Padding="24,16,24,34">
-            <Border BackgroundColor="{StaticResource Viola}"
+            <Border BackgroundColor="{StaticResource Teal}"
                     StrokeThickness="0"
-                    StrokeShape="RoundRectangle 16">
+                    StrokeShape="RoundRectangle 15,13,13,16">
                 <Border.Shadow>
-                    <Shadow Brush="#7657B8" Offset="0,6" Radius="16" Opacity="0.32"/>
+                    <Shadow Brush="#149081" Offset="0,6" Radius="16" Opacity="0.32"/>
                 </Border.Shadow>
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnContinueTapped"/>

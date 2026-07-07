@@ -34,51 +34,51 @@
 
                 <!-- Back-left -->
                 <Border WidthRequest="80" HeightRequest="80"
-                        Stroke="{StaticResource ViolaLine}" StrokeThickness="2"
+                        Stroke="{StaticResource GlassLine}" StrokeThickness="2"
                         StrokeShape="RoundRectangle 40"
                         HorizontalOptions="Start" VerticalOptions="End">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#EFE9F8" Offset="0"/>
-                            <GradientStop Color="#E3D9F2" Offset="1"/>
+                            <GradientStop Color="{StaticResource SeaHi}" Offset="0"/>
+                            <GradientStop Color="{StaticResource SeaMid}" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
                     <Border.Shadow>
-                        <Shadow Brush="#241E2E" Offset="0,6" Radius="14" Opacity="0.12"/>
+                        <Shadow Brush="#0D3A3C" Offset="0,6" Radius="14" Opacity="0.12"/>
                     </Border.Shadow>
                     <Label Text="🐶" FontSize="38" HorizontalOptions="Center" VerticalOptions="Center"/>
                 </Border>
 
                 <!-- Back-right -->
                 <Border WidthRequest="80" HeightRequest="80"
-                        Stroke="{StaticResource ViolaLine}" StrokeThickness="2"
+                        Stroke="{StaticResource GlassLine}" StrokeThickness="2"
                         StrokeShape="RoundRectangle 40"
                         HorizontalOptions="End" VerticalOptions="End">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#EFE9F8" Offset="0"/>
-                            <GradientStop Color="#E3D9F2" Offset="1"/>
+                            <GradientStop Color="{StaticResource SeaGradTop}" Offset="0"/>
+                            <GradientStop Color="{StaticResource SeaBlue}" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
                     <Border.Shadow>
-                        <Shadow Brush="#241E2E" Offset="0,6" Radius="14" Opacity="0.12"/>
+                        <Shadow Brush="#0D3A3C" Offset="0,6" Radius="14" Opacity="0.12"/>
                     </Border.Shadow>
                     <Label Text="🐰" FontSize="38" HorizontalOptions="Center" VerticalOptions="Center"/>
                 </Border>
 
                 <!-- Front-center -->
                 <Border WidthRequest="96" HeightRequest="96"
-                        Stroke="{StaticResource ViolaLine}" StrokeThickness="2.5"
+                        Stroke="{StaticResource GlassLine}" StrokeThickness="2.5"
                         StrokeShape="RoundRectangle 48"
                         HorizontalOptions="Center" VerticalOptions="Start">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#E6DBF6" Offset="0"/>
-                            <GradientStop Color="#D6C6EE" Offset="1"/>
+                            <GradientStop Color="{StaticResource SeaMid}" Offset="0"/>
+                            <GradientStop Color="{StaticResource SeaBlue}" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
                     <Border.Shadow>
-                        <Shadow Brush="#241E2E" Offset="0,8" Radius="20" Opacity="0.18"/>
+                        <Shadow Brush="#0D3A3C" Offset="0,8" Radius="20" Opacity="0.18"/>
                     </Border.Shadow>
                     <Label Text="🐱" FontSize="46" HorizontalOptions="Center" VerticalOptions="Center"/>
                 </Border>
@@ -107,11 +107,11 @@
                              Spacing="14">
 
             <!-- Primary CTA -->
-            <Border BackgroundColor="{StaticResource Viola}"
+            <Border BackgroundColor="{StaticResource Teal}"
                     StrokeThickness="0"
-                    StrokeShape="RoundRectangle 16">
+                    StrokeShape="RoundRectangle 15,13,13,16">
                 <Border.Shadow>
-                    <Shadow Brush="#7657B8" Offset="0,6" Radius="16" Opacity="0.32"/>
+                    <Shadow Brush="#149081" Offset="0,6" Radius="16" Opacity="0.32"/>
                 </Border.Shadow>
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnAddPetClicked"/>
