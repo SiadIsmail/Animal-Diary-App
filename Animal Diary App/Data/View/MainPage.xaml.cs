@@ -12,8 +12,6 @@ using View = Microsoft.Maui.Controls.View;
 public partial class MainPage : ContentPage
 {
     private readonly MainViewModel vm;
-    private CalendarPage? calendarPage;
-    private PetsPage? petPage;
     private int _toastSeq;
     private DoseItem? _nextDose;
 
@@ -41,8 +39,11 @@ public partial class MainPage : ContentPage
         vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
 
         await vm.LoadAsync();
-        await vm.MainPageVM.LoadWeightChartAsync();
-        await vm.MainPageVM.LoadMoodTimelineAsync();
+        // The two charts are independent of each other; overlap their queries
+        // instead of running them back-to-back.
+        await Task.WhenAll(
+            vm.MainPageVM.LoadWeightChartAsync(),
+            vm.MainPageVM.LoadMoodTimelineAsync());
 
         SetAside();
         RefreshRing();
@@ -67,14 +68,12 @@ public partial class MainPage : ContentPage
 
     async void OnCalendarClicked(object? sender, EventArgs args)
     {
-        calendarPage ??= new CalendarPage(vm);
-        await Navigation.PushAsync(calendarPage);
+        await Shell.Current.GoToAsync("//JournalTab");
     }
 
     async void OnPetsClicked(object? sender, EventArgs args)
     {
-        petPage ??= new PetsPage(vm);
-        await Navigation.PushAsync(petPage);
+        await Shell.Current.GoToAsync("//PetsTab");
     }
 
     private void OnCalendarVmPropertyChanged(object? sender, PropertyChangedEventArgs e)

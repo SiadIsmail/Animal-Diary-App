@@ -56,6 +56,18 @@ public class MedicationService
             .ToListAsync();
     }
 
+    /// <summary>All schedule rows for a set of medications in one query (IN clause).
+    /// Avoids the per-medication round-trip when building a day/week of doses.</summary>
+    public async Task<List<MedicationSchedule>> GetSchedulesForMedicationsAsync(IReadOnlyCollection<int> medicationIds)
+    {
+        if (medicationIds.Count == 0)
+            return new List<MedicationSchedule>();
+
+        return await _db.Table<MedicationSchedule>()
+            .Where(s => medicationIds.Contains(s.MedicationId))
+            .ToListAsync();
+    }
+
     public async Task SaveMedicationScheduleAsync(MedicationSchedule schedule)
     {
         await _db.InsertAsync(schedule);

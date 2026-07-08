@@ -297,7 +297,7 @@ public class CalendarViewModel : BaseViewModel
     }
 
     // ── Medication dose checklist (selected date) ────────────────────────
-    public ObservableCollection<DoseItem> DosesForSelectedDate { get; } = new();
+    public RangeObservableCollection<DoseItem> DosesForSelectedDate { get; } = new();
 
     private bool hasNoDoses = true;
     public bool HasNoDoses
@@ -313,10 +313,9 @@ public class CalendarViewModel : BaseViewModel
     /// </summary>
     public async Task LoadDosesAsync()
     {
-        DosesForSelectedDate.Clear();
-
         var petId = CurrentPetId;
         var date = CurrentSelectedDate.Date;
+        var ordered = new List<DoseItem>();
 
         if (petId != 0)
         {
@@ -328,11 +327,16 @@ public class CalendarViewModel : BaseViewModel
                 .ToList();
             var logs = await _doseLogService.GetByPetAndDateAsync(petId, date);
 
+            // Fetch every medication's schedules in one query instead of one
+            // round-trip per med, then group by medication id.
+            var schedulesByMed = (await _medicationService.GetSchedulesForMedicationsAsync(
+                    meds.Select(m => m.Id).ToList()))
+                .ToLookup(s => s.MedicationId);
+
             var items = new List<DoseItem>();
             foreach (var med in meds)
             {
-                var schedules = await _medicationService.GetMedicationSchedulesByMedicationIdAsync(med.Id);
-                var times = schedules.Where(s => s.Day == weekday).Select(s => s.Time).Distinct();
+                var times = schedulesByMed[med.Id].Where(s => s.Day == weekday).Select(s => s.Time).Distinct();
 
                 foreach (var time in times)
                 {
@@ -364,12 +368,14 @@ public class CalendarViewModel : BaseViewModel
                     1 => new CornerRadius(14, 18, 17, 15),
                     _ => new CornerRadius(16, 15, 18, 14),
                 };
-                DosesForSelectedDate.Add(item);
+                ordered.Add(item);
                 index++;
             }
         }
 
-        HasNoDoses = DosesForSelectedDate.Count == 0;
+        // One Reset notification for the whole checklist instead of Clear + N Adds.
+        DosesForSelectedDate.ReplaceAll(ordered);
+        HasNoDoses = ordered.Count == 0;
         NotifyDerived();
     }
 
@@ -379,7 +385,7 @@ public class CalendarViewModel : BaseViewModel
     /// Recomputed for the active pet whenever the visible week, pet, or a dose
     /// outcome changes. The control groups these by date and chooses dot styling.
     /// </summary>
-    public ObservableCollection<CalendarActivity> WeekActivities { get; } = new();
+    public RangeObservableCollection<CalendarActivity> WeekActivities { get; } = new();
 
     /// <summary>
     /// Build the visible week's activity indicators for the active pet:
@@ -402,13 +408,20 @@ public class CalendarViewModel : BaseViewModel
                 .Where(m => !m.IsArchived)
                 .ToList();
 
+            // Two batched queries for the whole week instead of two per medication.
+            var medIds = meds.Select(m => m.Id).ToList();
+            var schedulesByMed = (await _medicationService.GetSchedulesForMedicationsAsync(medIds))
+                .ToLookup(s => s.MedicationId);
+            var logsByMed = (await _doseLogService.GetByMedicationsAndRangeAsync(medIds, weekStart, weekEnd))
+                .ToLookup(l => l.MedicationId);
+
             foreach (var med in meds)
             {
-                var schedules = await _medicationService.GetMedicationSchedulesByMedicationIdAsync(med.Id);
+                var schedules = schedulesByMed[med.Id].ToList();
                 if (schedules.Count == 0)
                     continue;
 
-                var logs = await _doseLogService.GetByMedicationAndRangeAsync(med.Id, weekStart, weekEnd);
+                var logs = logsByMed[med.Id];
                 // Never show doses for dates before the medication existed.
                 var expandFrom = med.CreatedAt > weekStart ? med.CreatedAt : weekStart.AddTicks(-1);
 
@@ -443,9 +456,7 @@ public class CalendarViewModel : BaseViewModel
             }
         }
 
-        WeekActivities.Clear();
-        foreach (var activity in activities)
-            WeekActivities.Add(activity);
+        WeekActivities.ReplaceAll(activities);
     }
 
     /// <summary>One-tap confirmation: toggle a dose between Taken and not-recorded.</summary>

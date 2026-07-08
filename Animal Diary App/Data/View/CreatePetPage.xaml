@@ -12,6 +12,8 @@
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              x:Class="Animal_Diary_App.Data.View.CreatePetPage"
              NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
              BackgroundColor="#C4E6E3">
 
     <ContentPage.Resources>

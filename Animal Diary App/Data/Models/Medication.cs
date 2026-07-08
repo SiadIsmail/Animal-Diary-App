@@ -16,6 +16,7 @@ public class Medication : INotifyPropertyChanged
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
 
+    [Indexed]
     public int PetId { get; set; }
 
     private string name = string.Empty;
@@ -88,6 +89,7 @@ public class MedicationSchedule
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
+    [Indexed]
     public int MedicationId { get; set; }
     public DayOfWeek Day { get; set; }
     public TimeSpan Time { get; set; }

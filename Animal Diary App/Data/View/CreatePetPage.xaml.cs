@@ -37,6 +37,16 @@ public partial class CreatePetPage : ContentPage
     async void OnSaveClicked(object? sender, EventArgs args)
     {
         await vm.PetVM.SavePetAsync();
-        await Navigation.PushAsync(new MainPage(vm));
+
+        if (Shell.Current is not null)
+        {
+            // Adding a pet from the Pets tab: pop this detail page and land on Today.
+            await Shell.Current.GoToAsync("//TodayTab");
+        }
+        else
+        {
+            // Finishing onboarding (no Shell yet): hand off to the tabbed app.
+            (Application.Current as App)?.SwitchToMainApp();
+        }
     }
 }

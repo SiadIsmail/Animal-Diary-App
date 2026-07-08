@@ -26,12 +26,18 @@ public class MedicationDoseLog
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
 
+    // Two access paths: by medication+date (week dots, dose-key lookups) and by
+    // pet+date (a day's whole checklist). Each gets its own composite index.
+    [Indexed(Name = "IX_DoseLog_Med_Date", Order = 1)]
     public int MedicationId { get; set; }
 
     /// <summary>Denormalized so a day's doses for a pet can be queried directly.</summary>
+    [Indexed(Name = "IX_DoseLog_Pet_Date", Order = 1)]
     public int PetId { get; set; }
 
     /// <summary>The local date the dose was scheduled for (date-only).</summary>
+    [Indexed(Name = "IX_DoseLog_Med_Date", Order = 2)]
+    [Indexed(Name = "IX_DoseLog_Pet_Date", Order = 2)]
     public DateTime ScheduledDate { get; set; }
 
     /// <summary>Which dose of the day (matches a <see cref="MedicationSchedule"/> time).</summary>

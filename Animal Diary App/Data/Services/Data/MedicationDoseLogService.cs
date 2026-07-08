@@ -36,6 +36,20 @@ public class MedicationDoseLogService
             .ToListAsync();
     }
 
+    /// <summary>All dose logs for a set of medications within an inclusive date
+    /// range, in one query. Callers group the result by medication id.</summary>
+    public async Task<List<MedicationDoseLog>> GetByMedicationsAndRangeAsync(IReadOnlyCollection<int> medicationIds, DateTime startDate, DateTime endDate)
+    {
+        if (medicationIds.Count == 0)
+            return new List<MedicationDoseLog>();
+
+        var start = startDate.Date;
+        var end = endDate.Date;
+        return await _db.Table<MedicationDoseLog>()
+            .Where(l => medicationIds.Contains(l.MedicationId) && l.ScheduledDate >= start && l.ScheduledDate <= end)
+            .ToListAsync();
+    }
+
     /// <summary>The recorded outcome for a single dose, or null if none.</summary>
     public async Task<DoseStatus?> GetStatusAsync(int medicationId, DateTime date, TimeSpan time)
     {

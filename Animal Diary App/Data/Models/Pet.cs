@@ -38,7 +38,13 @@ public class PetEntry
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
+
+    // Composite index on (PetId, Date): every entry query filters by pet and a
+    // date range, so this covers the weight-chart, mood-timeline and day-lookup
+    // reads with a single B-tree instead of a full table scan.
+    [Indexed(Name = "IX_PetEntry_Pet_Date", Order = 1)]
     public int PetId { get; set; }
+    [Indexed(Name = "IX_PetEntry_Pet_Date", Order = 2)]
     public DateTime Date { get; set; }
     public string Mood { get; set; } = string.Empty;
     public int MoodLevel { get; set; } = 0;

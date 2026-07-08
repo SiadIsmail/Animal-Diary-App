@@ -4,6 +4,7 @@ using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Data.View;
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Animal_Diary_App;
 
@@ -15,8 +16,9 @@ public partial class App : Application
 	private readonly ActivePetService _activePetService;
 	private readonly MedicationReminderScheduler _reminderScheduler;
 	private readonly SettingsService _settingsService;
+	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, SettingsService settingsService)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, SettingsService settingsService, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -25,8 +27,20 @@ public partial class App : Application
 		_activePetService = activePetService;
 		_reminderScheduler = reminderScheduler;
 		_settingsService = settingsService;
+		_services = services;
 
 		_ = StartAsync();
+	}
+
+	/// <summary>
+	/// Swap the window root to the tabbed <see cref="AppShell"/>. Called when the
+	/// user leaves onboarding (first pet saved). A fresh Shell is resolved so a
+	/// post-reset relaunch doesn't reuse stale page instances.
+	/// </summary>
+	public void SwitchToMainApp()
+	{
+		if (Windows.Count > 0)
+			Windows[0].Page = _services.GetRequiredService<AppShell>();
 	}
 
 	protected override Window CreateWindow(IActivationState? activationState)
@@ -54,7 +68,7 @@ public partial class App : Application
 			// the chosen language has been applied.
 			Page BuildNextPage() => pets.Count == 0
 				? new NavigationPage(new WelcomePage(_vm))
-				: new NavigationPage(new MainPage(_vm));
+				: _services.GetRequiredService<AppShell>();
 
 			var savedLanguage = await _settingsService.GetLanguageAsync();
 

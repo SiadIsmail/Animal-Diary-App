@@ -47,6 +47,14 @@ public static class MauiProgram
 		builder.Services.AddSingleton<MedicationDoseReconciler>();
 		builder.Services.AddSingleton<MedicationReminderScheduler>();
 
+		// Shell + its three tab pages. Transient so a post-reset relaunch builds a
+		// fresh Shell (with fresh page instances); within one Shell each page is
+		// still constructed once and reused across tab switches.
+		builder.Services.AddTransient<Animal_Diary_App.Data.View.MainPage>();
+		builder.Services.AddTransient<Animal_Diary_App.Data.View.CalendarPage>();
+		builder.Services.AddTransient<Animal_Diary_App.Data.View.PetsPage>();
+		builder.Services.AddTransient<AppShell>();
+
 
 #if DEBUG
 		builder.Logging.AddDebug();

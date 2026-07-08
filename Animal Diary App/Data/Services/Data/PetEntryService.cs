@@ -31,6 +31,17 @@ public class PetEntryService
     {
         return await _db.Table<PetEntry>().Where(e => e.Date == date).FirstOrDefaultAsync();
     }
+
+    /// <summary>Most recent weight entry for a pet, or null if it has none.
+    /// Pushes the ordering into SQL (backed by the (PetId, Date) index) instead of
+    /// loading the whole table and sorting in memory.</summary>
+    public async Task<PetEntry?> GetLatestWeightEntryAsync(int petId)
+    {
+        return await _db.Table<PetEntry>()
+            .Where(e => e.PetId == petId && e.Weight > 0)
+            .OrderByDescending(e => e.Date)
+            .FirstOrDefaultAsync();
+    }
     public async Task<PetEntry> GetPetEntryByDateAndPetIdAsync(DateTime date, int petId)
     {
         return await _db.Table<PetEntry>().Where(e => e.Date == date && e.PetId == petId).FirstOrDefaultAsync();

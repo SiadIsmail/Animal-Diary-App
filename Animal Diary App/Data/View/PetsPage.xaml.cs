@@ -6,8 +6,6 @@ using Animal_Diary_App.Helpers;
 
 public partial class PetsPage : ContentPage
 {
-    private CalendarPage? calendarPage;
-
     private readonly MainViewModel vm;
     public PetsPage(MainViewModel mainViewModel)
     {
@@ -52,13 +50,12 @@ public partial class PetsPage : ContentPage
 
     async void OnMainClicked(object? sender, EventArgs args)
     {
-        await Navigation.PushAsync(new MainPage(vm));
+        await Shell.Current.GoToAsync("//TodayTab");
     }
 
     async void OnCalendarClicked(object? sender, EventArgs args)
     {
-        calendarPage ??= new CalendarPage(vm);
-        await Navigation.PushAsync(calendarPage);
+        await Shell.Current.GoToAsync("//JournalTab");
     }
 
     async void OnAddPetClicked(object? sender, EventArgs args)

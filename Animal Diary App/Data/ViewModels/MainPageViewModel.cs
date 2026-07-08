@@ -101,7 +101,8 @@ public class MainPageViewModel : BaseViewModel
     private PetEntry? EntryToday;
     public async Task LoadLatestWeightAsync()
     {
-        EntryToday = await _petEntryService.GetPetEntriesAsync().ContinueWith(t => t.Result.OrderByDescending(e => e.Date).FirstOrDefault());
+        if (ActivePet == null) return;
+        EntryToday = await _petEntryService.GetLatestWeightEntryAsync(ActivePet.Id);
         if (EntryToday != null)
         {
             LatestWeight = EntryToday.Weight;

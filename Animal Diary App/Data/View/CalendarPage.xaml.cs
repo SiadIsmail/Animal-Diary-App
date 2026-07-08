@@ -14,7 +14,6 @@ using View = Microsoft.Maui.Controls.View;
 public partial class CalendarPage : ContentPage
 {
 	private MainViewModel vm;
-	private PetsPage? petPage;
 	private int _toastSeq;
 
 	public CalendarPage(MainViewModel mainViewModel)
@@ -22,15 +21,17 @@ public partial class CalendarPage : ContentPage
 		InitializeComponent();
 		vm = mainViewModel;
 		BindingContext = vm;
-
-		// Play the paw celebration whenever the day's care becomes fully complete.
-		vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
 	}
 
 
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
+
+		// Play the paw celebration whenever the day's care becomes fully complete.
+		// Subscribe here (and unsubscribe in OnDisappearing) so handlers don't
+		// accumulate across navigations onto the same shared CalendarVM.
+		vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
 
 		if (vm.CalendarVM.Pets.Count == 0)
 			await vm.CalendarVM.PrepareDataAsync();
@@ -41,14 +42,19 @@ public partial class CalendarPage : ContentPage
 			await AnimatePawsAsync();
 	}
 
+	protected override void OnDisappearing()
+	{
+		base.OnDisappearing();
+		vm.CalendarVM.PropertyChanged -= OnCalendarVmPropertyChanged;
+	}
+
 	async void OnMainClicked(object? sender, EventArgs args)
 	{
-		await Navigation.PushAsync(new MainPage(vm));
+		await Shell.Current.GoToAsync("//TodayTab");
 	}
 	async void OnPetsClicked(object? sender, EventArgs args)
 	{
-		petPage ??= new PetsPage(vm);
-		await Navigation.PushAsync(petPage);
+		await Shell.Current.GoToAsync("//PetsTab");
 	}
 
 	// ── Confirm actions: run the command, then celebrate (toast + burst) ──
