@@ -16,21 +16,33 @@
             <helpers:FirstLetterConverter x:Key="FirstLetter"/>
 
             <!-- Frosted glass card surface -->
-            <Style x:Key="GlassCard" TargetType="Border">
-                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
-                <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
-                <Setter Property="StrokeThickness" Value="1"/>
-                <Setter Property="StrokeShape" Value="RoundRectangle 17,14,15,18"/>
-                <Setter Property="Padding" Value="14"/>
+            <Style x:Key="GlassCard"
+                    TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{StaticResource Glass}"/>
+                <Setter Property="Stroke"
+                        Value="{StaticResource GlassLine}"/>
+                <Setter Property="StrokeThickness"
+                        Value="1"/>
+                <Setter Property="StrokeShape"
+                        Value="RoundRectangle 17,14,15,18"/>
+                <Setter Property="Padding"
+                        Value="14"/>
             </Style>
 
             <!-- Uppercase section eyebrow -->
-            <Style x:Key="SectionLabel" TargetType="Label">
-                <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
-                <Setter Property="FontSize" Value="11"/>
-                <Setter Property="FontAttributes" Value="Bold"/>
-                <Setter Property="CharacterSpacing" Value="1.3"/>
-                <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+            <Style x:Key="SectionLabel"
+                    TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize"
+                        Value="11"/>
+                <Setter Property="FontAttributes"
+                        Value="Bold"/>
+                <Setter Property="CharacterSpacing"
+                        Value="1.3"/>
+                <Setter Property="TextColor"
+                        Value="{StaticResource InkSecondary}"/>
             </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
@@ -41,14 +53,16 @@
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ================= JOURNAL ================= -->
-        <ScrollView Grid.Row="0" x:Name="JournalScroll">
+        <ScrollView Grid.Row="0"
+                x:Name="JournalScroll">
 
             <VerticalStackLayout Padding="22,26,22,20"
                                  Spacing="18">
 
                 <!-- 1 ── Header ─────────────────────────────────────────── -->
                 <Grid ColumnDefinitions="*,Auto">
-                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <VerticalStackLayout Grid.Column="0"
+                            Spacing="2">
                         <Label Text="{Binding CalendarVM.EyebrowText}"
                                FontFamily="{StaticResource FontSans}"
                                FontSize="11"
@@ -83,16 +97,22 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnJumpTodayClicked"/>
                         </Border.GestureRecognizers>
-                        <Grid WidthRequest="22" HeightRequest="22"
-                              HorizontalOptions="Center" VerticalOptions="Center">
-                            <Ellipse WidthRequest="20" HeightRequest="20"
+                        <Grid WidthRequest="22"
+                                HeightRequest="22"
+                              HorizontalOptions="Center"
+                                VerticalOptions="Center">
+                            <Ellipse WidthRequest="20"
+                                    HeightRequest="20"
                                      Stroke="{StaticResource InkSecondary}"
                                      StrokeThickness="1.8"
-                                     HorizontalOptions="Center" VerticalOptions="Center"/>
-                            <Ellipse WidthRequest="7" HeightRequest="7"
+                                     HorizontalOptions="Center"
+                                    VerticalOptions="Center"/>
+                            <Ellipse WidthRequest="7"
+                                    HeightRequest="7"
                                      Stroke="{StaticResource InkSecondary}"
                                      StrokeThickness="1.8"
-                                     HorizontalOptions="Center" VerticalOptions="Center"/>
+                                     HorizontalOptions="Center"
+                                    VerticalOptions="Center"/>
                         </Grid>
                     </Border>
                 </Grid>
@@ -110,9 +130,13 @@
                                         StrokeShape="RoundRectangle 999"
                                         Padding="7,7,14,7">
                                     <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Ink}"/>
-                                            <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                                        <DataTrigger TargetType="Border"
+                                                Binding="{Binding IsSelected}"
+                                                Value="True">
+                                            <Setter Property="BackgroundColor"
+                                                    Value="{StaticResource Ink}"/>
+                                            <Setter Property="Stroke"
+                                                    Value="{StaticResource Ink}"/>
                                         </DataTrigger>
                                     </Border.Triggers>
                                     <Border.GestureRecognizers>
@@ -121,7 +145,8 @@
                                             CommandParameter="{Binding .}"/>
                                     </Border.GestureRecognizers>
 
-                                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                    <HorizontalStackLayout Spacing="8"
+                                            VerticalOptions="Center">
                                         <!-- Mini avatar with the pet's initial (serif italic) -->
                                         <Border WidthRequest="26"
                                                 HeightRequest="26"
@@ -130,8 +155,11 @@
                                                 BackgroundColor="{StaticResource TealTint}"
                                                 VerticalOptions="Center">
                                             <Border.Triggers>
-                                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                                    <Setter Property="BackgroundColor" Value="#28FFFFFF"/>
+                                                <DataTrigger TargetType="Border"
+                                                        Binding="{Binding IsSelected}"
+                                                        Value="True">
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="#28FFFFFF"/>
                                                 </DataTrigger>
                                             </Border.Triggers>
                                             <Label Text="{Binding Name, Converter={StaticResource FirstLetter}}"
@@ -141,8 +169,11 @@
                                                    HorizontalOptions="Center"
                                                    VerticalOptions="Center">
                                                 <Label.Triggers>
-                                                    <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                                        <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                                    <DataTrigger TargetType="Label"
+                                                            Binding="{Binding IsSelected}"
+                                                            Value="True">
+                                                        <Setter Property="TextColor"
+                                                                Value="{StaticResource White}"/>
                                                     </DataTrigger>
                                                 </Label.Triggers>
                                             </Label>
@@ -155,8 +186,11 @@
                                                TextColor="{StaticResource InkSecondary}"
                                                VerticalOptions="Center">
                                             <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                                    <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                                <DataTrigger TargetType="Label"
+                                                        Binding="{Binding IsSelected}"
+                                                        Value="True">
+                                                    <Setter Property="TextColor"
+                                                            Value="{StaticResource White}"/>
                                                 </DataTrigger>
                                             </Label.Triggers>
                                         </Label>
@@ -167,8 +201,11 @@
                                                TextColor="{StaticResource InkTertiary}"
                                                VerticalOptions="Center">
                                             <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                                                    <Setter Property="TextColor" Value="{StaticResource GlassLine}"/>
+                                                <DataTrigger TargetType="Label"
+                                                        Binding="{Binding IsSelected}"
+                                                        Value="True">
+                                                    <Setter Property="TextColor"
+                                                            Value="{StaticResource GlassLine}"/>
                                                 </DataTrigger>
                                             </Label.Triggers>
                                         </Label>
@@ -186,7 +223,8 @@
                     Activities="{Binding CalendarVM.WeekActivities}"/>
 
                 <!-- 4 ── Date heading + relative label ─────────────────── -->
-                <Grid ColumnDefinitions="*,Auto" Margin="2,2,2,0">
+                <Grid ColumnDefinitions="*,Auto"
+                        Margin="2,2,2,0">
                     <Label Grid.Column="0"
                            Text="{Binding CalendarVM.CurrentSelectedDate, StringFormat='{0:ddd, d MMM}'}"
                            FontFamily="{StaticResource FontSerif}"
@@ -202,7 +240,8 @@
                 </Grid>
 
                 <!-- 5 ── Quick-log: three dashed, slightly rotated buttons ─ -->
-                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="9">
+                <Grid ColumnDefinitions="*,*,*"
+                        ColumnSpacing="9">
 
                     <Border Grid.Column="0"
                             BackgroundColor="{StaticResource GlassSoft}"
@@ -215,11 +254,15 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding CalendarVM.ShowMoodInputCommand}"/>
                         </Border.GestureRecognizers>
-                        <VerticalStackLayout HorizontalOptions="Center" Spacing="7">
-                            <Label Text="😊" FontSize="20" HorizontalOptions="Center"/>
+                        <VerticalStackLayout HorizontalOptions="Center"
+                                Spacing="7">
+                            <Label Text="😊"
+                                    FontSize="20"
+                                    HorizontalOptions="Center"/>
                             <Label Text="{loc:Translate Journal_MoodCheck}"
                                    FontFamily="{StaticResource FontSans}"
-                                   FontSize="12" FontAttributes="Bold"
+                                   FontSize="12"
+                                    FontAttributes="Bold"
                                    TextColor="{StaticResource TealDeep}"
                                    HorizontalOptions="Center"/>
                         </VerticalStackLayout>
@@ -237,11 +280,15 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding CalendarVM.ShowWeightInputCommand}"/>
                         </Border.GestureRecognizers>
-                        <VerticalStackLayout HorizontalOptions="Center" Spacing="7">
-                            <Label Text="⚖️" FontSize="20" HorizontalOptions="Center"/>
+                        <VerticalStackLayout HorizontalOptions="Center"
+                                Spacing="7">
+                            <Label Text="⚖️"
+                                    FontSize="20"
+                                    HorizontalOptions="Center"/>
                             <Label Text="{loc:Translate Journal_WeighIn}"
                                    FontFamily="{StaticResource FontSans}"
-                                   FontSize="12" FontAttributes="Bold"
+                                   FontSize="12"
+                                    FontAttributes="Bold"
                                    TextColor="{StaticResource TealDeep}"
                                    HorizontalOptions="Center"/>
                         </VerticalStackLayout>
@@ -259,11 +306,15 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnMedsQuickTapped"/>
                         </Border.GestureRecognizers>
-                        <VerticalStackLayout HorizontalOptions="Center" Spacing="7">
-                            <Label Text="💊" FontSize="20" HorizontalOptions="Center"/>
+                        <VerticalStackLayout HorizontalOptions="Center"
+                                Spacing="7">
+                            <Label Text="💊"
+                                    FontSize="20"
+                                    HorizontalOptions="Center"/>
                             <Label Text="{loc:Translate Journal_Meds}"
                                    FontFamily="{StaticResource FontSans}"
-                                   FontSize="12" FontAttributes="Bold"
+                                   FontSize="12"
+                                    FontAttributes="Bold"
                                    TextColor="{StaticResource TealDeep}"
                                    HorizontalOptions="Center"/>
                         </VerticalStackLayout>
@@ -280,7 +331,8 @@
                                FontAttributes="Bold"
                                TextColor="{StaticResource Ink}"/>
 
-                        <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="8">
+                        <Grid ColumnDefinitions="*,*,*,*,*"
+                                ColumnSpacing="8">
 
                             <Border Grid.Column="0"
                                     BackgroundColor="{StaticResource Glass}"
@@ -289,17 +341,27 @@
                                     StrokeShape="RoundRectangle 15,12,13,14"
                                     Padding="2,12">
                                 <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="1">
-                                        <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                                    <DataTrigger TargetType="Border"
+                                            Binding="{Binding CalendarVM.SelectedMoodLevel}"
+                                            Value="1">
+                                        <Setter Property="Stroke"
+                                                Value="{StaticResource Ink}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}" CommandParameter="1"/>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                            CommandParameter="1"/>
                                 </Border.GestureRecognizers>
-                                <Border WidthRequest="34" HeightRequest="34" StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 17" BackgroundColor="{StaticResource MUnwell}"
+                                <Border WidthRequest="34"
+                                        HeightRequest="34"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 17"
+                                        BackgroundColor="{StaticResource MUnwell}"
                                         HorizontalOptions="Center">
-                                    <Label Text="😢" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    <Label Text="😢"
+                                            FontSize="16"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"/>
                                 </Border>
                             </Border>
 
@@ -310,17 +372,27 @@
                                     StrokeShape="RoundRectangle 12,15,14,13"
                                     Padding="2,12">
                                 <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="2">
-                                        <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                                    <DataTrigger TargetType="Border"
+                                            Binding="{Binding CalendarVM.SelectedMoodLevel}"
+                                            Value="2">
+                                        <Setter Property="Stroke"
+                                                Value="{StaticResource Ink}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}" CommandParameter="2"/>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                            CommandParameter="2"/>
                                 </Border.GestureRecognizers>
-                                <Border WidthRequest="34" HeightRequest="34" StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 17" BackgroundColor="{StaticResource MLow}"
+                                <Border WidthRequest="34"
+                                        HeightRequest="34"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 17"
+                                        BackgroundColor="{StaticResource MLow}"
                                         HorizontalOptions="Center">
-                                    <Label Text="😟" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    <Label Text="😟"
+                                            FontSize="16"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"/>
                                 </Border>
                             </Border>
 
@@ -331,17 +403,27 @@
                                     StrokeShape="RoundRectangle 15,12,13,14"
                                     Padding="2,12">
                                 <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="3">
-                                        <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                                    <DataTrigger TargetType="Border"
+                                            Binding="{Binding CalendarVM.SelectedMoodLevel}"
+                                            Value="3">
+                                        <Setter Property="Stroke"
+                                                Value="{StaticResource Ink}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}" CommandParameter="3"/>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                            CommandParameter="3"/>
                                 </Border.GestureRecognizers>
-                                <Border WidthRequest="34" HeightRequest="34" StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 17" BackgroundColor="{StaticResource MOkay}"
+                                <Border WidthRequest="34"
+                                        HeightRequest="34"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 17"
+                                        BackgroundColor="{StaticResource MOkay}"
                                         HorizontalOptions="Center">
-                                    <Label Text="😐" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    <Label Text="😐"
+                                            FontSize="16"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"/>
                                 </Border>
                             </Border>
 
@@ -352,17 +434,27 @@
                                     StrokeShape="RoundRectangle 12,15,14,13"
                                     Padding="2,12">
                                 <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="4">
-                                        <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                                    <DataTrigger TargetType="Border"
+                                            Binding="{Binding CalendarVM.SelectedMoodLevel}"
+                                            Value="4">
+                                        <Setter Property="Stroke"
+                                                Value="{StaticResource Ink}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}" CommandParameter="4"/>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                            CommandParameter="4"/>
                                 </Border.GestureRecognizers>
-                                <Border WidthRequest="34" HeightRequest="34" StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 17" BackgroundColor="{StaticResource MGood}"
+                                <Border WidthRequest="34"
+                                        HeightRequest="34"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 17"
+                                        BackgroundColor="{StaticResource MGood}"
                                         HorizontalOptions="Center">
-                                    <Label Text="😊" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    <Label Text="😊"
+                                            FontSize="16"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"/>
                                 </Border>
                             </Border>
 
@@ -373,17 +465,27 @@
                                     StrokeShape="RoundRectangle 15,12,13,14"
                                     Padding="2,12">
                                 <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding CalendarVM.SelectedMoodLevel}" Value="5">
-                                        <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                                    <DataTrigger TargetType="Border"
+                                            Binding="{Binding CalendarVM.SelectedMoodLevel}"
+                                            Value="5">
+                                        <Setter Property="Stroke"
+                                                Value="{StaticResource Ink}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}" CommandParameter="5"/>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectMoodCommand}"
+                                            CommandParameter="5"/>
                                 </Border.GestureRecognizers>
-                                <Border WidthRequest="34" HeightRequest="34" StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 17" BackgroundColor="{StaticResource MGreat}"
+                                <Border WidthRequest="34"
+                                        HeightRequest="34"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 17"
+                                        BackgroundColor="{StaticResource MGreat}"
                                         HorizontalOptions="Center">
-                                    <Label Text="😄" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    <Label Text="😄"
+                                            FontSize="16"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center"/>
                                 </Border>
                             </Border>
                         </Grid>
@@ -414,6 +516,7 @@
                             <Entry Placeholder="{loc:Translate Calendar_WeightPlaceholder}"
                                    Text="{Binding CalendarVM.EnteredWeight}"
                                    FontFamily="{StaticResource FontSans}"
+                                   TextColor="{StaticResource Ink}"
                                    FontSize="16"
                                    Keyboard="Numeric"
                                    Completed="OnWeightEntryCompleted"/>
@@ -429,29 +532,40 @@
                        Margin="2,6,0,0"/>
 
                 <!-- 7 ── Timeline ──────────────────────────────────────── -->
-                <VerticalStackLayout x:Name="TimelineSection" Spacing="4">
+                <VerticalStackLayout x:Name="TimelineSection"
+                        Spacing="4">
 
                     <!-- Mood entry -->
-                    <Grid ColumnDefinitions="38,*" ColumnSpacing="13"
+                    <Grid ColumnDefinitions="38,*"
+                            ColumnSpacing="13"
                           IsVisible="{Binding CalendarVM.HasMood}">
-                        <Grid Grid.Column="0" RowDefinitions="38,*">
-                            <Border WidthRequest="38" HeightRequest="38"
+                        <Grid Grid.Column="0"
+                                RowDefinitions="38,*">
+                            <Border WidthRequest="38"
+                                    HeightRequest="38"
                                     Rotation="-3"
                                     BackgroundColor="{StaticResource TealTint}"
                                     StrokeThickness="0"
                                     StrokeShape="RoundRectangle 19,18,19,18"
                                     VerticalOptions="Start">
-                                <Label Text="😊" FontSize="17" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                <Label Text="😊"
+                                        FontSize="17"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"/>
                             </Border>
-                            <BoxView Grid.Row="1" WidthRequest="2"
+                            <BoxView Grid.Row="1"
+                                    WidthRequest="2"
                                      Color="{StaticResource GlassLine}"
-                                     HorizontalOptions="Center" Margin="0,4,0,0"/>
+                                     HorizontalOptions="Center"
+                                    Margin="0,4,0,0"/>
                         </Grid>
-                        <Border Grid.Column="1" Style="{StaticResource GlassCard}">
+                        <Border Grid.Column="1"
+                                Style="{StaticResource GlassCard}">
                             <VerticalStackLayout Spacing="2">
                                 <Label Text="{loc:Translate Journal_MoodTitle}"
                                        FontFamily="{StaticResource FontSans}"
-                                       FontSize="13.5" FontAttributes="Bold"
+                                       FontSize="13.5"
+                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Ink}"/>
                                 <!-- warm-paper note with washi tape -->
                                 <Grid Margin="0,10,0,0">
@@ -461,7 +575,10 @@
                                             Rotation="-0.6"
                                             Padding="12,12,12,9">
                                         <Border.Shadow>
-                                            <Shadow Brush="#0D3A3C" Offset="0,2" Radius="6" Opacity="0.08"/>
+                                            <Shadow Brush="#0D3A3C"
+                                                    Offset="0,2"
+                                                    Radius="6"
+                                                    Opacity="0.08"/>
                                         </Border.Shadow>
                                         <Label Text="{Binding CalendarVM.MoodNarrative}"
                                                FontFamily="{StaticResource FontSerifItalic}"
@@ -469,10 +586,12 @@
                                                TextColor="{StaticResource NoteInk}"/>
                                     </Border>
                                     <!-- washi tape overlapping the top edge -->
-                                    <BoxView WidthRequest="46" HeightRequest="15"
+                                    <BoxView WidthRequest="46"
+                                            HeightRequest="15"
                                              Color="{StaticResource Washi}"
                                              Rotation="-3"
-                                             HorizontalOptions="Start" VerticalOptions="Start"
+                                             HorizontalOptions="Start"
+                                            VerticalOptions="Start"
                                              Margin="16,-7,0,0"/>
                                 </Grid>
                             </VerticalStackLayout>
@@ -480,26 +599,36 @@
                     </Grid>
 
                     <!-- Weight entry -->
-                    <Grid ColumnDefinitions="38,*" ColumnSpacing="13"
+                    <Grid ColumnDefinitions="38,*"
+                            ColumnSpacing="13"
                           IsVisible="{Binding CalendarVM.HasWeight}">
-                        <Grid Grid.Column="0" RowDefinitions="38,*">
-                            <Border WidthRequest="38" HeightRequest="38"
+                        <Grid Grid.Column="0"
+                                RowDefinitions="38,*">
+                            <Border WidthRequest="38"
+                                    HeightRequest="38"
                                     Rotation="2.5"
                                     BackgroundColor="{StaticResource BlueTint}"
                                     StrokeThickness="0"
                                     StrokeShape="RoundRectangle 18,19,18,19"
                                     VerticalOptions="Start">
-                                <Label Text="⚖️" FontSize="17" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                <Label Text="⚖️"
+                                        FontSize="17"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"/>
                             </Border>
-                            <BoxView Grid.Row="1" WidthRequest="2"
+                            <BoxView Grid.Row="1"
+                                    WidthRequest="2"
                                      Color="{StaticResource GlassLine}"
-                                     HorizontalOptions="Center" Margin="0,4,0,0"/>
+                                     HorizontalOptions="Center"
+                                    Margin="0,4,0,0"/>
                         </Grid>
-                        <Border Grid.Column="1" Style="{StaticResource GlassCard}">
+                        <Border Grid.Column="1"
+                                Style="{StaticResource GlassCard}">
                             <VerticalStackLayout Spacing="2">
                                 <Label Text="{loc:Translate Journal_WeighIn}"
                                        FontFamily="{StaticResource FontSans}"
-                                       FontSize="13.5" FontAttributes="Bold"
+                                       FontSize="13.5"
+                                        FontAttributes="Bold"
                                        TextColor="{StaticResource Ink}"/>
                                 <HorizontalStackLayout Spacing="5">
                                     <Label Text="{Binding CalendarVM.ShownWeightDisplay}"
@@ -523,19 +652,27 @@
                                          BindableLayout.ItemsSource="{Binding CalendarVM.DosesForSelectedDate}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate>
-                                <Grid ColumnDefinitions="38,*" ColumnSpacing="13">
-                                    <Grid Grid.Column="0" RowDefinitions="38,*">
-                                        <Border WidthRequest="38" HeightRequest="38"
+                                <Grid ColumnDefinitions="38,*"
+                                        ColumnSpacing="13">
+                                    <Grid Grid.Column="0"
+                                            RowDefinitions="38,*">
+                                        <Border WidthRequest="38"
+                                                HeightRequest="38"
                                                 Rotation="{Binding IconRotation}"
                                                 BackgroundColor="{StaticResource HoneyWarmTint}"
                                                 StrokeThickness="0"
                                                 StrokeShape="RoundRectangle 19,18,19,18"
                                                 VerticalOptions="Start">
-                                            <Label Text="💊" FontSize="17" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                            <Label Text="💊"
+                                                    FontSize="17"
+                                                    HorizontalOptions="Center"
+                                                    VerticalOptions="Center"/>
                                         </Border>
-                                        <BoxView Grid.Row="1" WidthRequest="2"
+                                        <BoxView Grid.Row="1"
+                                                WidthRequest="2"
                                                  Color="{StaticResource GlassLine}"
-                                                 HorizontalOptions="Center" Margin="0,4,0,0"/>
+                                                 HorizontalOptions="Center"
+                                                Margin="0,4,0,0"/>
                                     </Grid>
 
                                     <Border Grid.Column="1"
@@ -551,12 +688,14 @@
                                                 <Label Grid.Column="0"
                                                        Text="{Binding MedName}"
                                                        FontFamily="{StaticResource FontSans}"
-                                                       FontSize="13.5" FontAttributes="Bold"
+                                                       FontSize="13.5"
+                                                        FontAttributes="Bold"
                                                        TextColor="{StaticResource Ink}"/>
                                                 <Label Grid.Column="1"
                                                        Text="{Binding TimeDisplay}"
                                                        FontFamily="{StaticResource FontSans}"
-                                                       FontSize="11" FontAttributes="Bold"
+                                                       FontSize="11"
+                                                        FontAttributes="Bold"
                                                        TextColor="{StaticResource InkTertiary}"
                                                        VerticalOptions="Center"/>
                                             </Grid>
@@ -578,7 +717,8 @@
                                             <Button Text="{loc:Translate Journal_MarkGiven}"
                                                     IsVisible="{Binding IsPending}"
                                                     FontFamily="{StaticResource FontSans}"
-                                                    FontSize="12.5" FontAttributes="Bold"
+                                                    FontSize="12.5"
+                                                    FontAttributes="Bold"
                                                     HeightRequest="38"
                                                     Margin="0,8,0,0"
                                                     CornerRadius="12"
@@ -589,11 +729,13 @@
                                                     Clicked="OnMarkGivenClicked"/>
 
                                             <!-- Given (tap to undo) / skip secondary -->
-                                            <HorizontalStackLayout Spacing="14" Margin="0,6,0,0">
+                                            <HorizontalStackLayout Spacing="14"
+                                                    Margin="0,6,0,0">
                                                 <Label Text="✓ given"
                                                        IsVisible="{Binding IsTaken}"
                                                        FontFamily="{StaticResource FontSans}"
-                                                       FontSize="12" FontAttributes="Bold"
+                                                       FontSize="12"
+                                                        FontAttributes="Bold"
                                                        TextColor="{StaticResource TealDeep}">
                                                     <Label.GestureRecognizers>
                                                         <TapGestureRecognizer
@@ -632,7 +774,8 @@
                               StrokeLineCap="Round"
                               StrokeLineJoin="Round"
                               Opacity="0.8"
-                              WidthRequest="76" HeightRequest="58"
+                              WidthRequest="76"
+                                HeightRequest="58"
                               HorizontalOptions="Center"/>
                         <Label Text="{Binding CalendarVM.EmptyHeadline}"
                                FontFamily="{StaticResource FontHand}"
@@ -642,7 +785,8 @@
                                HorizontalTextAlignment="Center"/>
                         <Label Text="{loc:Translate Journal_EmptySub}"
                                FontFamily="{StaticResource FontSans}"
-                               FontSize="12.5" FontAttributes="Bold"
+                               FontSize="12.5"
+                                FontAttributes="Bold"
                                TextColor="{StaticResource InkTertiary}"
                                HorizontalOptions="Center"
                                HorizontalTextAlignment="Center"/>
@@ -654,11 +798,31 @@
                                          HorizontalOptions="Center"
                                          Spacing="2"
                                          Padding="10,18,10,6">
-                        <HorizontalStackLayout x:Name="PawRow" Spacing="14" HorizontalOptions="Center">
-                            <Label x:Name="Paw1" Text="🐾" FontSize="20" Rotation="-14" Opacity="0"/>
-                            <Label x:Name="Paw2" Text="🐾" FontSize="20" Rotation="10" TranslationY="-5" Opacity="0"/>
-                            <Label x:Name="Paw3" Text="🐾" FontSize="20" Rotation="-8" Opacity="0"/>
-                            <Label x:Name="Paw4" Text="🐾" FontSize="20" Rotation="12" TranslationY="-5" Opacity="0"/>
+                        <HorizontalStackLayout x:Name="PawRow"
+                                Spacing="14"
+                                HorizontalOptions="Center">
+                            <Label x:Name="Paw1"
+                                    Text="🐾"
+                                    FontSize="20"
+                                    Rotation="-14"
+                                    Opacity="0"/>
+                            <Label x:Name="Paw2"
+                                    Text="🐾"
+                                    FontSize="20"
+                                    Rotation="10"
+                                    TranslationY="-5"
+                                    Opacity="0"/>
+                            <Label x:Name="Paw3"
+                                    Text="🐾"
+                                    FontSize="20"
+                                    Rotation="-8"
+                                    Opacity="0"/>
+                            <Label x:Name="Paw4"
+                                    Text="🐾"
+                                    FontSize="20"
+                                    Rotation="12"
+                                    TranslationY="-5"
+                                    Opacity="0"/>
                         </HorizontalStackLayout>
                         <Label Text="{Binding CalendarVM.CelebrationText}"
                                FontFamily="{StaticResource FontHand}"
@@ -684,21 +848,29 @@
                 VerticalOptions="End">
 
             <Border.Shadow>
-                <Shadow Brush="#0D3A3C" Offset="0,10" Radius="24" Opacity="0.16"/>
+                <Shadow Brush="#0D3A3C"
+                        Offset="0,10"
+                        Radius="24"
+                        Opacity="0.16"/>
             </Border.Shadow>
 
             <Grid ColumnDefinitions="*,*,*">
 
                 <!-- MAIN -->
-                <Grid Grid.Column="0" Padding="0,8">
+                <Grid Grid.Column="0"
+                        Padding="0,8">
                     <Grid.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnMainClicked"/>
                     </Grid.GestureRecognizers>
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
-                        <Label Text="🏠" FontSize="20" HorizontalTextAlignment="Center"/>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                            Spacing="3">
+                        <Label Text="🏠"
+                                FontSize="20"
+                                HorizontalTextAlignment="Center"/>
                         <Label Text="{loc:Translate Nav_Main}"
                                FontFamily="{StaticResource FontSans}"
-                               FontSize="10.5" FontAttributes="Bold"
+                               FontSize="10.5"
+                                FontAttributes="Bold"
                                TextColor="{StaticResource InkTertiary}"
                                HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
@@ -710,26 +882,35 @@
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 17"
                         Padding="0,8">
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
-                        <Label Text="📅" FontSize="20" HorizontalTextAlignment="Center"/>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                            Spacing="3">
+                        <Label Text="📅"
+                                FontSize="20"
+                                HorizontalTextAlignment="Center"/>
                         <Label Text="{loc:Translate Nav_Calendar}"
                                FontFamily="{StaticResource FontSans}"
-                               FontSize="10.5" FontAttributes="Bold"
+                               FontSize="10.5"
+                                FontAttributes="Bold"
                                TextColor="{StaticResource TealDeep}"
                                HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- PETS -->
-                <Grid Grid.Column="2" Padding="0,8">
+                <Grid Grid.Column="2"
+                        Padding="0,8">
                     <Grid.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnPetsClicked"/>
                     </Grid.GestureRecognizers>
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
-                        <Label Text="🐾" FontSize="20" HorizontalTextAlignment="Center"/>
+                    <VerticalStackLayout HorizontalOptions="Center"
+                            Spacing="3">
+                        <Label Text="🐾"
+                                FontSize="20"
+                                HorizontalTextAlignment="Center"/>
                         <Label Text="{loc:Translate Nav_Pets}"
                                FontFamily="{StaticResource FontSans}"
-                               FontSize="10.5" FontAttributes="Bold"
+                               FontSize="10.5"
+                                FontAttributes="Bold"
                                TextColor="{StaticResource InkTertiary}"
                                HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
@@ -758,17 +939,23 @@
                 VerticalOptions="End"
                 Margin="0,0,0,92">
             <Border.Shadow>
-                <Shadow Brush="#0D3A3C" Offset="0,12" Radius="34" Opacity="0.20"/>
+                <Shadow Brush="#0D3A3C"
+                        Offset="0,12"
+                        Radius="34"
+                        Opacity="0.20"/>
             </Border.Shadow>
-            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+            <HorizontalStackLayout Spacing="8"
+                    VerticalOptions="Center">
                 <Label Text="✓"
                        FontFamily="{StaticResource FontSans}"
-                       FontSize="13" FontAttributes="Bold"
+                       FontSize="13"
+                        FontAttributes="Bold"
                        TextColor="{StaticResource MGreat}"
                        VerticalOptions="Center"/>
                 <Label x:Name="ToastLabel"
                        FontFamily="{StaticResource FontSans}"
-                       FontSize="13" FontAttributes="Bold"
+                       FontSize="13"
+                        FontAttributes="Bold"
                        TextColor="{StaticResource White}"
                        VerticalOptions="Center"/>
             </HorizontalStackLayout>
