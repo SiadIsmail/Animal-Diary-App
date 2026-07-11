@@ -10,6 +10,7 @@ public class MainViewModel
     public PetViewModel PetVM { get; }
     public MedicationViewModel MedicationVM { get; }
     public SettingsViewModel SettingsVM { get; }
+    public ConditionPickerViewModel ConditionVM { get; }
 
     // Child VMs that hold transient form/draft state, cleared together on a
     // global data reset. New draft forms just implement IResettableDraft and
@@ -21,13 +22,15 @@ public class MainViewModel
  MainPageViewModel mainPageVM,
  PetViewModel petVM,
  MedicationViewModel medicationVM,
- SettingsViewModel settingsVM)
+ SettingsViewModel settingsVM,
+ ConditionPickerViewModel conditionVM)
     {
         MainPageVM = mainPageVM;
         PetVM = petVM;
         MedicationVM = medicationVM;
         CalendarVM = calendarVM;
         SettingsVM = settingsVM;
+        ConditionVM = conditionVM;
 
         _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM };
     }

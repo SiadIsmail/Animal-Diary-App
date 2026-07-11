@@ -32,6 +32,7 @@ public partial class CalendarPage : ContentPage
 		// Subscribe here (and unsubscribe in OnDisappearing) so handlers don't
 		// accumulate across navigations onto the same shared CalendarVM.
 		vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
+		vm.CalendarVM.TrackingChanged += OnTrackingChanged;
 
 		if (vm.CalendarVM.Pets.Count == 0)
 			await vm.CalendarVM.PrepareDataAsync();
@@ -46,7 +47,19 @@ public partial class CalendarPage : ContentPage
 	{
 		base.OnDisappearing();
 		vm.CalendarVM.PropertyChanged -= OnCalendarVmPropertyChanged;
+		vm.CalendarVM.TrackingChanged -= OnTrackingChanged;
 	}
+
+	/// <summary>A numeric tracker's entry was completed (keyboard "done") → persist
+	/// it via the leaf's own save command (its BindingContext is the TrackerLeaf).</summary>
+	private void OnTrackingValueCompleted(object? sender, EventArgs e)
+	{
+		if (sender is BindableObject bo && bo.BindingContext is TrackerLeaf leaf)
+			leaf.SaveCommand.Execute(null);
+	}
+
+	/// <summary>Show a gentle confirmation after a tracking value is saved.</summary>
+	private void OnTrackingChanged(string message) => ShowToast(message);
 
 	async void OnMainClicked(object? sender, EventArgs args)
 	{
@@ -58,22 +71,6 @@ public partial class CalendarPage : ContentPage
 	}
 
 	// ── Confirm actions: run the command, then celebrate (toast + burst) ──
-
-	private void OnMoodConfirmClicked(object? sender, EventArgs e)
-	{
-		vm.CalendarVM.OnMoodEntryCompleted.Execute(null);
-		ShowToast(MoodSavedToast());
-		if (sender is View anchor)
-			_ = BurstBubblesAsync(anchor);
-	}
-
-	private async void OnWeightEntryCompleted(object? sender, EventArgs e)
-	{
-		vm.CalendarVM.OnWeightEntryCompleted.Execute(null);
-		ShowToast(WeightSavedToast());
-		if (sender is View anchor)
-			await BurstBubblesAsync(anchor);
-	}
 
 	private void OnMarkGivenClicked(object? sender, EventArgs e)
 	{
@@ -90,19 +87,6 @@ public partial class CalendarPage : ContentPage
 	{
 		vm.CalendarVM.CurrentSelectedDate = DateTime.Now.Date;
 		ShowToast(LocalizationManager.Instance.GetString("Toast_BackToday"));
-	}
-
-	/// <summary>Third quick-log button: bring the day's timeline (doses) into view.</summary>
-	private async void OnMedsQuickTapped(object? sender, EventArgs e)
-	{
-		try
-		{
-			await JournalScroll.ScrollToAsync(TimelineSection, ScrollToPosition.Start, animated: true);
-		}
-		catch
-		{
-			// Scrolling is a nicety — never let a layout race throw into the UI.
-		}
 	}
 
 	private async void OnCalendarVmPropertyChanged(object? sender, PropertyChangedEventArgs e)

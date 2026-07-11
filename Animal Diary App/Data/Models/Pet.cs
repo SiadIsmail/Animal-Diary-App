@@ -17,9 +17,21 @@ public class Pet : INotifyPropertyChanged
     public string Type { get; set; } = string.Empty;
     public int Age { get; set; }
 
+    /// <summary>Id of the pet's ongoing condition (see ConditionCatalog); empty =
+    /// "None / Not sure". Chosen in the condition picker after the pet is created
+    /// and drives which tracking items the Calendar shows. SQLite.NET adds this
+    /// column automatically on the next CreateTableAsync — no manual migration.</summary>
+    public string ConditionId { get; set; } = string.Empty;
+
     /// <summary>Localized age label, e.g. "(3 yrs)" / "(3 J.)". Used by calendar chips.</summary>
     [Ignore]
     public string AgeDisplay => Animal_Diary_App.Helpers.LocalizationManager.Instance.Format("Common_AgeYearsShort", Age);
+
+    /// <summary>The pet's care plan — the trackers the Journal asks for. Not a column;
+    /// <see cref="Tracker"/> rows are stored separately and loaded into this list by
+    /// the care-plan service. New pets are seeded from <see cref="CarePlanCatalog"/>.</summary>
+    [Ignore]
+    public List<Tracker> CarePlan { get; set; } = new();
     private bool _isSelected;
     public bool IsSelected
     {
@@ -48,6 +60,11 @@ public class PetEntry
     public DateTime Date { get; set; }
     public string Mood { get; set; } = string.Empty;
     public int MoodLevel { get; set; } = 0;
+
+    /// <summary>Optional free-text note the owner writes alongside the mood (the
+    /// journal's washi-tape card shows it). Added when Notes was folded into the
+    /// Mood tracker. SQLite.NET adds this column automatically — no migration.</summary>
+    public string MoodNote { get; set; } = string.Empty;
     public decimal Weight { get; set; }
 }
 

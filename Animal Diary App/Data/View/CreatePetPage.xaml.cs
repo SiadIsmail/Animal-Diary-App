@@ -38,15 +38,8 @@ public partial class CreatePetPage : ContentPage
     {
         await vm.PetVM.SavePetAsync();
 
-        if (Shell.Current is not null)
-        {
-            // Adding a pet from the Pets tab: pop this detail page and land on Today.
-            await Shell.Current.GoToAsync("//TodayTab");
-        }
-        else
-        {
-            // Finishing onboarding (no Shell yet): hand off to the tabbed app.
-            (Application.Current as App)?.SwitchToMainApp();
-        }
+        // The pet now exists and is the active pet. Ask about its condition next;
+        // the picker performs the final handoff into the tabbed app (Shell) itself.
+        await Navigation.PushAsync(new ConditionPickerPage(vm));
     }
 }

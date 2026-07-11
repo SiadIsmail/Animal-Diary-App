@@ -30,11 +30,13 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PetViewModel>();
 		builder.Services.AddSingleton<CalendarViewModel>();
 		builder.Services.AddSingleton<MedicationViewModel>();
+		builder.Services.AddSingleton<ConditionPickerViewModel>();
 		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<MoodTimelineViewModel>();
 		builder.Services.AddSingleton<SettingsViewModel>();
 		builder.Services.AddSingleton<AppDatabase>();
 		builder.Services.AddSingleton<PetEntryService>();
+		builder.Services.AddSingleton<TrackingEntryService>();
 		builder.Services.AddSingleton<PetService>();
 		builder.Services.AddSingleton<MedicationService>();
 		builder.Services.AddSingleton<MedicationDoseLogService>();
