@@ -12,6 +12,14 @@ public class MainViewModel
     public SettingsViewModel SettingsVM { get; }
     public ConditionPickerViewModel ConditionVM { get; }
 
+    // ── Journal rework surfaces (new VMs; the CalendarViewModel is not reshaped) ──
+    /// <summary>The "Still to do" chip row + glucose/appetite timeline + add-anything.</summary>
+    public JournalLogViewModel JournalVM { get; }
+    public GlucoseSheetViewModel GlucoseSheetVM { get; }
+    public MoodSheetViewModel MoodSheetVM { get; }
+    public WeightSheetViewModel WeightSheetVM { get; }
+    public AppetiteSheetViewModel AppetiteSheetVM { get; }
+
     // Child VMs that hold transient form/draft state, cleared together on a
     // global data reset. New draft forms just implement IResettableDraft and
     // get added here.
@@ -23,7 +31,12 @@ public class MainViewModel
  PetViewModel petVM,
  MedicationViewModel medicationVM,
  SettingsViewModel settingsVM,
- ConditionPickerViewModel conditionVM)
+ ConditionPickerViewModel conditionVM,
+ JournalLogViewModel journalVM,
+ GlucoseSheetViewModel glucoseSheetVM,
+ MoodSheetViewModel moodSheetVM,
+ WeightSheetViewModel weightSheetVM,
+ AppetiteSheetViewModel appetiteSheetVM)
     {
         MainPageVM = mainPageVM;
         PetVM = petVM;
@@ -31,6 +44,11 @@ public class MainViewModel
         CalendarVM = calendarVM;
         SettingsVM = settingsVM;
         ConditionVM = conditionVM;
+        JournalVM = journalVM;
+        GlucoseSheetVM = glucoseSheetVM;
+        MoodSheetVM = moodSheetVM;
+        WeightSheetVM = weightSheetVM;
+        AppetiteSheetVM = appetiteSheetVM;
 
         _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM };
     }

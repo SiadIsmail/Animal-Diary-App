@@ -29,7 +29,6 @@ public static class CarePlanCatalog
         "diabetes" => new[]
         {
             Glucose(perDayCount: 3, fromCondition: "diabetes"),   // mmol/L, no target range yet
-            Simple(TrackerId.Water, TrackerKind.Daily, "diabetes"),
         },
         "ckd" => new[]
         {

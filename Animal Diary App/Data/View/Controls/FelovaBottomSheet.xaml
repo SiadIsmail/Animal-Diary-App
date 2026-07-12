@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    FelovaBottomSheet
+    ─────────────────────────────────────────────────────────
+    The one slide-up bottom sheet used everywhere (medication add/edit, and every
+    Journal input). It owns the chrome + motion; callers supply arbitrary body via
+    SheetContent, plus an optional serif Title and Caveat Subtitle.
+
+      IsPresented   bool   — flip to slide the sheet up / down (bind to a VM flag)
+      Title         string — centred Fraunces title (hidden when empty)
+      Subtitle      string — centred Caveat handwriting line (hidden when empty)
+      SheetContent  View   — the body (form, stepper, pickers…)
+      DismissCommand ICommand — invoked when the scrim is tapped; if unset, tapping
+                                the scrim just sets IsPresented=false.
+
+    Motion matches the prototype: ~420ms slide on cubic-bezier(.32,.72,.28,1) with a
+    scrim fade, shortened when the OS asks for reduced motion. Keep the x:Named
+    Scrim / SheetContainer / BodyHost — the code-behind animates them.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Animal_Diary_App.Data.View.Controls.FelovaBottomSheet"
+             x:Name="Root"
+             IsVisible="False"
+             InputTransparent="False">
+
+    <ContentView.Resources>
+        <!-- Warm gradient sheet ground (prototype: mint → mint → sand), built from
+             existing rockpool tokens — no new colour keys. -->
+        <LinearGradientBrush x:Key="SheetWarm" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="{StaticResource SeaHi}" Offset="0"/>
+            <GradientStop Color="{StaticResource SeaGradTop}" Offset="0.78"/>
+            <GradientStop Color="{StaticResource Sand}" Offset="1"/>
+        </LinearGradientBrush>
+    </ContentView.Resources>
+
+    <Grid>
+        <!-- Dimmed scrim; tap to dismiss -->
+        <BoxView x:Name="Scrim"
+                 BackgroundColor="#660D3A3C"
+                 InputTransparent="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnScrimTapped"/>
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <!-- The sheet itself -->
+        <Border x:Name="SheetContainer"
+                Background="{StaticResource SheetWarm}"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 30,26,0,0"
+                VerticalOptions="End"
+                Padding="20,0,20,28">
+
+            <Border.Shadow>
+                <Shadow Brush="#0D3A3C" Offset="0,-4" Radius="24" Opacity="0.22"/>
+            </Border.Shadow>
+
+            <Grid RowDefinitions="Auto,*" RowSpacing="14">
+
+                <!-- Header: drag handle + serif title + Caveat subtitle -->
+                <VerticalStackLayout Grid.Row="0" Spacing="4" Padding="0,12,0,0">
+                    <BoxView WidthRequest="38"
+                             HeightRequest="4"
+                             CornerRadius="2"
+                             BackgroundColor="{StaticResource GlassLine}"
+                             HorizontalOptions="Center"
+                             Margin="0,0,0,10"/>
+
+                    <Label Text="{Binding Title, Source={x:Reference Root}}"
+                           IsVisible="{Binding Title, Source={x:Reference Root}, Converter={StaticResource StringToBoolConverter}}"
+                           FontFamily="{StaticResource FontSerif}"
+                           FontSize="21"
+                           TextColor="{StaticResource Ink}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"/>
+
+                    <Label Text="{Binding Subtitle, Source={x:Reference Root}}"
+                           IsVisible="{Binding Subtitle, Source={x:Reference Root}, Converter={StaticResource StringToBoolConverter}}"
+                           FontFamily="{StaticResource FontHand}"
+                           FontSize="17"
+                           TextColor="{StaticResource InkSecondary}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           Margin="0,2,0,0"/>
+                </VerticalStackLayout>
+
+                <!-- Arbitrary body supplied by the caller -->
+                <ContentView x:Name="BodyHost" Grid.Row="1"/>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentView>

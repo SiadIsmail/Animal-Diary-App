@@ -915,214 +915,122 @@
                            VerticalOptions="End"/>
                 </Grid>
 
-                <!-- 5 ── Tracker Hub (progressive-disclosure logging) ──── -->
-                <!-- One flow for every tracker: a short chooser → optional  -->
-                <!-- group drill-in → a single tracker's input. Replaces the  -->
-                <!-- old quick-log buttons + inline mood/weight editors.      -->
-                <Border Style="{StaticResource GlassCard}"
-                        Padding="16"
-                        IsVisible="{Binding CalendarVM.HasHub}">
-                    <VerticalStackLayout Spacing="14">
+                <!-- 5 ── "Still to do" chip row / all-done / past-day add ─── -->
+                <!-- Replaces the old "Today's Tracking" card. Today drives the -->
+                <!-- pending chips; past days show a single "add" affordance.    -->
 
-                        <!-- Hub header: optional back chip + current title -->
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    IsVisible="{Binding CalendarVM.ShowBack}"
-                                    WidthRequest="34"
-                                    HeightRequest="34"
-                                    BackgroundColor="{StaticResource GlassSoft}"
-                                    Stroke="{StaticResource GlassLine}"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 12"
-                                    Margin="0,0,10,0"
-                                    VerticalOptions="Center">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding CalendarVM.HubBackCommand}"/>
-                                </Border.GestureRecognizers>
-                                <Label Text="‹"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="22"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource TealDeep}"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center"/>
-                            </Border>
-                            <Label Grid.Column="1"
-                                   Text="{Binding CalendarVM.HubTitle}"
-                                   FontFamily="{StaticResource FontSerif}"
-                                   FontSize="20"
-                                   TextColor="{StaticResource Ink}"
-                                   VerticalOptions="Center"/>
-                        </Grid>
+                <!-- (a) Today, with things left: heading + wrapped chips + "+" -->
+                <VerticalStackLayout Spacing="9"
+                                     IsVisible="{Binding JournalVM.ShowStillToDo}">
+                    <Label Text="{Binding JournalVM.Heading}"
+                           FontFamily="{StaticResource FontSerifItalic}"
+                           FontSize="15"
+                           TextColor="{StaticResource InkSecondary}"
+                           Margin="2,0,0,0"/>
+                    <FlexLayout Wrap="Wrap"
+                                AlignItems="Center"
+                                BindableLayout.ItemsSource="{Binding JournalVM.Chips}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Border Rotation="{Binding Tilt}"
+                                        Margin="0,0,8,8"
+                                        BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource TealLine}"
+                                        StrokeThickness="1.5"
+                                        StrokeShape="RoundRectangle 14,11,13,12"
+                                        Padding="13,9"
+                                        SemanticProperties.Description="{Binding SemanticLabel}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsMedication}" Value="True">
+                                            <Setter Property="Stroke" Value="{StaticResource HoneyWarm}"/>
+                                            <Setter Property="BackgroundColor" Value="{StaticResource HoneyWarmTint}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnChipTapped"/>
+                                    </Border.GestureRecognizers>
+                                    <HorizontalStackLayout Spacing="7" VerticalOptions="Center">
+                                        <Label Text="{Binding Icon}"
+                                               FontSize="14"
+                                               VerticalOptions="Center"/>
+                                        <Label Text="{Binding Label}"
+                                               IsVisible="{Binding Label, Converter={StaticResource StringToBoolConverter}}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="12.5"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource TealDeep}"
+                                               VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding IsMedication}" Value="True">
+                                                    <Setter Property="TextColor" Value="{StaticResource HoneyWarmDeep}"/>
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                        <Label Text="{Binding Detail}"
+                                               IsVisible="{Binding HasDetail}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="11"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource InkTertiary}"
+                                               VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </VerticalStackLayout>
 
-                        <!-- Chooser rows (root list, or a group's children) -->
-                        <VerticalStackLayout IsVisible="{Binding CalendarVM.ShowRows}"
-                                             Spacing="8"
-                                             BindableLayout.ItemsSource="{Binding CalendarVM.VisibleRows}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate>
-                                    <Border BackgroundColor="{StaticResource GlassSoft}"
-                                            Stroke="{StaticResource GlassLine}"
-                                            StrokeThickness="1"
-                                            StrokeShape="RoundRectangle 14"
-                                            Padding="12,11">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SelectRowCommand}"
-                                                CommandParameter="{Binding .}"/>
-                                        </Border.GestureRecognizers>
-                                        <Grid ColumnDefinitions="36,*,Auto"
-                                                ColumnSpacing="12">
-                                            <Border Grid.Column="0"
-                                                    WidthRequest="36"
-                                                    HeightRequest="36"
-                                                    BackgroundColor="{StaticResource TealTint}"
-                                                    StrokeThickness="0"
-                                                    StrokeShape="RoundRectangle 12"
-                                                    VerticalOptions="Center">
-                                                <Label Text="{Binding Icon}"
-                                                       FontSize="18"
-                                                       HorizontalOptions="Center"
-                                                       VerticalOptions="Center"/>
-                                            </Border>
-                                            <VerticalStackLayout Grid.Column="1"
-                                                    Spacing="1"
-                                                    VerticalOptions="Center">
-                                                <Label Text="{Binding Name}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="15"
-                                                       FontAttributes="Bold"
-                                                       TextColor="{StaticResource Ink}"/>
-                                                <Label Text="{Binding Summary}"
-                                                       IsVisible="{Binding HasSummary}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="12.5"
-                                                       TextColor="{StaticResource TealDeep}"/>
-                                            </VerticalStackLayout>
-                                            <!-- group → chevron; a logged leaf → check -->
-                                            <Label Grid.Column="2"
-                                                   Text="›"
-                                                   IsVisible="{Binding IsGroup}"
-                                                   FontFamily="{StaticResource FontSans}"
-                                                   FontSize="24"
-                                                   TextColor="{StaticResource InkTertiary}"
-                                                   VerticalOptions="Center"/>
-                                            <Label Grid.Column="2"
-                                                   Text="✓"
-                                                   IsVisible="{Binding ShowLeafCheck}"
-                                                   FontFamily="{StaticResource FontSans}"
-                                                   FontSize="15"
-                                                   FontAttributes="Bold"
-                                                   TextColor="{StaticResource TealDeep}"
-                                                   VerticalOptions="Center"/>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
-
-                        <!-- Leaf input: only the chosen tracker's controls -->
-                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding CalendarVM.OpenLeafItems}"
-                                             BindableLayout.ItemTemplateSelector="{StaticResource LeafInputSelector}"/>
-
-                        <!-- Medications group: today's dose checklist -->
-                        <VerticalStackLayout IsVisible="{Binding CalendarVM.ShowMedications}"
-                                             Spacing="8"
-                                             BindableLayout.ItemsSource="{Binding CalendarVM.DosesForSelectedDate}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate>
-                                    <Border BackgroundColor="{StaticResource GlassSoft}"
-                                            Stroke="{StaticResource GlassLine}"
-                                            StrokeThickness="1"
-                                            StrokeShape="RoundRectangle 14"
-                                            Padding="14,12">
-                                        <VerticalStackLayout Spacing="2">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <Label Grid.Column="0"
-                                                       Text="{Binding MedName}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="13.5"
-                                                       FontAttributes="Bold"
-                                                       TextColor="{StaticResource Ink}"/>
-                                                <Label Grid.Column="1"
-                                                       Text="{Binding TimeDisplay}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="11"
-                                                       FontAttributes="Bold"
-                                                       TextColor="{StaticResource InkTertiary}"
-                                                       VerticalOptions="Center"/>
-                                            </Grid>
-                                            <HorizontalStackLayout Spacing="5">
-                                                <Label Text="{Binding DoseDisplay}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="12"
-                                                       TextColor="{StaticResource InkSecondary}"/>
-                                                <Label Text="·"
-                                                       FontSize="12"
-                                                       TextColor="{StaticResource InkTertiary}"/>
-                                                <Label Text="{Binding StatusText}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="12"
-                                                       TextColor="{StaticResource InkTertiary}"/>
-                                            </HorizontalStackLayout>
-
-                                            <Button Text="{loc:Translate Journal_MarkGiven}"
-                                                    IsVisible="{Binding IsPending}"
-                                                    FontFamily="{StaticResource FontSans}"
-                                                    FontSize="12.5"
-                                                    FontAttributes="Bold"
-                                                    HeightRequest="38"
-                                                    Margin="0,8,0,0"
-                                                    CornerRadius="12"
-                                                    BackgroundColor="{StaticResource Teal}"
-                                                    TextColor="{StaticResource White}"
-                                                    HorizontalOptions="Start"
-                                                    Padding="16,0"
-                                                    Clicked="OnMarkGivenClicked"/>
-
-                                            <HorizontalStackLayout Spacing="14"
-                                                    Margin="0,6,0,0">
-                                                <Label Text="✓ given"
-                                                       IsVisible="{Binding IsTaken}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="12"
-                                                       FontAttributes="Bold"
-                                                       TextColor="{StaticResource TealDeep}">
-                                                    <Label.GestureRecognizers>
-                                                        <TapGestureRecognizer
-                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.ToggleDoseTakenCommand}"
-                                                            CommandParameter="{Binding .}"/>
-                                                    </Label.GestureRecognizers>
-                                                </Label>
-                                                <Label Text="{loc:Translate Calendar_Skip}"
-                                                       IsVisible="{Binding ShowSkip}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="12"
-                                                       TextColor="{StaticResource InkTertiary}">
-                                                    <Label.GestureRecognizers>
-                                                        <TapGestureRecognizer
-                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CalendarVM.SkipDoseCommand}"
-                                                            CommandParameter="{Binding .}"/>
-                                                    </Label.GestureRecognizers>
-                                                </Label>
-                                            </HorizontalStackLayout>
-                                        </VerticalStackLayout>
-                                    </Border>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
-
-                        <!-- Medications group open, but nothing scheduled today -->
-                        <Label Text="No medications scheduled for this day."
-                               IsVisible="{Binding CalendarVM.ShowMedsEmpty}"
+                <!-- (b) Today, all done: paw celebration + quiet add chip -->
+                <VerticalStackLayout Spacing="8"
+                                     Padding="2,4,0,0"
+                                     IsVisible="{Binding JournalVM.ShowAllDone}">
+                    <HorizontalStackLayout x:Name="PawRow" Spacing="14">
+                        <Label x:Name="Paw1" Text="🐾" FontSize="20" Rotation="-14" Opacity="0"/>
+                        <Label x:Name="Paw2" Text="🐾" FontSize="20" Rotation="10" TranslationY="-5" Opacity="0"/>
+                        <Label x:Name="Paw3" Text="🐾" FontSize="20" Rotation="-8" Opacity="0"/>
+                        <Label x:Name="Paw4" Text="🐾" FontSize="20" Rotation="12" TranslationY="-5" Opacity="0"/>
+                    </HorizontalStackLayout>
+                    <Label Text="{Binding JournalVM.CelebrationText}"
+                           FontFamily="{StaticResource FontHand}"
+                           FontSize="20"
+                           TextColor="{StaticResource TealDeep}"/>
+                    <Border BackgroundColor="{StaticResource GlassSoft}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1.5"
+                            StrokeShape="RoundRectangle 14,11,13,12"
+                            Padding="13,9"
+                            HorizontalOptions="Start"
+                            Margin="0,4,0,0"
+                            SemanticProperties.Description="Add something else">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding JournalVM.OpenAddSheetCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Journal_ChipAddMore}"
                                FontFamily="{StaticResource FontSans}"
-                               FontSize="13"
-                               TextColor="{StaticResource InkTertiary}"
-                               HorizontalTextAlignment="Center"
-                               Padding="0,10"/>
-                    </VerticalStackLayout>
-                </Border>
+                               FontSize="12.5"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource InkTertiary}"/>
+                    </Border>
+                </VerticalStackLayout>
 
+                <!-- (c) A past day: a single "add to this day" chip -->
+                <Border IsVisible="{Binding JournalVM.ShowPastAdd}"
+                        BackgroundColor="{StaticResource GlassSoft}"
+                        Stroke="{StaticResource GlassLine}"
+                        StrokeThickness="1.5"
+                        StrokeShape="RoundRectangle 14,11,13,12"
+                        Padding="13,9"
+                        HorizontalOptions="Start"
+                        SemanticProperties.Description="Add to this day">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding JournalVM.OpenAddSheetCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate Journal_ChipAddDay}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12.5"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource InkTertiary}"/>
+                </Border>
                 <!-- 6 ── Day heading (italic serif) ────────────────────── -->
                 <Label Text="{Binding CalendarVM.DayHeading}"
                        FontFamily="{StaticResource FontSerifItalic}"
@@ -1246,6 +1154,80 @@
                         </Border>
                     </Grid>
 
+                    <!-- Glucose readings (rose accent); value is precise, never restyled -->
+                    <VerticalStackLayout Spacing="4"
+                                         IsVisible="{Binding JournalVM.HasGlucoseItems}"
+                                         BindableLayout.ItemsSource="{Binding JournalVM.GlucoseItems}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="38,*" ColumnSpacing="13">
+                                    <Grid Grid.Column="0" RowDefinitions="38,*">
+                                        <Border WidthRequest="38" HeightRequest="38" Rotation="-3"
+                                                BackgroundColor="{StaticResource RoseTint}"
+                                                StrokeThickness="0" StrokeShape="RoundRectangle 19,18,19,18"
+                                                VerticalOptions="Start">
+                                            <Label Text="🩸" FontSize="17" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                        </Border>
+                                        <BoxView Grid.Row="1" WidthRequest="2" Color="{StaticResource GlassLine}"
+                                                 HorizontalOptions="Center" Margin="0,4,0,0"/>
+                                    </Grid>
+                                    <Border Grid.Column="1" Style="{StaticResource GlassCard}">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <Label Grid.Column="0" Text="{Binding Title}"
+                                                       FontFamily="{StaticResource FontSans}" FontSize="13.5" FontAttributes="Bold"
+                                                       TextColor="{StaticResource Ink}"/>
+                                                <Label Grid.Column="1" Text="{Binding TimeDisplay}"
+                                                       FontFamily="{StaticResource FontSans}" FontSize="11"
+                                                       TextColor="{StaticResource InkTertiary}" VerticalOptions="Center"/>
+                                            </Grid>
+                                            <Label Text="{Binding Sub}"
+                                                   FontFamily="{StaticResource FontSans}" FontSize="12.5"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <!-- Appetite readings -->
+                    <VerticalStackLayout Spacing="4"
+                                         IsVisible="{Binding JournalVM.HasAppetiteItems}"
+                                         BindableLayout.ItemsSource="{Binding JournalVM.AppetiteItems}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="38,*" ColumnSpacing="13">
+                                    <Grid Grid.Column="0" RowDefinitions="38,*">
+                                        <Border WidthRequest="38" HeightRequest="38" Rotation="2.5"
+                                                BackgroundColor="{StaticResource HoneyWarmTint}"
+                                                StrokeThickness="0" StrokeShape="RoundRectangle 18,19,18,19"
+                                                VerticalOptions="Start">
+                                            <Label Text="🍽️" FontSize="17" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                        </Border>
+                                        <BoxView Grid.Row="1" WidthRequest="2" Color="{StaticResource GlassLine}"
+                                                 HorizontalOptions="Center" Margin="0,4,0,0"/>
+                                    </Grid>
+                                    <Border Grid.Column="1" Style="{StaticResource GlassCard}">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <Label Grid.Column="0" Text="{loc:Translate Journal_Appetite}"
+                                                       FontFamily="{StaticResource FontSans}" FontSize="13.5" FontAttributes="Bold"
+                                                       TextColor="{StaticResource Ink}"/>
+                                                <Label Grid.Column="1" Text="{Binding TimeDisplay}"
+                                                       FontFamily="{StaticResource FontSans}" FontSize="11"
+                                                       TextColor="{StaticResource InkTertiary}" VerticalOptions="Center"/>
+                                            </Grid>
+                                            <Label Text="{Binding Sub}"
+                                                   FontFamily="{StaticResource FontSans}" FontSize="12.5"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
                     <!-- Medication doses -->
                     <VerticalStackLayout Spacing="4"
                                          BindableLayout.ItemsSource="{Binding CalendarVM.DosesForSelectedDate}">
@@ -1350,45 +1332,8 @@
                                HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
 
-                    <!-- All-care-complete celebration -->
-                    <VerticalStackLayout x:Name="CelebrationSection"
-                                         IsVisible="{Binding CalendarVM.AllCareComplete}"
-                                         HorizontalOptions="Center"
-                                         Spacing="2"
-                                         Padding="10,18,10,6">
-                        <HorizontalStackLayout x:Name="PawRow"
-                                Spacing="14"
-                                HorizontalOptions="Center">
-                            <Label x:Name="Paw1"
-                                    Text="🐾"
-                                    FontSize="20"
-                                    Rotation="-14"
-                                    Opacity="0"/>
-                            <Label x:Name="Paw2"
-                                    Text="🐾"
-                                    FontSize="20"
-                                    Rotation="10"
-                                    TranslationY="-5"
-                                    Opacity="0"/>
-                            <Label x:Name="Paw3"
-                                    Text="🐾"
-                                    FontSize="20"
-                                    Rotation="-8"
-                                    Opacity="0"/>
-                            <Label x:Name="Paw4"
-                                    Text="🐾"
-                                    FontSize="20"
-                                    Rotation="12"
-                                    TranslationY="-5"
-                                    Opacity="0"/>
-                        </HorizontalStackLayout>
-                        <Label Text="{Binding CalendarVM.CelebrationText}"
-                               FontFamily="{StaticResource FontHand}"
-                               FontSize="20"
-                               TextColor="{StaticResource TealDeep}"
-                               HorizontalOptions="Center"
-                               HorizontalTextAlignment="Center"/>
-                    </VerticalStackLayout>
+                    <!-- (The all-care-complete celebration now lives in the chip row
+                         area above, driven by JournalVM.ShowAllDone.) -->
 
                 </VerticalStackLayout>
 
@@ -1516,8 +1461,35 @@
                         FontAttributes="Bold"
                        TextColor="{StaticResource White}"
                        VerticalOptions="Center"/>
+                <!-- Undo: the safety net for one-tap logging. Reachable by screen
+                     reader while the toast is up. -->
+                <Border x:Name="UndoButton"
+                        IsVisible="False"
+                        BackgroundColor="#1FFFFFFF"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 10"
+                        Padding="12,6"
+                        VerticalOptions="Center"
+                        SemanticProperties.Description="Undo">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnUndoTapped"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="Undo"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12.5"
+                           FontAttributes="Bold"
+                           TextColor="#8FE3CD"/>
+                </Border>
             </HorizontalStackLayout>
         </Border>
+
+        <!-- Journal input sheets (all share FelovaBottomSheet). Overlays above every
+             layer; input-transparent when closed so they never block the Journal. -->
+        <views:GlucoseSheetView Grid.RowSpan="2" BindingContext="{Binding GlucoseSheetVM}"/>
+        <views:MoodSheetView Grid.RowSpan="2" BindingContext="{Binding MoodSheetVM}"/>
+        <views:WeightSheetView Grid.RowSpan="2" BindingContext="{Binding WeightSheetVM}"/>
+        <views:AppetiteSheetView Grid.RowSpan="2" BindingContext="{Binding AppetiteSheetVM}"/>
+        <views:AddAnythingSheetView Grid.RowSpan="2" BindingContext="{Binding JournalVM}"/>
 
     </Grid>
 

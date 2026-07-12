@@ -832,7 +832,6 @@ public class CalendarViewModel : BaseViewModel
         await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadHubAsync(), LoadWeekActivitiesAsync());
         RefreshGroupSummaries();
         NotifyDerived();
-        Console.WriteLine($"Selected pet: {pet.Name}");
     });
 }
 

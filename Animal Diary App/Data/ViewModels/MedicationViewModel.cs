@@ -72,6 +72,7 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
             if (SetProperty(ref isEditingMedication, value))
             {
                 OnPropertyChanged(nameof(SheetTitle));
+                OnPropertyChanged(nameof(SheetSubtitle));
                 OnPropertyChanged(nameof(SaveButtonText));
             }
         }
@@ -81,6 +82,11 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
     private int? editingMedicationId;
 
     public string SheetTitle => LocalizationManager.Instance.GetString(IsEditingMedication ? "MedEdit_EditTitle" : "MedEdit_AddTitle");
+
+    /// <summary>The sheet's Caveat subtitle: the gentle editing note while editing,
+    /// empty when adding (the shared sheet hides an empty subtitle).</summary>
+    public string SheetSubtitle => IsEditingMedication ? LocalizationManager.Instance.GetString("MedEdit_EditingNote") : string.Empty;
+
     public string SaveButtonText => LocalizationManager.Instance.GetString(IsEditingMedication ? "MedEdit_Override" : "MedEdit_Save");
 
     public List<int> FrequencyOptions { get; } = new()
@@ -400,7 +406,6 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
     public async Task SetSelectedMedicationDraftAsync()
     {
         SelectedMedicationDraftPet = await _petService.GetPetByIdAsync(await _activePetService.GetSavedActivePetIdAsync());
-        Console.WriteLine($"Set SelectedMedicationDraftPet to active pet: {SelectedMedicationDraftPet?.Name}");
     }
 
     public async Task SaveMedicationCommandasync()

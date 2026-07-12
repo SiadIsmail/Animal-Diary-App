@@ -1,11 +1,9 @@
 namespace Animal_Diary_App.Data.View;
 
 using System.ComponentModel;
-using Animal_Diary_App.Data.Models;
-using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls.Shapes;
 
 // This file's own namespace is ...Data.View, which shadows the MAUI View type.
@@ -16,6 +14,9 @@ public partial class CalendarPage : ContentPage
 	private MainViewModel vm;
 	private int _toastSeq;
 
+	// The undo behind the currently-shown toast (null when the toast has no undo).
+	private Func<Task>? _pendingUndo;
+
 	public CalendarPage(MainViewModel mainViewModel)
 	{
 		InitializeComponent();
@@ -23,23 +24,27 @@ public partial class CalendarPage : ContentPage
 		BindingContext = vm;
 	}
 
-
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
 
-		// Play the paw celebration whenever the day's care becomes fully complete.
-		// Subscribe here (and unsubscribe in OnDisappearing) so handlers don't
-		// accumulate across navigations onto the same shared CalendarVM.
 		vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
 		vm.CalendarVM.TrackingChanged += OnTrackingChanged;
+		vm.JournalVM.PropertyChanged += OnJournalVmPropertyChanged;
+		vm.JournalVM.RequestOpenSheet += OnRequestOpenSheet;
+		vm.GlucoseSheetVM.Saved += OnSheetSaved;
+		vm.MoodSheetVM.Saved += OnSheetSaved;
+		vm.WeightSheetVM.Saved += OnSheetSaved;
+		vm.AppetiteSheetVM.Saved += OnSheetSaved;
 
 		if (vm.CalendarVM.Pets.Count == 0)
 			await vm.CalendarVM.PrepareDataAsync();
 		else
 			await vm.CalendarVM.RefreshEntriesAsync();
 
-		if (vm.CalendarVM.AllCareComplete)
+		await vm.JournalVM.ReloadAsync(vm.CalendarVM.CurrentSelectedDate);
+
+		if (vm.JournalVM.ShowAllDone)
 			await AnimatePawsAsync();
 	}
 
@@ -48,39 +53,26 @@ public partial class CalendarPage : ContentPage
 		base.OnDisappearing();
 		vm.CalendarVM.PropertyChanged -= OnCalendarVmPropertyChanged;
 		vm.CalendarVM.TrackingChanged -= OnTrackingChanged;
+		vm.JournalVM.PropertyChanged -= OnJournalVmPropertyChanged;
+		vm.JournalVM.RequestOpenSheet -= OnRequestOpenSheet;
+		vm.GlucoseSheetVM.Saved -= OnSheetSaved;
+		vm.MoodSheetVM.Saved -= OnSheetSaved;
+		vm.WeightSheetVM.Saved -= OnSheetSaved;
+		vm.AppetiteSheetVM.Saved -= OnSheetSaved;
 	}
 
-	/// <summary>A numeric tracker's entry was completed (keyboard "done") → persist
-	/// it via the leaf's own save command (its BindingContext is the TrackerLeaf).</summary>
+	/// <summary>Numeric tracker "done" on the keyboard → save via the leaf's command.
+	/// Retained for the (unused-but-defined) Tracker Hub input templates.</summary>
 	private void OnTrackingValueCompleted(object? sender, EventArgs e)
 	{
 		if (sender is BindableObject bo && bo.BindingContext is TrackerLeaf leaf)
 			leaf.SaveCommand.Execute(null);
 	}
 
-	/// <summary>Show a gentle confirmation after a tracking value is saved.</summary>
 	private void OnTrackingChanged(string message) => ShowToast(message);
 
-	async void OnMainClicked(object? sender, EventArgs args)
-	{
-		await Shell.Current.GoToAsync("//TodayTab");
-	}
-	async void OnPetsClicked(object? sender, EventArgs args)
-	{
-		await Shell.Current.GoToAsync("//PetsTab");
-	}
-
-	// ── Confirm actions: run the command, then celebrate (toast + burst) ──
-
-	private void OnMarkGivenClicked(object? sender, EventArgs e)
-	{
-		if (sender is not View anchor || anchor.BindingContext is not DoseItem dose)
-			return;
-
-		vm.CalendarVM.ToggleDoseTakenCommand.Execute(dose);
-		ShowToast(MedGivenToast());
-		_ = BurstBubblesAsync(anchor);
-	}
+	async void OnMainClicked(object? sender, EventArgs args) => await Shell.Current.GoToAsync("//TodayTab");
+	async void OnPetsClicked(object? sender, EventArgs args) => await Shell.Current.GoToAsync("//PetsTab");
 
 	/// <summary>Jump-to-today: snap the selection back to the current date.</summary>
 	private void OnJumpTodayClicked(object? sender, EventArgs e)
@@ -89,38 +81,126 @@ public partial class CalendarPage : ContentPage
 		ShowToast(LocalizationManager.Instance.GetString("Toast_BackToday"));
 	}
 
+	// ── "Still to do" chips ───────────────────────────────────────────────────
+	/// <summary>A chip was tapped. Medication chips log in one tap (with undo); the
+	/// others slide up their sheet; the trailing "+" opens the add-anything sheet.</summary>
+	private async void OnChipTapped(object? sender, TappedEventArgs e)
+	{
+		if (sender is not View v || v.BindingContext is not JournalChip chip)
+			return;
+
+		switch (chip.Kind)
+		{
+			case JournalChipKind.Add:
+				vm.JournalVM.OpenAddSheetCommand.Execute(null);
+				break;
+			case JournalChipKind.Medication:
+				await LogDoseFlowAsync(chip, v);
+				break;
+			default:
+				await OpenSheetForKindAsync(chip.Kind);
+				break;
+		}
+	}
+
+	// One-tap dose: log, pop bubbles from the chip, refresh (chip vanishes, entry
+	// appears), then a 6-second toast whose Undo removes the dose and restores it.
+	private async Task LogDoseFlowAsync(JournalChip chip, View anchor)
+	{
+		var result = await vm.JournalVM.LogDoseAsync(chip);
+		_ = BurstBubblesAsync(anchor);
+		await ReloadJournalAsync();
+		ShowUndoToast(result);
+	}
+
+	private void OnRequestOpenSheet(JournalChipKind kind) => _ = OpenAfterAddSheetAsync(kind);
+
+	// Let the "+" sheet finish sliding out before the chosen sheet slides in.
+	private async Task OpenAfterAddSheetAsync(JournalChipKind kind)
+	{
+		await Task.Delay(ReducedMotion.IsEnabled ? 60 : 220);
+		await OpenSheetForKindAsync(kind);
+	}
+
+	private async Task OpenSheetForKindAsync(JournalChipKind kind)
+	{
+		int petId = vm.CalendarVM.CurrentPetId;
+		string name = vm.CalendarVM.ActivePetName;
+		var date = vm.CalendarVM.CurrentSelectedDate;
+
+		switch (kind)
+		{
+			case JournalChipKind.Glucose: await vm.GlucoseSheetVM.OpenAsync(petId, name, date); break;
+			case JournalChipKind.Mood: await vm.MoodSheetVM.OpenAsync(petId, name, date); break;
+			case JournalChipKind.Weight: await vm.WeightSheetVM.OpenAsync(petId, name, date); break;
+			case JournalChipKind.Appetite: await vm.AppetiteSheetVM.OpenAsync(petId, name, date); break;
+			case JournalChipKind.Seizure: ShowToast(LocalizationManager.Instance.GetString("Journal_SeizureComingSoon")); break;
+		}
+	}
+
+	// A sheet saved something → bubble-pop, refresh, undo-toast.
+	private async void OnSheetSaved(JournalSaveResult result)
+	{
+		_ = BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62));
+		await ReloadJournalAsync();
+		ShowUndoToast(result);
+	}
+
+	private async Task ReloadJournalAsync()
+	{
+		await vm.JournalVM.ReloadAsync(vm.CalendarVM.CurrentSelectedDate);
+		await vm.CalendarVM.RefreshEntriesAsync();
+	}
+
 	private async void OnCalendarVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
 	{
-		if (e.PropertyName == nameof(CalendarViewModel.AllCareComplete) && vm.CalendarVM.AllCareComplete)
+		if (e.PropertyName is nameof(CalendarViewModel.CurrentSelectedDate) or nameof(CalendarViewModel.ActivePetName))
+			await vm.JournalVM.ReloadAsync(vm.CalendarVM.CurrentSelectedDate);
+	}
+
+	private async void OnJournalVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+	{
+		if (e.PropertyName == nameof(JournalLogViewModel.ShowAllDone) && vm.JournalVM.ShowAllDone)
 			await AnimatePawsAsync();
 	}
 
-	// ── Rotating warm copy (pulled from the HTML COPY object) ─────────────
-	private string MedGivenToast() => PickCopy(new[] { "Toast_MedGiven1", "Toast_MedGiven2", "Toast_MedGiven3" });
-	private string MoodSavedToast() => PickCopy(new[] { "Toast_MoodSaved1", "Toast_MoodSaved2" });
-	private string WeightSavedToast() => PickCopy(new[] { "Toast_WeightSaved1", "Toast_WeightSaved2" });
-
-	/// <summary>Pick one variant at random and format it with the active pet's
-	/// name ({0}); variants without a placeholder simply ignore the argument.</summary>
-	private string PickCopy(string[] keys)
+	// ── Undo ───────────────────────────────────────────────────────────────────
+	private async void OnUndoTapped(object? sender, TappedEventArgs e)
 	{
-		var key = keys[Random.Shared.Next(keys.Length)];
-		return LocalizationManager.Instance.Format(key, vm.CalendarVM.ActivePetName);
+		var undo = _pendingUndo;
+		_pendingUndo = null;
+		_toastSeq++;              // cancel the pending auto-hide
+		HideToast();
+
+		if (undo != null)
+			await undo();
+		await ReloadJournalAsync();
 	}
 
-	// ── Toast overlay ─────────────────────────────────────────────────────
-	private async void ShowToast(string message)
+	// ── Toast ──────────────────────────────────────────────────────────────────
+	private void ShowToast(string message) => ShowToastCore(message, null);
+
+	private void ShowUndoToast(JournalSaveResult result) => ShowToastCore(result.Message, result.UndoAsync);
+
+	private async void ShowToastCore(string message, Func<Task>? undo)
 	{
 		ToastLabel.Text = message;
+		_pendingUndo = undo;
+		UndoButton.IsVisible = undo != null;
+		// Only capture taps while an Undo button is present; otherwise stay
+		// input-transparent so the transient toast never blocks the Journal.
+		Toast.InputTransparent = undo == null;
+
 		int seq = ++_toastSeq;
+		int ms = undo != null ? 6000 : 2400; // undo stays 6s so it's reachable
 
 		if (ReducedMotion.IsEnabled)
 		{
 			Toast.TranslationY = 0;
 			Toast.Opacity = 1;
-			await Task.Delay(2400);
+			await Task.Delay(ms);
 			if (seq == _toastSeq)
-				Toast.Opacity = 0;
+				HideToast();
 			return;
 		}
 
@@ -130,24 +210,36 @@ public partial class CalendarPage : ContentPage
 			Toast.FadeTo(1, 220, Easing.CubicOut),
 			Toast.TranslateTo(0, 0, 220, Easing.CubicOut));
 
-		await Task.Delay(2400);
+		await Task.Delay(ms);
 		if (seq != _toastSeq)
 			return;
 		await Toast.FadeTo(0, 260, Easing.CubicIn);
+		HideToast();
 	}
 
-	// ── Reusable confirm burst: small bubbles rise + fade from an anchor ──
-	/// <summary>Emit a short burst of bubbles that rise and dissipate from the
-	/// centre of <paramref name="anchor"/>. Reusable from any "confirm" action;
-	/// silently does nothing when reduced motion is requested.</summary>
-	private async Task BurstBubblesAsync(View anchor)
+	private void HideToast()
 	{
-		if (ReducedMotion.IsEnabled || anchor.Width <= 0)
+		Toast.Opacity = 0;
+		Toast.InputTransparent = true;
+		UndoButton.IsVisible = false;
+		_pendingUndo = null;
+	}
+
+	// ── Reusable confirm burst: bubbles rise + fade from an anchor / point ──
+	private Task BurstBubblesAsync(View anchor)
+	{
+		if (anchor.Width <= 0)
+			return Task.CompletedTask;
+		var origin = GetPositionInPage(anchor);
+		return BurstBubblesAtAsync(new Point(origin.X + anchor.Width / 2, origin.Y + anchor.Height / 2));
+	}
+
+	private async Task BurstBubblesAtAsync(Point center)
+	{
+		if (ReducedMotion.IsEnabled)
 			return;
 
-		var origin = GetPositionInPage(anchor);
-		double cx = origin.X + anchor.Width / 2;
-		double cy = origin.Y + anchor.Height / 2;
+		double cx = center.X, cy = center.Y;
 		var rng = Random.Shared;
 
 		var tasks = new List<Task>();
@@ -199,8 +291,8 @@ public partial class CalendarPage : ContentPage
 		EffectLayer.Remove(bubble);
 	}
 
-	/// <summary>Position of an element relative to the page/effect layer, walking
-	/// up the visual tree and discounting the scroll offset.</summary>
+	/// <summary>Position of an element relative to the page, walking up the visual
+	/// tree and discounting the scroll offset.</summary>
 	private Point GetPositionInPage(VisualElement element)
 	{
 		double x = 0, y = 0;
@@ -219,8 +311,8 @@ public partial class CalendarPage : ContentPage
 		return new Point(x, y);
 	}
 
-	/// <summary>Fade the four paw glyphs in with a staggered delay (skipped when
-	/// the OS asks for reduced motion — they simply appear at full opacity).</summary>
+	/// <summary>Fade the four paw glyphs in with a staggered delay (skipped when the
+	/// OS asks for reduced motion — they simply appear at full opacity).</summary>
 	private async Task AnimatePawsAsync()
 	{
 		var paws = new[] { Paw1, Paw2, Paw3, Paw4 };

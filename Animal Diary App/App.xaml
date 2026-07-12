@@ -12,6 +12,7 @@
             </ResourceDictionary.MergedDictionaries>
             <helpers:StringToBoolConverter x:Key="StringToBoolConverter" />
             <helpers:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+            <helpers:InvertedBoolConverter x:Key="InvertedBoolConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

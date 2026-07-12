@@ -111,18 +111,14 @@ public enum AppetiteLevel
 
 public static class AppetiteLevelExtensions
 {
-    /// <summary>The word for a stored level. NOTE: routed through the localization
-    /// resources (EN + DE) in Step 5; the English literals here are the interim
-    /// mapping from the brief so Step 4's UI reads correctly before then.</summary>
-    public static string GetDisplayName(this AppetiteLevel level) => level switch
+    /// <summary>The localized word for a stored level (EN + DE via AppStrings). The
+    /// owner always sees the word, never the number.</summary>
+    public static string GetDisplayName(this AppetiteLevel level)
     {
-        AppetiteLevel.Barely => "Barely",
-        AppetiteLevel.ALittle => "A little",
-        AppetiteLevel.AboutHalf => "About half",
-        AppetiteLevel.MostOfIt => "Most of it",
-        AppetiteLevel.Everything => "Everything",
-        _ => string.Empty
-    };
+        if (level is < AppetiteLevel.Barely or > AppetiteLevel.Everything)
+            return string.Empty;
+        return Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString($"Appetite_Level{(int)level}");
+    }
 
     /// <summary>Fraction of the bowl to fill for the level's indicator (0..1). Used by
     /// the appetite sheet's progressively-filled bowl — no numbers shown.</summary>

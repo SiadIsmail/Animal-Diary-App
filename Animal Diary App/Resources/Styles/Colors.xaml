@@ -129,6 +129,12 @@
     <Color x:Key="BlueTint">#243E8FB0</Color>   <!-- 14% -->
     <Color x:Key="BlueInk">#2A6E8C</Color>      <!-- weigh-in icon fg -->
 
+    <!-- Rose — glucose accent (the design system's rose / rose-tint / rose-deep;
+         glucose is new, so these join the warm palette now). -->
+    <Color x:Key="Rose">#BE5F76</Color>
+    <Color x:Key="RoseTint">#24BE5F76</Color>   <!-- 14% -->
+    <Color x:Key="RoseDeep">#8C3B50</Color>
+
     <!-- Honey — medication (warm variant, distinct from shared Honey) -->
     <Color x:Key="HoneyWarm">#D9973C</Color>
     <Color x:Key="HoneyWarmTint">#29D9973C</Color> <!-- 16% -->

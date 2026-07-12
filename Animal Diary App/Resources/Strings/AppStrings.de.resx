@@ -158,6 +158,58 @@
   <data name="Toast_WeightSaved2" xml:space="preserve"><value>Zu {0}s Geschichte hinzugefügt.</value></data>
   <data name="Toast_BackToday" xml:space="preserve"><value>Zurück zu heute</value></data>
 
+  <!-- ── Journal chip rework: „Noch zu tun“-Chips + Eingabe-Sheets (§6) ── -->
+  <data name="Journal_GlucoseCheck" xml:space="preserve"><value>Zucker messen</value></data>
+  <data name="Journal_Appetite" xml:space="preserve"><value>Appetit</value></data>
+  <data name="Journal_Water" xml:space="preserve"><value>Wasser</value></data>
+  <data name="Journal_Seizure" xml:space="preserve"><value>Anfall</value></data>
+  <data name="Journal_CountOfN" xml:space="preserve"><value>{0} von {1}</value></data>
+  <data name="Journal_StillToDoOne" xml:space="preserve"><value>Noch zu tun — {0} Kleinigkeit</value></data>
+  <data name="Journal_StillToDoMany" xml:space="preserve"><value>Noch zu tun — {0} Kleinigkeiten</value></data>
+  <data name="Journal_ChipAddMore" xml:space="preserve"><value>＋ Noch etwas</value></data>
+  <data name="Journal_ChipAddDay" xml:space="preserve"><value>＋ Zu diesem Tag</value></data>
+  <data name="Journal_AddMoreTitle" xml:space="preserve"><value>Noch etwas eintragen</value></data>
+  <data name="Journal_AddDayTitle" xml:space="preserve"><value>Zu diesem Tag hinzufügen</value></data>
+  <data name="Journal_AddSheetSub" xml:space="preserve"><value>{0} · {1:ddd, d. MMM}</value></data>
+  <data name="Journal_A11yGiveMed" xml:space="preserve"><value>{0} geben, fällig um {1}</value></data>
+  <data name="Journal_A11yLogGlucose" xml:space="preserve"><value>Zucker eintragen, {0} von {1} heute erledigt</value></data>
+  <data name="Journal_A11yLogAppetite" xml:space="preserve"><value>Appetit eintragen</value></data>
+  <data name="Journal_A11yLogWeight" xml:space="preserve"><value>Gewicht eintragen</value></data>
+  <data name="Journal_A11yLogMood" xml:space="preserve"><value>Stimmung eintragen</value></data>
+  <data name="Journal_A11yLogWater" xml:space="preserve"><value>Wasser eintragen</value></data>
+  <data name="Journal_ToastMedGiven" xml:space="preserve"><value>{0} gegeben — braver Mensch.</value></data>
+  <data name="Journal_ToastGlucose" xml:space="preserve"><value>Gespeichert — eine Zahl, notiert.</value></data>
+  <data name="Journal_ToastAppetite" xml:space="preserve"><value>Notiert — {0} gefressen.</value></data>
+  <data name="Journal_SeizureComingSoon" xml:space="preserve"><value>Anfälle protokollieren kommt bald.</value></data>
+  <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}s Zucker-Check</value></data>
+  <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d. MMM} — eine Zahl, und fertig</value></data>
+  <data name="Journal_GlucoseFieldLabel" xml:space="preserve"><value>Blutzucker · mmol/L</value></data>
+  <data name="Journal_WhenLabel" xml:space="preserve"><value>Wann</value></data>
+  <data name="Journal_BeforeFood" xml:space="preserve"><value>Vor dem Fressen</value></data>
+  <data name="Journal_AfterFood" xml:space="preserve"><value>Nach dem Fressen</value></data>
+  <data name="Journal_SaveCheck" xml:space="preserve"><value>Messung speichern</value></data>
+  <data name="Journal_MoodSheetTitle" xml:space="preserve"><value>Wie geht es {0}?</value></data>
+  <data name="Journal_MoodSheetSub" xml:space="preserve"><value>{0:ddd, d. MMM} — du kennst sie am besten</value></data>
+  <data name="Journal_MoodNotePlaceholder" xml:space="preserve"><value>Eine kleine Notiz · optional</value></data>
+  <data name="Journal_SaveMood" xml:space="preserve"><value>Stimmung speichern</value></data>
+  <data name="Journal_WeightTitle" xml:space="preserve"><value>{0}s Gewicht</value></data>
+  <data name="Journal_WeightSub" xml:space="preserve"><value>{0:ddd, d. MMM} — jeder Eintrag hilft dem Tierarzt</value></data>
+  <data name="Journal_WeightFieldLabel" xml:space="preserve"><value>Gewicht · Kilogramm</value></data>
+  <data name="Journal_SaveWeight" xml:space="preserve"><value>Gewicht speichern</value></data>
+  <data name="Journal_AppetiteTitle" xml:space="preserve"><value>Wie hat {0} gefressen?</value></data>
+  <data name="Journal_AppetiteSub" xml:space="preserve"><value>{0:ddd, d. MMM} — ehrliche Antworten helfen</value></data>
+  <data name="Appetite_Level1" xml:space="preserve"><value>Kaum</value></data>
+  <data name="Appetite_Level2" xml:space="preserve"><value>Ein wenig</value></data>
+  <data name="Appetite_Level3" xml:space="preserve"><value>Etwa die Hälfte</value></data>
+  <data name="Appetite_Level4" xml:space="preserve"><value>Das meiste</value></data>
+  <data name="Appetite_Level5" xml:space="preserve"><value>Alles</value></data>
+  <data name="Journal_GlucoseTimeline" xml:space="preserve"><value>Zucker · {0} mmol/L</value></data>
+  <data name="Journal_AteWord" xml:space="preserve"><value>{0} gefressen</value></data>
+  <data name="Journal_GlucoseInRange" xml:space="preserve"><value>genau im üblichen Bereich</value></data>
+  <data name="Journal_GlucoseHigh" xml:space="preserve"><value>etwas hoch — behalt es im Auge</value></data>
+  <data name="Journal_GlucoseLow" xml:space="preserve"><value>eher niedrig — sprich es beim Tierarzt an</value></data>
+  <data name="Common_NotNow" xml:space="preserve"><value>Jetzt nicht</value></data>
+
   <!-- ── Care (Pets) header ── -->
   <data name="Care_Eyebrow" xml:space="preserve"><value>Tiere &amp; Verwaltung</value></data>
   <data name="Care_Title" xml:space="preserve"><value>Pflege</value></data>

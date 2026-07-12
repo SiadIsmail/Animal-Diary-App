@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- AddAnythingSheetView — the "+" sheet listing this pet's log types. BindingContext
+     is the JournalLogViewModel; picking a row raises RequestOpenSheet, which the page
+     turns into the matching sheet sliding up in its place. -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             x:Class="Animal_Diary_App.Data.View.AddAnythingSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsAddSheetVisible, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsAddSheetVisible}"
+                                Title="{Binding AddSheetTitle}"
+                                Subtitle="{Binding AddSheetSubtitle}"
+                                DismissCommand="{Binding CloseAddSheetCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+            <VerticalStackLayout Spacing="9" Padding="0,2,0,2"
+                                 BindableLayout.ItemsSource="{Binding AddOptions}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <Border BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 16,13,15,14"
+                                Padding="13,13">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={x:Reference Root}, Path=BindingContext.SelectAddOptionCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="36,*" ColumnSpacing="13">
+                                <Border Grid.Column="0" WidthRequest="36" HeightRequest="36"
+                                        BackgroundColor="{StaticResource TealTint}"
+                                        StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                        VerticalOptions="Center">
+                                    <Label Text="{Binding Icon}" FontSize="18"
+                                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                                <Label Grid.Column="1" Text="{Binding Label}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>

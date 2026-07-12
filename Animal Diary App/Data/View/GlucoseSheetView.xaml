@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    GlucoseSheetView
+    ─────────────────────────────────────────────────────────
+    The Journal's "log a glucose reading" sheet — a value stepper + Before/After
+    food toggle, rendered inside the shared FelovaBottomSheet. BindingContext is a
+    GlucoseSheetViewModel; open it via that VM's OpenAsync. The value is a precise
+    readout: one decimal, never softened.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             x:Class="Animal_Diary_App.Data.View.GlucoseSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="CharacterSpacing" Value="1"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+        <Style x:Key="StepButton" TargetType="Border">
+            <Setter Property="WidthRequest" Value="46"/>
+            <Setter Property="HeightRequest" Value="46"/>
+            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 15,13,14,16"/>
+        </Style>
+        <!-- Before/After toggle segment; highlighted via a bound-bool DataTrigger. -->
+        <Style x:Key="SegButton" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource GlassSoft}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 12"/>
+            <Setter Property="Padding" Value="0,11"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet x:Name="Sheet"
+                                IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+
+                <!-- Value stepper -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Journal_GlucoseFieldLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                        <Border Grid.Column="0" Style="{StaticResource StepButton}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="-0.1"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="−"
+                                   FontSize="24"
+                                   TextColor="{StaticResource TealDeep}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 14">
+                            <Entry Text="{Binding ValueText}"
+                                   Keyboard="Numeric"
+                                   HorizontalTextAlignment="Center"
+                                   FontFamily="{StaticResource FontSerif}"
+                                   FontSize="24"
+                                   TextColor="{StaticResource Ink}"/>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource StepButton}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="0.1"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="+"
+                                   FontSize="24"
+                                   TextColor="{StaticResource TealDeep}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- Before / After food -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Journal_WhenLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Border Grid.Column="0" Style="{StaticResource SegButton}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsBeforeFood}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickContextCommand}" CommandParameter="before"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Journal_BeforeFood}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource InkSecondary}"
+                                   HorizontalOptions="Center"/>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource SegButton}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsAfterFood}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickContextCommand}" CommandParameter="after"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Journal_AfterFood}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource InkSecondary}"
+                                   HorizontalOptions="Center"/>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- Actions -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,6,0,0">
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_NotNow}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Journal_SaveCheck}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>
