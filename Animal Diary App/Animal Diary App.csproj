@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="keystore.props" Condition="Exists('keystore.props')" />
 
 	<PropertyGroup>
 		<TargetFrameworks>net9.0-android</TargetFrameworks>
@@ -76,5 +77,11 @@
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 		<PackageReference Include="Plugin.LocalNotification" Version="12.0.2" />
 	</ItemGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Release' AND '$(TargetFramework)' == 'net9.0-android'">
+		<AndroidKeyStore>true</AndroidKeyStore>
+		<AndroidSigningKeyStore>felova-upload.keystore</AndroidSigningKeyStore>
+		<AndroidSigningKeyAlias>felova</AndroidSigningKeyAlias>
+	</PropertyGroup>
 
 </Project>
