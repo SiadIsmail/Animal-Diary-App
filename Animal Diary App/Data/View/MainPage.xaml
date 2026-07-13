@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers"
@@ -395,7 +395,7 @@
                             <FlexLayout Wrap="Wrap" Direction="Row" AlignItems="Center">
                                 <HorizontalStackLayout Spacing="5" Margin="0,0,12,0">
                                     <Border WidthRequest="8" HeightRequest="8" StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3" BackgroundColor="#2D5016"
+                                            StrokeShape="RoundRectangle 3" BackgroundColor="{StaticResource MGreat}"
                                             VerticalOptions="Center"/>
                                     <Label Text="{loc:Translate Mood_Excellent}"
                                            FontFamily="{StaticResource FontSans}" FontSize="10.5"
@@ -403,7 +403,7 @@
                                 </HorizontalStackLayout>
                                 <HorizontalStackLayout Spacing="5" Margin="0,0,12,0">
                                     <Border WidthRequest="8" HeightRequest="8" StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3" BackgroundColor="#4CAF50"
+                                            StrokeShape="RoundRectangle 3" BackgroundColor="{StaticResource MGood}"
                                             VerticalOptions="Center"/>
                                     <Label Text="{loc:Translate Mood_Good}"
                                            FontFamily="{StaticResource FontSans}" FontSize="10.5"
@@ -411,7 +411,7 @@
                                 </HorizontalStackLayout>
                                 <HorizontalStackLayout Spacing="5" Margin="0,0,12,0">
                                     <Border WidthRequest="8" HeightRequest="8" StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3" BackgroundColor="#FFC107"
+                                            StrokeShape="RoundRectangle 3" BackgroundColor="{StaticResource MOkay}"
                                             VerticalOptions="Center"/>
                                     <Label Text="{loc:Translate Mood_Neutral}"
                                            FontFamily="{StaticResource FontSans}" FontSize="10.5"
@@ -419,7 +419,7 @@
                                 </HorizontalStackLayout>
                                 <HorizontalStackLayout Spacing="5" Margin="0,0,12,0">
                                     <Border WidthRequest="8" HeightRequest="8" StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3" BackgroundColor="#FF9800"
+                                            StrokeShape="RoundRectangle 3" BackgroundColor="{StaticResource MLow}"
                                             VerticalOptions="Center"/>
                                     <Label Text="{loc:Translate Mood_Bad}"
                                            FontFamily="{StaticResource FontSans}" FontSize="10.5"
@@ -427,7 +427,7 @@
                                 </HorizontalStackLayout>
                                 <HorizontalStackLayout Spacing="5" Margin="0,0,12,0">
                                     <Border WidthRequest="8" HeightRequest="8" StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3" BackgroundColor="#F44336"
+                                            StrokeShape="RoundRectangle 3" BackgroundColor="{StaticResource MUnwell}"
                                             VerticalOptions="Center"/>
                                     <Label Text="{loc:Translate Mood_VeryBad}"
                                            FontFamily="{StaticResource FontSans}" FontSize="10.5"

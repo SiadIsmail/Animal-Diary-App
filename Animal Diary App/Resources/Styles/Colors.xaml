@@ -78,12 +78,6 @@
     <Color x:Key="Clay">#C05F5F</Color>
     <Color x:Key="ClayTint">#F7E5E2</Color>
 
-    <!-- Mood scale -->
-    <Color x:Key="MoodGreat">#4FA085</Color>
-    <Color x:Key="MoodGood">#8CB56E</Color>
-    <Color x:Key="MoodOkay">#DFB253</Color>
-    <Color x:Key="MoodLow">#D68D62</Color>
-    <Color x:Key="MoodUnwell">#C05F5F</Color>
 
     <!-- Brushes for the common surface / accent tokens -->
     <SolidColorBrush x:Key="PaperBrush" Color="{StaticResource Paper}"/>
@@ -152,11 +146,11 @@
     <Color x:Key="Well">#57FFFFFF</Color>       <!-- 34% recessed well -->
 
     <!-- Mood scale (warm variant — matches HTML m-great..m-unwell) -->
-    <Color x:Key="MGreat">#2E9C82</Color>
-    <Color x:Key="MGood">#7DB268</Color>
-    <Color x:Key="MOkay">#DFB253</Color>
-    <Color x:Key="MLow">#D68D62</Color>
-    <Color x:Key="MUnwell">#C05F5F</Color>
+    <Color x:Key="MGreat">#FF2BBC89</Color>
+    <Color x:Key="MGood">#FF89E166</Color>
+    <Color x:Key="MOkay">#FFE2F250</Color>
+    <Color x:Key="MLow">#FFF29C33</Color>
+    <Color x:Key="MUnwell">#FFDC4141</Color>
 
     <!-- Brushes for surfaces / strokes used by the Journal -->
     <SolidColorBrush x:Key="TealBrush" Color="{StaticResource Teal}"/>

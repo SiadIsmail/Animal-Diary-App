@@ -3,11 +3,11 @@ namespace Animal_Diary_App.Helpers;
 public enum MoodLevel
 {
     None = 0,
-    VeryBad = 1,
-    Bad = 2,
-    Neutral = 3,
+    Unwell = 1,
+    Low = 2,
+    Okay = 3,
     Good = 4,
-    Excellent = 5
+    Great = 5
 }
 
 public static class MoodLevelExtensions
@@ -16,11 +16,11 @@ public static class MoodLevelExtensions
     {
         var key = mood switch
         {
-            MoodLevel.Excellent => "Mood_Excellent",
+            MoodLevel.Great => "Mood_Great",
             MoodLevel.Good => "Mood_Good",
-            MoodLevel.Neutral => "Mood_Neutral",
-            MoodLevel.Bad => "Mood_Bad",
-            MoodLevel.VeryBad => "Mood_VeryBad",
+            MoodLevel.Okay => "Mood_Okay",
+            MoodLevel.Low => "Mood_Low",
+            MoodLevel.Unwell => "Mood_Unwell",
             _ => "Mood_None"
         };
         return LocalizationManager.Instance.GetString(key);
@@ -28,21 +28,21 @@ public static class MoodLevelExtensions
 
     public static Color GetColor(this MoodLevel mood) => mood switch
     {
-        MoodLevel.Excellent => Color.FromArgb("#2D5016"),
-        MoodLevel.Good => Color.FromArgb("#4CAF50"),
-        MoodLevel.Neutral => Color.FromArgb("#FFC107"),
-        MoodLevel.Bad => Color.FromArgb("#FF9800"),
-        MoodLevel.VeryBad => Color.FromArgb("#F44336"),
-        _ => Color.FromArgb("#E0E0E0")
+        MoodLevel.Great => (Color)Application.Current!.Resources["MGreat"],
+        MoodLevel.Good => (Color)Application.Current!.Resources["MGood"],
+        MoodLevel.Okay => (Color)Application.Current!.Resources["MOkay"],
+        MoodLevel.Low => (Color)Application.Current!.Resources["MLow"],
+        MoodLevel.Unwell => (Color)Application.Current!.Resources["MUnwell"],
+        _ => Colors.White
     };
 
     public static string GetEmoji(this MoodLevel mood) => mood switch
     {
-        MoodLevel.Excellent => "😄",
+        MoodLevel.Great => "😄",
         MoodLevel.Good => "😊",
-        MoodLevel.Neutral => "😐",
-        MoodLevel.Bad => "😟",
-        MoodLevel.VeryBad => "😢",
+        MoodLevel.Okay => "😐",
+        MoodLevel.Low => "😟",
+        MoodLevel.Unwell => "😢",
         _ => "❓"
     };
 }
