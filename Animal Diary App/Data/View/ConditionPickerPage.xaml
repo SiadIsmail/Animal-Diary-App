@@ -11,6 +11,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
              x:Class="Animal_Diary_App.Data.View.ConditionPickerPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
@@ -70,8 +71,8 @@
                                         CommandParameter="{Binding .}"/>
                                 </Border.GestureRecognizers>
 
-                                <Grid ColumnDefinitions="Auto,*,Auto"
-                                      ColumnSpacing="14">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                                      ColumnSpacing="12">
                                     <Label Grid.Column="0"
                                            Text="{Binding Icon}"
                                            FontSize="24"
@@ -83,7 +84,7 @@
                                            FontAttributes="Bold"
                                            TextColor="{StaticResource Ink}"
                                            VerticalOptions="Center"/>
-                                    <!-- Selected check -->
+                                    <!-- Configured / selected check -->
                                     <Label Grid.Column="2"
                                            Text="✓"
                                            FontFamily="{StaticResource FontSans}"
@@ -92,6 +93,22 @@
                                            TextColor="{StaticResource TealDeep}"
                                            VerticalOptions="Center"
                                            IsVisible="{Binding IsSelected}"/>
+                                    <!-- Toggle-off ✕ on selected real conditions -->
+                                    <Border Grid.Column="3"
+                                            WidthRequest="24" HeightRequest="24"
+                                            BackgroundColor="{StaticResource Well}"
+                                            StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                            VerticalOptions="Center"
+                                            IsVisible="{Binding ShowRemove}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ConditionVM.RemoveCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <Label Text="✕" FontSize="11" FontAttributes="Bold"
+                                               TextColor="{StaticResource InkTertiary}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -122,6 +139,11 @@
                        Padding="0,16"/>
             </Border>
         </VerticalStackLayout>
+
+        <!-- ── Reusable condition setup sheets — the SAME instances Manage uses ── -->
+        <views:DiabetesSetupSheetView Grid.RowSpan="2" BindingContext="{Binding DiabetesSetupVM}"/>
+        <views:CkdSetupSheetView Grid.RowSpan="2" BindingContext="{Binding CkdSetupVM}"/>
+        <views:EpilepsySetupSheetView Grid.RowSpan="2" BindingContext="{Binding EpilepsySetupVM}"/>
 
     </Grid>
 

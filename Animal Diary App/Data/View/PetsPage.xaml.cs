@@ -63,6 +63,11 @@ public partial class PetsPage : ContentPage
         await Navigation.PushAsync(new CreatePetPage(vm));
     }
 
+    async void OnManageClicked(object? sender, EventArgs args)
+    {
+        await Navigation.PushAsync(new ManagePetPage(vm));
+    }
+
     async void OnAddMedicationClicked(object? sender, EventArgs args)
     {
         await Navigation.PushAsync(new MedicationsPage(vm));

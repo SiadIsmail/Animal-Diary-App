@@ -49,7 +49,14 @@ public static class CarePlanCatalog
 
     /// <summary>The full default plan for a pet with the given condition: defaults +
     /// condition extras, de-duplicated by <see cref="Tracker.TrackerId"/> (defaults win).</summary>
-    public static List<Tracker> BuildDefaultPlan(string? conditionId)
+    public static List<Tracker> BuildDefaultPlan(string? conditionId) =>
+        BuildDefaultPlan(new[] { conditionId });
+
+    /// <summary>The full default plan for a pet carrying SEVERAL conditions: the
+    /// always-on defaults plus every condition's extras, merged and de-duplicated by
+    /// <see cref="Tracker.TrackerId"/> (defaults and earlier conditions win). This is
+    /// the multi-condition seed the pet page and picker use.</summary>
+    public static List<Tracker> BuildDefaultPlan(IEnumerable<string?> conditionIds)
     {
         var plan = new List<Tracker>();
         var seen = new HashSet<TrackerId>();
@@ -61,7 +68,8 @@ public static class CarePlanCatalog
         }
 
         foreach (var t in DefaultTrackers()) Add(t);
-        foreach (var t in ForCondition(conditionId)) Add(t);
+        foreach (var id in conditionIds ?? System.Array.Empty<string?>())
+            foreach (var t in ForCondition(id)) Add(t);
         return plan;
     }
 

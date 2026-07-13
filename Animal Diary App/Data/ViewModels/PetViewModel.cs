@@ -137,8 +137,6 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
     public ICommand SelectPetCommand { get; }
     public ICommand AddPetCommand { get; }
-    public ICommand OpenActivePetProfileCommand { get; }
-    public ICommand EditActivePetCommand { get; }
     public ICommand OpenDocumentsCommand { get; }
     public ICommand ExportReportCommand { get; }
     public ICommand OpenMedicationDetailCommand { get; }
@@ -151,8 +149,6 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
         SelectPetCommand = new Command<Pet>(SelectPet);
         AddPetCommand = new Command(async () => await SavePetAsync());
-        OpenActivePetProfileCommand = new Command(() => Console.WriteLine("Open active pet profile"));
-        EditActivePetCommand = new Command(() => Console.WriteLine($"Edit pet {ActivePet.Name}"));
         OpenDocumentsCommand = new Command(() => Console.WriteLine("Open documents"));
         ExportReportCommand = new Command(() => Console.WriteLine("Export report"));
         OpenMedicationDetailCommand = new Command(() => Console.WriteLine("Open medication detail"));
@@ -218,6 +214,73 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
         // Leave the form in a clean state so the next "add pet" starts fresh.
         ResetDraft();
+    }
+
+    /// <summary>
+    /// Prefill the create/edit form from the active pet — the edit-pet door from the
+    /// Manage page. Matches the stored type to a known option (else "Other" with the
+    /// custom text), and clears any residual validation errors.
+    /// </summary>
+    public void LoadDraftFromActivePet()
+    {
+        var pet = ActivePet;
+        if (pet == null)
+            return;
+
+        EnteredPetName = pet.Name;
+        EnteredPetAge = pet.Age.ToString();
+
+        var match = PetTypeOptions.FirstOrDefault(
+            o => string.Equals(o.Name, pet.Type, StringComparison.OrdinalIgnoreCase));
+        if (match != null)
+        {
+            SelectedPetType = match; // setter mirrors the name into EnteredPetType
+        }
+        else
+        {
+            SelectedPetType = PetTypeOptions.FirstOrDefault(o => o.Name == "Other");
+            EnteredPetType = pet.Type; // a custom type: keep the stored text
+        }
+
+        PetNameError = string.Empty;
+        PetTypeError = string.Empty;
+        PetAgeError = string.Empty;
+    }
+
+    /// <summary>Set the form's title + button for edit mode ("You're editing {X}").</summary>
+    public void ConfigureForEdit()
+    {
+        PageTitle = LocalizationManager.Instance.Format("CreatePet_EditTitle", ActivePet?.Name ?? string.Empty);
+        SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_EditSave");
+        ShowBackButton = true;
+    }
+
+    /// <summary>Save an edit in place: update the active pet's fields and persist. No
+    /// new pet, no condition picker — the Manage page just pops back.</summary>
+    public async Task<bool> SaveEditedPetAsync()
+    {
+        ValidatePetName();
+        ValidatePetType();
+        ValidatePetAge();
+
+        if (!CanSavePet)
+            return false;
+
+        var pet = ActivePet;
+        if (pet == null)
+            return false;
+
+        pet.Name = EnteredPetName.Trim();
+        pet.Type = EnteredPetType.Trim();
+        pet.Age = ParsedPetAge!.Value;
+
+        await _petService.UpdatePetAsync(pet);
+
+        // Refresh anything bound to the active pet (Care card, subtitle, emoji).
+        OnPropertyChanged(nameof(ActivePet));
+        OnPropertyChanged(nameof(ActivePetEmoji));
+        OnPropertyChanged(nameof(ActivePetSubtitle));
+        return true;
     }
 
     /// <summary>

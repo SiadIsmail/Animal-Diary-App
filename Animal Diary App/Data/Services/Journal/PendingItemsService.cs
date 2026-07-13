@@ -38,7 +38,7 @@ public class PendingItemsService
     public async Task<IReadOnlyList<PendingItem>> GetAsync(Pet pet, DateTime date)
     {
         var day = date.Date;
-        var plan = _carePlan.GetPlan(pet);
+        var plan = await _carePlan.GetPlanAsync(pet);
 
         var doses = await GatherDosesAsync(pet.Id, day);
         var entries = await GatherEntryDatesAsync(pet.Id, day);

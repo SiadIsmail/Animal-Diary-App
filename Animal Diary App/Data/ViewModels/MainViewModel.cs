@@ -20,6 +20,14 @@ public class MainViewModel
     public WeightSheetViewModel WeightSheetVM { get; }
     public AppetiteSheetViewModel AppetiteSheetVM { get; }
 
+    // ── Reusable condition-setup sheets ("one menu, two doors": onboarding + Manage) ──
+    public DiabetesSetupSheetViewModel DiabetesSetupVM { get; }
+    public CkdSetupSheetViewModel CkdSetupVM { get; }
+    public EpilepsySetupSheetViewModel EpilepsySetupVM { get; }
+
+    /// <summary>The Manage Pet page (identity, conditions, care plan, medications).</summary>
+    public ManagePetViewModel ManageVM { get; }
+
     // Child VMs that hold transient form/draft state, cleared together on a
     // global data reset. New draft forms just implement IResettableDraft and
     // get added here.
@@ -36,7 +44,11 @@ public class MainViewModel
  GlucoseSheetViewModel glucoseSheetVM,
  MoodSheetViewModel moodSheetVM,
  WeightSheetViewModel weightSheetVM,
- AppetiteSheetViewModel appetiteSheetVM)
+ AppetiteSheetViewModel appetiteSheetVM,
+ DiabetesSetupSheetViewModel diabetesSetupVM,
+ CkdSetupSheetViewModel ckdSetupVM,
+ EpilepsySetupSheetViewModel epilepsySetupVM,
+ ManagePetViewModel manageVM)
     {
         MainPageVM = mainPageVM;
         PetVM = petVM;
@@ -49,6 +61,10 @@ public class MainViewModel
         MoodSheetVM = moodSheetVM;
         WeightSheetVM = weightSheetVM;
         AppetiteSheetVM = appetiteSheetVM;
+        DiabetesSetupVM = diabetesSetupVM;
+        CkdSetupVM = ckdSetupVM;
+        EpilepsySetupVM = epilepsySetupVM;
+        ManageVM = manageVM;
 
         _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM };
     }

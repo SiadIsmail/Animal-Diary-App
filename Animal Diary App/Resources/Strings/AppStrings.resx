@@ -222,6 +222,60 @@
   <!-- Shared -->
   <data name="Common_NotNow" xml:space="preserve"><value>Not now</value></data>
 
+  <!-- ── Condition setup sheets (reused in onboarding + Manage Pet) ── -->
+  <data name="CondSetup_DiabetesTitle" xml:space="preserve"><value>Diabetes</value></data>
+  <data name="CondSetup_DiabetesSub" xml:space="preserve"><value>how often should Felova ask for a glucose check?</value></data>
+  <data name="CondSetup_GlucoseFreqLabel" xml:space="preserve"><value>GLUCOSE CHECKS</value></data>
+  <data name="CondSetup_FreqOnce" xml:space="preserve"><value>Once daily</value></data>
+  <data name="CondSetup_FreqTwice" xml:space="preserve"><value>Twice daily</value></data>
+  <data name="CondSetup_FreqThree" xml:space="preserve"><value>3× daily</value></data>
+  <data name="CondSetup_FreqAsNeeded" xml:space="preserve"><value>Only when needed</value></data>
+  <data name="CondSetup_TargetRangeLabel" xml:space="preserve"><value>TARGET RANGE · OPTIONAL</value></data>
+  <data name="CondSetup_RangeHint" xml:space="preserve"><value>No range yet? Leave it empty — readings are simply recorded, without judgement, until you add one.</value></data>
+  <data name="CondSetup_RangeError" xml:space="preserve"><value>That range needs a low and a high, low first.</value></data>
+  <data name="CondSetup_DiabetesSave" xml:space="preserve"><value>Set up diabetes care</value></data>
+  <data name="CondSetup_CkdTitle" xml:space="preserve"><value>Kidney care</value></data>
+  <data name="CondSetup_CkdSub" xml:space="preserve"><value>weight, appetite and water tell the story here</value></data>
+  <data name="CondSetup_WeighInLabel" xml:space="preserve"><value>WEIGH-INS</value></data>
+  <data name="CondSetup_FreqDaily" xml:space="preserve"><value>Daily</value></data>
+  <data name="CondSetup_FreqTwiceWeekly" xml:space="preserve"><value>Twice a week</value></data>
+  <data name="CondSetup_FreqWeekly" xml:space="preserve"><value>Weekly</value></data>
+  <data name="CondSetup_AlsoTrackLabel" xml:space="preserve"><value>ALSO TRACK</value></data>
+  <data name="CondSetup_AppetiteToggle" xml:space="preserve"><value>Appetite · daily</value></data>
+  <data name="CondSetup_WaterToggle" xml:space="preserve"><value>Water intake · daily</value></data>
+  <data name="CondSetup_CkdSave" xml:space="preserve"><value>Set up kidney care</value></data>
+  <data name="CondSetup_EpilepsyTitle" xml:space="preserve"><value>Epilepsy</value></data>
+  <data name="CondSetup_EpilepsySub" xml:space="preserve"><value>nothing to schedule — just a place to capture it</value></data>
+  <data name="CondSetup_EpilepsyBody" xml:space="preserve"><value>Seizures can't be planned, so this adds a seizure log instead of a daily task. It waits under + in the Journal, ready to capture when it happened, how long it lasted and what you noticed.</value></data>
+  <data name="CondSetup_EpilepsySave" xml:space="preserve"><value>Add seizure log</value></data>
+
+  <!-- ── Manage Pet page ── -->
+  <data name="Manage_IdentityHint" xml:space="preserve"><value>Tap to edit name, type or age</value></data>
+  <data name="Manage_ConditionsTitle" xml:space="preserve"><value>Conditions</value></data>
+  <data name="Manage_ConditionsNote" xml:space="preserve"><value>the vet's words, remembered</value></data>
+  <data name="Manage_CarePlanTitle" xml:space="preserve"><value>Care plan</value></data>
+  <data name="Manage_CarePlanNote" xml:space="preserve"><value>what the Journal will ask for</value></data>
+  <data name="Manage_AddCondition" xml:space="preserve"><value>Add condition</value></data>
+  <data name="Manage_MedicationsTitle" xml:space="preserve"><value>Medications</value></data>
+  <data name="Manage_AddMedication" xml:space="preserve"><value>Add medication</value></data>
+  <data name="Manage_EmptyPlan" xml:space="preserve"><value>Nothing tracked — and that's okay too.</value></data>
+  <data name="Manage_PreviewLabel" xml:space="preserve"><value>so {0}'s Journal will gently ask for…</value></data>
+  <data name="Manage_MedsCount" xml:space="preserve"><value>Medications ×{0}</value></data>
+  <data name="Manage_FreqPerDay" xml:space="preserve"><value>{0}× daily</value></data>
+  <data name="Manage_Event" xml:space="preserve"><value>logged as it happens · waits under +</value></data>
+  <data name="Manage_GlucoseTarget" xml:space="preserve"><value>target {0}–{1} mmol/L</value></data>
+  <data name="Manage_NoTarget" xml:space="preserve"><value>no target range yet</value></data>
+  <data name="Manage_AddConditionTitle" xml:space="preserve"><value>Add a condition</value></data>
+  <data name="Manage_AddConditionSub" xml:space="preserve"><value>this sets up the right trackers</value></data>
+  <data name="Manage_RemoveTitle" xml:space="preserve"><value>Remove {0}?</value></data>
+  <data name="Manage_RemoveLinked" xml:space="preserve"><value>This set up: {0}. All history is kept either way — nothing is ever deleted.</value></data>
+  <data name="Manage_RemoveNoLinked" xml:space="preserve"><value>No trackers came from this condition. All history is kept.</value></data>
+  <data name="Manage_RemoveWithTrackers" xml:space="preserve"><value>Remove it and its trackers</value></data>
+  <data name="Manage_RemoveKeepTrackers" xml:space="preserve"><value>Remove it, keep the trackers</value></data>
+  <data name="Manage_RemoveCancel" xml:space="preserve"><value>Keep everything</value></data>
+  <data name="Manage_AdjustSub" xml:space="preserve"><value>match whatever your vet suggested</value></data>
+  <data name="Manage_TurnOff" xml:space="preserve"><value>Turn off</value></data>
+
   <!-- ── Care (Pets) header ── -->
   <data name="Care_Eyebrow" xml:space="preserve"><value>Pets &amp; management</value></data>
   <data name="Care_Title" xml:space="preserve"><value>Care</value></data>
@@ -237,6 +291,9 @@
   <data name="Pets_MedicationsTag" xml:space="preserve"><value>2 Medications</value></data>
   <data name="Pets_OpenProfile" xml:space="preserve"><value>Open Profile</value></data>
   <data name="Pets_Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Pets_Manage" xml:space="preserve"><value>Manage</value></data>
+  <data name="ConditionPicker_Title" xml:space="preserve"><value>Does {0} have any ongoing conditions?</value></data>
+  <data name="ConditionPicker_Sub" xml:space="preserve"><value>Pick any that apply so Felova tracks the right things for {0}. You can change this anytime.</value></data>
   <data name="Pets_QuickManagement" xml:space="preserve"><value>QUICK MANAGEMENT</value></data>
   <data name="Pets_AddPet" xml:space="preserve"><value>Add Pet</value></data>
   <data name="Pets_AddPetSubtitle" xml:space="preserve"><value>Create a new pet profile</value></data>
@@ -297,6 +354,8 @@
   <!-- ── Create pet ── -->
   <data name="CreatePet_FirstLaunchTitle" xml:space="preserve"><value>Meet your first pet 🐾</value></data>
   <data name="CreatePet_AddTitle" xml:space="preserve"><value>Add a Pet</value></data>
+  <data name="CreatePet_EditTitle" xml:space="preserve"><value>You're editing {0}</value></data>
+  <data name="CreatePet_EditSave" xml:space="preserve"><value>Save changes</value></data>
   <data name="CreatePet_FirstLaunchSave" xml:space="preserve"><value>Let's go! 🐾</value></data>
   <data name="CreatePet_AddSave" xml:space="preserve"><value>Add Pet</value></data>
   <data name="CreatePet_Subtitle" xml:space="preserve"><value>Tell us about your animal. You can always edit this later.</value></data>

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    CkdSetupSheetView
+    ─────────────────────────────────────────────────────────
+    The reusable "set up kidney care" sheet — weigh-in cadence + optional daily
+    Appetite / Water tracking, in the shared FelovaBottomSheet. Hosted by BOTH the
+    onboarding condition picker and the Manage Pet page. BindingContext is a
+    CkdSetupSheetViewModel; open it via that VM's OpenAsync.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             x:Class="Animal_Diary_App.Data.View.CkdSetupSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="CharacterSpacing" Value="1"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+        <Style x:Key="SegButton" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource GlassSoft}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 12"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="Margin" Value="0,0,7,7"/>
+        </Style>
+        <Style x:Key="SegLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+        <Style x:Key="ToggleRow" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource GlassSoft}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 14,12,13,12"/>
+            <Setter Property="Padding" Value="15,10"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding TitleText}"
+                                Subtitle="{Binding SubtitleText}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+
+                <!-- Weigh-in cadence -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate CondSetup_WeighInLabel}" Style="{StaticResource FieldLabel}"/>
+                    <FlexLayout Wrap="Wrap" Direction="Row">
+                        <Border Style="{StaticResource SegButton}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsWeightDaily}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource BlueTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource Blue}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickWeightFrequencyCommand}" CommandParameter="daily"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate CondSetup_FreqDaily}" Style="{StaticResource SegLabel}"/>
+                        </Border>
+                        <Border Style="{StaticResource SegButton}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsWeightTwiceWeekly}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource BlueTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource Blue}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickWeightFrequencyCommand}" CommandParameter="twiceweekly"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate CondSetup_FreqTwiceWeekly}" Style="{StaticResource SegLabel}"/>
+                        </Border>
+                        <Border Style="{StaticResource SegButton}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsWeightWeekly}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource BlueTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource Blue}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickWeightFrequencyCommand}" CommandParameter="weekly"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate CondSetup_FreqWeekly}" Style="{StaticResource SegLabel}"/>
+                        </Border>
+                    </FlexLayout>
+                </VerticalStackLayout>
+
+                <!-- Also track -->
+                <VerticalStackLayout Spacing="9">
+                    <Label Text="{loc:Translate CondSetup_AlsoTrackLabel}" Style="{StaticResource FieldLabel}"/>
+
+                    <Border Style="{StaticResource ToggleRow}">
+                        <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                            <Label Grid.Column="0"
+                                   Text="{loc:Translate CondSetup_AppetiteToggle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="13.5"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"
+                                   VerticalOptions="Center"/>
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding IsAppetiteOn}"
+                                    OnColor="{StaticResource Teal}"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource ToggleRow}">
+                        <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                            <Label Grid.Column="0"
+                                   Text="{loc:Translate CondSetup_WaterToggle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="13.5"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"
+                                   VerticalOptions="Center"/>
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding IsWaterOn}"
+                                    OnColor="{StaticResource Teal}"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Actions -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,6,0,0">
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_NotNow}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CondSetup_CkdSave}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>

@@ -217,30 +217,16 @@
                             </VerticalStackLayout>
                         </Grid>
 
-                        <!-- Actions -->
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="9">
-                            <Button Grid.Column="0"
-                                    Text="{loc:Translate Pets_OpenProfile}"
-                                    FontFamily="{StaticResource FontSans}"
-                                    FontSize="13"
-                                    FontAttributes="Bold"
-                                    HeightRequest="44"
-                                    CornerRadius="14"
-                                    BackgroundColor="{StaticResource Teal}"
-                                    TextColor="{StaticResource White}"
-                                    Command="{Binding PetVM.OpenActivePetProfileCommand}"/>
-                            <Button Grid.Column="1"
-                                    Text="{loc:Translate Pets_Edit}"
-                                    FontFamily="{StaticResource FontSans}"
-                                    FontSize="13"
-                                    FontAttributes="Bold"
-                                    HeightRequest="44"
-                                    WidthRequest="96"
-                                    CornerRadius="14"
-                                    BackgroundColor="{StaticResource TealTint}"
-                                    TextColor="{StaticResource TealDeep}"
-                                    Command="{Binding PetVM.EditActivePetCommand}"/>
-                        </Grid>
+                        <!-- Action — one "Manage" button opens the full Manage Pet page -->
+                        <Button Text="{loc:Translate Pets_Manage}"
+                                FontFamily="{StaticResource FontSans}"
+                                FontSize="13"
+                                FontAttributes="Bold"
+                                HeightRequest="44"
+                                CornerRadius="14"
+                                BackgroundColor="{StaticResource Teal}"
+                                TextColor="{StaticResource White}"
+                                Clicked="OnManageClicked"/>
                     </VerticalStackLayout>
                 </Border>
 

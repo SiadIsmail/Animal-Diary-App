@@ -19,13 +19,42 @@ public partial class ConditionPickerPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
-        // Highlight whatever is already stored on the just-created pet (defaults
-        // to "None / Not sure").
-        vm.ConditionVM.Sync();
+
+        // The reusable setup sheets are the SAME ones the Manage page uses; opening +
+        // refreshing is coordinated exactly the same way.
+        vm.ConditionVM.RequestConditionSetup += OnRequestConditionSetup;
+        vm.DiabetesSetupVM.Saved += OnSheetSaved;
+        vm.CkdSetupVM.Saved += OnSheetSaved;
+        vm.EpilepsySetupVM.Saved += OnSheetSaved;
+
+        // Reflect whatever is already stored on the just-created pet.
+        await vm.ConditionVM.SyncAsync();
     }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        vm.ConditionVM.RequestConditionSetup -= OnRequestConditionSetup;
+        vm.DiabetesSetupVM.Saved -= OnSheetSaved;
+        vm.CkdSetupVM.Saved -= OnSheetSaved;
+        vm.EpilepsySetupVM.Saved -= OnSheetSaved;
+    }
+
+    private async void OnRequestConditionSetup(string conditionId)
+    {
+        switch (conditionId)
+        {
+            case "diabetes": await vm.DiabetesSetupVM.OpenAsync(); break;
+            case "ckd": await vm.CkdSetupVM.OpenAsync(); break;
+            case "epilepsy": await vm.EpilepsySetupVM.OpenAsync(); break;
+        }
+    }
+
+    private async void OnSheetSaved() => await vm.ConditionVM.SyncAsync();
 
     private async void OnContinueTapped(object? sender, TappedEventArgs e)
     {

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    DiabetesSetupSheetView
+    ─────────────────────────────────────────────────────────
+    The reusable "set up diabetes care" sheet — glucose-check frequency + an optional
+    target range, in the shared FelovaBottomSheet. Hosted by BOTH the onboarding
+    condition picker and the Manage Pet page ("one menu, two doors"). BindingContext
+    is a DiabetesSetupSheetViewModel; open it via that VM's OpenAsync.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             x:Class="Animal_Diary_App.Data.View.DiabetesSetupSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="CharacterSpacing" Value="1"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+        <Style x:Key="SegButton" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource GlassSoft}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 12"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="Margin" Value="0,0,7,7"/>
+        </Style>
+        <Style x:Key="SegLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+        <Style x:Key="RangeEntry" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 13"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding TitleText}"
+                                Subtitle="{Binding SubtitleText}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+
+                <!-- Glucose-check frequency -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate CondSetup_GlucoseFreqLabel}" Style="{StaticResource FieldLabel}"/>
+                    <FlexLayout Wrap="Wrap" Direction="Row">
+                        <Border Style="{StaticResource SegButton}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsFreqOnce}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource RoseTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource RoseDeep}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickFrequencyCommand}" CommandParameter="1"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate CondSetup_FreqOnce}" Style="{StaticResource SegLabel}"/>
+                        </Border>
+                        <Border Style="{StaticResource SegButton}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsFreqTwice}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource RoseTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource RoseDeep}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickFrequencyCommand}" CommandParameter="2"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate CondSetup_FreqTwice}" Style="{StaticResource SegLabel}"/>
+                        </Border>
+                        <Border Style="{StaticResource SegButton}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsFreqThrice}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource RoseTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource RoseDeep}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickFrequencyCommand}" CommandParameter="3"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate CondSetup_FreqThree}" Style="{StaticResource SegLabel}"/>
+                        </Border>
+                        <Border Style="{StaticResource SegButton}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsFreqAsNeeded}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource RoseTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource RoseDeep}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PickFrequencyCommand}" CommandParameter="asneeded"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate CondSetup_FreqAsNeeded}" Style="{StaticResource SegLabel}"/>
+                        </Border>
+                    </FlexLayout>
+                </VerticalStackLayout>
+
+                <!-- Optional target range -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate CondSetup_TargetRangeLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Grid ColumnDefinitions="*,Auto,*,Auto" ColumnSpacing="10" VerticalOptions="Center">
+                        <Border Grid.Column="0" Style="{StaticResource RangeEntry}">
+                            <Entry Text="{Binding LoText}"
+                                   Keyboard="Numeric"
+                                   Placeholder="4.0"
+                                   HorizontalTextAlignment="Center"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="15"
+                                   TextColor="{StaticResource Ink}"/>
+                        </Border>
+                        <Label Grid.Column="1" Text="–"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource InkTertiary}"
+                               VerticalOptions="Center"/>
+                        <Border Grid.Column="2" Style="{StaticResource RangeEntry}">
+                            <Entry Text="{Binding HiText}"
+                                   Keyboard="Numeric"
+                                   Placeholder="11.0"
+                                   HorizontalTextAlignment="Center"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="15"
+                                   TextColor="{StaticResource Ink}"/>
+                        </Border>
+                        <Label Grid.Column="3" Text="mmol/L"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource InkSecondary}"
+                               VerticalOptions="Center"/>
+                    </Grid>
+
+                    <Label Text="{Binding RangeError}"
+                           IsVisible="{Binding HasRangeError}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="11.5"
+                           TextColor="{StaticResource RoseDeep}"/>
+
+                    <Label Text="{loc:Translate CondSetup_RangeHint}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="11.5"
+                           TextColor="{StaticResource InkTertiary}"/>
+                </VerticalStackLayout>
+
+                <!-- Actions -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,6,0,0">
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_NotNow}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CondSetup_DiabetesSave}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>

@@ -18,12 +18,16 @@ public partial class CreatePetPage : ContentPage
     {
         base.OnAppearing();
 
-        // Add mode always opens on a clean draft so stale inputs from a previous
-        // creation don't reappear. Edit mode keeps the draft the caller loaded
-        // for the pet being edited.
-        if (!isEditMode)
-            vm.PetVM.ResetDraft();
+        // Edit mode keeps the draft the caller (Manage page) loaded for the pet being
+        // edited, and shows the "You're editing X" title. Add mode opens on a clean
+        // draft so stale inputs from a previous creation don't reappear.
+        if (isEditMode)
+        {
+            vm.PetVM.ConfigureForEdit();
+            return;
+        }
 
+        vm.PetVM.ResetDraft();
         await vm.PetVM.CheckAndSetFirstLaunchAsync();
     }
 
@@ -36,6 +40,14 @@ public partial class CreatePetPage : ContentPage
 
     async void OnSaveClicked(object? sender, EventArgs args)
     {
+        if (isEditMode)
+        {
+            // Edit-pet door: save in place and return to Manage (no condition picker).
+            if (await vm.PetVM.SaveEditedPetAsync())
+                await Navigation.PopAsync();
+            return;
+        }
+
         await vm.PetVM.SavePetAsync();
 
         // The pet now exists and is the active pet. Ask about its condition next;

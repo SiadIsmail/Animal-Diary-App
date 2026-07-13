@@ -100,7 +100,7 @@ public class JournalLogViewModel : BaseViewModel
         _glucose = glucose;
         _appetite = appetite;
 
-        OpenAddSheetCommand = new Command(OpenAddSheet);
+        OpenAddSheetCommand = new Command(async () => await OpenAddSheetAsync());
         CloseAddSheetCommand = new Command(() => IsAddSheetVisible = false);
         SelectAddOptionCommand = new Command<AddOption>(OnSelectAddOption);
     }
@@ -180,9 +180,9 @@ public class JournalLogViewModel : BaseViewModel
         RequestOpenSheet?.Invoke(option.Kind);
     }
 
-    private void OpenAddSheet()
+    private async Task OpenAddSheetAsync()
     {
-        BuildAddOptions();
+        await BuildAddOptionsAsync();
         OnPropertyChanged(nameof(AddSheetTitle));
         OnPropertyChanged(nameof(AddSheetSubtitle));
         IsAddSheetVisible = true;
@@ -311,7 +311,7 @@ public class JournalLogViewModel : BaseViewModel
         if (pet == null || pet.Id == 0)
             return (glucose, appetite);
 
-        var range = _carePlan.GetPlan(pet)
+        var range = (await _carePlan.GetPlanAsync(pet))
             .FirstOrDefault(t => t.TrackerId == TrackerId.Glucose)?.TargetRange;
 
         foreach (var g in await _glucose.GetForDateAsync(pet.Id, _date))
@@ -368,14 +368,14 @@ public class JournalLogViewModel : BaseViewModel
     }
 
     // ── Add-anything options (tracker sheets present in the plan) ──────────────────
-    private void BuildAddOptions()
+    private async Task BuildAddOptionsAsync()
     {
         AddOptions.Clear();
         var pet = _activePet.ActivePet;
         if (pet == null)
             return;
 
-        var plan = _carePlan.GetPlan(pet);
+        var plan = await _carePlan.GetPlanAsync(pet);
         bool Has(TrackerId id) => plan.Any(t => t.TrackerId == id);
 
         if (Has(TrackerId.Glucose)) AddOptions.Add(new AddOption { Kind = JournalChipKind.Glucose, Icon = "🩸", Label = Loc.GetString("Journal_GlucoseCheck") });
