@@ -25,6 +25,7 @@ public class SettingsViewModel : BaseViewModel
     public ICommand CloseSettingsCommand { get; }
     public ICommand DeleteAllDataCommand { get; }
     public ICommand SetLanguageCommand { get; }
+    public ICommand OpenLinkCommand { get; }
 
     private readonly AppResetService _appResetService;
     private readonly SettingsService _settingsService;
@@ -37,6 +38,22 @@ public class SettingsViewModel : BaseViewModel
         CloseSettingsCommand = new Command(() => IsPanelOpen = false);
         DeleteAllDataCommand = new Command(async () => await OnDeleteAllDataAsync());
         SetLanguageCommand = new Command<string>(async code => await SetLanguageAsync(code));
+        OpenLinkCommand = new Command<string>(async url => await OpenLinkAsync(url));
+    }
+
+    private static async Task OpenLinkAsync(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return;
+
+        try
+        {
+            await Launcher.OpenAsync(uri);
+        }
+        catch
+        {
+            // Ignore — no browser available or the launch was cancelled.
+        }
     }
 
     /// <summary>Two-letter code of the active language ("en" / "de").</summary>

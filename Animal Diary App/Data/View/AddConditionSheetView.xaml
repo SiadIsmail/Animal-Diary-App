@@ -20,8 +20,12 @@
                                 DismissCommand="{Binding CloseAddConditionCommand}">
         <controls:FelovaBottomSheet.SheetContent>
 
-            <VerticalStackLayout Spacing="10" Padding="0,2,0,0"
-                                 BindableLayout.ItemsSource="{Binding AddConditionOptions}">
+            <!-- Outer layout is the reparented SheetContent root; the BindableLayout
+                 lives on the INNER layout so Android doesn't drop its item generation
+                 when the root is moved into the sheet's BodyHost. -->
+            <VerticalStackLayout Padding="0,2,0,0">
+              <VerticalStackLayout Spacing="10"
+                                   BindableLayout.ItemsSource="{Binding AddConditionOptions}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate>
                         <Border BackgroundColor="{StaticResource GlassSoft}"
@@ -47,6 +51,7 @@
                         </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
+              </VerticalStackLayout>
             </VerticalStackLayout>
 
         </controls:FelovaBottomSheet.SheetContent>

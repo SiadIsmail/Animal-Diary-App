@@ -99,6 +99,13 @@
   <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Alle Daten löschen</value></data>
   <data name="Settings_DeleteConfirmMessage" xml:space="preserve"><value>Dadurch werden alle Tiere, Einträge, Medikamente und Einstellungen dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.</value></data>
   <data name="Settings_DeleteConfirmAccept" xml:space="preserve"><value>Löschen</value></data>
+  <data name="Settings_CommunitySection" xml:space="preserve"><value>COMMUNITY &amp; SUPPORT</value></data>
+  <data name="Settings_DiscordTitle" xml:space="preserve"><value>Tritt der Felova-Community bei</value></data>
+  <data name="Settings_DiscordSubtitle" xml:space="preserve"><value>Hast du Feedback, Vorschläge oder Fragen zur Gesundheit deines Tieres? Tritt unserer Discord-Community bei und tausche dich direkt mit anderen Tierhaltern und dem Entwickler von Felova aus.</value></data>
+  <data name="Settings_WebsiteTitle" xml:space="preserve"><value>Felova-Website besuchen</value></data>
+  <data name="Settings_WebsiteSubtitle" xml:space="preserve"><value>Erfahre mehr über Felova, entdecke kommende Funktionen und finde hilfreiche Ressourcen für die Gesundheit deines Tieres.</value></data>
+  <data name="Settings_PrivacyTitle" xml:space="preserve"><value>Datenschutzerklärung</value></data>
+  <data name="Settings_PrivacySubtitle" xml:space="preserve"><value>Erfahre, wie Felova mit deinen Daten umgeht und wie wir deine Privatsphäre schützen.</value></data>
 
   <!-- ── Main page ── -->
   <data name="Main_GreetingMorning" xml:space="preserve"><value>Guten Morgen ☀️</value></data>

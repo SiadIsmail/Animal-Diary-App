@@ -14,8 +14,12 @@
                                 Subtitle="{Binding AddSheetSubtitle}"
                                 DismissCommand="{Binding CloseAddSheetCommand}">
         <controls:FelovaBottomSheet.SheetContent>
-            <VerticalStackLayout Spacing="9" Padding="0,2,0,2"
-                                 BindableLayout.ItemsSource="{Binding AddOptions}">
+            <!-- Outer layout is the reparented SheetContent root; the BindableLayout
+                 lives on the INNER layout so Android doesn't drop its item generation
+                 when the root is moved into the sheet's BodyHost. -->
+            <VerticalStackLayout Padding="0,2,0,2">
+              <VerticalStackLayout Spacing="9"
+                                   BindableLayout.ItemsSource="{Binding AddOptions}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate>
                         <Border BackgroundColor="{StaticResource Glass}"
@@ -43,6 +47,7 @@
                         </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
+              </VerticalStackLayout>
             </VerticalStackLayout>
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>

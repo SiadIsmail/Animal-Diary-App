@@ -99,6 +99,13 @@
   <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Delete All Data</value></data>
   <data name="Settings_DeleteConfirmMessage" xml:space="preserve"><value>This will permanently delete all pets, logs, medications, and settings. This cannot be undone.</value></data>
   <data name="Settings_DeleteConfirmAccept" xml:space="preserve"><value>Delete</value></data>
+  <data name="Settings_CommunitySection" xml:space="preserve"><value>COMMUNITY &amp; SUPPORT</value></data>
+  <data name="Settings_DiscordTitle" xml:space="preserve"><value>Felova Community</value></data>
+  <data name="Settings_DiscordSubtitle" xml:space="preserve"><value>Feedback, support &amp; pet discussions</value></data>
+  <data name="Settings_WebsiteTitle" xml:space="preserve"><value>Visit the Felova Website</value></data>
+  <data name="Settings_WebsiteSubtitle" xml:space="preserve"><value>Features, updates &amp; resources</value></data>
+  <data name="Settings_PrivacyTitle" xml:space="preserve"><value>Privacy Policy</value></data>
+  <data name="Settings_PrivacySubtitle" xml:space="preserve"><value>How Felova protects your data</value></data>
 
   <!-- ── Main page ── -->
   <data name="Main_GreetingMorning" xml:space="preserve"><value>Good morning ☀️</value></data>
