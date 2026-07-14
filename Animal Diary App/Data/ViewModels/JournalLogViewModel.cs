@@ -370,14 +370,21 @@ public class JournalLogViewModel : BaseViewModel
     // ── Add-anything options (tracker sheets present in the plan) ──────────────────
     private async Task BuildAddOptionsAsync()
     {
-        AddOptions.Clear();
         var pet = _activePet.ActivePet;
         if (pet == null)
+        {
+            AddOptions.Clear();
             return;
+        }
 
+        // Gather (await) BEFORE touching the bound collection, then fill atomically
+        // with no await in between. If we cleared before the await, Android renders the
+        // now-empty sheet during the yield and never shows the items added afterwards
+        // (the same race ReloadAsync guards against). Windows happens to re-render.
         var plan = await _carePlan.GetPlanAsync(pet);
         bool Has(TrackerId id) => plan.Any(t => t.TrackerId == id);
 
+        AddOptions.Clear();
         if (Has(TrackerId.Glucose)) AddOptions.Add(new AddOption { Kind = JournalChipKind.Glucose, Icon = "🩸", Label = Loc.GetString("Journal_GlucoseCheck") });
         AddOptions.Add(new AddOption { Kind = JournalChipKind.Mood, Icon = "🙂", Label = Loc.GetString("Journal_MoodTitle") });
         if (Has(TrackerId.Appetite)) AddOptions.Add(new AddOption { Kind = JournalChipKind.Appetite, Icon = "🍽️", Label = Loc.GetString("Journal_Appetite") });
