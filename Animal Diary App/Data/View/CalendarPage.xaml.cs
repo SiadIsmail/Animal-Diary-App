@@ -71,9 +71,6 @@ public partial class CalendarPage : ContentPage
 
 	private void OnTrackingChanged(string message) => ShowToast(message);
 
-	async void OnMainClicked(object? sender, EventArgs args) => await Shell.Current.GoToAsync("//TodayTab");
-	async void OnPetsClicked(object? sender, EventArgs args) => await Shell.Current.GoToAsync("//PetsTab");
-
 	/// <summary>Jump-to-today: snap the selection back to the current date.</summary>
 	private void OnJumpTodayClicked(object? sender, EventArgs e)
 	{

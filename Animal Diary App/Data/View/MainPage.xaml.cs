@@ -66,16 +66,6 @@ public partial class MainPage : ContentPage
         Application.Current!.Windows[0].Page = new NavigationPage(new WelcomePage(vm));
     }
 
-    async void OnCalendarClicked(object? sender, EventArgs args)
-    {
-        await Shell.Current.GoToAsync("//JournalTab");
-    }
-
-    async void OnPetsClicked(object? sender, EventArgs args)
-    {
-        await Shell.Current.GoToAsync("//PetsTab");
-    }
-
     private void OnCalendarVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // These derived flags fire whenever the day's entries/doses reload.

@@ -119,13 +119,13 @@
   <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Next up</value></data>
   <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>All caught up</value></data>
   <data name="Main_AllCaughtUpDetail" xml:space="preserve"><value>Nothing due right now — nicely done.</value></data>
-  <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Healthy (Placeholder)</value></data>
-  <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Meds 20:00 (Placeholder)</value></data>
-  <data name="Main_StableThisWeek" xml:space="preserve"><value>Stable this week (Placeholder)</value></data>
-  <data name="Main_HappyPlaceholder" xml:space="preserve"><value>Happy 😊 (Placeholder)</value></data>
+  <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Healthy</value></data>
+  <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Meds 20:00</value></data>
+  <data name="Main_StableThisWeek" xml:space="preserve"><value>Stable this week</value></data>
+  <data name="Main_HappyPlaceholder" xml:space="preserve"><value>Happy</value></data>
   <data name="Main_LoggedToday" xml:space="preserve"><value>Logged today</value></data>
   <data name="Main_MedicationGiven" xml:space="preserve"><value>Medication given</value></data>
-  <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazole · with food (Placeholder)</value></data>
+  <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazole · with food</value></data>
 
   <!-- ── Journal (Calendar) header ── -->
   <data name="Journal_Eyebrow" xml:space="preserve"><value>Health journal</value></data>

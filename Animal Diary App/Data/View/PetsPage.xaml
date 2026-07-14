@@ -357,68 +357,8 @@
         </ScrollView>
 
         <!-- ================= TAB BAR ================= -->
-        <Border Grid.Row="1"
-                Margin="16,0,16,16"
-                Padding="7"
-                BackgroundColor="{StaticResource Glass}"
-                Stroke="{StaticResource GlassLine}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 24"
-                VerticalOptions="End">
-
-            <Border.Shadow>
-                <Shadow Brush="#0D3A3C" Offset="0,10" Radius="24" Opacity="0.16"/>
-            </Border.Shadow>
-
-            <Grid ColumnDefinitions="*,*,*">
-
-                <!-- MAIN -->
-                <Grid Grid.Column="0" Padding="0,8">
-                    <Grid.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnMainClicked"/>
-                    </Grid.GestureRecognizers>
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
-                        <Label Text="🏠" FontSize="20" HorizontalTextAlignment="Center"/>
-                        <Label Text="{loc:Translate Nav_Main}"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="10.5" FontAttributes="Bold"
-                               TextColor="{StaticResource InkTertiary}"
-                               HorizontalTextAlignment="Center"/>
-                    </VerticalStackLayout>
-                </Grid>
-
-                <!-- CALENDAR -->
-                <Grid Grid.Column="1" Padding="0,8">
-                    <Grid.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnCalendarClicked"/>
-                    </Grid.GestureRecognizers>
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
-                        <Label Text="📅" FontSize="20" HorizontalTextAlignment="Center"/>
-                        <Label Text="{loc:Translate Nav_Calendar}"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="10.5" FontAttributes="Bold"
-                               TextColor="{StaticResource InkTertiary}"
-                               HorizontalTextAlignment="Center"/>
-                    </VerticalStackLayout>
-                </Grid>
-
-                <!-- PETS (active) -->
-                <Border Grid.Column="2"
-                        BackgroundColor="{StaticResource TealTint}"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 17"
-                        Padding="0,8">
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
-                        <Label Text="🐾" FontSize="20" HorizontalTextAlignment="Center"/>
-                        <Label Text="{loc:Translate Nav_Pets}"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="10.5" FontAttributes="Bold"
-                               TextColor="{StaticResource TealDeep}"
-                               HorizontalTextAlignment="Center"/>
-                    </VerticalStackLayout>
-                </Border>
-            </Grid>
-        </Border>
+        <controls:BottomNavigation Grid.Row="1"
+                                   ActiveTab="Pets"/>
 
         <!-- Settings panel overlay — last child renders on top of everything -->
         <view:SettingsPanelView Grid.RowSpan="2"

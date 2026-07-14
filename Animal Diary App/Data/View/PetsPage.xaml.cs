@@ -48,16 +48,6 @@ public partial class PetsPage : ContentPage
         await Navigation.PushAsync(new CreatePetPage(vm));
     }
 
-    async void OnMainClicked(object? sender, EventArgs args)
-    {
-        await Shell.Current.GoToAsync("//TodayTab");
-    }
-
-    async void OnCalendarClicked(object? sender, EventArgs args)
-    {
-        await Shell.Current.GoToAsync("//JournalTab");
-    }
-
     async void OnAddPetClicked(object? sender, EventArgs args)
     {
         await Navigation.PushAsync(new CreatePetPage(vm));
