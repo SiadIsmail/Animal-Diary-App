@@ -126,11 +126,28 @@ public partial class FelovaBottomSheet : ContentView
         Scrim.Opacity = 0;
         IsVisible = true;
 
+        // Android: the body was collapsed (IsVisible=false) while hidden, so content
+        // populated just before presenting — especially a BindableLayout whose items
+        // were assigned on-open — measures short (or empty) on this first show and only
+        // corrects on a later, unrelated relayout. Force the body to remeasure now that
+        // it's on-screen, and again on the next tick once the platform has settled.
+        InvalidateBody();
+        Dispatcher.Dispatch(InvalidateBody);
+
         await Task.WhenAll(
             Scrim.FadeTo(1, reduce ? ReducedMs : ScrimInMs, Easing.CubicOut),
             SheetContainer.TranslateTo(0, 0, reduce ? ReducedMs : SlideInMs, SheetEasing));
 
+        InvalidateBody();
         isAnimating = false;
+    }
+
+    // Re-measure the sheet + its hosted body (see ShowAsync). A no-op cost when nothing
+    // has changed; on Android it's what makes late-populated content lay out on first show.
+    private void InvalidateBody()
+    {
+        (SheetContainer as Microsoft.Maui.IView)?.InvalidateMeasure();
+        (BodyHost?.Content as Microsoft.Maui.IView)?.InvalidateMeasure();
     }
 
     private async Task HideAsync()
