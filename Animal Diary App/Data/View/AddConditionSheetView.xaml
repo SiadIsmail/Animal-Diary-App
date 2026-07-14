@@ -26,11 +26,11 @@
                  handler was created while IsVisible=false (this sheet's hidden-until-
                  opened state). CollectionView drives a real RecyclerView with its own
                  adapter, which rebuilds correctly regardless of prior visibility. -->
-            <VerticalStackLayout Padding="0,2,0,0">
-              <CollectionView ItemsSource="{Binding AddConditionOptions}"
-                              SelectionMode="None"
-                              VerticalOptions="Start"
-                              VerticalScrollBarVisibility="Never">
+            <CollectionView Margin="0,2,0,0"
+                            ItemsSource="{Binding AddConditionOptions}"
+                            SelectionMode="None"
+                            VerticalOptions="Start"
+                            VerticalScrollBarVisibility="Never">
                 <CollectionView.ItemsLayout>
                     <LinearItemsLayout Orientation="Vertical" ItemSpacing="10"/>
                 </CollectionView.ItemsLayout>
@@ -59,8 +59,7 @@
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
-              </CollectionView>
-            </VerticalStackLayout>
+            </CollectionView>
 
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>

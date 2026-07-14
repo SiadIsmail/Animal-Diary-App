@@ -462,8 +462,7 @@ public class ManagePetViewModel : BaseViewModel
         var current = await _trackers.GetByTrackerIdAsync(pet.Id, trackerId);
         var currentKind = current?.Kind ?? DefaultKind(trackerId);
 
-        // Fresh list (not in-place mutation) so the sheet's BindableLayout rebuilds on
-        // Android — see the AdjustOptions field note.
+        // Fresh list (not in-place mutation) — see the AdjustOptions field note.
         AdjustOptions = OptionsFor(trackerId)
             .Select(o => new AdjustOption
             {

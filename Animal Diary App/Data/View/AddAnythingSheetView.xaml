@@ -14,13 +14,21 @@
                                 Subtitle="{Binding AddSheetSubtitle}"
                                 DismissCommand="{Binding CloseAddSheetCommand}">
         <controls:FelovaBottomSheet.SheetContent>
-            <!-- Outer layout is the reparented SheetContent root; the BindableLayout
-                 lives on the INNER layout so Android doesn't drop its item generation
-                 when the root is moved into the sheet's BodyHost. -->
-            <VerticalStackLayout Padding="0,2,0,2">
-              <VerticalStackLayout Spacing="9"
-                                   BindableLayout.ItemsSource="{Binding AddOptions}">
-                <BindableLayout.ItemTemplate>
+            <!-- CollectionView, not BindableLayout: BindableLayout is an attached
+                 property that procedurally adds/removes children, and on Android it
+                 fails to regenerate items when ItemsSource changes on a layout whose
+                 handler was created while IsVisible=false (this sheet's hidden-until-
+                 opened state). CollectionView drives a real RecyclerView with its own
+                 adapter, which rebuilds correctly regardless of prior visibility. -->
+            <CollectionView Margin="0,2,0,2"
+                            ItemsSource="{Binding AddOptions}"
+                            SelectionMode="None"
+                            VerticalOptions="Start"
+                            VerticalScrollBarVisibility="Never">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="9"/>
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Border BackgroundColor="{StaticResource Glass}"
                                 Stroke="{StaticResource GlassLine}"
@@ -46,9 +54,8 @@
                             </Grid>
                         </Border>
                     </DataTemplate>
-                </BindableLayout.ItemTemplate>
-              </VerticalStackLayout>
-            </VerticalStackLayout>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>
 </ContentView>

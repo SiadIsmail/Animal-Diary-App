@@ -160,9 +160,9 @@ public class JournalLogViewModel : BaseViewModel
     public bool HasAppetiteItems => AppetiteItems.Count > 0;
 
     // ── Add-anything sheet ───────────────────────────────────────────────────────
-    // NOT an in-place-mutated ObservableCollection: Android's BindableLayout inside the
-    // reparented FelovaBottomSheet doesn't render items added to an existing collection
-    // after first realisation. Assigning a fresh list makes the binding rebuild it.
+    // A plain reassigned list rather than an in-place-mutated ObservableCollection:
+    // assigning a fresh list each time raises the property change CollectionView
+    // needs to rebuild from scratch.
     private IReadOnlyList<AddOption> _addOptions = System.Array.Empty<AddOption>();
     public IReadOnlyList<AddOption> AddOptions
     {
@@ -388,8 +388,7 @@ public class JournalLogViewModel : BaseViewModel
         var plan = await _carePlan.GetPlanAsync(pet);
         bool Has(TrackerId id) => plan.Any(t => t.TrackerId == id);
 
-        // Build a fresh list and assign it (see AddOptions' note) — a new source
-        // reference makes the BindableLayout rebuild, which Android needs here.
+        // Build a fresh list and assign it (see AddOptions' note above).
         var options = new List<AddOption>();
         if (Has(TrackerId.Glucose)) options.Add(new AddOption { Kind = JournalChipKind.Glucose, Icon = "🩸", Label = Loc.GetString("Journal_GlucoseCheck") });
         options.Add(new AddOption { Kind = JournalChipKind.Mood, Icon = "🙂", Label = Loc.GetString("Journal_MoodTitle") });
