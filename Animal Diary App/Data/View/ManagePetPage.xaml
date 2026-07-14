@@ -323,7 +323,7 @@
         <views:EpilepsySetupSheetView BindingContext="{Binding EpilepsySetupVM}"/>
 
         <!-- Manage-owned sheets -->
-        <views:AddConditionSheetView x:Name="AddConditionSheet" BindingContext="{Binding ManageVM}"/>
+        <views:AddConditionSheetView BindingContext="{Binding ManageVM}"/>
         <views:RemoveConditionSheetView BindingContext="{Binding ManageVM}"/>
         <views:AdjustTrackerSheetView BindingContext="{Binding ManageVM}"/>
 

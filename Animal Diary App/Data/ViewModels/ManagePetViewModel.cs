@@ -132,9 +132,6 @@ public class ManagePetViewModel : BaseViewModel
     public event Action? RequestAddMedication;
     /// <summary>Open a specific medication (by id).</summary>
     public event Action<int>? RequestOpenMedication;
-    /// <summary>Diagnostic: let the page refresh the add-condition BindableLayout
-    /// before the sheet becomes visible.</summary>
-    public event Action? RequestOpenAddConditionSheet;
 
     // ── Bindable lists ───────────────────────────────────────────────────────────
     public ObservableCollection<ManageConditionChip> Conditions { get; } = new();
@@ -143,10 +140,8 @@ public class ManagePetViewModel : BaseViewModel
     public ObservableCollection<ManageMedRow> Medications { get; } = new();
 
     // These two live inside a FelovaBottomSheet and are populated on open, so they are
-    // NOT in-place-mutated collections: Android's BindableLayout inside the reparented
-    // sheet won't render items added after first realisation. Assigning a fresh list
-    // each time makes the binding rebuild from scratch (page-level lists above are fine
-    // mutated in place — the bug is specific to the sheet).
+    // NOT in-place-mutated collections: assigning a fresh list each time raises the
+    // property change CollectionView needs to rebuild from scratch.
     private IReadOnlyList<AddConditionOption> _addConditionOptions = System.Array.Empty<AddConditionOption>();
     public IReadOnlyList<AddConditionOption> AddConditionOptions
     {
@@ -335,11 +330,7 @@ public class ManagePetViewModel : BaseViewModel
             .Where(c => !string.IsNullOrEmpty(c.Id) && !already.Contains(c.Id))
             .Select(c => new AddConditionOption { Id = c.Id, Name = c.Name, Icon = c.Icon })
             .ToList();
-
-        if (RequestOpenAddConditionSheet != null)
-            RequestOpenAddConditionSheet.Invoke();
-        else
-            IsAddConditionSheetVisible = true;
+        IsAddConditionSheetVisible = true;
     }
 
     private async Task OnPickAddConditionAsync(AddConditionOption? option)

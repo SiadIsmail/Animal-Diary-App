@@ -26,7 +26,6 @@ public partial class ManagePetPage : ContentPage
         vm.ManageVM.RequestEditPet += OnRequestEditPet;
         vm.ManageVM.RequestAddMedication += OnRequestAddMedication;
         vm.ManageVM.RequestOpenMedication += OnRequestOpenMedication;
-        vm.ManageVM.RequestOpenAddConditionSheet += OnRequestOpenAddConditionSheet;
 
         // Any setup sheet saving should refresh the page's plan + chips.
         vm.DiabetesSetupVM.Saved += OnSheetSaved;
@@ -44,7 +43,6 @@ public partial class ManagePetPage : ContentPage
         vm.ManageVM.RequestEditPet -= OnRequestEditPet;
         vm.ManageVM.RequestAddMedication -= OnRequestAddMedication;
         vm.ManageVM.RequestOpenMedication -= OnRequestOpenMedication;
-        vm.ManageVM.RequestOpenAddConditionSheet -= OnRequestOpenAddConditionSheet;
 
         vm.DiabetesSetupVM.Saved -= OnSheetSaved;
         vm.CkdSetupVM.Saved -= OnSheetSaved;
@@ -62,14 +60,6 @@ public partial class ManagePetPage : ContentPage
     }
 
     private async void OnSheetSaved() => await vm.ManageVM.LoadAsync();
-
-    // Diagnostic: force the add-condition BindableLayout to rebuild its children
-    // immediately before the sheet opens.
-    private void OnRequestOpenAddConditionSheet()
-    {
-        AddConditionSheet.RefreshItems();
-        vm.ManageVM.IsAddConditionSheetVisible = true;
-    }
 
     // Edit-pet door: prefill the create form from the active pet, then reuse it in edit
     // mode (it saves in place and pops back — no condition picker).
