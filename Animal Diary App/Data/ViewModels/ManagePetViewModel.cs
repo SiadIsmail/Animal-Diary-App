@@ -138,8 +138,25 @@ public class ManagePetViewModel : BaseViewModel
     public ObservableCollection<CarePlanRow> CarePlanRows { get; } = new();
     public ObservableCollection<PreviewChip> PreviewChips { get; } = new();
     public ObservableCollection<ManageMedRow> Medications { get; } = new();
-    public ObservableCollection<AddConditionOption> AddConditionOptions { get; } = new();
-    public ObservableCollection<AdjustOption> AdjustOptions { get; } = new();
+
+    // These two live inside a FelovaBottomSheet and are populated on open, so they are
+    // NOT in-place-mutated collections: Android's BindableLayout inside the reparented
+    // sheet won't render items added after first realisation. Assigning a fresh list
+    // each time makes the binding rebuild from scratch (page-level lists above are fine
+    // mutated in place — the bug is specific to the sheet).
+    private IReadOnlyList<AddConditionOption> _addConditionOptions = System.Array.Empty<AddConditionOption>();
+    public IReadOnlyList<AddConditionOption> AddConditionOptions
+    {
+        get => _addConditionOptions;
+        private set => SetProperty(ref _addConditionOptions, value);
+    }
+
+    private IReadOnlyList<AdjustOption> _adjustOptions = System.Array.Empty<AdjustOption>();
+    public IReadOnlyList<AdjustOption> AdjustOptions
+    {
+        get => _adjustOptions;
+        private set => SetProperty(ref _adjustOptions, value);
+    }
 
     // ── Identity ─────────────────────────────────────────────────────────────────
     public string PetName => _activePet.ActivePet?.Name ?? string.Empty;
@@ -310,14 +327,11 @@ public class ManagePetViewModel : BaseViewModel
     private void OpenAddConditionSheet()
     {
         var already = Conditions.Select(c => c.Id).ToHashSet();
-        AddConditionOptions.Clear();
-        foreach (var c in ConditionCatalog.Conditions)
-        {
+        AddConditionOptions = ConditionCatalog.Conditions
             // Skip the "None" sentinel and anything already added.
-            if (string.IsNullOrEmpty(c.Id) || already.Contains(c.Id))
-                continue;
-            AddConditionOptions.Add(new AddConditionOption { Id = c.Id, Name = c.Name, Icon = c.Icon });
-        }
+            .Where(c => !string.IsNullOrEmpty(c.Id) && !already.Contains(c.Id))
+            .Select(c => new AddConditionOption { Id = c.Id, Name = c.Name, Icon = c.Icon })
+            .ToList();
         IsAddConditionSheetVisible = true;
     }
 
@@ -450,14 +464,16 @@ public class ManagePetViewModel : BaseViewModel
         var current = await _trackers.GetByTrackerIdAsync(pet.Id, trackerId);
         var currentKind = current?.Kind ?? DefaultKind(trackerId);
 
-        AdjustOptions.Clear();
-        foreach (var (kind, key) in OptionsFor(trackerId))
-            AdjustOptions.Add(new AdjustOption
+        // Fresh list (not in-place mutation) so the sheet's BindableLayout rebuilds on
+        // Android — see the AdjustOptions field note.
+        AdjustOptions = OptionsFor(trackerId)
+            .Select(o => new AdjustOption
             {
-                Kind = kind,
-                Label = Loc.GetString(key),
-                IsSelected = kind == currentKind
-            });
+                Kind = o.Item1,
+                Label = Loc.GetString(o.Item2),
+                IsSelected = o.Item1 == currentKind
+            })
+            .ToList();
 
         IsAdjustSheetVisible = true;
     }

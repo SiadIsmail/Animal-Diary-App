@@ -160,7 +160,15 @@ public class JournalLogViewModel : BaseViewModel
     public bool HasAppetiteItems => AppetiteItems.Count > 0;
 
     // ── Add-anything sheet ───────────────────────────────────────────────────────
-    public ObservableCollection<AddOption> AddOptions { get; } = new();
+    // NOT an in-place-mutated ObservableCollection: Android's BindableLayout inside the
+    // reparented FelovaBottomSheet doesn't render items added to an existing collection
+    // after first realisation. Assigning a fresh list makes the binding rebuild it.
+    private IReadOnlyList<AddOption> _addOptions = System.Array.Empty<AddOption>();
+    public IReadOnlyList<AddOption> AddOptions
+    {
+        get => _addOptions;
+        private set => SetProperty(ref _addOptions, value);
+    }
 
     private bool _isAddSheetVisible;
     public bool IsAddSheetVisible { get => _isAddSheetVisible; set => SetProperty(ref _isAddSheetVisible, value); }
@@ -373,23 +381,22 @@ public class JournalLogViewModel : BaseViewModel
         var pet = _activePet.ActivePet;
         if (pet == null)
         {
-            AddOptions.Clear();
+            AddOptions = System.Array.Empty<AddOption>();
             return;
         }
 
-        // Gather (await) BEFORE touching the bound collection, then fill atomically
-        // with no await in between. If we cleared before the await, Android renders the
-        // now-empty sheet during the yield and never shows the items added afterwards
-        // (the same race ReloadAsync guards against). Windows happens to re-render.
         var plan = await _carePlan.GetPlanAsync(pet);
         bool Has(TrackerId id) => plan.Any(t => t.TrackerId == id);
 
-        AddOptions.Clear();
-        if (Has(TrackerId.Glucose)) AddOptions.Add(new AddOption { Kind = JournalChipKind.Glucose, Icon = "🩸", Label = Loc.GetString("Journal_GlucoseCheck") });
-        AddOptions.Add(new AddOption { Kind = JournalChipKind.Mood, Icon = "🙂", Label = Loc.GetString("Journal_MoodTitle") });
-        if (Has(TrackerId.Appetite)) AddOptions.Add(new AddOption { Kind = JournalChipKind.Appetite, Icon = "🍽️", Label = Loc.GetString("Journal_Appetite") });
-        AddOptions.Add(new AddOption { Kind = JournalChipKind.Weight, Icon = "⚖️", Label = Loc.GetString("Journal_WeighIn") });
-        if (Has(TrackerId.Seizure)) AddOptions.Add(new AddOption { Kind = JournalChipKind.Seizure, Icon = "⚡", Label = Loc.GetString("Journal_Seizure") });
+        // Build a fresh list and assign it (see AddOptions' note) — a new source
+        // reference makes the BindableLayout rebuild, which Android needs here.
+        var options = new List<AddOption>();
+        if (Has(TrackerId.Glucose)) options.Add(new AddOption { Kind = JournalChipKind.Glucose, Icon = "🩸", Label = Loc.GetString("Journal_GlucoseCheck") });
+        options.Add(new AddOption { Kind = JournalChipKind.Mood, Icon = "🙂", Label = Loc.GetString("Journal_MoodTitle") });
+        if (Has(TrackerId.Appetite)) options.Add(new AddOption { Kind = JournalChipKind.Appetite, Icon = "🍽️", Label = Loc.GetString("Journal_Appetite") });
+        options.Add(new AddOption { Kind = JournalChipKind.Weight, Icon = "⚖️", Label = Loc.GetString("Journal_WeighIn") });
+        if (Has(TrackerId.Seizure)) options.Add(new AddOption { Kind = JournalChipKind.Seizure, Icon = "⚡", Label = Loc.GetString("Journal_Seizure") });
+        AddOptions = options;
     }
 
     private void NotifyStates()
