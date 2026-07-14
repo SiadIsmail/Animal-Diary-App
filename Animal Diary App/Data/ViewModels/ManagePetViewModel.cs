@@ -132,6 +132,9 @@ public class ManagePetViewModel : BaseViewModel
     public event Action? RequestAddMedication;
     /// <summary>Open a specific medication (by id).</summary>
     public event Action<int>? RequestOpenMedication;
+    /// <summary>Diagnostic: let the page refresh the add-condition BindableLayout
+    /// before the sheet becomes visible.</summary>
+    public event Action? RequestOpenAddConditionSheet;
 
     // ── Bindable lists ───────────────────────────────────────────────────────────
     public ObservableCollection<ManageConditionChip> Conditions { get; } = new();
@@ -332,7 +335,11 @@ public class ManagePetViewModel : BaseViewModel
             .Where(c => !string.IsNullOrEmpty(c.Id) && !already.Contains(c.Id))
             .Select(c => new AddConditionOption { Id = c.Id, Name = c.Name, Icon = c.Icon })
             .ToList();
-        IsAddConditionSheetVisible = true;
+
+        if (RequestOpenAddConditionSheet != null)
+            RequestOpenAddConditionSheet.Invoke();
+        else
+            IsAddConditionSheetVisible = true;
     }
 
     private async Task OnPickAddConditionAsync(AddConditionOption? option)

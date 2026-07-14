@@ -24,7 +24,8 @@
                  lives on the INNER layout so Android doesn't drop its item generation
                  when the root is moved into the sheet's BodyHost. -->
             <VerticalStackLayout Padding="0,2,0,0">
-              <VerticalStackLayout Spacing="10"
+              <VerticalStackLayout x:Name="ConditionList"
+                                   Spacing="10"
                                    BindableLayout.ItemsSource="{Binding AddConditionOptions}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate>
