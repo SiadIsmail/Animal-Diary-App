@@ -63,8 +63,6 @@
                            HorizontalTextAlignment="Center"
                            VerticalOptions="Center"/>
 
-                    <!-- Spacer to balance the back button -->
-                    <BoxView Grid.Column="2" WidthRequest="40" Color="Transparent"/>
                 </Grid>
 
                 <!-- Active / Archived segmented control -->

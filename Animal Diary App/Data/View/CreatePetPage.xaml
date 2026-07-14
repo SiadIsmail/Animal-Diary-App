@@ -216,28 +216,6 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Conditions hint -->
-                <Border BackgroundColor="{StaticResource TealTint}"
-                        Stroke="{StaticResource TealLine}"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 16"
-                        Padding="14,12">
-                    <HorizontalStackLayout Spacing="10">
-                        <Label Text="🏷️" FontSize="18" VerticalOptions="Center"/>
-                        <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                            <Label Text="{loc:Translate CreatePet_ConditionsTitle}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="12.5"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Ink}"/>
-                            <Label Text="{loc:Translate CreatePet_ConditionsSubtitle}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11"
-                                   TextColor="{StaticResource InkSecondary}"/>
-                        </VerticalStackLayout>
-                    </HorizontalStackLayout>
-                </Border>
-
             </VerticalStackLayout>
         </ScrollView>
 
