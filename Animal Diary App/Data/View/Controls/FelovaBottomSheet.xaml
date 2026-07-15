@@ -59,9 +59,7 @@
                 TranslationY="2000"
                 Padding="20,0,20,28">
 
-            <Border.Shadow>
-                <Shadow Brush="#0D3A3C" Offset="0,-4" Radius="24" Opacity="0.22"/>
-            </Border.Shadow>
+            
 
             <Grid RowDefinitions="Auto,*" RowSpacing="14">
 
