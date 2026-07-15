@@ -10,12 +10,25 @@ using Animal_Diary_App.Helpers;
 
 // ── Small display records for the page's bindable lists ──────────────────────────
 
+/// <summary>Common type for anything the Conditions section's FlexLayout can render —
+/// a condition chip, the trailing Add chip, and (later) things like a loading or
+/// recommendation chip. Add a new item type + template + selector case to extend.</summary>
+public interface IConditionChipItem
+{
+}
+
 /// <summary>A condition chip on the Manage page (name + emoji + its id for removal).</summary>
-public class ManageConditionChip
+public class ManageConditionChip : IConditionChipItem
 {
     public string Id { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public string Icon { get; init; } = string.Empty;
+}
+
+/// <summary>Sentinel item for the trailing "Add Condition" chip in the Conditions FlexLayout.</summary>
+public class AddConditionChipItem : IConditionChipItem
+{
+    public static readonly AddConditionChipItem Instance = new();
 }
 
 /// <summary>One care-plan row: a tracker with its cadence description and the
@@ -135,6 +148,11 @@ public class ManagePetViewModel : BaseViewModel
 
     // ── Bindable lists ───────────────────────────────────────────────────────────
     public ObservableCollection<ManageConditionChip> Conditions { get; } = new();
+
+    /// <summary>What the Conditions FlexLayout actually renders: every condition chip
+    /// followed by the Add chip, rebuilt whenever <see cref="Conditions"/> changes so
+    /// Add always sorts last and wraps like any other chip.</summary>
+    public ObservableCollection<IConditionChipItem> ConditionItems { get; } = new();
     public ObservableCollection<CarePlanRow> CarePlanRows { get; } = new();
     public ObservableCollection<PreviewChip> PreviewChips { get; } = new();
     public ObservableCollection<ManageMedRow> Medications { get; } = new();
@@ -219,6 +237,7 @@ public class ManagePetViewModel : BaseViewModel
             var c = ConditionCatalog.GetCondition(id);
             Conditions.Add(new ManageConditionChip { Id = c.Id, Name = c.Name, Icon = c.Icon });
         }
+        RebuildConditionItems();
 
         CarePlanRows.Clear();
         foreach (var t in plan)
@@ -242,11 +261,21 @@ public class ManagePetViewModel : BaseViewModel
     private void ClearAll()
     {
         Conditions.Clear();
+        RebuildConditionItems();
         CarePlanRows.Clear();
         PreviewChips.Clear();
         Medications.Clear();
         OnPropertyChanged(nameof(HasCarePlan));
         OnPropertyChanged(nameof(HasNoCarePlan));
+    }
+
+    // Add always sorts last so it wraps in the FlexLayout exactly like a chip would.
+    private void RebuildConditionItems()
+    {
+        ConditionItems.Clear();
+        foreach (var c in Conditions)
+            ConditionItems.Add(c);
+        ConditionItems.Add(AddConditionChipItem.Instance);
     }
 
     // ── Care-plan row build ──────────────────────────────────────────────────────

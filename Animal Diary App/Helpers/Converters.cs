@@ -74,6 +74,21 @@ public class MoodToHeightConverter : IValueConverter
         => value;
 }
 
+/// <summary>Localizes a stored pet-type key ("Dog", "Cat", …) for display via
+/// <see cref="PetTypeNames.Localize"/>. Used as a <see cref="IMultiValueConverter"/>
+/// so the second binding leg — sourced from <see cref="LocalizationManager"/> — makes
+/// the text re-translate live when the language changes, just like a
+/// <c>{loc:Translate}</c> span. The second value is only a refresh trigger and is
+/// otherwise ignored.</summary>
+public class PetTypeLocalizedConverter : IMultiValueConverter
+{
+    public object? Convert(object?[]? values, Type? targetType, object? parameter, CultureInfo? culture)
+        => PetTypeNames.Localize(values is { Length: > 0 } ? values[0]?.ToString() : null);
+
+    public object?[]? ConvertBack(object? value, Type?[]? targetTypes, object? parameter, CultureInfo? culture)
+        => throw new NotSupportedException();
+}
+
 public class StringToBoolConverter : IValueConverter
 {
     public object? Convert(object? value, Type? targetType, object? parameter, CultureInfo? culture)

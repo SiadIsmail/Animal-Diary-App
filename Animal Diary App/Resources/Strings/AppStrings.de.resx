@@ -126,13 +126,13 @@
   <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Als Nächstes</value></data>
   <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>Alles erledigt</value></data>
   <data name="Main_AllCaughtUpDetail" xml:space="preserve"><value>Gerade nichts fällig — gut gemacht.</value></data>
-  <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Gesund (Platzhalter)</value></data>
-  <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Medis 20:00 (Platzhalter)</value></data>
-  <data name="Main_StableThisWeek" xml:space="preserve"><value>Stabil diese Woche (Platzhalter)</value></data>
-  <data name="Main_HappyPlaceholder" xml:space="preserve"><value>Glücklich 😊 (Platzhalter)</value></data>
+  <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Gesund</value></data>
+  <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Medis 20:00</value></data>
+  <data name="Main_StableThisWeek" xml:space="preserve"><value>Stabil diese Woche</value></data>
+  <data name="Main_HappyPlaceholder" xml:space="preserve"><value>Glücklich</value></data>
   <data name="Main_LoggedToday" xml:space="preserve"><value>Heute erfasst</value></data>
   <data name="Main_MedicationGiven" xml:space="preserve"><value>Medikament gegeben</value></data>
-  <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazol · mit Futter (Platzhalter)</value></data>
+  <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazol · mit Futter</value></data>
 
   <!-- ── Journal (Calendar) header ── -->
   <data name="Journal_Eyebrow" xml:space="preserve"><value>Gesundheitstagebuch</value></data>

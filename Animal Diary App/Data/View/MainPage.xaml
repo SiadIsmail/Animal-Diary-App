@@ -164,7 +164,14 @@
                            TextColor="{StaticResource InkSecondary}">
                         <Label.FormattedText>
                             <FormattedString>
-                                <Span Text="{Binding MainPageVM.ActivePet.Type}"/>
+                                <Span>
+                                    <Span.Text>
+                                        <MultiBinding Converter="{StaticResource PetTypeLocalizedConverter}">
+                                            <Binding Path="MainPageVM.ActivePet.Type"/>
+                                            <Binding Path="CurrentLanguage" Source="{x:Static loc:LocalizationManager.Instance}"/>
+                                        </MultiBinding>
+                                    </Span.Text>
+                                </Span>
                                 <Span Text=" · "/>
                                 <Span Text="{Binding MainPageVM.ActivePet.Age}"/>
                                 <Span Text="{loc:Translate Common_YearsSeparator}"/>
