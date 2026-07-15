@@ -22,28 +22,20 @@
 
             <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
 
-                <!-- CollectionView, not BindableLayout: BindableLayout is an attached
-                     property that procedurally adds/removes children, and on Android it
-                     fails to regenerate items when ItemsSource changes on a layout whose
-                     handler was created while IsVisible=false (this sheet's hidden-until-
-                     opened state). CollectionView drives a real RecyclerView with its own
-                     adapter, which rebuilds correctly regardless of prior visibility. -->
-                <CollectionView ItemsSource="{Binding AdjustOptions}"
-                                SelectionMode="None"
-                                VerticalOptions="Start"
-                                VerticalScrollBarVisibility="Never">
-                    <CollectionView.ItemsLayout>
-                        <GridItemsLayout Orientation="Vertical" Span="2"
-                                         HorizontalItemSpacing="7" VerticalItemSpacing="7"/>
-                    </CollectionView.ItemsLayout>
-                    <CollectionView.ItemTemplate>
+                <!-- BindableLayout on a wrapping FlexLayout: two-to-three fixed chips,
+                     no scrolling — BindableLayout's documented use case. Safe here
+                     because FelovaBottomSheet keeps its body realised while hidden
+                     (translated off-screen, never IsVisible=false). -->
+                <FlexLayout Wrap="Wrap" Direction="Row"
+                            BindableLayout.ItemsSource="{Binding AdjustOptions}">
+                    <BindableLayout.ItemTemplate>
                         <DataTemplate>
                             <Border BackgroundColor="{StaticResource GlassSoft}"
                                     Stroke="{StaticResource GlassLine}"
                                     StrokeThickness="1"
                                     StrokeShape="RoundRectangle 12"
                                     Padding="14,10"
-                                    HorizontalOptions="Start">
+                                    Margin="0,0,7,7">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
                                         <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
@@ -62,8 +54,8 @@
                                        TextColor="{StaticResource InkSecondary}"/>
                             </Border>
                         </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
 
                 <!-- Actions -->
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,4,0,0">

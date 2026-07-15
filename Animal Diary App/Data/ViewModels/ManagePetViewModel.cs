@@ -140,8 +140,8 @@ public class ManagePetViewModel : BaseViewModel
     public ObservableCollection<ManageMedRow> Medications { get; } = new();
 
     // These two live inside a FelovaBottomSheet and are populated on open, so they are
-    // NOT in-place-mutated collections: assigning a fresh list each time raises the
-    // property change CollectionView needs to rebuild from scratch.
+    // NOT in-place-mutated collections: assigning a fresh list raises one property
+    // change and the sheet's ItemsSource binding rebuilds its rows from scratch.
     private IReadOnlyList<AddConditionOption> _addConditionOptions = System.Array.Empty<AddConditionOption>();
     public IReadOnlyList<AddConditionOption> AddConditionOptions
     {

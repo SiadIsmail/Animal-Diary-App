@@ -11,6 +11,9 @@ using View = Microsoft.Maui.Controls.View;
 /// scrim + slide/fade motion and hosts arbitrary <see cref="SheetContent"/>.
 /// Used by both the medication add/edit form and the Journal input sheets so the
 /// person never feels they "left" the page to log something.
+/// Hidden sheets stay in the visual tree — translated below the screen and
+/// InputTransparent, never IsVisible=false — so Android keeps the body realised;
+/// collapsing it left on-open-populated content empty on first show.
 /// </summary>
 public partial class FelovaBottomSheet : ContentView
 {
@@ -26,12 +29,28 @@ public partial class FelovaBottomSheet : ContentView
     /// every sheet slides with the same hand.</summary>
     public static readonly Easing SheetEasing = new(BezierEase);
 
+    // Hidden = the container translated just past the bottom edge, with a little
+    // extra so its upward shadow can't peek above the edge either.
+    private const double HiddenShadowBuffer = 40;
+
     private bool isAnimating;
 
     public FelovaBottomSheet()
     {
         InitializeComponent();
+
+        // Keep the hidden sheet pinned just below the screen as its size settles
+        // (first layout, rotation, content changes while closed). The XAML starts it
+        // at a generous 2000 so nothing flashes before this first fires.
+        SheetContainer.SizeChanged += (_, _) =>
+        {
+            if (!IsPresented && !isAnimating)
+                SheetContainer.TranslationY = HiddenOffset;
+        };
     }
+
+    private double HiddenOffset =>
+        SheetContainer.Height > 0 ? SheetContainer.Height + HiddenShadowBuffer : 2000;
 
     // ── Bindable surface ───────────────────────────────────────────────────────
 
@@ -119,35 +138,20 @@ public partial class FelovaBottomSheet : ContentView
         isAnimating = true;
 
         var reduce = ReducedMotion.IsEnabled;
-        var offset = SheetContainer.Height > 0 ? SheetContainer.Height : 600;
 
-        // Start fully below and transparent, then slide up + fade the scrim in.
-        SheetContainer.TranslationY = offset;
+        // Start just below the screen and transparent, then slide up + fade the scrim
+        // in. No forced remeasures here: the body is already laid out (hidden sheets
+        // are only translated, never collapsed), and invalidating mid-animation made
+        // Android snap the container to its untransformed spot before sliding.
+        SheetContainer.TranslationY = HiddenOffset;
         Scrim.Opacity = 0;
-        IsVisible = true;
-
-        // Android: the body was collapsed (IsVisible=false) while hidden, so content
-        // populated just before presenting — especially a BindableLayout whose items
-        // were assigned on-open — measures short (or empty) on this first show and only
-        // corrects on a later, unrelated relayout. Force the body to remeasure now that
-        // it's on-screen, and again on the next tick once the platform has settled.
-        InvalidateBody();
-        Dispatcher.Dispatch(InvalidateBody);
+        InputTransparent = false;
 
         await Task.WhenAll(
             Scrim.FadeTo(1, reduce ? ReducedMs : ScrimInMs, Easing.CubicOut),
             SheetContainer.TranslateTo(0, 0, reduce ? ReducedMs : SlideInMs, SheetEasing));
 
-        InvalidateBody();
         isAnimating = false;
-    }
-
-    // Re-measure the sheet + its hosted body (see ShowAsync). A no-op cost when nothing
-    // has changed; on Android it's what makes late-populated content lay out on first show.
-    private void InvalidateBody()
-    {
-        (SheetContainer as Microsoft.Maui.IView)?.InvalidateMeasure();
-        (BodyHost?.Content as Microsoft.Maui.IView)?.InvalidateMeasure();
     }
 
     private async Task HideAsync()
@@ -157,15 +161,12 @@ public partial class FelovaBottomSheet : ContentView
         isAnimating = true;
 
         var reduce = ReducedMotion.IsEnabled;
-        var offset = SheetContainer.Height > 0 ? SheetContainer.Height : 600;
 
         await Task.WhenAll(
             Scrim.FadeTo(0, reduce ? ReducedMs : ScrimOutMs, Easing.CubicIn),
-            SheetContainer.TranslateTo(0, offset, reduce ? ReducedMs : SlideOutMs, SheetEasing));
+            SheetContainer.TranslateTo(0, HiddenOffset, reduce ? ReducedMs : SlideOutMs, SheetEasing));
 
-        IsVisible = false;
-        SheetContainer.TranslationY = 0;
-
+        InputTransparent = true;
         isAnimating = false;
     }
 

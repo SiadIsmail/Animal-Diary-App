@@ -16,13 +16,17 @@
     Motion matches the prototype: ~420ms slide on cubic-bezier(.32,.72,.28,1) with a
     scrim fade, shortened when the OS asks for reduced motion. Keep the x:Named
     Scrim / SheetContainer / BodyHost — the code-behind animates them.
+
+    Hiding: the sheet is NEVER collapsed with IsVisible. It hides by translating the
+    container below the screen with the whole control InputTransparent, so Android
+    keeps the body realised and laid out — content populated on-open (item lists
+    especially) stayed empty on first show when the view had never been laid out.
 -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Animal_Diary_App.Data.View.Controls.FelovaBottomSheet"
              x:Name="Root"
-             IsVisible="False"
-             InputTransparent="False">
+             InputTransparent="True">
 
     <ContentView.Resources>
         <!-- Warm gradient sheet ground (prototype: mint → mint → sand), built from
@@ -38,18 +42,21 @@
         <!-- Dimmed scrim; tap to dismiss -->
         <BoxView x:Name="Scrim"
                  BackgroundColor="#660D3A3C"
+                 Opacity="0"
                  InputTransparent="False">
             <BoxView.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnScrimTapped"/>
             </BoxView.GestureRecognizers>
         </BoxView>
 
-        <!-- The sheet itself -->
+        <!-- The sheet itself. Starts translated far below the screen; the code-behind
+             re-pins the exact offset once the real height is known (SizeChanged). -->
         <Border x:Name="SheetContainer"
                 Background="{StaticResource SheetWarm}"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 30,26,0,0"
                 VerticalOptions="End"
+                TranslationY="2000"
                 Padding="20,0,20,28">
 
             <Border.Shadow>

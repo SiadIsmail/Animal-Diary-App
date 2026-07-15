@@ -161,8 +161,8 @@ public class JournalLogViewModel : BaseViewModel
 
     // ── Add-anything sheet ───────────────────────────────────────────────────────
     // A plain reassigned list rather than an in-place-mutated ObservableCollection:
-    // assigning a fresh list each time raises the property change CollectionView
-    // needs to rebuild from scratch.
+    // assigning a fresh list raises one property change and the sheet's ItemsSource
+    // binding rebuilds its rows from scratch.
     private IReadOnlyList<AddOption> _addOptions = System.Array.Empty<AddOption>();
     public IReadOnlyList<AddOption> AddOptions
     {
