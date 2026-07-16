@@ -188,6 +188,7 @@
   <data name="Journal_ToastGlucose" xml:space="preserve"><value>Gespeichert — eine Zahl, notiert.</value></data>
   <data name="Journal_ToastAppetite" xml:space="preserve"><value>Notiert — {0} gefressen.</value></data>
   <data name="Journal_ToastSeizure" xml:space="preserve"><value>Notiert — hoffentlich ein ruhiger.</value></data>
+  <data name="Journal_ToastDeleted" xml:space="preserve"><value>Aus der Zeitleiste entfernt.</value></data>
   <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}s Zucker-Check</value></data>
   <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d. MMM} — eine Zahl, und fertig</value></data>
   <data name="Journal_GlucoseFieldLabel" xml:space="preserve"><value>Blutzucker · mmol/L</value></data>

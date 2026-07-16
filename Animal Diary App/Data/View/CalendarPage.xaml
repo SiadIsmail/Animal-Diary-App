@@ -6,6 +6,7 @@
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
              x:Class="Animal_Diary_App.Data.View.CalendarPage"
+             x:Name="CalendarPageRoot"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
              Shell.TabBarIsVisible="False"
@@ -61,11 +62,26 @@
                     </Grid>
                     <Border Grid.Column="1" Style="{StaticResource GlassCard}">
                         <VerticalStackLayout Spacing="2">
-                            <Grid ColumnDefinitions="*,Auto">
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                                 <Label Grid.Column="0" Text="{Binding Title}"
                                        FontFamily="{StaticResource FontSans}" FontSize="13.5" FontAttributes="Bold"
                                        TextColor="{StaticResource Ink}"/>
-                                <Label Grid.Column="1" Text="{Binding TimeDisplay}" IsVisible="{Binding HasTime}"
+                                <!-- ✕ delete this logged entry (hidden for scheduled doses) -->
+                                <Border Grid.Column="1" IsVisible="{Binding CanDelete}"
+                                        WidthRequest="22" HeightRequest="22"
+                                        BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 11" VerticalOptions="Center">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference CalendarPageRoot}, Path=BindingContext.JournalVM.DeleteItemCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="✕" FontSize="10.5" FontAttributes="Bold"
+                                           TextColor="{StaticResource InkTertiary}"
+                                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                                <Label Grid.Column="2" Text="{Binding TimeDisplay}" IsVisible="{Binding HasTime}"
                                        FontFamily="{StaticResource FontSans}" FontSize="11"
                                        TextColor="{StaticResource InkTertiary}" VerticalOptions="Center"/>
                             </Grid>
@@ -103,11 +119,26 @@
                     </Grid>
                     <Border Grid.Column="1" Style="{StaticResource GlassCard}">
                         <VerticalStackLayout Spacing="2">
-                            <Grid ColumnDefinitions="*,Auto">
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                                 <Label Grid.Column="0" Text="{Binding Title}"
                                        FontFamily="{StaticResource FontSans}" FontSize="13.5" FontAttributes="Bold"
                                        TextColor="{StaticResource Ink}"/>
-                                <Label Grid.Column="1" Text="{Binding TimeDisplay}" IsVisible="{Binding HasTime}"
+                                <!-- ✕ delete this logged entry (hidden for scheduled doses) -->
+                                <Border Grid.Column="1" IsVisible="{Binding CanDelete}"
+                                        WidthRequest="22" HeightRequest="22"
+                                        BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 11" VerticalOptions="Center">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference CalendarPageRoot}, Path=BindingContext.JournalVM.DeleteItemCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="✕" FontSize="10.5" FontAttributes="Bold"
+                                           TextColor="{StaticResource InkTertiary}"
+                                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                                <Label Grid.Column="2" Text="{Binding TimeDisplay}" IsVisible="{Binding HasTime}"
                                        FontFamily="{StaticResource FontSans}" FontSize="11"
                                        TextColor="{StaticResource InkTertiary}" VerticalOptions="Center"/>
                             </Grid>

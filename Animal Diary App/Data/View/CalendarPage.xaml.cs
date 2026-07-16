@@ -31,6 +31,7 @@ public partial class CalendarPage : ContentPage
 		vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
 		vm.JournalVM.PropertyChanged += OnJournalVmPropertyChanged;
 		vm.JournalVM.RequestOpenSheet += OnRequestOpenSheet;
+		vm.JournalVM.ItemDeleted += OnItemDeleted;
 		vm.GlucoseSheetVM.Saved += OnSheetSaved;
 		vm.MoodSheetVM.Saved += OnSheetSaved;
 		vm.WeightSheetVM.Saved += OnSheetSaved;
@@ -54,6 +55,7 @@ public partial class CalendarPage : ContentPage
 		vm.CalendarVM.PropertyChanged -= OnCalendarVmPropertyChanged;
 		vm.JournalVM.PropertyChanged -= OnJournalVmPropertyChanged;
 		vm.JournalVM.RequestOpenSheet -= OnRequestOpenSheet;
+		vm.JournalVM.ItemDeleted -= OnItemDeleted;
 		vm.GlucoseSheetVM.Saved -= OnSheetSaved;
 		vm.MoodSheetVM.Saved -= OnSheetSaved;
 		vm.WeightSheetVM.Saved -= OnSheetSaved;
@@ -129,6 +131,14 @@ public partial class CalendarPage : ContentPage
 	private async void OnSheetSaved(JournalSaveResult result)
 	{
 		_ = BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62));
+		await ReloadJournalAsync();
+		ShowUndoToast(result);
+	}
+
+	// A timeline entry was deleted → refresh, then a 6-second undo-toast that restores
+	// it. No bubble-pop: a deletion isn't a "logged something" celebration.
+	private async void OnItemDeleted(JournalSaveResult result)
+	{
 		await ReloadJournalAsync();
 		ShowUndoToast(result);
 	}

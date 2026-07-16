@@ -62,6 +62,15 @@ public class TimelineItem
 {
     public TimelineKind Kind { get; init; }
 
+    /// <summary>The database row id this entry deletes, for the per-row stores
+    /// (glucose / appetite / seizure). 0 for mood/weight (keyed by pet+date, cleared
+    /// on their shared PetEntry) and for doses (not a deletable log).</summary>
+    public int EntryId { get; init; }
+
+    /// <summary>Whether this entry offers a delete (✕) affordance. True for every
+    /// logged reading; false for scheduled doses, which aren't user-created logs.</summary>
+    public bool CanDelete { get; init; }
+
     /// <summary>Time of day the entry was recorded, or null for a legacy mood/weight
     /// row with no stored time.</summary>
     public TimeSpan? Time { get; init; }
@@ -134,6 +143,7 @@ public class JournalLogViewModel : BaseViewModel
         OpenAddSheetCommand = new Command(async () => await OpenAddSheetAsync());
         CloseAddSheetCommand = new Command(() => IsAddSheetVisible = false);
         SelectAddOptionCommand = new Command<AddOption>(OnSelectAddOption);
+        DeleteItemCommand = new Command<TimelineItem>(async i => await DeleteItemAsync(i));
     }
 
     // Short-hand for the localized string manager (usable from the static chip builders).
@@ -142,6 +152,15 @@ public class JournalLogViewModel : BaseViewModel
     /// <summary>Raised when the person picks a log type (from a chip or the "+"
     /// sheet). The page opens the matching sheet — it owns the sheet VMs + animations.</summary>
     public event Action<JournalChipKind>? RequestOpenSheet;
+
+    /// <summary>Raised after a timeline entry is deleted, carrying the confirmation
+    /// line + an undo that restores it — the page shows the standard undo-toast and
+    /// refreshes (same safety net every destructive Journal action uses).</summary>
+    public event Action<JournalSaveResult>? ItemDeleted;
+
+    /// <summary>Delete one logged timeline entry (the ✕ on a card). Dispatches to the
+    /// right store by kind; scheduled doses aren't deletable and are ignored.</summary>
+    public ICommand DeleteItemCommand { get; }
 
     // ── Chip row ────────────────────────────────────────────────────────────────
     public ObservableCollection<JournalChip> Chips { get; } = new();
@@ -364,6 +383,7 @@ public class JournalLogViewModel : BaseViewModel
                 items.Add(new TimelineItem
                 {
                     Kind = TimelineKind.Mood,
+                    CanDelete = true,
                     Time = TicksToTime(entry.MoodTimeTicks),
                     Icon = "😊",
                     Tint = Tint("TealTint"),
@@ -381,6 +401,7 @@ public class JournalLogViewModel : BaseViewModel
                 items.Add(new TimelineItem
                 {
                     Kind = TimelineKind.Weight,
+                    CanDelete = true,
                     Time = TicksToTime(entry.WeightTimeTicks),
                     Icon = "⚖️",
                     Tint = Tint("BlueTint"),
@@ -398,6 +419,8 @@ public class JournalLogViewModel : BaseViewModel
             items.Add(new TimelineItem
             {
                 Kind = TimelineKind.Glucose,
+                CanDelete = true,
+                EntryId = g.Id,
                 Time = g.Time,
                 Icon = "🩸",
                 Tint = Tint("RoseTint"),
@@ -413,6 +436,8 @@ public class JournalLogViewModel : BaseViewModel
             items.Add(new TimelineItem
             {
                 Kind = TimelineKind.Appetite,
+                CanDelete = true,
+                EntryId = a.Id,
                 Time = a.Time,
                 Icon = "🍽️",
                 Tint = Tint("HoneyWarmTint"),
@@ -427,6 +452,8 @@ public class JournalLogViewModel : BaseViewModel
             items.Add(new TimelineItem
             {
                 Kind = TimelineKind.Seizure,
+                CanDelete = true,
+                EntryId = s.Id,
                 Time = s.Time,
                 Icon = "⚡",
                 Tint = Color.FromArgb("#26584A8A"),
@@ -447,6 +474,99 @@ public class JournalLogViewModel : BaseViewModel
             ordered[i].IconRotation = i % 2 == 0 ? -3 : 2.5;
 
         return ordered;
+    }
+
+    // ── Delete a logged entry (the ✕ on a timeline card) ─────────────────────────
+    // Dispatches to the row's own store. Glucose/appetite/seizure are per-row deletes;
+    // mood/weight clear their columns on the day's shared PetEntry (leaving the other
+    // reading intact). Every path carries an undo that restores exactly what was
+    // removed. Doses are scheduled occurrences, not logs, and aren't deletable here.
+    private async Task DeleteItemAsync(TimelineItem? item)
+    {
+        var pet = _activePet.ActivePet;
+        if (item == null || !item.CanDelete || pet == null || pet.Id == 0)
+            return;
+
+        var petId = pet.Id;
+        Func<Task>? undo = null;
+
+        switch (item.Kind)
+        {
+            case TimelineKind.Glucose:
+            {
+                var row = (await _glucose.GetForDateAsync(petId, _date)).FirstOrDefault(r => r.Id == item.EntryId);
+                if (row == null) return;
+                await _glucose.DeleteAsync(row.Id);
+                undo = () => _glucose.InsertAsync(new GlucoseEntry
+                {
+                    PetId = row.PetId, Date = row.Date, Time = row.Time, Value = row.Value, Context = row.Context
+                });
+                break;
+            }
+            case TimelineKind.Appetite:
+            {
+                var row = (await _appetite.GetForDateAsync(petId, _date)).FirstOrDefault(r => r.Id == item.EntryId);
+                if (row == null) return;
+                await _appetite.DeleteAsync(row.Id);
+                undo = () => _appetite.InsertAsync(new AppetiteEntry
+                {
+                    PetId = row.PetId, Date = row.Date, Time = row.Time, Level = row.Level
+                });
+                break;
+            }
+            case TimelineKind.Seizure:
+            {
+                var row = (await _seizures.GetForDateAsync(petId, _date)).FirstOrDefault(r => r.Id == item.EntryId);
+                if (row == null) return;
+                await _seizures.DeleteAsync(row.Id);
+                undo = () => _seizures.InsertAsync(new SeizureEntry
+                {
+                    PetId = row.PetId, Date = row.Date, Time = row.Time,
+                    DurationMinutes = row.DurationMinutes, Note = row.Note
+                });
+                break;
+            }
+            case TimelineKind.Mood:
+            {
+                var e = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, petId);
+                if (e == null || e.MoodLevel == 0) return;
+                int lvl = e.MoodLevel; string mood = e.Mood; string note = e.MoodNote; long? ticks = e.MoodTimeTicks;
+                e.MoodLevel = 0; e.Mood = string.Empty; e.MoodNote = string.Empty; e.MoodTimeTicks = null;
+                await _petEntries.UpdatePetEntryAsync(e);
+                undo = async () =>
+                {
+                    var cur = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, petId);
+                    if (cur == null) return;
+                    cur.MoodLevel = lvl; cur.Mood = mood; cur.MoodNote = note; cur.MoodTimeTicks = ticks;
+                    await _petEntries.UpdatePetEntryAsync(cur);
+                };
+                break;
+            }
+            case TimelineKind.Weight:
+            {
+                var e = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, petId);
+                if (e == null || e.Weight <= 0) return;
+                decimal w = e.Weight; long? ticks = e.WeightTimeTicks;
+                e.Weight = 0; e.WeightTimeTicks = null;
+                await _petEntries.UpdatePetEntryAsync(e);
+                undo = async () =>
+                {
+                    var cur = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, petId);
+                    if (cur == null) return;
+                    cur.Weight = w; cur.WeightTimeTicks = ticks;
+                    await _petEntries.UpdatePetEntryAsync(cur);
+                };
+                break;
+            }
+            default:
+                return; // doses aren't a deletable log
+        }
+
+        if (undo == null)
+            return;
+
+        ItemDeleted?.Invoke(new JournalSaveResult(
+            Loc.GetString("Journal_ToastDeleted"), undo));
     }
 
     // Today's scheduled doses as timeline entries, from the shared DayDoseService

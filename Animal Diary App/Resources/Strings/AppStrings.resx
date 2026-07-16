@@ -193,6 +193,7 @@
   <data name="Journal_ToastGlucose" xml:space="preserve"><value>Saved — one number, written down.</value></data>
   <data name="Journal_ToastAppetite" xml:space="preserve"><value>Noted — ate {0}.</value></data>
   <data name="Journal_ToastSeizure" xml:space="preserve"><value>Logged — I hope it's a quiet one.</value></data>
+  <data name="Journal_ToastDeleted" xml:space="preserve"><value>Removed from the timeline.</value></data>
   <!-- Glucose sheet -->
   <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}'s glucose check</value></data>
   <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d MMM} — one number, and you're done</value></data>
