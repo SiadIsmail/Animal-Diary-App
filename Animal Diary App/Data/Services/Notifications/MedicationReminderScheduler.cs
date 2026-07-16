@@ -8,7 +8,7 @@ using Microsoft.Maui.Storage;
 /// <summary>
 /// Reliable medication-reminder scheduler built for Android background limits.
 ///
-/// Design (see AI_CONTEXT.md §6):
+/// Design (see AI/design-decisions.md → "Notifications: bounded horizon"):
 ///   • Recurrence rules ("Mon &amp; Thu at 09:00") live only in the data layer
 ///     (<see cref="MedicationSchedule"/>).
 ///   • At runtime those rules are *expanded* into independent, single-shot
