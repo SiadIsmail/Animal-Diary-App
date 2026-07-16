@@ -125,7 +125,7 @@
   <data name="Main_CareRingLabel" xml:space="preserve"><value>Today's care</value></data>
   <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Next up</value></data>
   <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>All caught up</value></data>
-  <data name="Main_AllCaughtUpDetail" xml:space="preserve"><value>Nothing due right now — nicely done.</value></data>
+  <data name="Main_AllCaughtUpDetail" xml:space="preserve"><value>Nothing due right now. Nicely done.</value></data>
   <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Healthy</value></data>
   <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Meds 20:00</value></data>
   <data name="Main_StableThisWeek" xml:space="preserve"><value>Stable this week</value></data>

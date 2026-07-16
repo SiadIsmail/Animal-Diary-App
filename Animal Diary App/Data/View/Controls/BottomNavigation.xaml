@@ -44,8 +44,8 @@
                 <VerticalStackLayout HorizontalOptions="Center"
                                      Spacing="3">
                     <Image Source="todayicon.png"
-                           WidthRequest="30"
-                           HeightRequest="30"
+                           WidthRequest="36"
+                           HeightRequest="36"
                            Aspect="AspectFit"
                            HorizontalOptions="Center"/>
                     <Label Text="{loc:Translate Nav_Main}"
@@ -84,8 +84,8 @@
                 <VerticalStackLayout HorizontalOptions="Center"
                                      Spacing="3">
                     <Image Source="journalicon.png"
-                           WidthRequest="30"
-                           HeightRequest="30"
+                           WidthRequest="36"
+                           HeightRequest="36"
                            Aspect="AspectFit"
                            HorizontalOptions="Center"/>
                     <Label Text="{loc:Translate Nav_Calendar}"
@@ -124,8 +124,8 @@
                 <VerticalStackLayout HorizontalOptions="Center"
                                      Spacing="3">
                     <Image Source="careicon.png"
-                           WidthRequest="30"
-                           HeightRequest="30"
+                           WidthRequest="36"
+                           HeightRequest="36"
                            Aspect="AspectFit"
                            HorizontalOptions="Center"/>
                     <Label Text="{loc:Translate Nav_Pets}"
