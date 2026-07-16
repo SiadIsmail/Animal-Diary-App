@@ -47,20 +47,42 @@ public class JournalChip
     public TimeSpan DoseTime { get; init; }
 }
 
-/// <summary>A completed glucose reading on the timeline. The value is precise; the
-/// range sentence is added only when the tracker actually has a target range.</summary>
-public class GlucoseTimelineItem
+/// <summary>Which kind of entry a <see cref="TimelineItem"/> represents. Drives only
+/// the template pick (Mood gets the washi-note card, everything else the standard
+/// card) — never the ordering, which is purely by time.</summary>
+public enum TimelineKind { Mood, Weight, Glucose, Appetite, Seizure, Dose }
+
+/// <summary>One entry on the Journal's single chronological timeline, whatever its
+/// kind. Everything logged for the day — mood, weight, glucose, appetite, seizures
+/// and medication doses — becomes one of these and is sorted purely by
+/// <see cref="Time"/>. <see cref="Time"/> is null only for legacy mood/weight rows
+/// saved before per-entry times existed; those sort at the start of the day and
+/// hide their time label.</summary>
+public class TimelineItem
 {
-    public string TimeDisplay { get; init; } = string.Empty;
+    public TimelineKind Kind { get; init; }
+
+    /// <summary>Time of day the entry was recorded, or null for a legacy mood/weight
+    /// row with no stored time.</summary>
+    public TimeSpan? Time { get; init; }
+    public string TimeDisplay => Time?.ToString(@"hh\:mm") ?? string.Empty;
+    public bool HasTime => Time.HasValue;
+
+    public string Icon { get; init; } = string.Empty;
+
+    /// <summary>Icon-tile tint (resolved from the app's rockpool colour tokens).</summary>
+    public Color Tint { get; init; } = Colors.Transparent;
+
+    /// <summary>Slight alternating tilt down the timeline — imperfection on the frame.
+    /// Assigned by the builder once the list is in its final chronological order.</summary>
+    public double IconRotation { get; set; }
+
     public string Title { get; init; } = string.Empty;
     public string Sub { get; init; } = string.Empty;
-}
+    public bool HasSub => !string.IsNullOrEmpty(Sub);
 
-/// <summary>A completed appetite reading on the timeline ("Ate most of it").</summary>
-public class AppetiteTimelineItem
-{
-    public string TimeDisplay { get; init; } = string.Empty;
-    public string Sub { get; init; } = string.Empty;
+    /// <summary>Mood only: the warm-paper washi note line.</summary>
+    public string Note { get; init; } = string.Empty;
 }
 
 /// <summary>A log type offered in the "+" (add-anything) sheet.</summary>
@@ -76,10 +98,13 @@ public class JournalLogViewModel : BaseViewModel
     private readonly PendingItemsService _pending;
     private readonly CarePlanService _carePlan;
     private readonly ActivePetService _activePet;
+    private readonly DayDoseService _dayDoses;
     private readonly MedicationDoseLogService _doseLogs;
     private readonly MedicationReminderScheduler _reminders;
+    private readonly PetEntryService _petEntries;
     private readonly GlucoseEntryService _glucose;
     private readonly AppetiteEntryService _appetite;
+    private readonly SeizureEntryService _seizures;
 
     private DateTime _date = DateTime.Now.Date;
 
@@ -87,18 +112,24 @@ public class JournalLogViewModel : BaseViewModel
         PendingItemsService pending,
         CarePlanService carePlan,
         ActivePetService activePet,
+        DayDoseService dayDoses,
         MedicationDoseLogService doseLogs,
         MedicationReminderScheduler reminders,
+        PetEntryService petEntries,
         GlucoseEntryService glucose,
-        AppetiteEntryService appetite)
+        AppetiteEntryService appetite,
+        SeizureEntryService seizures)
     {
         _pending = pending;
         _carePlan = carePlan;
         _activePet = activePet;
+        _dayDoses = dayDoses;
         _doseLogs = doseLogs;
         _reminders = reminders;
+        _petEntries = petEntries;
         _glucose = glucose;
         _appetite = appetite;
+        _seizures = seizures;
 
         OpenAddSheetCommand = new Command(async () => await OpenAddSheetAsync());
         CloseAddSheetCommand = new Command(() => IsAddSheetVisible = false);
@@ -152,12 +183,16 @@ public class JournalLogViewModel : BaseViewModel
         private set { if (SetProperty(ref _petName, value)) OnPropertyChanged(nameof(CelebrationText)); }
     }
 
-    // ── Timeline (glucose + appetite; mood/weight/doses stay on CalendarViewModel) ─
-    public ObservableCollection<GlucoseTimelineItem> GlucoseItems { get; } = new();
-    public ObservableCollection<AppetiteTimelineItem> AppetiteItems { get; } = new();
+    // ── Timeline (one chronological list of everything logged for the day) ─────────
+    // Mood, weight, glucose, appetite, seizures and medication doses all become
+    // TimelineItems here and are sorted purely by time — a single ordering, no
+    // per-kind sections. The page renders them with one template selector.
+    public ObservableCollection<TimelineItem> TimelineItems { get; } = new();
 
-    public bool HasGlucoseItems => GlucoseItems.Count > 0;
-    public bool HasAppetiteItems => AppetiteItems.Count > 0;
+    public bool HasTimelineItems => TimelineItems.Count > 0;
+
+    /// <summary>Nothing logged for the day → the page shows its quiet-page empty state.</summary>
+    public bool IsTimelineEmpty => _hasPet && TimelineItems.Count == 0;
 
     // ── Add-anything sheet ───────────────────────────────────────────────────────
     // A plain reassigned list rather than an in-place-mutated ObservableCollection:
@@ -210,17 +245,15 @@ public class JournalLogViewModel : BaseViewModel
         // handlers); if we cleared before awaiting, their clear+add would interleave
         // and duplicate the rows. The fill below is await-free, so each reload rebuilds
         // atomically on the UI thread.
-        var (glucose, appetite) = await GatherTimelineAsync(pet);
+        var timeline = await GatherTimelineAsync(pet);
 
         IReadOnlyList<PendingItem> pending = System.Array.Empty<PendingItem>();
         if (_hasPet && IsToday)
             pending = await _pending.GetAsync(pet!, _date);
 
         // ── atomic fill: no awaits from here on ──
-        GlucoseItems.Clear();
-        foreach (var g in glucose) GlucoseItems.Add(g);
-        AppetiteItems.Clear();
-        foreach (var a in appetite) AppetiteItems.Add(a);
+        TimelineItems.Clear();
+        foreach (var t in timeline) TimelineItems.Add(t);
         RaiseTimelineFlags();
 
         Chips.Clear();
@@ -311,39 +344,164 @@ public class JournalLogViewModel : BaseViewModel
     private static string BuildHeading(int n) =>
         Loc.Format(n == 1 ? "Journal_StillToDoOne" : "Journal_StillToDoMany", n);
 
-    private async Task<(List<GlucoseTimelineItem> glucose, List<AppetiteTimelineItem> appetite)> GatherTimelineAsync(Pet? pet)
+    // Gather everything logged for the day as one list, then sort purely by time —
+    // a single chronological ordering across every kind (§3). Legacy mood/weight rows
+    // with no stored time sort at the start of the day.
+    private async Task<List<TimelineItem>> GatherTimelineAsync(Pet? pet)
     {
-        var glucose = new List<GlucoseTimelineItem>();
-        var appetite = new List<AppetiteTimelineItem>();
+        var items = new List<TimelineItem>();
 
         if (pet == null || pet.Id == 0)
-            return (glucose, appetite);
+            return items;
 
+        // Mood + Weight (both live on the day's PetEntry, each with its own time).
+        var entry = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, pet.Id);
+        if (entry != null)
+        {
+            if (entry.MoodLevel > 0)
+            {
+                var moodWord = ((MoodLevel)entry.MoodLevel).GetDisplayName();
+                items.Add(new TimelineItem
+                {
+                    Kind = TimelineKind.Mood,
+                    Time = TicksToTime(entry.MoodTimeTicks),
+                    Icon = "😊",
+                    Tint = Tint("TealTint"),
+                    Title = Loc.GetString("Journal_MoodTitle"),
+                    Note = !string.IsNullOrWhiteSpace(entry.MoodNote)
+                        ? entry.MoodNote
+                        : Loc.Format("Journal_MoodNarrative", pet.Name, moodWord)
+                });
+            }
+
+            if (entry.Weight > 0)
+            {
+                var weight = entry.Weight.ToString(CultureInfo.CurrentCulture)
+                    + Loc.GetString("Common_KgSuffix");
+                items.Add(new TimelineItem
+                {
+                    Kind = TimelineKind.Weight,
+                    Time = TicksToTime(entry.WeightTimeTicks),
+                    Icon = "⚖️",
+                    Tint = Tint("BlueTint"),
+                    Title = Loc.GetString("Journal_WeighIn"),
+                    Sub = $"{weight} · {Loc.GetString("Journal_WeightScales")}"
+                });
+            }
+        }
+
+        // Glucose (rose) — value is precise; range sentence only when a range exists.
         var range = (await _carePlan.GetPlanAsync(pet))
             .FirstOrDefault(t => t.TrackerId == TrackerId.Glucose)?.TargetRange;
-
         foreach (var g in await _glucose.GetForDateAsync(pet.Id, _date))
         {
-            glucose.Add(new GlucoseTimelineItem
+            items.Add(new TimelineItem
             {
-                TimeDisplay = g.Time.ToString(@"hh\:mm"),
+                Kind = TimelineKind.Glucose,
+                Time = g.Time,
+                Icon = "🩸",
+                Tint = Tint("RoseTint"),
                 Title = Loc.Format("Journal_GlucoseTimeline", g.Value.ToString("0.0", CultureInfo.CurrentCulture)),
                 Sub = GlucoseSub(g, range)
             });
         }
 
+        // Appetite (honey).
         foreach (var a in await _appetite.GetForDateAsync(pet.Id, _date))
         {
             var word = ((AppetiteLevel)a.Level).GetDisplayName().ToLowerInvariant();
-            appetite.Add(new AppetiteTimelineItem
+            items.Add(new TimelineItem
             {
-                TimeDisplay = a.Time.ToString(@"hh\:mm"),
+                Kind = TimelineKind.Appetite,
+                Time = a.Time,
+                Icon = "🍽️",
+                Tint = Tint("HoneyWarmTint"),
+                Title = Loc.GetString("Journal_Appetite"),
                 Sub = Loc.Format("Journal_AteWord", word)
             });
         }
 
-        return (glucose, appetite);
+        // Seizures (violet) — logged as they happen; optional duration + note.
+        foreach (var s in await _seizures.GetForDateAsync(pet.Id, _date))
+        {
+            items.Add(new TimelineItem
+            {
+                Kind = TimelineKind.Seizure,
+                Time = s.Time,
+                Icon = "⚡",
+                Tint = Color.FromArgb("#26584A8A"),
+                Title = Loc.GetString("Journal_Seizure"),
+                Sub = SeizureSub(s)
+            });
+        }
+
+        // Medication doses — placed at the moment they were tapped as taken/skipped
+        // (their resolved time), falling back to the scheduled time when not yet acted on.
+        items.AddRange(await GatherDoseItemsAsync(pet.Id, _date));
+
+        // ── the single ordering: everything, purely by time ──
+        var ordered = items.OrderBy(i => i.Time ?? TimeSpan.Zero).ToList();
+
+        // Handmade wobble: alternate the icon tilt down the finished timeline.
+        for (int i = 0; i < ordered.Count; i++)
+            ordered[i].IconRotation = i % 2 == 0 ? -3 : 2.5;
+
+        return ordered;
     }
+
+    // Today's scheduled doses as timeline entries, from the shared DayDoseService
+    // (same meds → schedules → logs join the pending engine + Calendar use). A dose
+    // sits at its resolved (tapped) time when acted on, else at its scheduled time.
+    private async Task<List<TimelineItem>> GatherDoseItemsAsync(int petId, DateTime date)
+    {
+        var now = DateTime.Now;
+        var honey = Tint("HoneyWarmTint");
+        var result = new List<TimelineItem>();
+
+        foreach (var d in await _dayDoses.GetForDayAsync(petId, date))
+        {
+            var canToggle = date < now.Date || (date == now.Date && d.ScheduledTime <= now.TimeOfDay);
+            result.Add(new TimelineItem
+            {
+                Kind = TimelineKind.Dose,
+                Time = d.Log?.ResolvedAt?.TimeOfDay ?? d.ScheduledTime,
+                Icon = "💊",
+                Tint = honey,
+                Title = d.Medication.Name,
+                Sub = $"{d.Medication.Dosage} {d.Medication.Unit} · {DoseStatusText(d.Log, canToggle)}"
+            });
+        }
+
+        return result;
+    }
+
+    private static string DoseStatusText(MedicationDoseLog? log, bool canToggle) => log?.Status switch
+    {
+        DoseStatus.Taken => Loc.GetString("Dose_Taken"),
+        DoseStatus.Skipped => Loc.GetString("Dose_Skipped"),
+        DoseStatus.Missed => Loc.GetString("Dose_Missed"),
+        _ => Loc.GetString(canToggle ? "Dose_NotTaken" : "Dose_Upcoming")
+    };
+
+    // Duration and note are both optional; join whichever are present.
+    private static string SeizureSub(SeizureEntry s)
+    {
+        var duration = s.DurationMinutes is int m ? Loc.Format("Journal_SeizureDuration", m) : string.Empty;
+        var note = s.Note?.Trim() ?? string.Empty;
+        if (duration.Length > 0 && note.Length > 0)
+            return $"{duration} · {note}";
+        return duration.Length > 0 ? duration : note;
+    }
+
+    /// <summary>Ticks → time of day, or null when the entry has no stored time.</summary>
+    private static TimeSpan? TicksToTime(long? ticks) =>
+        ticks.HasValue ? TimeSpan.FromTicks(ticks.Value) : null;
+
+    /// <summary>Resolve a rockpool colour token to a <see cref="Color"/> for an icon tile.</summary>
+    private static Color Tint(string key) =>
+        Application.Current?.Resources.TryGetValue(key, out var v) == true && v is Color c
+            ? c
+            : Colors.Transparent;
 
     // "{Before|After} food" — plus a gentle range sentence ONLY when a range exists.
     // The value itself is never coloured or altered by the range.
@@ -407,7 +565,7 @@ public class JournalLogViewModel : BaseViewModel
 
     private void RaiseTimelineFlags()
     {
-        OnPropertyChanged(nameof(HasGlucoseItems));
-        OnPropertyChanged(nameof(HasAppetiteItems));
+        OnPropertyChanged(nameof(HasTimelineItems));
+        OnPropertyChanged(nameof(IsTimelineEmpty));
     }
 }

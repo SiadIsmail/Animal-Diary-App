@@ -29,7 +29,6 @@ public class CalendarViewModel : BaseViewModel
             NotifyDerived();
             _ = LoadEntriesAsync();
             _ = LoadDosesAsync();
-            _ = LoadHubAsync();
             if (weekChanged)
                 _ = LoadWeekActivitiesAsync();
         }
@@ -162,11 +161,6 @@ public class CalendarViewModel : BaseViewModel
     public string CelebrationText =>
         LocalizationManager.Instance.Format("Journal_Celebrate", ActivePetName);
 
-    /// <summary>Nothing logged for the selected day → show the quiet-page empty state.
-    /// The mood/weight leaves cover mood + weight, so we only add the other leaves.</summary>
-    public bool IsDayEmpty =>
-        DosesForSelectedDate.Count == 0 && !_allLeaves.Any(l => l.HasValue);
-
     /// <summary>Today's mood, weight and every scheduled dose are all recorded.</summary>
     public bool AllCareComplete =>
         IsSelectedDateToday && HasMood && HasWeight
@@ -182,10 +176,8 @@ public class CalendarViewModel : BaseViewModel
         OnPropertyChanged(nameof(RelativeDateLabel));
         OnPropertyChanged(nameof(DayHeading));
         OnPropertyChanged(nameof(MoodNarrative));
-        OnPropertyChanged(nameof(ConditionName));
         OnPropertyChanged(nameof(EmptyHeadline));
         OnPropertyChanged(nameof(CelebrationText));
-        OnPropertyChanged(nameof(IsDayEmpty));
         OnPropertyChanged(nameof(AllCareComplete));
     }
 
@@ -208,7 +200,7 @@ public class CalendarViewModel : BaseViewModel
     private readonly ActivePetService _activePetService;
     private readonly MedicationService _medicationService;
     private readonly MedicationDoseLogService _doseLogService;
-    private readonly TrackingEntryService _trackingService;
+    private readonly DayDoseService _dayDoseService;
     private readonly Animal_Diary_App.Data.Services.Notifications.MedicationReminderScheduler _reminderScheduler;
     public MedicationViewModel MedicationVM { get; }
 
@@ -216,7 +208,7 @@ public class CalendarViewModel : BaseViewModel
     PetEntryService petEntryService,
     MedicationViewModel medicationVM, PetService petService, ActivePetService activePetService,
     MedicationService medicationService, MedicationDoseLogService doseLogService,
-    TrackingEntryService trackingService,
+    DayDoseService dayDoseService,
     Animal_Diary_App.Data.Services.Notifications.MedicationReminderScheduler reminderScheduler)
     {
         _petEntryService = petEntryService;
@@ -224,7 +216,7 @@ public class CalendarViewModel : BaseViewModel
         _activePetService = activePetService;
         _medicationService = medicationService;
         _doseLogService = doseLogService;
-        _trackingService = trackingService;
+        _dayDoseService = dayDoseService;
         _reminderScheduler = reminderScheduler;
         MedicationVM = medicationVM;
     }
@@ -254,6 +246,7 @@ public class CalendarViewModel : BaseViewModel
         {
             ExistingEntry.MoodLevel = (int)SelectedMoodLevel;
             ExistingEntry.Mood = SelectedMoodLevel.GetDisplayName();
+            ExistingEntry.MoodTimeTicks = DateTime.Now.TimeOfDay.Ticks;
             await _petEntryService.UpdatePetEntryAsync(ExistingEntry);
             return;
         }
@@ -262,7 +255,8 @@ public class CalendarViewModel : BaseViewModel
             PetId = CurrentPetId,
             Date = CurrentSelectedDate,
             MoodLevel = (int)SelectedMoodLevel,
-            Mood = SelectedMoodLevel.GetDisplayName()
+            Mood = SelectedMoodLevel.GetDisplayName(),
+            MoodTimeTicks = DateTime.Now.TimeOfDay.Ticks
         };
 
         await _petEntryService.SavePetEntryAsync(entry);
@@ -282,6 +276,7 @@ public class CalendarViewModel : BaseViewModel
         if (ExistingEntry != null)
         {
             ExistingEntry.Weight = weight;
+            ExistingEntry.WeightTimeTicks = DateTime.Now.TimeOfDay.Ticks;
             await _petEntryService.UpdatePetEntryAsync(ExistingEntry);
             return;
         }
@@ -290,6 +285,7 @@ public class CalendarViewModel : BaseViewModel
             PetId = CurrentPetId,
             Date = CurrentSelectedDate,
             Weight = weight,
+            WeightTimeTicks = DateTime.Now.TimeOfDay.Ticks,
         };
 
         await _petEntryService.SavePetEntryAsync(entry);
@@ -340,41 +336,26 @@ public class CalendarViewModel : BaseViewModel
 
         if (petId != 0)
         {
-            var weekday = date.DayOfWeek;
             var now = DateTime.Now;
 
-            var meds = (await _medicationService.GetMedicationsByPetIdAsync(petId))
-                .Where(m => !m.IsArchived)
-                .ToList();
-            var logs = await _doseLogService.GetByPetAndDateAsync(petId, date);
-
-            // Fetch every medication's schedules in one query instead of one
-            // round-trip per med, then group by medication id.
-            var schedulesByMed = (await _medicationService.GetSchedulesForMedicationsAsync(
-                    meds.Select(m => m.Id).ToList()))
-                .ToLookup(s => s.MedicationId);
-
+            // The day's doses come from the shared DayDoseService (same meds →
+            // schedules → logs join the Journal timeline + pending engine use).
             var items = new List<DoseItem>();
-            foreach (var med in meds)
+            foreach (var d in await _dayDoseService.GetForDayAsync(petId, date))
             {
-                var times = schedulesByMed[med.Id].Where(s => s.Day == weekday).Select(s => s.Time).Distinct();
-
-                foreach (var time in times)
+                var med = d.Medication;
+                items.Add(new DoseItem
                 {
-                    var log = logs.FirstOrDefault(l => l.MedicationId == med.Id && l.ScheduledTime == time);
-                    items.Add(new DoseItem
-                    {
-                        MedicationId = med.Id,
-                        PetId = petId,
-                        ScheduledDate = date,
-                        ScheduledTime = time,
-                        MedName = med.Name,
-                        DoseDisplay = $"{med.Dosage} {med.Unit}",
-                        CanToggle = date < now.Date || (date == now.Date && time <= now.TimeOfDay),
-                        Status = log?.Status,
-                        ResolvedAt = log?.ResolvedAt
-                    });
-                }
+                    MedicationId = med.Id,
+                    PetId = petId,
+                    ScheduledDate = date,
+                    ScheduledTime = d.ScheduledTime,
+                    MedName = med.Name,
+                    DoseDisplay = $"{med.Dosage} {med.Unit}",
+                    CanToggle = date < now.Date || (date == now.Date && d.ScheduledTime <= now.TimeOfDay),
+                    Status = d.Log?.Status,
+                    ResolvedAt = d.Log?.ResolvedAt
+                });
             }
 
             // A "handmade" wobble: alternate the pill-icon tilt and cycle the
@@ -397,8 +378,6 @@ public class CalendarViewModel : BaseViewModel
         // One Reset notification for the whole checklist instead of Clear + N Adds.
         DosesForSelectedDate.ReplaceAll(ordered);
         HasNoDoses = ordered.Count == 0;
-        RefreshGroupSummaries();
-        OnPropertyChanged(nameof(ShowMedsEmpty));
         NotifyDerived();
     }
 
@@ -503,10 +482,8 @@ public class CalendarViewModel : BaseViewModel
             await _reminderScheduler.MarkDoseHandledAsync(item.MedicationId, item.ScheduledDate, item.ScheduledTime);
         }
 
-        // Reflect the new outcome in the month dots (hollow ↔ filled) and the
-        // Medications group's rollup (e.g. 2/3).
+        // Reflect the new outcome in the month dots (hollow ↔ filled).
         await LoadWeekActivitiesAsync();
-        RefreshGroupSummaries();
     });
 
     /// <summary>Secondary action: toggle a dose between Skipped and not-recorded.</summary>
@@ -530,206 +507,9 @@ public class CalendarViewModel : BaseViewModel
             await _reminderScheduler.MarkDoseHandledAsync(item.MedicationId, item.ScheduledDate, item.ScheduledTime);
         }
 
-        // Reflect the new outcome in the month dots (hollow ↔ filled) and the
-        // Medications group's rollup (e.g. 2/3).
+        // Reflect the new outcome in the month dots (hollow ↔ filled).
         await LoadWeekActivitiesAsync();
-        RefreshGroupSummaries();
     });
-
-    // ── Tracker Hub (progressive-disclosure logging) ─────────────────────
-    // Every tracker — Mood, Weight, Appetite, a medication dose, a condition
-    // reading — is surfaced through one flow: a short chooser (RootRows) →
-    // optional group drill-in (CurrentGroup) → a single tracker's input
-    // (OpenLeaf). See TrackerHub.cs for the pieces.
-
-    /// <summary>Chooser rows shown at the hub root.</summary>
-    public ObservableCollection<TrackerRow> RootRows { get; } = new();
-
-    /// <summary>Every leaf currently built (across root + groups), for the
-    /// "is the day empty?" check and summary refreshes.</summary>
-    private readonly List<TrackerLeaf> _allLeaves = new();
-
-    private TrackerGroup? _medsGroup;      // the Medications group (dose checklist)
-    private TrackerGroup? _conditionGroup; // the active pet's condition group, if any
-
-    private TrackerGroup? _currentGroup;
-    /// <summary>The group the user has drilled into (null = root).</summary>
-    public TrackerGroup? CurrentGroup
-    {
-        get => _currentGroup;
-        private set { if (SetProperty(ref _currentGroup, value)) NotifyHub(); }
-    }
-
-    private TrackerLeaf? _openLeaf;
-    /// <summary>The tracker whose input is currently disclosed (null = none).</summary>
-    public TrackerLeaf? OpenLeaf
-    {
-        get => _openLeaf;
-        private set { if (SetProperty(ref _openLeaf, value)) NotifyHub(); }
-    }
-
-    /// <summary>Rows for the current level (a group's children, or the root).</summary>
-    public IReadOnlyList<TrackerRow> VisibleRows =>
-        (IReadOnlyList<TrackerRow>?)CurrentGroup?.Rows ?? RootRows;
-
-    /// <summary>The one open leaf wrapped as a 0/1-item source, so a BindableLayout
-    /// + template selector can render its input.</summary>
-    public IEnumerable<TrackerLeaf> OpenLeafItems =>
-        OpenLeaf is null ? Array.Empty<TrackerLeaf>() : new[] { OpenLeaf };
-
-    public string HubTitle => OpenLeaf?.Name ?? CurrentGroup?.Name ?? "Today's Tracking";
-    public bool ShowBack => OpenLeaf != null || CurrentGroup != null;
-    public bool ShowRows => OpenLeaf == null && CurrentGroup?.IsMedications != true;
-    public bool ShowMedications => OpenLeaf == null && CurrentGroup?.IsMedications == true;
-    /// <summary>Medications group is open but nothing is scheduled today.</summary>
-    public bool ShowMedsEmpty => ShowMedications && HasNoDoses;
-    public bool HasHub => RootRows.Count > 0;
-
-    /// <summary>The active pet's condition name (used elsewhere too).</summary>
-    public string ConditionName =>
-        ConditionCatalog.GetCondition(_activePetService.ActivePet?.ConditionId).Name;
-
-    /// <summary>Raised after any tracker is saved (with a short confirmation), so
-    /// the page can show a gentle toast.</summary>
-    public event Action<string>? TrackingChanged;
-
-    /// <summary>Tap a chooser row: drill into a group, or open a leaf's input.</summary>
-    public ICommand SelectRowCommand => new Command<TrackerRow>(row =>
-    {
-        if (row == null)
-            return;
-
-        if (row.Group != null)
-        {
-            CurrentGroup = row.Group;
-            OpenLeaf = null;
-        }
-        else if (row.Leaf != null)
-        {
-            OpenLeaf = row.Leaf;
-        }
-    });
-
-    /// <summary>Back: close an open leaf, else leave the current group.</summary>
-    public ICommand HubBackCommand => new Command(() =>
-    {
-        if (OpenLeaf != null)
-            OpenLeaf = null;
-        else if (CurrentGroup != null)
-            CurrentGroup = null;
-    });
-
-    /// <summary>
-    /// (Re)build the whole hub for the active pet + selected date: the native Mood
-    /// and Weight leaves, the general Appetite leaf, the Medications group and the
-    /// pet's condition group. Every leaf is hydrated with the day's current value
-    /// so its chooser row shows a ✓ summary without being opened.
-    /// </summary>
-    public async Task LoadHubAsync()
-    {
-        // Detach old leaves and reset navigation to the root.
-        foreach (var leaf in _allLeaves)
-            leaf.Saved -= OnLeafSaved;
-        _allLeaves.Clear();
-        RootRows.Clear();
-        _medsGroup = null;
-        _conditionGroup = null;
-        _currentGroup = null;
-        _openLeaf = null;
-
-        var petId = CurrentPetId;
-        if (petId != 0)
-        {
-            var date = CurrentSelectedDate.Date;
-            var petEntry = await _petEntryService.GetPetEntryByDateAndPetIdAsync(date, petId);
-            var tracking = (await _trackingService.GetForDateAsync(petId, date))
-                .ToDictionary(e => e.ItemId);
-
-            TrackingEntry? Saved(string id) => tracking.TryGetValue(id, out var e) ? e : null;
-
-            // Native leaves (bespoke inputs, PetEntry storage).
-            RootRows.Add(TrackLeaf(new MoodTrackerLeaf(petId, date, _petEntryService, petEntry)));
-            RootRows.Add(TrackLeaf(new WeightTrackerLeaf(petId, date, _petEntryService, petEntry)));
-
-            // General non-native leaves (Appetite) as their own root rows.
-            foreach (var item in ConditionCatalog.GetGeneralDynamicItems())
-                RootRows.Add(TrackLeaf(new DynamicTrackerLeaf(item, petId, date, _trackingService, Saved(item.Id))));
-
-            // Medications group (its content is the dose checklist).
-            _medsGroup = new TrackerGroup { Name = "Medications", Icon = "💊", IsMedications = true };
-            RootRows.Add(new TrackerRow(_medsGroup));
-
-            // Condition group (e.g. Diabetes → Insulin, Blood Glucose, Water Intake).
-            var conditionId = _activePetService.ActivePet?.ConditionId ?? string.Empty;
-            var conditionItems = ConditionCatalog.GetConditionItems(conditionId);
-            if (conditionItems.Count > 0)
-            {
-                var condition = ConditionCatalog.GetCondition(conditionId);
-                _conditionGroup = new TrackerGroup { Name = condition.Name, Icon = condition.Icon };
-                foreach (var item in conditionItems)
-                {
-                    var leaf = new DynamicTrackerLeaf(item, petId, date, _trackingService, Saved(item.Id));
-                    leaf.Saved += OnLeafSaved;
-                    _allLeaves.Add(leaf);
-                    _conditionGroup.Rows.Add(new TrackerRow(leaf));
-                }
-                RootRows.Add(new TrackerRow(_conditionGroup));
-            }
-        }
-
-        RefreshGroupSummaries();
-        NotifyHub();
-        OnPropertyChanged(nameof(ConditionName));
-        OnPropertyChanged(nameof(IsDayEmpty));
-    }
-
-    /// <summary>Wire a leaf up (save handler + empty-day tracking) and wrap it in a row.</summary>
-    private TrackerRow TrackLeaf(TrackerLeaf leaf)
-    {
-        leaf.Saved += OnLeafSaved;
-        _allLeaves.Add(leaf);
-        return new TrackerRow(leaf);
-    }
-
-    private async void OnLeafSaved(TrackerLeaf leaf)
-    {
-        // Collapse the input back to the chooser and refresh what changed.
-        OpenLeaf = null;
-        await LoadEntriesAsync();      // refresh mood/weight timeline cards
-        RefreshGroupSummaries();
-        OnPropertyChanged(nameof(IsDayEmpty));
-        TrackingChanged?.Invoke($"{leaf.Name} noted 💛");
-    }
-
-    /// <summary>Recompute the Medications and condition group rollups.</summary>
-    private void RefreshGroupSummaries()
-    {
-        if (_medsGroup != null)
-        {
-            var total = DosesForSelectedDate.Count;
-            var taken = DosesForSelectedDate.Count(d => d.Status == DoseStatus.Taken);
-            _medsGroup.Summary = total == 0 ? string.Empty : $"{taken}/{total}";
-        }
-
-        if (_conditionGroup != null)
-        {
-            var logged = _conditionGroup.Rows.Count(r => r.Leaf?.HasValue == true);
-            _conditionGroup.Summary = logged == 0 ? string.Empty : $"{logged} logged";
-        }
-    }
-
-    /// <summary>Notify every derived hub-navigation property at once.</summary>
-    private void NotifyHub()
-    {
-        OnPropertyChanged(nameof(VisibleRows));
-        OnPropertyChanged(nameof(OpenLeafItems));
-        OnPropertyChanged(nameof(HubTitle));
-        OnPropertyChanged(nameof(ShowBack));
-        OnPropertyChanged(nameof(ShowRows));
-        OnPropertyChanged(nameof(ShowMedications));
-        OnPropertyChanged(nameof(ShowMedsEmpty));
-        OnPropertyChanged(nameof(HasHub));
-    }
 
     public EntrySection MoodSection { get; } = new();
     public EntrySection WeightSection { get; } = new();
@@ -743,8 +523,7 @@ public class CalendarViewModel : BaseViewModel
     {
         ResetInputSections();
         await LoadPetsAsync();
-        await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadHubAsync(), LoadWeekActivitiesAsync());
-        RefreshGroupSummaries();
+        await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
     }
 
     /// <summary>
@@ -753,8 +532,7 @@ public class CalendarViewModel : BaseViewModel
     public async Task RefreshEntriesAsync()
     {
         ResetInputSections();
-        await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadHubAsync(), LoadWeekActivitiesAsync());
-        RefreshGroupSummaries();
+        await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
     }
 
     private void ResetInputSections()
@@ -829,8 +607,7 @@ public class CalendarViewModel : BaseViewModel
         }
         pet.IsSelected = true;
         _activePetService.ActivePet = pet;
-        await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadHubAsync(), LoadWeekActivitiesAsync());
-        RefreshGroupSummaries();
+        await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
         NotifyDerived();
     });
 }

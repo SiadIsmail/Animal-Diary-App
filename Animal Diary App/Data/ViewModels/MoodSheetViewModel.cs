@@ -76,19 +76,20 @@ public class MoodSheetViewModel : BaseViewModel
         var prevLevel = entry?.MoodLevel ?? 0;
         var prevMood = entry?.Mood ?? string.Empty;
         var prevNote = entry?.MoodNote ?? string.Empty;
+        var prevTicks = entry?.MoodTimeTicks;
 
         var name = ((MoodLevel)Level).GetDisplayName();
         var note = NoteText?.Trim() ?? string.Empty;
-        await WriteMoodAsync(Level, name, note);
+        await WriteMoodAsync(Level, name, note, DateTime.Now.TimeOfDay.Ticks);
 
         IsPresented = false;
         Saved?.Invoke(new JournalSaveResult(
             LocalizationManager.Instance.Format("Toast_MoodSaved1", _petName),
-            () => WriteMoodAsync(prevLevel, prevMood, prevNote)));
+            () => WriteMoodAsync(prevLevel, prevMood, prevNote, prevTicks)));
     }
 
     // Write just the mood columns of the day's entry, leaving weight untouched.
-    private async Task WriteMoodAsync(int level, string moodName, string note)
+    private async Task WriteMoodAsync(int level, string moodName, string note, long? timeTicks)
     {
         var entry = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, _petId);
         if (entry != null)
@@ -96,6 +97,7 @@ public class MoodSheetViewModel : BaseViewModel
             entry.MoodLevel = level;
             entry.Mood = moodName;
             entry.MoodNote = note;
+            entry.MoodTimeTicks = timeTicks;
             await _petEntries.UpdatePetEntryAsync(entry);
         }
         else
@@ -106,7 +108,8 @@ public class MoodSheetViewModel : BaseViewModel
                 Date = _date,
                 MoodLevel = level,
                 Mood = moodName,
-                MoodNote = note
+                MoodNote = note,
+                MoodTimeTicks = timeTicks
             });
         }
     }

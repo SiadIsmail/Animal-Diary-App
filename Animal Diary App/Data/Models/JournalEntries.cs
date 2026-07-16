@@ -6,9 +6,10 @@ using SQLite;
 //  Typed Journal entries.
 //
 //  These sit ALONGSIDE the existing entry stores (mood + weight on PetEntry;
-//  scheduled doses on MedicationDoseLog). Unlike the generic TrackingEntry — which
-//  upserts a single row per (pet, date, item) — each of these allows MANY rows per
-//  day, so a reading is an event with its own time, never overwriting the last.
+//  scheduled doses on MedicationDoseLog). Glucose and Seizure allow MANY rows per
+//  day, so each reading is an event with its own time, never overwriting the last.
+//  Appetite is the exception: one reading per day (like Mood + Weight), so re-logging
+//  replaces the day's row rather than adding another.
 //
 //  Design rule: imperfection on the frame, never on the readout. Values here are
 //  stored precisely (glucose to its exact decimal; appetite as the raw level) and
@@ -53,9 +54,9 @@ public class GlucoseEntry
     public FoodContext Context { get; set; }
 }
 
-/// <summary>One appetite reading for the day. Stored as the raw 1–5 level; the word
-/// is resolved for display (see <see cref="AppetiteLevelExtensions"/>). A number is
-/// never shown to the owner.</summary>
+/// <summary>The day's appetite reading — one per day (like Mood + Weight). Stored as
+/// the raw 1–5 level; the word is resolved for display (see
+/// <see cref="AppetiteLevelExtensions"/>). A number is never shown to the owner.</summary>
 public class AppetiteEntry
 {
     [PrimaryKey, AutoIncrement]

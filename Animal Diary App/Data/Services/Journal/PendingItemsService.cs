@@ -12,23 +12,20 @@ using Animal_Diary_App.Data.Models;
 public class PendingItemsService
 {
     private readonly CarePlanService _carePlan;
-    private readonly MedicationService _medications;
-    private readonly MedicationDoseLogService _doseLogs;
+    private readonly DayDoseService _dayDoses;
     private readonly PetEntryService _petEntries;
     private readonly GlucoseEntryService _glucose;
     private readonly AppetiteEntryService _appetite;
 
     public PendingItemsService(
         CarePlanService carePlan,
-        MedicationService medications,
-        MedicationDoseLogService doseLogs,
+        DayDoseService dayDoses,
         PetEntryService petEntries,
         GlucoseEntryService glucose,
         AppetiteEntryService appetite)
     {
         _carePlan = carePlan;
-        _medications = medications;
-        _doseLogs = doseLogs;
+        _dayDoses = dayDoses;
         _petEntries = petEntries;
         _glucose = glucose;
         _appetite = appetite;
@@ -48,36 +45,15 @@ public class PendingItemsService
 
     // Today's scheduled doses, each flagged with whether it has been acted on. A
     // dose is "given" once it has any dose-log row (Taken / Skipped / Missed) — a
-    // deliberately-skipped dose shouldn't keep nagging. Insulin is not special.
+    // deliberately-skipped dose shouldn't keep nagging. Insulin is not special. The
+    // meds → schedules → logs join is shared with the Journal timeline + Calendar
+    // via DayDoseService; here we project it to the engine's flat snapshot.
     private async Task<IReadOnlyList<ScheduledDose>> GatherDosesAsync(int petId, DateTime day)
     {
-        var meds = (await _medications.GetMedicationsByPetIdAsync(petId))
-            .Where(m => !m.IsArchived)
+        var doses = await _dayDoses.GetForDayAsync(petId, day);
+        return doses
+            .Select(d => new ScheduledDose(d.Medication.Id, petId, d.Medication.Name, d.ScheduledTime, d.Given))
             .ToList();
-
-        if (meds.Count == 0)
-            return System.Array.Empty<ScheduledDose>();
-
-        var schedulesByMed = (await _medications.GetSchedulesForMedicationsAsync(meds.Select(m => m.Id).ToList()))
-            .ToLookup(s => s.MedicationId);
-        var logs = await _doseLogs.GetByPetAndDateAsync(petId, day);
-
-        var result = new List<ScheduledDose>();
-        foreach (var med in meds)
-        {
-            var times = schedulesByMed[med.Id]
-                .Where(s => s.Day == day.DayOfWeek)
-                .Select(s => s.Time)
-                .Distinct();
-
-            foreach (var time in times)
-            {
-                var given = logs.Any(l => l.MedicationId == med.Id && l.ScheduledTime == time);
-                result.Add(new ScheduledDose(med.Id, petId, med.Name, time, given));
-            }
-        }
-
-        return result;
     }
 
     // Each tracker's recent entry dates (rolling 7 days, enough for the weekly

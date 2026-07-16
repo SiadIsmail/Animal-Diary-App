@@ -24,7 +24,9 @@ public class AppetiteOption : BaseViewModel
 /// Backs the Journal's appetite sheet — five word-tiles (Barely … Everything) with
 /// a progressively-filled bowl, in the shared <see cref="Controls.FelovaBottomSheet"/>.
 /// Stores the raw level as an <see cref="AppetiteEntry"/>; the timeline shows the
-/// word. No "3/5" anywhere. Save's undo removes the just-logged reading.
+/// word. No "3/5" anywhere. Appetite is one reading per day (like Mood and Weight):
+/// re-logging replaces the day's entry. Save's undo restores the previous reading
+/// (or removes it when there was none).
 /// </summary>
 public class AppetiteSheetViewModel : BaseViewModel
 {
@@ -108,18 +110,41 @@ public class AppetiteSheetViewModel : BaseViewModel
         if (SelectedLevel <= 0)
             return;
 
-        var id = await _service.InsertAsync(new AppetiteEntry
+        // One reading per day: replace the day's entry if there is one (like Mood /
+        // Weight), otherwise insert. Undo restores the previous reading, or removes
+        // the row when the day had none.
+        var existing = (await _service.GetForDateAsync(_petId, _date)).FirstOrDefault();
+        Func<Task> undo;
+        if (existing != null)
         {
-            PetId = _petId,
-            Date = _date,
-            Time = DateTime.Now.TimeOfDay,
-            Level = SelectedLevel
-        });
+            var prevLevel = existing.Level;
+            var prevTime = existing.Time;
+            existing.Level = SelectedLevel;
+            existing.Time = DateTime.Now.TimeOfDay;
+            await _service.UpdateAsync(existing);
+            undo = () =>
+            {
+                existing.Level = prevLevel;
+                existing.Time = prevTime;
+                return _service.UpdateAsync(existing);
+            };
+        }
+        else
+        {
+            var id = await _service.InsertAsync(new AppetiteEntry
+            {
+                PetId = _petId,
+                Date = _date,
+                Time = DateTime.Now.TimeOfDay,
+                Level = SelectedLevel
+            });
+            undo = () => _service.DeleteAsync(id);
+        }
 
         var word = ((AppetiteLevel)SelectedLevel).GetDisplayName().ToLowerInvariant();
         IsPresented = false;
         Saved?.Invoke(new JournalSaveResult(
             LocalizationManager.Instance.Format("Journal_ToastAppetite", word),
-            () => _service.DeleteAsync(id)));
+            undo));
     }
 }

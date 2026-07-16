@@ -187,7 +187,7 @@
   <data name="Journal_ToastMedGiven" xml:space="preserve"><value>{0} gegeben — braver Mensch.</value></data>
   <data name="Journal_ToastGlucose" xml:space="preserve"><value>Gespeichert — eine Zahl, notiert.</value></data>
   <data name="Journal_ToastAppetite" xml:space="preserve"><value>Notiert — {0} gefressen.</value></data>
-  <data name="Journal_SeizureComingSoon" xml:space="preserve"><value>Anfälle protokollieren kommt bald.</value></data>
+  <data name="Journal_ToastSeizure" xml:space="preserve"><value>Notiert — hoffentlich ein ruhiger.</value></data>
   <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}s Zucker-Check</value></data>
   <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d. MMM} — eine Zahl, und fertig</value></data>
   <data name="Journal_GlucoseFieldLabel" xml:space="preserve"><value>Blutzucker · mmol/L</value></data>
@@ -205,6 +205,14 @@
   <data name="Journal_SaveWeight" xml:space="preserve"><value>Gewicht speichern</value></data>
   <data name="Journal_AppetiteTitle" xml:space="preserve"><value>Wie hat {0} gefressen?</value></data>
   <data name="Journal_AppetiteSub" xml:space="preserve"><value>{0:ddd, d. MMM} — ehrliche Antworten helfen</value></data>
+  <data name="Journal_SeizureTitle" xml:space="preserve"><value>{0}s Anfallsprotokoll</value></data>
+  <data name="Journal_SeizureSub" xml:space="preserve"><value>{0:ddd, d. MMM} — solange es frisch ist</value></data>
+  <data name="Journal_SeizureTimeLabel" xml:space="preserve"><value>Uhrzeit</value></data>
+  <data name="Journal_SeizureDurationLabel" xml:space="preserve"><value>Dauer · optional</value></data>
+  <data name="Journal_SeizureDurationPlaceholder" xml:space="preserve"><value>Minuten</value></data>
+  <data name="Journal_SeizureNoteLabel" xml:space="preserve"><value>Notizen · optional</value></data>
+  <data name="Journal_SeizureNotePlaceholder" xml:space="preserve"><value>Was dir aufgefallen ist</value></data>
+  <data name="Journal_SaveSeizure" xml:space="preserve"><value>Anfall speichern</value></data>
   <data name="Appetite_Level1" xml:space="preserve"><value>Kaum</value></data>
   <data name="Appetite_Level2" xml:space="preserve"><value>Ein wenig</value></data>
   <data name="Appetite_Level3" xml:space="preserve"><value>Etwa die Hälfte</value></data>
@@ -212,10 +220,17 @@
   <data name="Appetite_Level5" xml:space="preserve"><value>Alles</value></data>
   <data name="Journal_GlucoseTimeline" xml:space="preserve"><value>Zucker · {0} mmol/L</value></data>
   <data name="Journal_AteWord" xml:space="preserve"><value>{0} gefressen</value></data>
+  <data name="Journal_SeizureDuration" xml:space="preserve"><value>Dauerte {0} Min.</value></data>
   <data name="Journal_GlucoseInRange" xml:space="preserve"><value>genau im üblichen Bereich</value></data>
   <data name="Journal_GlucoseHigh" xml:space="preserve"><value>etwas hoch — behalt es im Auge</value></data>
   <data name="Journal_GlucoseLow" xml:space="preserve"><value>eher niedrig — sprich es beim Tierarzt an</value></data>
   <data name="Common_NotNow" xml:space="preserve"><value>Jetzt nicht</value></data>
+
+  <!-- ── Bedingungsnamen (Auswahl + Verwalten + Tierarztbericht) ── -->
+  <data name="Condition_None" xml:space="preserve"><value>Keine / Nicht sicher</value></data>
+  <data name="Condition_Diabetes" xml:space="preserve"><value>Diabetes</value></data>
+  <data name="Condition_Ckd" xml:space="preserve"><value>Nierenerkrankung (CNI)</value></data>
+  <data name="Condition_Epilepsy" xml:space="preserve"><value>Epilepsie / Anfälle</value></data>
 
   <!-- ── Bedingungs-Einrichtung (im Onboarding + in „Verwalten" wiederverwendet) ── -->
   <data name="CondSetup_DiabetesTitle" xml:space="preserve"><value>Diabetes</value></data>

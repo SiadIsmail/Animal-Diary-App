@@ -46,680 +46,82 @@
                         Value="{StaticResource InkSecondary}"/>
             </Style>
 
-            <!-- ============================================================ -->
-            <!-- Tracker Hub input templates (one per InputKind).              -->
-            <!-- Rendered inside the hub panel *under* its title, so they are  -->
-            <!-- lean: just the input + a Save affordance. BindingContext is a -->
-            <!-- TrackerLeaf. Scale / Boolean / Dose chips save (and collapse) -->
-            <!-- on tap; Numeric / Text / Event / Mood commit via a button.    -->
-            <!-- ============================================================ -->
-
-            <Style x:Key="TrackChip"
-                    TargetType="Border">
-                <Setter Property="BackgroundColor"
-                        Value="{StaticResource Glass}"/>
-                <Setter Property="Stroke"
-                        Value="{StaticResource GlassLine}"/>
-                <Setter Property="StrokeThickness"
-                        Value="1.5"/>
-                <Setter Property="StrokeShape"
-                        Value="RoundRectangle 12"/>
-                <Setter Property="Padding"
-                        Value="0,11"/>
-            </Style>
-            <Style x:Key="TrackField"
-                    TargetType="Border">
-                <Setter Property="BackgroundColor"
-                        Value="{StaticResource Glass}"/>
-                <Setter Property="Stroke"
-                        Value="{StaticResource GlassLine}"/>
-                <Setter Property="StrokeThickness"
-                        Value="1"/>
-                <Setter Property="StrokeShape"
-                        Value="RoundRectangle 13"/>
-                <Setter Property="Padding"
-                        Value="14,4"/>
-            </Style>
-            <Style x:Key="LeafSaveButton"
-                    TargetType="Button">
-                <Setter Property="FontFamily"
-                        Value="{StaticResource FontSans}"/>
-                <Setter Property="FontSize"
-                        Value="15"/>
-                <Setter Property="FontAttributes"
-                        Value="Bold"/>
-                <Setter Property="HeightRequest"
-                        Value="48"/>
-                <Setter Property="CornerRadius"
-                        Value="14"/>
-                <Setter Property="BackgroundColor"
-                        Value="{StaticResource Teal}"/>
-                <Setter Property="TextColor"
-                        Value="{StaticResource White}"/>
-            </Style>
-
-            <!-- Mood: the bespoke 5-emoji picker + an optional note, saved together -->
-            <DataTemplate x:Key="LeafMoodTemplate">
-                <VerticalStackLayout Spacing="14">
-                    <Grid ColumnDefinitions="*,*,*,*,*"
-                            ColumnSpacing="8">
-                        <Border Grid.Column="0"
-                                BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}"
-                                StrokeThickness="1.5"
-                                StrokeShape="RoundRectangle 15,12,13,14"
-                                Padding="2,12">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding MoodLevelValue}"
-                                        Value="1">
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Ink}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectMoodCommand}"
-                                        CommandParameter="1"/>
-                            </Border.GestureRecognizers>
-                            <Border WidthRequest="34"
-                                    HeightRequest="34"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 17"
-                                    BackgroundColor="{StaticResource MUnwell}"
-                                    HorizontalOptions="Center">
-                                <Label Text="😢"
-                                        FontSize="16"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"/>
-                            </Border>
+            <!-- ── Chronological timeline cards (one ordering, two layouts) ── -->
+            <!-- Mood: title + time, then the warm-paper washi note -->
+            <DataTemplate x:Key="TimelineMoodTemplate">
+                <Grid ColumnDefinitions="38,*" ColumnSpacing="13">
+                    <Grid Grid.Column="0" RowDefinitions="38,*">
+                        <Border WidthRequest="38" HeightRequest="38" Rotation="{Binding IconRotation}"
+                                BackgroundColor="{Binding Tint}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 19,18,19,18" VerticalOptions="Start">
+                            <Label Text="{Binding Icon}" FontSize="17" HorizontalOptions="Center" VerticalOptions="Center"/>
                         </Border>
-
-                        <Border Grid.Column="1"
-                                BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}"
-                                StrokeThickness="1.5"
-                                StrokeShape="RoundRectangle 12,15,14,13"
-                                Padding="2,12">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding MoodLevelValue}"
-                                        Value="2">
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Ink}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectMoodCommand}"
-                                        CommandParameter="2"/>
-                            </Border.GestureRecognizers>
-                            <Border WidthRequest="34"
-                                    HeightRequest="34"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 17"
-                                    BackgroundColor="{StaticResource MLow}"
-                                    HorizontalOptions="Center">
-                                <Label Text="😟"
-                                        FontSize="16"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"/>
-                            </Border>
-                        </Border>
-
-                        <Border Grid.Column="2"
-                                BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}"
-                                StrokeThickness="1.5"
-                                StrokeShape="RoundRectangle 15,12,13,14"
-                                Padding="2,12">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding MoodLevelValue}"
-                                        Value="3">
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Ink}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectMoodCommand}"
-                                        CommandParameter="3"/>
-                            </Border.GestureRecognizers>
-                            <Border WidthRequest="34"
-                                    HeightRequest="34"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 17"
-                                    BackgroundColor="{StaticResource MOkay}"
-                                    HorizontalOptions="Center">
-                                <Label Text="😐"
-                                        FontSize="16"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"/>
-                            </Border>
-                        </Border>
-
-                        <Border Grid.Column="3"
-                                BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}"
-                                StrokeThickness="1.5"
-                                StrokeShape="RoundRectangle 12,15,14,13"
-                                Padding="2,12">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding MoodLevelValue}"
-                                        Value="4">
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Ink}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectMoodCommand}"
-                                        CommandParameter="4"/>
-                            </Border.GestureRecognizers>
-                            <Border WidthRequest="34"
-                                    HeightRequest="34"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 17"
-                                    BackgroundColor="{StaticResource MGood}"
-                                    HorizontalOptions="Center">
-                                <Label Text="😊"
-                                        FontSize="16"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"/>
-                            </Border>
-                        </Border>
-
-                        <Border Grid.Column="4"
-                                BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}"
-                                StrokeThickness="1.5"
-                                StrokeShape="RoundRectangle 15,12,13,14"
-                                Padding="2,12">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding MoodLevelValue}"
-                                        Value="5">
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Ink}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectMoodCommand}"
-                                        CommandParameter="5"/>
-                            </Border.GestureRecognizers>
-                            <Border WidthRequest="34"
-                                    HeightRequest="34"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 17"
-                                    BackgroundColor="{StaticResource MGreat}"
-                                    HorizontalOptions="Center">
-                                <Label Text="😄"
-                                        FontSize="16"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"/>
-                            </Border>
-                        </Border>
+                        <BoxView Grid.Row="1" WidthRequest="2" Color="{StaticResource GlassLine}"
+                                 HorizontalOptions="Center" Margin="0,4,0,0"/>
                     </Grid>
-
-                    <!-- Optional free-text note saved with the mood -->
-                    <Border Style="{StaticResource TrackField}"
-                            Padding="12,6">
-                        <Editor Text="{Binding MoodNoteText}"
-                                Placeholder="Add a note about today… (optional)"
-                                AutoSize="TextChanges"
-                                MinimumHeightRequest="60"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="14"
-                                TextColor="{StaticResource Ink}"
-                                PlaceholderColor="{StaticResource InkTertiary}"/>
-                    </Border>
-
-                    <Button Text="Save"
-                            Command="{Binding SaveCommand}"
-                            Style="{StaticResource LeafSaveButton}"/>
-                </VerticalStackLayout>
-            </DataTemplate>
-
-            <!-- Numeric + Volume + Weight (unit label distinguishes them) -->
-            <DataTemplate x:Key="LeafNumericTemplate">
-                <VerticalStackLayout Spacing="12">
-                    <Border Style="{StaticResource TrackField}">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <Entry Text="{Binding ValueText}"
-                                   Keyboard="Numeric"
-                                   Placeholder="—"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="18"
-                                   TextColor="{StaticResource Ink}"
-                                   PlaceholderColor="{StaticResource InkTertiary}"
-                                   Completed="OnTrackingValueCompleted"/>
-                            <Label Grid.Column="1"
-                                   Text="{Binding Unit}"
-                                   IsVisible="{Binding HasUnit}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14"
-                                   TextColor="{StaticResource InkTertiary}"
-                                   VerticalOptions="Center"
-                                   Margin="6,0,4,0"/>
-                        </Grid>
-                    </Border>
-                    <Button Text="Save"
-                            Command="{Binding SaveCommand}"
-                            Style="{StaticResource LeafSaveButton}"/>
-                </VerticalStackLayout>
-            </DataTemplate>
-
-            <!-- Scale 1–5 (saves + collapses on tap) -->
-            <DataTemplate x:Key="LeafScaleTemplate">
-                <Grid ColumnDefinitions="*,*,*,*,*"
-                        ColumnSpacing="8">
-                    <Border Grid.Column="0"
-                            Style="{StaticResource TrackChip}">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                    Binding="{Binding ScaleValue}"
-                                    Value="1">
-                                <Setter Property="BackgroundColor"
-                                        Value="{StaticResource TealTint}"/>
-                                <Setter Property="Stroke"
-                                        Value="{StaticResource Teal}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SelectScaleCommand}"
-                                    CommandParameter="1"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="1"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                TextColor="{StaticResource InkSecondary}"
-                                HorizontalOptions="Center"/>
-                    </Border>
-                    <Border Grid.Column="1"
-                            Style="{StaticResource TrackChip}">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                    Binding="{Binding ScaleValue}"
-                                    Value="2">
-                                <Setter Property="BackgroundColor"
-                                        Value="{StaticResource TealTint}"/>
-                                <Setter Property="Stroke"
-                                        Value="{StaticResource Teal}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SelectScaleCommand}"
-                                    CommandParameter="2"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="2"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                TextColor="{StaticResource InkSecondary}"
-                                HorizontalOptions="Center"/>
-                    </Border>
-                    <Border Grid.Column="2"
-                            Style="{StaticResource TrackChip}">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                    Binding="{Binding ScaleValue}"
-                                    Value="3">
-                                <Setter Property="BackgroundColor"
-                                        Value="{StaticResource TealTint}"/>
-                                <Setter Property="Stroke"
-                                        Value="{StaticResource Teal}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SelectScaleCommand}"
-                                    CommandParameter="3"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="3"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                TextColor="{StaticResource InkSecondary}"
-                                HorizontalOptions="Center"/>
-                    </Border>
-                    <Border Grid.Column="3"
-                            Style="{StaticResource TrackChip}">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                    Binding="{Binding ScaleValue}"
-                                    Value="4">
-                                <Setter Property="BackgroundColor"
-                                        Value="{StaticResource TealTint}"/>
-                                <Setter Property="Stroke"
-                                        Value="{StaticResource Teal}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SelectScaleCommand}"
-                                    CommandParameter="4"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="4"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                TextColor="{StaticResource InkSecondary}"
-                                HorizontalOptions="Center"/>
-                    </Border>
-                    <Border Grid.Column="4"
-                            Style="{StaticResource TrackChip}">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                    Binding="{Binding ScaleValue}"
-                                    Value="5">
-                                <Setter Property="BackgroundColor"
-                                        Value="{StaticResource TealTint}"/>
-                                <Setter Property="Stroke"
-                                        Value="{StaticResource Teal}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SelectScaleCommand}"
-                                    CommandParameter="5"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="5"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                TextColor="{StaticResource InkSecondary}"
-                                HorizontalOptions="Center"/>
+                    <Border Grid.Column="1" Style="{StaticResource GlassCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0" Text="{Binding Title}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="13.5" FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Grid.Column="1" Text="{Binding TimeDisplay}" IsVisible="{Binding HasTime}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="11"
+                                       TextColor="{StaticResource InkTertiary}" VerticalOptions="Center"/>
+                            </Grid>
+                            <!-- warm-paper note with washi tape -->
+                            <Grid Margin="0,10,0,0">
+                                <Border BackgroundColor="{StaticResource PaperWarm}" StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 3,8,9,4" Rotation="-0.6" Padding="12,12,12,9">
+                                    <Border.Shadow>
+                                        <Shadow Brush="#0D3A3C" Offset="0,2" Radius="6" Opacity="0.08"/>
+                                    </Border.Shadow>
+                                    <Label Text="{Binding Note}"
+                                           FontFamily="{StaticResource FontSerifItalic}" FontSize="13.5"
+                                           TextColor="{StaticResource NoteInk}"/>
+                                </Border>
+                                <BoxView WidthRequest="46" HeightRequest="15" Color="{StaticResource Washi}"
+                                         Rotation="-3" HorizontalOptions="Start" VerticalOptions="Start"
+                                         Margin="16,-7,0,0"/>
+                            </Grid>
+                        </VerticalStackLayout>
                     </Border>
                 </Grid>
             </DataTemplate>
 
-            <!-- Boolean (yes / no, saves + collapses on tap) -->
-            <DataTemplate x:Key="LeafBooleanTemplate">
-                <Grid ColumnDefinitions="*,*"
-                        ColumnSpacing="9">
-                    <Border Grid.Column="0"
-                            Style="{StaticResource TrackChip}">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                    Binding="{Binding BoolState}"
-                                    Value="1">
-                                <Setter Property="BackgroundColor"
-                                        Value="{StaticResource TealTint}"/>
-                                <Setter Property="Stroke"
-                                        Value="{StaticResource Teal}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SetBoolCommand}"
-                                    CommandParameter="yes"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="Yes"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                TextColor="{StaticResource InkSecondary}"
-                                HorizontalOptions="Center"/>
-                    </Border>
-                    <Border Grid.Column="1"
-                            Style="{StaticResource TrackChip}">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                    Binding="{Binding BoolState}"
-                                    Value="2">
-                                <Setter Property="BackgroundColor"
-                                        Value="{StaticResource TealTint}"/>
-                                <Setter Property="Stroke"
-                                        Value="{StaticResource Teal}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding SetBoolCommand}"
-                                    CommandParameter="no"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="No"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                TextColor="{StaticResource InkSecondary}"
-                                HorizontalOptions="Center"/>
+            <!-- Standard: icon + title + time + sub (weight, glucose, appetite, seizure, dose) -->
+            <DataTemplate x:Key="TimelineStandardTemplate">
+                <Grid ColumnDefinitions="38,*" ColumnSpacing="13">
+                    <Grid Grid.Column="0" RowDefinitions="38,*">
+                        <Border WidthRequest="38" HeightRequest="38" Rotation="{Binding IconRotation}"
+                                BackgroundColor="{Binding Tint}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 19,18,19,18" VerticalOptions="Start">
+                            <Label Text="{Binding Icon}" FontSize="17" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                        <BoxView Grid.Row="1" WidthRequest="2" Color="{StaticResource GlassLine}"
+                                 HorizontalOptions="Center" Margin="0,4,0,0"/>
+                    </Grid>
+                    <Border Grid.Column="1" Style="{StaticResource GlassCard}">
+                        <VerticalStackLayout Spacing="2">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0" Text="{Binding Title}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="13.5" FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Grid.Column="1" Text="{Binding TimeDisplay}" IsVisible="{Binding HasTime}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="11"
+                                       TextColor="{StaticResource InkTertiary}" VerticalOptions="Center"/>
+                            </Grid>
+                            <Label Text="{Binding Sub}" IsVisible="{Binding HasSub}"
+                                   FontFamily="{StaticResource FontSans}" FontSize="12.5"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
                     </Border>
                 </Grid>
             </DataTemplate>
 
-            <!-- Dose (given / skipped, saves + collapses on tap) -->
-            <DataTemplate x:Key="LeafDoseTemplate">
-                <VerticalStackLayout Spacing="10">
-                    <Grid ColumnDefinitions="*,*"
-                            ColumnSpacing="9">
-                        <Border Grid.Column="0"
-                                Style="{StaticResource TrackChip}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding DoseState}"
-                                        Value="1">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{StaticResource TealTint}"/>
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Teal}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SetDoseCommand}"
-                                        CommandParameter="given"/>
-                            </Border.GestureRecognizers>
-                            <Label Text="Given"
-                                    FontFamily="{StaticResource FontSans}"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    TextColor="{StaticResource InkSecondary}"
-                                    HorizontalOptions="Center"/>
-                        </Border>
-                        <Border Grid.Column="1"
-                                Style="{StaticResource TrackChip}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding DoseState}"
-                                        Value="2">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{StaticResource TealTint}"/>
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Teal}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SetDoseCommand}"
-                                        CommandParameter="skipped"/>
-                            </Border.GestureRecognizers>
-                            <Label Text="Skip"
-                                    FontFamily="{StaticResource FontSans}"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    TextColor="{StaticResource InkSecondary}"
-                                    HorizontalOptions="Center"/>
-                        </Border>
-                    </Grid>
-                    <Label Text="{Binding Summary}"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="12"
-                           TextColor="{StaticResource InkTertiary}"/>
-                </VerticalStackLayout>
-            </DataTemplate>
-
-            <!-- Text / Note -->
-            <DataTemplate x:Key="LeafTextTemplate">
-                <VerticalStackLayout Spacing="12">
-                    <Border Style="{StaticResource TrackField}"
-                            Padding="12,6">
-                        <Editor Text="{Binding NoteText}"
-                                Placeholder="Add a note…"
-                                AutoSize="TextChanges"
-                                MinimumHeightRequest="70"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="14"
-                                TextColor="{StaticResource Ink}"
-                                PlaceholderColor="{StaticResource InkTertiary}"/>
-                    </Border>
-                    <Button Text="Save note"
-                            Command="{Binding SaveCommand}"
-                            Style="{StaticResource LeafSaveButton}"/>
-                </VerticalStackLayout>
-            </DataTemplate>
-
-            <!-- Event (severity + duration + note, e.g. a seizure) -->
-            <DataTemplate x:Key="LeafEventTemplate">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Severity"
-                           Style="{StaticResource SectionLabel}"/>
-                    <Grid ColumnDefinitions="*,*,*,*,*"
-                            ColumnSpacing="8">
-                        <Border Grid.Column="0"
-                                Style="{StaticResource TrackChip}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding SeverityValue}"
-                                        Value="1">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{StaticResource TealTint}"/>
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Teal}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectSeverityCommand}"
-                                        CommandParameter="1"/>
-                            </Border.GestureRecognizers>
-                            <Label Text="1"
-                                    FontFamily="{StaticResource FontSans}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{StaticResource InkSecondary}"
-                                    HorizontalOptions="Center"/>
-                        </Border>
-                        <Border Grid.Column="1"
-                                Style="{StaticResource TrackChip}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding SeverityValue}"
-                                        Value="2">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{StaticResource TealTint}"/>
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Teal}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectSeverityCommand}"
-                                        CommandParameter="2"/>
-                            </Border.GestureRecognizers>
-                            <Label Text="2"
-                                    FontFamily="{StaticResource FontSans}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{StaticResource InkSecondary}"
-                                    HorizontalOptions="Center"/>
-                        </Border>
-                        <Border Grid.Column="2"
-                                Style="{StaticResource TrackChip}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding SeverityValue}"
-                                        Value="3">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{StaticResource TealTint}"/>
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Teal}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectSeverityCommand}"
-                                        CommandParameter="3"/>
-                            </Border.GestureRecognizers>
-                            <Label Text="3"
-                                    FontFamily="{StaticResource FontSans}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{StaticResource InkSecondary}"
-                                    HorizontalOptions="Center"/>
-                        </Border>
-                        <Border Grid.Column="3"
-                                Style="{StaticResource TrackChip}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding SeverityValue}"
-                                        Value="4">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{StaticResource TealTint}"/>
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Teal}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectSeverityCommand}"
-                                        CommandParameter="4"/>
-                            </Border.GestureRecognizers>
-                            <Label Text="4"
-                                    FontFamily="{StaticResource FontSans}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{StaticResource InkSecondary}"
-                                    HorizontalOptions="Center"/>
-                        </Border>
-                        <Border Grid.Column="4"
-                                Style="{StaticResource TrackChip}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border"
-                                        Binding="{Binding SeverityValue}"
-                                        Value="5">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{StaticResource TealTint}"/>
-                                    <Setter Property="Stroke"
-                                            Value="{StaticResource Teal}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectSeverityCommand}"
-                                        CommandParameter="5"/>
-                            </Border.GestureRecognizers>
-                            <Label Text="5"
-                                    FontFamily="{StaticResource FontSans}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{StaticResource InkSecondary}"
-                                    HorizontalOptions="Center"/>
-                        </Border>
-                    </Grid>
-
-                    <Border Style="{StaticResource TrackField}">
-                        <Entry Text="{Binding DurationText}"
-                               Keyboard="Numeric"
-                               Placeholder="Duration (minutes)"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="15"
-                               TextColor="{StaticResource Ink}"
-                               PlaceholderColor="{StaticResource InkTertiary}"/>
-                    </Border>
-                    <Border Style="{StaticResource TrackField}"
-                            Padding="12,6">
-                        <Editor Text="{Binding EventNote}"
-                                Placeholder="What happened?"
-                                AutoSize="TextChanges"
-                                MinimumHeightRequest="52"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="14"
-                                TextColor="{StaticResource Ink}"
-                                PlaceholderColor="{StaticResource InkTertiary}"/>
-                    </Border>
-                    <Button Text="Log"
-                            Command="{Binding SaveCommand}"
-                            Style="{StaticResource LeafSaveButton}"/>
-                </VerticalStackLayout>
-            </DataTemplate>
-
-            <!-- Selector: maps a leaf's TemplateKind → input template -->
-            <views:LeafInputTemplateSelector x:Key="LeafInputSelector"
-                    MoodTemplate="{StaticResource LeafMoodTemplate}"
-                    NumericTemplate="{StaticResource LeafNumericTemplate}"
-                    ScaleTemplate="{StaticResource LeafScaleTemplate}"
-                    BooleanTemplate="{StaticResource LeafBooleanTemplate}"
-                    DoseTemplate="{StaticResource LeafDoseTemplate}"
-                    TextTemplate="{StaticResource LeafTextTemplate}"
-                    EventTemplate="{StaticResource LeafEventTemplate}"/>
+            <views:TimelineTemplateSelector x:Key="TimelineSelector"
+                    MoodTemplate="{StaticResource TimelineMoodTemplate}"
+                    StandardTemplate="{StaticResource TimelineStandardTemplate}"/>
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -1042,268 +444,17 @@
                 <VerticalStackLayout x:Name="TimelineSection"
                         Spacing="4">
 
-                    <!-- Mood entry -->
-                    <Grid ColumnDefinitions="38,*"
-                            ColumnSpacing="13"
-                          IsVisible="{Binding CalendarVM.HasMood}">
-                        <Grid Grid.Column="0"
-                                RowDefinitions="38,*">
-                            <Border WidthRequest="38"
-                                    HeightRequest="38"
-                                    Rotation="-3"
-                                    BackgroundColor="{StaticResource TealTint}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 19,18,19,18"
-                                    VerticalOptions="Start">
-                                <Label Text="😊"
-                                        FontSize="17"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"/>
-                            </Border>
-                            <BoxView Grid.Row="1"
-                                    WidthRequest="2"
-                                     Color="{StaticResource GlassLine}"
-                                     HorizontalOptions="Center"
-                                    Margin="0,4,0,0"/>
-                        </Grid>
-                        <Border Grid.Column="1"
-                                Style="{StaticResource GlassCard}">
-                            <VerticalStackLayout Spacing="2">
-                                <Label Text="{loc:Translate Journal_MoodTitle}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="13.5"
-                                        FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}"/>
-                                <!-- warm-paper note with washi tape -->
-                                <Grid Margin="0,10,0,0">
-                                    <Border BackgroundColor="{StaticResource PaperWarm}"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3,8,9,4"
-                                            Rotation="-0.6"
-                                            Padding="12,12,12,9">
-                                        <Border.Shadow>
-                                            <Shadow Brush="#0D3A3C"
-                                                    Offset="0,2"
-                                                    Radius="6"
-                                                    Opacity="0.08"/>
-                                        </Border.Shadow>
-                                        <Label Text="{Binding CalendarVM.MoodNarrative}"
-                                               FontFamily="{StaticResource FontSerifItalic}"
-                                               FontSize="13.5"
-                                               TextColor="{StaticResource NoteInk}"/>
-                                    </Border>
-                                    <!-- washi tape overlapping the top edge -->
-                                    <BoxView WidthRequest="46"
-                                            HeightRequest="15"
-                                             Color="{StaticResource Washi}"
-                                             Rotation="-3"
-                                             HorizontalOptions="Start"
-                                            VerticalOptions="Start"
-                                             Margin="16,-7,0,0"/>
-                                </Grid>
-                            </VerticalStackLayout>
-                        </Border>
-                    </Grid>
-
-                    <!-- Weight entry -->
-                    <Grid ColumnDefinitions="38,*"
-                            ColumnSpacing="13"
-                          IsVisible="{Binding CalendarVM.HasWeight}">
-                        <Grid Grid.Column="0"
-                                RowDefinitions="38,*">
-                            <Border WidthRequest="38"
-                                    HeightRequest="38"
-                                    Rotation="2.5"
-                                    BackgroundColor="{StaticResource BlueTint}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 18,19,18,19"
-                                    VerticalOptions="Start">
-                                <Label Text="⚖️"
-                                        FontSize="17"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"/>
-                            </Border>
-                            <BoxView Grid.Row="1"
-                                    WidthRequest="2"
-                                     Color="{StaticResource GlassLine}"
-                                     HorizontalOptions="Center"
-                                    Margin="0,4,0,0"/>
-                        </Grid>
-                        <Border Grid.Column="1"
-                                Style="{StaticResource GlassCard}">
-                            <VerticalStackLayout Spacing="2">
-                                <Label Text="{loc:Translate Journal_WeighIn}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="13.5"
-                                        FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}"/>
-                                <HorizontalStackLayout Spacing="5">
-                                    <Label Text="{Binding CalendarVM.ShownWeightDisplay}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="12.5"
-                                           TextColor="{StaticResource InkSecondary}"/>
-                                    <Label Text="·"
-                                           FontSize="12.5"
-                                           TextColor="{StaticResource InkTertiary}"/>
-                                    <Label Text="{loc:Translate Journal_WeightScales}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="12.5"
-                                           TextColor="{StaticResource InkTertiary}"/>
-                                </HorizontalStackLayout>
-                            </VerticalStackLayout>
-                        </Border>
-                    </Grid>
-
-                    <!-- Glucose readings (rose accent); value is precise, never restyled -->
+                    <!-- One chronological list of everything logged for the day
+                         (mood, weight, glucose, appetite, seizures, doses), sorted
+                         purely by time in JournalVM. Two card layouts via the
+                         TimelineSelector; a single ordering. -->
                     <VerticalStackLayout Spacing="4"
-                                         IsVisible="{Binding JournalVM.HasGlucoseItems}"
-                                         BindableLayout.ItemsSource="{Binding JournalVM.GlucoseItems}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate>
-                                <Grid ColumnDefinitions="38,*" ColumnSpacing="13">
-                                    <Grid Grid.Column="0" RowDefinitions="38,*">
-                                        <Border WidthRequest="38" HeightRequest="38" Rotation="-3"
-                                                BackgroundColor="{StaticResource RoseTint}"
-                                                StrokeThickness="0" StrokeShape="RoundRectangle 19,18,19,18"
-                                                VerticalOptions="Start">
-                                            <Label Text="🩸" FontSize="17" HorizontalOptions="Center" VerticalOptions="Center"/>
-                                        </Border>
-                                        <BoxView Grid.Row="1" WidthRequest="2" Color="{StaticResource GlassLine}"
-                                                 HorizontalOptions="Center" Margin="0,4,0,0"/>
-                                    </Grid>
-                                    <Border Grid.Column="1" Style="{StaticResource GlassCard}">
-                                        <VerticalStackLayout Spacing="2">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <Label Grid.Column="0" Text="{Binding Title}"
-                                                       FontFamily="{StaticResource FontSans}" FontSize="13.5" FontAttributes="Bold"
-                                                       TextColor="{StaticResource Ink}"/>
-                                                <Label Grid.Column="1" Text="{Binding TimeDisplay}"
-                                                       FontFamily="{StaticResource FontSans}" FontSize="11"
-                                                       TextColor="{StaticResource InkTertiary}" VerticalOptions="Center"/>
-                                            </Grid>
-                                            <Label Text="{Binding Sub}"
-                                                   FontFamily="{StaticResource FontSans}" FontSize="12.5"
-                                                   TextColor="{StaticResource InkSecondary}"/>
-                                        </VerticalStackLayout>
-                                    </Border>
-                                </Grid>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
+                                         BindableLayout.ItemsSource="{Binding JournalVM.TimelineItems}"
+                                         BindableLayout.ItemTemplateSelector="{StaticResource TimelineSelector}"/>
 
-                    <!-- Appetite readings -->
-                    <VerticalStackLayout Spacing="4"
-                                         IsVisible="{Binding JournalVM.HasAppetiteItems}"
-                                         BindableLayout.ItemsSource="{Binding JournalVM.AppetiteItems}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate>
-                                <Grid ColumnDefinitions="38,*" ColumnSpacing="13">
-                                    <Grid Grid.Column="0" RowDefinitions="38,*">
-                                        <Border WidthRequest="38" HeightRequest="38" Rotation="2.5"
-                                                BackgroundColor="{StaticResource HoneyWarmTint}"
-                                                StrokeThickness="0" StrokeShape="RoundRectangle 18,19,18,19"
-                                                VerticalOptions="Start">
-                                            <Label Text="🍽️" FontSize="17" HorizontalOptions="Center" VerticalOptions="Center"/>
-                                        </Border>
-                                        <BoxView Grid.Row="1" WidthRequest="2" Color="{StaticResource GlassLine}"
-                                                 HorizontalOptions="Center" Margin="0,4,0,0"/>
-                                    </Grid>
-                                    <Border Grid.Column="1" Style="{StaticResource GlassCard}">
-                                        <VerticalStackLayout Spacing="2">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <Label Grid.Column="0" Text="{loc:Translate Journal_Appetite}"
-                                                       FontFamily="{StaticResource FontSans}" FontSize="13.5" FontAttributes="Bold"
-                                                       TextColor="{StaticResource Ink}"/>
-                                                <Label Grid.Column="1" Text="{Binding TimeDisplay}"
-                                                       FontFamily="{StaticResource FontSans}" FontSize="11"
-                                                       TextColor="{StaticResource InkTertiary}" VerticalOptions="Center"/>
-                                            </Grid>
-                                            <Label Text="{Binding Sub}"
-                                                   FontFamily="{StaticResource FontSans}" FontSize="12.5"
-                                                   TextColor="{StaticResource InkSecondary}"/>
-                                        </VerticalStackLayout>
-                                    </Border>
-                                </Grid>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
-
-                    <!-- Medication doses -->
-                    <VerticalStackLayout Spacing="4"
-                                         BindableLayout.ItemsSource="{Binding CalendarVM.DosesForSelectedDate}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate>
-                                <Grid ColumnDefinitions="38,*"
-                                        ColumnSpacing="13">
-                                    <Grid Grid.Column="0"
-                                            RowDefinitions="38,*">
-                                        <Border WidthRequest="38"
-                                                HeightRequest="38"
-                                                Rotation="{Binding IconRotation}"
-                                                BackgroundColor="{StaticResource HoneyWarmTint}"
-                                                StrokeThickness="0"
-                                                StrokeShape="RoundRectangle 19,18,19,18"
-                                                VerticalOptions="Start">
-                                            <Label Text="💊"
-                                                    FontSize="17"
-                                                    HorizontalOptions="Center"
-                                                    VerticalOptions="Center"/>
-                                        </Border>
-                                        <BoxView Grid.Row="1"
-                                                WidthRequest="2"
-                                                 Color="{StaticResource GlassLine}"
-                                                 HorizontalOptions="Center"
-                                                Margin="0,4,0,0"/>
-                                    </Grid>
-
-                                    <Border Grid.Column="1"
-                                            BackgroundColor="{StaticResource Glass}"
-                                            Stroke="{StaticResource GlassLine}"
-                                            StrokeThickness="1"
-                                            Padding="14,12">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="{Binding CardCorner}"/>
-                                        </Border.StrokeShape>
-                                        <VerticalStackLayout Spacing="2">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <Label Grid.Column="0"
-                                                       Text="{Binding MedName}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="13.5"
-                                                        FontAttributes="Bold"
-                                                       TextColor="{StaticResource Ink}"/>
-                                                <Label Grid.Column="1"
-                                                       Text="{Binding TimeDisplay}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="11"
-                                                        FontAttributes="Bold"
-                                                       TextColor="{StaticResource InkTertiary}"
-                                                       VerticalOptions="Center"/>
-                                            </Grid>
-                                            <!-- Read-only summary: give / skip happens in the
-                                                 Tracker Hub's Medications group now. -->
-                                            <HorizontalStackLayout Spacing="5">
-                                                <Label Text="{Binding DoseDisplay}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="12"
-                                                       TextColor="{StaticResource InkSecondary}"/>
-                                                <Label Text="·"
-                                                       FontSize="12"
-                                                       TextColor="{StaticResource InkTertiary}"/>
-                                                <Label Text="{Binding StatusText}"
-                                                       FontFamily="{StaticResource FontSans}"
-                                                       FontSize="12"
-                                                       TextColor="{StaticResource InkTertiary}"/>
-                                            </HorizontalStackLayout>
-                                        </VerticalStackLayout>
-                                    </Border>
-                                </Grid>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
 
                     <!-- Empty state: sleeping-cat doodle -->
-                    <VerticalStackLayout IsVisible="{Binding CalendarVM.IsDayEmpty}"
+                    <VerticalStackLayout IsVisible="{Binding JournalVM.IsTimelineEmpty}"
                                          HorizontalOptions="Center"
                                          Spacing="6"
                                          Padding="24,34,24,40">
@@ -1412,6 +563,7 @@
         <views:MoodSheetView Grid.RowSpan="2" BindingContext="{Binding MoodSheetVM}"/>
         <views:WeightSheetView Grid.RowSpan="2" BindingContext="{Binding WeightSheetVM}"/>
         <views:AppetiteSheetView Grid.RowSpan="2" BindingContext="{Binding AppetiteSheetVM}"/>
+        <views:SeizureSheetView Grid.RowSpan="2" BindingContext="{Binding SeizureSheetVM}"/>
         <views:AddAnythingSheetView Grid.RowSpan="2" BindingContext="{Binding JournalVM}"/>
 
     </Grid>

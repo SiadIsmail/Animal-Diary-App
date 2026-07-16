@@ -19,6 +19,7 @@ public class MainViewModel
     public MoodSheetViewModel MoodSheetVM { get; }
     public WeightSheetViewModel WeightSheetVM { get; }
     public AppetiteSheetViewModel AppetiteSheetVM { get; }
+    public SeizureSheetViewModel SeizureSheetVM { get; }
 
     // ── Reusable condition-setup sheets ("one menu, two doors": onboarding + Manage) ──
     public DiabetesSetupSheetViewModel DiabetesSetupVM { get; }
@@ -45,6 +46,7 @@ public class MainViewModel
  MoodSheetViewModel moodSheetVM,
  WeightSheetViewModel weightSheetVM,
  AppetiteSheetViewModel appetiteSheetVM,
+ SeizureSheetViewModel seizureSheetVM,
  DiabetesSetupSheetViewModel diabetesSetupVM,
  CkdSetupSheetViewModel ckdSetupVM,
  EpilepsySetupSheetViewModel epilepsySetupVM,
@@ -61,6 +63,7 @@ public class MainViewModel
         MoodSheetVM = moodSheetVM;
         WeightSheetVM = weightSheetVM;
         AppetiteSheetVM = appetiteSheetVM;
+        SeizureSheetVM = seizureSheetVM;
         DiabetesSetupVM = diabetesSetupVM;
         CkdSetupVM = ckdSetupVM;
         EpilepsySetupVM = epilepsySetupVM;

@@ -39,11 +39,7 @@ public static class CarePlanCatalog
         {
             Simple(TrackerId.Seizure, TrackerKind.Event, "epilepsy"),
         },
-        "hyperthyroid" => new[]
-        {
-            Simple(TrackerId.Appetite, TrackerKind.Daily, "hyperthyroid"),
-        },
-        // "heart", "" (none) and any unknown id contribute no extra trackers.
+        // "" (none) and any unknown id contribute no extra trackers.
         _ => System.Array.Empty<Tracker>(),
     };
 

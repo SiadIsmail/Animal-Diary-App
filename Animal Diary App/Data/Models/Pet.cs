@@ -66,5 +66,14 @@ public class PetEntry
     /// Mood tracker. SQLite.NET adds this column automatically — no migration.</summary>
     public string MoodNote { get; set; } = string.Empty;
     public decimal Weight { get; set; }
+
+    /// <summary>Time-of-day (ticks) the mood was logged, or null for entries written
+    /// before per-entry times existed. Lets the chronological Journal timeline place
+    /// mood at the moment it was recorded. SQLite.NET adds this column automatically.</summary>
+    public long? MoodTimeTicks { get; set; }
+
+    /// <summary>Time-of-day (ticks) the weight was logged, or null for legacy entries.
+    /// Weight and mood carry separate times because they're logged independently.</summary>
+    public long? WeightTimeTicks { get; set; }
 }
 

@@ -50,6 +50,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<MoodSheetViewModel>();
 		builder.Services.AddSingleton<WeightSheetViewModel>();
 		builder.Services.AddSingleton<AppetiteSheetViewModel>();
+		builder.Services.AddSingleton<SeizureSheetViewModel>();
 		builder.Services.AddSingleton<DiabetesSetupSheetViewModel>();
 		builder.Services.AddSingleton<CkdSetupSheetViewModel>();
 		builder.Services.AddSingleton<EpilepsySetupSheetViewModel>();
@@ -58,6 +59,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PetService>();
 		builder.Services.AddSingleton<MedicationService>();
 		builder.Services.AddSingleton<MedicationDoseLogService>();
+		builder.Services.AddSingleton<DayDoseService>();
 		builder.Services.AddSingleton<ActivePetService>();
 		builder.Services.AddSingleton<SettingsService>();
 		builder.Services.AddSingleton<AppResetService>();

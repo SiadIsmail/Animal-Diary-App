@@ -85,22 +85,24 @@ public class WeightSheetViewModel : BaseViewModel
 
         var entry = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, _petId);
         var prevWeight = entry?.Weight ?? 0m;
+        var prevTicks = entry?.WeightTimeTicks;
 
-        await WriteWeightAsync(weight);
+        await WriteWeightAsync(weight, DateTime.Now.TimeOfDay.Ticks);
 
         IsPresented = false;
         Saved?.Invoke(new JournalSaveResult(
             LocalizationManager.Instance.GetString("Toast_WeightSaved1"),
-            () => WriteWeightAsync(prevWeight)));
+            () => WriteWeightAsync(prevWeight, prevTicks)));
     }
 
     // Write just the weight column of the day's entry, leaving mood untouched.
-    private async Task WriteWeightAsync(decimal weight)
+    private async Task WriteWeightAsync(decimal weight, long? timeTicks)
     {
         var entry = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, _petId);
         if (entry != null)
         {
             entry.Weight = weight;
+            entry.WeightTimeTicks = timeTicks;
             await _petEntries.UpdatePetEntryAsync(entry);
         }
         else
@@ -109,7 +111,8 @@ public class WeightSheetViewModel : BaseViewModel
             {
                 PetId = _petId,
                 Date = _date,
-                Weight = weight
+                Weight = weight,
+                WeightTimeTicks = timeTicks
             });
         }
     }

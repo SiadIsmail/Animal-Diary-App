@@ -192,7 +192,7 @@
   <data name="Journal_ToastMedGiven" xml:space="preserve"><value>{0} marked given — good human.</value></data>
   <data name="Journal_ToastGlucose" xml:space="preserve"><value>Saved — one number, written down.</value></data>
   <data name="Journal_ToastAppetite" xml:space="preserve"><value>Noted — ate {0}.</value></data>
-  <data name="Journal_SeizureComingSoon" xml:space="preserve"><value>Seizure logging is coming soon.</value></data>
+  <data name="Journal_ToastSeizure" xml:space="preserve"><value>Logged — I hope it's a quiet one.</value></data>
   <!-- Glucose sheet -->
   <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}'s glucose check</value></data>
   <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d MMM} — one number, and you're done</value></data>
@@ -214,6 +214,15 @@
   <!-- Appetite sheet -->
   <data name="Journal_AppetiteTitle" xml:space="preserve"><value>How did {0} eat?</value></data>
   <data name="Journal_AppetiteSub" xml:space="preserve"><value>{0:ddd, d MMM} — honest answers help most</value></data>
+  <!-- Seizure sheet -->
+  <data name="Journal_SeizureTitle" xml:space="preserve"><value>{0}'s seizure log</value></data>
+  <data name="Journal_SeizureSub" xml:space="preserve"><value>{0:ddd, d MMM} — capture it while it's fresh</value></data>
+  <data name="Journal_SeizureTimeLabel" xml:space="preserve"><value>Time</value></data>
+  <data name="Journal_SeizureDurationLabel" xml:space="preserve"><value>Duration · optional</value></data>
+  <data name="Journal_SeizureDurationPlaceholder" xml:space="preserve"><value>Minutes</value></data>
+  <data name="Journal_SeizureNoteLabel" xml:space="preserve"><value>Notes · optional</value></data>
+  <data name="Journal_SeizureNotePlaceholder" xml:space="preserve"><value>What you noticed</value></data>
+  <data name="Journal_SaveSeizure" xml:space="preserve"><value>Save seizure log</value></data>
   <!-- Appetite levels (word shown to the owner; the int is stored) -->
   <data name="Appetite_Level1" xml:space="preserve"><value>Barely</value></data>
   <data name="Appetite_Level2" xml:space="preserve"><value>A little</value></data>
@@ -223,11 +232,18 @@
   <!-- Timeline renderers -->
   <data name="Journal_GlucoseTimeline" xml:space="preserve"><value>Glucose · {0} mmol/L</value></data>
   <data name="Journal_AteWord" xml:space="preserve"><value>Ate {0}</value></data>
+  <data name="Journal_SeizureDuration" xml:space="preserve"><value>Lasted {0} min</value></data>
   <data name="Journal_GlucoseInRange" xml:space="preserve"><value>right in the usual range</value></data>
   <data name="Journal_GlucoseHigh" xml:space="preserve"><value>a touch high — worth keeping an eye on</value></data>
   <data name="Journal_GlucoseLow" xml:space="preserve"><value>on the low side — maybe mention it to your vet</value></data>
   <!-- Shared -->
   <data name="Common_NotNow" xml:space="preserve"><value>Not now</value></data>
+
+  <!-- ── Condition names (picker + Manage + vet report) ── -->
+  <data name="Condition_None" xml:space="preserve"><value>None / Not sure</value></data>
+  <data name="Condition_Diabetes" xml:space="preserve"><value>Diabetes</value></data>
+  <data name="Condition_Ckd" xml:space="preserve"><value>Kidney disease (CKD)</value></data>
+  <data name="Condition_Epilepsy" xml:space="preserve"><value>Epilepsy / Seizures</value></data>
 
   <!-- ── Condition setup sheets (reused in onboarding + Manage Pet) ── -->
   <data name="CondSetup_DiabetesTitle" xml:space="preserve"><value>Diabetes</value></data>

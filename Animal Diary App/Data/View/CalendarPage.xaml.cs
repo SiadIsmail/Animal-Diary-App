@@ -29,13 +29,13 @@ public partial class CalendarPage : ContentPage
 		base.OnAppearing();
 
 		vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
-		vm.CalendarVM.TrackingChanged += OnTrackingChanged;
 		vm.JournalVM.PropertyChanged += OnJournalVmPropertyChanged;
 		vm.JournalVM.RequestOpenSheet += OnRequestOpenSheet;
 		vm.GlucoseSheetVM.Saved += OnSheetSaved;
 		vm.MoodSheetVM.Saved += OnSheetSaved;
 		vm.WeightSheetVM.Saved += OnSheetSaved;
 		vm.AppetiteSheetVM.Saved += OnSheetSaved;
+		vm.SeizureSheetVM.Saved += OnSheetSaved;
 
 		if (vm.CalendarVM.Pets.Count == 0)
 			await vm.CalendarVM.PrepareDataAsync();
@@ -52,24 +52,14 @@ public partial class CalendarPage : ContentPage
 	{
 		base.OnDisappearing();
 		vm.CalendarVM.PropertyChanged -= OnCalendarVmPropertyChanged;
-		vm.CalendarVM.TrackingChanged -= OnTrackingChanged;
 		vm.JournalVM.PropertyChanged -= OnJournalVmPropertyChanged;
 		vm.JournalVM.RequestOpenSheet -= OnRequestOpenSheet;
 		vm.GlucoseSheetVM.Saved -= OnSheetSaved;
 		vm.MoodSheetVM.Saved -= OnSheetSaved;
 		vm.WeightSheetVM.Saved -= OnSheetSaved;
 		vm.AppetiteSheetVM.Saved -= OnSheetSaved;
+		vm.SeizureSheetVM.Saved -= OnSheetSaved;
 	}
-
-	/// <summary>Numeric tracker "done" on the keyboard → save via the leaf's command.
-	/// Retained for the (unused-but-defined) Tracker Hub input templates.</summary>
-	private void OnTrackingValueCompleted(object? sender, EventArgs e)
-	{
-		if (sender is BindableObject bo && bo.BindingContext is TrackerLeaf leaf)
-			leaf.SaveCommand.Execute(null);
-	}
-
-	private void OnTrackingChanged(string message) => ShowToast(message);
 
 	/// <summary>Jump-to-today: snap the selection back to the current date.</summary>
 	private void OnJumpTodayClicked(object? sender, EventArgs e)
@@ -131,7 +121,7 @@ public partial class CalendarPage : ContentPage
 			case JournalChipKind.Mood: await vm.MoodSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Weight: await vm.WeightSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Appetite: await vm.AppetiteSheetVM.OpenAsync(petId, name, date); break;
-			case JournalChipKind.Seizure: ShowToast(LocalizationManager.Instance.GetString("Journal_SeizureComingSoon")); break;
+			case JournalChipKind.Seizure: await vm.SeizureSheetVM.OpenAsync(petId, name, date); break;
 		}
 	}
 
