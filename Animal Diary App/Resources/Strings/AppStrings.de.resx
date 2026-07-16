@@ -298,6 +298,10 @@
   <data name="Pets_DocumentsSubtitle" xml:space="preserve"><value>Berichte, Scans und Dateien</value></data>
   <data name="Pets_Export" xml:space="preserve"><value>Exportieren</value></data>
   <data name="Pets_ExportSubtitle" xml:space="preserve"><value>Gesundheits-PDF erstellen</value></data>
+  <data name="Export_SavedTitle" xml:space="preserve"><value>Bericht gespeichert</value></data>
+  <data name="Export_NoData" xml:space="preserve"><value>Noch keine Einträge in diesem Zeitraum — nichts zu exportieren.</value></data>
+  <data name="Export_Failed" xml:space="preserve"><value>Der Bericht konnte nicht erstellt werden.</value></data>
+  <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
   <data name="Pet_SubtitleFormat" xml:space="preserve"><value>{0} · {1} J.</value></data>
 
   <!-- ── Calendar ── -->

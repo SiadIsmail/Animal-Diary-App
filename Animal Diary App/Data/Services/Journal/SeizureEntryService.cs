@@ -32,4 +32,15 @@ public class SeizureEntryService
             .ToListAsync();
         return rows.OrderBy(s => s.Time).ToList();
     }
+
+    /// <summary>All seizures for a pet within an inclusive date range (for the vet
+    /// report's event list and per-week counts). Mirrors the other entry services.</summary>
+    public async Task<List<SeizureEntry>> GetForRangeAsync(int petId, DateTime startDate, DateTime endDate)
+    {
+        var start = startDate.Date;
+        var end = endDate.Date;
+        return await _db.Table<SeizureEntry>()
+            .Where(s => s.PetId == petId && s.Date >= start && s.Date <= end)
+            .ToListAsync();
+    }
 }

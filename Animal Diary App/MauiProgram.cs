@@ -44,6 +44,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.PetConditionService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.CarePlanService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.PendingItemsService>();
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Reports.VetReportDataBuilder>();
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Reports.IVetReportService, Animal_Diary_App.Data.Services.Reports.VetReportService>();
 		builder.Services.AddSingleton<GlucoseSheetViewModel>();
 		builder.Services.AddSingleton<MoodSheetViewModel>();
 		builder.Services.AddSingleton<WeightSheetViewModel>();

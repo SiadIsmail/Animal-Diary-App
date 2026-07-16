@@ -25,6 +25,17 @@ public class TrackingEntryService
             .ToListAsync();
     }
 
+    /// <summary>All logged tracking values for a pet within an inclusive date range
+    /// (used by the vet report to find e.g. vomiting days in the period).</summary>
+    public async Task<List<TrackingEntry>> GetForRangeAsync(int petId, DateTime startDate, DateTime endDate)
+    {
+        var start = startDate.Date;
+        var end = endDate.Date;
+        return await _db.Table<TrackingEntry>()
+            .Where(e => e.PetId == petId && e.Date >= start && e.Date <= end)
+            .ToListAsync();
+    }
+
     /// <summary>Insert or update one (pet, date, item) value; returns the row id.
     /// The caller keeps the id so the next save updates the same row.</summary>
     public async Task<int> UpsertAsync(TrackingEntry entry)

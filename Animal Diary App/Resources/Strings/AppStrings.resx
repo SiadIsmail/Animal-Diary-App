@@ -310,6 +310,10 @@
   <data name="Pets_DocumentsSubtitle" xml:space="preserve"><value>Reports, scans and files</value></data>
   <data name="Pets_Export" xml:space="preserve"><value>Export</value></data>
   <data name="Pets_ExportSubtitle" xml:space="preserve"><value>Generate health PDF</value></data>
+  <data name="Export_SavedTitle" xml:space="preserve"><value>Report saved</value></data>
+  <data name="Export_NoData" xml:space="preserve"><value>No entries in this period yet — nothing to export.</value></data>
+  <data name="Export_Failed" xml:space="preserve"><value>The report could not be generated.</value></data>
+  <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
   <data name="Pet_SubtitleFormat" xml:space="preserve"><value>{0} · {1} yrs</value></data>
 
   <!-- ── Calendar ── -->
