@@ -456,7 +456,7 @@ public class JournalLogViewModel : BaseViewModel
                 EntryId = s.Id,
                 Time = s.Time,
                 Icon = "⚡",
-                Tint = Color.FromArgb("#26584A8A"),
+                Tint = Tint("VioletTint"),
                 Title = Loc.GetString("Journal_Seizure"),
                 Sub = SeizureSub(s)
             });
@@ -650,7 +650,15 @@ public class JournalLogViewModel : BaseViewModel
         var date = _date;
         return new JournalSaveResult(
             Loc.Format("Journal_ToastMedGiven", chip.Label),
-            () => _doseLogs.ClearStatusAsync(medId, date, time));
+            async () =>
+            {
+                await _doseLogs.ClearStatusAsync(medId, date, time);
+                // MarkDoseHandledAsync cancelled this occurrence's reminder; undoing
+                // the log must re-arm it, or an accidental tap + undo before the due
+                // time would silently kill the reminder (and its boot re-send).
+                // SyncMedicationAsync is idempotent and rebuilds pending occurrences.
+                await _reminders.SyncMedicationAsync(medId);
+            });
     }
 
     // ── Add-anything options (tracker sheets present in the plan) ──────────────────

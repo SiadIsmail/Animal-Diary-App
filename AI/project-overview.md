@@ -25,9 +25,7 @@ records facts; the vet does the medicine.
   on Windows; the mobile targets are the shipping ones).
 - **Stack:** .NET MAUI 9 · MVVM · SQLite (`sqlite-net-pcl`) · Microsoft DI.
 - **Key packages:** `Microsoft.Maui.Controls`, `sqlite-net-pcl` (1.9.172),
-  `Plugin.LocalNotification` (12.x), `QuestPDF` (pinned 2023.12.6),
-  `Syncfusion.Maui.Calendar` (still referenced for `ConfigureSyncfusionCore`,
-  though the calendar UI is now a custom control — see
+  `Plugin.LocalNotification` (12.x), `QuestPDF` (pinned 2023.12.6 — see
   [known-constraints.md](known-constraints.md)).
 
 > The German `README.md` in the repo root refers to the app as "AnimalDiary" and

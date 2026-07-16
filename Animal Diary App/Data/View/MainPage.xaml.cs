@@ -38,16 +38,25 @@ public partial class MainPage : ContentPage
         // Keep the care ring and next-up card in step with today's data.
         vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
 
-        await vm.LoadAsync();
-        // The two charts are independent of each other; overlap their queries
-        // instead of running them back-to-back.
-        await Task.WhenAll(
-            vm.MainPageVM.LoadWeightChartAsync(),
-            vm.MainPageVM.LoadMoodTimelineAsync());
+        try
+        {
+            await vm.LoadAsync();
+            // The two charts are independent of each other; overlap their queries
+            // instead of running them back-to-back.
+            await Task.WhenAll(
+                vm.MainPageVM.LoadWeightChartAsync(),
+                vm.MainPageVM.LoadMoodTimelineAsync());
 
-        SetAside();
-        RefreshRing();
-        RefreshNextMed();
+            SetAside();
+            RefreshRing();
+            RefreshNextMed();
+        }
+        catch (Exception ex)
+        {
+            // A failed load must degrade to an empty page, never crash the app
+            // (async void — an escaping exception here kills the process).
+            System.Diagnostics.Debug.WriteLine($"[MainPage] OnAppearing failed: {ex}");
+        }
     }
 
     protected override void OnDisappearing()

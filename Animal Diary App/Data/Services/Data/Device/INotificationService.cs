@@ -33,5 +33,9 @@ namespace Animal_Diary_App.Data.Services.Data.Device
         Task ScheduleNotification(NotificationContent content);
         Task CancelNotification(int id);
         Task CancelNotifications(IEnumerable<int> ids);
+
+        /// <summary>Cancel every notification this app has scheduled — the "delete
+        /// all data" path, where nothing armed with the OS may survive the wipe.</summary>
+        Task CancelAllNotifications();
     }
 }

@@ -1,28 +1,51 @@
 namespace Animal_Diary_App.Data.Services;
 
 using Animal_Diary_App.Data.Models;
+using Animal_Diary_App.Data.Services.Data.Device;
+using Animal_Diary_App.Data.Services.Notifications;
 
+/// <summary>
+/// The "delete all data" path. Invariant: this must wipe EVERY table created in
+/// <c>AppDatabase.InitAsync</c> (add new tables here in the same commit), cancel
+/// every notification armed with the OS, and clear persisted scheduler state —
+/// health data is medical data, and nothing may survive a reset the user asked for.
+/// </summary>
 public class AppResetService
 {
     private readonly AppDatabase _db;
     private readonly ActivePetService _activePetService;
+    private readonly INotificationService _notifications;
 
-    public AppResetService(AppDatabase db, ActivePetService activePetService)
+    public AppResetService(AppDatabase db, ActivePetService activePetService, INotificationService notifications)
     {
         _db = db;
         _activePetService = activePetService;
+        _notifications = notifications;
     }
 
     public async Task ResetDataAsync()
     {
+        // Already-armed one-shot reminders would otherwise keep firing for up to
+        // 14 days, naming the deleted pet and medication.
+        await _notifications.CancelAllNotifications();
+
         await _db.Connection.DeleteAllAsync<Pet>();
         await _db.Connection.DeleteAllAsync<PetEntry>();
         await _db.Connection.DeleteAllAsync<Medication>();
         await _db.Connection.DeleteAllAsync<AppSettings>();
         await _db.Connection.DeleteAllAsync<MedicationSchedule>();
-        await _db.Connection.DeleteAllAsync<MedicationTime>();
         await _db.Connection.DeleteAllAsync<ReminderInstance>();
         await _db.Connection.DeleteAllAsync<MedicationDoseLog>();
+        await _db.Connection.DeleteAllAsync<TrackingEntry>();
+        await _db.Connection.DeleteAllAsync<Tracker>();
+        await _db.Connection.DeleteAllAsync<PetCondition>();
+        await _db.Connection.DeleteAllAsync<GlucoseEntry>();
+        await _db.Connection.DeleteAllAsync<AppetiteEntry>();
+        await _db.Connection.DeleteAllAsync<SeizureEntry>();
+
+        // Forget the reminder catch-up marker so a fresh start can't misread the
+        // old install's "last seen" time.
+        MedicationReminderScheduler.ClearPersistedState();
 
         MainThread.BeginInvokeOnMainThread(() =>
         {

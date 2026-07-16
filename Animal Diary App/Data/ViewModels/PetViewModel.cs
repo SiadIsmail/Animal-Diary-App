@@ -203,9 +203,10 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
         SelectPetCommand = new Command<Pet>(SelectPet);
         AddPetCommand = new Command(async () => await SavePetAsync());
-        OpenDocumentsCommand = new Command(() => Console.WriteLine("Open documents"));
+        // Stubs: bound in XAML but the flows don't exist yet (documents; med detail).
+        OpenDocumentsCommand = new Command(() => System.Diagnostics.Debug.WriteLine("Open documents (stub)"));
         ExportReportCommand = new Command(async () => await ExportReportAsync());
-        OpenMedicationDetailCommand = new Command(() => Console.WriteLine("Open medication detail"));
+        OpenMedicationDetailCommand = new Command(() => System.Diagnostics.Debug.WriteLine("Open medication detail (stub)"));
         InitializePetTypeOptions();
 
         _activePetService.PropertyChanged += (s, e) =>
@@ -265,6 +266,15 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         await _petService.SavePetAsync(pet);
         Pets.Add(pet);
         SelectPet(pet);
+
+        // First launch completes when the first pet is actually SAVED — flipping
+        // it on page-view meant killing the app on the form gave a returning-user
+        // experience with no pet.
+        if (IsFirstLaunch)
+        {
+            await SetFirstLaunchFalseAsync();
+            IsFirstLaunch = false;
+        }
 
         // Leave the form in a clean state so the next "add pet" starts fresh.
         ResetDraft();
@@ -430,12 +440,6 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     {
         await _SettingsService.SetIsFirstLaunchAsync(false);
     }
-    private bool showPetCreationBackButton;
-    public bool ShowPetCreationBackButton
-    {
-        get => showPetCreationBackButton;
-        set => SetProperty(ref showPetCreationBackButton, value);
-    }
     private string saveButtonLabel = string.Empty;
     public string SaveButtonLabel
     {
@@ -479,7 +483,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
             SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_FirstLaunchSave");
             PageTitle = LocalizationManager.Instance.GetString("CreatePet_FirstLaunchTitle");
             ShowBackButton = false;
-            await SetFirstLaunchFalseAsync();
+            // The flag is cleared in SavePetAsync, once the first pet is saved.
         }
         else
         {

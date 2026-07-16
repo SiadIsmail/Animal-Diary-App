@@ -29,9 +29,15 @@ public class MedicationReminderScheduler
     // between app opens, while staying well under the OS exact-alarm budget.
     private const int HorizonDays = 14;
 
-    // A dose whose trigger passed while the device was off is re-sent as a
-    // "missed dose" catch-up rather than silently dropped.
+    // Upper bound of materialized occurrences per medication (14 days × 5
+    // times/day = 70 covers the full horizon).
     private const int MaxInstancesPerMedication = 70;
+
+    // Android caps an app at 500 exact alarms; beyond it scheduling silently
+    // fails or throws depending on the OS. Keep total pending instances under
+    // this budget — meds synced later in a pass get fewer occurrences, and the
+    // horizon is re-extended on the next launch/boot anyway.
+    private const int GlobalPendingBudget = 400;
 
     // Persisted marker of the last time the app was confirmed running. Used to
     // tell "the OS already delivered this" from "this fired while we were off".
@@ -46,6 +52,12 @@ public class MedicationReminderScheduler
     private readonly ReminderInstanceService _instances;
     private readonly MedicationDoseLogService _doseLogService;
     private readonly MedicationDoseReconciler _doseReconciler;
+
+    // Serializes every mutation of the instance store + OS schedule. The global
+    // catch-up (launch / boot / time-change receivers) and user-triggered syncs
+    // can otherwise interleave ClearPending with materialization and duplicate
+    // notifications. Public entry points take the gate; *Core methods assume it.
+    private readonly SemaphoreSlim _gate = new(1, 1);
 
     public MedicationReminderScheduler(
         INotificationService notifications,
@@ -76,10 +88,23 @@ public class MedicationReminderScheduler
     /// </summary>
     public async Task SyncMedicationAsync(int medicationId)
     {
+        await _gate.WaitAsync();
+        try
+        {
+            await SyncMedicationCoreAsync(medicationId);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async Task SyncMedicationCoreAsync(int medicationId)
+    {
         var medication = await _medicationService.GetMedicationByIdAsync(medicationId);
         if (medication == null || medication.IsArchived)
         {
-            await CancelMedicationAsync(medicationId);
+            await CancelMedicationCoreAsync(medicationId);
             return;
         }
 
@@ -108,32 +133,37 @@ public class MedicationReminderScheduler
                 occurrences.Add((when, slot));
         }
 
+        // Respect the OS exact-alarm budget: this med may only take what's left
+        // after every other medication's already-pending occurrences.
+        var pendingOthers = (await _instances.GetAllAsync())
+            .Count(i => i.Status == ReminderStatus.Pending);
+        var budget = Math.Max(0, GlobalPendingBudget - pendingOthers);
+
         var ordered = occurrences
             .GroupBy(o => o.When)              // dedupe identical day+time across rules
             .Select(g => g.First())
             .OrderBy(o => o.When)
-            .Take(MaxInstancesPerMedication)
+            .Take(Math.Min(MaxInstancesPerMedication, budget))
             .ToList();
 
-        foreach (var (when, slot) in ordered)
+        // Persist the whole batch atomically, then arm the one-shots.
+        var instances = ordered.Select(o => new ReminderInstance
         {
-            var instance = new ReminderInstance
-            {
-                MedicationId = medicationId,
-                ScheduledTime = when,
-                SlotIndex = slot,
-                Status = ReminderStatus.Pending
-            };
-            await _instances.InsertAsync(instance);               // assigns Id
-            instance.NotificationId = NotificationIds.ForInstance(instance.Id);
-            await _instances.UpdateAsync(instance);
+            MedicationId = medicationId,
+            ScheduledTime = o.When,
+            SlotIndex = o.Slot,
+            Status = ReminderStatus.Pending
+        }).ToList();
+        await _instances.InsertAllAsync(instances, NotificationIds.ForInstance);
 
+        foreach (var instance in instances)
+        {
             await _notifications.ScheduleNotification(new NotificationContent
             {
                 Id = instance.NotificationId,
                 Title = NotificationMessages.MedicationTitle(petName),
-                Message = NotificationMessages.MedicationBody(petName, medication.Name, slot),
-                NotifyTime = when,
+                Message = NotificationMessages.MedicationBody(petName, medication.Name, instance.SlotIndex),
+                NotifyTime = instance.ScheduledTime,
                 Recurrence = NotificationRecurrence.Once
             });
         }
@@ -141,6 +171,19 @@ public class MedicationReminderScheduler
 
     /// <summary>Cancel and forget every reminder for a medication (archive / delete).</summary>
     public async Task CancelMedicationAsync(int medicationId)
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            await CancelMedicationCoreAsync(medicationId);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async Task CancelMedicationCoreAsync(int medicationId)
     {
         var all = await _instances.GetByMedicationAsync(medicationId);
         await _notifications.CancelNotifications(all.Select(i => i.NotificationId));
@@ -156,8 +199,7 @@ public class MedicationReminderScheduler
             .ToList();
 
         await _notifications.CancelNotifications(pending.Select(i => i.NotificationId));
-        foreach (var inst in pending)
-            await _instances.DeleteAsync(inst);
+        await _instances.DeleteAllAsync(pending);
     }
 
     // ── Global catch-up + re-arm (app launch / device boot) ──────────────
@@ -175,6 +217,19 @@ public class MedicationReminderScheduler
     /// notifications — re-sending would spam duplicates every time the app opens.
     /// </summary>
     public async Task CatchUpAndRefreshAsync(bool resendMissed = true)
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            await CatchUpAndRefreshCoreAsync(resendMissed);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async Task CatchUpAndRefreshCoreAsync(bool resendMissed)
     {
         var now = DateTime.Now;
         var lastSeen = GetLastSeen(now);
@@ -214,19 +269,23 @@ public class MedicationReminderScheduler
         await ResendMissedAsync(missedToResend, now);
 
         // Re-materialize + re-arm every medication; cancel archived ones.
+        // (Core variants — the gate is already held.)
         var meds = await _medicationService.GetAllMedicationsAsync();
         foreach (var med in meds)
         {
             if (med.IsArchived)
-                await CancelMedicationAsync(med.Id);
+                await CancelMedicationCoreAsync(med.Id);
             else
-                await SyncMedicationAsync(med.Id);
+                await SyncMedicationCoreAsync(med.Id);
         }
 
         // Record durable "missed" adherence for past doses never logged.
         await _doseReconciler.ReconcileMissedAsync(now);
 
-        await PruneHistoryAsync(now);
+        // `all` was mutated in place above (statuses resolved), so it's still an
+        // accurate view for pruning — no second full-table scan needed. Instances
+        // materialized by the re-arm loop are all Pending and never prunable.
+        await PruneHistoryAsync(all, now);
         SetLastSeen(now);
     }
 
@@ -237,17 +296,25 @@ public class MedicationReminderScheduler
     /// </summary>
     public async Task MarkDoseHandledAsync(int medicationId, DateTime date, TimeSpan time)
     {
-        var match = (await _instances.GetByMedicationAsync(medicationId))
-            .FirstOrDefault(i => i.Status == ReminderStatus.Pending
-                && i.ScheduledTime.Date == date.Date
-                && i.ScheduledTime.TimeOfDay == time);
+        await _gate.WaitAsync();
+        try
+        {
+            var match = (await _instances.GetByMedicationAsync(medicationId))
+                .FirstOrDefault(i => i.Status == ReminderStatus.Pending
+                    && i.ScheduledTime.Date == date.Date
+                    && i.ScheduledTime.TimeOfDay == time);
 
-        if (match == null)
-            return;
+            if (match == null)
+                return;
 
-        await _notifications.CancelNotification(match.NotificationId);
-        match.Status = ReminderStatus.Cancelled;
-        await _instances.UpdateAsync(match);
+            await _notifications.CancelNotification(match.NotificationId);
+            match.Status = ReminderStatus.Cancelled;
+            await _instances.UpdateAsync(match);
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     private async Task ResendMissedAsync(List<ReminderInstance> missed, DateTime now)
@@ -276,15 +343,14 @@ public class MedicationReminderScheduler
         }
     }
 
-    private async Task PruneHistoryAsync(DateTime now)
+    private async Task PruneHistoryAsync(List<ReminderInstance> all, DateTime now)
     {
         var cutoff = now - HistoryRetention;
-        var stale = (await _instances.GetAllAsync())
+        var stale = all
             .Where(i => i.Status != ReminderStatus.Pending && i.ScheduledTime < cutoff)
             .ToList();
 
-        foreach (var inst in stale)
-            await _instances.DeleteAsync(inst);
+        await _instances.DeleteAllAsync(stale);
     }
 
     private static DateTime GetLastSeen(DateTime fallback)
@@ -295,4 +361,9 @@ public class MedicationReminderScheduler
 
     private static void SetLastSeen(DateTime when)
         => Preferences.Default.Set(LastSeenKey, when.Ticks);
+
+    /// <summary>Forget the persisted "last seen" marker. Called by the full data
+    /// reset so a fresh start can't inherit the old install's catch-up window.</summary>
+    public static void ClearPersistedState()
+        => Preferences.Default.Remove(LastSeenKey);
 }

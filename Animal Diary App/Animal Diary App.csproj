@@ -73,7 +73,6 @@
 
 	<ItemGroup>
 		<Folder Include="Data\View\" />
-		<PackageReference Include="Syncfusion.Maui.Calendar" Version="33.2.3" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 		<!-- Pinned to 2023.12.x on purpose: it is the LAST QuestPDF version that runs
 		     on Android (2024.3+ replaced SkiaSharp with a custom native Skia layer that

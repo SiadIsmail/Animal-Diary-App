@@ -21,13 +21,34 @@
 - VMs derive from `BaseViewModel` (`SetProperty` / `INotifyPropertyChanged`).
 - Async loads run in `OnAppearing()`, not constructors. List state is
   `ObservableCollection<T>`.
-- Commands are `ICommand` via `Command` / `Command<T>`. List-item commands reach
-  the page VM with
+- Commands are `ICommand` via `Command` / `Command<T>`, **assigned once in the
+  constructor** — never as an expression-bodied `=> new Command(...)` property,
+  which hands out a fresh instance per binding read and can never support
+  `CanExecuteChanged`.
+- List-item commands reach the page VM with
   `{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.…}`.
 - **Validation:** VMs expose `XxxError` strings + a composite `CanSave…` bool;
   error labels bind visibility through `StringToBoolConverter`.
 - Draft-holding VMs implement `IResettableDraft` and are added to
   `MainViewModel._draftViewModels` so a data reset clears them.
+
+## Async safety (crash surface)
+
+- **Never discard a task with `_ =`** — call `.Forget()`
+  (`Helpers/TaskExtensions`), which observes and logs the failure. A bare
+  discard swallows exceptions silently.
+- **Every `async void` entry point that touches the DB** (page `OnAppearing`,
+  sheet `Saved` handlers, tap handlers) wraps its body in try/catch +
+  `Debug.WriteLine` — an exception escaping `async void` kills the process. A
+  failed load must degrade to an empty page, never crash.
+- **Multi-row writes run in one transaction** (`RunInTransactionAsync`):
+  medication + its schedule set (`SaveMedicationWithSchedulesAsync`), reminder
+  instance batches (`ReminderInstanceService.InsertAllAsync`/`DeleteAllAsync`),
+  care-plan seeding. Android process death mid-write is normal, not rare —
+  a torn write here silently loses medication schedules.
+- The reminder scheduler serializes all mutations behind a `SemaphoreSlim`
+  gate; public methods take it, `*Core` methods assume it. New scheduler entry
+  points must follow that split (re-entering the gate deadlocks).
 
 ## Input sheets — the uniform contract
 
@@ -59,6 +80,11 @@ whole subtree non-interactive and the open sheet becomes visual-only.
 (undo restores the previous); Glucose/Seizure *insert* a new row. (See
 [domain.md](domain.md).)
 
+**Hidden sheets stay in the visual tree** — a closed `FelovaBottomSheet` is
+translated below the screen and made `InputTransparent`, never `IsVisible=false`.
+Android drops unrealized content; collapsing a hidden sheet left on-open-populated
+bodies empty on first show. Don't "optimize" this away.
+
 Animations live in the **page** (`CalendarPage.xaml.cs`), not the VM. Presentation
 hints on `TimelineItem`/`DoseItem` (tint, rotation) are resolved from
 `Application.Current.Resources` — an accepted convention, flagged as soft debt in
@@ -70,7 +96,8 @@ hints on `TimelineItem`/`DoseItem` (tint, rotation) are resolved from
 - Persisted enums: `[StoreAsText]` on the **enum type**, not the property.
 - **Additive** property changes need no migration (columns auto-add; nothing is
   dropped — keep old columns for back-compat). A new **table** must be added to
-  `AppDatabase.InitAsync`.
+  `AppDatabase.InitAsync` **and** to `AppResetService.ResetDataAsync` in the same
+  commit — the reset must wipe every table (see [domain.md](domain.md)).
 - Reuse repositories in `Services/Data`/`Services/Journal`; don't open the
   connection directly from a VM.
 
@@ -104,6 +131,10 @@ screen-prefixed (`Common_*`, `Nav_*`, `Main_*`, `Med_*`, `Journal_*`,
   - Notifications pull localized templates (`Notif_*`, `{0}`/`{1}` = pet/med).
   - Intentionally untranslated: the brand name (Felova) and the language names on
     the picker.
+  - **Singleton VMs must not cache localized strings at construction** — they'd
+    survive a live language switch in the old language. Resolve per read and
+    re-raise on `LocalizationManager.PropertyChanged` (see `DaySelectionItem`'s
+    `ResourceKey`/`DisplayName` pattern).
 
 ## Colours & spacing
 
@@ -121,6 +152,8 @@ screen-prefixed (`Common_*`, `Nav_*`, `Main_*`, `Med_*`, `Journal_*`,
 - **Fastest local compile check** (on Windows):
   `dotnet build "Animal Diary App/Animal Diary App.csproj" -f net9.0-windows10.0.19041.0 -c Debug -clp:ErrorsOnly`
   Expect ~0 errors and a large **pre-existing** warning count — don't chase it.
-- Before deleting a VM member, confirm it has no live XAML binding, e.g.
-  `grep -rhoE 'CalendarVM\.[A-Za-z0-9_]+' "Animal Diary App/Data/View/"*.xaml | sort -u`
+- Before deleting a VM member, confirm it has no live consumer in XAML **or in
+  page code-behind** — the Today page's care ring reads CalendarVM members from
+  `MainPage.xaml.cs`, which a XAML-only grep misses:
+  `grep -rhoE 'CalendarVM\.[A-Za-z0-9_]+' "Animal Diary App/Data/View/"*.xaml "Animal Diary App/Data/View/"*.xaml.cs | sort -u`
   (repeat per VM). Unbound **and** unused by other members = safe to remove.

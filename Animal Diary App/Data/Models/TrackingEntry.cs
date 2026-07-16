@@ -3,17 +3,17 @@ namespace Animal_Diary_App.Data.Models;
 using SQLite;
 
 /// <summary>
-/// One logged value for one <see cref="TrackingItem"/>, for a pet on a date.
-/// A single row holds any input kind via nullable typed columns — only the
-/// column(s) relevant to the item's <see cref="InputKind"/> are set:
-///   Numeric / Scale / Volume → <see cref="Number"/>
-///   Boolean / Dose (given?)  → <see cref="Flag"/>
-///   Text / Event note        → <see cref="Text"/>
-///   Dose / Event time-of-day → <see cref="TimeTicks"/>
-///   Event                    → <see cref="DurationSeconds"/> + <see cref="Severity"/>
-///
-/// There is at most one row per (PetId, Date, ItemId) — the tracker upserts.
-/// (Multiple same-day events, e.g. two seizures, would be a future extension.)
+/// LEGACY, read-only in practice: one value logged by the removed Tracker Hub,
+/// for a pet on a date, keyed by a string item id ("seizure", "vomiting", …).
+/// Nothing writes this table anymore, but the vet report still READS it for
+/// historical data — the table, service and DI registration must stay.
+/// A single row held any input kind via nullable typed columns:
+///   numeric / scale / volume → <see cref="Number"/>
+///   boolean / dose (given?)  → <see cref="Flag"/>
+///   text / event note        → <see cref="Text"/>
+///   dose / event time-of-day → <see cref="TimeTicks"/>
+///   event                    → <see cref="DurationSeconds"/> + <see cref="Severity"/>
+/// At most one row per (PetId, Date, ItemId) — the hub upserted.
 /// </summary>
 public class TrackingEntry
 {
@@ -26,7 +26,7 @@ public class TrackingEntry
     [Indexed(Name = "IX_TrackingEntry_Pet_Date", Order = 2)]
     public DateTime Date { get; set; }
 
-    /// <summary>The <see cref="TrackingItem.Id"/> this value belongs to.</summary>
+    /// <summary>The removed hub's stable item key ("seizure", "vomiting", …).</summary>
     public string ItemId { get; set; } = string.Empty;
 
     public double? Number { get; set; }

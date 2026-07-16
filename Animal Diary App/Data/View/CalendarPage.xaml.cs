@@ -17,6 +17,12 @@ public partial class CalendarPage : ContentPage
 	// The undo behind the currently-shown toast (null when the toast has no undo).
 	private Func<Task>? _pendingUndo;
 
+	// The (pet, date) context of the last-started Journal reload. CalendarVM's
+	// NotifyDerived raises ActivePetName on EVERY entries/doses load, so without
+	// this marker each save/refresh cascaded into 2–4 redundant full-day gathers.
+	private int _lastJournalPetId = -1;
+	private DateTime _lastJournalDate = DateTime.MinValue;
+
 	public CalendarPage(MainViewModel mainViewModel)
 	{
 		InitializeComponent();
@@ -38,15 +44,35 @@ public partial class CalendarPage : ContentPage
 		vm.AppetiteSheetVM.Saved += OnSheetSaved;
 		vm.SeizureSheetVM.Saved += OnSheetSaved;
 
-		if (vm.CalendarVM.Pets.Count == 0)
+		try
+		{
+			// Data may have changed on other tabs while we were away — mark the
+			// Journal context stale so exactly one reload runs for this appearance
+			// (usually via the property-changed handler as PrepareDataAsync loads).
+			_lastJournalPetId = -1;
+			_lastJournalDate = DateTime.MinValue;
+
+			// Reload the pet list too (one small query): a pet added on the Pets
+			// tab must appear in the Journal's chips without passing through Today.
 			await vm.CalendarVM.PrepareDataAsync();
-		else
-			await vm.CalendarVM.RefreshEntriesAsync();
 
-		await vm.JournalVM.ReloadAsync(vm.CalendarVM.CurrentSelectedDate);
+			// If nothing the handler listens to fired, load explicitly.
+			if (_lastJournalPetId == -1)
+			{
+				_lastJournalPetId = vm.CalendarVM.CurrentPetId;
+				_lastJournalDate = vm.CalendarVM.CurrentSelectedDate;
+				await vm.JournalVM.ReloadAsync(_lastJournalDate);
+			}
 
-		if (vm.JournalVM.ShowAllDone)
-			await AnimatePawsAsync();
+			if (vm.JournalVM.ShowAllDone)
+				await AnimatePawsAsync();
+		}
+		catch (Exception ex)
+		{
+			// A failed load must degrade to an empty page, never crash the app
+			// (async void — an escaping exception here kills the process).
+			System.Diagnostics.Debug.WriteLine($"[CalendarPage] OnAppearing failed: {ex}");
+		}
 	}
 
 	protected override void OnDisappearing()
@@ -78,17 +104,24 @@ public partial class CalendarPage : ContentPage
 		if (sender is not View v || v.BindingContext is not JournalChip chip)
 			return;
 
-		switch (chip.Kind)
+		try
 		{
-			case JournalChipKind.Add:
-				vm.JournalVM.OpenAddSheetCommand.Execute(null);
-				break;
-			case JournalChipKind.Medication:
-				await LogDoseFlowAsync(chip, v);
-				break;
-			default:
-				await OpenSheetForKindAsync(chip.Kind);
-				break;
+			switch (chip.Kind)
+			{
+				case JournalChipKind.Add:
+					vm.JournalVM.OpenAddSheetCommand.Execute(null);
+					break;
+				case JournalChipKind.Medication:
+					await LogDoseFlowAsync(chip, v);
+					break;
+				default:
+					await OpenSheetForKindAsync(chip.Kind);
+					break;
+			}
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[CalendarPage] chip tap failed: {ex}");
 		}
 	}
 
@@ -130,29 +163,66 @@ public partial class CalendarPage : ContentPage
 	// A sheet saved something → bubble-pop, refresh, undo-toast.
 	private async void OnSheetSaved(JournalSaveResult result)
 	{
-		_ = BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62));
-		await ReloadJournalAsync();
-		ShowUndoToast(result);
+		try
+		{
+			_ = BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62));
+			await ReloadJournalAsync();
+			ShowUndoToast(result);
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[CalendarPage] OnSheetSaved failed: {ex}");
+		}
 	}
 
 	// A timeline entry was deleted → refresh, then a 6-second undo-toast that restores
 	// it. No bubble-pop: a deletion isn't a "logged something" celebration.
 	private async void OnItemDeleted(JournalSaveResult result)
 	{
-		await ReloadJournalAsync();
-		ShowUndoToast(result);
+		try
+		{
+			await ReloadJournalAsync();
+			ShowUndoToast(result);
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[CalendarPage] OnItemDeleted failed: {ex}");
+		}
 	}
 
+	// Explicit full refresh after a mutation (save / delete / undo). Always runs;
+	// stamps the context marker so RefreshEntriesAsync's derived-property
+	// notifications don't bounce back through the handler below.
 	private async Task ReloadJournalAsync()
 	{
-		await vm.JournalVM.ReloadAsync(vm.CalendarVM.CurrentSelectedDate);
+		_lastJournalPetId = vm.CalendarVM.CurrentPetId;
+		_lastJournalDate = vm.CalendarVM.CurrentSelectedDate;
+		await vm.JournalVM.ReloadAsync(_lastJournalDate);
 		await vm.CalendarVM.RefreshEntriesAsync();
 	}
 
 	private async void OnCalendarVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
 	{
-		if (e.PropertyName is nameof(CalendarViewModel.CurrentSelectedDate) or nameof(CalendarViewModel.ActivePetName))
-			await vm.JournalVM.ReloadAsync(vm.CalendarVM.CurrentSelectedDate);
+		if (e.PropertyName is not (nameof(CalendarViewModel.CurrentSelectedDate) or nameof(CalendarViewModel.ActivePetName)))
+			return;
+
+		// ActivePetName is raised by every NotifyDerived, not just real pet
+		// switches — only reload when the (pet, date) context actually changed.
+		var petId = vm.CalendarVM.CurrentPetId;
+		var date = vm.CalendarVM.CurrentSelectedDate;
+		if (petId == _lastJournalPetId && date == _lastJournalDate)
+			return;
+
+		_lastJournalPetId = petId;
+		_lastJournalDate = date;
+		try
+		{
+			await vm.JournalVM.ReloadAsync(date);
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[CalendarPage] journal reload failed: {ex}");
+		}
 	}
 
 	private async void OnJournalVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -169,9 +239,16 @@ public partial class CalendarPage : ContentPage
 		_toastSeq++;              // cancel the pending auto-hide
 		HideToast();
 
-		if (undo != null)
-			await undo();
-		await ReloadJournalAsync();
+		try
+		{
+			if (undo != null)
+				await undo();
+			await ReloadJournalAsync();
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[CalendarPage] undo failed: {ex}");
+		}
 	}
 
 	// ── Toast ──────────────────────────────────────────────────────────────────

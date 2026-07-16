@@ -97,13 +97,6 @@ public class MedicationSchedule
 
 }
 
-public class MedicationTime
-{
-    [PrimaryKey, AutoIncrement]
-    public int Id { get; set; }
-    public int MedicationId { get; set; }
-}
-
 public class FilteredMedication
 {
     [PrimaryKey, AutoIncrement]

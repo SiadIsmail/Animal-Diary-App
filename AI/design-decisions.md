@@ -23,9 +23,14 @@ survives reboot) that the plugin can actually deliver. Tuning knobs are constant
 in `MedicationReminderScheduler` (`HorizonDays`, `MaxInstancesPerMedication`,
 `HistoryRetention`).
 
-`SyncMedicationAsync(medId)` is idempotent — it is both the create and the
-edit-after-save path. `NotificationIds` are deterministic (per type-range and per
-instance) so update/cancel work; never randomize them.
+`SyncMedicationAsync(medId)` is idempotent — it is the create path, the
+edit-after-save path, **and** the "re-arm after an outcome was cleared" path
+(undo of a logged dose must re-arm the reminder its logging cancelled). All
+scheduler mutations are serialized behind one `SemaphoreSlim` gate (launch/boot
+catch-up vs. user saves would otherwise interleave and duplicate notifications),
+and materialization respects a `GlobalPendingBudget` so the app stays under
+Android's exact-alarm cap. `NotificationIds` are deterministic (per type-range
+and per instance) so update/cancel work; never randomize them.
 
 ## `resendMissed`: boot re-sends, launch does not
 
@@ -91,15 +96,30 @@ per-metric buckets. (This replaced earlier per-kind timeline collections.) A
 template selector varies the card; the ordering rule is a requirement, not
 incidental.
 
+## Journal reloads are deduped by (pet, date) context
+
+**Decision:** `CalendarViewModel.NotifyDerived()` raises `ActivePetName` on
+*every* entries/doses load, not only on a real pet switch — so `CalendarPage`
+keeps a "last-reloaded (petId, date)" marker and only reloads the Journal when
+that context actually changed; explicit post-save reloads always run and stamp
+the marker.
+
+**Because:** listening to `ActivePetName` naively cascaded 2–4 redundant
+full-day gathers on every save/appearance (reload → refresh → NotifyDerived →
+reload…). If you add a new trigger for `JournalLogViewModel.ReloadAsync`, route
+it through the page's marker, not a raw PropertyChanged subscription.
+
 ## New VMs/services over reshaping old ones
 
 **Decision:** the Journal rework and Manage-pet work added new VMs
 (`JournalLogViewModel`, sheet VMs, `ManagePetViewModel`) instead of bloating
 `CalendarViewModel`.
 
-**Because:** the older `CalendarViewModel` still drives the week strip and day
-headings; growing it would entangle two designs. The cost is dead legacy members
-left in `CalendarViewModel` — tracked in [known-constraints.md](known-constraints.md).
+**Because:** the older `CalendarViewModel` still drives the week strip, day
+headings, and the Today page's care-ring inputs; growing it would entangle two
+designs. (Its dead inline-editor members have since been removed; the members the
+Today page consumes from code-behind are listed in
+[known-constraints.md](known-constraints.md).)
 
 ## Custom `WeekCalendarView` replaced the Syncfusion calendar
 
@@ -110,8 +130,7 @@ left in `CalendarViewModel` — tracked in [known-constraints.md](known-constrai
 **Because:** the Syncfusion month-cell customization needed for activity dots was
 a blocker; a purpose-built strip is simpler and fully themeable. All scheduling
 logic stays in the VM; the control owns no business logic. (The Syncfusion
-package is still referenced for `ConfigureSyncfusionCore` / charts — see
-[known-constraints.md](known-constraints.md).)
+package has been removed entirely — nothing referenced it.)
 
 ## Vet report: three independent layers
 

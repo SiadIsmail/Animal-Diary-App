@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
-using Syncfusion.Maui.Core.Hosting;
 using Animal_Diary_App.Data.Services.Data.Device;
 using Animal_Diary_App.Data.Services.Notifications;
 using Plugin.LocalNotification;
@@ -12,7 +11,6 @@ public static class MauiProgram
 	public static MauiApp CreateMauiApp()
 	{
 		var builder = MauiApp.CreateBuilder();
-		builder.ConfigureSyncfusionCore();
 		builder
 			.UseMauiApp<App>()
 			.UseLocalNotification()

@@ -131,15 +131,24 @@ public class VetReportDataBuilder
             var medSchedules = schedules[med.Id].ToList();
             var medLogs = logs[med.Id].ToList();
 
-            // Scheduled doses that actually fell inside the period: walk each day and
-            // count that weekday's schedule rows. Bounded below by the medication's
-            // creation date and above by today (future doses aren't "scheduled yet"
-            // for adherence purposes).
+            // Scheduled doses that actually fell inside the period. The schedule rows
+            // only describe the CURRENT rules — an edited schedule would silently
+            // rewrite history — so the count is the UNION of (a) the current rules
+            // walked over the period and (b) every dose log in the period (each log
+            // row proves a dose was scheduled then, whatever the rules said at the
+            // time). Bounded below by the medication's creation date and above by
+            // today (future doses aren't "scheduled yet" for adherence purposes).
             var start = med.CreatedAt.Date > from ? med.CreatedAt.Date : from;
             var end = to < DateTime.Today ? to : DateTime.Today;
-            var scheduled = 0;
-            for (var day = start; day <= end; day = day.AddDays(1))
-                scheduled += medSchedules.Count(s => s.Day == day.DayOfWeek);
+
+            var scheduledKeys = new HashSet<(DateTime Date, TimeSpan Time)>();
+            foreach (var s in medSchedules)
+                foreach (var occurrence in Animal_Diary_App.Data.Services.Notifications.MedicationScheduleExpander
+                             .Expand(s.Day, s.Time, start.AddTicks(-1), end.AddDays(1).AddTicks(-1)))
+                    scheduledKeys.Add((occurrence.Date, occurrence.TimeOfDay));
+            foreach (var log in medLogs.Where(l => l.ScheduledDate.Date >= start && l.ScheduledDate.Date <= end))
+                scheduledKeys.Add((log.ScheduledDate.Date, log.ScheduledTime));
+            var scheduled = scheduledKeys.Count;
 
             // Nothing scheduled and nothing logged in the period → the medication
             // played no role in it; leave it out entirely.

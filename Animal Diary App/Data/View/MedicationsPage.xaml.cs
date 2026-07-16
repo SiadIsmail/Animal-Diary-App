@@ -14,8 +14,16 @@ public partial class MedicationsPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await vm.PetVM.LoadPetsAsync();
-        await vm.MedicationVM.LoadFilteredMedicationAsync();
+        try
+        {
+            await vm.PetVM.LoadPetsAsync();
+            await vm.MedicationVM.LoadFilteredMedicationAsync();
+        }
+        catch (Exception ex)
+        {
+            // async void — an escaping exception here would crash the app.
+            System.Diagnostics.Debug.WriteLine($"[MedicationsPage] OnAppearing failed: {ex}");
+        }
     }
     async void OnBackClicked(object? sender, EventArgs args)
     {

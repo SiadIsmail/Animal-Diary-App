@@ -94,11 +94,16 @@ public class TrackerService
             if (existing.Count > 0)
                 return existing;
 
-            foreach (var t in CarePlanCatalog.BuildDefaultPlan(conditionIds))
+            // Seed atomically: a torn seed would look like a tuned plan (rows exist)
+            // and never be completed.
+            await _db.RunInTransactionAsync(conn =>
             {
-                t.PetId = petId;
-                await _db.InsertAsync(t);
-            }
+                foreach (var t in CarePlanCatalog.BuildDefaultPlan(conditionIds))
+                {
+                    t.PetId = petId;
+                    conn.Insert(t);
+                }
+            });
 
             return await GetForPetAsync(petId);
         }

@@ -39,13 +39,18 @@ public class DayDoseService
         if (petId == 0)
             return result;
 
+        var day = date.Date;
+
+        // Never surface doses for days before the medication existed — mirrors the
+        // CreatedAt bound the week dots and the missed-dose reconciler already apply,
+        // so a past day can't show phantom "not taken" doses. (Legacy rows default
+        // CreatedAt to DateTime.MinValue, which passes for every day.)
         var meds = (await _medications.GetMedicationsByPetIdAsync(petId))
-            .Where(m => !m.IsArchived)
+            .Where(m => !m.IsArchived && m.CreatedAt.Date <= day)
             .ToList();
         if (meds.Count == 0)
             return result;
 
-        var day = date.Date;
         var weekday = day.DayOfWeek;
         var schedulesByMed = (await _medications.GetSchedulesForMedicationsAsync(meds.Select(m => m.Id).ToList()))
             .ToLookup(s => s.MedicationId);

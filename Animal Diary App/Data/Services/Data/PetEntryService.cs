@@ -22,16 +22,6 @@ public class PetEntryService
         await _db.UpdateAsync(PetEntry);
     }
 
-    public async Task<List<PetEntry>> GetPetEntriesAsync()
-    {
-        return await _db.Table<PetEntry>().ToListAsync();
-    }
-
-    public async Task<PetEntry> GetPetEntryByDateAsync(DateTime date)
-    {
-        return await _db.Table<PetEntry>().Where(e => e.Date == date).FirstOrDefaultAsync();
-    }
-
     /// <summary>Most recent weight entry for a pet, or null if it has none.
     /// Pushes the ordering into SQL (backed by the (PetId, Date) index) instead of
     /// loading the whole table and sorting in memory.</summary>
@@ -55,15 +45,6 @@ public class PetEntryService
         var to = end.Date;
         return await _db.Table<PetEntry>()
             .Where(e => e.PetId == petId && e.Date >= from && e.Date <= to)
-            .ToListAsync();
-    }
-
-    public async Task<List<PetEntry>> GetLast30DaysWeightEntriesAsync(int petId)
-    {
-        var thirtyDaysAgo = DateTime.Now.AddDays(-30).Date;
-        return await _db.Table<PetEntry>()
-            .Where(e => e.PetId == petId && e.Weight > 0 && e.Date >= thirtyDaysAgo)
-            .OrderBy(e => e.Date)
             .ToListAsync();
     }
 

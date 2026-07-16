@@ -134,6 +134,11 @@
     <Color x:Key="HoneyWarmTint">#29D9973C</Color> <!-- 16% -->
     <Color x:Key="HoneyWarmDeep">#8A5A12</Color>
 
+    <!-- Violet — seizure accent (timeline icon tile) -->
+    <Color x:Key="Violet">#584A8A</Color>
+    <Color x:Key="VioletTint">#26584A8A</Color> <!-- 15% -->
+    <Color x:Key="VioletDeep">#453A6E</Color>
+
     <!-- Warm paper (mood note card) + washi tape -->
     <Color x:Key="PaperWarm">#FFF9EC</Color>
     <Color x:Key="NoteInk">#4A4433</Color>      <!-- serif-italic note text  -->

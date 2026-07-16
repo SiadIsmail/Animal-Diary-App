@@ -53,8 +53,14 @@ public class GlucoseEntryService
     /// to pre-fill the stepper so the owner nudges from their last number.</summary>
     public async Task<GlucoseEntry?> GetMostRecentAsync(int petId)
     {
+        // Order by date in SQL and pull only a small slice — a long-lived diabetic
+        // pet accumulates ~1,000 rows/year and this runs on every sheet open. The
+        // slice comfortably covers the latest day's readings; the Time tie-break
+        // happens in memory on those few rows.
         var rows = await _db.Table<GlucoseEntry>()
             .Where(g => g.PetId == petId)
+            .OrderByDescending(g => g.Date)
+            .Take(24)
             .ToListAsync();
         return rows
             .OrderByDescending(g => g.Date)

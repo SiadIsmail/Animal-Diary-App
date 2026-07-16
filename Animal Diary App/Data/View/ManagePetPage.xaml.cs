@@ -32,7 +32,15 @@ public partial class ManagePetPage : ContentPage
         vm.CkdSetupVM.Saved += OnSheetSaved;
         vm.EpilepsySetupVM.Saved += OnSheetSaved;
 
-        await vm.ManageVM.LoadAsync();
+        try
+        {
+            await vm.ManageVM.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            // async void — an escaping exception here would crash the app.
+            System.Diagnostics.Debug.WriteLine($"[ManagePetPage] OnAppearing failed: {ex}");
+        }
     }
 
     protected override void OnDisappearing()

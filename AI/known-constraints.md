@@ -25,31 +25,34 @@
 
 - **QuestPDF is pinned to 2023.12.6** — the last Android-compatible release. Do
   not upgrade. (Rationale in [design-decisions.md](design-decisions.md).)
-- **Syncfusion is still referenced** (`Syncfusion.Maui.Calendar`,
-  `ConfigureSyncfusionCore` in `MauiProgram`) even though the calendar UI is now
-  the custom `WeekCalendarView`. It remains for core/chart hosting; removing it is
-  unverified cleanup, not a quick win.
+- **Android exact-alarm budget.** Android caps an app at ~500 exact alarms. The
+  scheduler enforces `GlobalPendingBudget` (400) across all medications when
+  materializing occurrences — meds synced later in a pass get fewer instances,
+  re-extended on the next launch/boot. Don't raise the budget or per-med cap
+  without checking the OS limit.
 
-## Legacy / dead code (verify before removing)
+## Legacy / cross-layer dependencies (verify before removing)
 
-- **Dead inline-editor members in `CalendarViewModel`.** The Journal rework left
-  several members with no XAML binding (old mood/weight inline editing, dose
-  toggle commands, `DosesForSelectedDate`, etc.). Deletable as a batch **only
-  after** confirming against the live binding surface (see the grep in
-  [coding-standards.md](coding-standards.md)). Left in place to keep feature work
-  focused.
+- **⚠️ `CalendarViewModel` members are consumed from MainPage CODE-BEHIND, not
+  XAML.** The Today page's care ring and next-med card
+  ([MainPage.xaml.cs](../Animal%20Diary%20App/Data/View/MainPage.xaml.cs)) read
+  `DosesForSelectedDate`, `HasMood`, `HasWeight`, `AllCareComplete`,
+  `IsSelectedDateToday` and execute `ToggleDoseTakenCommand`. A XAML-only grep
+  says they're unbound — they are **live**. (The inline mood/weight editor
+  members that really were dead have been deleted.) Any dead-code grep must
+  include `*.xaml.cs` — see [coding-standards.md](coding-standards.md).
 - **`TrackingEntry` is read-only in practice.** Nothing writes it anymore (the
   removed Tracker Hub did); the **vet report still reads** it for historical
   seizure/vomiting data, so the table/service/DI must stay. Consequence: water
   intake, vomiting, sub-Q fluids, and post-seizure notes currently have **no
   logging UI** — only mood/weight/glucose/appetite/seizure do. To make them
   loggable again, add sheets (per [coding-standards.md](coding-standards.md)) —
-  do not revive the hub.
-- **Orphaned model vocabulary.** `TrackingItem` + `InputKind`
-  (`Data/Models/Condition.cs`) are no longer produced anywhere; kept only because
-  `TrackingEntry`'s doc-comments `cref` them. `MedicationTime` (an Id-only table
-  created in `AppDatabase`) is likewise vestigial. Remove related items together
-  if you clean this up.
+  do not revive the hub. Its rows key items by plain string ids ("seizure",
+  "vomiting") — the old `TrackingItem`/`InputKind` vocabulary was deleted.
+- **`DoseStatus.Skipped` has no writer in the current UI** (the skip command went
+  with the dead Calendar checklist). Historical Skipped rows still render on the
+  timeline and count in the vet report; re-adding a skip affordance is a product
+  decision, not a bug.
 
 ## Data-model debt
 
@@ -64,7 +67,8 @@
 
 - **Two colour-token generations** in `Colors.xaml` (older hex palette +
   Rockpool). Prefer Rockpool; consolidating is unpaid debt — don't add new usages
-  of the old set.
+  of the old set. (`WeekCalendarView`'s dot colours are the old palette's last
+  code-side holdout.)
 - **VM-owned presentation hints.** `TimelineItem`/`DoseItem` carry view concerns
   (tint `Color`, `IconRotation`, `CardCorner`) resolved from
   `Application.Current.Resources`. Matches existing convention but is a soft MVVM

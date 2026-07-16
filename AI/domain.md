@@ -95,6 +95,14 @@ Three distinct concepts; do not collapse them.
    (Taken/Skipped/Missed) per (medication, date, time), with `ResolvedAt`. A dose
    is "given" once **any** log row exists for it (so a skip doesn't nag).
 
+Logging a dose cancels its pending `ReminderInstance` (`MarkDoseHandledAsync`).
+**Clearing a dose outcome (undo / un-toggle) must re-arm the reminder** — call
+the idempotent `SyncMedicationAsync` after `ClearStatusAsync`, or an accidental
+tap + undo before the due time silently kills that dose's reminder and its boot
+re-send. All doses surfaced anywhere are bounded by `Medication.CreatedAt` —
+`DayDoseService`, the week dots, and the reconciler all apply it, so a past day
+can never show phantom doses from before the medication existed.
+
 **`DayDoseService.GetForDayAsync(petId, date)` is the one place** that expands a
 pet's schedules for a day and joins the dose logs. Three callers project its
 result — `PendingItemsService`, `JournalLogViewModel`, `CalendarViewModel`.
@@ -124,6 +132,10 @@ Do not re-inline this join. (Whole-**week** dot expansion is separate, in
   ("Owner-reported data · Not a medical record") must stay.
 - Counts are facts (rows counted). Weight change is stated only when the range
   itself holds ≥2 readings — never inferred across gaps.
+- **Scheduled-dose counts are the union of the current schedule walked over the
+  period and every dose log in it.** Schedule rows describe only the *current*
+  rules; an edit would silently rewrite history, but each log row proves a dose
+  was scheduled then. Don't count from the rules alone.
 - Seizures are read from **both** `SeizureEntry` and legacy `TrackingEntry`
   "seizure" rows until that data is migrated.
 - An empty range produces **no** document (`HasAnyData` gate → `GenerateAsync`
@@ -140,6 +152,11 @@ Do not re-inline this join. (Whole-**week** dot expansion is separate, in
   of *trackers* and *doses*, never a disease name.
 - Reminder rules are never handed to the OS directly; only bounded, concrete
   instances are.
+- **A data reset wipes everything**: every table created in
+  `AppDatabase.InitAsync` must also be deleted in `AppResetService.ResetDataAsync`
+  (add both in the same commit), all OS notifications cancelled
+  (`CancelAllNotifications`), and the scheduler's persisted state cleared. Health
+  data is medical data — nothing may survive a reset the user asked for.
 - Stored data is never translated (pet types/moods are canonical keys localized
   only for display; pet/med names are verbatim user data). See
   [coding-standards.md](coding-standards.md).

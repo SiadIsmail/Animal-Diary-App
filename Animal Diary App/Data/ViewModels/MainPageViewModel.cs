@@ -2,10 +2,9 @@ namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
-using System.Globalization;
+using Animal_Diary_App.Helpers;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
-using SQLite;
 
 public class MainPageViewModel : BaseViewModel
 {
@@ -30,6 +29,20 @@ public class MainPageViewModel : BaseViewModel
         _activePetService = activePetService;
         _SettingsService = settingsService;
         MoodTimeline = moodTimeline;
+
+        // Commands are created once — an expression-bodied `=> new Command(...)`
+        // property hands out a fresh instance per read, which allocates on every
+        // binding access and can never support CanExecuteChanged.
+        SetChartRangeCommand = new Command<string>(days =>
+        {
+            if (int.TryParse(days, out var d))
+                ChartRangeDays = d;
+        });
+        NavigateToMoodDateCommand = new Command<DateTime>(date =>
+        {
+            // Stub: would navigate the Journal to this date.
+            System.Diagnostics.Debug.WriteLine($"Tapped mood date: {date:M/d/yyyy}");
+        });
 
         _activePetService.PropertyChanged += (s, e) =>
         {
@@ -69,15 +82,11 @@ public class MainPageViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref chartRangeDays, value))
-                _ = LoadWeightChartAsync();
+                LoadWeightChartAsync().Forget();
         }
     }
 
-    public ICommand SetChartRangeCommand => new Command<string>(days =>
-    {
-        if (int.TryParse(days, out var d))
-            ChartRangeDays = d;
-    });
+    public ICommand SetChartRangeCommand { get; }
 
     // Padded value axis the chart normalizes points into.
     private double weightAxisMin;
@@ -163,9 +172,5 @@ public class MainPageViewModel : BaseViewModel
         await MoodTimeline.LoadLast30DaysAsync(ActivePet.Id);
     }
 
-    public ICommand NavigateToMoodDateCommand => new Command<DateTime>(async date =>
-    {
-        // This command would be used to navigate to the calendar on a specific date if needed
-        Console.WriteLine($"Tapped mood date: {date:M/d/yyyy}");
-    });
+    public ICommand NavigateToMoodDateCommand { get; }
 }

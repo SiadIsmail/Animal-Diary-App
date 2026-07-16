@@ -50,6 +50,12 @@ public class NotificationService : INotificationService
         return Task.CompletedTask;
     }
 
+    public Task CancelAllNotifications()
+    {
+        LocalNotificationCenter.Current.CancelAll();
+        return Task.CompletedTask;
+    }
+
     private static NotificationRepeat MapRepeat(NotificationRecurrence recurrence) => recurrence switch
     {
         NotificationRecurrence.Daily => NotificationRepeat.Daily,
