@@ -79,10 +79,13 @@
 
 ## Feature scope limits (v1)
 
-- **Vet report is v1**: saves to `FileSystem.AppDataDirectory` only — **no share
-  sheet, no preview, no range picker** (fixed 90-day look-back; the range is
-  already a `GenerateAsync` parameter). Pull the file off-device via the returned
-  path (also debug-logged).
+- **Vet report export options are presets-only**: the export sheet offers
+  30/90/180-day look-backs; a custom date range and per-export section toggles
+  are deliberately deferred (`GenerateAsync` already takes arbitrary dates).
+  Preview PNGs (~120 KB/page at 144 DPI) are stored alongside every PDF — an
+  accepted disk cost; there is no auto-cleanup cap, owners delete via Documents.
+  Sharing relies on MAUI Essentials' bundled Android FileProvider (no manifest
+  entry of our own) — verify on-device after Essentials upgrades.
 - **Notification copy after boot** may use the device locale rather than the
   saved language if the `BootReceiver` runs before the language is applied — a
   minor edge case.

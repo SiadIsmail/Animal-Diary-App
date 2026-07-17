@@ -33,7 +33,8 @@ public class AppDatabase
             _db.CreateTableAsync<PetCondition>(),
             _db.CreateTableAsync<GlucoseEntry>(),
             _db.CreateTableAsync<AppetiteEntry>(),
-            _db.CreateTableAsync<SeizureEntry>()
+            _db.CreateTableAsync<SeizureEntry>(),
+            _db.CreateTableAsync<VetReportFile>()
             );
     }
 

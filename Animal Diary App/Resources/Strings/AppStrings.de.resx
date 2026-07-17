@@ -317,6 +317,26 @@
   <data name="Pets_Export" xml:space="preserve"><value>Exportieren</value></data>
   <data name="Pets_ExportSubtitle" xml:space="preserve"><value>Gesundheits-PDF erstellen</value></data>
   <data name="Export_SavedTitle" xml:space="preserve"><value>Bericht gespeichert</value></data>
+  <data name="Export_SheetTitle" xml:space="preserve"><value>Tierarztbericht</value></data>
+  <data name="Export_SheetSubtitle" xml:space="preserve"><value>PDF-Zusammenfassung für {0}</value></data>
+  <data name="Export_PeriodLabel" xml:space="preserve"><value>Zeitraum</value></data>
+  <data name="Export_Days30" xml:space="preserve"><value>30 Tage</value></data>
+  <data name="Export_Days90" xml:space="preserve"><value>90 Tage</value></data>
+  <data name="Export_Days180" xml:space="preserve"><value>180 Tage</value></data>
+  <data name="Export_Generate" xml:space="preserve"><value>PDF erstellen</value></data>
+  <data name="Export_Generating" xml:space="preserve"><value>Wird erstellt…</value></data>
+  <data name="Export_DoneMessage" xml:space="preserve"><value>Dein Bericht über die letzten {0} Tage ist fertig.</value></data>
+  <data name="Export_View" xml:space="preserve"><value>Ansehen</value></data>
+  <data name="Export_Share" xml:space="preserve"><value>Teilen</value></data>
+  <data name="Export_Done" xml:space="preserve"><value>Fertig</value></data>
+  <data name="Docs_Title" xml:space="preserve"><value>Dokumente</value></data>
+  <data name="Docs_Subtitle" xml:space="preserve"><value>Tierarztberichte für {0}</value></data>
+  <data name="Docs_Empty" xml:space="preserve"><value>Noch keine Berichte — erstelle einen über „Exportieren“.</value></data>
+  <data name="Docs_Deleted" xml:space="preserve"><value>Bericht gelöscht</value></data>
+  <data name="Docs_Pages" xml:space="preserve"><value>{0} Seite(n)</value></data>
+  <data name="Docs_PreviewTitle" xml:space="preserve"><value>Bericht</value></data>
+  <data name="Docs_OpenWith" xml:space="preserve"><value>Öffnen mit…</value></data>
+  <data name="Common_Undo" xml:space="preserve"><value>Rückgängig</value></data>
   <data name="Export_NoData" xml:space="preserve"><value>Noch keine Einträge in diesem Zeitraum — nichts zu exportieren.</value></data>
   <data name="Export_Failed" xml:space="preserve"><value>Der Bericht konnte nicht erstellt werden.</value></data>
   <data name="Common_OK" xml:space="preserve"><value>OK</value></data>

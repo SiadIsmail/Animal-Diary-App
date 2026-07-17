@@ -29,6 +29,11 @@ public class MainViewModel
     /// <summary>The Manage Pet page (identity, conditions, care plan, medications).</summary>
     public ManagePetViewModel ManageVM { get; }
 
+    // ── Vet-report surfaces (export sheet on Pets, preview page, Documents page) ──
+    public ExportSheetViewModel ExportSheetVM { get; }
+    public ReportPreviewViewModel ReportPreviewVM { get; }
+    public DocumentsViewModel DocumentsVM { get; }
+
     // Child VMs that hold transient form/draft state, cleared together on a
     // global data reset. New draft forms just implement IResettableDraft and
     // get added here.
@@ -50,7 +55,10 @@ public class MainViewModel
  DiabetesSetupSheetViewModel diabetesSetupVM,
  CkdSetupSheetViewModel ckdSetupVM,
  EpilepsySetupSheetViewModel epilepsySetupVM,
- ManagePetViewModel manageVM)
+ ManagePetViewModel manageVM,
+ ExportSheetViewModel exportSheetVM,
+ ReportPreviewViewModel reportPreviewVM,
+ DocumentsViewModel documentsVM)
     {
         MainPageVM = mainPageVM;
         PetVM = petVM;
@@ -68,6 +76,9 @@ public class MainViewModel
         CkdSetupVM = ckdSetupVM;
         EpilepsySetupVM = epilepsySetupVM;
         ManageVM = manageVM;
+        ExportSheetVM = exportSheetVM;
+        ReportPreviewVM = reportPreviewVM;
+        DocumentsVM = documentsVM;
 
         _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM };
     }

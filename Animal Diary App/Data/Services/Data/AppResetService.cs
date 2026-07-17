@@ -15,12 +15,15 @@ public class AppResetService
     private readonly AppDatabase _db;
     private readonly ActivePetService _activePetService;
     private readonly INotificationService _notifications;
+    private readonly Reports.ReportLibraryService _reportLibrary;
 
-    public AppResetService(AppDatabase db, ActivePetService activePetService, INotificationService notifications)
+    public AppResetService(AppDatabase db, ActivePetService activePetService, INotificationService notifications,
+        Reports.ReportLibraryService reportLibrary)
     {
         _db = db;
         _activePetService = activePetService;
         _notifications = notifications;
+        _reportLibrary = reportLibrary;
     }
 
     public async Task ResetDataAsync()
@@ -42,6 +45,10 @@ public class AppResetService
         await _db.Connection.DeleteAllAsync<GlucoseEntry>();
         await _db.Connection.DeleteAllAsync<AppetiteEntry>();
         await _db.Connection.DeleteAllAsync<SeizureEntry>();
+
+        // Reports are files + rows; the library wipes both (health data is medical
+        // data — a reset must not leave PDFs behind in app storage).
+        await _reportLibrary.DeleteAllAsync();
 
         // Forget the reminder catch-up marker so a fresh start can't misread the
         // old install's "last seen" time.

@@ -147,6 +147,33 @@ sections must stay independent of each other *and* of data access. The document
 layer has **no MAUI dependency**, which enables a console harness (+
 `VetReportSampleData`) to iterate on layout without a device or real data.
 
+## Report preview = PNGs rendered at generation time
+
+**Decision:** every export saves the PDF **and** one preview PNG per page
+(`{name}.p{n}.png`, `VetReportStyles.PreviewRasterDpi` = 144) into `Reports/`,
+tracked by a `VetReportFile` row (`ReportLibraryService` owns rows + files). The
+in-app viewer (`ReportPreviewPage`) and the Documents thumbnails show those
+images; Share / "Open with…" hand the PDF to the OS via `ReportActions`.
+
+**Because:** Android WebView cannot render PDFs and QuestPDF cannot re-read a
+saved one — generation time is the only moment the document object exists, so
+pre-rendering there buys an instant, offline, cross-platform preview with no
+platform PdfRenderer code. 144 DPI keeps a page ~120 KB (288 default was
+multi-MB). Trade-off: previews cost disk alongside each PDF; delete/reset
+removes both.
+
+## Deletion uses the undo toast, not a confirm dialog
+
+**Decision:** deleting a report from Documents follows the app's undo-toast
+pattern (now the shared `Controls/UndoToast`, extracted from CalendarPage): the
+row disappears immediately, actual file+row deletion is **deferred** until the
+toast expires or the page is left; Undo restores the row. The toast's
+`expiredAsync` callback exists precisely for this deferred-commit contract; a
+superseded toast calls neither callback, so commits must stay idempotent.
+
+**Because:** confirmation dialogs are deliberately avoided app-wide (see the
+bottom-sheet entry above); undo-after-the-fact is the established safety net.
+
 ## QuestPDF pinned to 2023.12.6
 
 **Decision / because:** 2023.12.6 is the **last** QuestPDF version that runs on

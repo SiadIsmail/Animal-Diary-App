@@ -533,60 +533,10 @@
                         InputTransparent="True"
                         IsClippedToBounds="False"/>
 
-        <!-- Toast: warm confirmation pill, floats above the tab bar. -->
-        <Border x:Name="Toast"
-                Grid.RowSpan="2"
-                Opacity="0"
-                InputTransparent="True"
-                BackgroundColor="{StaticResource Ink}"
-                StrokeThickness="0"
-                StrokeShape="RoundRectangle 18,15,14,17"
-                Rotation="-0.5"
-                Padding="14,11"
-                HorizontalOptions="Center"
-                VerticalOptions="End"
-                Margin="0,0,0,92">
-            <Border.Shadow>
-                <Shadow Brush="#0D3A3C"
-                        Offset="0,12"
-                        Radius="34"
-                        Opacity="0.20"/>
-            </Border.Shadow>
-            <HorizontalStackLayout Spacing="8"
-                    VerticalOptions="Center">
-                <Label Text="✓"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="13"
-                        FontAttributes="Bold"
-                       TextColor="{StaticResource MGreat}"
-                       VerticalOptions="Center"/>
-                <Label x:Name="ToastLabel"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="13"
-                        FontAttributes="Bold"
-                       TextColor="{StaticResource White}"
-                       VerticalOptions="Center"/>
-                <!-- Undo: the safety net for one-tap logging. Reachable by screen
-                     reader while the toast is up. -->
-                <Border x:Name="UndoButton"
-                        IsVisible="False"
-                        BackgroundColor="#1FFFFFFF"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 10"
-                        Padding="12,6"
-                        VerticalOptions="Center"
-                        SemanticProperties.Description="Undo">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnUndoTapped"/>
-                    </Border.GestureRecognizers>
-                    <Label Text="Undo"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="12.5"
-                           FontAttributes="Bold"
-                           TextColor="#8FE3CD"/>
-                </Border>
-            </HorizontalStackLayout>
-        </Border>
+        <!-- Toast: the shared confirmation/undo pill, floats above the tab bar. -->
+        <controls:UndoToast x:Name="Toast"
+                            Grid.RowSpan="2"
+                            Margin="0,0,0,92"/>
 
         <!-- Journal input sheets (all share FelovaBottomSheet). Overlays above every
              layer; input-transparent when closed so they never block the Journal. -->

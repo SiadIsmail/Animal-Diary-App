@@ -33,6 +33,7 @@ new **table** must be added to `InitAsync`. Enums that persist declare
 | `AppetiteEntry` | Id, PetId, Date, Time, Level | Pet 1—* ; **one per day** (replace-on-relog) |
 | `SeizureEntry` | Id, PetId, Date, Time, DurationMinutes, Note | Pet 1—* ; event, never upserted |
 | `TrackingEntry` | generic legacy tracking rows | **read-only now** (see below + [known-constraints.md](known-constraints.md)) |
+| `VetReportFile` | Id, PetId, FileName (relative), FromDate, ToDate, CreatedAt, PageCount, SizeBytes | Pet 1—* ; metadata for one generated report PDF (files live in `Reports/`, owned by `ReportLibraryService`) |
 | `AppSettings` | preferences incl. `Language` | singleton-ish |
 
 ## Conditions
@@ -144,6 +145,24 @@ Do not re-inline this join. (Whole-**week** dot expansion is separate, in
   to false.
 - An empty range produces **no** document (`HasAnyData` gate → `GenerateAsync`
   returns null).
+
+## Report library rules
+
+- Every export = one PDF **plus one preview PNG per page** (`{name}.p{n}.png`)
+  in `FileSystem.AppDataDirectory/Reports/`, recorded as a `VetReportFile` row.
+  `ReportLibraryService` owns folder, paths, and rows — **rows and files are
+  created/deleted together**; nothing else touches report files on disk.
+- `FileName` is stored **relative** to the reports folder (the app-data root can
+  move between installs); file names are de-duplicated with a numeric suffix so
+  re-exports never overwrite.
+- Reads **reconcile**: a row whose PDF vanished is dropped (never crashes).
+  Sample-data exports (`GenerateSampleAsync`) write files but no row, so they
+  never appear in Documents.
+- **Reset wipes files too**: `AppResetService` calls the library's
+  `DeleteAllAsync` (rows + the whole `Reports/` folder, including strays).
+- Documents-page deletion is **deferred** behind the shared undo toast: the row
+  leaves the list immediately, disk+DB deletion happens on toast expiry / page
+  leave; Undo restores the row. Commit is idempotent.
 
 ## Invariants (must always hold)
 

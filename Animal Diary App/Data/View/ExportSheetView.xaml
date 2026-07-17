@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    ExportSheetView
+    ─────────────────────────────────────────────────────────
+    The Pets page's "Export vet report" sheet: period chips (30/90/180 days) and
+    a create button, flipping to a done face (View / Share / Done) once the PDF
+    is saved. Rendered inside the shared FelovaBottomSheet; BindingContext is an
+    ExportSheetViewModel — open it via that VM's OpenCommand.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             x:Class="Animal_Diary_App.Data.View.ExportSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="CharacterSpacing" Value="1"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+
+        <!-- Period chip: quiet tint normally, filled teal when it is the selection
+             (each chip carries its own DataTrigger on SelectedDays). -->
+        <Style x:Key="PeriodChip" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+            <Setter Property="StrokeThickness" Value="0"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 13"/>
+        </Style>
+        <Style x:Key="PeriodChipLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="TextColor" Value="{StaticResource TealDeep}"/>
+            <Setter Property="HorizontalTextAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="0,12"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+            <Grid>
+
+                <!-- ══ Options face: period chips + create ══ -->
+                <VerticalStackLayout Spacing="16" Padding="0,2,0,0"
+                                     IsVisible="{Binding IsDone, Converter={StaticResource InvertedBoolConverter}}">
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{loc:Translate Export_PeriodLabel}" Style="{StaticResource FieldLabel}"/>
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+
+                            <Border Style="{StaticResource PeriodChip}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding SelectedDays}" Value="30">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectPeriodCommand}" CommandParameter="30"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:Translate Export_Days30}" Style="{StaticResource PeriodChipLabel}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding SelectedDays}" Value="30">
+                                            <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource PeriodChip}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding SelectedDays}" Value="90">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectPeriodCommand}" CommandParameter="90"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:Translate Export_Days90}" Style="{StaticResource PeriodChipLabel}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding SelectedDays}" Value="90">
+                                            <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                            <Border Grid.Column="2" Style="{StaticResource PeriodChip}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding SelectedDays}" Value="180">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectPeriodCommand}" CommandParameter="180"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:Translate Export_Days180}" Style="{StaticResource PeriodChipLabel}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding SelectedDays}" Value="180">
+                                            <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <!-- Inline "no data in range" / error line (never an alert) -->
+                    <Label Text="{Binding StatusMessage}"
+                           IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="13"
+                           TextColor="{StaticResource InkSecondary}"/>
+
+                    <!-- Create button; shows a spinner while generating -->
+                    <Border BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13,16,15,14"
+                            Margin="0,6,0,0">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GenerateCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Grid>
+                            <Label Text="{loc:Translate Export_Generate}"
+                                   IsVisible="{Binding IsGenerating, Converter={StaticResource InvertedBoolConverter}}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource White}"
+                                   HorizontalTextAlignment="Center"
+                                   Padding="0,14"/>
+                            <HorizontalStackLayout IsVisible="{Binding IsGenerating}"
+                                                   Spacing="10" HorizontalOptions="Center" Padding="0,12">
+                                <ActivityIndicator IsRunning="{Binding IsGenerating}"
+                                                   Color="{StaticResource White}"
+                                                   WidthRequest="20" HeightRequest="20"/>
+                                <Label Text="{loc:Translate Export_Generating}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource White}"
+                                       VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- ══ Done face: saved line + View / Share / Done ══ -->
+                <VerticalStackLayout Spacing="14" Padding="0,2,0,0"
+                                     IsVisible="{Binding IsDone}">
+
+                    <Label Text="{Binding DoneMessage}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="14"
+                           TextColor="{StaticResource Ink}"/>
+                    <Label Text="{Binding ResultFileName}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12"
+                           TextColor="{StaticResource InkTertiary}"/>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Border BackgroundColor="{StaticResource Teal}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 15,13,13,16">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ViewCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Export_View}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource White}"
+                                   HorizontalTextAlignment="Center"
+                                   Padding="0,14"/>
+                        </Border>
+                        <Border Grid.Column="1"
+                                BackgroundColor="{StaticResource TealTint}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 13,16,15,14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ShareCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Export_Share}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource TealDeep}"
+                                   HorizontalTextAlignment="Center"
+                                   Padding="0,14"/>
+                        </Border>
+                    </Grid>
+
+                    <Border BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 13">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Export_Done}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Ink}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+                </VerticalStackLayout>
+
+            </Grid>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>

@@ -295,7 +295,7 @@
                               ColumnSpacing="14"
                               Padding="14,15">
                             <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding PetVM.OpenDocumentsCommand}"/>
+                                <TapGestureRecognizer Tapped="OnDocumentsClicked"/>
                             </Grid.GestureRecognizers>
                             <Border Grid.Column="0"
                                     WidthRequest="40" HeightRequest="40"
@@ -326,7 +326,7 @@
                               ColumnSpacing="14"
                               Padding="14,15">
                             <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding PetVM.ExportReportCommand}"/>
+                                <TapGestureRecognizer Command="{Binding ExportSheetVM.OpenCommand}"/>
                             </Grid.GestureRecognizers>
                             <Border Grid.Column="0"
                                     WidthRequest="40" HeightRequest="40"
@@ -359,6 +359,10 @@
         <!-- ================= TAB BAR ================= -->
         <controls:BottomNavigation Grid.Row="1"
                                    ActiveTab="Pets"/>
+
+        <!-- Export sheet overlay (FelovaBottomSheet; click-through while closed) -->
+        <view:ExportSheetView Grid.RowSpan="2"
+                              BindingContext="{Binding ExportSheetVM}"/>
 
         <!-- Settings panel overlay — last child renders on top of everything -->
         <view:SettingsPanelView Grid.RowSpan="2"

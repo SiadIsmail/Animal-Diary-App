@@ -49,8 +49,11 @@ Namespace is `Animal_Diary_App`; folders mirror namespaces.
   properties: `CalendarVM`, `MainPageVM`, `PetVM`, `MedicationVM`, `SettingsVM`,
   `ConditionVM`, `JournalVM`, `ManageVM`, the per-type sheet VMs
   (`GlucoseSheetVM`, `MoodSheetVM`, `WeightSheetVM`, `AppetiteSheetVM`,
-  `SeizureSheetVM`), and the condition-setup sheet VMs (`DiabetesSetupVM`,
-  `CkdSetupVM`, `EpilepsySetupVM`).
+  `SeizureSheetVM`), the condition-setup sheet VMs (`DiabetesSetupVM`,
+  `CkdSetupVM`, `EpilepsySetupVM`), and the vet-report surfaces
+  (`ExportSheetVM` — the Pets-page export sheet; `ReportPreviewVM` — call its
+  `Open(row)` before pushing `ReportPreviewPage`; `DocumentsVM` — the Documents
+  page list).
 - Pages set `BindingContext = mainViewModel` and bind through paths like
   `{Binding MedicationVM.SomeProperty}`.
 - All VMs derive from **`BaseViewModel`** (`INotifyPropertyChanged` + `SetProperty`).
@@ -77,7 +80,12 @@ Each is a coherent slice with its own folder. Details live in the linked docs.
    `PendingEngine`, typed entry stores, and the unified day timeline. Rules →
    [domain.md](domain.md).
 4. **Reports** (`Services/Reports/`) — the vet PDF, layered DATA → DOCUMENT →
-   SERVICE (QuestPDF). Rules → [domain.md](domain.md); layering → [design-decisions.md](design-decisions.md).
+   SERVICE (QuestPDF), plus the report library around it: `ReportLibraryService`
+   (the `Reports/` folder + `VetReportFile` rows), `ReportActions` (share /
+   open-externally, shared by every surface), the Pets-page export sheet
+   (`ExportSheetView(Model)`), `ReportPreviewPage` (pre-rendered page PNGs), and
+   `DocumentsPage` (list / share / delete-with-undo). Rules → [domain.md](domain.md);
+   layering + preview/deletion decisions → [design-decisions.md](design-decisions.md).
 
 ## Navigation
 
@@ -90,8 +98,9 @@ Each is a coherent slice with its own folder. Details live in the linked docs.
   create pet → optional condition picker) *before* the Shell exists.
 - After the first pet is saved, `App.SwitchToMainApp()` swaps the window root to
   a **freshly resolved** `AppShell` (so a post-reset relaunch never reuses stale
-  page instances). Pushed pages like `ManagePetPage` and `CreatePetPage` (edit
-  mode) are `ContentPage`s pushed onto the Shell/nav stack.
+  page instances). Pushed pages like `ManagePetPage`, `CreatePetPage` (edit
+  mode), `DocumentsPage`, and `ReportPreviewPage` are `ContentPage`s pushed onto
+  the Shell/nav stack (ctor takes the shared `MainViewModel`).
 
 ## Startup flow (`App.StartAsync`)
 

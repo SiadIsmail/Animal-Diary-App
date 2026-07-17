@@ -17,8 +17,9 @@
   medications list; a dedicated detail page is pending.
 - **Adherence streak stats.** The dose-log data exists; the summary/streak UI on
   the calendar is not built.
-- **Vet report polish.** A share sheet, an on-device preview, and a user-facing
-  range picker (the range is already a `GenerateAsync` parameter).
+- **Vet report: custom range + section toggles.** The export sheet ships with
+  30/90/180-day presets; an exact from/to picker and per-export section
+  on/off are the decided next steps (`GenerateAsync` already takes dates).
 
 ## Later
 

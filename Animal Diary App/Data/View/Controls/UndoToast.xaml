@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    UndoToast
+    ─────────────────────────────────────────────────────────
+    The app's shared confirmation pill with the 6-second Undo safety net — the
+    deliberate alternative to confirmation dialogs (see AI/design-decisions.md).
+    Extracted from CalendarPage so every page shows the identical toast. Host it
+    as an overlay child of the page's root Grid and call Show(...) from
+    code-behind; the control sizes itself to the pill (Center/End), so it never
+    blocks the page. Position via Margin on the host's instance.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             x:Class="Animal_Diary_App.Data.View.Controls.UndoToast"
+             HorizontalOptions="Center"
+             VerticalOptions="End"
+             InputTransparent="True">
+
+    <Border x:Name="ToastBorder"
+            Opacity="0"
+            BackgroundColor="{StaticResource Ink}"
+            StrokeThickness="0"
+            StrokeShape="RoundRectangle 18,15,14,17"
+            Rotation="-0.5"
+            Padding="14,11">
+        <Border.Shadow>
+            <Shadow Brush="#0D3A3C" Offset="0,12" Radius="34" Opacity="0.20"/>
+        </Border.Shadow>
+        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+            <Label Text="✓"
+                   FontFamily="{StaticResource FontSans}"
+                   FontSize="13"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource MGreat}"
+                   VerticalOptions="Center"/>
+            <Label x:Name="ToastLabel"
+                   FontFamily="{StaticResource FontSans}"
+                   FontSize="13"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource White}"
+                   VerticalOptions="Center"/>
+            <!-- Undo: reachable by screen reader while the toast is up. -->
+            <Border x:Name="UndoButton"
+                    IsVisible="False"
+                    BackgroundColor="#1FFFFFFF"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 10"
+                    Padding="12,6"
+                    VerticalOptions="Center"
+                    SemanticProperties.Description="Undo">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnUndoTapped"/>
+                </Border.GestureRecognizers>
+                <Label Text="{loc:Translate Common_Undo}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="12.5"
+                       FontAttributes="Bold"
+                       TextColor="#8FE3CD"/>
+            </Border>
+        </HorizontalStackLayout>
+    </Border>
+
+</ContentView>

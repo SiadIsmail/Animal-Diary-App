@@ -12,10 +12,6 @@ using View = Microsoft.Maui.Controls.View;
 public partial class CalendarPage : ContentPage
 {
 	private MainViewModel vm;
-	private int _toastSeq;
-
-	// The undo behind the currently-shown toast (null when the toast has no undo).
-	private Func<Task>? _pendingUndo;
 
 	// The (pet, date) context of the last-started Journal reload. CalendarVM's
 	// NotifyDerived raises ActivePetName on EVERY entries/doses load, so without
@@ -231,73 +227,15 @@ public partial class CalendarPage : ContentPage
 			await AnimatePawsAsync();
 	}
 
-	// ── Undo ───────────────────────────────────────────────────────────────────
-	private async void OnUndoTapped(object? sender, TappedEventArgs e)
-	{
-		var undo = _pendingUndo;
-		_pendingUndo = null;
-		_toastSeq++;              // cancel the pending auto-hide
-		HideToast();
+	// ── Toast (the shared UndoToast control; undo reloads the Journal too) ─────
+	private void ShowToast(string message) => Toast.Show(message);
 
-		try
+	private void ShowUndoToast(JournalSaveResult result) =>
+		Toast.Show(result.Message, async () =>
 		{
-			if (undo != null)
-				await undo();
+			await result.UndoAsync();
 			await ReloadJournalAsync();
-		}
-		catch (Exception ex)
-		{
-			System.Diagnostics.Debug.WriteLine($"[CalendarPage] undo failed: {ex}");
-		}
-	}
-
-	// ── Toast ──────────────────────────────────────────────────────────────────
-	private void ShowToast(string message) => ShowToastCore(message, null);
-
-	private void ShowUndoToast(JournalSaveResult result) => ShowToastCore(result.Message, result.UndoAsync);
-
-	private async void ShowToastCore(string message, Func<Task>? undo)
-	{
-		ToastLabel.Text = message;
-		_pendingUndo = undo;
-		UndoButton.IsVisible = undo != null;
-		// Only capture taps while an Undo button is present; otherwise stay
-		// input-transparent so the transient toast never blocks the Journal.
-		Toast.InputTransparent = undo == null;
-
-		int seq = ++_toastSeq;
-		int ms = undo != null ? 6000 : 2400; // undo stays 6s so it's reachable
-
-		if (ReducedMotion.IsEnabled)
-		{
-			Toast.TranslationY = 0;
-			Toast.Opacity = 1;
-			await Task.Delay(ms);
-			if (seq == _toastSeq)
-				HideToast();
-			return;
-		}
-
-		Toast.TranslationY = 16;
-		Toast.Opacity = 0;
-		await Task.WhenAll(
-			Toast.FadeTo(1, 220, Easing.CubicOut),
-			Toast.TranslateTo(0, 0, 220, Easing.CubicOut));
-
-		await Task.Delay(ms);
-		if (seq != _toastSeq)
-			return;
-		await Toast.FadeTo(0, 260, Easing.CubicIn);
-		HideToast();
-	}
-
-	private void HideToast()
-	{
-		Toast.Opacity = 0;
-		Toast.InputTransparent = true;
-		UndoButton.IsVisible = false;
-		_pendingUndo = null;
-	}
+		});
 
 	// ── Reusable confirm burst: bubbles rise + fade from an anchor / point ──
 	private Task BurstBubblesAsync(View anchor)

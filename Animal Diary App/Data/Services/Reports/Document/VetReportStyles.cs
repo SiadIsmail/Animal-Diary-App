@@ -42,6 +42,12 @@ public static class VetReportStyles
     public const float ChartMarkerRadius = 1.8f;
     public const float ChartLabelSize = 6.5f;
 
+    // ── Preview images ──────────────────────────────────────────────────────
+    /// <summary>DPI of the per-page preview PNGs saved next to each PDF (the
+    /// in-app viewer shows these). QuestPDF's 288 default made multi-MB pages;
+    /// 144 is crisp on phone screens at a fraction of the size.</summary>
+    public const int PreviewRasterDpi = 144;
+
     // ── Content caps (keeps the document at 1–2 pages on busy pets) ─────────
     public const int MaxEventRows = 30;
     public const int MaxNotes = 10;

@@ -26,6 +26,7 @@ public partial class PetsPage : ContentPage
                 LocalizationManager.Instance.GetString("Common_Cancel"));
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
+        vm.ExportSheetVM.ViewRequested += OnReportViewRequested;
     }
 
     protected override void OnDisappearing()
@@ -33,6 +34,22 @@ public partial class PetsPage : ContentPage
         base.OnDisappearing();
         vm.SettingsVM.ConfirmDeleteAllData = null;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
+        vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;
+    }
+
+    /// <summary>The export sheet's "View" button — push the in-app preview for the
+    /// report it just generated (navigation belongs to pages, not VMs).</summary>
+    private async void OnReportViewRequested(Data.Models.VetReportFile report)
+    {
+        try
+        {
+            vm.ReportPreviewVM.Open(report);
+            await Navigation.PushAsync(new ReportPreviewPage(vm));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[VetReport] preview push failed: {ex}");
+        }
     }
 
     private void OnResetCompleted(object? sender, EventArgs e)
@@ -61,5 +78,10 @@ public partial class PetsPage : ContentPage
     async void OnAddMedicationClicked(object? sender, EventArgs args)
     {
         await Navigation.PushAsync(new MedicationsPage(vm));
+    }
+
+    async void OnDocumentsClicked(object? sender, EventArgs args)
+    {
+        await Navigation.PushAsync(new DocumentsPage(vm));
     }
 }

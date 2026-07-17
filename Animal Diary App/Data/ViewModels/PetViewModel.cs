@@ -116,58 +116,6 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     private readonly PetService _petService;
     private readonly ActivePetService _activePetService;
     private readonly SettingsService _SettingsService;
-    private readonly Animal_Diary_App.Data.Services.Reports.IVetReportService _vetReportService;
-
-    /// <summary>How far back the vet report looks. A constant only until the UI
-    /// grows a range picker — GenerateAsync already takes the range as parameters.</summary>
-    private const int ReportRangeDays = 90;
-
-    /// <summary>Flip to true to render the PDF from <c>VetReportSampleData</c>'s fake
-    /// data — iterate on the layout without needing real logged entries on device.</summary>
-    private const bool UseSampleReportData = false;
-
-    private bool _isExportingReport;
-
-    /// <summary>Generate the vet PDF for the active pet and surface where it landed
-    /// (alert + debug log). V1 on purpose: no share sheet, no preview.</summary>
-    private async Task ExportReportAsync()
-    {
-        if (_isExportingReport)
-            return;
-        _isExportingReport = true;
-
-        var loc = LocalizationManager.Instance;
-        try
-        {
-            string? path;
-            if (UseSampleReportData)
-#pragma warning disable CS0162 // unreachable — intentional compile-time switch
-                path = await _vetReportService.GenerateSampleAsync();
-#pragma warning restore CS0162
-            else if (ActivePet.Id != 0)
-                path = await _vetReportService.GenerateAsync(
-                    ActivePet.Id, DateTime.Today.AddDays(-ReportRangeDays), DateTime.Today);
-            else
-                path = null; // no active pet behaves like "no data"
-
-            if (path == null)
-                await Shell.Current.DisplayAlert(
-                    loc.GetString("Pets_Export"), loc.GetString("Export_NoData"), loc.GetString("Common_OK"));
-            else
-                await Shell.Current.DisplayAlert(
-                    loc.GetString("Export_SavedTitle"), path, loc.GetString("Common_OK"));
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[VetReport] export failed: {ex}");
-            await Shell.Current.DisplayAlert(
-                loc.GetString("Pets_Export"), loc.GetString("Export_Failed"), loc.GetString("Common_OK"));
-        }
-        finally
-        {
-            _isExportingReport = false;
-        }
-    }
 
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
@@ -189,23 +137,21 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
     public ICommand SelectPetCommand { get; }
     public ICommand AddPetCommand { get; }
-    public ICommand OpenDocumentsCommand { get; }
-    public ICommand ExportReportCommand { get; }
     public ICommand OpenMedicationDetailCommand { get; }
 
-    public PetViewModel(PetService petService, ActivePetService activePetService, SettingsService settingsService,
-        Animal_Diary_App.Data.Services.Reports.IVetReportService vetReportService)
+    // Export + Documents left this VM: the Export row opens ExportSheetViewModel's
+    // sheet, and the Documents row navigates from PetsPage code-behind (pages own
+    // navigation), so neither needs a command here anymore.
+
+    public PetViewModel(PetService petService, ActivePetService activePetService, SettingsService settingsService)
     {
         _petService = petService;
         _activePetService = activePetService;
         _SettingsService = settingsService;
-        _vetReportService = vetReportService;
 
         SelectPetCommand = new Command<Pet>(SelectPet);
         AddPetCommand = new Command(async () => await SavePetAsync());
-        // Stubs: bound in XAML but the flows don't exist yet (documents; med detail).
-        OpenDocumentsCommand = new Command(() => System.Diagnostics.Debug.WriteLine("Open documents (stub)"));
-        ExportReportCommand = new Command(async () => await ExportReportAsync());
+        // Stub: bound in XAML but the flow doesn't exist yet (med detail).
         OpenMedicationDetailCommand = new Command(() => System.Diagnostics.Debug.WriteLine("Open medication detail (stub)"));
         InitializePetTypeOptions();
 
