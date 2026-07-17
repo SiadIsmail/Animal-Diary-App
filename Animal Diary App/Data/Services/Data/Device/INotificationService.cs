@@ -30,6 +30,7 @@ namespace Animal_Diary_App.Data.Services.Data.Device
     public interface INotificationService
     {
         Task RequestNotificationPermission();
+        Task<bool> RequestNotificationPermissionAsync(bool requestExactAlarm = false);
         Task ScheduleNotification(NotificationContent content);
         Task CancelNotification(int id);
         Task CancelNotifications(IEnumerable<int> ids);

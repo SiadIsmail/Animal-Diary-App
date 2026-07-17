@@ -75,8 +75,8 @@ public class MedicationReminderScheduler
         _doseReconciler = doseReconciler;
     }
 
-    /// <summary>Ask the OS for permission to post notifications (no-op if already granted).</summary>
-    public Task RequestPermissionAsync() => _notifications.RequestNotificationPermission();
+    /// <summary>Ask the OS for exact-alarm permission before scheduling reminders.</summary>
+    public Task<bool> RequestPermissionAsync() => _notifications.RequestNotificationPermissionAsync(requestExactAlarm: true);
 
     // ── Per-medication sync (create / edit / restore) ────────────────────
 

@@ -480,7 +480,12 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
         // The scheduler reads the just-saved schedule rules and materializes
         // concrete reminder occurrences from them. SyncMedicationAsync is
         // idempotent, so it doubles as the "update after edit" path.
-        await _reminderScheduler.RequestPermissionAsync();
+        var permissionGranted = await _reminderScheduler.RequestPermissionAsync();
+        if (!permissionGranted)
+        {
+            System.Diagnostics.Debug.WriteLine("[MedicationViewModel] Exact-alarm permission was not granted; reminders will use the platform fallback.");
+        }
+
         await _reminderScheduler.SyncMedicationAsync(medicationId);
 
         await LoadFilteredMedicationAsync();
