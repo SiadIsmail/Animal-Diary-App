@@ -118,10 +118,13 @@
                           WidthRequest="132"
                           HeightRequest="132">
 
-                        <!-- Care-completion ring (DATA — precise, animated fill) -->
+                        <!-- Care-completion ring (DATA — precise, animated fill).
+                             Progress = today's done/total from the same PendingEngine
+                             snapshot the Journal's "Still to do" chips use. -->
                         <controls:ProgressRingView x:Name="CareRing"
                                                    WidthRequest="132"
                                                    HeightRequest="132"
+                                                   Progress="{Binding MainPageVM.CareProgress}"
                                                    ProgressColor="{StaticResource Teal}"
                                                    TrackColor="{StaticResource TealLine}"
                                                    RingThickness="6"/>
@@ -214,7 +217,7 @@
                     </FlexLayout>
                 </VerticalStackLayout>
 
-                <!-- 3 ── Next-up medication: tilted card + paperclip ── -->
+                <!-- 3 ── Next up: first pending med dose or care-plan tracker ── -->
                 <Grid Margin="0,4,0,0">
                     <Border x:Name="NextMedCard"
                             Rotation="-1.2"
@@ -292,7 +295,7 @@
                                         CornerRadius="11"
                                         BackgroundColor="{StaticResource Teal}"
                                         TextColor="{StaticResource White}"
-                                        Clicked="OnMarkNextMedGiven"/>
+                                        Clicked="OnNextUpAction"/>
                             </VerticalStackLayout>
                         </Grid>
                     </Border>

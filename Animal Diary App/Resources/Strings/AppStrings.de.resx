@@ -126,6 +126,7 @@
   <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Als Nächstes</value></data>
   <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>Alles erledigt</value></data>
   <data name="Main_AllCaughtUpDetail" xml:space="preserve"><value>Gerade nichts fällig. Gut gemacht.</value></data>
+  <data name="Main_LogNow" xml:space="preserve"><value>Eintragen</value></data>
   <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Gesund</value></data>
   <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Medis 20:00</value></data>
   <data name="Main_StableThisWeek" xml:space="preserve"><value>Stabil diese Woche</value></data>

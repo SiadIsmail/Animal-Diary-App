@@ -153,7 +153,7 @@ screen-prefixed (`Common_*`, `Nav_*`, `Main_*`, `Med_*`, `Journal_*`,
   `dotnet build "Animal Diary App/Animal Diary App.csproj" -f net9.0-windows10.0.19041.0 -c Debug -clp:ErrorsOnly`
   Expect ~0 errors and a large **pre-existing** warning count — don't chase it.
 - Before deleting a VM member, confirm it has no live consumer in XAML **or in
-  page code-behind** — the Today page's care ring reads CalendarVM members from
-  `MainPage.xaml.cs`, which a XAML-only grep misses:
+  page code-behind** — e.g. the Today page's next-up card reads
+  `MainPageVM.NextUpItem` from `MainPage.xaml.cs`, which a XAML-only grep misses:
   `grep -rhoE 'CalendarVM\.[A-Za-z0-9_]+' "Animal Diary App/Data/View/"*.xaml "Animal Diary App/Data/View/"*.xaml.cs | sort -u`
   (repeat per VM). Unbound **and** unused by other members = safe to remove.

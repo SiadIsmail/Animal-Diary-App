@@ -78,6 +78,50 @@ public static class PendingEngine
         return result;
     }
 
+    /// <summary>
+    /// The day's care measured in units — the numerator/denominator behind the Today
+    /// page's care ring. Counts the SAME rules as <see cref="Compute"/> so the ring
+    /// and the "Still to do" chips can never disagree: each dose is one unit, a
+    /// PerDay tracker is PerDayCount units, Daily/Weekly/TwiceWeekly trackers are one
+    /// unit each (done once their rolling window is satisfied), and AsNeeded/Event
+    /// contribute nothing. Done == Total exactly when <see cref="Compute"/> returns
+    /// no pending items.
+    /// </summary>
+    public static DayProgress ComputeProgress(
+        IReadOnlyList<Tracker> carePlan,
+        IReadOnlyList<ScheduledDose> dosesToday,
+        IReadOnlyDictionary<TrackerId, IReadOnlyList<DateTime>> entryDatesByTracker,
+        DateTime date)
+    {
+        var today = date.Date;
+        int done = dosesToday.Count(d => d.Given);
+        int total = dosesToday.Count;
+
+        foreach (var t in carePlan)
+        {
+            switch (t.Kind)
+            {
+                case TrackerKind.PerDay:
+                    total += t.PerDayCount;
+                    done += Math.Min(CountOn(entryDatesByTracker, t.TrackerId, today), t.PerDayCount);
+                    break;
+                case TrackerKind.Daily or TrackerKind.Weekly or TrackerKind.TwiceWeekly:
+                    int window = t.Kind switch
+                    {
+                        TrackerKind.Daily => 1,
+                        TrackerKind.TwiceWeekly => 3,
+                        _ => 7
+                    };
+                    total += 1;
+                    done += AnyInWindow(entryDatesByTracker, t.TrackerId, today, window) ? 1 : 0;
+                    break;
+                    // AsNeeded / Event: never scheduled, never counted.
+            }
+        }
+
+        return new DayProgress(done, total);
+    }
+
     /// <summary>Number of entries for a tracker on a specific day.</summary>
     private static int CountOn(
         IReadOnlyDictionary<TrackerId, IReadOnlyList<DateTime>> byTracker, TrackerId id, DateTime day)

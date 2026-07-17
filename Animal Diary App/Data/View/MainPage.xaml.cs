@@ -1,7 +1,7 @@
 namespace Animal_Diary_App.Data.View;
 
-using System.ComponentModel;
-using System.Linq;
+using Animal_Diary_App.Data.Models;
+using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Helpers;
 using Microsoft.Maui.Controls.Shapes;
@@ -13,7 +13,6 @@ public partial class MainPage : ContentPage
 {
     private readonly MainViewModel vm;
     private int _toastSeq;
-    private DoseItem? _nextDose;
 
     public MainPage(MainViewModel mainViewModel)
     {
@@ -35,21 +34,21 @@ public partial class MainPage : ContentPage
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
 
-        // Keep the care ring and next-up card in step with today's data.
-        vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
-
         try
         {
             await vm.LoadAsync();
-            // The two charts are independent of each other; overlap their queries
-            // instead of running them back-to-back.
+            // The charts and the today-care snapshot are independent of each
+            // other; overlap their queries instead of running them back-to-back.
+            // LoadTodayCareAsync drives the care ring (bound) + next-up card and
+            // re-runs on every appearance, so logs made on other tabs are
+            // reflected the moment this page returns.
             await Task.WhenAll(
                 vm.MainPageVM.LoadWeightChartAsync(),
-                vm.MainPageVM.LoadMoodTimelineAsync());
+                vm.MainPageVM.LoadMoodTimelineAsync(),
+                vm.MainPageVM.LoadTodayCareAsync());
 
             SetAside();
-            RefreshRing();
-            RefreshNextMed();
+            RefreshNextUp();
         }
         catch (Exception ex)
         {
@@ -64,7 +63,6 @@ public partial class MainPage : ContentPage
         base.OnDisappearing();
         vm.SettingsVM.ConfirmDeleteAllData = null;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
-        vm.CalendarVM.PropertyChanged -= OnCalendarVmPropertyChanged;
     }
 
     private void OnResetCompleted(object? sender, EventArgs e)
@@ -73,19 +71,6 @@ public partial class MainPage : ContentPage
         // (the ViewModels are singletons).
         vm.ResetDrafts();
         Application.Current!.Windows[0].Page = new NavigationPage(new WelcomePage(vm));
-    }
-
-    private void OnCalendarVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // These derived flags fire whenever the day's entries/doses reload.
-        if (e.PropertyName is nameof(CalendarViewModel.AllCareComplete)
-            or nameof(CalendarViewModel.HasMood)
-            or nameof(CalendarViewModel.HasWeight)
-            or nameof(CalendarViewModel.IsSelectedDateToday))
-        {
-            RefreshRing();
-            RefreshNextMed();
-        }
     }
 
     // ── Handwritten aside under the greeting (Caveat, rotated per load) ──
@@ -97,40 +82,37 @@ public partial class MainPage : ContentPage
         AsideLabel.Text = LocalizationManager.Instance.Format(key, pet);
     }
 
-    // ── Care-completion ring: today's mood + weight + doses (DATA) ──
-    private void RefreshRing() => CareRing.Progress = ComputeCareProgress();
-
-    private double ComputeCareProgress()
+    // ── Next-up card: the first thing still to do today ──
+    // Med doses first (soonest due), then care-plan trackers — the same
+    // PendingEngine order the Journal's chips use (MainPageViewModel supplies it).
+    private void RefreshNextUp()
     {
-        var c = vm.CalendarVM;
-        // Only meaningful for today; a parked non-today selection reads as empty.
-        if (!c.IsSelectedDateToday)
-            return 0;
-
-        int total = 2 + c.DosesForSelectedDate.Count;           // mood + weight + doses
-        int done = (c.HasMood ? 1 : 0)
-                 + (c.HasWeight ? 1 : 0)
-                 + c.DosesForSelectedDate.Count(d => d.IsTaken);
-        return total == 0 ? 0 : (double)done / total;
-    }
-
-    // ── Next-up medication card ──
-    private void RefreshNextMed()
-    {
-        var c = vm.CalendarVM;
-        _nextDose = c.IsSelectedDateToday
-            ? c.DosesForSelectedDate.FirstOrDefault(d => !d.IsTaken && !d.IsSkipped)
-            : null;
-
         var loc = LocalizationManager.Instance;
-        if (_nextDose is { } dose)
+        var item = vm.MainPageVM.NextUpItem;
+
+        if (item is { Kind: PendingKind.Medication })
         {
             NextMedIcon.Text = "💊";
-            NextMedName.Text = dose.MedName;
-            NextMedDetail.Text = dose.DoseDisplay;
-            NextMedTime.Text = dose.TimeDisplay;
-            NextMedTime.IsVisible = true;
-            NextMedAction.IsVisible = dose.IsPending;
+            NextMedName.Text = item.MedicationName;
+            NextMedDetail.Text = vm.MainPageVM.NextUpDetail;
+            NextMedTime.Text = item.DoseTime?.ToString(@"hh\:mm") ?? string.Empty;
+            NextMedTime.IsVisible = item.DoseTime.HasValue;
+            NextMedAction.Text = loc.GetString("Journal_MarkGiven");
+            // You can't take a dose early — the action appears once it's due.
+            NextMedAction.IsVisible = (item.DoseTime ?? TimeSpan.Zero) <= DateTime.Now.TimeOfDay;
+        }
+        else if (item is { Kind: PendingKind.Tracker })
+        {
+            var (icon, label) = TrackerDisplay(item, loc);
+            NextMedIcon.Text = icon;
+            NextMedName.Text = label;
+            // PerDay trackers (glucose) show their "1 of 3" count; others need no detail.
+            NextMedDetail.Text = item.Target > 0
+                ? loc.Format("Journal_CountOfN", item.Done, item.Target)
+                : string.Empty;
+            NextMedTime.IsVisible = false;
+            NextMedAction.Text = loc.GetString("Main_LogNow");
+            NextMedAction.IsVisible = true;
         }
         else
         {
@@ -142,32 +124,44 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private void OnMarkNextMedGiven(object? sender, EventArgs e)
+    // Same icons + labels as the Journal's chips, so the card reads as the
+    // first chip of the day. (Water never reaches here — filtered with the
+    // same "no sheet yet" rule the Journal applies.)
+    private static (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc) => item.TrackerId switch
     {
-        if (_nextDose is not { } dose)
-            return;
+        TrackerId.Glucose => ("🩸", loc.GetString("Journal_GlucoseCheck")),
+        TrackerId.Appetite => ("🍽️", loc.GetString("Journal_Appetite")),
+        TrackerId.Weight => ("⚖️", loc.GetString("Journal_WeighIn")),
+        TrackerId.Seizure => ("⚡", loc.GetString("Journal_Seizure")),
+        _ => ("🙂", loc.GetString("Journal_MoodTitle")),
+    };
 
-        // The toggle command records the outcome asynchronously, so refresh the
-        // ring + card only once the dose actually flips to Taken.
-        void OnDoseResolved(object? s, PropertyChangedEventArgs args)
+    private async void OnNextUpAction(object? sender, EventArgs e)
+    {
+        try
         {
-            if (args.PropertyName is not (nameof(DoseItem.Status) or nameof(DoseItem.IsTaken)))
-                return;
-            dose.PropertyChanged -= OnDoseResolved;
-            MainThread.BeginInvokeOnMainThread(() =>
+            if (vm.MainPageVM.NextUpItem is { Kind: PendingKind.Medication })
             {
-                RefreshNextMed();
-                RefreshRing();
-            });
+                // Immediate, optimistic confirmation feedback; the awaited call
+                // then records the dose and re-derives the ring + next-up.
+                ShowToast(MedGivenToast());
+                if (sender is View anchor)
+                    BurstBubblesAsync(anchor).Forget();
+
+                await vm.MainPageVM.MarkNextDoseGivenAsync();
+                RefreshNextUp();
+            }
+            else if (vm.MainPageVM.NextUpItem is { Kind: PendingKind.Tracker })
+            {
+                // Logging sheets live on the Journal — take the person there.
+                await Shell.Current.GoToAsync("//JournalTab");
+            }
         }
-
-        dose.PropertyChanged += OnDoseResolved;
-        vm.CalendarVM.ToggleDoseTakenCommand.Execute(dose);
-
-        // Immediate, optimistic confirmation feedback.
-        ShowToast(MedGivenToast());
-        if (sender is View anchor)
-            _ = BurstBubblesAsync(anchor);
+        catch (Exception ex)
+        {
+            // async void — an escaping exception here kills the process.
+            System.Diagnostics.Debug.WriteLine($"[MainPage] Next-up action failed: {ex}");
+        }
     }
 
     // ── Rotating warm copy (shared bank with Journal) ──

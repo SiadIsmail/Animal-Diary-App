@@ -7,11 +7,13 @@ using System.Windows.Input;
 using System.Collections.ObjectModel;
 
 /// <summary>
-/// The Journal's week strip, pet selector and derived day headings — plus the
-/// day's dose list and the HasMood/HasWeight flags, which the TODAY page's care
-/// ring and next-med card consume from code-behind (MainPage.xaml.cs). The
-/// logging surface itself lives in <see cref="JournalLogViewModel"/> and the
-/// sheet VMs; the legacy inline mood/weight editors were removed with them.
+/// The Journal's week strip, pet selector and derived day headings, plus the
+/// day's dose list and HasMood/HasWeight flags. The Today page no longer reads
+/// any of this — its care ring and next-up card now derive from the
+/// PendingEngine via MainPageViewModel — so the dose-checklist and mood/weight
+/// members here have no remaining consumer and are kept only pending a careful
+/// removal (see known-constraints.md). The logging surface lives in
+/// <see cref="JournalLogViewModel"/> and the sheet VMs.
 /// </summary>
 public class CalendarViewModel : BaseViewModel
 {
@@ -47,8 +49,8 @@ public class CalendarViewModel : BaseViewModel
         return d.AddDays(-offset);
     }
 
-    // The day's recorded mood/weight, kept only as the source of HasMood/HasWeight
-    // (the Today page's care ring reads those from code-behind).
+    // The day's recorded mood/weight, kept only as the source of HasMood/HasWeight.
+    // (Legacy: the Today page's old care ring read these; nothing consumes them now.)
     private string shownMood = string.Empty;
     public string ShownMood
     {
@@ -117,13 +119,6 @@ public class CalendarViewModel : BaseViewModel
     public string EmptyHeadline =>
         LocalizationManager.Instance.Format("Journal_EmptyBig", ActivePetName);
 
-    /// <summary>Today's mood, weight and every scheduled dose are all recorded.
-    /// Consumed by the Today page's care ring (code-behind).</summary>
-    public bool AllCareComplete =>
-        IsSelectedDateToday && HasMood && HasWeight
-        && DosesForSelectedDate.Count > 0
-        && DosesForSelectedDate.All(d => d.Status == DoseStatus.Taken);
-
     /// <summary>Fire change notifications for every derived Journal label at once.
     /// NOTE: this raises ActivePetName on every entries/doses load, not only on a
     /// real pet switch — the CalendarPage dedupes its Journal reloads on that.</summary>
@@ -135,7 +130,6 @@ public class CalendarViewModel : BaseViewModel
         OnPropertyChanged(nameof(RelativeDateLabel));
         OnPropertyChanged(nameof(DayHeading));
         OnPropertyChanged(nameof(EmptyHeadline));
-        OnPropertyChanged(nameof(AllCareComplete));
     }
 
     private readonly PetEntryService _petEntryService;
@@ -193,8 +187,8 @@ public class CalendarViewModel : BaseViewModel
         selected.IsSelected = true;
     }
 
-    /// <summary>Load the selected day's mood/weight so HasMood/HasWeight (the Today
-    /// page's care ring inputs) reflect the stored entry.</summary>
+    /// <summary>Load the selected day's mood/weight so HasMood/HasWeight reflect the
+    /// stored entry (and so NotifyDerived fires for the Journal's reload dedup).</summary>
     public async Task LoadEntriesAsync()
     {
         var entry = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
@@ -213,7 +207,7 @@ public class CalendarViewModel : BaseViewModel
     }
 
     // ── Medication dose checklist (selected date) ────────────────────────
-    // Consumed by the Today page's care ring + next-med card (code-behind).
+    // Legacy: served the Today page's old ring + next-med card; no consumer now.
     public RangeObservableCollection<DoseItem> DosesForSelectedDate { get; } = new();
 
     /// <summary>
@@ -354,7 +348,7 @@ public class CalendarViewModel : BaseViewModel
     }
 
     /// <summary>One-tap confirmation: toggle a dose between Taken and not-recorded.
-    /// Used by the Today page's next-med card.</summary>
+    /// Legacy: the Today page's old next-med card was its only executor.</summary>
     public ICommand ToggleDoseTakenCommand { get; }
 
     private async Task ToggleDoseTakenAsync(DoseItem? item)

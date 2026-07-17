@@ -115,10 +115,12 @@ it through the page's marker, not a raw PropertyChanged subscription.
 (`JournalLogViewModel`, sheet VMs, `ManagePetViewModel`) instead of bloating
 `CalendarViewModel`.
 
-**Because:** the older `CalendarViewModel` still drives the week strip, day
-headings, and the Today page's care-ring inputs; growing it would entangle two
-designs. (Its dead inline-editor members have since been removed; the members the
-Today page consumes from code-behind are listed in
+**Because:** the older `CalendarViewModel` still drives the week strip and day
+headings; growing it would entangle two designs. (Its dead inline-editor members
+have since been removed. The Today page's care ring and next-up card no longer
+read it either — they derive from the same `PendingEngine` snapshot as the
+Journal's chips, via `PendingItemsService.GetTodayCareAsync` on
+`MainPageViewModel` — leaving a now-unconsumed dose/mood/weight cluster listed in
 [known-constraints.md](known-constraints.md).)
 
 ## Custom `WeekCalendarView` replaced the Syncfusion calendar

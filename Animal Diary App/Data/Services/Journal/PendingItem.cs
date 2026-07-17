@@ -64,3 +64,8 @@ public sealed record PendingItem
 /// as a flat snapshot is what lets the engine stay pure and unit-testable: the
 /// async service resolves "given?" from the dose logs and hands over plain data.</summary>
 public sealed record ScheduledDose(int MedicationId, int PetId, string MedicationName, TimeSpan Time, bool Given);
+
+/// <summary>How much of the day's care is done, in counted units — the output of
+/// <see cref="PendingEngine.ComputeProgress"/> and the number pair behind the Today
+/// page's care ring. Total 0 means nothing is scheduled or tracked at all.</summary>
+public readonly record struct DayProgress(int Done, int Total);

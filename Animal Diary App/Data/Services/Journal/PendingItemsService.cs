@@ -9,6 +9,11 @@ using Animal_Diary_App.Data.Models;
 /// CalendarViewModel is deliberate — the pending list is new functionality, so it
 /// lives in its own service.
 /// </summary>
+/// <summary>Everything the Today page needs about the day's care in one snapshot:
+/// the pending list and the ring's progress counts (see
+/// <see cref="PendingItemsService.GetTodayCareAsync"/>).</summary>
+public sealed record TodayCare(IReadOnlyList<PendingItem> Pending, DayProgress Progress);
+
 public class PendingItemsService
 {
     private readonly CarePlanService _carePlan;
@@ -41,6 +46,28 @@ public class PendingItemsService
         var entries = await GatherEntryDatesAsync(pet.Id, day);
 
         return PendingEngine.Compute(plan, doses, entries, day);
+    }
+
+    /// <summary>
+    /// The Today page's snapshot: the pending list (same rules as the Journal's
+    /// chips) plus the care ring's done/total counts, computed from ONE gather so
+    /// the two can never disagree. Water is excluded from both sides — it has no
+    /// logging sheet yet (the Journal filters its chip the same way), so it must
+    /// neither surface as a dead-end next-up card nor hold the ring below full.
+    /// </summary>
+    public async Task<TodayCare> GetTodayCareAsync(Pet pet, DateTime date)
+    {
+        var day = date.Date;
+        var plan = (await _carePlan.GetPlanAsync(pet))
+            .Where(t => t.TrackerId != TrackerId.Water)
+            .ToList();
+
+        var doses = await GatherDosesAsync(pet.Id, day);
+        var entries = await GatherEntryDatesAsync(pet.Id, day);
+
+        return new TodayCare(
+            PendingEngine.Compute(plan, doses, entries, day),
+            PendingEngine.ComputeProgress(plan, doses, entries, day));
     }
 
     // Today's scheduled doses, each flagged with whether it has been acted on. A

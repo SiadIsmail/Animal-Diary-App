@@ -33,14 +33,17 @@
 
 ## Legacy / cross-layer dependencies (verify before removing)
 
-- **⚠️ `CalendarViewModel` members are consumed from MainPage CODE-BEHIND, not
-  XAML.** The Today page's care ring and next-med card
-  ([MainPage.xaml.cs](../Animal%20Diary%20App/Data/View/MainPage.xaml.cs)) read
-  `DosesForSelectedDate`, `HasMood`, `HasWeight`, `AllCareComplete`,
-  `IsSelectedDateToday` and execute `ToggleDoseTakenCommand`. A XAML-only grep
-  says they're unbound — they are **live**. (The inline mood/weight editor
-  members that really were dead have been deleted.) Any dead-code grep must
-  include `*.xaml.cs` — see [coding-standards.md](coding-standards.md).
+- **`CalendarViewModel` still carries a dose/mood/weight cluster with NO
+  consumer.** The Today page's care ring and next-up card used to read
+  `DosesForSelectedDate`, `HasMood`/`HasWeight` (via `ShownMood`/`ShownWeight`)
+  and execute `ToggleDoseTakenCommand` from MainPage code-behind; they now
+  derive from `PendingItemsService`/`PendingEngine` via `MainPageViewModel`
+  instead, and nothing binds or calls those members anymore (verified across
+  XAML **and** `*.xaml.cs`). They are kept only because removing them touches
+  the Journal's load/NotifyDerived-dedup paths (`PrepareDataAsync`,
+  `RefreshEntriesAsync`, the date setter) and deserves its own verified change —
+  soft debt, safe to remove with care. Any dead-code grep must still include
+  `*.xaml.cs` — see [coding-standards.md](coding-standards.md).
 - **`TrackingEntry` is read-only in practice.** Nothing writes it anymore (the
   removed Tracker Hub did); the **vet report still reads** it for historical
   seizure/vomiting data, so the table/service/DI must stay. Consequence: water
