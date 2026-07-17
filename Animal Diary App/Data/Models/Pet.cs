@@ -65,6 +65,13 @@ public class PetEntry
     /// journal's washi-tape card shows it). Added when Notes was folded into the
     /// Mood tracker. SQLite.NET adds this column automatically — no migration.</summary>
     public string MoodNote { get; set; } = string.Empty;
+
+    /// <summary>Whether the owner asked for this day's <see cref="MoodNote"/> to
+    /// appear in the vet report's Owner's Notes section. Defaults to false, so
+    /// notes are private to the app unless the owner opts in per note; legacy
+    /// entries written before this column read as false. SQLite.NET adds the
+    /// column automatically — no migration.</summary>
+    public bool IncludeInVetReport { get; set; }
     public decimal Weight { get; set; }
 
     /// <summary>Time-of-day (ticks) the mood was logged, or null for entries written

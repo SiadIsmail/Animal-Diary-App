@@ -200,6 +200,7 @@
   <data name="Journal_MoodSheetTitle" xml:space="preserve"><value>Wie geht es {0}?</value></data>
   <data name="Journal_MoodSheetSub" xml:space="preserve"><value>{0:ddd, d. MMM} — du kennst sie am besten</value></data>
   <data name="Journal_MoodNotePlaceholder" xml:space="preserve"><value>Eine kleine Notiz · optional</value></data>
+  <data name="Journal_MoodIncludeInReport" xml:space="preserve"><value>In Tierarztbericht aufnehmen?</value></data>
   <data name="Journal_SaveMood" xml:space="preserve"><value>Stimmung speichern</value></data>
   <data name="Journal_WeightTitle" xml:space="preserve"><value>{0}s Gewicht</value></data>
   <data name="Journal_WeightSub" xml:space="preserve"><value>{0:ddd, d. MMM} — jeder Eintrag hilft dem Tierarzt</value></data>

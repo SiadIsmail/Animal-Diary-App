@@ -47,6 +47,11 @@ public class MoodSheetViewModel : BaseViewModel
     private string _noteText = string.Empty;
     public string NoteText { get => _noteText; set => SetProperty(ref _noteText, value); }
 
+    // Opt-in for the vet report's Owner's Notes section. Unchecked by default so a
+    // note stays private unless the owner asks for it (see PetEntry.IncludeInVetReport).
+    private bool _includeInVetReport;
+    public bool IncludeInVetReport { get => _includeInVetReport; set => SetProperty(ref _includeInVetReport, value); }
+
     public ICommand SelectCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand DismissCommand { get; }
@@ -60,6 +65,7 @@ public class MoodSheetViewModel : BaseViewModel
         var existing = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, petId);
         Level = existing?.MoodLevel ?? 0;
         NoteText = existing?.MoodNote ?? string.Empty;
+        IncludeInVetReport = existing?.IncludeInVetReport ?? false;
 
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
@@ -77,19 +83,20 @@ public class MoodSheetViewModel : BaseViewModel
         var prevMood = entry?.Mood ?? string.Empty;
         var prevNote = entry?.MoodNote ?? string.Empty;
         var prevTicks = entry?.MoodTimeTicks;
+        var prevInclude = entry?.IncludeInVetReport ?? false;
 
         var name = ((MoodLevel)Level).GetDisplayName();
         var note = NoteText?.Trim() ?? string.Empty;
-        await WriteMoodAsync(Level, name, note, DateTime.Now.TimeOfDay.Ticks);
+        await WriteMoodAsync(Level, name, note, IncludeInVetReport, DateTime.Now.TimeOfDay.Ticks);
 
         IsPresented = false;
         Saved?.Invoke(new JournalSaveResult(
             LocalizationManager.Instance.Format("Toast_MoodSaved1", _petName),
-            () => WriteMoodAsync(prevLevel, prevMood, prevNote, prevTicks)));
+            () => WriteMoodAsync(prevLevel, prevMood, prevNote, prevInclude, prevTicks)));
     }
 
     // Write just the mood columns of the day's entry, leaving weight untouched.
-    private async Task WriteMoodAsync(int level, string moodName, string note, long? timeTicks)
+    private async Task WriteMoodAsync(int level, string moodName, string note, bool includeInVetReport, long? timeTicks)
     {
         var entry = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, _petId);
         if (entry != null)
@@ -97,6 +104,7 @@ public class MoodSheetViewModel : BaseViewModel
             entry.MoodLevel = level;
             entry.Mood = moodName;
             entry.MoodNote = note;
+            entry.IncludeInVetReport = includeInVetReport;
             entry.MoodTimeTicks = timeTicks;
             await _petEntries.UpdatePetEntryAsync(entry);
         }
@@ -109,6 +117,7 @@ public class MoodSheetViewModel : BaseViewModel
                 MoodLevel = level,
                 Mood = moodName,
                 MoodNote = note,
+                IncludeInVetReport = includeInVetReport,
                 MoodTimeTicks = timeTicks
             });
         }

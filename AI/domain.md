@@ -22,7 +22,7 @@ new **table** must be added to `InitAsync`. Enums that persist declare
 | Table | Key fields | Relationship / note |
 |-------|-----------|---------------------|
 | `Pet` | Id, Name, Type, Age, `ConditionId` (legacy) | root entity |
-| `PetEntry` | Id, PetId, Date, Weight, Mood, MoodNote, `MoodTimeTicks`/`WeightTimeTicks` | Pet 1—* ; **one row per pet per day** (mood/weight replace-on-relog) |
+| `PetEntry` | Id, PetId, Date, Weight, Mood, MoodNote, `IncludeInVetReport`, `MoodTimeTicks`/`WeightTimeTicks` | Pet 1—* ; **one row per pet per day** (mood/weight replace-on-relog) |
 | `Medication` | Id, PetId, Name, Dosage, Unit, Notes, IsArchived, `CreatedAt` | Pet 1—* |
 | `MedicationSchedule` | Id, MedicationId, Day (`DayOfWeek`), Time (`TimeSpan`) | recurrence **rule**: one row per (day × time) |
 | `ReminderInstance` | Id, MedicationId, ScheduledTime, NotificationId, Status, SlotIndex | materialized **occurrence** of a rule |
@@ -138,6 +138,10 @@ Do not re-inline this join. (Whole-**week** dot expansion is separate, in
   was scheduled then. Don't count from the rules alone.
 - Seizures are read from **both** `SeizureEntry` and legacy `TrackingEntry`
   "seizure" rows until that data is migrated.
+- Owner's Notes are **opt-in per note**: a mood note appears only when its
+  `PetEntry.IncludeInVetReport` is true (owner ticks "Include in vet report" on the
+  mood sheet). All other notes stay stored but are omitted; legacy entries default
+  to false.
 - An empty range produces **no** document (`HasAnyData` gate → `GenerateAsync`
   returns null).
 

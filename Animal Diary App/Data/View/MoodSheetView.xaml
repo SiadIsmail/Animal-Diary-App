@@ -121,6 +121,24 @@
                             PlaceholderColor="{StaticResource InkTertiary}"/>
                 </Border>
 
+                <!-- Opt this note into the vet report (off by default). Kept as a
+                     light inline row so it doesn't compete with the mood tiles:
+                     label on the left, switch pinned to the right edge. -->
+                <Grid ColumnDefinitions="*,Auto" Padding="4,0" VerticalOptions="Center">
+                    <Label Grid.Column="0"
+                           Text="{loc:Translate Journal_MoodIncludeInReport}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12.5"
+                           TextColor="{StaticResource InkSecondary}"
+                           VerticalOptions="Center"/>
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding IncludeInVetReport}"
+                            OnColor="{StaticResource Teal}"
+                            Scale="0.8"
+                            HorizontalOptions="End"
+                            VerticalOptions="Center"/>
+                </Grid>
+
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,4,0,0">
                     <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0" StrokeShape="RoundRectangle 15,13,13,16">
                         <Border.GestureRecognizers>

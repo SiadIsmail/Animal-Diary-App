@@ -81,8 +81,10 @@ public class VetReportDataBuilder
             Medications = await BuildMedicationsAsync(petId, from, to),
             Trends = await BuildTrendsAsync(petId, weightPoints, glucoseEntries, events, from, to),
             Events = events,
+            // Only notes the owner explicitly opted into appear here; every other
+            // note stays stored but private. Legacy entries default to false.
             Notes = petEntries
-                .Where(e => !string.IsNullOrWhiteSpace(e.MoodNote))
+                .Where(e => e.IncludeInVetReport && !string.IsNullOrWhiteSpace(e.MoodNote))
                 .OrderByDescending(e => e.Date)
                 .Select(e => new ReportNote(e.Date, e.MoodNote.Trim()))
                 .ToList()

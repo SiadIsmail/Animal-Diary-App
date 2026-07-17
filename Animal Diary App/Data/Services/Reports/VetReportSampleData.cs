@@ -48,9 +48,9 @@ public static class VetReportSampleData
         {
             Pet = new ReportPetInfo
             {
-                Name = "Bruno",
+                Name = "Charly",
                 Species = "Dog",
-                AgeYears = 7,
+                AgeYears = 5,
                 Conditions = new[] { "Diabetes", "Epilepsy / Seizures" },
                 CurrentWeightKg = weight[^1].Value,
                 WeightChangeKg = weight[^1].Value - weight[0].Value

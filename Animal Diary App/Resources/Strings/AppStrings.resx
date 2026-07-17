@@ -207,6 +207,7 @@
   <data name="Journal_MoodSheetTitle" xml:space="preserve"><value>How's {0} feeling?</value></data>
   <data name="Journal_MoodSheetSub" xml:space="preserve"><value>{0:ddd, d MMM} — you know them best</value></data>
   <data name="Journal_MoodNotePlaceholder" xml:space="preserve"><value>A little note · optional</value></data>
+  <data name="Journal_MoodIncludeInReport" xml:space="preserve"><value>Include in vet report?</value></data>
   <data name="Journal_SaveMood" xml:space="preserve"><value>Save mood</value></data>
   <!-- Weight sheet -->
   <data name="Journal_WeightTitle" xml:space="preserve"><value>{0}'s weigh-in</value></data>
