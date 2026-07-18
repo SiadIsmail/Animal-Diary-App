@@ -1,10 +1,12 @@
 using System.Globalization;
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Data.View;
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Helpers;
 using Microsoft.Extensions.DependencyInjection;
+using Plugin.LocalNotification;
 
 namespace Animal_Diary_App;
 
@@ -16,9 +18,10 @@ public partial class App : Application
 	private readonly ActivePetService _activePetService;
 	private readonly MedicationReminderScheduler _reminderScheduler;
 	private readonly SettingsService _settingsService;
+	private readonly IAnalyticsService _analytics;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, SettingsService settingsService, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, SettingsService settingsService, IAnalyticsService analytics, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -27,9 +30,22 @@ public partial class App : Application
 		_activePetService = activePetService;
 		_reminderScheduler = reminderScheduler;
 		_settingsService = settingsService;
+		_analytics = analytics;
 		_services = services;
 
+		// Re-engagement signal: the app was foregrounded by tapping a medication
+		// reminder. This is the ONLY place the notification-tap hook is used for
+		// analytics; it carries no notification content, just the fact of a tap.
+		LocalNotificationCenter.Current.NotificationActionTapped += OnNotificationTapped;
+
 		_ = StartAsync();
+	}
+
+	private void OnNotificationTapped(Plugin.LocalNotification.EventArgs.NotificationActionEventArgs e)
+	{
+		// Guard: analytics must never break a user gesture.
+		try { _analytics.Track(AnalyticsEvents.NotificationOpened); }
+		catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Analytics] notification_opened failed: {ex.Message}"); }
 	}
 
 	/// <summary>
@@ -96,6 +112,22 @@ public partial class App : Application
 			if (Application.Current?.Windows.Count > 0)
 			{
 				Application.Current.Windows[0].Page = firstPage;
+			}
+
+			// Analytics: prepare the anonymous id, then record the launch. Fired here so
+			// the language property is already applied above and rides along with the
+			// event. Wrapped defensively — telemetry must never affect startup.
+			try
+			{
+				await _analytics.InitializeAsync();
+				_analytics.Track(AnalyticsEvents.AppOpened, new Dictionary<string, object?>
+				{
+					[AnalyticsEvents.PropLanguage] = LocalizationManager.Instance.CurrentLanguage,
+				});
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[Analytics] app_opened failed: {ex.Message}");
 			}
 
 			// Re-arm all future reminders on launch. resendMissed:false — the

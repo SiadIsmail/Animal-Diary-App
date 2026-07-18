@@ -2,6 +2,7 @@ namespace Animal_Diary_App.Data.View;
 
 using System.ComponentModel;
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
 using Microsoft.Maui.Controls.Shapes;
@@ -19,6 +20,11 @@ public partial class CalendarPage : ContentPage
 	private int _lastJournalPetId = -1;
 	private DateTime _lastJournalDate = DateTime.MinValue;
 
+	// The kind of the sheet most recently opened, so the single OnSheetSaved funnel
+	// (which is shared by all five sheets and doesn't otherwise know the kind) can tag
+	// journal_entry_created with the right entry_type. Undo does not pass through here.
+	private JournalChipKind? _lastOpenedSheetKind;
+
 	public CalendarPage(MainViewModel mainViewModel)
 	{
 		InitializeComponent();
@@ -29,6 +35,9 @@ public partial class CalendarPage : ContentPage
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
+
+		// Engagement signal: the Journal tab was opened.
+		vm.Analytics.Track(AnalyticsEvents.CalendarOpened);
 
 		vm.CalendarVM.PropertyChanged += OnCalendarVmPropertyChanged;
 		vm.JournalVM.PropertyChanged += OnJournalVmPropertyChanged;
@@ -131,6 +140,28 @@ public partial class CalendarPage : ContentPage
 		ShowUndoToast(result);
 	}
 
+	// Emit journal_entry_created for the sheet that just saved. Only the coarse entry
+	// kind is sent — never the logged value, note, or the pet.
+	private void TrackJournalEntry()
+	{
+		var entryType = _lastOpenedSheetKind switch
+		{
+			JournalChipKind.Mood => AnalyticsEvents.EntryTypeMood,
+			JournalChipKind.Weight => AnalyticsEvents.EntryTypeWeight,
+			JournalChipKind.Glucose => AnalyticsEvents.EntryTypeGlucose,
+			JournalChipKind.Appetite => AnalyticsEvents.EntryTypeAppetite,
+			JournalChipKind.Seizure => AnalyticsEvents.EntryTypeSeizure,
+			_ => null,
+		};
+		if (entryType is null)
+			return;
+
+		vm.Analytics.Track(AnalyticsEvents.JournalEntryCreated, new Dictionary<string, object?>
+		{
+			[AnalyticsEvents.PropEntryType] = entryType,
+		});
+	}
+
 	private void OnRequestOpenSheet(JournalChipKind kind) => _ = OpenAfterAddSheetAsync(kind);
 
 	// Let the "+" sheet finish sliding out before the chosen sheet slides in.
@@ -145,6 +176,9 @@ public partial class CalendarPage : ContentPage
 		int petId = vm.CalendarVM.CurrentPetId;
 		string name = vm.CalendarVM.ActivePetName;
 		var date = vm.CalendarVM.CurrentSelectedDate;
+
+		// Remember which sheet we opened so OnSheetSaved can tag the entry_type.
+		_lastOpenedSheetKind = kind;
 
 		switch (kind)
 		{
@@ -161,6 +195,11 @@ public partial class CalendarPage : ContentPage
 	{
 		try
 		{
+			// "Which logging features are actually used?" — one event per sheet save,
+			// tagged with the kind. This funnel is the forward save path only; undo
+			// runs through the toast callback, so undone saves aren't counted.
+			TrackJournalEntry();
+
 			_ = BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62));
 			await ReloadJournalAsync();
 			ShowUndoToast(result);

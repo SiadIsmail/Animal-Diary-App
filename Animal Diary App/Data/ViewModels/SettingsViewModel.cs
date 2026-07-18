@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Helpers;
 using System.Windows.Input;
 
@@ -29,12 +30,18 @@ public class SettingsViewModel : BaseViewModel
 
     private readonly AppResetService _appResetService;
     private readonly SettingsService _settingsService;
+    private readonly IAnalyticsService _analytics;
 
-    public SettingsViewModel(AppResetService appResetService, SettingsService settingsService)
+    public SettingsViewModel(AppResetService appResetService, SettingsService settingsService, IAnalyticsService analytics)
     {
         _appResetService = appResetService;
         _settingsService = settingsService;
-        OpenSettingsCommand = new Command(() => IsPanelOpen = true);
+        _analytics = analytics;
+        OpenSettingsCommand = new Command(() =>
+        {
+            IsPanelOpen = true;
+            _analytics.Track(AnalyticsEvents.SettingsOpened);
+        });
         CloseSettingsCommand = new Command(() => IsPanelOpen = false);
         DeleteAllDataCommand = new Command(async () => await OnDeleteAllDataAsync());
         SetLanguageCommand = new Command<string>(async code => await SetLanguageAsync(code));

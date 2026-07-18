@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Data.Services.Analytics;
 
 /// <summary>
 /// Condition picker shown after a pet is created. On Continue it saves the choice
@@ -71,7 +72,12 @@ public partial class ConditionPickerPage : ContentPage
         }
         else
         {
-            // Finishing first-launch onboarding: hand off to the tabbed app.
+            // Finishing first-launch onboarding: this branch runs only when there is no
+            // Shell yet (adding a pet from the Pets tab takes the branch above), so it
+            // marks the true end of the onboarding funnel.
+            vm.Analytics.Track(AnalyticsEvents.OnboardingCompleted);
+
+            // Hand off to the tabbed app.
             (Application.Current as App)?.SwitchToMainApp();
         }
     }

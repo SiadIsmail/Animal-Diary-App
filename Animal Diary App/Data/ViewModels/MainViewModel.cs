@@ -1,10 +1,17 @@
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Analytics;
 
 namespace Animal_Diary_App.Data.ViewModels;
 
 public class MainViewModel
 {
+    /// <summary>The analytics boundary, exposed here so pages that are constructed
+    /// by hand (Welcome, ConditionPicker, Calendar) — not resolved from DI — can log
+    /// events through the shared VM they already receive. DI-resolved VMs inject
+    /// <see cref="IAnalyticsService"/> directly instead.</summary>
+    public IAnalyticsService Analytics { get; }
+
     public CalendarViewModel CalendarVM { get; }
     public MainPageViewModel MainPageVM { get; }
     public PetViewModel PetVM { get; }
@@ -58,8 +65,10 @@ public class MainViewModel
  ManagePetViewModel manageVM,
  ExportSheetViewModel exportSheetVM,
  ReportPreviewViewModel reportPreviewVM,
- DocumentsViewModel documentsVM)
+ DocumentsViewModel documentsVM,
+ IAnalyticsService analytics)
     {
+        Analytics = analytics;
         MainPageVM = mainPageVM;
         PetVM = petVM;
         MedicationVM = medicationVM;

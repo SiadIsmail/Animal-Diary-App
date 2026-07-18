@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Helpers;
 using System.Collections.ObjectModel;
@@ -116,6 +117,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     private readonly PetService _petService;
     private readonly ActivePetService _activePetService;
     private readonly SettingsService _SettingsService;
+    private readonly IAnalyticsService _analytics;
 
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
@@ -143,11 +145,12 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     // sheet, and the Documents row navigates from PetsPage code-behind (pages own
     // navigation), so neither needs a command here anymore.
 
-    public PetViewModel(PetService petService, ActivePetService activePetService, SettingsService settingsService)
+    public PetViewModel(PetService petService, ActivePetService activePetService, SettingsService settingsService, IAnalyticsService analytics)
     {
         _petService = petService;
         _activePetService = activePetService;
         _SettingsService = settingsService;
+        _analytics = analytics;
 
         SelectPetCommand = new Command<Pet>(SelectPet);
         AddPetCommand = new Command(async () => await SavePetAsync());
@@ -212,6 +215,15 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         await _petService.SavePetAsync(pet);
         Pets.Add(pet);
         SelectPet(pet);
+
+        // Product signal: "do users create pets?" and the rough species mix. We send a
+        // COARSE species bucket only — a known type lowercased, or "other" for any
+        // custom free-text — never the raw type string, which a user could make
+        // identifying.
+        _analytics.Track(AnalyticsEvents.PetCreated, new Dictionary<string, object?>
+        {
+            [AnalyticsEvents.PropSpecies] = NormalizeSpecies(pet.Type),
+        });
 
         // First launch completes when the first pet is actually SAVED — flipping
         // it on page-view meant killing the app on the form gave a returning-user
@@ -361,6 +373,20 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
     public int? ParsedPetAge =>
         int.TryParse(EnteredPetAge, out var age) ? age : null;
+
+    /// <summary>Map a pet's stored type to a coarse, non-identifying species bucket for
+    /// analytics. Only the fixed known types pass through; any custom/free-text type
+    /// collapses to "other" so nothing a user typed is ever transmitted.</summary>
+    private static string NormalizeSpecies(string? type) =>
+        type?.Trim().ToLowerInvariant() switch
+        {
+            "dog" => "dog",
+            "cat" => "cat",
+            "bird" => "bird",
+            "rabbit" => "rabbit",
+            "fish" => "fish",
+            _ => AnalyticsEvents.SpeciesOther,
+        };
 
     private string GetEmojiForType(string type)
     {

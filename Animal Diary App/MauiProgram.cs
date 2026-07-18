@@ -67,6 +67,15 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AppResetService>();
 		builder.Services.AddSingleton<App>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Data.Device.INotificationService, NotificationService>();
+
+		// Analytics boundary. One line decides the whole posture: a real PostHog sender
+		// when analytics is enabled AND a project key is configured, else a no-op that
+		// collects and sends nothing. Every consumer holds IAnalyticsService only.
+		if (Animal_Diary_App.Data.Services.Analytics.AnalyticsConfig.Enabled)
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Analytics.IAnalyticsService, Animal_Diary_App.Data.Services.Analytics.PostHogAnalyticsService>();
+		else
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Analytics.IAnalyticsService, Animal_Diary_App.Data.Services.Analytics.NullAnalyticsService>();
+
 		builder.Services.AddSingleton<ReminderInstanceService>();
 		builder.Services.AddSingleton<MedicationDoseReconciler>();
 		builder.Services.AddSingleton<MedicationReminderScheduler>();

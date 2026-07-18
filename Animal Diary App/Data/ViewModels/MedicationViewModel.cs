@@ -2,6 +2,7 @@ namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Data.Services.Data.Device;
 using Animal_Diary_App.Data.Services.Notifications;
@@ -353,14 +354,16 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
     private readonly ActivePetService _activePetService;
     private readonly PetService _petService;
     private readonly MedicationReminderScheduler _reminderScheduler;
+    private readonly IAnalyticsService _analytics;
     public List<string> UnitOptions { get; } = new() { "mg", "ml", "tablet", "drops" };
 
-    public MedicationViewModel(MedicationService medicationService, ActivePetService activePetService, PetService petService, MedicationReminderScheduler reminderScheduler)
+    public MedicationViewModel(MedicationService medicationService, ActivePetService activePetService, PetService petService, MedicationReminderScheduler reminderScheduler, IAnalyticsService analytics)
     {
         _medicationService = medicationService;
         _activePetService = activePetService;
         _petService = petService;
         _reminderScheduler = reminderScheduler;
+        _analytics = analytics;
 
 
         Days = new ObservableCollection<DaySelectionItem>
@@ -430,6 +433,10 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
 
         var pet = SelectedMedicationDraftPet!;
 
+        // Distinguish create from edit up front so the analytics event fires only for a
+        // brand-new medication (an edit re-uses SaveMedication... but isn't a "created").
+        var isNewMedication = !(IsEditingMedication && editingMedicationId.HasValue);
+
         Medication medication;
 
         if (IsEditingMedication && editingMedicationId.HasValue)
@@ -471,6 +478,18 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
             .ToList();
         await _medicationService.SaveMedicationWithSchedulesAsync(medication, schedules);
         var medicationId = medication.Id;
+
+        // "Which features provide value?" — record that a medication was set up, with
+        // only the non-identifying shape of its schedule (how many reminders per day,
+        // how many weekdays). Never the name, dose, unit, or notes.
+        if (isNewMedication)
+        {
+            _analytics.Track(AnalyticsEvents.MedicationCreated, new Dictionary<string, object?>
+            {
+                [AnalyticsEvents.PropReminderCount] = ReminderTimes.Count,
+                [AnalyticsEvents.PropDaysPerWeek] = Days.Count(d => d.IsSelected),
+            });
+        }
 
         ClearMedicationDraft();
         editingMedicationId = null;

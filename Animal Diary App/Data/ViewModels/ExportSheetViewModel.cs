@@ -3,6 +3,7 @@ namespace Animal_Diary_App.Data.ViewModels;
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Reports;
 using Animal_Diary_App.Helpers;
 
@@ -22,6 +23,7 @@ public class ExportSheetViewModel : BaseViewModel
 {
     private readonly IVetReportService _reports;
     private readonly ActivePetService _activePetService;
+    private readonly IAnalyticsService _analytics;
 
     /// <summary>Flip to true to generate from <see cref="VetReportSampleData"/>'s
     /// fake data — iterate on the PDF layout without real logged entries. Sample
@@ -31,10 +33,11 @@ public class ExportSheetViewModel : BaseViewModel
     private Pet _pet = new();
     private VetReportFile? _result;
 
-    public ExportSheetViewModel(IVetReportService reports, ActivePetService activePetService)
+    public ExportSheetViewModel(IVetReportService reports, ActivePetService activePetService, IAnalyticsService analytics)
     {
         _reports = reports;
         _activePetService = activePetService;
+        _analytics = analytics;
 
         OpenCommand = new Command(Open);
         DismissCommand = new Command(() => IsPresented = false);
@@ -134,6 +137,13 @@ public class ExportSheetViewModel : BaseViewModel
             OnPropertyChanged(nameof(DoneMessage));
             OnPropertyChanged(nameof(ResultFileName));
             IsDone = true;
+
+            // "Which features provide value?" — a vet report was actually produced. We
+            // send only the chosen look-back window; nothing about the pet or its data.
+            _analytics.Track(AnalyticsEvents.ReportExported, new Dictionary<string, object?>
+            {
+                [AnalyticsEvents.PropRangeDays] = SelectedDays,
+            });
         }
         catch (Exception ex)
         {

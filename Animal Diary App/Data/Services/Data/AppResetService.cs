@@ -54,6 +54,12 @@ public class AppResetService
         // old install's "last seen" time.
         MedicationReminderScheduler.ClearPersistedState();
 
+        // Privacy: a data wipe also throws away the anonymous analytics id and mints a
+        // fresh one, so a reset install starts a brand-new anonymous identity — past
+        // events can no longer be associated with the new one. No personal data is
+        // involved (events never carry any), but this keeps the reset total.
+        Analytics.AnalyticsIdentity.Rotate();
+
         MainThread.BeginInvokeOnMainThread(() =>
         {
             _activePetService.ActivePet = new Pet();
