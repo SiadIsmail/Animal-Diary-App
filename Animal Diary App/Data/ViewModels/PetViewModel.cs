@@ -2,10 +2,34 @@ namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
+using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Helpers;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+
+/// <summary>One chip on the Care page's active-pet card: a condition the pet has, or
+/// its medication count. The label is resolved per read (the
+/// <see cref="DaySelectionItem"/> pattern) so a live language switch re-translates
+/// the chips — the owning VM is a singleton, so a name cached at construction would
+/// stay in the old language.</summary>
+public class PetProfileTag : BaseViewModel
+{
+    /// <summary>AppStrings key: a condition name key, or the medication count format.</summary>
+    public string ResourceKey { get; init; } = string.Empty;
+
+    /// <summary>Format argument for the count chips; null for a plain condition name.</summary>
+    public int? Count { get; init; }
+
+    /// <summary>Medication chips take the teal accent; conditions stay neutral.</summary>
+    public bool IsMedication { get; init; }
+
+    public string Label => Count is null
+        ? LocalizationManager.Instance.GetString(ResourceKey)
+        : LocalizationManager.Instance.Format(ResourceKey, Count.Value);
+
+    public void RefreshLabel() => OnPropertyChanged(nameof(Label));
+}
 
 public class PetViewModel : BaseViewModel, IResettableDraft
 {
@@ -118,6 +142,8 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     private readonly ActivePetService _activePetService;
     private readonly SettingsService _SettingsService;
     private readonly IAnalyticsService _analytics;
+    private readonly PetConditionService _conditions;
+    private readonly MedicationService _medications;
 
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
@@ -128,6 +154,42 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     }
 
     public string ActivePetEmoji => GetEmojiForType(ActivePet.Type);
+
+    /// <summary>Chips under the active pet's name: one per condition it actually has,
+    /// then its medication count. Read-only display of what the condition and
+    /// medication stores already hold — the Care card states, it doesn't edit
+    /// (Manage owns that).</summary>
+    public ObservableCollection<PetProfileTag> ActivePetTags { get; } = new();
+
+    /// <summary>Rebuild <see cref="ActivePetTags"/> from the authoritative stores.
+    /// Conditions come from <see cref="PetConditionService"/> (never the legacy
+    /// <c>Pet.ConditionId</c>); the count covers non-archived medications only, the
+    /// same filter the Manage page applies. Chips with nothing to say are omitted
+    /// rather than rendered as an empty state.</summary>
+    public async Task LoadActivePetTagsAsync()
+    {
+        var pet = ActivePet;
+
+        ActivePetTags.Clear();
+        if (pet == null || pet.Id == 0)
+            return;
+
+        // Gather before touching the observable collection.
+        var conditionIds = await _conditions.GetConditionIdsAsync(pet);
+        var medCount = (await _medications.GetMedicationsByPetIdAsync(pet.Id))
+            .Count(m => !m.IsArchived);
+
+        foreach (var id in conditionIds)
+            ActivePetTags.Add(new PetProfileTag { ResourceKey = ConditionCatalog.GetCondition(id).NameKey });
+
+        if (medCount > 0)
+            ActivePetTags.Add(new PetProfileTag
+            {
+                ResourceKey = medCount == 1 ? "Pets_MedicationCountOne" : "Pets_MedicationCountMany",
+                Count = medCount,
+                IsMedication = true
+            });
+    }
 
     public string ActivePetSubtitle => ActivePet == null
         ? string.Empty
@@ -145,12 +207,15 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     // sheet, and the Documents row navigates from PetsPage code-behind (pages own
     // navigation), so neither needs a command here anymore.
 
-    public PetViewModel(PetService petService, ActivePetService activePetService, SettingsService settingsService, IAnalyticsService analytics)
+    public PetViewModel(PetService petService, ActivePetService activePetService, SettingsService settingsService, IAnalyticsService analytics,
+        PetConditionService conditions, MedicationService medications)
     {
         _petService = petService;
         _activePetService = activePetService;
         _SettingsService = settingsService;
         _analytics = analytics;
+        _conditions = conditions;
+        _medications = medications;
 
         SelectPetCommand = new Command<Pet>(SelectPet);
         AddPetCommand = new Command(async () => await SavePetAsync());
@@ -165,7 +230,16 @@ public class PetViewModel : BaseViewModel, IResettableDraft
                 OnPropertyChanged(nameof(ActivePet));
                 OnPropertyChanged(nameof(ActivePetEmoji));
                 OnPropertyChanged(nameof(ActivePetSubtitle));
+                // The chips describe the active pet — they have to follow a switch.
+                LoadActivePetTagsAsync().Forget();
             }
+        };
+
+        // Chip labels are resolved per read; nudge the bindings after a live switch.
+        LocalizationManager.Instance.PropertyChanged += (s, e) =>
+        {
+            foreach (var tag in ActivePetTags)
+                tag.RefreshLabel();
         };
     }
 

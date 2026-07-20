@@ -32,6 +32,17 @@ public class PetEntryService
             .OrderByDescending(e => e.Date)
             .FirstOrDefaultAsync();
     }
+    /// <summary>Most recent mood entry for a pet, or null if it has none. Mirrors
+    /// <see cref="GetLatestWeightEntryAsync"/> — the ordering runs in SQL rather than
+    /// loading the table and sorting in memory.</summary>
+    public async Task<PetEntry?> GetLatestMoodEntryAsync(int petId)
+    {
+        return await _db.Table<PetEntry>()
+            .Where(e => e.PetId == petId && e.MoodLevel > 0)
+            .OrderByDescending(e => e.Date)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<PetEntry> GetPetEntryByDateAndPetIdAsync(DateTime date, int petId)
     {
         return await _db.Table<PetEntry>().Where(e => e.Date == date && e.PetId == petId).FirstOrDefaultAsync();

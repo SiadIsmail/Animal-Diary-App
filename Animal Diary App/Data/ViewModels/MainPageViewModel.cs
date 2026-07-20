@@ -62,7 +62,30 @@ public class MainPageViewModel : BaseViewModel
                 OnPropertyChanged(nameof(ActivePet));
             }
         };
+
+        // This VM is a singleton, so a greeting cached here would survive a live
+        // language switch in the old language. Re-raise instead and let the getter
+        // resolve the string fresh (the DaySelectionItem pattern).
+        LocalizationManager.Instance.PropertyChanged += (s, e) =>
+        {
+            OnPropertyChanged(nameof(Greeting));
+            OnPropertyChanged(nameof(WeightTrendLabel));
+            OnPropertyChanged(nameof(LatestMoodLabel));
+            OnPropertyChanged(nameof(LatestMoodLoggedLabel));
+            OnPropertyChanged(nameof(LatestWeightLoggedLabel));
+        };
     }
+
+    /// <summary>Time-of-day greeting on the Today header. Resolved per read — the
+    /// hour can roll over while the page is alive, and the string must follow the
+    /// active language. Refreshed on every appearance via <see cref="LoadTodayCareAsync"/>.</summary>
+    public string Greeting => LocalizationManager.Instance.GetString(
+        DateTime.Now.Hour switch
+        {
+            < 12 => "Main_GreetingMorning",
+            < 18 => "Main_GreetingAfternoon",
+            _ => "Main_GreetingEvening"
+        });
 
     private decimal latestWeight;
     public decimal LatestWeight
@@ -110,23 +133,72 @@ public class MainPageViewModel : BaseViewModel
     private string currentWeightLabel = "—";
     public string CurrentWeightLabel { get => currentWeightLabel; set => SetProperty(ref currentWeightLabel, value); }
 
-    // Signed change across the visible range, e.g. "+0.3" / "−0.2" / "±0.0".
-    private string weightTrendLabel = string.Empty;
-    public string WeightTrendLabel { get => weightTrendLabel; set => SetProperty(ref weightTrendLabel, value); }
+    // Signed change across the visible range; null when the range holds no readings.
+    private decimal? weightDiff;
 
-    // True when the change is negligible → chip reads as calm/sage rather than honey.
-    private bool weightTrendIsStable = true;
-    public bool WeightTrendIsStable { get => weightTrendIsStable; set => SetProperty(ref weightTrendIsStable, value); }
+    /// <summary>True when the change across the range is negligible.</summary>
+    public bool WeightTrendIsStable => weightDiff is null || Math.Abs(weightDiff.Value) < 0.05m;
+
+    /// <summary>The trend chip's text. A real change is stated as a signed value
+    /// ("+0.3 kg") — a fact, never coloured or worded as good or bad, because the app
+    /// cannot know which a given pet's change is. A negligible change reads as a plain
+    /// sentence instead of a hollow "±0.0 kg". Resolved per read so a live language
+    /// switch re-translates it (this VM is a singleton).</summary>
+    public string WeightTrendLabel
+    {
+        get
+        {
+            if (weightDiff is null)
+                return string.Empty;
+
+            if (WeightTrendIsStable)
+                return LocalizationManager.Instance.GetString("Main_WeightStable");
+
+            var sign = weightDiff.Value > 0 ? "+" : "−";
+            return $"{sign}{Math.Abs(weightDiff.Value).ToString("0.0")} kg";
+        }
+    }
 
     private PetEntry? EntryToday;
+    private DateTime? latestWeightDate;
+
+    /// <summary>False until the pet has at least one weigh-in; drives the card's swap
+    /// between the reading and its empty state.</summary>
+    public bool HasLoggedWeight => latestWeightDate is not null;
+
+    /// <summary>"Logged today" / "Logged yesterday" / "Logged 5 days ago" for the most
+    /// recent weigh-in — when it was taken, not a verdict on what it says.</summary>
+    public string LatestWeightLoggedLabel => RelativeLoggedLabel(latestWeightDate);
+
     public async Task LoadLatestWeightAsync()
     {
         if (ActivePet == null) return;
+
         EntryToday = await _petEntryService.GetLatestWeightEntryAsync(ActivePet.Id);
-        if (EntryToday != null)
+        // Clear on a pet with no weigh-ins too, or the previous pet's value lingers.
+        LatestWeight = EntryToday?.Weight ?? 0;
+        latestWeightDate = EntryToday?.Date;
+
+        OnPropertyChanged(nameof(HasLoggedWeight));
+        OnPropertyChanged(nameof(LatestWeightLoggedLabel));
+    }
+
+    /// <summary>Shared by both stat cards: "Logged {today|yesterday|N days ago}",
+    /// reusing the Journal's relative-date vocabulary. Empty when never logged.</summary>
+    private static string RelativeLoggedLabel(DateTime? date)
+    {
+        if (date is null)
+            return string.Empty;
+
+        var loc = LocalizationManager.Instance;
+        int diff = (DateTime.Now.Date - date.Value.Date).Days;
+        var relative = diff switch
         {
-            LatestWeight = EntryToday.Weight;
-        }
+            <= 0 => loc.GetString("Journal_RelToday"),
+            1 => loc.GetString("Journal_RelYesterday"),
+            _ => loc.Format("Journal_RelDaysAgo", diff),
+        };
+        return loc.Format("Main_LoggedRelative", relative);
     }
 
     public async Task LoadWeightChartAsync()
@@ -160,21 +232,58 @@ public class MainPageViewModel : BaseViewModel
             var latest = entries[^1].Weight;
             CurrentWeightLabel = latest.ToString("0.0");
 
-            var diff = latest - entries[0].Weight;
-            WeightTrendIsStable = Math.Abs(diff) < 0.05m;
-            var sign = WeightTrendIsStable ? "±" : diff > 0 ? "+" : "−";
-            WeightTrendLabel = $"{sign}{Math.Abs(diff).ToString("0.0")} kg";
+            weightDiff = latest - entries[0].Weight;
         }
         else
         {
             CurrentWeightLabel = "—";
-            WeightTrendLabel = string.Empty;
+            weightDiff = null;
             WeightAxisMin = 0;
             WeightAxisMax = 1;
         }
 
+        OnPropertyChanged(nameof(WeightTrendIsStable));
+        OnPropertyChanged(nameof(WeightTrendLabel));
+
         HasSufficientWeightData = entries.Count >= 2;
         WeightChartUpdated?.Invoke();
+    }
+
+    // ── Mood stat card: the pet's most recent mood, however old ─────────
+    // Same rule as the weight card beside it — state the latest reading and when
+    // it was taken. No cutoff, no interpretation.
+
+    private MoodLevel latestMood = MoodLevel.None;
+    private DateTime? latestMoodDate;
+
+    /// <summary>False until the pet has at least one mood logged; drives the card's
+    /// swap between the reading and its empty state.</summary>
+    public bool HasLoggedMood => latestMoodDate is not null;
+
+    /// <summary>Localized word for the latest mood ("Great"), empty when none.</summary>
+    public string LatestMoodLabel => HasLoggedMood ? latestMood.GetDisplayName() : string.Empty;
+
+    /// <summary>Swatch colour for the latest mood. A VM-held presentation hint, the
+    /// same accepted convention TimelineItem uses.</summary>
+    public Color LatestMoodColor => latestMood.GetColor();
+
+    /// <summary>"Logged today" / "Logged yesterday" / "Logged 5 days ago" for the most
+    /// recent mood.</summary>
+    public string LatestMoodLoggedLabel => RelativeLoggedLabel(latestMoodDate);
+
+    public async Task LoadLatestMoodAsync()
+    {
+        if (ActivePet == null)
+            return;
+
+        var entry = await _petEntryService.GetLatestMoodEntryAsync(ActivePet.Id);
+        latestMood = entry is null ? MoodLevel.None : (MoodLevel)entry.MoodLevel;
+        latestMoodDate = entry?.Date;
+
+        OnPropertyChanged(nameof(HasLoggedMood));
+        OnPropertyChanged(nameof(LatestMoodLabel));
+        OnPropertyChanged(nameof(LatestMoodColor));
+        OnPropertyChanged(nameof(LatestMoodLoggedLabel));
     }
 
     public async Task LoadMoodTimelineAsync()
@@ -209,6 +318,10 @@ public class MainPageViewModel : BaseViewModel
 
     public async Task LoadTodayCareAsync()
     {
+        // Cheap, and this runs on every appearance — so a page left open across
+        // noon or 6pm picks up the right greeting when it comes back.
+        OnPropertyChanged(nameof(Greeting));
+
         if (ActivePet == null)
         {
             CareProgress = 0;

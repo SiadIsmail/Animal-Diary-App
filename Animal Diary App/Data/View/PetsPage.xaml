@@ -187,32 +187,38 @@
                                        FontSize="12.5"
                                        TextColor="{StaticResource InkSecondary}"/>
 
-                                <!-- Tags -->
+                                <!-- Tags — the pet's real conditions, then its
+                                     medication count. Empty when it has neither. -->
                                 <FlexLayout Wrap="Wrap"
                                             Direction="Row"
-                                            Margin="0,8,0,0">
-                                    <Border BackgroundColor="{StaticResource Well}"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 999"
-                                            Padding="10,4"
-                                            Margin="0,0,6,6">
-                                        <Label Text="{loc:Translate Pets_KidneyTag}"
-                                               FontFamily="{StaticResource FontSans}"
-                                               FontSize="11"
-                                               FontAttributes="Bold"
-                                               TextColor="{StaticResource InkSecondary}"/>
-                                    </Border>
-                                    <Border BackgroundColor="{StaticResource TealTint}"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 999"
-                                            Padding="10,4"
-                                            Margin="0,0,6,6">
-                                        <Label Text="{loc:Translate Pets_MedicationsTag}"
-                                               FontFamily="{StaticResource FontSans}"
-                                               FontSize="11"
-                                               FontAttributes="Bold"
-                                               TextColor="{StaticResource TealDeep}"/>
-                                    </Border>
+                                            Margin="0,8,0,0"
+                                            BindableLayout.ItemsSource="{Binding PetVM.ActivePetTags}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BackgroundColor="{StaticResource Well}"
+                                                    StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 999"
+                                                    Padding="10,4"
+                                                    Margin="0,0,6,6">
+                                                <Border.Triggers>
+                                                    <DataTrigger TargetType="Border" Binding="{Binding IsMedication}" Value="True">
+                                                        <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                                    </DataTrigger>
+                                                </Border.Triggers>
+                                                <Label Text="{Binding Label}"
+                                                       FontFamily="{StaticResource FontSans}"
+                                                       FontSize="11"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{StaticResource InkSecondary}">
+                                                    <Label.Triggers>
+                                                        <DataTrigger TargetType="Label" Binding="{Binding IsMedication}" Value="True">
+                                                            <Setter Property="TextColor" Value="{StaticResource TealDeep}"/>
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
+                                                </Label>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
                                 </FlexLayout>
                             </VerticalStackLayout>
                         </Grid>

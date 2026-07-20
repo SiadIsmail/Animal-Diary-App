@@ -106,22 +106,23 @@
   <data name="Settings_WebsiteSubtitle" xml:space="preserve"><value>Features, updates &amp; resources</value></data>
   <data name="Settings_PrivacyTitle" xml:space="preserve"><value>Privacy Policy</value></data>
   <data name="Settings_PrivacySubtitle" xml:space="preserve"><value>How Felova protects your data</value></data>
+  <data name="Settings_VersionFormat" xml:space="preserve"><value>Version {0} ({1})</value></data>
 
   <!-- ── Main page ── -->
   <data name="Main_GreetingMorning" xml:space="preserve"><value>Good morning ☀️</value></data>
+  <data name="Main_GreetingAfternoon" xml:space="preserve"><value>Good afternoon 🌤️</value></data>
+  <data name="Main_GreetingEvening" xml:space="preserve"><value>Good evening 🌙</value></data>
   <data name="Main_Weight" xml:space="preserve"><value>WEIGHT</value></data>
   <data name="Main_Mood" xml:space="preserve"><value>MOOD</value></data>
   <data name="Main_MoodLabel" xml:space="preserve"><value>Mood</value></data>
   <data name="Main_Last30Days" xml:space="preserve"><value>Last 30 days</value></data>
-  <data name="Main_MoodEmptyState" xml:space="preserve"><value>Start tracking your pet's mood in the calendar</value></data>
-  <data name="Main_RecentActivity" xml:space="preserve"><value>RECENT ACTIVITY</value></data>
+  <data name="Main_MoodEmptyState" xml:space="preserve"><value>Start tracking your pet's mood in the Journal</value></data>
   <data name="Main_Aside1" xml:space="preserve"><value>another gentle day with {0}</value></data>
   <data name="Main_Aside2" xml:space="preserve"><value>{0}'s corner of the world</value></data>
   <data name="Main_Aside3" xml:space="preserve"><value>here's how {0} is doing</value></data>
   <data name="Main_MoodMonthHeading" xml:space="preserve"><value>How the month has felt</value></data>
   <data name="Main_WeighInsHeading" xml:space="preserve"><value>The weigh-ins</value></data>
-  <data name="Main_LatelyPrefix" xml:space="preserve"><value>Lately, in </value></data>
-  <data name="Main_LatelySuffix" xml:space="preserve"><value>'s world</value></data>
+  <data name="Main_WeightStable" xml:space="preserve"><value>Weight has stayed steady</value></data>
   <data name="Main_CareRingLabel" xml:space="preserve"><value>Today's care</value></data>
   <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Next up</value></data>
   <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>All caught up</value></data>
@@ -129,10 +130,9 @@
   <data name="Main_LogNow" xml:space="preserve"><value>Log it</value></data>
   <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Healthy</value></data>
   <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Meds 20:00</value></data>
-  <data name="Main_StableThisWeek" xml:space="preserve"><value>Stable this week</value></data>
-  <data name="Main_HappyPlaceholder" xml:space="preserve"><value>Happy</value></data>
-  <data name="Main_LoggedToday" xml:space="preserve"><value>Logged today</value></data>
-  <data name="Main_MedicationGiven" xml:space="preserve"><value>Medication given</value></data>
+  <data name="Main_WeightEmptyCard" xml:space="preserve"><value>Nothing logged yet — add the first weigh-in in the Journal</value></data>
+  <data name="Main_LoggedRelative" xml:space="preserve"><value>Logged {0}</value></data>
+  <data name="Main_MoodEmptyCard" xml:space="preserve"><value>Nothing logged yet — add the first mood in the Journal</value></data>
   <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazole · with food</value></data>
 
   <!-- ── Journal (Calendar) header ── -->
@@ -150,7 +150,6 @@
   <data name="Journal_EmptyBig" xml:space="preserve"><value>A quiet page for {0}</value></data>
   <data name="Journal_EmptySub" xml:space="preserve"><value>Nothing logged — quiet days are good days too.</value></data>
   <data name="Journal_Celebrate" xml:space="preserve"><value>That's everything for today — give {0} a scratch from us.</value></data>
-  <data name="Journal_MoodCheck" xml:space="preserve"><value>Mood check</value></data>
   <data name="Journal_WeighIn" xml:space="preserve"><value>Weigh-in</value></data>
   <data name="Journal_Meds" xml:space="preserve"><value>Meds</value></data>
   <data name="Journal_MoodTitle" xml:space="preserve"><value>Mood</value></data>
@@ -313,8 +312,8 @@
 
   <!-- ── Pets page ── -->
   <data name="Pets_Title" xml:space="preserve"><value>My Pets</value></data>
-  <data name="Pets_KidneyTag" xml:space="preserve"><value>Kidney Stage 1</value></data>
-  <data name="Pets_MedicationsTag" xml:space="preserve"><value>2 Medications</value></data>
+  <data name="Pets_MedicationCountOne" xml:space="preserve"><value>{0} medication</value></data>
+  <data name="Pets_MedicationCountMany" xml:space="preserve"><value>{0} medications</value></data>
   <data name="Pets_OpenProfile" xml:space="preserve"><value>Open Profile</value></data>
   <data name="Pets_Edit" xml:space="preserve"><value>Edit</value></data>
   <data name="Pets_Manage" xml:space="preserve"><value>Manage</value></data>
@@ -434,11 +433,19 @@
   <data name="PetTypePage_HowOld" xml:space="preserve"><value>How old are they?</value></data>
 
   <!-- ── Mood levels ── -->
+  <!-- Two sets, deliberately: the Excellent/Neutral/Bad/VeryBad words label the
+       MainPage mood legend, while MoodLevelExtensions.GetDisplayName resolves the
+       Great/Okay/Low/Unwell keys below — the warmer vocabulary that reads right
+       inside a sentence ("Buddy was feeling Great"). -->
   <data name="Mood_Excellent" xml:space="preserve"><value>Excellent</value></data>
   <data name="Mood_Good" xml:space="preserve"><value>Good</value></data>
   <data name="Mood_Neutral" xml:space="preserve"><value>Neutral</value></data>
   <data name="Mood_Bad" xml:space="preserve"><value>Bad</value></data>
   <data name="Mood_VeryBad" xml:space="preserve"><value>Very Bad</value></data>
+  <data name="Mood_Great" xml:space="preserve"><value>Great</value></data>
+  <data name="Mood_Okay" xml:space="preserve"><value>Okay</value></data>
+  <data name="Mood_Low" xml:space="preserve"><value>Low</value></data>
+  <data name="Mood_Unwell" xml:space="preserve"><value>Unwell</value></data>
   <data name="Mood_None" xml:space="preserve"><value>No mood</value></data>
 
   <!-- ── Weekday abbreviations ── -->

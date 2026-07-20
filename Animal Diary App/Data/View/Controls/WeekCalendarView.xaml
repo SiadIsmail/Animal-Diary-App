@@ -70,9 +70,13 @@
                         JustifyContent="Start">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate>
+                        <!-- No fixed height: at 58 the stacked weekday label, date ring
+                             and dot row overflowed once the font metrics rounded up, and
+                             the cell Border clipped the dots to its shape. The dot row
+                             carries its own HeightRequest, so every cell still measures
+                             the same whether it has dots or not. -->
                         <Grid FlexLayout.Basis="14.2857%"
-                              Padding="2"
-                              HeightRequest="58">
+                              Padding="2">
                             <Border BackgroundColor="Transparent"
                                     StrokeThickness="0"
                                     StrokeShape="RoundRectangle 13"

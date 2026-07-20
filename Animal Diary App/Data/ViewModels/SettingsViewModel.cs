@@ -16,6 +16,13 @@ public class SettingsViewModel : BaseViewModel
 
     public event EventHandler? ResetCompleted;
 
+    /// <summary>"Version 1.3.2 (7)" for the foot of the settings panel. Read from
+    /// <see cref="AppInfo"/>, which surfaces the csproj's ApplicationDisplayVersion and
+    /// ApplicationVersion — so a version bump needs no change here. Resolved per read
+    /// so a live language switch re-translates it (this VM is a singleton).</summary>
+    public string AppVersion => LocalizationManager.Instance.Format(
+        "Settings_VersionFormat", AppInfo.Current.VersionString, AppInfo.Current.BuildString);
+
     /// <summary>
     /// Set by the active page to show a native confirmation dialog before deletion.
     /// Returns true if the user confirmed, false to cancel.
@@ -81,6 +88,7 @@ public class SettingsViewModel : BaseViewModel
         OnPropertyChanged(nameof(CurrentLanguage));
         OnPropertyChanged(nameof(IsGerman));
         OnPropertyChanged(nameof(IsEnglish));
+        OnPropertyChanged(nameof(AppVersion));
     }
 
     private async Task OnDeleteAllDataAsync()

@@ -21,6 +21,10 @@ public partial class MainPage : ContentPage
         BindingContext = vm;
     }
 
+    // Android back closes an open sheet (or the settings panel) before it navigates.
+    protected override bool OnBackButtonPressed()
+        => Controls.BackDismiss.TryCloseTopmostOverlay(this) || base.OnBackButtonPressed();
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -45,6 +49,7 @@ public partial class MainPage : ContentPage
             await Task.WhenAll(
                 vm.MainPageVM.LoadWeightChartAsync(),
                 vm.MainPageVM.LoadMoodTimelineAsync(),
+                vm.MainPageVM.LoadLatestMoodAsync(),
                 vm.MainPageVM.LoadTodayCareAsync());
 
             SetAside();

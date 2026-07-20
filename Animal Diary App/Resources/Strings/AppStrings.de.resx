@@ -106,22 +106,23 @@
   <data name="Settings_WebsiteSubtitle" xml:space="preserve"><value>Erfahre mehr über Felova, entdecke kommende Funktionen und finde hilfreiche Ressourcen für die Gesundheit deines Tieres.</value></data>
   <data name="Settings_PrivacyTitle" xml:space="preserve"><value>Datenschutzerklärung</value></data>
   <data name="Settings_PrivacySubtitle" xml:space="preserve"><value>Erfahre, wie Felova mit deinen Daten umgeht und wie wir deine Privatsphäre schützen.</value></data>
+  <data name="Settings_VersionFormat" xml:space="preserve"><value>Version {0} ({1})</value></data>
 
   <!-- ── Main page ── -->
   <data name="Main_GreetingMorning" xml:space="preserve"><value>Guten Morgen ☀️</value></data>
+  <data name="Main_GreetingAfternoon" xml:space="preserve"><value>Guten Tag 🌤️</value></data>
+  <data name="Main_GreetingEvening" xml:space="preserve"><value>Guten Abend 🌙</value></data>
   <data name="Main_Weight" xml:space="preserve"><value>GEWICHT</value></data>
   <data name="Main_Mood" xml:space="preserve"><value>STIMMUNG</value></data>
   <data name="Main_MoodLabel" xml:space="preserve"><value>Stimmung</value></data>
   <data name="Main_Last30Days" xml:space="preserve"><value>Letzte 30 Tage</value></data>
-  <data name="Main_MoodEmptyState" xml:space="preserve"><value>Beginne im Kalender, die Stimmung deines Tieres zu erfassen</value></data>
-  <data name="Main_RecentActivity" xml:space="preserve"><value>LETZTE AKTIVITÄT</value></data>
+  <data name="Main_MoodEmptyState" xml:space="preserve"><value>Beginne im Journal, die Stimmung deines Tieres zu erfassen</value></data>
   <data name="Main_Aside1" xml:space="preserve"><value>noch ein sanfter Tag mit {0}</value></data>
   <data name="Main_Aside2" xml:space="preserve"><value>{0}s Ecke der Welt</value></data>
   <data name="Main_Aside3" xml:space="preserve"><value>so geht es {0}</value></data>
   <data name="Main_MoodMonthHeading" xml:space="preserve"><value>Wie sich der Monat angefühlt hat</value></data>
   <data name="Main_WeighInsHeading" xml:space="preserve"><value>Die Wiegungen</value></data>
-  <data name="Main_LatelyPrefix" xml:space="preserve"><value>Zurzeit in </value></data>
-  <data name="Main_LatelySuffix" xml:space="preserve"><value>s Welt</value></data>
+  <data name="Main_WeightStable" xml:space="preserve"><value>Gewicht ist gleich geblieben</value></data>
   <data name="Main_CareRingLabel" xml:space="preserve"><value>Heutige Pflege</value></data>
   <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Als Nächstes</value></data>
   <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>Alles erledigt</value></data>
@@ -129,10 +130,9 @@
   <data name="Main_LogNow" xml:space="preserve"><value>Eintragen</value></data>
   <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Gesund</value></data>
   <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Medis 20:00</value></data>
-  <data name="Main_StableThisWeek" xml:space="preserve"><value>Stabil diese Woche</value></data>
-  <data name="Main_HappyPlaceholder" xml:space="preserve"><value>Glücklich</value></data>
-  <data name="Main_LoggedToday" xml:space="preserve"><value>Heute erfasst</value></data>
-  <data name="Main_MedicationGiven" xml:space="preserve"><value>Medikament gegeben</value></data>
+  <data name="Main_WeightEmptyCard" xml:space="preserve"><value>Noch nichts erfasst — trage die erste Wiegung im Journal ein</value></data>
+  <data name="Main_LoggedRelative" xml:space="preserve"><value>Erfasst {0}</value></data>
+  <data name="Main_MoodEmptyCard" xml:space="preserve"><value>Noch nichts erfasst — trage die erste Stimmung im Journal ein</value></data>
   <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazol · mit Futter</value></data>
 
   <!-- ── Journal (Calendar) header ── -->
@@ -150,7 +150,6 @@
   <data name="Journal_EmptyBig" xml:space="preserve"><value>Eine ruhige Seite für {0}</value></data>
   <data name="Journal_EmptySub" xml:space="preserve"><value>Nichts eingetragen — ruhige Tage sind auch gute Tage.</value></data>
   <data name="Journal_Celebrate" xml:space="preserve"><value>Das war alles für heute — kraul {0} von uns.</value></data>
-  <data name="Journal_MoodCheck" xml:space="preserve"><value>Stimmung</value></data>
   <data name="Journal_WeighIn" xml:space="preserve"><value>Wiegen</value></data>
   <data name="Journal_Meds" xml:space="preserve"><value>Medis</value></data>
   <data name="Journal_MoodTitle" xml:space="preserve"><value>Stimmung</value></data>
@@ -300,8 +299,8 @@
 
   <!-- ── Pets page ── -->
   <data name="Pets_Title" xml:space="preserve"><value>Meine Tiere</value></data>
-  <data name="Pets_KidneyTag" xml:space="preserve"><value>Niere Stadium 1</value></data>
-  <data name="Pets_MedicationsTag" xml:space="preserve"><value>2 Medikamente</value></data>
+  <data name="Pets_MedicationCountOne" xml:space="preserve"><value>{0} Medikament</value></data>
+  <data name="Pets_MedicationCountMany" xml:space="preserve"><value>{0} Medikamente</value></data>
   <data name="Pets_OpenProfile" xml:space="preserve"><value>Profil öffnen</value></data>
   <data name="Pets_Edit" xml:space="preserve"><value>Bearbeiten</value></data>
   <data name="Pets_Manage" xml:space="preserve"><value>Verwalten</value></data>
@@ -426,6 +425,10 @@
   <data name="Mood_Neutral" xml:space="preserve"><value>Neutral</value></data>
   <data name="Mood_Bad" xml:space="preserve"><value>Schlecht</value></data>
   <data name="Mood_VeryBad" xml:space="preserve"><value>Sehr schlecht</value></data>
+  <data name="Mood_Great" xml:space="preserve"><value>super</value></data>
+  <data name="Mood_Okay" xml:space="preserve"><value>okay</value></data>
+  <data name="Mood_Low" xml:space="preserve"><value>gedämpft</value></data>
+  <data name="Mood_Unwell" xml:space="preserve"><value>unwohl</value></data>
   <data name="Mood_None" xml:space="preserve"><value>Keine Stimmung</value></data>
 
   <!-- ── Weekday abbreviations ── -->

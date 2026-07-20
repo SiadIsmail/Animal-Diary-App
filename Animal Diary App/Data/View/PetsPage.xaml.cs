@@ -14,7 +14,11 @@ public partial class PetsPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    // Android back closes an open sheet (or the settings panel) before it navigates.
+    protected override bool OnBackButtonPressed()
+        => Controls.BackDismiss.TryCloseTopmostOverlay(this) || base.OnBackButtonPressed();
+
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
 
@@ -27,6 +31,19 @@ public partial class PetsPage : ContentPage
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
         vm.ExportSheetVM.ViewRequested += OnReportViewRequested;
+
+        try
+        {
+            // Re-read on every appearance so conditions or medications changed on
+            // Manage / Medications are reflected the moment this page returns.
+            await vm.PetVM.LoadActivePetTagsAsync();
+        }
+        catch (Exception ex)
+        {
+            // A failed load must degrade to a card with no chips, never crash the app
+            // (async void — an escaping exception here kills the process).
+            System.Diagnostics.Debug.WriteLine($"[PetsPage] OnAppearing failed: {ex}");
+        }
     }
 
     protected override void OnDisappearing()

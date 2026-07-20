@@ -132,7 +132,7 @@
                     </Border>
 
                     <!-- Current value + trend -->
-                    <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                    <VerticalStackLayout Spacing="8">
                         <Label VerticalOptions="Center">
                             <Label.FormattedText>
                                 <FormattedString>
@@ -148,30 +148,24 @@
                             </Label.FormattedText>
                         </Label>
 
-                        <Border Grid.Column="1"
-                                Padding="10,4"
+                        <!-- Trend chip. One neutral treatment in every state: the app
+                             cannot know whether a weight change is good or bad for a
+                             given pet, so the colour must not imply a verdict. It sits
+                             under the readout rather than beside it because the steady
+                             state is a sentence, not a short number. -->
+                        <Border Padding="10,4"
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 999"
-                                BackgroundColor="{StaticResource HoneyWarmTint}"
-                                VerticalOptions="Center">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding MainPageVM.WeightTrendIsStable}" Value="True">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
+                                BackgroundColor="{StaticResource Well}"
+                                HorizontalOptions="Start"
+                                IsVisible="{Binding MainPageVM.WeightTrendLabel, Converter={StaticResource StringToBoolConverter}}">
                             <Label Text="{Binding MainPageVM.WeightTrendLabel}"
                                    FontFamily="{StaticResource FontSans}"
                                    FontSize="11.5"
                                    FontAttributes="Bold"
-                                   TextColor="{StaticResource HoneyWarmDeep}">
-                                <Label.Triggers>
-                                    <DataTrigger TargetType="Label" Binding="{Binding MainPageVM.WeightTrendIsStable}" Value="True">
-                                        <Setter Property="TextColor" Value="{StaticResource TealDeep}"/>
-                                    </DataTrigger>
-                                </Label.Triggers>
-                            </Label>
+                                   TextColor="{StaticResource InkSecondary}"/>
                         </Border>
-                    </Grid>
+                    </VerticalStackLayout>
 
                     <!-- Line chart -->
                     <GraphicsView x:Name="ChartSurface"

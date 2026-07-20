@@ -77,7 +77,7 @@
                     <VerticalStackLayout Grid.Column="0"
                                          Spacing="1"
                                          VerticalOptions="Center">
-                        <Label Text="{loc:Translate Main_GreetingMorning}"
+                        <Label Text="{Binding MainPageVM.Greeting}"
                                FontFamily="{StaticResource FontSerif}"
                                FontSize="{StaticResource TypeH1}"
                                TextColor="{StaticResource Ink}"/>
@@ -182,10 +182,7 @@
                                 <Span Text="{loc:Translate Common_KgSuffix}"/>
                             </FormattedString>
                         </Label.FormattedText>
-                    </Label>
-
-                    <!-- Health tags (chrome) -->
-                    
+                    </Label>                    
                 </VerticalStackLayout>
 
                 <!-- 3 ── Next up: first pending med dose or care-plan tracker ── -->
@@ -296,7 +293,11 @@
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{loc:Translate Main_Weight}"
                                    Style="{StaticResource StatLabel}"/>
-                            <Label>
+
+                            <!-- The pet's most recent weigh-in and when it was taken.
+                                 The chip states the date, never a judgement on the
+                                 value — the app can't know what a change means. -->
+                            <Label IsVisible="{Binding MainPageVM.HasLoggedWeight}">
                                 <Label.FormattedText>
                                     <FormattedString>
                                         <Span Text="{Binding MainPageVM.LatestWeight}"
@@ -314,13 +315,22 @@
                                     Padding="9,4"
                                     StrokeThickness="0"
                                     StrokeShape="RoundRectangle 999"
-                                    HorizontalOptions="Start">
-                                <Label Text="{loc:Translate Main_StableThisWeek}"
+                                    HorizontalOptions="Start"
+                                    IsVisible="{Binding MainPageVM.HasLoggedWeight}">
+                                <Label Text="{Binding MainPageVM.LatestWeightLoggedLabel}"
                                        FontFamily="{StaticResource FontSans}"
                                        FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource TealDeep}"/>
                             </Border>
+
+                            <!-- Empty state: no weigh-in for this pet yet. -->
+                            <Label Text="{loc:Translate Main_WeightEmptyCard}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12"
+                                   LineHeight="1.35"
+                                   TextColor="{StaticResource InkSecondary}"
+                                   IsVisible="{Binding MainPageVM.HasLoggedWeight, Converter={StaticResource InvertedBoolConverter}}"/>
                         </VerticalStackLayout>
                     </Border>
 
@@ -332,14 +342,18 @@
                         <VerticalStackLayout Spacing="6">
                             <Label Text="{loc:Translate Main_Mood}"
                                    Style="{StaticResource StatLabel}"/>
-                            <HorizontalStackLayout Spacing="7">
+
+                            <!-- The pet's most recent mood — swatch, word and when it
+                                 was logged all come from the same entry. -->
+                            <HorizontalStackLayout Spacing="7"
+                                                   IsVisible="{Binding MainPageVM.HasLoggedMood}">
                                 <Border WidthRequest="11"
                                         HeightRequest="11"
-                                        BackgroundColor="{StaticResource MGood}"
+                                        BackgroundColor="{Binding MainPageVM.LatestMoodColor}"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 6"
                                         VerticalOptions="Center"/>
-                                <Label Text="{loc:Translate Main_HappyPlaceholder}"
+                                <Label Text="{Binding MainPageVM.LatestMoodLabel}"
                                        FontFamily="{StaticResource FontSerif}"
                                        FontSize="20"
                                        TextColor="{StaticResource Ink}"/>
@@ -348,13 +362,22 @@
                                     Padding="9,4"
                                     StrokeThickness="0"
                                     StrokeShape="RoundRectangle 999"
-                                    HorizontalOptions="Start">
-                                <Label Text="{loc:Translate Main_LoggedToday}"
+                                    HorizontalOptions="Start"
+                                    IsVisible="{Binding MainPageVM.HasLoggedMood}">
+                                <Label Text="{Binding MainPageVM.LatestMoodLoggedLabel}"
                                        FontFamily="{StaticResource FontSans}"
                                        FontSize="11"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource TealDeep}"/>
                             </Border>
+
+                            <!-- Empty state: nothing logged for this pet yet. -->
+                            <Label Text="{loc:Translate Main_MoodEmptyCard}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12"
+                                   LineHeight="1.35"
+                                   TextColor="{StaticResource InkSecondary}"
+                                   IsVisible="{Binding MainPageVM.HasLoggedMood, Converter={StaticResource InvertedBoolConverter}}"/>
                         </VerticalStackLayout>
                     </Border>
                 </Grid>
@@ -496,143 +519,6 @@
 
                 <!-- 6 ── Weight chart (DATA — precise line chart) ── -->
                 <view:WeightChartView/>
-
-                <!-- 7 ── Lately, in {pet}'s world ── -->
-                <VerticalStackLayout Spacing="12">
-
-                    <Label Style="{StaticResource SerifHeading}">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="{loc:Translate Main_LatelyPrefix}"/>
-                                <Span Text="{Binding MainPageVM.ActivePet.Name}"/>
-                                <Span Text="{loc:Translate Main_LatelySuffix}"/>
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-
-                    <!-- Row 1 -->
-                    <Border Style="{StaticResource GlassCard}"
-                            StrokeShape="RoundRectangle 17,14,15,18"
-                            Padding="14">
-                        <Grid ColumnDefinitions="Auto,*,Auto"
-                              ColumnSpacing="12">
-                            <Border WidthRequest="42"
-                                    HeightRequest="42"
-                                    Rotation="-3"
-                                    BackgroundColor="{StaticResource HoneyWarmTint}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 12"
-                                    VerticalOptions="Center">
-                                <Label Text="💊"
-                                       FontSize="18"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center"/>
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1"
-                                                 Spacing="2"
-                                                 VerticalOptions="Center">
-                                <Label Text="{loc:Translate Main_MedicationGiven}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="13.5"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}"/>
-                                <Label Text="{loc:Translate Main_MedicationDetailPlaceholder}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="12"
-                                       TextColor="{StaticResource InkSecondary}"/>
-                            </VerticalStackLayout>
-                            <Label Grid.Column="2"
-                                   Text="08:00"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource InkTertiary}"
-                                   VerticalOptions="Start"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- Row 2 -->
-                    <Border Style="{StaticResource GlassCard}"
-                            StrokeShape="RoundRectangle 14,18,17,15"
-                            Padding="14">
-                        <Grid ColumnDefinitions="Auto,*,Auto"
-                              ColumnSpacing="12">
-                            <Border WidthRequest="42"
-                                    HeightRequest="42"
-                                    Rotation="2.5"
-                                    BackgroundColor="{StaticResource BlueTint}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 12"
-                                    VerticalOptions="Center">
-                                <Label Text="⚖️"
-                                       FontSize="18"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center"/>
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1"
-                                                 Spacing="2"
-                                                 VerticalOptions="Center">
-                                <Label Text="{loc:Translate Journal_WeighIn}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="13.5"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}"/>
-                                <Label Text="{loc:Translate Main_StableThisWeek}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="12"
-                                       TextColor="{StaticResource InkSecondary}"/>
-                            </VerticalStackLayout>
-                            <Label Grid.Column="2"
-                                   Text="08:15"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource InkTertiary}"
-                                   VerticalOptions="Start"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- Row 3 -->
-                    <Border Style="{StaticResource GlassCard}"
-                            StrokeShape="RoundRectangle 16,15,18,14"
-                            Padding="14">
-                        <Grid ColumnDefinitions="Auto,*,Auto"
-                              ColumnSpacing="12">
-                            <Border WidthRequest="42"
-                                    HeightRequest="42"
-                                    Rotation="-3"
-                                    BackgroundColor="{StaticResource TealTint}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 12"
-                                    VerticalOptions="Center">
-                                <Label Text="😊"
-                                       FontSize="18"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center"/>
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1"
-                                                 Spacing="2"
-                                                 VerticalOptions="Center">
-                                <Label Text="{loc:Translate Journal_MoodCheck}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="13.5"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}"/>
-                                <Label Text="{loc:Translate Main_HappyPlaceholder}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="12"
-                                       TextColor="{StaticResource InkSecondary}"/>
-                            </VerticalStackLayout>
-                            <Label Grid.Column="2"
-                                   Text="09:15"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource InkTertiary}"
-                                   VerticalOptions="Start"/>
-                        </Grid>
-                    </Border>
-                </VerticalStackLayout>
 
             </VerticalStackLayout>
         </ScrollView>

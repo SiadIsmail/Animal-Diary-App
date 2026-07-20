@@ -134,48 +134,6 @@
                     </Border>
                 </Grid>
 
-                <!-- ── DATA ── -->
-                <Label Text="{loc:Translate Settings_DataSection}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="11"
-                       FontAttributes="Bold"
-                       CharacterSpacing="1.3"
-                       TextColor="{StaticResource InkTertiary}"
-                       Margin="0,0,0,12"/>
-
-                <Border BackgroundColor="{StaticResource ClayTint}"
-                        StrokeThickness="1"
-                        Stroke="#EFD3CE"
-                        StrokeShape="RoundRectangle 16"
-                        Padding="16,14">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding SettingsVM.DeleteAllDataCommand}"/>
-                    </Border.GestureRecognizers>
-
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                        <Border WidthRequest="42"
-                                HeightRequest="42"
-                                BackgroundColor="#F2DAD6"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 12"
-                                VerticalOptions="Center">
-                            <Label Text="🗑️" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center"/>
-                        </Border>
-
-                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Label Text="{loc:Translate Settings_DeleteAllData}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Clay}"/>
-                            <Label Text="{loc:Translate Settings_ResetSubtitle}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11"
-                                   TextColor="#B07B76"/>
-                        </VerticalStackLayout>
-                    </Grid>
-                </Border>
-
                 <!-- ── COMMUNITY & SUPPORT ── -->
                 <Label Text="{loc:Translate Settings_CommunitySection}"
                        FontFamily="{StaticResource FontSans}"
@@ -302,6 +260,58 @@
                     </Border>
 
                 </VerticalStackLayout>
+
+                <!-- ── DATA ── -->
+                <!-- Last section on purpose: the destructive action sits at the very
+                     bottom, past everything routine. -->
+                <Label Text="{loc:Translate Settings_DataSection}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="11"
+                       FontAttributes="Bold"
+                       CharacterSpacing="1.3"
+                       TextColor="{StaticResource InkTertiary}"
+                       Margin="0,28,0,12"/>
+
+                <Border BackgroundColor="{StaticResource ClayTint}"
+                        StrokeThickness="1"
+                        Stroke="#EFD3CE"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="16,14">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SettingsVM.DeleteAllDataCommand}"/>
+                    </Border.GestureRecognizers>
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                        <Border WidthRequest="42"
+                                HeightRequest="42"
+                                BackgroundColor="#F2DAD6"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                VerticalOptions="Center">
+                            <Label Text="🗑️" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{loc:Translate Settings_DeleteAllData}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Clay}"/>
+                            <Label Text="{loc:Translate Settings_ResetSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11"
+                                   TextColor="#B07B76"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Build identity, quietly at the very foot of the panel. -->
+                <Label Text="{Binding SettingsVM.AppVersion}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="10.5"
+                       TextColor="{StaticResource InkTertiary}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,24,0,4"/>
 
             </VerticalStackLayout>
             </ScrollView>
