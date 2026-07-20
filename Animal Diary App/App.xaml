@@ -12,6 +12,8 @@
             </ResourceDictionary.MergedDictionaries>
             <helpers:StringToBoolConverter x:Key="StringToBoolConverter" />
             <helpers:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+            <helpers:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <helpers:PetTypeLocalizedConverter x:Key="PetTypeLocalizedConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

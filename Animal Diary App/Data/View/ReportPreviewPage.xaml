@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    ReportPreviewPage.xaml
+    ─────────────────────────────────────────────────────────
+    In-app viewer for one generated vet report: scrolls through the report's
+    pre-rendered page images (Android WebView can't show PDFs), with Share and
+    "Open with…" as the ways the PDF leaves the app. Pushed from the export
+    sheet's View button and from Documents rows. BindingContext is the
+    MainViewModel; content binds through ReportPreviewVM (call its Open first).
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
+             x:Class="Animal_Diary_App.Data.View.ReportPreviewPage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
+             BackgroundColor="#C4E6E3">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <controls:WaterBackground Grid.RowSpan="2"/>
+
+        <ScrollView>
+            <VerticalStackLayout Padding="22,20,22,24" Spacing="10">
+
+                <!-- Subhead: back + title -->
+                <Grid ColumnDefinitions="40,*,40" ColumnSpacing="10" Margin="0,0,0,8">
+                    <Border Grid.Column="0"
+                            WidthRequest="40" HeightRequest="40"
+                            BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 20">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnBackClicked"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="‹" FontSize="26"
+                               TextColor="{StaticResource InkSecondary}"
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                        <Label Text="{loc:Translate Docs_PreviewTitle}"
+                               FontFamily="{StaticResource FontSerif}"
+                               FontSize="21"
+                               TextColor="{StaticResource Ink}"
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="{Binding ReportPreviewVM.FileName}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="11"
+                               TextColor="{StaticResource InkTertiary}"
+                               HorizontalTextAlignment="Center"
+                               LineBreakMode="TailTruncation"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- The report pages, in order. White cards so the A4 pages read as
+                     paper against the water background. -->
+                <VerticalStackLayout Spacing="14"
+                                     BindableLayout.ItemsSource="{Binding ReportPreviewVM.PageImages}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Border BackgroundColor="{StaticResource White}"
+                                    Stroke="{StaticResource GlassLine}"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 10"
+                                    Padding="4">
+                                <Image Source="{Binding .}" Aspect="AspectFit"/>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Action bar -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10" Padding="22,10,22,20">
+            <Border BackgroundColor="{StaticResource Teal}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 15,13,13,16">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ReportPreviewVM.ShareCommand}"/>
+                </Border.GestureRecognizers>
+                <Label Text="{loc:Translate Export_Share}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="14" FontAttributes="Bold"
+                       TextColor="{StaticResource White}"
+                       HorizontalTextAlignment="Center"
+                       Padding="0,14"/>
+            </Border>
+            <Border Grid.Column="1"
+                    BackgroundColor="{StaticResource TealTint}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 13,16,15,14">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ReportPreviewVM.OpenExternallyCommand}"/>
+                </Border.GestureRecognizers>
+                <Label Text="{loc:Translate Docs_OpenWith}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="14" FontAttributes="Bold"
+                       TextColor="{StaticResource TealDeep}"
+                       HorizontalTextAlignment="Center"
+                       Padding="0,14"/>
+            </Border>
+        </Grid>
+
+    </Grid>
+</ContentPage>

@@ -70,9 +70,9 @@
   <data name="Common_AgeYearsShort" xml:space="preserve"><value>({0} J.)</value></data>
 
   <!-- ── Bottom navigation ── -->
-  <data name="Nav_Main" xml:space="preserve"><value>Start</value></data>
-  <data name="Nav_Calendar" xml:space="preserve"><value>Kalender</value></data>
-  <data name="Nav_Pets" xml:space="preserve"><value>Tiere</value></data>
+  <data name="Nav_Main" xml:space="preserve"><value>Heute</value></data>
+  <data name="Nav_Calendar" xml:space="preserve"><value>Journal</value></data>
+  <data name="Nav_Pets" xml:space="preserve"><value>Pflege</value></data>
 
   <!-- ── App / Loading ── -->
   <data name="App_StartError" xml:space="preserve"><value>Die App konnte nicht gestartet werden. Bitte starte sie neu.</value></data>
@@ -99,22 +99,199 @@
   <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Alle Daten löschen</value></data>
   <data name="Settings_DeleteConfirmMessage" xml:space="preserve"><value>Dadurch werden alle Tiere, Einträge, Medikamente und Einstellungen dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.</value></data>
   <data name="Settings_DeleteConfirmAccept" xml:space="preserve"><value>Löschen</value></data>
+  <data name="Settings_CommunitySection" xml:space="preserve"><value>COMMUNITY &amp; SUPPORT</value></data>
+  <data name="Settings_DiscordTitle" xml:space="preserve"><value>Tritt der Felova-Community bei</value></data>
+  <data name="Settings_DiscordSubtitle" xml:space="preserve"><value>Hast du Feedback, Vorschläge oder Fragen zur Gesundheit deines Tieres? Tritt unserer Discord-Community bei und tausche dich direkt mit anderen Tierhaltern und dem Entwickler von Felova aus.</value></data>
+  <data name="Settings_WebsiteTitle" xml:space="preserve"><value>Felova-Website besuchen</value></data>
+  <data name="Settings_WebsiteSubtitle" xml:space="preserve"><value>Erfahre mehr über Felova, entdecke kommende Funktionen und finde hilfreiche Ressourcen für die Gesundheit deines Tieres.</value></data>
+  <data name="Settings_PrivacyTitle" xml:space="preserve"><value>Datenschutzerklärung</value></data>
+  <data name="Settings_PrivacySubtitle" xml:space="preserve"><value>Erfahre, wie Felova mit deinen Daten umgeht und wie wir deine Privatsphäre schützen.</value></data>
+  <data name="Settings_VersionFormat" xml:space="preserve"><value>Version {0} ({1})</value></data>
 
   <!-- ── Main page ── -->
   <data name="Main_GreetingMorning" xml:space="preserve"><value>Guten Morgen ☀️</value></data>
+  <data name="Main_GreetingAfternoon" xml:space="preserve"><value>Guten Tag 🌤️</value></data>
+  <data name="Main_GreetingEvening" xml:space="preserve"><value>Guten Abend 🌙</value></data>
   <data name="Main_Weight" xml:space="preserve"><value>GEWICHT</value></data>
   <data name="Main_Mood" xml:space="preserve"><value>STIMMUNG</value></data>
   <data name="Main_MoodLabel" xml:space="preserve"><value>Stimmung</value></data>
   <data name="Main_Last30Days" xml:space="preserve"><value>Letzte 30 Tage</value></data>
-  <data name="Main_MoodEmptyState" xml:space="preserve"><value>Beginne im Kalender, die Stimmung deines Tieres zu erfassen</value></data>
-  <data name="Main_RecentActivity" xml:space="preserve"><value>LETZTE AKTIVITÄT</value></data>
-  <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Gesund (Platzhalter)</value></data>
-  <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Medis 20:00 (Platzhalter)</value></data>
-  <data name="Main_StableThisWeek" xml:space="preserve"><value>Stabil diese Woche (Platzhalter)</value></data>
-  <data name="Main_HappyPlaceholder" xml:space="preserve"><value>Glücklich 😊 (Platzhalter)</value></data>
-  <data name="Main_LoggedToday" xml:space="preserve"><value>Heute erfasst</value></data>
-  <data name="Main_MedicationGiven" xml:space="preserve"><value>Medikament gegeben</value></data>
-  <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazol · mit Futter (Platzhalter)</value></data>
+  <data name="Main_MoodEmptyState" xml:space="preserve"><value>Beginne im Journal, die Stimmung deines Tieres zu erfassen</value></data>
+  <data name="Main_Aside1" xml:space="preserve"><value>noch ein sanfter Tag mit {0}</value></data>
+  <data name="Main_Aside2" xml:space="preserve"><value>{0}s Ecke der Welt</value></data>
+  <data name="Main_Aside3" xml:space="preserve"><value>so geht es {0}</value></data>
+  <data name="Main_MoodMonthHeading" xml:space="preserve"><value>Wie sich der Monat angefühlt hat</value></data>
+  <data name="Main_WeighInsHeading" xml:space="preserve"><value>Die Wiegungen</value></data>
+  <data name="Main_WeightStable" xml:space="preserve"><value>Gewicht ist gleich geblieben</value></data>
+  <data name="Main_CareRingLabel" xml:space="preserve"><value>Heutige Pflege</value></data>
+  <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Als Nächstes</value></data>
+  <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>Alles erledigt</value></data>
+  <data name="Main_AllCaughtUpDetail" xml:space="preserve"><value>Gerade nichts fällig. Gut gemacht.</value></data>
+  <data name="Main_LogNow" xml:space="preserve"><value>Eintragen</value></data>
+  <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>Gesund</value></data>
+  <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Medis 20:00</value></data>
+  <data name="Main_WeightEmptyCard" xml:space="preserve"><value>Noch nichts erfasst — trage die erste Wiegung im Journal ein</value></data>
+  <data name="Main_LoggedRelative" xml:space="preserve"><value>Erfasst {0}</value></data>
+  <data name="Main_MoodEmptyCard" xml:space="preserve"><value>Noch nichts erfasst — trage die erste Stimmung im Journal ein</value></data>
+  <data name="Main_MedicationDetailPlaceholder" xml:space="preserve"><value>Methimazol · mit Futter</value></data>
+
+  <!-- ── Journal (Calendar) header ── -->
+  <data name="Journal_Eyebrow" xml:space="preserve"><value>Gesundheitstagebuch</value></data>
+  <data name="Journal_Title" xml:space="preserve"><value>Tagebuch</value></data>
+  <data name="Journal_DayTimeline" xml:space="preserve"><value>TAGESVERLAUF</value></data>
+  <data name="Journal_EyebrowFmt" xml:space="preserve"><value>{0}s Gesundheitstagebuch</value></data>
+  <data name="Journal_RelToday" xml:space="preserve"><value>heute</value></data>
+  <data name="Journal_RelYesterday" xml:space="preserve"><value>gestern</value></data>
+  <data name="Journal_RelDaysAgo" xml:space="preserve"><value>vor {0} Tagen</value></data>
+  <data name="Journal_RelUpcoming" xml:space="preserve"><value>demnächst</value></data>
+  <data name="Journal_HeadingToday" xml:space="preserve"><value>Heute, bisher…</value></data>
+  <data name="Journal_HeadingPast" xml:space="preserve"><value>Wie {0} war</value></data>
+  <data name="Journal_MoodNarrative" xml:space="preserve"><value>{0} fühlte sich {1}</value></data>
+  <data name="Journal_EmptyBig" xml:space="preserve"><value>Eine ruhige Seite für {0}</value></data>
+  <data name="Journal_EmptySub" xml:space="preserve"><value>Nichts eingetragen — ruhige Tage sind auch gute Tage.</value></data>
+  <data name="Journal_Celebrate" xml:space="preserve"><value>Das war alles für heute — kraul {0} von uns.</value></data>
+  <data name="Journal_WeighIn" xml:space="preserve"><value>Wiegen</value></data>
+  <data name="Journal_Meds" xml:space="preserve"><value>Medis</value></data>
+  <data name="Journal_MoodTitle" xml:space="preserve"><value>Stimmung</value></data>
+  <data name="Journal_WeightScales" xml:space="preserve"><value>auf der Waage</value></data>
+  <data name="Journal_MarkGiven" xml:space="preserve"><value>Als gegeben markieren</value></data>
+  <data name="Journal_JumpToday" xml:space="preserve"><value>Zu heute springen</value></data>
+  <data name="Toast_MedGiven1" xml:space="preserve"><value>Erledigt — {0} sagt danke.</value></data>
+  <data name="Toast_MedGiven2" xml:space="preserve"><value>Als gegeben markiert. Braver Mensch.</value></data>
+  <data name="Toast_MedGiven3" xml:space="preserve"><value>Erledigt — eine Sorge weniger.</value></data>
+  <data name="Toast_MoodSaved1" xml:space="preserve"><value>Notiert. Danke, dass du nach {0} schaust.</value></data>
+  <data name="Toast_MoodSaved2" xml:space="preserve"><value>In {0}s Tagebuch gespeichert.</value></data>
+  <data name="Toast_WeightSaved1" xml:space="preserve"><value>Gewogen und notiert.</value></data>
+  <data name="Toast_WeightSaved2" xml:space="preserve"><value>Zu {0}s Geschichte hinzugefügt.</value></data>
+  <data name="Toast_BackToday" xml:space="preserve"><value>Zurück zu heute</value></data>
+
+  <!-- ── Journal chip rework: „Noch zu tun“-Chips + Eingabe-Sheets (§6) ── -->
+  <data name="Journal_GlucoseCheck" xml:space="preserve"><value>Zucker messen</value></data>
+  <data name="Journal_Appetite" xml:space="preserve"><value>Appetit</value></data>
+  <data name="Journal_Water" xml:space="preserve"><value>Wasser</value></data>
+  <data name="Journal_Seizure" xml:space="preserve"><value>Anfall</value></data>
+  <data name="Journal_CountOfN" xml:space="preserve"><value>{0} von {1}</value></data>
+  <data name="Journal_StillToDoOne" xml:space="preserve"><value>Noch zu tun — {0} Kleinigkeit</value></data>
+  <data name="Journal_StillToDoMany" xml:space="preserve"><value>Noch zu tun — {0} Kleinigkeiten</value></data>
+  <data name="Journal_ChipAddMore" xml:space="preserve"><value>＋ Noch etwas</value></data>
+  <data name="Journal_ChipAddDay" xml:space="preserve"><value>＋ Zu diesem Tag</value></data>
+  <data name="Journal_AddMoreTitle" xml:space="preserve"><value>Noch etwas eintragen</value></data>
+  <data name="Journal_AddDayTitle" xml:space="preserve"><value>Zu diesem Tag hinzufügen</value></data>
+  <data name="Journal_AddSheetSub" xml:space="preserve"><value>{0} · {1:ddd, d. MMM}</value></data>
+  <data name="Journal_A11yGiveMed" xml:space="preserve"><value>{0} geben, fällig um {1}</value></data>
+  <data name="Journal_A11yLogGlucose" xml:space="preserve"><value>Zucker eintragen, {0} von {1} heute erledigt</value></data>
+  <data name="Journal_A11yLogAppetite" xml:space="preserve"><value>Appetit eintragen</value></data>
+  <data name="Journal_A11yLogWeight" xml:space="preserve"><value>Gewicht eintragen</value></data>
+  <data name="Journal_A11yLogMood" xml:space="preserve"><value>Stimmung eintragen</value></data>
+  <data name="Journal_A11yLogWater" xml:space="preserve"><value>Wasser eintragen</value></data>
+  <data name="Journal_ToastMedGiven" xml:space="preserve"><value>{0} gegeben — braver Mensch.</value></data>
+  <data name="Journal_ToastGlucose" xml:space="preserve"><value>Gespeichert — eine Zahl, notiert.</value></data>
+  <data name="Journal_ToastAppetite" xml:space="preserve"><value>Notiert — {0} gefressen.</value></data>
+  <data name="Journal_ToastSeizure" xml:space="preserve"><value>Notiert — hoffentlich ein ruhiger.</value></data>
+  <data name="Journal_ToastDeleted" xml:space="preserve"><value>Aus der Zeitleiste entfernt.</value></data>
+  <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}s Zucker-Check</value></data>
+  <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d. MMM} — eine Zahl, und fertig</value></data>
+  <data name="Journal_GlucoseFieldLabel" xml:space="preserve"><value>Blutzucker · mmol/L</value></data>
+  <data name="Journal_WhenLabel" xml:space="preserve"><value>Wann</value></data>
+  <data name="Journal_BeforeFood" xml:space="preserve"><value>Vor dem Fressen</value></data>
+  <data name="Journal_AfterFood" xml:space="preserve"><value>Nach dem Fressen</value></data>
+  <data name="Journal_SaveCheck" xml:space="preserve"><value>Messung speichern</value></data>
+  <data name="Journal_MoodSheetTitle" xml:space="preserve"><value>Wie geht es {0}?</value></data>
+  <data name="Journal_MoodSheetSub" xml:space="preserve"><value>{0:ddd, d. MMM} — du kennst sie am besten</value></data>
+  <data name="Journal_MoodNotePlaceholder" xml:space="preserve"><value>Eine kleine Notiz · optional</value></data>
+  <data name="Journal_MoodIncludeInReport" xml:space="preserve"><value>In Tierarztbericht aufnehmen?</value></data>
+  <data name="Journal_SaveMood" xml:space="preserve"><value>Stimmung speichern</value></data>
+  <data name="Journal_WeightTitle" xml:space="preserve"><value>{0}s Gewicht</value></data>
+  <data name="Journal_WeightSub" xml:space="preserve"><value>{0:ddd, d. MMM} — jeder Eintrag hilft dem Tierarzt</value></data>
+  <data name="Journal_WeightFieldLabel" xml:space="preserve"><value>Gewicht · Kilogramm</value></data>
+  <data name="Journal_SaveWeight" xml:space="preserve"><value>Gewicht speichern</value></data>
+  <data name="Journal_AppetiteTitle" xml:space="preserve"><value>Wie hat {0} gefressen?</value></data>
+  <data name="Journal_AppetiteSub" xml:space="preserve"><value>{0:ddd, d. MMM} — ehrliche Antworten helfen</value></data>
+  <data name="Journal_SeizureTitle" xml:space="preserve"><value>{0}s Anfallsprotokoll</value></data>
+  <data name="Journal_SeizureSub" xml:space="preserve"><value>{0:ddd, d. MMM} — solange es frisch ist</value></data>
+  <data name="Journal_SeizureTimeLabel" xml:space="preserve"><value>Uhrzeit</value></data>
+  <data name="Journal_SeizureDurationLabel" xml:space="preserve"><value>Dauer · optional</value></data>
+  <data name="Journal_SeizureDurationPlaceholder" xml:space="preserve"><value>Minuten</value></data>
+  <data name="Journal_SeizureNoteLabel" xml:space="preserve"><value>Notizen · optional</value></data>
+  <data name="Journal_SeizureNotePlaceholder" xml:space="preserve"><value>Was dir aufgefallen ist</value></data>
+  <data name="Journal_SaveSeizure" xml:space="preserve"><value>Anfall speichern</value></data>
+  <data name="Appetite_Level1" xml:space="preserve"><value>Kaum</value></data>
+  <data name="Appetite_Level2" xml:space="preserve"><value>Ein wenig</value></data>
+  <data name="Appetite_Level3" xml:space="preserve"><value>Etwa die Hälfte</value></data>
+  <data name="Appetite_Level4" xml:space="preserve"><value>Das meiste</value></data>
+  <data name="Appetite_Level5" xml:space="preserve"><value>Alles</value></data>
+  <data name="Journal_GlucoseTimeline" xml:space="preserve"><value>Zucker · {0} mmol/L</value></data>
+  <data name="Journal_AteWord" xml:space="preserve"><value>{0} gefressen</value></data>
+  <data name="Journal_SeizureDuration" xml:space="preserve"><value>Dauerte {0} Min.</value></data>
+  <data name="Journal_GlucoseInRange" xml:space="preserve"><value>genau im üblichen Bereich</value></data>
+  <data name="Journal_GlucoseHigh" xml:space="preserve"><value>etwas hoch — behalt es im Auge</value></data>
+  <data name="Journal_GlucoseLow" xml:space="preserve"><value>eher niedrig — sprich es beim Tierarzt an</value></data>
+  <data name="Common_NotNow" xml:space="preserve"><value>Jetzt nicht</value></data>
+
+  <!-- ── Bedingungsnamen (Auswahl + Verwalten + Tierarztbericht) ── -->
+  <data name="Condition_None" xml:space="preserve"><value>Keine / Nicht sicher</value></data>
+  <data name="Condition_Diabetes" xml:space="preserve"><value>Diabetes</value></data>
+  <data name="Condition_Ckd" xml:space="preserve"><value>Nierenerkrankung (CNI)</value></data>
+  <data name="Condition_Epilepsy" xml:space="preserve"><value>Epilepsie / Anfälle</value></data>
+
+  <!-- ── Bedingungs-Einrichtung (im Onboarding + in „Verwalten" wiederverwendet) ── -->
+  <data name="CondSetup_DiabetesTitle" xml:space="preserve"><value>Diabetes</value></data>
+  <data name="CondSetup_DiabetesSub" xml:space="preserve"><value>wie oft soll Felova nach dem Blutzucker fragen?</value></data>
+  <data name="CondSetup_GlucoseFreqLabel" xml:space="preserve"><value>BLUTZUCKER-KONTROLLEN</value></data>
+  <data name="CondSetup_FreqOnce" xml:space="preserve"><value>Einmal täglich</value></data>
+  <data name="CondSetup_FreqTwice" xml:space="preserve"><value>Zweimal täglich</value></data>
+  <data name="CondSetup_FreqThree" xml:space="preserve"><value>3× täglich</value></data>
+  <data name="CondSetup_FreqAsNeeded" xml:space="preserve"><value>Nur bei Bedarf</value></data>
+  <data name="CondSetup_TargetRangeLabel" xml:space="preserve"><value>ZIELBEREICH · OPTIONAL</value></data>
+  <data name="CondSetup_RangeHint" xml:space="preserve"><value>Noch kein Bereich? Lass es leer — Werte werden einfach festgehalten, ohne Wertung, bis du einen hinzufügst.</value></data>
+  <data name="CondSetup_RangeError" xml:space="preserve"><value>Der Bereich braucht einen unteren und einen oberen Wert, den kleineren zuerst.</value></data>
+  <data name="CondSetup_DiabetesSave" xml:space="preserve"><value>Diabetes-Betreuung einrichten</value></data>
+  <data name="CondSetup_CkdTitle" xml:space="preserve"><value>Nierenbetreuung</value></data>
+  <data name="CondSetup_CkdSub" xml:space="preserve"><value>Gewicht, Appetit und Wasser erzählen hier die Geschichte</value></data>
+  <data name="CondSetup_WeighInLabel" xml:space="preserve"><value>WIEGEN</value></data>
+  <data name="CondSetup_FreqDaily" xml:space="preserve"><value>Täglich</value></data>
+  <data name="CondSetup_FreqTwiceWeekly" xml:space="preserve"><value>Zweimal pro Woche</value></data>
+  <data name="CondSetup_FreqWeekly" xml:space="preserve"><value>Wöchentlich</value></data>
+  <data name="CondSetup_AlsoTrackLabel" xml:space="preserve"><value>AUSSERDEM VERFOLGEN</value></data>
+  <data name="CondSetup_AppetiteToggle" xml:space="preserve"><value>Appetit · täglich</value></data>
+  <data name="CondSetup_WaterToggle" xml:space="preserve"><value>Wasseraufnahme · täglich</value></data>
+  <data name="CondSetup_CkdSave" xml:space="preserve"><value>Nierenbetreuung einrichten</value></data>
+  <data name="CondSetup_EpilepsyTitle" xml:space="preserve"><value>Epilepsie</value></data>
+  <data name="CondSetup_EpilepsySub" xml:space="preserve"><value>nichts zu planen — nur ein Ort, um es festzuhalten</value></data>
+  <data name="CondSetup_EpilepsyBody" xml:space="preserve"><value>Anfälle lassen sich nicht planen, deshalb kommt statt einer täglichen Aufgabe ein Anfalls-Protokoll dazu. Es wartet unter + im Journal, bereit festzuhalten, wann es passierte, wie lange es dauerte und was dir auffiel.</value></data>
+  <data name="CondSetup_EpilepsySave" xml:space="preserve"><value>Anfalls-Protokoll hinzufügen</value></data>
+
+  <!-- ── Seite „Tier verwalten" ── -->
+  <data name="Manage_IdentityHint" xml:space="preserve"><value>Tippen, um Name, Art oder Alter zu ändern</value></data>
+  <data name="Manage_ConditionsTitle" xml:space="preserve"><value>Erkrankungen</value></data>
+  <data name="Manage_ConditionsNote" xml:space="preserve"><value>die Worte des Tierarztes, gemerkt</value></data>
+  <data name="Manage_CarePlanTitle" xml:space="preserve"><value>Pflegeplan</value></data>
+  <data name="Manage_CarePlanNote" xml:space="preserve"><value>wonach das Journal fragen wird</value></data>
+  <data name="Manage_AddCondition" xml:space="preserve"><value>Erkrankung hinzufügen</value></data>
+  <data name="Manage_MedicationsTitle" xml:space="preserve"><value>Medikamente</value></data>
+  <data name="Manage_AddMedication" xml:space="preserve"><value>Medikament hinzufügen</value></data>
+  <data name="Manage_EmptyPlan" xml:space="preserve"><value>Nichts verfolgt — und das ist auch in Ordnung.</value></data>
+  <data name="Manage_PreviewLabel" xml:space="preserve"><value>{0}s Journal wird also sanft fragen nach…</value></data>
+  <data name="Manage_MedsCount" xml:space="preserve"><value>Medikamente ×{0}</value></data>
+  <data name="Manage_FreqPerDay" xml:space="preserve"><value>{0}× täglich</value></data>
+  <data name="Manage_Event" xml:space="preserve"><value>bei Bedarf festgehalten · wartet unter +</value></data>
+  <data name="Manage_GlucoseTarget" xml:space="preserve"><value>Ziel {0}–{1} mmol/L</value></data>
+  <data name="Manage_NoTarget" xml:space="preserve"><value>noch kein Zielbereich</value></data>
+  <data name="Manage_AddConditionTitle" xml:space="preserve"><value>Erkrankung hinzufügen</value></data>
+  <data name="Manage_AddConditionSub" xml:space="preserve"><value>das richtet die passenden Tracker ein</value></data>
+  <data name="Manage_RemoveTitle" xml:space="preserve"><value>{0} entfernen?</value></data>
+  <data name="Manage_RemoveLinked" xml:space="preserve"><value>Das hat eingerichtet: {0}. Der Verlauf bleibt so oder so erhalten — nichts wird je gelöscht.</value></data>
+  <data name="Manage_RemoveNoLinked" xml:space="preserve"><value>Von dieser Erkrankung kamen keine Tracker. Der Verlauf bleibt erhalten.</value></data>
+  <data name="Manage_RemoveWithTrackers" xml:space="preserve"><value>Entfernen samt ihrer Tracker</value></data>
+  <data name="Manage_RemoveKeepTrackers" xml:space="preserve"><value>Entfernen, Tracker behalten</value></data>
+  <data name="Manage_RemoveCancel" xml:space="preserve"><value>Alles behalten</value></data>
+  <data name="Manage_AdjustSub" xml:space="preserve"><value>passe es an, was dein Tierarzt vorschlägt</value></data>
+  <data name="Manage_TurnOff" xml:space="preserve"><value>Ausschalten</value></data>
+
+  <!-- ── Care (Pets) header ── -->
+  <data name="Care_Eyebrow" xml:space="preserve"><value>Tiere &amp; Verwaltung</value></data>
+  <data name="Care_Title" xml:space="preserve"><value>Pflege</value></data>
+  <data name="Care_YourPets" xml:space="preserve"><value>DEINE TIERE</value></data>
 
   <!-- ── Weight chart ── -->
   <data name="Weight_TrendHeader" xml:space="preserve"><value>GEWICHTSVERLAUF</value></data>
@@ -122,10 +299,13 @@
 
   <!-- ── Pets page ── -->
   <data name="Pets_Title" xml:space="preserve"><value>Meine Tiere</value></data>
-  <data name="Pets_KidneyTag" xml:space="preserve"><value>Niere Stadium 1</value></data>
-  <data name="Pets_MedicationsTag" xml:space="preserve"><value>2 Medikamente</value></data>
+  <data name="Pets_MedicationCountOne" xml:space="preserve"><value>{0} Medikament</value></data>
+  <data name="Pets_MedicationCountMany" xml:space="preserve"><value>{0} Medikamente</value></data>
   <data name="Pets_OpenProfile" xml:space="preserve"><value>Profil öffnen</value></data>
   <data name="Pets_Edit" xml:space="preserve"><value>Bearbeiten</value></data>
+  <data name="Pets_Manage" xml:space="preserve"><value>Verwalten</value></data>
+  <data name="ConditionPicker_Title" xml:space="preserve"><value>Hat {0} anhaltende Erkrankungen?</value></data>
+  <data name="ConditionPicker_Sub" xml:space="preserve"><value>Wähle alles Zutreffende, damit Felova das Richtige für {0} verfolgt. Du kannst das jederzeit ändern.</value></data>
   <data name="Pets_QuickManagement" xml:space="preserve"><value>SCHNELLVERWALTUNG</value></data>
   <data name="Pets_AddPet" xml:space="preserve"><value>Tier hinzufügen</value></data>
   <data name="Pets_AddPetSubtitle" xml:space="preserve"><value>Neues Tierprofil erstellen</value></data>
@@ -135,12 +315,36 @@
   <data name="Pets_DocumentsSubtitle" xml:space="preserve"><value>Berichte, Scans und Dateien</value></data>
   <data name="Pets_Export" xml:space="preserve"><value>Exportieren</value></data>
   <data name="Pets_ExportSubtitle" xml:space="preserve"><value>Gesundheits-PDF erstellen</value></data>
+  <data name="Export_SavedTitle" xml:space="preserve"><value>Bericht gespeichert</value></data>
+  <data name="Export_SheetTitle" xml:space="preserve"><value>Tierarztbericht</value></data>
+  <data name="Export_SheetSubtitle" xml:space="preserve"><value>PDF-Zusammenfassung für {0}</value></data>
+  <data name="Export_PeriodLabel" xml:space="preserve"><value>Zeitraum</value></data>
+  <data name="Export_Days30" xml:space="preserve"><value>30 Tage</value></data>
+  <data name="Export_Days90" xml:space="preserve"><value>90 Tage</value></data>
+  <data name="Export_Days180" xml:space="preserve"><value>180 Tage</value></data>
+  <data name="Export_Generate" xml:space="preserve"><value>PDF erstellen</value></data>
+  <data name="Export_Generating" xml:space="preserve"><value>Wird erstellt…</value></data>
+  <data name="Export_DoneMessage" xml:space="preserve"><value>Dein Bericht über die letzten {0} Tage ist fertig.</value></data>
+  <data name="Export_View" xml:space="preserve"><value>Ansehen</value></data>
+  <data name="Export_Share" xml:space="preserve"><value>Teilen</value></data>
+  <data name="Export_Done" xml:space="preserve"><value>Fertig</value></data>
+  <data name="Docs_Title" xml:space="preserve"><value>Dokumente</value></data>
+  <data name="Docs_Subtitle" xml:space="preserve"><value>Tierarztberichte für {0}</value></data>
+  <data name="Docs_Empty" xml:space="preserve"><value>Noch keine Berichte — erstelle einen über „Exportieren“.</value></data>
+  <data name="Docs_Deleted" xml:space="preserve"><value>Bericht gelöscht</value></data>
+  <data name="Docs_Pages" xml:space="preserve"><value>{0} Seite(n)</value></data>
+  <data name="Docs_PreviewTitle" xml:space="preserve"><value>Bericht</value></data>
+  <data name="Docs_OpenWith" xml:space="preserve"><value>Öffnen mit…</value></data>
+  <data name="Common_Undo" xml:space="preserve"><value>Rückgängig</value></data>
+  <data name="Export_NoData" xml:space="preserve"><value>Noch keine Einträge in diesem Zeitraum — nichts zu exportieren.</value></data>
+  <data name="Export_Failed" xml:space="preserve"><value>Der Bericht konnte nicht erstellt werden.</value></data>
+  <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
   <data name="Pet_SubtitleFormat" xml:space="preserve"><value>{0} · {1} J.</value></data>
 
   <!-- ── Calendar ── -->
   <data name="Calendar_SelectedDate" xml:space="preserve"><value>Ausgewähltes Datum: {0:d}</value></data>
-  <data name="Calendar_MoodAdd" xml:space="preserve"><value>+ Stimmung</value></data>
-  <data name="Calendar_WeightAdd" xml:space="preserve"><value>+ Gewicht</value></data>
+  <data name="Calendar_MoodAdd" xml:space="preserve"><value>Stimmung</value></data>
+  <data name="Calendar_WeightAdd" xml:space="preserve"><value>Gewicht</value></data>
   <data name="Calendar_HowFeeling" xml:space="preserve"><value>Wie fühlt sich dein Tier heute?</value></data>
   <data name="Calendar_ConfirmMood" xml:space="preserve"><value>Stimmung bestätigen</value></data>
   <data name="Calendar_WeightPlaceholder" xml:space="preserve"><value>Gib das heutige Gewicht deines Tieres ein</value></data>
@@ -156,6 +360,7 @@
 
   <!-- ── Medications list ── -->
   <data name="Med_Title" xml:space="preserve"><value>Medikamente</value></data>
+  <data name="Med_Add" xml:space="preserve"><value>Medikament hinzufügen</value></data>
   <data name="Med_Active" xml:space="preserve"><value>Aktiv</value></data>
   <data name="Med_Archived" xml:space="preserve"><value>Archiviert</value></data>
   <data name="Med_ForPet" xml:space="preserve"><value>Medikamente für {0}</value></data>
@@ -185,6 +390,8 @@
   <!-- ── Create pet ── -->
   <data name="CreatePet_FirstLaunchTitle" xml:space="preserve"><value>Lerne dein erstes Tier kennen 🐾</value></data>
   <data name="CreatePet_AddTitle" xml:space="preserve"><value>Tier hinzufügen</value></data>
+  <data name="CreatePet_EditTitle" xml:space="preserve"><value>Du bearbeitest {0}</value></data>
+  <data name="CreatePet_EditSave" xml:space="preserve"><value>Änderungen speichern</value></data>
   <data name="CreatePet_FirstLaunchSave" xml:space="preserve"><value>Los geht's! 🐾</value></data>
   <data name="CreatePet_AddSave" xml:space="preserve"><value>Tier hinzufügen</value></data>
   <data name="CreatePet_Subtitle" xml:space="preserve"><value>Erzähle uns von deinem Tier. Du kannst dies später jederzeit ändern.</value></data>
@@ -218,6 +425,10 @@
   <data name="Mood_Neutral" xml:space="preserve"><value>Neutral</value></data>
   <data name="Mood_Bad" xml:space="preserve"><value>Schlecht</value></data>
   <data name="Mood_VeryBad" xml:space="preserve"><value>Sehr schlecht</value></data>
+  <data name="Mood_Great" xml:space="preserve"><value>super</value></data>
+  <data name="Mood_Okay" xml:space="preserve"><value>okay</value></data>
+  <data name="Mood_Low" xml:space="preserve"><value>gedämpft</value></data>
+  <data name="Mood_Unwell" xml:space="preserve"><value>unwohl</value></data>
   <data name="Mood_None" xml:space="preserve"><value>Keine Stimmung</value></data>
 
   <!-- ── Weekday abbreviations ── -->

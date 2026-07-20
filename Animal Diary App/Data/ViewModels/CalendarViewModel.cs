@@ -2,11 +2,19 @@ namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
-using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Helpers;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
 
+/// <summary>
+/// The Journal's week strip, pet selector and derived day headings, plus the
+/// day's dose list and HasMood/HasWeight flags. The Today page no longer reads
+/// any of this — its care ring and next-up card now derive from the
+/// PendingEngine via MainPageViewModel — so the dose-checklist and mood/weight
+/// members here have no remaining consumer and are kept only pending a careful
+/// removal (see known-constraints.md). The logging surface lives in
+/// <see cref="JournalLogViewModel"/> and the sheet VMs.
+/// </summary>
 public class CalendarViewModel : BaseViewModel
 {
     private DateTime currentSelectedDate = DateTime.Now.Date;
@@ -25,11 +33,11 @@ public class CalendarViewModel : BaseViewModel
 
             currentSelectedDate = newDate;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(SelectedDateDisplay));
-            _ = LoadEntriesAsync();
-            _ = LoadDosesAsync();
+            NotifyDerived();
+            LoadEntriesAsync().Forget();
+            LoadDosesAsync().Forget();
             if (weekChanged)
-                _ = LoadWeekActivitiesAsync();
+                LoadWeekActivitiesAsync().Forget();
         }
     }
 
@@ -41,28 +49,8 @@ public class CalendarViewModel : BaseViewModel
         return d.AddDays(-offset);
     }
 
-    private string enteredMood = string.Empty;
-
-    public string EnteredMood
-    {
-        get => enteredMood;
-        set => SetProperty(ref enteredMood, value);
-    }
-
-    private MoodLevel selectedMoodLevel = MoodLevel.None;
-    public MoodLevel SelectedMoodLevel
-    {
-        get => selectedMoodLevel;
-        set => SetProperty(ref selectedMoodLevel, value);
-    }
-
-    private string enteredWeight = string.Empty;
-
-    public string EnteredWeight
-    {
-        get => enteredWeight;
-        set => SetProperty(ref enteredWeight, value);
-    }
+    // The day's recorded mood/weight, kept only as the source of HasMood/HasWeight.
+    // (Legacy: the Today page's old care ring read these; nothing consumes them now.)
     private string shownMood = string.Empty;
     public string ShownMood
     {
@@ -70,12 +58,10 @@ public class CalendarViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref shownMood, value))
-            {
-                OnPropertyChanged(nameof(ShownMoodDisplay));
                 OnPropertyChanged(nameof(HasMood));
-            }
         }
     }
+
     private string shownWeight = string.Empty;
     public string ShownWeight
     {
@@ -83,43 +69,82 @@ public class CalendarViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref shownWeight, value))
-            {
-                OnPropertyChanged(nameof(ShownWeightDisplay));
                 OnPropertyChanged(nameof(HasWeight));
-            }
         }
     }
 
-    /// <summary>Localized "Selected Date: …" label for the calendar.</summary>
-    public string SelectedDateDisplay =>
-        LocalizationManager.Instance.Format("Calendar_SelectedDate", CurrentSelectedDate);
-
     public bool HasMood => !string.IsNullOrEmpty(ShownMood);
-
-    /// <summary>Recorded mood, or a localized placeholder when none is logged.</summary>
-    public string ShownMoodDisplay =>
-        HasMood ? ShownMood : LocalizationManager.Instance.GetString("Calendar_NoMood");
-
     public bool HasWeight => !string.IsNullOrEmpty(ShownWeight);
 
-    /// <summary>Recorded weight (with unit), or a localized placeholder when none is logged.</summary>
-    public string ShownWeightDisplay =>
-        HasWeight
-            ? ShownWeight + LocalizationManager.Instance.GetString("Common_KgSuffix")
-            : LocalizationManager.Instance.GetString("Calendar_NoWeight");
+    // ── Rockpool Journal display helpers (derived, read-only) ────────────
+    // Refreshed together via NotifyDerived() whenever the selection, active
+    // pet, or the day's entries/doses change.
+
+    /// <summary>Active pet's name, or empty when none is selected.</summary>
+    public string ActivePetName => _activePetService.ActivePet?.Name ?? string.Empty;
+
+    /// <summary>Eyebrow: "{Pet}'s health journal".</summary>
+    public string EyebrowText =>
+        LocalizationManager.Instance.Format("Journal_EyebrowFmt", ActivePetName);
+
+    /// <summary>True when the selected date is today.</summary>
+    public bool IsSelectedDateToday => CurrentSelectedDate.Date == DateTime.Now.Date;
+
+    /// <summary>Handwriting relative label: today / yesterday / N days ago / upcoming.</summary>
+    public string RelativeDateLabel
+    {
+        get
+        {
+            var loc = LocalizationManager.Instance;
+            int diff = (DateTime.Now.Date - CurrentSelectedDate.Date).Days;
+            return diff switch
+            {
+                0 => loc.GetString("Journal_RelToday"),
+                1 => loc.GetString("Journal_RelYesterday"),
+                > 1 => loc.Format("Journal_RelDaysAgo", diff),
+                _ => loc.GetString("Journal_RelUpcoming"),
+            };
+        }
+    }
+
+    /// <summary>Italic-serif day heading: "Today, so far…" or "How {Weekday} went".</summary>
+    public string DayHeading =>
+        IsSelectedDateToday
+            ? LocalizationManager.Instance.GetString("Journal_HeadingToday")
+            : LocalizationManager.Instance.Format(
+                "Journal_HeadingPast",
+                CurrentSelectedDate.ToString("dddd", System.Globalization.CultureInfo.CurrentCulture));
+
+    /// <summary>Empty-state headline: "A quiet page for {Pet}".</summary>
+    public string EmptyHeadline =>
+        LocalizationManager.Instance.Format("Journal_EmptyBig", ActivePetName);
+
+    /// <summary>Fire change notifications for every derived Journal label at once.
+    /// NOTE: this raises ActivePetName on every entries/doses load, not only on a
+    /// real pet switch — the CalendarPage dedupes its Journal reloads on that.</summary>
+    private void NotifyDerived()
+    {
+        OnPropertyChanged(nameof(ActivePetName));
+        OnPropertyChanged(nameof(EyebrowText));
+        OnPropertyChanged(nameof(IsSelectedDateToday));
+        OnPropertyChanged(nameof(RelativeDateLabel));
+        OnPropertyChanged(nameof(DayHeading));
+        OnPropertyChanged(nameof(EmptyHeadline));
+    }
 
     private readonly PetEntryService _petEntryService;
     private readonly PetService _petService;
     private readonly ActivePetService _activePetService;
     private readonly MedicationService _medicationService;
     private readonly MedicationDoseLogService _doseLogService;
+    private readonly DayDoseService _dayDoseService;
     private readonly Animal_Diary_App.Data.Services.Notifications.MedicationReminderScheduler _reminderScheduler;
-    public MedicationViewModel MedicationVM { get; }
 
     public CalendarViewModel(
     PetEntryService petEntryService,
-    MedicationViewModel medicationVM, PetService petService, ActivePetService activePetService,
+    PetService petService, ActivePetService activePetService,
     MedicationService medicationService, MedicationDoseLogService doseLogService,
+    DayDoseService dayDoseService,
     Animal_Diary_App.Data.Services.Notifications.MedicationReminderScheduler reminderScheduler)
     {
         _petEntryService = petEntryService;
@@ -127,9 +152,15 @@ public class CalendarViewModel : BaseViewModel
         _activePetService = activePetService;
         _medicationService = medicationService;
         _doseLogService = doseLogService;
+        _dayDoseService = dayDoseService;
         _reminderScheduler = reminderScheduler;
-        MedicationVM = medicationVM;
+
+        // Commands are created once — an expression-bodied `=> new Command(...)`
+        // property hands out a fresh instance per read.
+        SelectPetCommand = new Command<Pet>(async pet => await SelectPetAsync(pet));
+        ToggleDoseTakenCommand = new Command<DoseItem>(async item => await ToggleDoseTakenAsync(item));
     }
+
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
     private async Task LoadPetsAsync()
@@ -144,86 +175,40 @@ public class CalendarViewModel : BaseViewModel
         if (petsFromDb.Count == 0)
             return;
 
+        // Prefer the in-memory active pet: the saved id is written fire-and-forget
+        // by ActivePetService, so reading it right after a switch on another tab
+        // could race and stomp the user's selection back to the previous pet.
+        var currentId = _activePetService.ActivePet?.Id ?? 0;
         var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
-        var selected = Pets.FirstOrDefault(p => p.Id == savedPetId) ?? petsFromDb[0];
+        var selected = Pets.FirstOrDefault(p => p.Id == currentId)
+            ?? Pets.FirstOrDefault(p => p.Id == savedPetId)
+            ?? petsFromDb[0];
         _activePetService.ActivePet = selected;
         selected.IsSelected = true;
     }
-    public async Task SavePetMoodEntryAsync()
-    {
-        var ExistingEntry = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
-        if (ExistingEntry != null)
-        {
-            ExistingEntry.MoodLevel = (int)SelectedMoodLevel;
-            ExistingEntry.Mood = SelectedMoodLevel.GetDisplayName();
-            await _petEntryService.UpdatePetEntryAsync(ExistingEntry);
-            return;
-        }
-        var entry = new PetEntry
-        {
-            PetId = CurrentPetId,
-            Date = CurrentSelectedDate,
-            MoodLevel = (int)SelectedMoodLevel,
-            Mood = SelectedMoodLevel.GetDisplayName()
-        };
 
-        await _petEntryService.SavePetEntryAsync(entry);
-    }
-    decimal weight = 0;
-
-
-    public async Task SavePetWeightEntryAsync()
-    {
-        var ExistingEntry = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
-
-        if (!InputParser.TryParsePositive(EnteredWeight, out weight))
-        {
-            Console.WriteLine("Invalid weight entry, skipping save.");
-            return;
-        }
-        if (ExistingEntry != null)
-        {
-            ExistingEntry.Weight = weight;
-            await _petEntryService.UpdatePetEntryAsync(ExistingEntry);
-            return;
-        }
-        var entry = new PetEntry
-        {
-            PetId = CurrentPetId,
-            Date = CurrentSelectedDate,
-            Weight = weight,
-        };
-
-        await _petEntryService.SavePetEntryAsync(entry);
-    }
-
+    /// <summary>Load the selected day's mood/weight so HasMood/HasWeight reflect the
+    /// stored entry (and so NotifyDerived fires for the Journal's reload dedup).</summary>
     public async Task LoadEntriesAsync()
     {
-        var Entries = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
-        if (Entries == null)
+        var entry = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
+        if (entry == null)
         {
             ShownMood = string.Empty;
             ShownWeight = string.Empty;
-            SelectedMoodLevel = MoodLevel.None;
+            NotifyDerived();
             return;
         }
         // Derive the displayed mood from the stored level so it always renders in
         // the active language (the stored Mood string may be in another language).
-        ShownMood = Entries.MoodLevel > 0 ? ((MoodLevel)Entries.MoodLevel).GetDisplayName() : string.Empty;
-        ShownWeight = Entries.Weight > 0 ? Entries.Weight.ToString() : string.Empty;
-        SelectedMoodLevel = (MoodLevel)Entries.MoodLevel;
-        return;
+        ShownMood = entry.MoodLevel > 0 ? ((MoodLevel)entry.MoodLevel).GetDisplayName() : string.Empty;
+        ShownWeight = entry.Weight > 0 ? entry.Weight.ToString() : string.Empty;
+        NotifyDerived();
     }
 
     // ── Medication dose checklist (selected date) ────────────────────────
-    public ObservableCollection<DoseItem> DosesForSelectedDate { get; } = new();
-
-    private bool hasNoDoses = true;
-    public bool HasNoDoses
-    {
-        get => hasNoDoses;
-        set => SetProperty(ref hasNoDoses, value);
-    }
+    // Legacy: served the Today page's old ring + next-med card; no consumer now.
+    public RangeObservableCollection<DoseItem> DosesForSelectedDate { get; } = new();
 
     /// <summary>
     /// Build the list of scheduled doses for the active pet on the selected date
@@ -232,50 +217,54 @@ public class CalendarViewModel : BaseViewModel
     /// </summary>
     public async Task LoadDosesAsync()
     {
-        DosesForSelectedDate.Clear();
-
         var petId = CurrentPetId;
         var date = CurrentSelectedDate.Date;
+        var ordered = new List<DoseItem>();
 
         if (petId != 0)
         {
-            var weekday = date.DayOfWeek;
             var now = DateTime.Now;
 
-            var meds = (await _medicationService.GetMedicationsByPetIdAsync(petId))
-                .Where(m => !m.IsArchived)
-                .ToList();
-            var logs = await _doseLogService.GetByPetAndDateAsync(petId, date);
-
+            // The day's doses come from the shared DayDoseService (same meds →
+            // schedules → logs join the Journal timeline + pending engine use).
             var items = new List<DoseItem>();
-            foreach (var med in meds)
+            foreach (var d in await _dayDoseService.GetForDayAsync(petId, date))
             {
-                var schedules = await _medicationService.GetMedicationSchedulesByMedicationIdAsync(med.Id);
-                var times = schedules.Where(s => s.Day == weekday).Select(s => s.Time).Distinct();
-
-                foreach (var time in times)
+                var med = d.Medication;
+                items.Add(new DoseItem
                 {
-                    var log = logs.FirstOrDefault(l => l.MedicationId == med.Id && l.ScheduledTime == time);
-                    items.Add(new DoseItem
-                    {
-                        MedicationId = med.Id,
-                        PetId = petId,
-                        ScheduledDate = date,
-                        ScheduledTime = time,
-                        MedName = med.Name,
-                        DoseDisplay = $"{med.Dosage} {med.Unit}",
-                        CanToggle = date < now.Date || (date == now.Date && time <= now.TimeOfDay),
-                        Status = log?.Status,
-                        ResolvedAt = log?.ResolvedAt
-                    });
-                }
+                    MedicationId = med.Id,
+                    PetId = petId,
+                    ScheduledDate = date,
+                    ScheduledTime = d.ScheduledTime,
+                    MedName = med.Name,
+                    DoseDisplay = $"{med.Dosage} {med.Unit}",
+                    CanToggle = date < now.Date || (date == now.Date && d.ScheduledTime <= now.TimeOfDay),
+                    Status = d.Log?.Status,
+                    ResolvedAt = d.Log?.ResolvedAt
+                });
             }
 
+            // A "handmade" wobble: alternate the pill-icon tilt and cycle the
+            // card corners through three patterns as they go down the timeline.
+            int index = 0;
             foreach (var item in items.OrderBy(i => i.ScheduledTime).ThenBy(i => i.MedName))
-                DosesForSelectedDate.Add(item);
+            {
+                item.IconRotation = index % 2 == 0 ? -3 : 2.5;
+                item.CardCorner = (index % 3) switch
+                {
+                    0 => new CornerRadius(17, 14, 15, 18),
+                    1 => new CornerRadius(14, 18, 17, 15),
+                    _ => new CornerRadius(16, 15, 18, 14),
+                };
+                ordered.Add(item);
+                index++;
+            }
         }
 
-        HasNoDoses = DosesForSelectedDate.Count == 0;
+        // One Reset notification for the whole checklist instead of Clear + N Adds.
+        DosesForSelectedDate.ReplaceAll(ordered);
+        NotifyDerived();
     }
 
     // ── Week activity dots (visible week) ────────────────────────────────
@@ -284,7 +273,7 @@ public class CalendarViewModel : BaseViewModel
     /// Recomputed for the active pet whenever the visible week, pet, or a dose
     /// outcome changes. The control groups these by date and chooses dot styling.
     /// </summary>
-    public ObservableCollection<CalendarActivity> WeekActivities { get; } = new();
+    public RangeObservableCollection<CalendarActivity> WeekActivities { get; } = new();
 
     /// <summary>
     /// Build the visible week's activity indicators for the active pet:
@@ -307,13 +296,20 @@ public class CalendarViewModel : BaseViewModel
                 .Where(m => !m.IsArchived)
                 .ToList();
 
+            // Two batched queries for the whole week instead of two per medication.
+            var medIds = meds.Select(m => m.Id).ToList();
+            var schedulesByMed = (await _medicationService.GetSchedulesForMedicationsAsync(medIds))
+                .ToLookup(s => s.MedicationId);
+            var logsByMed = (await _doseLogService.GetByMedicationsAndRangeAsync(medIds, weekStart, weekEnd))
+                .ToLookup(l => l.MedicationId);
+
             foreach (var med in meds)
             {
-                var schedules = await _medicationService.GetMedicationSchedulesByMedicationIdAsync(med.Id);
+                var schedules = schedulesByMed[med.Id].ToList();
                 if (schedules.Count == 0)
                     continue;
 
-                var logs = await _doseLogService.GetByMedicationAndRangeAsync(med.Id, weekStart, weekEnd);
+                var logs = logsByMed[med.Id];
                 // Never show doses for dates before the medication existed.
                 var expandFrom = med.CreatedAt > weekStart ? med.CreatedAt : weekStart.AddTicks(-1);
 
@@ -348,13 +344,14 @@ public class CalendarViewModel : BaseViewModel
             }
         }
 
-        WeekActivities.Clear();
-        foreach (var activity in activities)
-            WeekActivities.Add(activity);
+        WeekActivities.ReplaceAll(activities);
     }
 
-    /// <summary>One-tap confirmation: toggle a dose between Taken and not-recorded.</summary>
-    public ICommand ToggleDoseTakenCommand => new Command<DoseItem>(async item =>
+    /// <summary>One-tap confirmation: toggle a dose between Taken and not-recorded.
+    /// Legacy: the Today page's old next-med card was its only executor.</summary>
+    public ICommand ToggleDoseTakenCommand { get; }
+
+    private async Task ToggleDoseTakenAsync(DoseItem? item)
     {
         if (item == null || !item.CanToggle)
             return;
@@ -364,6 +361,9 @@ public class CalendarViewModel : BaseViewModel
             await _doseLogService.ClearStatusAsync(item.MedicationId, item.ScheduledDate, item.ScheduledTime);
             item.ResolvedAt = null;
             item.Status = null;
+            // Marking it taken cancelled the occurrence's reminder; un-marking must
+            // re-arm it or the dose would go silently unreminded. Idempotent sync.
+            await _reminderScheduler.SyncMedicationAsync(item.MedicationId);
         }
         else
         {
@@ -376,44 +376,13 @@ public class CalendarViewModel : BaseViewModel
 
         // Reflect the new outcome in the month dots (hollow ↔ filled).
         await LoadWeekActivitiesAsync();
-    });
-
-    /// <summary>Secondary action: toggle a dose between Skipped and not-recorded.</summary>
-    public ICommand SkipDoseCommand => new Command<DoseItem>(async item =>
-    {
-        if (item == null || !item.CanToggle)
-            return;
-
-        if (item.Status == DoseStatus.Skipped)
-        {
-            await _doseLogService.ClearStatusAsync(item.MedicationId, item.ScheduledDate, item.ScheduledTime);
-            item.ResolvedAt = null;
-            item.Status = null;
-        }
-        else
-        {
-            await _doseLogService.SetStatusAsync(item.MedicationId, item.PetId, item.ScheduledDate, item.ScheduledTime, DoseStatus.Skipped);
-            item.ResolvedAt = DateTime.Now;
-            item.Status = DoseStatus.Skipped;
-            // A skipped dose is handled too — don't let its reminder nag.
-            await _reminderScheduler.MarkDoseHandledAsync(item.MedicationId, item.ScheduledDate, item.ScheduledTime);
-        }
-
-        // Reflect the new outcome in the month dots (hollow ↔ filled).
-        await LoadWeekActivitiesAsync();
-    });
-
-    public EntrySection MoodSection { get; } = new();
-    public EntrySection WeightSection { get; } = new();
-    public EntrySection MedicationSection { get; } = new();
-
+    }
 
     /// <summary>
     /// Loads pets and entries. Call from Main while that page is visible so Calendar opens ready.
     /// </summary>
     public async Task PrepareDataAsync()
     {
-        ResetInputSections();
         await LoadPetsAsync();
         await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
     }
@@ -423,76 +392,18 @@ public class CalendarViewModel : BaseViewModel
     /// </summary>
     public async Task RefreshEntriesAsync()
     {
-        ResetInputSections();
         await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
     }
 
-    private void ResetInputSections()
-    {
-        EntrySection.HideInput(MoodSection);
-        EntrySection.HideInput(WeightSection);
-        EntrySection.HideInput(MedicationSection);
-    }
-    public ICommand ShowMoodInputCommand => new Command(() =>
-    {
-        EntrySection.ShowInput(MoodSection, WeightSection, MedicationSection);
-    });
-    public ICommand OnMoodEntryCompleted =>
-    new Command(async () =>
-    {
-        EntrySection.HideInput(MoodSection);
-        await SavePetMoodEntryAsync();
-        await LoadEntriesAsync();
-        SelectedMoodLevel = MoodLevel.None;
-    });
+    public int CurrentPetId => _activePetService.ActivePet?.Id ?? 0;
 
-    public ICommand ShowWeightInputCommand => new Command(() =>
+    public ICommand SelectPetCommand { get; }
+
+    private async Task SelectPetAsync(Pet pet)
     {
-        EntrySection.ShowInput(WeightSection, MoodSection, MedicationSection);
-    });
+        if (pet == null)
+            return;
 
-    public ICommand OnWeightEntryCompleted => new Command(async () =>
-    {
-        EntrySection.HideInput(WeightSection);
-        await SavePetWeightEntryAsync();
-        await LoadEntriesAsync();
-        EnteredWeight = "";
-    });
-
-
-
-    public ICommand ShowMedicationInputCommand => new Command(() =>
-    {
-        EntrySection.ShowInput(MedicationSection, MoodSection, WeightSection);
-    });
-
-    public int CurrentPetId
-    {
-        get => _activePetService.ActivePet?.Id ?? 0;
-        private set
-        {
-            if (CurrentPetId != value)
-            {
-                var pet = Pets.FirstOrDefault(p => p.Id == value);
-                if (pet != null)
-                {
-                    _activePetService.ActivePet = pet;
-                    OnPropertyChanged();
-                }
-            }
-        }
-    }
-
-    public ICommand SelectMoodCommand => new Command<string>(mood =>
-    {
-        if (int.TryParse(mood, out var moodValue))
-        {
-            SelectedMoodLevel = (MoodLevel)moodValue;
-        }
-    });
-
-    public ICommand SelectPetCommand => new Command<Pet>(async pet =>
-    {
         foreach (var p in Pets)
         {
             p.IsSelected = false;
@@ -500,7 +411,6 @@ public class CalendarViewModel : BaseViewModel
         pet.IsSelected = true;
         _activePetService.ActivePet = pet;
         await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
-        Console.WriteLine($"Selected pet: {pet.Name}");
-    });
+        NotifyDerived();
+    }
 }
-

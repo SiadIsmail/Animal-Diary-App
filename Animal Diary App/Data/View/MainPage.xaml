@@ -4,503 +4,571 @@
              xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
              x:Class="Animal_Diary_App.Data.View.MainPage"
              NavigationPage.HasNavigationBar="False"
-             BackgroundColor="#DCEBF5">
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
+             BackgroundColor="#C4E6E3">
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <helpers:WeightToHeightConverter x:Key="WeightToHeightConverter"/>
-            <helpers:WeightMaxConverter x:Key="WeightMaxConverter"/>
-            <helpers:WeightMidConverter x:Key="WeightMidConverter"/>
-            <helpers:WeightMinConverter x:Key="WeightMinConverter"/>
             <helpers:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+            <helpers:MoodToHeightConverter x:Key="MoodToHeight"/>
+
+            <!-- Frosted glass card surface (matches Journal) -->
+            <Style x:Key="GlassCard"
+                   TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{StaticResource Glass}"/>
+                <Setter Property="Stroke"
+                        Value="{StaticResource GlassLine}"/>
+                <Setter Property="StrokeThickness"
+                        Value="1"/>
+                <Setter Property="StrokeShape"
+                        Value="RoundRectangle 17,14,15,18"/>
+                <Setter Property="Padding"
+                        Value="16"/>
+            </Style>
+
+            <!-- Warm italic-serif section heading -->
+            <Style x:Key="SerifHeading"
+                   TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{StaticResource FontSerifItalic}"/>
+                <Setter Property="FontSize"
+                        Value="17"/>
+                <Setter Property="TextColor"
+                        Value="{StaticResource Ink}"/>
+            </Style>
+
+            <!-- Small stat-card eyebrow -->
+            <Style x:Key="StatLabel"
+                   TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize"
+                        Value="10.5"/>
+                <Setter Property="FontAttributes"
+                        Value="Bold"/>
+                <Setter Property="CharacterSpacing"
+                        Value="1.2"/>
+                <Setter Property="TextColor"
+                        Value="{StaticResource InkTertiary}"/>
+            </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Background -->
-        <Image Source="hintergrund_blau.png"
-               Aspect="AspectFill"
-               HorizontalOptions="Fill"
-               VerticalOptions="Fill"
-               InputTransparent="True"
-               Grid.RowSpan="2"/>
+        <!-- Water background — bottom layer, spans the whole page -->
+        <controls:WaterBackground Grid.RowSpan="2"/>
 
-        <!-- Main Content -->
+        <!-- ================= TODAY ================= -->
         <ScrollView Grid.Row="0">
 
-            <VerticalStackLayout Padding="20,16,20,120"
-                                 Spacing="18">
+            <VerticalStackLayout Padding="22,26,22,20"
+                                 Spacing="22">
 
-                <!-- Header -->
+                <!-- 1 ── Header: greeting + handwritten aside + settings ── -->
                 <Grid ColumnDefinitions="*,Auto"
                       VerticalOptions="Center">
 
-                    <VerticalStackLayout Spacing="2">
-
-                        <!-- ? greeting binding -->
-                        <Label Text="{loc:Translate Main_GreetingMorning}"
-                               FontSize="14"
-                               FontAttributes="Bold"
-                               TextColor="#4A6172"
-                               Opacity="0.7"/>
-
+                    <VerticalStackLayout Grid.Column="0"
+                                         Spacing="1"
+                                         VerticalOptions="Center">
+                        <Label Text="{Binding MainPageVM.Greeting}"
+                               FontFamily="{StaticResource FontSerif}"
+                               FontSize="{StaticResource TypeH1}"
+                               TextColor="{StaticResource Ink}"/>
+                        <!-- rotating handwritten aside (set per load, Caveat) -->
+                        <Label x:Name="AsideLabel"
+                               FontFamily="{StaticResource FontHand}"
+                               FontSize="18"
+                               TextColor="{StaticResource TealDeep}"/>
                     </VerticalStackLayout>
 
                     <!-- Settings button -->
                     <Border Grid.Column="1"
-                            WidthRequest="38"
-                            HeightRequest="38"
-                            BackgroundColor="#55FFFFFF"
-                            StrokeThickness="0"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 20,19,19,20"
                             HorizontalOptions="End"
-                            VerticalOptions="Center">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="19"/>
-                        </Border.StrokeShape>
-
+                            VerticalOptions="Center"
+                            SemanticProperties.Description="Settings">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding SettingsVM.OpenSettingsCommand}"/>
                         </Border.GestureRecognizers>
-
                         <Label Text="⚙️"
-                               FontSize="18"
+                               FontSize="17"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
-
                     </Border>
-
                 </Grid>
 
-                <!-- ACTIVE PET HERO -->
+                <!-- 2 ── Active pet hero: precise care ring + avatar ── -->
+                <VerticalStackLayout HorizontalOptions="Center"
+                                     Spacing="3"
+                                     Margin="0,6,0,0">
 
-                <Border Padding="18"
-                        BackgroundColor="#5B9BB8"
-                        StrokeThickness="0">
+                    <Grid HorizontalOptions="Center"
+                          WidthRequest="132"
+                          HeightRequest="132">
 
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="28"/>
-                    </Border.StrokeShape>
-
-                    <Border.Shadow>
-                        <Shadow Brush="#40000000"
-                                Offset="0,8"
-                                Radius="18"
-                                Opacity="0.35"/>
-                    </Border.Shadow>
-
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="14">
+                        <!-- Care-completion ring (DATA — precise, animated fill).
+                             Progress = today's done/total from the same PendingEngine
+                             snapshot the Journal's "Still to do" chips use. -->
+                        <controls:ProgressRingView x:Name="CareRing"
+                                                   WidthRequest="132"
+                                                   HeightRequest="132"
+                                                   Progress="{Binding MainPageVM.CareProgress}"
+                                                   ProgressColor="{StaticResource Teal}"
+                                                   TrackColor="{StaticResource TealLine}"
+                                                   RingThickness="6"/>
 
                         <!-- Avatar -->
-                        <Grid WidthRequest="72"
-                              HeightRequest="72">
-
-                            <Border BackgroundColor="#30FFFFFF"
-                                    Stroke="#55FFFFFF"
-                                    StrokeThickness="2">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="36"/>
-                                </Border.StrokeShape>
-
-                                <!-- ? bind pet image -->
-                                <Image Source="animal1.jpg"
-                                       Aspect="AspectFill"/>
-                            </Border>
-
-                            <!-- Mood / health indicator -->
-                            <Border WidthRequest="16"
-                                    HeightRequest="16"
-                                    BackgroundColor="#6DD39E"
-                                    Stroke="#5B9BB8"
-                                    StrokeThickness="2"
-                                    HorizontalOptions="End"
-                                    VerticalOptions="End">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8"/>
-                                </Border.StrokeShape>
-
-                            </Border>
-
-                        </Grid>
-
-                        <!-- Pet Info -->
-                        <VerticalStackLayout Grid.Column="1"
-                                             Spacing="6"
-                                             VerticalOptions="Center">
-
-                            <Label Text="{Binding MainPageVM.ActivePet.Name}"
-                                   FontSize="20"
-                                   FontFamily="Georgia"
-                                   FontAttributes="Bold"
-                                   TextColor="White"/>
-
-                            <Label FontSize="12"
-                                   TextColor="White"
-                                   Opacity="0.72">
-
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding MainPageVM.ActivePet.Type}"/>
-                                        <Span Text=" · "/>
-                                        <Span Text="{Binding MainPageVM.ActivePet.Age}"/>
-                                        <Span Text="{loc:Translate Common_YearsSeparator}"/>
-                                        <Span Text="{Binding MainPageVM.LatestWeight}"/>
-                                        <Span Text="{loc:Translate Common_KgSuffix}"/>
-                                    </FormattedString>
-                                </Label.FormattedText>
-
-                            </Label>
-
-                            <!-- Health Tags -->
-                            <FlexLayout Wrap="Wrap"
-                                        Direction="Row"
-                                        AlignItems="Start"
-                                        JustifyContent="Start">
-
-                                <!-- ? convert to bindable collection later -->
-                                <Border BackgroundColor="#30FFFFFF"
-                                        Padding="10,4"
-                                        Margin="0,0,6,6"
-                                        StrokeThickness="0">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="20"/>
-                                    </Border.StrokeShape>
-
-                                    <Label Text="{loc:Translate Main_HealthyPlaceholder}"
-                                           FontSize="10"
-                                           FontAttributes="Bold"
-                                           TextColor="White"/>
-                                </Border>
-
-                                <Border BackgroundColor="#40F0C060"
-                                        Padding="10,4"
-                                        Margin="0,0,6,6"
-                                        StrokeThickness="0">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="20"/>
-                                    </Border.StrokeShape>
-
-                                    <!-- ? medication reminder binding -->
-                                    <Label Text="{loc:Translate Main_MedsPlaceholder}"
-                                           FontSize="10"
-                                           FontAttributes="Bold"
-                                           TextColor="#7A4A00"/>
-                                </Border>
-
-                            </FlexLayout>
-
-                        </VerticalStackLayout>
-
+                        <Border WidthRequest="108"
+                                HeightRequest="108"
+                                Stroke="{StaticResource GlassLine}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 54"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0"
+                                                     EndPoint="1,1">
+                                    <GradientStop Color="{StaticResource SeaHi}"
+                                                  Offset="0"/>
+                                    <GradientStop Color="{StaticResource SeaMid}"
+                                                  Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Image Source="animal1.jpg"
+                                   Aspect="AspectFill"/>
+                        </Border>
                     </Grid>
 
-                </Border>
+                    <!-- Pet name -->
+                    <Label Text="{Binding MainPageVM.ActivePet.Name}"
+                           FontFamily="{StaticResource FontSerif}"
+                           FontSize="{StaticResource TypeDisplay}"
+                           TextColor="{StaticResource Ink}"
+                           HorizontalOptions="Center"
+                           Margin="0,10,0,0"/>
 
-                <!-- QUICK STATS -->
-                <Grid ColumnDefinitions="*,*"
-                      ColumnSpacing="14">
+                    <!-- Meta line: type · age · weight (DATA — precise) -->
+                    <Label HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="13.5"
+                           TextColor="{StaticResource InkSecondary}">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span>
+                                    <Span.Text>
+                                        <MultiBinding Converter="{StaticResource PetTypeLocalizedConverter}">
+                                            <Binding Path="MainPageVM.ActivePet.Type"/>
+                                            <Binding Path="CurrentLanguage" Source="{x:Static loc:LocalizationManager.Instance}"/>
+                                        </MultiBinding>
+                                    </Span.Text>
+                                </Span>
+                                <Span Text=" · "/>
+                                <Span Text="{Binding MainPageVM.ActivePet.Age}"/>
+                                <Span Text="{loc:Translate Common_YearsSeparator}"/>
+                                <Span Text="{Binding MainPageVM.LatestWeight}"/>
+                                <Span Text="{loc:Translate Common_KgSuffix}"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>                    
+                </VerticalStackLayout>
 
-                    <!-- Latest Weight -->
-                    <Border Padding="16"
-                            BackgroundColor="#40FFFFFF"
-                            Stroke="#50FFFFFF"
-                            StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="16"/>
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="6">
-
-                            <Label Text="{loc:Translate Main_Weight}"
-                                   FontSize="10"
-                                   FontAttributes="Bold"
-                                   CharacterSpacing="1.5"
-                                   TextColor="#2E6B85"/>
-
-                            <Label Text="{Binding MainPageVM.LatestWeight, StringFormat='{0} kg'}"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="#1C3D52"/>
-
-                            <!-- ? trend binding -->
-                            <Label Text="{loc:Translate Main_StableThisWeek}"
-                                   FontSize="11"
-                                   TextColor="#6D8291"/>
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                    <!-- Mood -->
-                    <Border Grid.Column="1"
-                            Padding="16"
-                            BackgroundColor="#40FFFFFF"
-                            Stroke="#50FFFFFF"
-                            StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="16"/>
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="6">
-
-                            <Label Text="{loc:Translate Main_Mood}"
-                                   FontSize="10"
-                                   FontAttributes="Bold"
-                                   CharacterSpacing="1.5"
-                                   TextColor="#2E6B85"/>
-
-                            <!-- ? latest mood binding -->
-                            <Label Text="{loc:Translate Main_HappyPlaceholder}"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="#1C3D52"/>
-
-                            <!-- ? date binding -->
-                            <Label Text="{loc:Translate Main_LoggedToday}"
-                                   FontSize="11"
-                                   TextColor="#6D8291"/>
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                </Grid>
-                <VerticalStackLayout
-                    IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
-                    <Label Text="{loc:Translate Main_MoodLabel}"
-                           FontSize="10"
-                           FontAttributes="Bold"
-                           CharacterSpacing="1.5"
-                           TextColor="#2E6B85"/>
-
-                    <!-- MOOD TIMELINE -->
-                    <Border BackgroundColor="#40FFFFFF"
-                            Stroke="#50FFFFFF"
+                <!-- 3 ── Next up: first pending med dose or care-plan tracker ── -->
+                <Grid Margin="0,4,0,0">
+                    <Border x:Name="NextMedCard"
+                            Rotation="-1.2"
+                            BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
                             StrokeThickness="1"
-                            Padding="12,8"
-                            StrokeShape="RoundRectangle 16">
+                            StrokeShape="RoundRectangle 16,13,14,15"
+                            Padding="15,14">
+                        <Border.Shadow>
+                            <Shadow Brush="#0D3A3C"
+                                    Offset="0,6"
+                                    Radius="18"
+                                    Opacity="0.10"/>
+                        </Border.Shadow>
 
-                        <VerticalStackLayout Spacing="8">
+                        <!-- contents counter-rotated so the readout stays level -->
+                        <Grid Rotation="1.2"
+                              ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="14">
 
-                            <Label Text="{loc:Translate Main_Last30Days}"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   TextColor="#2E6B85"/>
-
-                            <FlexLayout Direction="Row"
-                                        Wrap="NoWrap"
-                                        AlignItems="Center"
-                                        HeightRequest="26"
-                                        BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
-
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border HeightRequest="26"
-                                                Margin="1,0"
-                                                BackgroundColor="{Binding MoodColor}"
-                                                StrokeThickness="0"
-                                                FlexLayout.Grow="1"
-                                                StrokeShape="RoundRectangle 3">
-
-                                            <Border.GestureRecognizers>
-                                                <TapGestureRecognizer
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MainPageVM.NavigateToMoodDateCommand}"
-                                                    CommandParameter="{Binding Date}"/>
-                                            </Border.GestureRecognizers>
-
-                                        </Border>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-
-                            </FlexLayout>
-
-                        </VerticalStackLayout>
-
-                    </Border>
-                </VerticalStackLayout>
-
-
-                <VerticalStackLayout Spacing="8"
-                                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData, Converter={StaticResource InvertedBoolConverter}}"
-                                     Padding="16"
-                                     VerticalOptions="Start">
-                    <Label Text="😊"
-                           FontSize="32"
-                           HorizontalTextAlignment="Center"/>
-                    <Label Text="{loc:Translate Main_MoodEmptyState}"
-                           FontSize="12"
-                           TextColor="#6D8291"
-                           HorizontalTextAlignment="Center"/>
-                </VerticalStackLayout>
-
-                <!-- WEIGHT CHART -->
-                <view:WeightChartView/>
-
-                <VerticalStackLayout Spacing="10">
-
-                    <Label Text="{loc:Translate Main_RecentActivity}"
-                           FontSize="10"
-                           FontAttributes="Bold"
-                           CharacterSpacing="1.5"
-                           TextColor="#2E6B85"/>
-
-                    <!-- This should eventually become a CollectionView -->
-                    <!-- ? recent activity collection -->
-
-                    <!-- Activity Card -->
-                    <Border Padding="14"
-                            BackgroundColor="#35FFFFFF"
-                            Stroke="#45FFFFFF"
-                            StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="18"/>
-                        </Border.StrokeShape>
-
-                        <Grid ColumnDefinitions="Auto,*,Auto"
-                              ColumnSpacing="12">
-
-                            <Border WidthRequest="42"
-                                    HeightRequest="42"
-                                    BackgroundColor="#30C4A8E0"
-                                    StrokeThickness="0">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12"/>
-                                </Border.StrokeShape>
-
-                                <Label Text="💊"
-                                       FontSize="18"
+                            <Border WidthRequest="44"
+                                    HeightRequest="44"
+                                    BackgroundColor="{StaticResource HoneyWarmTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 14"
+                                    VerticalOptions="Center">
+                                <Label x:Name="NextMedIcon"
+                                       Text="💊"
+                                       FontSize="20"
                                        HorizontalOptions="Center"
                                        VerticalOptions="Center"/>
                             </Border>
 
                             <VerticalStackLayout Grid.Column="1"
-                                                 Spacing="2">
-
-                                <!-- ? medication binding -->
-                                <Label Text="{loc:Translate Main_MedicationGiven}"
-                                       FontSize="13"
+                                                 Spacing="2"
+                                                 VerticalOptions="Center">
+                                <Label Text="{loc:Translate Main_NextMedEyebrow}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="10.5"
                                        FontAttributes="Bold"
-                                       TextColor="#1C3D52"/>
-
-                                <!-- ? details binding -->
-                                <Label Text="{loc:Translate Main_MedicationDetailPlaceholder}"
-                                       FontSize="11"
-                                       TextColor="#6D8291"/>
-
+                                       CharacterSpacing="1.1"
+                                       TextColor="{StaticResource InkTertiary}"/>
+                                <Label x:Name="NextMedName"
+                                       Text="{loc:Translate Main_MedsPlaceholder}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14.5"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label x:Name="NextMedDetail"
+                                       Text="{loc:Translate Main_MedicationDetailPlaceholder}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12.5"
+                                       TextColor="{StaticResource InkSecondary}"/>
                             </VerticalStackLayout>
 
-                            <!-- ? time binding -->
-                            <Label Grid.Column="2"
-                                   Text="08:00"
-                                   FontSize="10"
-                                   TextColor="#7B91A1"
-                                   VerticalOptions="Start"/>
-
+                            <VerticalStackLayout Grid.Column="2"
+                                                 Spacing="6"
+                                                 VerticalOptions="Center"
+                                                 HorizontalOptions="End">
+                                <Label x:Name="NextMedTime"
+                                       Text="08:00"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="13"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource InkSecondary}"
+                                       HorizontalOptions="End"/>
+                                <Button x:Name="NextMedAction"
+                                        Text="{loc:Translate Journal_MarkGiven}"
+                                        IsVisible="False"
+                                        FontFamily="{StaticResource FontSans}"
+                                        FontSize="12"
+                                        FontAttributes="Bold"
+                                        HeightRequest="34"
+                                        Padding="14,0"
+                                        CornerRadius="11"
+                                        BackgroundColor="{StaticResource Teal}"
+                                        TextColor="{StaticResource White}"
+                                        Clicked="OnNextUpAction"/>
+                            </VerticalStackLayout>
                         </Grid>
-
                     </Border>
 
+                    <!-- Paperclip overlapping the top-left corner (chrome) -->
+                    <Path Data="M7 3 L7 17 Q7 21 11 21 Q15 21 15 17 L15 7 Q15 4 12 4 Q10 4 10 7 L10 15"
+                          Stroke="{StaticResource InkTertiary}"
+                          StrokeThickness="1.6"
+                          StrokeLineCap="Round"
+                          StrokeLineJoin="Round"
+                          Rotation="-24"
+                          WidthRequest="22"
+                          HeightRequest="24"
+                          HorizontalOptions="Start"
+                          VerticalOptions="Start"
+                          Margin="10,-6,0,0"/>
+                </Grid>
+
+                <!-- 4 ── Quick stats: weight + mood ── -->
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="12">
+
+                    <!-- Weight (DATA — precise serif number) -->
+                    <Border Style="{StaticResource GlassCard}"
+                            StrokeShape="RoundRectangle 16,13,14,15"
+                            Padding="16,16,16,14">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{loc:Translate Main_Weight}"
+                                   Style="{StaticResource StatLabel}"/>
+
+                            <!-- The pet's most recent weigh-in and when it was taken.
+                                 The chip states the date, never a judgement on the
+                                 value — the app can't know what a change means. -->
+                            <Label IsVisible="{Binding MainPageVM.HasLoggedWeight}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding MainPageVM.LatestWeight}"
+                                              FontFamily="{StaticResource FontSerif}"
+                                              FontSize="27"
+                                              TextColor="{StaticResource Ink}"/>
+                                        <Span Text=" kg"
+                                              FontFamily="{StaticResource FontSans}"
+                                              FontSize="14"
+                                              TextColor="{StaticResource InkSecondary}"/>
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border BackgroundColor="{StaticResource TealTint}"
+                                    Padding="9,4"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 999"
+                                    HorizontalOptions="Start"
+                                    IsVisible="{Binding MainPageVM.HasLoggedWeight}">
+                                <Label Text="{Binding MainPageVM.LatestWeightLoggedLabel}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="11"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"/>
+                            </Border>
+
+                            <!-- Empty state: no weigh-in for this pet yet. -->
+                            <Label Text="{loc:Translate Main_WeightEmptyCard}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12"
+                                   LineHeight="1.35"
+                                   TextColor="{StaticResource InkSecondary}"
+                                   IsVisible="{Binding MainPageVM.HasLoggedWeight, Converter={StaticResource InvertedBoolConverter}}"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Mood -->
+                    <Border Grid.Column="1"
+                            Style="{StaticResource GlassCard}"
+                            StrokeShape="RoundRectangle 13,16,15,14"
+                            Padding="16,16,16,14">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{loc:Translate Main_Mood}"
+                                   Style="{StaticResource StatLabel}"/>
+
+                            <!-- The pet's most recent mood — swatch, word and when it
+                                 was logged all come from the same entry. -->
+                            <HorizontalStackLayout Spacing="7"
+                                                   IsVisible="{Binding MainPageVM.HasLoggedMood}">
+                                <Border WidthRequest="11"
+                                        HeightRequest="11"
+                                        BackgroundColor="{Binding MainPageVM.LatestMoodColor}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 6"
+                                        VerticalOptions="Center"/>
+                                <Label Text="{Binding MainPageVM.LatestMoodLabel}"
+                                       FontFamily="{StaticResource FontSerif}"
+                                       FontSize="20"
+                                       TextColor="{StaticResource Ink}"/>
+                            </HorizontalStackLayout>
+                            <Border BackgroundColor="{StaticResource TealTint}"
+                                    Padding="9,4"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 999"
+                                    HorizontalOptions="Start"
+                                    IsVisible="{Binding MainPageVM.HasLoggedMood}">
+                                <Label Text="{Binding MainPageVM.LatestMoodLoggedLabel}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="11"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"/>
+                            </Border>
+
+                            <!-- Empty state: nothing logged for this pet yet. -->
+                            <Label Text="{loc:Translate Main_MoodEmptyCard}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12"
+                                   LineHeight="1.35"
+                                   TextColor="{StaticResource InkSecondary}"
+                                   IsVisible="{Binding MainPageVM.HasLoggedMood, Converter={StaticResource InvertedBoolConverter}}"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- 5 ── Mood ribbon (DATA — accurate heights) ── -->
+                <VerticalStackLayout Spacing="12"
+                                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
+
+                    <Label Text="{loc:Translate Main_MoodMonthHeading}"
+                           Style="{StaticResource SerifHeading}"/>
+
+                    <Border Style="{StaticResource GlassCard}">
+                        <VerticalStackLayout Spacing="12">
+
+                            <Label Text="{loc:Translate Main_Last30Days}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource InkTertiary}"/>
+
+                            <FlexLayout Direction="Row"
+                                        Wrap="NoWrap"
+                                        AlignItems="End"
+                                        HeightRequest="30"
+                                        BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vms:MoodTimelineDay">
+                                        <!-- Height encodes the real mood value; only the
+                                             corner radius is decorative. -->
+                                        <Border HeightRequest="{Binding Mood, Converter={StaticResource MoodToHeight}}"
+                                                Margin="1.5,0"
+                                                BackgroundColor="{Binding MoodColor}"
+                                                StrokeThickness="0"
+                                                FlexLayout.Grow="1"
+                                                VerticalOptions="End"
+                                                StrokeShape="RoundRectangle 4,3,4,3">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MainPageVM.NavigateToMoodDateCommand}"
+                                                    CommandParameter="{Binding Date}"/>
+                                            </Border.GestureRecognizers>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </FlexLayout>
+
+                            <!-- Legend (colours mirror MoodLevel.GetColor — kept exact) -->
+                            <FlexLayout Wrap="Wrap"
+                                        Direction="Row"
+                                        AlignItems="Center">
+                                <HorizontalStackLayout Spacing="5"
+                                                       Margin="0,0,12,0">
+                                    <Border WidthRequest="8"
+                                            HeightRequest="8"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 3"
+                                            BackgroundColor="{StaticResource MGreat}"
+                                            VerticalOptions="Center"/>
+                                    <Label Text="{loc:Translate Mood_Excellent}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="10.5"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource InkTertiary}"/>
+                                </HorizontalStackLayout>
+                                <HorizontalStackLayout Spacing="5"
+                                                       Margin="0,0,12,0">
+                                    <Border WidthRequest="8"
+                                            HeightRequest="8"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 3"
+                                            BackgroundColor="{StaticResource MGood}"
+                                            VerticalOptions="Center"/>
+                                    <Label Text="{loc:Translate Mood_Good}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="10.5"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource InkTertiary}"/>
+                                </HorizontalStackLayout>
+                                <HorizontalStackLayout Spacing="5"
+                                                       Margin="0,0,12,0">
+                                    <Border WidthRequest="8"
+                                            HeightRequest="8"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 3"
+                                            BackgroundColor="{StaticResource MOkay}"
+                                            VerticalOptions="Center"/>
+                                    <Label Text="{loc:Translate Mood_Neutral}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="10.5"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource InkTertiary}"/>
+                                </HorizontalStackLayout>
+                                <HorizontalStackLayout Spacing="5"
+                                                       Margin="0,0,12,0">
+                                    <Border WidthRequest="8"
+                                            HeightRequest="8"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 3"
+                                            BackgroundColor="{StaticResource MLow}"
+                                            VerticalOptions="Center"/>
+                                    <Label Text="{loc:Translate Mood_Bad}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="10.5"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource InkTertiary}"/>
+                                </HorizontalStackLayout>
+                                <HorizontalStackLayout Spacing="5"
+                                                       Margin="0,0,12,0">
+                                    <Border WidthRequest="8"
+                                            HeightRequest="8"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 3"
+                                            BackgroundColor="{StaticResource MUnwell}"
+                                            VerticalOptions="Center"/>
+                                    <Label Text="{loc:Translate Mood_VeryBad}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="10.5"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource InkTertiary}"/>
+                                </HorizontalStackLayout>
+                            </FlexLayout>
+                        </VerticalStackLayout>
+                    </Border>
                 </VerticalStackLayout>
 
+                <!-- Mood empty state -->
+                <VerticalStackLayout Spacing="8"
+                                     Padding="16"
+                                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData, Converter={StaticResource InvertedBoolConverter}}">
+                    <Label Text="😊"
+                           FontSize="32"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Text="{loc:Translate Main_MoodEmptyState}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12"
+                           TextColor="{StaticResource InkSecondary}"
+                           HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
 
+                <!-- 6 ── Weight chart (DATA — precise line chart) ── -->
+                <view:WeightChartView/>
 
             </VerticalStackLayout>
-
         </ScrollView>
 
-        <!-- BOTTOM NAVIGATION -->
-        <Border Grid.Row="1"
-                Margin="0"
-                Padding="12,10,12,20"
-                BackgroundColor="#E6C4A8E0"
+        <!-- ================= TAB BAR ================= -->
+        <controls:BottomNavigation Grid.Row="1"
+                                   ActiveTab="Main"/>
+
+        <!-- Confirm micro-interaction overlay (bubbles) -->
+        <AbsoluteLayout x:Name="EffectLayer"
+                        Grid.RowSpan="2"
+                        InputTransparent="True"
+                        IsClippedToBounds="False"/>
+
+        <!-- Toast (warm confirmation pill) -->
+        <Border x:Name="Toast"
+                Grid.RowSpan="2"
+                Opacity="0"
+                InputTransparent="True"
+                BackgroundColor="{StaticResource Ink}"
                 StrokeThickness="0"
-                VerticalOptions="End">
-
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="24,24,0,0"/>
-            </Border.StrokeShape>
-
+                StrokeShape="RoundRectangle 18,15,14,17"
+                Rotation="-0.5"
+                Padding="14,11"
+                HorizontalOptions="Center"
+                VerticalOptions="End"
+                Margin="0,0,0,92">
             <Border.Shadow>
-                <Shadow Brush="#30000000"
-                        Offset="0,-2"
-                        Radius="10"
-                        Opacity="0.18"/>
+                <Shadow Brush="#0D3A3C"
+                        Offset="0,12"
+                        Radius="34"
+                        Opacity="0.20"/>
             </Border.Shadow>
-
-            <Grid ColumnDefinitions="*,*,*">
-
-                <!-- MAIN -->
-                <Grid>
-
-                    <VerticalStackLayout HorizontalOptions="Center"
-                                         Spacing="2">
-
-                        <Label Text="🏠"
-                               FontSize="20"
-                               HorizontalTextAlignment="Center"/>
-
-                        <Label Text="{loc:Translate Nav_Main}"
-                               FontSize="11"
-                               FontAttributes="Bold"
-                               TextColor="#4A1580"
-                               HorizontalTextAlignment="Center"/>
-                    </VerticalStackLayout>
-                </Grid>
-
-                <!-- CALENDAR -->
-                <Grid Grid.Column="1">
-                    <Grid.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnCalendarClicked"/>
-                    </Grid.GestureRecognizers>
-
-                    <VerticalStackLayout HorizontalOptions="Center"
-                                         Spacing="2">
-
-                        <Label Text="📅"
-                               FontSize="20"
-                               HorizontalTextAlignment="Center"/>
-
-                        <Label Text="{loc:Translate Nav_Calendar}"
-                               FontSize="11"
-                               FontAttributes="Bold"
-                               TextColor="#664A1580"
-                               HorizontalTextAlignment="Center"/>
-                    </VerticalStackLayout>
-                </Grid>
-
-                <!-- PETS -->
-                <Grid Grid.Column="2">
-                    <Grid.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnPetsClicked"/>
-                    </Grid.GestureRecognizers>
-
-                    <VerticalStackLayout HorizontalOptions="Center"
-                                         Spacing="2">
-
-                        <Label Text="🐾"
-                               FontSize="20"
-                               HorizontalTextAlignment="Center"/>
-
-                        <Label Text="{loc:Translate Nav_Pets}"
-                               FontSize="11"
-                               FontAttributes="Bold"
-                               TextColor="#664A1580"
-                               HorizontalTextAlignment="Center"/>
-                    </VerticalStackLayout>
-                </Grid>
-
-            </Grid>
+            <HorizontalStackLayout Spacing="8"
+                                   VerticalOptions="Center">
+                <Label Text="✓"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="13"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource MGreat}"
+                       VerticalOptions="Center"/>
+                <Label x:Name="ToastLabel"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="13"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource White}"
+                       VerticalOptions="Center"/>
+            </HorizontalStackLayout>
         </Border>
 
         <!-- Settings panel overlay — last child renders on top of everything -->

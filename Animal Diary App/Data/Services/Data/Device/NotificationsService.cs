@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.Services.Data.Device;
 
 using Plugin.LocalNotification;
+using System.Diagnostics;
 
 /// <summary>
 /// <see cref="INotificationService"/> implementation backed by
@@ -9,14 +10,22 @@ using Plugin.LocalNotification;
 /// </summary>
 public class NotificationService : INotificationService
 {
-    public async Task RequestNotificationPermission()
+    public Task RequestNotificationPermission() => RequestNotificationPermissionAsync();
+
+    public async Task<bool> RequestNotificationPermissionAsync(bool requestExactAlarm = false)
     {
-        var status = await LocalNotificationCenter.Current.RequestNotificationPermission();
+        var permissionRequest = new NotificationPermission
+        {
+            Android = { RequestPermissionToScheduleExactAlarm = requestExactAlarm }
+        };
+
+        var status = await LocalNotificationCenter.Current.RequestNotificationPermission(permissionRequest);
         if (!status)
         {
-            // Permission denied — reminders simply won't fire. We fail quietly
-            // rather than nag; the user can re-enable notifications in settings.
+            Debug.WriteLine("[Notifications] Permission denied for local reminders.");
         }
+
+        return status;
     }
 
     public async Task ScheduleNotification(NotificationContent content)
@@ -47,6 +56,12 @@ public class NotificationService : INotificationService
         var array = ids?.ToArray() ?? Array.Empty<int>();
         if (array.Length > 0)
             LocalNotificationCenter.Current.Cancel(array);
+        return Task.CompletedTask;
+    }
+
+    public Task CancelAllNotifications()
+    {
+        LocalNotificationCenter.Current.CancelAll();
         return Task.CompletedTask;
     }
 

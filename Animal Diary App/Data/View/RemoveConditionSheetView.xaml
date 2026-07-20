@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    RemoveConditionSheetView
+    ─────────────────────────────────────────────────────────
+    Manage Pet's "remove a condition" confirmation. Offers three gentle choices —
+    remove with its trackers, remove but keep them, or keep everything — and always
+    reassures that history is never deleted. BindingContext is the ManagePetViewModel.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:ManagePetViewModel"
+             x:Class="Animal_Diary_App.Data.View.RemoveConditionSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsRemoveSheetVisible, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsRemoveSheetVisible}"
+                                Title="{Binding RemoveTitle}"
+                                DismissCommand="{Binding CancelRemoveCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <VerticalStackLayout Spacing="12" Padding="0,2,0,0">
+
+                <Border BackgroundColor="{StaticResource GlassSoft}"
+                        Stroke="{StaticResource GlassLine}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 14,11,13,12"
+                        Padding="15,13">
+                    <Label Text="{Binding RemoveExplanation}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="13"
+                           LineHeight="1.4"
+                           TextColor="{StaticResource InkSecondary}"/>
+                </Border>
+
+                <Border BackgroundColor="{StaticResource Teal}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 15,13,13,16">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding RemoveWithTrackersCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate Manage_RemoveWithTrackers}"
+                           FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                           TextColor="{StaticResource White}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                </Border>
+
+                <Border BackgroundColor="{StaticResource GlassSoft}"
+                        Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                        StrokeShape="RoundRectangle 13,15,14,13">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding RemoveKeepTrackersCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate Manage_RemoveKeepTrackers}"
+                           FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                           TextColor="{StaticResource InkSecondary}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                </Border>
+
+                <Border BackgroundColor="Transparent" StrokeThickness="0">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CancelRemoveCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate Manage_RemoveCancel}"
+                           FontFamily="{StaticResource FontSans}" FontSize="13.5" FontAttributes="Bold"
+                           TextColor="{StaticResource InkTertiary}" HorizontalTextAlignment="Center" Padding="0,10"/>
+                </Border>
+
+            </VerticalStackLayout>
+
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>

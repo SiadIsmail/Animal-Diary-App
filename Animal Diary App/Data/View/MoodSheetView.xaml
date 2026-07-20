@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    MoodSheetView — the ported 5-emoji mood picker + optional note, in the shared
+    FelovaBottomSheet. BindingContext is a MoodSheetViewModel.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MoodSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.MoodSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <Style x:Key="MoodTile" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1.5"/>
+            <Setter Property="Padding" Value="2,12"/>
+        </Style>
+        <Style x:Key="MoodSwatch" TargetType="Border">
+            <Setter Property="WidthRequest" Value="34"/>
+            <Setter Property="HeightRequest" Value="34"/>
+            <Setter Property="StrokeThickness" Value="0"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 17"/>
+            <Setter Property="HorizontalOptions" Value="Center"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+
+                <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="8">
+                    <Border Grid.Column="0" Style="{StaticResource MoodTile}" StrokeShape="RoundRectangle 15,12,13,14">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding Level}" Value="1">
+                                <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="1"/>
+                        </Border.GestureRecognizers>
+                        <Border Style="{StaticResource MoodSwatch}" BackgroundColor="{StaticResource MUnwell}">
+                            <Label Text="😢" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource MoodTile}" StrokeShape="RoundRectangle 12,15,14,13">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding Level}" Value="2">
+                                <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="2"/>
+                        </Border.GestureRecognizers>
+                        <Border Style="{StaticResource MoodSwatch}" BackgroundColor="{StaticResource MLow}">
+                            <Label Text="😟" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource MoodTile}" StrokeShape="RoundRectangle 15,12,13,14">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding Level}" Value="3">
+                                <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="3"/>
+                        </Border.GestureRecognizers>
+                        <Border Style="{StaticResource MoodSwatch}" BackgroundColor="{StaticResource MOkay}">
+                            <Label Text="😐" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                    </Border>
+
+                    <Border Grid.Column="3" Style="{StaticResource MoodTile}" StrokeShape="RoundRectangle 12,15,14,13">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding Level}" Value="4">
+                                <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="4"/>
+                        </Border.GestureRecognizers>
+                        <Border Style="{StaticResource MoodSwatch}" BackgroundColor="{StaticResource MGood}">
+                            <Label Text="😊" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                    </Border>
+
+                    <Border Grid.Column="4" Style="{StaticResource MoodTile}" StrokeShape="RoundRectangle 15,12,13,14">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding Level}" Value="5">
+                                <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SelectCommand}" CommandParameter="5"/>
+                        </Border.GestureRecognizers>
+                        <Border Style="{StaticResource MoodSwatch}" BackgroundColor="{StaticResource MGreat}">
+                            <Label Text="😄" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                    </Border>
+                </Grid>
+
+                <!-- Optional note -->
+                <Border BackgroundColor="{StaticResource PaperWarm}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 3,8,9,4"
+                        Padding="12,6">
+                    <Editor Text="{Binding NoteText}"
+                            Placeholder="{loc:Translate Journal_MoodNotePlaceholder}"
+                            AutoSize="TextChanges"
+                            MinimumHeightRequest="60"
+                            FontFamily="{StaticResource FontSerifItalic}"
+                            FontSize="14"
+                            TextColor="{StaticResource NoteInk}"
+                            PlaceholderColor="{StaticResource InkTertiary}"/>
+                </Border>
+
+                <!-- Opt this note into the vet report (off by default). Kept as a
+                     light inline row so it doesn't compete with the mood tiles:
+                     label on the left, switch pinned to the right edge. -->
+                <Grid ColumnDefinitions="*,Auto" Padding="4,0" VerticalOptions="Center">
+                    <Label Grid.Column="0"
+                           Text="{loc:Translate Journal_MoodIncludeInReport}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12.5"
+                           TextColor="{StaticResource InkSecondary}"
+                           VerticalOptions="Center"/>
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding IncludeInVetReport}"
+                            OnColor="{StaticResource Teal}"
+                            Scale="0.8"
+                            HorizontalOptions="End"
+                            VerticalOptions="Center"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,4,0,0">
+                    <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0" StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_NotNow}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                    </Border>
+                    <Border Grid.Column="1" BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Journal_SaveMood}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource White}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>

@@ -37,11 +37,18 @@ public partial class LanguageSelectionPage : ContentPage
     {
         var germanSelected = _selectedLanguage == "de";
 
-        GermanOption.BackgroundColor = germanSelected ? Color.FromArgb("#809B6FCC") : Color.FromArgb("#40FFFFFF");
-        GermanOption.Stroke = germanSelected ? Color.FromArgb("#B39B6FCC") : Color.FromArgb("#60FFFFFF");
+        // Felova selection accent: teal tint + teal stroke when selected,
+        // plain glass + hairline otherwise.
+        var selBg = Color.FromArgb("#21149081");    // teal-tint
+        var selStroke = Color.FromArgb("#149081");  // teal
+        var idleBg = Color.FromArgb("#99FFFFFF");   // glass
+        var idleStroke = Color.FromArgb("#D9FFFFFF"); // glass-line
 
-        EnglishOption.BackgroundColor = !germanSelected ? Color.FromArgb("#809B6FCC") : Color.FromArgb("#40FFFFFF");
-        EnglishOption.Stroke = !germanSelected ? Color.FromArgb("#B39B6FCC") : Color.FromArgb("#60FFFFFF");
+        GermanOption.BackgroundColor = germanSelected ? selBg : idleBg;
+        GermanOption.Stroke = germanSelected ? selStroke : idleStroke;
+
+        EnglishOption.BackgroundColor = !germanSelected ? selBg : idleBg;
+        EnglishOption.Stroke = !germanSelected ? selStroke : idleStroke;
     }
 
     private async void OnContinueTapped(object? sender, TappedEventArgs e)

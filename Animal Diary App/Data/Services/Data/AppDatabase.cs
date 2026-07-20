@@ -26,9 +26,15 @@ public class AppDatabase
             _db.CreateTableAsync<PetEntry>(),
             _db.CreateTableAsync<AppSettings>(),
             _db.CreateTableAsync<MedicationSchedule>(),
-            _db.CreateTableAsync<MedicationTime>(),
             _db.CreateTableAsync<ReminderInstance>(),
-            _db.CreateTableAsync<MedicationDoseLog>()
+            _db.CreateTableAsync<MedicationDoseLog>(),
+            _db.CreateTableAsync<TrackingEntry>(),
+            _db.CreateTableAsync<Tracker>(),
+            _db.CreateTableAsync<PetCondition>(),
+            _db.CreateTableAsync<GlucoseEntry>(),
+            _db.CreateTableAsync<AppetiteEntry>(),
+            _db.CreateTableAsync<SeizureEntry>(),
+            _db.CreateTableAsync<VetReportFile>()
             );
     }
 

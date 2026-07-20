@@ -7,13 +7,11 @@ public static class InputParser
     {
         if (!decimal.TryParse(input, NumberStyles.Any, CultureInfo.CurrentCulture, out value))
         {
-            Console.WriteLine("Please enter a valid number");
             return false;
         }
 
         if (value <= 0)
         {
-            Console.WriteLine("Value must be greater than 0");
             return false;
         }
 

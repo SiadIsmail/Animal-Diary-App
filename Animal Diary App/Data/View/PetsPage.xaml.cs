@@ -6,8 +6,6 @@ using Animal_Diary_App.Helpers;
 
 public partial class PetsPage : ContentPage
 {
-    private CalendarPage? calendarPage;
-
     private readonly MainViewModel vm;
     public PetsPage(MainViewModel mainViewModel)
     {
@@ -16,7 +14,11 @@ public partial class PetsPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override void OnAppearing()
+    // Android back closes an open sheet (or the settings panel) before it navigates.
+    protected override bool OnBackButtonPressed()
+        => Controls.BackDismiss.TryCloseTopmostOverlay(this) || base.OnBackButtonPressed();
+
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
 
@@ -28,6 +30,20 @@ public partial class PetsPage : ContentPage
                 LocalizationManager.Instance.GetString("Common_Cancel"));
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
+        vm.ExportSheetVM.ViewRequested += OnReportViewRequested;
+
+        try
+        {
+            // Re-read on every appearance so conditions or medications changed on
+            // Manage / Medications are reflected the moment this page returns.
+            await vm.PetVM.LoadActivePetTagsAsync();
+        }
+        catch (Exception ex)
+        {
+            // A failed load must degrade to a card with no chips, never crash the app
+            // (async void — an escaping exception here kills the process).
+            System.Diagnostics.Debug.WriteLine($"[PetsPage] OnAppearing failed: {ex}");
+        }
     }
 
     protected override void OnDisappearing()
@@ -35,10 +51,29 @@ public partial class PetsPage : ContentPage
         base.OnDisappearing();
         vm.SettingsVM.ConfirmDeleteAllData = null;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
+        vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;
+    }
+
+    /// <summary>The export sheet's "View" button — push the in-app preview for the
+    /// report it just generated (navigation belongs to pages, not VMs).</summary>
+    private async void OnReportViewRequested(Data.Models.VetReportFile report)
+    {
+        try
+        {
+            vm.ReportPreviewVM.Open(report);
+            await Navigation.PushAsync(new ReportPreviewPage(vm));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[VetReport] preview push failed: {ex}");
+        }
     }
 
     private void OnResetCompleted(object? sender, EventArgs e)
     {
+        // Clear in-memory form drafts so stale inputs don't survive the wipe
+        // (the ViewModels are singletons).
+        vm.ResetDrafts();
         Application.Current!.Windows[0].Page = new NavigationPage(new WelcomePage(vm));
     }
 
@@ -47,24 +82,23 @@ public partial class PetsPage : ContentPage
         await Navigation.PushAsync(new CreatePetPage(vm));
     }
 
-    async void OnMainClicked(object? sender, EventArgs args)
-    {
-        await Navigation.PushAsync(new MainPage(vm));
-    }
-
-    async void OnCalendarClicked(object? sender, EventArgs args)
-    {
-        calendarPage ??= new CalendarPage(vm);
-        await Navigation.PushAsync(calendarPage);
-    }
-
     async void OnAddPetClicked(object? sender, EventArgs args)
     {
         await Navigation.PushAsync(new CreatePetPage(vm));
     }
 
+    async void OnManageClicked(object? sender, EventArgs args)
+    {
+        await Navigation.PushAsync(new ManagePetPage(vm));
+    }
+
     async void OnAddMedicationClicked(object? sender, EventArgs args)
     {
         await Navigation.PushAsync(new MedicationsPage(vm));
+    }
+
+    async void OnDocumentsClicked(object? sender, EventArgs args)
+    {
+        await Navigation.PushAsync(new DocumentsPage(vm));
     }
 }

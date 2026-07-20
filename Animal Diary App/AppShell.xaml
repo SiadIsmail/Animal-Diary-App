@@ -3,16 +3,22 @@
     x:Class="Animal_Diary_App.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:data="clr-namespace:Animal_Diary_App.Data.View"
-    Title="Animal_Diary_App">
+    Title="Animal_Diary_App"
+    FlyoutBehavior="Disabled"
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False">
 
-    <ShellContent
-        Route="MainPage"
-        ContentTemplate="{DataTemplate data:MainPage}"/>
-
-    <ShellContent
-        Route="CalendarPage"
-        ContentTemplate="{DataTemplate data:CalendarPage}"/>
-
+    <!--
+        The three primary destinations (Today / Journal / Pets) live as tabs so
+        each page is constructed once and switched, not re-pushed. Both the Shell
+        nav bar and the tab bar are hidden — navigation is driven entirely by the
+        in-page buttons via GoToAsync("//<Route>"). Page instances are assigned in
+        code-behind from DI so their MainViewModel constructor injection is kept.
+    -->
+    <TabBar>
+        <ShellContent x:Name="TodayTab" Route="TodayTab" />
+        <ShellContent x:Name="JournalTab" Route="JournalTab" />
+        <ShellContent x:Name="PetsTab" Route="PetsTab" />
+    </TabBar>
 
 </Shell>

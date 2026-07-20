@@ -22,15 +22,27 @@ public class PetEntryService
         await _db.UpdateAsync(PetEntry);
     }
 
-    public async Task<List<PetEntry>> GetPetEntriesAsync()
+    /// <summary>Most recent weight entry for a pet, or null if it has none.
+    /// Pushes the ordering into SQL (backed by the (PetId, Date) index) instead of
+    /// loading the whole table and sorting in memory.</summary>
+    public async Task<PetEntry?> GetLatestWeightEntryAsync(int petId)
     {
-        return await _db.Table<PetEntry>().ToListAsync();
+        return await _db.Table<PetEntry>()
+            .Where(e => e.PetId == petId && e.Weight > 0)
+            .OrderByDescending(e => e.Date)
+            .FirstOrDefaultAsync();
+    }
+    /// <summary>Most recent mood entry for a pet, or null if it has none. Mirrors
+    /// <see cref="GetLatestWeightEntryAsync"/> — the ordering runs in SQL rather than
+    /// loading the table and sorting in memory.</summary>
+    public async Task<PetEntry?> GetLatestMoodEntryAsync(int petId)
+    {
+        return await _db.Table<PetEntry>()
+            .Where(e => e.PetId == petId && e.MoodLevel > 0)
+            .OrderByDescending(e => e.Date)
+            .FirstOrDefaultAsync();
     }
 
-    public async Task<PetEntry> GetPetEntryByDateAsync(DateTime date)
-    {
-        return await _db.Table<PetEntry>().Where(e => e.Date == date).FirstOrDefaultAsync();
-    }
     public async Task<PetEntry> GetPetEntryByDateAndPetIdAsync(DateTime date, int petId)
     {
         return await _db.Table<PetEntry>().Where(e => e.Date == date && e.PetId == petId).FirstOrDefaultAsync();
@@ -47,11 +59,13 @@ public class PetEntryService
             .ToListAsync();
     }
 
-    public async Task<List<PetEntry>> GetLast30DaysWeightEntriesAsync(int petId)
+    /// <summary>Weight entries for a pet over the last <paramref name="days"/> days
+    /// (date-ascending). Powers the weight-trend chart's range selector.</summary>
+    public async Task<List<PetEntry>> GetWeightEntriesForRangeAsync(int petId, int days)
     {
-        var thirtyDaysAgo = DateTime.Now.AddDays(-30).Date;
+        var from = DateTime.Now.AddDays(-days).Date;
         return await _db.Table<PetEntry>()
-            .Where(e => e.PetId == petId && e.Weight > 0 && e.Date >= thirtyDaysAgo)
+            .Where(e => e.PetId == petId && e.Weight > 0 && e.Date >= from)
             .OrderBy(e => e.Date)
             .ToListAsync();
     }

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    SeizureSheetView
+    ─────────────────────────────────────────────────────────
+    The Journal's "log a seizure" sheet — a time picker plus two optional fields
+    (duration in minutes and a note), rendered inside the shared FelovaBottomSheet.
+    BindingContext is a SeizureSheetViewModel; open it via that VM's OpenAsync.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:SeizureSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.SeizureSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="CharacterSpacing" Value="1"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 14"/>
+            <Setter Property="Padding" Value="12,2"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+
+                <!-- Time -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Journal_SeizureTimeLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Border Style="{StaticResource FieldBox}">
+                        <TimePicker Time="{Binding Time}"
+                                    FontFamily="{StaticResource FontSans}"
+                                    FontSize="16"
+                                    TextColor="{StaticResource Ink}"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Duration · optional -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Journal_SeizureDurationLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Border Style="{StaticResource FieldBox}">
+                        <Entry Text="{Binding DurationText}"
+                               Keyboard="Numeric"
+                               Placeholder="{loc:Translate Journal_SeizureDurationPlaceholder}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="16"
+                               TextColor="{StaticResource Ink}"
+                               PlaceholderColor="{StaticResource InkTertiary}"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Notes · optional -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Journal_SeizureNoteLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Border Style="{StaticResource FieldBox}">
+                        <Editor Text="{Binding NoteText}"
+                                Placeholder="{loc:Translate Journal_SeizureNotePlaceholder}"
+                                AutoSize="TextChanges"
+                                HeightRequest="72"
+                                FontFamily="{StaticResource FontSans}"
+                                FontSize="15"
+                                TextColor="{StaticResource Ink}"
+                                PlaceholderColor="{StaticResource InkTertiary}"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Actions -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,6,0,0">
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_NotNow}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Journal_SaveSeizure}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>

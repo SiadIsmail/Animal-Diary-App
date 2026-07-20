@@ -41,4 +41,135 @@
     <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+
+    <!-- ============================================================= -->
+    <!-- Felova redesign tokens (see Designs/felova-redesign.html)      -->
+    <!-- ============================================================= -->
+
+    <!-- Surfaces -->
+    <Color x:Key="Paper">#D9EFE9</Color>       <!-- rockpool page ground         -->
+    <Color x:Key="PaperDeep">#C8E4E0</Color>   <!-- recessed wells               -->
+    <Color x:Key="Card">#99FFFFFF</Color>      <!-- primary card surface (60% white) -->
+    <Color x:Key="Cream">#FBF7EF</Color>       <!-- journal / note surface       -->
+    <Color x:Key="Line">#B3FFFFFF</Color>      <!-- hairline borders (white stroke) -->
+
+    <!-- Ink / text -->
+    <Color x:Key="Ink">#0D3A3C</Color>         <!-- primary text — blue-green ink -->
+    <Color x:Key="InkSecondary">#3A6A6B</Color><!-- secondary text               -->
+    <Color x:Key="InkTertiary">#7CA2A1</Color> <!-- tertiary / metadata          -->
+
+    <!-- Rockpool — brand accent (teal/blue-green) -->
+    <Color x:Key="Viola">#149081</Color>
+    <Color x:Key="ViolaDeep">#0C6A5D</Color>
+    <Color x:Key="ViolaTint">#DCEFEA</Color>
+    <Color x:Key="ViolaLine">#DCD2EE</Color>
+
+    <!-- Honey — medication / attention -->
+    <Color x:Key="Honey">#D99A3E</Color>
+    <Color x:Key="HoneyTint">#F9EEDB</Color>
+    <Color x:Key="HoneyDeep">#8A5D14</Color>
+
+    <!-- Sage — stable / given / good -->
+    <Color x:Key="Sage">#5F9E82</Color>
+    <Color x:Key="SageTint">#E5F0EA</Color>
+    <Color x:Key="SageDeep">#2E6B50</Color>
+
+    <!-- Clay — alerts, used sparingly -->
+    <Color x:Key="Clay">#C05F5F</Color>
+    <Color x:Key="ClayTint">#F7E5E2</Color>
+
+
+    <!-- Brushes for the common surface / accent tokens -->
+    <SolidColorBrush x:Key="PaperBrush" Color="{StaticResource Paper}"/>
+    <SolidColorBrush x:Key="PaperDeepBrush" Color="{StaticResource PaperDeep}"/>
+    <SolidColorBrush x:Key="CardBrush" Color="{StaticResource Card}"/>
+    <SolidColorBrush x:Key="CreamBrush" Color="{StaticResource Cream}"/>
+    <SolidColorBrush x:Key="LineBrush" Color="{StaticResource Line}"/>
+    <SolidColorBrush x:Key="InkBrush" Color="{StaticResource Ink}"/>
+    <SolidColorBrush x:Key="ViolaBrush" Color="{StaticResource Viola}"/>
+    <SolidColorBrush x:Key="ViolaDeepBrush" Color="{StaticResource ViolaDeep}"/>
+    <SolidColorBrush x:Key="ViolaTintBrush" Color="{StaticResource ViolaTint}"/>
+    <SolidColorBrush x:Key="HoneyBrush" Color="{StaticResource Honey}"/>
+    <SolidColorBrush x:Key="SageBrush" Color="{StaticResource Sage}"/>
+    <SolidColorBrush x:Key="ClayBrush" Color="{StaticResource Clay}"/>
+
+    <!-- =================================================================== -->
+    <!-- ROCKPOOL · WARM  (Journal reskin — Designs/felova-journal-rockpool-warm.html) -->
+    <!-- Additive tokens: do NOT reuse the older redesign keys above so the   -->
+    <!-- MainPage / PetsPage / MedicationsPage visuals stay unchanged.        -->
+    <!-- Alpha hexes are #AARRGGBB (e.g. 13% => 0x21).                        -->
+    <!-- =================================================================== -->
+
+    <!-- Sea gradient stops + warm sand -->
+    <Color x:Key="SeaHi">#E8F7F1</Color>       <!-- mint highlight            -->
+    <Color x:Key="SeaMid">#C4E6E3</Color>      <!-- aqua mid                  -->
+    <Color x:Key="SeaBlue">#B7DCEC</Color>     <!-- sea blue                  -->
+    <Color x:Key="Sand">#EDDFC0</Color>        <!-- warm sand (bottom glow)   -->
+    <Color x:Key="SeaGradTop">#DDF2EC</Color>  <!-- linear top                -->
+    <Color x:Key="SeaGradBottom">#B6DCD9</Color><!-- linear bottom            -->
+    <Color x:Key="SeaGradGlow">#A8D8CD</Color> <!-- bottom radial glow        -->
+
+    <!-- Ink reuses the shared Ink / InkSecondary / InkTertiary (#0D3A3C /
+         #3A6A6B / #7CA2A1) — identical values, no new keys needed. -->
+
+    <!-- Teal accent (translucent, glass-friendly) -->
+    <Color x:Key="Teal">#149081</Color>
+    <Color x:Key="TealDeep">#0C6A5D</Color>
+    <Color x:Key="TealTint">#21149081</Color>   <!-- 13% -->
+    <Color x:Key="TealLine">#47149081</Color>   <!-- 28% -->
+
+    <!-- Blue — weigh-in accent -->
+    <Color x:Key="Blue">#3E8FB0</Color>
+    <Color x:Key="BlueTint">#243E8FB0</Color>   <!-- 14% -->
+    <Color x:Key="BlueInk">#2A6E8C</Color>      <!-- weigh-in icon fg -->
+
+    <!-- Rose — glucose accent (the design system's rose / rose-tint / rose-deep;
+         glucose is new, so these join the warm palette now). -->
+    <Color x:Key="Rose">#BE5F76</Color>
+    <Color x:Key="RoseTint">#24BE5F76</Color>   <!-- 14% -->
+    <Color x:Key="RoseDeep">#8C3B50</Color>
+
+    <!-- Honey — medication (warm variant, distinct from shared Honey) -->
+    <Color x:Key="HoneyWarm">#D9973C</Color>
+    <Color x:Key="HoneyWarmTint">#29D9973C</Color> <!-- 16% -->
+    <Color x:Key="HoneyWarmDeep">#8A5A12</Color>
+
+    <!-- Violet — seizure accent (timeline icon tile) -->
+    <Color x:Key="Violet">#584A8A</Color>
+    <Color x:Key="VioletTint">#26584A8A</Color> <!-- 15% -->
+    <Color x:Key="VioletDeep">#453A6E</Color>
+
+    <!-- Warm paper (mood note card) + washi tape -->
+    <Color x:Key="PaperWarm">#FFF9EC</Color>
+    <Color x:Key="NoteInk">#4A4433</Color>      <!-- serif-italic note text  -->
+    <Color x:Key="Washi">#A6BEE2D8</Color>      <!-- 65% mint tape           -->
+
+    <!-- Glass surfaces (frosted whites) -->
+    <Color x:Key="Glass">#99FFFFFF</Color>      <!-- 60% -->
+    <Color x:Key="GlassSoft">#6BFFFFFF</Color>  <!-- 42% -->
+    <Color x:Key="GlassLine">#D9FFFFFF</Color>  <!-- 85% -->
+    <Color x:Key="Well">#57FFFFFF</Color>       <!-- 34% recessed well -->
+
+    <!-- Mood scale (warm variant — matches HTML m-great..m-unwell) -->
+    <Color x:Key="MGreat">#FF2BBC89</Color>
+    <Color x:Key="MGood">#FF89E166</Color>
+    <Color x:Key="MOkay">#FFE2F250</Color>
+    <Color x:Key="MLow">#FFF29C33</Color>
+    <Color x:Key="MUnwell">#FFDC4141</Color>
+
+    <!-- Brushes for surfaces / strokes used by the Journal -->
+    <SolidColorBrush x:Key="TealBrush" Color="{StaticResource Teal}"/>
+    <SolidColorBrush x:Key="TealDeepBrush" Color="{StaticResource TealDeep}"/>
+    <SolidColorBrush x:Key="TealTintBrush" Color="{StaticResource TealTint}"/>
+    <SolidColorBrush x:Key="TealLineBrush" Color="{StaticResource TealLine}"/>
+    <SolidColorBrush x:Key="BlueBrush" Color="{StaticResource Blue}"/>
+    <SolidColorBrush x:Key="BlueTintBrush" Color="{StaticResource BlueTint}"/>
+    <SolidColorBrush x:Key="HoneyWarmBrush" Color="{StaticResource HoneyWarm}"/>
+    <SolidColorBrush x:Key="HoneyWarmTintBrush" Color="{StaticResource HoneyWarmTint}"/>
+    <SolidColorBrush x:Key="PaperWarmBrush" Color="{StaticResource PaperWarm}"/>
+    <SolidColorBrush x:Key="WashiBrush" Color="{StaticResource Washi}"/>
+    <SolidColorBrush x:Key="GlassBrush" Color="{StaticResource Glass}"/>
+    <SolidColorBrush x:Key="GlassSoftBrush" Color="{StaticResource GlassSoft}"/>
+    <SolidColorBrush x:Key="GlassLineBrush" Color="{StaticResource GlassLine}"/>
+    <SolidColorBrush x:Key="WellBrush" Color="{StaticResource Well}"/>
 </ResourceDictionary>

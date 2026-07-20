@@ -3,6 +3,7 @@ namespace Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Helpers;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 public class MoodTimelineDay
@@ -17,7 +18,7 @@ public class MoodTimelineViewModel
 {
     private readonly PetEntryService _petEntryService;
 
-    public ObservableCollection<MoodTimelineDay> TimelineDays { get; } = new();
+    public RangeObservableCollection<MoodTimelineDay> TimelineDays { get; } = new();
 
     private bool hasMoodData = true;
     public bool HasMoodData
@@ -36,21 +37,21 @@ public class MoodTimelineViewModel
 
     public async Task LoadLast30DaysAsync(int petId)
     {
-        TimelineDays.Clear();
-
         var endDate = DateTime.Now.Date;
         var startDate = endDate.AddDays(-29);
 
         var entries = await _petEntryService.GetLast30DaysMoodEntriesAsync(petId);
         var entryDict = entries.ToDictionary(e => e.Date.Date);
 
+        var days = new List<MoodTimelineDay>(30);
         for (int i = 0; i < 30; i++)
         {
             var date = startDate.AddDays(i);
-            var mood = entryDict.ContainsKey(date) ? (MoodLevel)entryDict[date].MoodLevel : MoodLevel.None;
-            TimelineDays.Add(new MoodTimelineDay { Date = date, Mood = mood });
+            var mood = entryDict.TryGetValue(date, out var entry) ? (MoodLevel)entry.MoodLevel : MoodLevel.None;
+            days.Add(new MoodTimelineDay { Date = date, Mood = mood });
         }
 
+        TimelineDays.ReplaceAll(days);
         HasMoodData = entries.Count > 0;
     }
 }

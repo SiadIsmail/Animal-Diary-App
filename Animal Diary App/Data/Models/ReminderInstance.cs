@@ -26,6 +26,7 @@ public class ReminderInstance
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
 
+    [Indexed]
     public int MedicationId { get; set; }
 
     /// <summary>Exact local wall-clock time this reminder should fire.</summary>

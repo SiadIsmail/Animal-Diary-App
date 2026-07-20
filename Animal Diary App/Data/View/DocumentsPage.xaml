@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    DocumentsPage.xaml
+    ─────────────────────────────────────────────────────────
+    The active pet's generated vet reports (newest first), reached from the Pets
+    page's Documents row. Row tap → in-app preview; icons → share / delete.
+    Delete is deferred behind the shared UndoToast (no confirm dialogs — see
+    AI/design-decisions.md); leaving the page commits a staged delete.
+    BindingContext is the MainViewModel; content binds through DocumentsVM.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             x:DataType="vms:MainViewModel"
+             x:Class="Animal_Diary_App.Data.View.DocumentsPage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
+             BackgroundColor="#C4E6E3">
+
+    <Grid>
+
+        <controls:WaterBackground/>
+
+        <ScrollView>
+            <VerticalStackLayout Padding="22,20,22,40" Spacing="10">
+
+                <!-- Subhead: back + title -->
+                <Grid ColumnDefinitions="40,*,40" ColumnSpacing="10" Margin="0,0,0,8">
+                    <Border Grid.Column="0"
+                            WidthRequest="40" HeightRequest="40"
+                            BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 20">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnBackClicked"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="‹" FontSize="26"
+                               TextColor="{StaticResource InkSecondary}"
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                        <Label Text="{Binding DocumentsVM.Title}"
+                               FontFamily="{StaticResource FontSerif}"
+                               FontSize="21"
+                               TextColor="{StaticResource Ink}"
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="{Binding DocumentsVM.Subtitle}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="11"
+                               TextColor="{StaticResource InkTertiary}"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Empty state -->
+                <Label Text="{loc:Translate Docs_Empty}"
+                       IsVisible="{Binding DocumentsVM.IsEmpty}"
+                       FontFamily="{StaticResource FontHand}"
+                       FontSize="16"
+                       TextColor="{StaticResource InkTertiary}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,28,0,0"/>
+
+                <!-- Report rows -->
+                <VerticalStackLayout Spacing="10"
+                                     BindableLayout.ItemsSource="{Binding DocumentsVM.Reports}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:ReportListItem">
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 17,14,15,18"
+                                    Padding="12">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DocumentsVM.OpenCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+
+                                    <!-- First-page thumbnail, A4-ish -->
+                                    <Border Grid.Column="0"
+                                            WidthRequest="44" HeightRequest="60"
+                                            BackgroundColor="{StaticResource White}"
+                                            Stroke="{StaticResource GlassLine}"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 6"
+                                            VerticalOptions="Center">
+                                        <Image Source="{Binding ThumbnailPath}" Aspect="AspectFill"/>
+                                    </Border>
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                        <Label Text="{Binding PeriodDisplay}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="13.5" FontAttributes="Bold"
+                                               TextColor="{StaticResource Ink}"/>
+                                        <Label Text="{Binding CreatedDisplay}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="12"
+                                               TextColor="{StaticResource InkSecondary}"/>
+                                        <Label Text="{Binding MetaDisplay}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="11"
+                                               TextColor="{StaticResource InkTertiary}"/>
+                                    </VerticalStackLayout>
+
+                                    <!-- Share -->
+                                    <Border Grid.Column="2"
+                                            WidthRequest="38" HeightRequest="38"
+                                            BackgroundColor="{StaticResource TealTint}"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 12"
+                                            VerticalOptions="Center"
+                                            SemanticProperties.Description="{loc:Translate Export_Share}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DocumentsVM.ShareCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <Label Text="📤" FontSize="16"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+
+                                    <!-- Delete (undo-toast, no confirm) -->
+                                    <Border Grid.Column="3"
+                                            WidthRequest="38" HeightRequest="38"
+                                            BackgroundColor="{StaticResource RoseTint}"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 12"
+                                            VerticalOptions="Center"
+                                            SemanticProperties.Description="{loc:Translate Common_Delete}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DocumentsVM.DeleteCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <Label Text="🗑" FontSize="16"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Shared confirmation/undo pill -->
+        <controls:UndoToast x:Name="Toast" Margin="0,0,0,28"/>
+
+    </Grid>
+</ContentPage>

@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    ManagePetPage.xaml
+    ─────────────────────────────────────────────────────────
+    The single "Manage" surface reached from the Care tab (replacing Open Profile +
+    Edit). Mirrors Designs/felova-pet-page.html: identity (tap → edit-pet door),
+    conditions (chips + add/remove), the care plan (rows → condition setup or a small
+    adjust sheet), a Journal preview strip, and medications. Every sheet is the shared
+    FelovaBottomSheet; the condition setup sheets are the SAME ones onboarding uses.
+    BindingContext is the MainViewModel; content binds through ManageVM.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
+             x:Class="Animal_Diary_App.Data.View.ManagePetPage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
+             BackgroundColor="#C4E6E3">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Style x:Key="CardSurface"
+                   TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{StaticResource Glass}"/>
+                <Setter Property="Stroke"
+                        Value="{StaticResource GlassLine}"/>
+                <Setter Property="StrokeThickness"
+                        Value="1"/>
+                <Setter Property="StrokeShape"
+                        Value="RoundRectangle 19,16,18,17"/>
+            </Style>
+            <Style x:Key="SectionTitle"
+                   TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{StaticResource FontSerif}"/>
+                <Setter Property="FontSize"
+                        Value="16"/>
+                <Setter Property="TextColor"
+                        Value="{StaticResource Ink}"/>
+            </Style>
+            <Style x:Key="SectionNote"
+                   TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{StaticResource FontHand}"/>
+                <Setter Property="FontSize"
+                        Value="15"/>
+                <Setter Property="TextColor"
+                        Value="{StaticResource InkTertiary}"/>
+                <Setter Property="VerticalOptions"
+                        Value="End"/>
+            </Style>
+
+            <!-- Conditions FlexLayout: a normal chip, and the trailing dashed Add chip -->
+            <DataTemplate x:DataType="vms:ManageConditionChip" x:Key="ConditionChipTemplate">
+                <Border BackgroundColor="{StaticResource Glass}"
+                        Stroke="{StaticResource GlassLine}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 14,11,13,12"
+                        Padding="12,8"
+                        Margin="0,0,8,8">
+                    <HorizontalStackLayout Spacing="8"
+                                           VerticalOptions="Center">
+                        <Label Text="{Binding Icon}"
+                               FontSize="14"
+                               VerticalOptions="Center"/>
+                        <Label Text="{Binding Name}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="12.5"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Ink}"
+                               VerticalOptions="Center"/>
+                        <Border WidthRequest="20"
+                                HeightRequest="20"
+                                BackgroundColor="{StaticResource Well}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 10"
+                                VerticalOptions="Center">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ManageVM.RemoveConditionCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="✕"
+                                   FontSize="10"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource InkTertiary}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                    </HorizontalStackLayout>
+                </Border>
+            </DataTemplate>
+
+            <DataTemplate x:DataType="vms:AddConditionChipItem" x:Key="AddConditionChipTemplate">
+                <Border BackgroundColor="{StaticResource GlassSoft}"
+                        Stroke="{StaticResource TealLine}"
+                        StrokeThickness="1.5"
+                        StrokeDashArray="4,3"
+                        StrokeShape="RoundRectangle 13,12,14,11"
+                        Padding="14,10"
+                        Margin="0,0,8,8">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ManageVM.AddConditionCommand}"/>
+                    </Border.GestureRecognizers>
+                    <HorizontalStackLayout Spacing="7"
+                                           VerticalOptions="Center">
+                        <Label Text="＋"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Teal}"
+                               VerticalOptions="Center"/>
+                        <Label Text="{loc:Translate Manage_AddCondition}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="12.5"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Border>
+            </DataTemplate>
+
+            <views:ConditionChipTemplateSelector x:Key="ConditionChipSelector"
+                    ConditionTemplate="{StaticResource ConditionChipTemplate}"
+                    AddTemplate="{StaticResource AddConditionChipTemplate}"/>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+
+        <controls:WaterBackground/>
+
+        <ScrollView>
+            <VerticalStackLayout Padding="22,20,22,40"
+                                 Spacing="10">
+
+                <!-- Subhead -->
+                <Grid ColumnDefinitions="40,*,40"
+                      ColumnSpacing="10"
+                      Margin="0,0,0,8">
+                    <Border Grid.Column="0"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 20">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnBackClicked"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="‹"
+                               FontSize="26"
+                               TextColor="{StaticResource InkSecondary}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Border>
+                    <Label Grid.Column="1"
+                           Text="{Binding ManageVM.PetName}"
+                           FontFamily="{StaticResource FontSerif}"
+                           FontSize="21"
+                           TextColor="{StaticResource Ink}"
+                           HorizontalTextAlignment="Center"
+                           VerticalOptions="Center"/>
+                </Grid>
+
+                <!-- Identity card → edit-pet door -->
+                <Border Style="{StaticResource CardSurface}"
+                        Padding="18">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ManageVM.TapIdentityCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="15">
+                        <Border Grid.Column="0"
+                                WidthRequest="64"
+                                HeightRequest="64"
+                                Stroke="{StaticResource TealLine}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 32"
+                                VerticalOptions="Center">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0"
+                                                     EndPoint="1,1">
+                                    <GradientStop Color="{StaticResource SeaHi}"
+                                                  Offset="0"/>
+                                    <GradientStop Color="{StaticResource SeaMid}"
+                                                  Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Label Text="{Binding ManageVM.PetInitial}"
+                                   FontFamily="{StaticResource FontSerif}"
+                                   FontSize="28"
+                                   TextColor="{StaticResource TealDeep}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="2"
+                                             VerticalOptions="Center">
+                            <Label Text="{Binding ManageVM.PetName}"
+                                   FontFamily="{StaticResource FontSerif}"
+                                   FontSize="23"
+                                   TextColor="{StaticResource Ink}"/>
+                            <Label Text="{Binding ManageVM.PetSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                            <Label Text="{Binding ManageVM.IdentityHint}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource InkTertiary}"
+                                   Margin="0,4,0,0"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Conditions -->
+                <Grid ColumnDefinitions="Auto,*"
+                      Margin="2,14,2,2">
+                    <Label Grid.Column="0"
+                           Text="{loc:Translate Manage_ConditionsTitle}"
+                           Style="{StaticResource SectionTitle}"/>
+                    <Label Grid.Column="1"
+                           Text="{loc:Translate Manage_ConditionsNote}"
+                           Style="{StaticResource SectionNote}"
+                           HorizontalTextAlignment="End"/>
+                </Grid>
+                
+                    <FlexLayout
+                        Direction="Row"
+                        Wrap="Wrap"
+                        JustifyContent="Start"
+                        AlignItems="Start"
+                        HorizontalOptions="Fill"
+                        BindableLayout.ItemsSource="{Binding ManageVM.ConditionItems}"
+                        BindableLayout.ItemTemplateSelector="{StaticResource ConditionChipSelector}"/>
+
+                <!-- Care plan -->
+                <Grid ColumnDefinitions="Auto,*"
+                      Margin="2,14,2,2">
+                    <Label Grid.Column="0"
+                           Text="{loc:Translate Manage_CarePlanTitle}"
+                           Style="{StaticResource SectionTitle}"/>
+                    <Label Grid.Column="1"
+                           Text="{loc:Translate Manage_CarePlanNote}"
+                           Style="{StaticResource SectionNote}"
+                           HorizontalTextAlignment="End"/>
+                </Grid>
+
+                <Border Style="{StaticResource CardSurface}"
+                        Padding="4">
+                    <VerticalStackLayout>
+                        <Label Text="{Binding ManageVM.EmptyPlanText}"
+                               IsVisible="{Binding ManageVM.HasNoCarePlan}"
+                               FontFamily="{StaticResource FontHand}"
+                               FontSize="18"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="16,20"/>
+
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding ManageVM.CarePlanRows}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vms:CarePlanRow">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                                          ColumnSpacing="13"
+                                          Padding="12,14">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ManageVM.TapCarePlanRowCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                        </Grid.GestureRecognizers>
+                                        <Border Grid.Column="0"
+                                                WidthRequest="38"
+                                                HeightRequest="38"
+                                                BackgroundColor="{Binding IconBackground}"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 12"
+                                                VerticalOptions="Center">
+                                            <Label Text="{Binding Icon}"
+                                                   FontSize="17"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"/>
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1"
+                                                             Spacing="1"
+                                                             VerticalOptions="Center">
+                                            <Label Text="{Binding Title}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="14"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource Ink}"/>
+                                            <Label Text="{Binding Description}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="2"
+                                               Text="{Binding FromLabel}"
+                                               IsVisible="{Binding HasFrom}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="9.5"
+                                               FontAttributes="Bold"
+                                               CharacterSpacing="0.6"
+                                               TextColor="{StaticResource InkTertiary}"
+                                               VerticalOptions="Center"/>
+                                        <Label Grid.Column="3"
+                                               Text="›"
+                                               FontSize="20"
+                                               TextColor="{StaticResource InkTertiary}"
+                                               VerticalOptions="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Journal preview -->
+                <Border BackgroundColor="{StaticResource Well}"
+                        Stroke="{StaticResource GlassLine}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16,18,15,17"
+                        Padding="15,13"
+                        Margin="0,4,0,0">
+                    <VerticalStackLayout Spacing="9">
+                        <Label Text="{Binding ManageVM.PreviewLabel}"
+                               FontFamily="{StaticResource FontHand}"
+                               FontSize="16"
+                               TextColor="{StaticResource TealDeep}"/>
+                        <FlexLayout Wrap="Wrap"
+                                    Direction="Row"
+                                    BindableLayout.ItemsSource="{Binding ManageVM.PreviewChips}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vms:PreviewChip">
+                                    <Border BackgroundColor="{StaticResource GlassSoft}"
+                                            Stroke="{StaticResource TealLine}"
+                                            StrokeThickness="1.5"
+                                            StrokeDashArray="3,2"
+                                            StrokeShape="RoundRectangle 11,10,11,10"
+                                            Padding="10,6"
+                                            Margin="0,0,6,6">
+                                        <HorizontalStackLayout Spacing="5"
+                                                               VerticalOptions="Center">
+                                            <Label Text="{Binding Icon}"
+                                                   FontSize="12"
+                                                   VerticalOptions="Center"/>
+                                            <Label Text="{Binding Text}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource TealDeep}"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Medications -->
+                <Label Text="{loc:Translate Manage_MedicationsTitle}"
+                       Style="{StaticResource SectionTitle}"
+                       Margin="2,14,2,2"/>
+
+                <Border Style="{StaticResource CardSurface}"
+                        Padding="4">
+                    <VerticalStackLayout>
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding ManageVM.Medications}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vms:ManageMedRow">
+                                    <Grid ColumnDefinitions="Auto,*,Auto"
+                                          ColumnSpacing="13"
+                                          Padding="12,14">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ManageVM.TapMedicationCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                        </Grid.GestureRecognizers>
+                                        <Border Grid.Column="0"
+                                                WidthRequest="38"
+                                                HeightRequest="38"
+                                                BackgroundColor="{StaticResource HoneyWarmTint}"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 12"
+                                                VerticalOptions="Center">
+                                            <Label Text="💊"
+                                                   FontSize="17"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"/>
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1"
+                                                             Spacing="1"
+                                                             VerticalOptions="Center">
+                                            <Label Text="{Binding Name}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="14"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource Ink}"/>
+                                            <Label Text="{Binding Detail}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="2"
+                                               Text="›"
+                                               FontSize="20"
+                                               TextColor="{StaticResource InkTertiary}"
+                                               VerticalOptions="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="13"
+                              Padding="12,14">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ManageVM.AddMedicationCommand}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Grid.Column="0"
+                                    WidthRequest="38"
+                                    HeightRequest="38"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    VerticalOptions="Center">
+                                <Label Text="＋"
+                                       FontSize="17"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                            <Label Grid.Column="1"
+                                   Text="{loc:Translate Manage_AddMedication}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ── Sheet overlays (last children render on top) ── -->
+        <!-- Reusable condition setup sheets — the SAME instances onboarding uses -->
+        <views:DiabetesSetupSheetView BindingContext="{Binding DiabetesSetupVM}"/>
+        <views:CkdSetupSheetView BindingContext="{Binding CkdSetupVM}"/>
+        <views:EpilepsySetupSheetView BindingContext="{Binding EpilepsySetupVM}"/>
+
+        <!-- Manage-owned sheets -->
+        <views:AddConditionSheetView BindingContext="{Binding ManageVM}"/>
+        <views:RemoveConditionSheetView BindingContext="{Binding ManageVM}"/>
+        <views:AdjustTrackerSheetView BindingContext="{Binding ManageVM}"/>
+
+    </Grid>
+
+</ContentPage>

@@ -56,10 +56,45 @@ public class MedicationService
             .ToListAsync();
     }
 
+    /// <summary>All schedule rows for a set of medications in one query (IN clause).
+    /// Avoids the per-medication round-trip when building a day/week of doses.</summary>
+    public async Task<List<MedicationSchedule>> GetSchedulesForMedicationsAsync(IReadOnlyCollection<int> medicationIds)
+    {
+        if (medicationIds.Count == 0)
+            return new List<MedicationSchedule>();
+
+        return await _db.Table<MedicationSchedule>()
+            .Where(s => medicationIds.Contains(s.MedicationId))
+            .ToListAsync();
+    }
+
     public async Task SaveMedicationScheduleAsync(MedicationSchedule schedule)
     {
         await _db.InsertAsync(schedule);
     }
+
+    /// <summary>
+    /// Persist a medication together with its COMPLETE schedule set in one
+    /// transaction: insert/update the medication, drop its old schedule rows, and
+    /// insert the new ones. Atomic on purpose — process death between "delete old
+    /// schedules" and "insert new ones" would otherwise leave a medication with no
+    /// rules, silently killing its reminders on the next sync.
+    /// </summary>
+    public Task SaveMedicationWithSchedulesAsync(Medication medication, IReadOnlyList<MedicationSchedule> schedules)
+        => _db.RunInTransactionAsync(conn =>
+        {
+            if (medication.Id == 0)
+                conn.Insert(medication);            // assigns Id
+            else
+                conn.Update(medication);
+
+            conn.Table<MedicationSchedule>().Delete(s => s.MedicationId == medication.Id);
+            foreach (var schedule in schedules)
+            {
+                schedule.MedicationId = medication.Id;
+                conn.Insert(schedule);
+            }
+        });
 
     /// <summary>Remove every schedule row for a medication (used before re-saving an edit, or on delete).</summary>
     public async Task DeleteSchedulesForMedicationAsync(int medicationId)
@@ -68,10 +103,4 @@ public class MedicationService
             .DeleteAsync(s => s.MedicationId == medicationId);
     }
 
-    /*public async Task<List<MedicationLog>> GetMedicationLogsAsync()
-    {
-        return await _db.Table<MedicationLog>()
-            .OrderByDescending(m => m.TakenAt)
-            .ToListAsync();
-    }*/
 }

@@ -25,6 +25,30 @@ public class ReminderInstanceService
 
     public Task<int> DeleteAsync(ReminderInstance instance) => _db.DeleteAsync(instance);
 
+    /// <summary>
+    /// Insert a batch of instances in ONE transaction, letting the caller derive
+    /// each row's notification id from its freshly-assigned database id. Atomic:
+    /// process death mid-materialization can't leave a half-armed medication.
+    /// </summary>
+    public Task InsertAllAsync(IReadOnlyList<ReminderInstance> instances, Func<int, int> notificationIdForInstanceId)
+        => _db.RunInTransactionAsync(conn =>
+        {
+            foreach (var instance in instances)
+            {
+                conn.Insert(instance);                                     // assigns Id
+                instance.NotificationId = notificationIdForInstanceId(instance.Id);
+                conn.Update(instance);
+            }
+        });
+
+    /// <summary>Delete a batch of instances in one transaction.</summary>
+    public Task DeleteAllAsync(IReadOnlyList<ReminderInstance> instances)
+        => _db.RunInTransactionAsync(conn =>
+        {
+            foreach (var instance in instances)
+                conn.Delete(instance);
+        });
+
     public Task<List<ReminderInstance>> GetAllAsync()
         => _db.Table<ReminderInstance>().ToListAsync();
 

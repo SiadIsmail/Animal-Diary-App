@@ -18,6 +18,16 @@ public class DoseItem : BaseViewModel
     /// <summary>False for future doses — you can't take a dose early.</summary>
     public bool CanToggle { get; init; }
 
+    // ── Rockpool timeline presentation hints (set by the VM per row index) ──
+    /// <summary>Per-row pill-icon tilt, alternating down the timeline.</summary>
+    public double IconRotation { get; set; }
+
+    /// <summary>Per-row asymmetric card corners, cycling through three patterns.</summary>
+    public Microsoft.Maui.CornerRadius CardCorner { get; set; } = new(16, 13, 14, 15);
+
+    /// <summary>Actionable and not yet recorded → show the "Mark given" button.</summary>
+    public bool IsPending => CanToggle && Status is null;
+
     public string TimeDisplay => ScheduledTime.ToString(@"hh\:mm");
 
     private DoseStatus? status;
@@ -31,6 +41,7 @@ public class DoseItem : BaseViewModel
             {
                 OnPropertyChanged(nameof(IsTaken));
                 OnPropertyChanged(nameof(IsSkipped));
+                OnPropertyChanged(nameof(IsPending));
                 OnPropertyChanged(nameof(ShowSkip));
                 OnPropertyChanged(nameof(StatusGlyph));
                 OnPropertyChanged(nameof(StatusText));

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    AdjustTrackerSheetView
+    ─────────────────────────────────────────────────────────
+    Manage Pet's small "adjust a default tracker" sheet (Mood / Weight): pick a
+    cadence, or turn the tracker off. Condition-derived trackers use their condition's
+    setup sheet instead. BindingContext is the ManagePetViewModel (set by the page).
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:ManagePetViewModel"
+             x:Class="Animal_Diary_App.Data.View.AdjustTrackerSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsAdjustSheetVisible, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsAdjustSheetVisible}"
+                                Title="{Binding AdjustTitle}"
+                                Subtitle="{Binding AdjustSubtitle}"
+                                DismissCommand="{Binding CloseAdjustCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+
+                <!-- BindableLayout on a wrapping FlexLayout: two-to-three fixed chips,
+                     no scrolling — BindableLayout's documented use case. Safe here
+                     because FelovaBottomSheet keeps its body realised while hidden
+                     (translated off-screen, never IsVisible=false). -->
+                <FlexLayout Wrap="Wrap" Direction="Row"
+                            BindableLayout.ItemsSource="{Binding AdjustOptions}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:AdjustOption">
+                            <Border BackgroundColor="{StaticResource GlassSoft}"
+                                    Stroke="{StaticResource GlassLine}"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 12"
+                                    Padding="14,10"
+                                    Margin="0,0,7,7">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                        <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={x:Reference Root}, Path=BindingContext.SelectAdjustCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding Label}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12.5"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+
+                <!-- Actions -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,4,0,0">
+                    <Border BackgroundColor="{StaticResource GlassSoft}"
+                            Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                            StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding TurnOffTrackerCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Manage_TurnOff}"
+                               FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource RoseDeep}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveAdjustCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_Save}"
+                               FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource White}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </VerticalStackLayout>
+
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>

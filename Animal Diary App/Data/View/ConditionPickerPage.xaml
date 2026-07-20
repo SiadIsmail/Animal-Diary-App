@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    ConditionPickerPage.xaml
+    ─────────────────────────────────────────────────────────
+    Shown right after a pet is created (onboarding, or "add pet" from Pets).
+    The owner picks one ongoing condition — or the gentle "None / Not sure" —
+    so the Calendar can offer the right tracking items. The choice is saved to
+    Pet.ConditionId. Selection accent = teal tint + teal stroke, matching the
+    LanguageSelectionPage pattern.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
+             x:Class="Animal_Diary_App.Data.View.ConditionPickerPage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
+             BackgroundColor="#C4E6E3">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Water background — bottom layer, spans the whole page -->
+        <controls:WaterBackground Grid.RowSpan="2"/>
+
+        <!-- ── MAIN CONTENT ── -->
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="26,40,26,20"
+                                 Spacing="0">
+
+                <Label Text="🩺"
+                       FontSize="48"
+                       HorizontalOptions="Center"
+                       Margin="0,0,0,18"/>
+
+                <Label Text="{Binding ConditionVM.TitleText}"
+                       FontFamily="{StaticResource FontSerif}"
+                       FontSize="26"
+                       TextColor="{StaticResource Ink}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,0,0,8"/>
+
+                <Label Text="{Binding ConditionVM.SubtitleText}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="14"
+                       TextColor="{StaticResource InkSecondary}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,0,0,26"/>
+
+                <!-- One row per condition -->
+                <VerticalStackLayout Spacing="11"
+                                     BindableLayout.ItemsSource="{Binding ConditionVM.Conditions}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:ConditionOption">
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}"
+                                    StrokeThickness="2"
+                                    StrokeShape="RoundRectangle 16,13,15,14"
+                                    Padding="16,15">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border"
+                                                 Binding="{Binding IsSelected}"
+                                                 Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                        <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ConditionVM.SelectCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                                      ColumnSpacing="12">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding Icon}"
+                                           FontSize="24"
+                                           VerticalOptions="Center"/>
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Name}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource Ink}"
+                                           VerticalOptions="Center"/>
+                                    <!-- Configured / selected check -->
+                                    <Label Grid.Column="2"
+                                           Text="✓"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource TealDeep}"
+                                           VerticalOptions="Center"
+                                           IsVisible="{Binding IsSelected}"/>
+                                    <!-- Toggle-off ✕ on selected real conditions -->
+                                    <Border Grid.Column="3"
+                                            WidthRequest="24" HeightRequest="24"
+                                            BackgroundColor="{StaticResource Well}"
+                                            StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                            VerticalOptions="Center"
+                                            IsVisible="{Binding ShowRemove}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ConditionVM.RemoveCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <Label Text="✕" FontSize="11" FontAttributes="Bold"
+                                               TextColor="{StaticResource InkTertiary}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ── BOTTOM ACTION ── -->
+        <VerticalStackLayout Grid.Row="1"
+                             Padding="24,16,24,34">
+            <Border BackgroundColor="{StaticResource Teal}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 15,13,13,16">
+                <Border.Shadow>
+                    <Shadow Brush="#149081" Offset="0,6" Radius="16" Opacity="0.32"/>
+                </Border.Shadow>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnContinueTapped"/>
+                </Border.GestureRecognizers>
+                <Label Text="Continue"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource White}"
+                       HorizontalTextAlignment="Center"
+                       Padding="0,16"/>
+            </Border>
+        </VerticalStackLayout>
+
+        <!-- ── Reusable condition setup sheets — the SAME instances Manage uses ── -->
+        <views:DiabetesSetupSheetView Grid.RowSpan="2" BindingContext="{Binding DiabetesSetupVM}"/>
+        <views:CkdSetupSheetView Grid.RowSpan="2" BindingContext="{Binding CkdSetupVM}"/>
+        <views:EpilepsySetupSheetView Grid.RowSpan="2" BindingContext="{Binding EpilepsySetupVM}"/>
+
+    </Grid>
+
+</ContentPage>

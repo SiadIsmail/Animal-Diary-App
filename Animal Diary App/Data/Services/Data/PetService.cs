@@ -22,6 +22,11 @@ public class PetService
         await _db.InsertAsync(pet);
     }
 
+    public async Task UpdatePetAsync(Pet pet)
+    {
+        await _db.UpdateAsync(pet);
+    }
+
     public async Task<List<Pet>> GetPetsAsync()
     {
         return await _db.Table<Pet>().ToListAsync();

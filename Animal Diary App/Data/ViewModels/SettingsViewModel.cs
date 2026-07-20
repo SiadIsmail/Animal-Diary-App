@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Helpers;
 using System.Windows.Input;
 
@@ -15,6 +16,13 @@ public class SettingsViewModel : BaseViewModel
 
     public event EventHandler? ResetCompleted;
 
+    /// <summary>"Version 1.3.2 (7)" for the foot of the settings panel. Read from
+    /// <see cref="AppInfo"/>, which surfaces the csproj's ApplicationDisplayVersion and
+    /// ApplicationVersion — so a version bump needs no change here. Resolved per read
+    /// so a live language switch re-translates it (this VM is a singleton).</summary>
+    public string AppVersion => LocalizationManager.Instance.Format(
+        "Settings_VersionFormat", AppInfo.Current.VersionString, AppInfo.Current.BuildString);
+
     /// <summary>
     /// Set by the active page to show a native confirmation dialog before deletion.
     /// Returns true if the user confirmed, false to cancel.
@@ -25,18 +33,41 @@ public class SettingsViewModel : BaseViewModel
     public ICommand CloseSettingsCommand { get; }
     public ICommand DeleteAllDataCommand { get; }
     public ICommand SetLanguageCommand { get; }
+    public ICommand OpenLinkCommand { get; }
 
     private readonly AppResetService _appResetService;
     private readonly SettingsService _settingsService;
+    private readonly IAnalyticsService _analytics;
 
-    public SettingsViewModel(AppResetService appResetService, SettingsService settingsService)
+    public SettingsViewModel(AppResetService appResetService, SettingsService settingsService, IAnalyticsService analytics)
     {
         _appResetService = appResetService;
         _settingsService = settingsService;
-        OpenSettingsCommand = new Command(() => IsPanelOpen = true);
+        _analytics = analytics;
+        OpenSettingsCommand = new Command(() =>
+        {
+            IsPanelOpen = true;
+            _analytics.Track(AnalyticsEvents.SettingsOpened);
+        });
         CloseSettingsCommand = new Command(() => IsPanelOpen = false);
         DeleteAllDataCommand = new Command(async () => await OnDeleteAllDataAsync());
         SetLanguageCommand = new Command<string>(async code => await SetLanguageAsync(code));
+        OpenLinkCommand = new Command<string>(async url => await OpenLinkAsync(url));
+    }
+
+    private static async Task OpenLinkAsync(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return;
+
+        try
+        {
+            await Launcher.OpenAsync(uri);
+        }
+        catch
+        {
+            // Ignore — no browser available or the launch was cancelled.
+        }
     }
 
     /// <summary>Two-letter code of the active language ("en" / "de").</summary>
@@ -57,6 +88,7 @@ public class SettingsViewModel : BaseViewModel
         OnPropertyChanged(nameof(CurrentLanguage));
         OnPropertyChanged(nameof(IsGerman));
         OnPropertyChanged(nameof(IsEnglish));
+        OnPropertyChanged(nameof(AppVersion));
     }
 
     private async Task OnDeleteAllDataAsync()
