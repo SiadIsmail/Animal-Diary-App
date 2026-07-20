@@ -63,7 +63,14 @@
 		<MauiIcon Include="Resources\AppIcon\appicon.png"/>
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.jpg" Color="#30c3e4" BaseSize="128,128" />
+		<!-- felova_splash.svg is Resources\Images\felova_rockpool_logo.svg with its two
+		     <text> runs converted to outlines. Resizetizer renders SVG text using fonts
+		     installed on the BUILD MACHINE, and Fraunces / Plus Jakarta Sans ship inside
+		     the app rather than being installed — so the live wordmark would fall back to
+		     a substitute font and vary per machine. Outlines make it deterministic.
+		     Re-generate it if the logo changes; don't hand-edit the path data.
+		     Colour matches LoadingPage's background so the handoff is seamless. -->
+		<MauiSplashScreen Include="Resources\Splash\felova_splash.svg" Color="#C4E6E3" BaseSize="190,170" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
