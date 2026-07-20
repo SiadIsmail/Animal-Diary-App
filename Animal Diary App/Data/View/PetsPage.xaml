@@ -4,6 +4,9 @@
              xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
+             xmlns:models="clr-namespace:Animal_Diary_App.Data.Models"
              x:Class="Animal_Diary_App.Data.View.PetsPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
@@ -92,7 +95,7 @@
                     <HorizontalStackLayout Spacing="8"
                                            BindableLayout.ItemsSource="{Binding PetVM.Pets}">
                         <BindableLayout.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:Pet">
                                 <Border StrokeThickness="1"
                                         Stroke="{StaticResource GlassLine}"
                                         BackgroundColor="{StaticResource Glass}"
@@ -194,7 +197,7 @@
                                             Margin="0,8,0,0"
                                             BindableLayout.ItemsSource="{Binding PetVM.ActivePetTags}">
                                     <BindableLayout.ItemTemplate>
-                                        <DataTemplate>
+                                        <DataTemplate x:DataType="vms:PetProfileTag">
                                             <Border BackgroundColor="{StaticResource Well}"
                                                     StrokeThickness="0"
                                                     StrokeShape="RoundRectangle 999"

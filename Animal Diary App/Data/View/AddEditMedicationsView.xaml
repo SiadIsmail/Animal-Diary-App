@@ -11,6 +11,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
+             xmlns:models="clr-namespace:Animal_Diary_App.Data.Models"
              x:Class="Animal_Diary_App.Data.View.AddEditMedicationsView"
              x:Name="Root"
              InputTransparent="{Binding MedicationVM.IsAddEditSheetVisible, Converter={StaticResource InvertedBoolConverter}}">
@@ -110,7 +113,7 @@
                                             SelectionMode="None"
                                             HeightRequest="52">
                                 <CollectionView.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:DataType="vms:DaySelectionItem">
                                         <Border WidthRequest="42"
                                                 HeightRequest="42"
                                                 Stroke="{StaticResource GlassLine}"
@@ -170,7 +173,7 @@
                         <VerticalStackLayout Spacing="10"
                                              BindableLayout.ItemsSource="{Binding MedicationVM.ReminderTimes}">
                             <BindableLayout.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="vms:ReminderTimeSlot">
                                     <VerticalStackLayout Spacing="6">
                                         <Label Text="{Binding Label}" Style="{StaticResource FieldLabel}"/>
                                         <Border Style="{StaticResource FieldBorder}">
@@ -192,7 +195,7 @@
                             <Border Style="{StaticResource FieldBorder}">
                                 <Picker ItemsSource="{Binding PetVM.Pets}"
                                         SelectedItem="{Binding PetVM.SelectedPet}"
-                                        ItemDisplayBinding="{Binding Name}"
+                                        ItemDisplayBinding="{Binding Name, x:DataType=models:Pet}"
                                         FontFamily="{StaticResource FontSans}"
                                         FontSize="14"
                                         TextColor="{StaticResource Ink}"

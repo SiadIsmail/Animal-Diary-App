@@ -5,6 +5,8 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:JournalLogViewModel"
              x:Class="Animal_Diary_App.Data.View.AddAnythingSheetView"
              x:Name="Root"
              InputTransparent="{Binding IsAddSheetVisible, Converter={StaticResource InvertedBoolConverter}}">
@@ -22,7 +24,7 @@
             <VerticalStackLayout Spacing="9" Padding="0,2,0,2"
                                  BindableLayout.ItemsSource="{Binding AddOptions}">
                 <BindableLayout.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="vms:AddOption">
                         <Border BackgroundColor="{StaticResource Glass}"
                                 Stroke="{StaticResource GlassLine}"
                                 StrokeThickness="1"

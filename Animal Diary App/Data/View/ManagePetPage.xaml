@@ -14,6 +14,8 @@
              xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
              x:Class="Animal_Diary_App.Data.View.ManagePetPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
@@ -55,7 +57,7 @@
             </Style>
 
             <!-- Conditions FlexLayout: a normal chip, and the trailing dashed Add chip -->
-            <DataTemplate x:Key="ConditionChipTemplate">
+            <DataTemplate x:DataType="vms:ManageConditionChip" x:Key="ConditionChipTemplate">
                 <Border BackgroundColor="{StaticResource Glass}"
                         Stroke="{StaticResource GlassLine}"
                         StrokeThickness="1"
@@ -95,7 +97,7 @@
                 </Border>
             </DataTemplate>
 
-            <DataTemplate x:Key="AddConditionChipTemplate">
+            <DataTemplate x:DataType="vms:AddConditionChipItem" x:Key="AddConditionChipTemplate">
                 <Border BackgroundColor="{StaticResource GlassSoft}"
                         Stroke="{StaticResource TealLine}"
                         StrokeThickness="1.5"
@@ -266,7 +268,7 @@
 
                         <VerticalStackLayout BindableLayout.ItemsSource="{Binding ManageVM.CarePlanRows}">
                             <BindableLayout.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="vms:CarePlanRow">
                                     <Grid ColumnDefinitions="Auto,*,Auto,Auto"
                                           ColumnSpacing="13"
                                           Padding="12,14">
@@ -337,7 +339,7 @@
                                     Direction="Row"
                                     BindableLayout.ItemsSource="{Binding ManageVM.PreviewChips}">
                             <BindableLayout.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="vms:PreviewChip">
                                     <Border BackgroundColor="{StaticResource GlassSoft}"
                                             Stroke="{StaticResource TealLine}"
                                             StrokeThickness="1.5"
@@ -374,7 +376,7 @@
                     <VerticalStackLayout>
                         <VerticalStackLayout BindableLayout.ItemsSource="{Binding ManageVM.Medications}">
                             <BindableLayout.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="vms:ManageMedRow">
                                     <Grid ColumnDefinitions="Auto,*,Auto"
                                           ColumnSpacing="13"
                                           Padding="12,14">

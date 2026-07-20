@@ -13,6 +13,7 @@
              xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             x:DataType="vms:MainViewModel"
              x:Class="Animal_Diary_App.Data.View.DocumentsPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"

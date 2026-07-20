@@ -5,6 +5,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:WeightSheetViewModel"
              x:Class="Animal_Diary_App.Data.View.WeightSheetView"
              x:Name="Root"
              InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">

@@ -5,6 +5,9 @@
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
+             xmlns:models="clr-namespace:Animal_Diary_App.Data.Models"
              x:Class="Animal_Diary_App.Data.View.CalendarPage"
              x:Name="CalendarPageRoot"
              NavigationPage.HasNavigationBar="False"
@@ -49,7 +52,7 @@
 
             <!-- ── Chronological timeline cards (one ordering, two layouts) ── -->
             <!-- Mood: title + time, then the warm-paper washi note -->
-            <DataTemplate x:Key="TimelineMoodTemplate">
+            <DataTemplate x:DataType="vms:TimelineItem" x:Key="TimelineMoodTemplate">
                 <Grid ColumnDefinitions="38,*" ColumnSpacing="13">
                     <Grid Grid.Column="0" RowDefinitions="38,*">
                         <Border WidthRequest="38" HeightRequest="38" Rotation="{Binding IconRotation}"
@@ -106,7 +109,7 @@
             </DataTemplate>
 
             <!-- Standard: icon + title + time + sub (weight, glucose, appetite, seizure, dose) -->
-            <DataTemplate x:Key="TimelineStandardTemplate">
+            <DataTemplate x:DataType="vms:TimelineItem" x:Key="TimelineStandardTemplate">
                 <Grid ColumnDefinitions="38,*" ColumnSpacing="13">
                     <Grid Grid.Column="0" RowDefinitions="38,*">
                         <Border WidthRequest="38" HeightRequest="38" Rotation="{Binding IconRotation}"
@@ -232,7 +235,7 @@
                     <HorizontalStackLayout Spacing="8"
                                            BindableLayout.ItemsSource="{Binding CalendarVM.Pets}">
                         <BindableLayout.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:Pet">
                                 <Border StrokeThickness="1"
                                         Stroke="{StaticResource GlassLine}"
                                         BackgroundColor="{StaticResource GlassSoft}"
@@ -364,7 +367,7 @@
                                 AlignItems="Center"
                                 BindableLayout.ItemsSource="{Binding JournalVM.Chips}">
                         <BindableLayout.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="vms:JournalChip">
                                 <Border Rotation="{Binding Tilt}"
                                         Margin="0,0,8,8"
                                         BackgroundColor="{StaticResource GlassSoft}"

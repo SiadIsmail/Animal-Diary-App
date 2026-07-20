@@ -10,6 +10,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
+             xmlns:models="clr-namespace:Animal_Diary_App.Data.Models"
              x:Class="Animal_Diary_App.Data.View.CreatePetPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
@@ -113,7 +116,7 @@
                                     SelectedItem="{Binding PetVM.SelectedPetType}"
                                     HeightRequest="92">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:PetTypeOption">
                                 <VerticalStackLayout Padding="5,0" Spacing="6">
                                     <Border WidthRequest="58"
                                             HeightRequest="58"

@@ -4,6 +4,9 @@
              xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
+             xmlns:models="clr-namespace:Animal_Diary_App.Data.Models"
              x:Class="Animal_Diary_App.Data.View.MedicationsPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
@@ -137,7 +140,7 @@
                 <CollectionView ItemsSource="{Binding MedicationVM.FilteredMedications}"
                                 SelectionMode="None">
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="models:FilteredMedication">
                             <Border Padding="15,16"
                                     Margin="0,0,0,11"
                                     BackgroundColor="{StaticResource Glass}"

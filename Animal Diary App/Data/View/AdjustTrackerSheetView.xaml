@@ -10,6 +10,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:ManagePetViewModel"
              x:Class="Animal_Diary_App.Data.View.AdjustTrackerSheetView"
              x:Name="Root"
              InputTransparent="{Binding IsAdjustSheetVisible, Converter={StaticResource InvertedBoolConverter}}">
@@ -29,7 +31,7 @@
                 <FlexLayout Wrap="Wrap" Direction="Row"
                             BindableLayout.ItemsSource="{Binding AdjustOptions}">
                     <BindableLayout.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="vms:AdjustOption">
                             <Border BackgroundColor="{StaticResource GlassSoft}"
                                     Stroke="{StaticResource GlassLine}"
                                     StrokeThickness="1"

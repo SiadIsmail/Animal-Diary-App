@@ -10,6 +10,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
              x:Class="Animal_Diary_App.Data.View.WelcomePage"
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="#C4E6E3">

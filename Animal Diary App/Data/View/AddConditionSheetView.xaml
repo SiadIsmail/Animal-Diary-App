@@ -10,6 +10,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:ManagePetViewModel"
              x:Class="Animal_Diary_App.Data.View.AddConditionSheetView"
              x:Name="Root"
              InputTransparent="{Binding IsAddConditionSheetVisible, Converter={StaticResource InvertedBoolConverter}}">
@@ -28,7 +30,7 @@
             <VerticalStackLayout Spacing="10" Padding="0,2,0,0"
                                  BindableLayout.ItemsSource="{Binding AddConditionOptions}">
                 <BindableLayout.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="vms:AddConditionOption">
                         <Border BackgroundColor="{StaticResource GlassSoft}"
                                 Stroke="{StaticResource GlassLine}"
                                 StrokeThickness="1"

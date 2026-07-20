@@ -5,6 +5,8 @@
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:MainViewModel"
              x:Class="Animal_Diary_App.Data.View.MainPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
@@ -404,7 +406,7 @@
                                         HeightRequest="30"
                                         BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
                                 <BindableLayout.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:DataType="vms:MoodTimelineDay">
                                         <!-- Height encodes the real mood value; only the
                                              corner radius is decorative. -->
                                         <Border HeightRequest="{Binding Mood, Converter={StaticResource MoodToHeight}}"

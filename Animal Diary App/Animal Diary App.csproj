@@ -28,6 +28,16 @@
 		       <MauiXaml Update="MyPage.xaml" Inflator="Runtime" /> (force runtime inflation) -->
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
+		<!-- MauiEnableXamlCBindingWithSourceCompilation is deliberately left OFF.
+		     Turning it on compiles bindings that set Source explicitly, but this app's
+		     list-item commands reach the page VM through
+		     {RelativeSource AncestorType={x:Type ContentPage}} + Path=BindingContext.…,
+		     and ContentPage.BindingContext is typed `object`, so those paths cannot be
+		     resolved at compile time. The flag turns ~35 harmless "not compiled" notes
+		     (XC0025) into ~23 misleading "property not found" warnings that would mask
+		     real ones. Those bindings stay on the reflection path, as they are today. -->
+
+
 		<!-- Display name -->
 		<ApplicationTitle>Felova</ApplicationTitle>
 

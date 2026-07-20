@@ -69,7 +69,7 @@
                         AlignItems="Start"
                         JustifyContent="Start">
                 <BindableLayout.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="controls:CalendarDayCell">
                         <!-- No fixed height: at 58 the stacked weekday label, date ring
                              and dot row overflowed once the font metrics rounded up, and
                              the cell Border clipped the dots to its shape. The dot row
@@ -140,7 +140,7 @@
                                                            HorizontalOptions="Center"
                                                            BindableLayout.ItemsSource="{Binding Dots}">
                                         <BindableLayout.ItemTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate x:DataType="controls:CalendarDot">
                                                 <Ellipse WidthRequest="5"
                                                          HeightRequest="5"
                                                          Fill="{Binding Fill}"
