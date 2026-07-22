@@ -1,5 +1,6 @@
 Animal Diary App/obj/
 Animal Diary App/bin/
+Animal Diary App/supabase\migrations
 AI/
 appdata.db
 AI_CONTEXT.md
