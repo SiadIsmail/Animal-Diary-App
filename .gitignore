@@ -1,7 +1,26 @@
-Animal Diary App/obj/
-Animal Diary App/bin/
-Animal Diary App/supabase\migrations
-AI/
+# Build outputs
+bin/
+obj/
+
+# IDE / user-specific state
+.vs/
+.idea/
+*.user
+*.lscache
+*.suo
+
+# Local data & logs (the app's SQLite db when run from the repo root)
 appdata.db
-AI_CONTEXT.md
+*.log
+
+# Signing material — never commit. keystore.props holds the store/key passwords
+# and is imported by the csproj only when present.
 Animal Diary App/keystore.props
+*.keystore
+*.jks
+*.pfx
+*.p12
+
+# Project-local working docs (AI-assistant context; not part of the public repo)
+AI/
+AI_CONTEXT.md

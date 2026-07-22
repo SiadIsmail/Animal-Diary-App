@@ -427,9 +427,9 @@ who opt into cloud. Nothing entitlement-shaped gets built now.
 
 *No open questions — implementation can start.*
 
-## Project config (safe-to-embed, like the PostHog project key)
+## Project config
 
-- Supabase project URL: `https://pbwhusssrzavdgbvjtrv.supabase.co`
-- Publishable key: `sb_publishable_vAPqc7ARaJiI_39xTDUftA_zXWRIuXc`
-  (new-style key replacing the legacy `anon` JWT; the service-role key is
-  never stored in this repo)
+The Supabase project URL and publishable key live in one place —
+`Data/Services/Cloud/CloudConfig.cs`. Both are safe to embed (the publishable
+key grants nothing RLS doesn't allow, same category as the PostHog project
+key); the service-role key is never used by the app and never committed.
