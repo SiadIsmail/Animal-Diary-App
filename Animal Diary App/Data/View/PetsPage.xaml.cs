@@ -25,13 +25,24 @@ public partial class PetsPage : ContentPage
         vm.SettingsVM.ConfirmDeleteAllData = () =>
             DisplayAlert(
                 LocalizationManager.Instance.GetString("Settings_DeleteConfirmTitle"),
-                // Signed in → the message must also state the cloud consequences
-                // (owned pets deleted from backup, shared pets left).
-                LocalizationManager.Instance.GetString(vm.SettingsVM.IsCloudSignedIn
-                    ? "Settings_DeleteConfirmMessageCloud"
-                    : "Settings_DeleteConfirmMessage"),
+                LocalizationManager.Instance.GetString("Settings_DeleteConfirmMessage"),
                 LocalizationManager.Instance.GetString("Settings_DeleteConfirmAccept"),
                 LocalizationManager.Instance.GetString("Common_Cancel"));
+
+        // Signed-in reset is a choice: keep the backup or destroy it too.
+        vm.SettingsVM.ConfirmDeleteAllDataCloud = async () =>
+        {
+            var deviceOnly = LocalizationManager.Instance.GetString("Settings_ResetDeviceOnly");
+            var everything = LocalizationManager.Instance.GetString("Settings_ResetEverything");
+            var choice = await DisplayActionSheet(
+                LocalizationManager.Instance.GetString("Settings_DeleteConfirmTitle"),
+                LocalizationManager.Instance.GetString("Common_Cancel"),
+                everything,
+                deviceOnly);
+            if (choice == deviceOnly) return Data.ViewModels.ResetScope.DeviceOnly;
+            if (choice == everything) return Data.ViewModels.ResetScope.Everything;
+            return null;
+        };
 
         vm.CloudVM.ConfirmDeleteAccount = () =>
             DisplayAlert(
@@ -61,6 +72,7 @@ public partial class PetsPage : ContentPage
     {
         base.OnDisappearing();
         vm.SettingsVM.ConfirmDeleteAllData = null;
+        vm.SettingsVM.ConfirmDeleteAllDataCloud = null;
         vm.CloudVM.ConfirmDeleteAccount = null;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;

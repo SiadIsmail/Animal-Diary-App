@@ -6,6 +6,17 @@ using Animal_Diary_App.Data.Services.Cloud;
 using Animal_Diary_App.Helpers;
 using System.Windows.Input;
 
+/// <summary>What a signed-in "Delete all data" should destroy. Signed out there
+/// is no choice — the device is all there is.</summary>
+public enum ResetScope
+{
+    /// <summary>Wipe the device, keep the cloud backup (signs out).</summary>
+    DeviceOnly,
+    /// <summary>Wipe the device AND permanently delete owned pets from the
+    /// cloud + leave shared pets (the ownership rule).</summary>
+    Everything
+}
+
 public class SettingsViewModel : BaseViewModel
 {
     private bool _isPanelOpen;
@@ -26,9 +37,15 @@ public class SettingsViewModel : BaseViewModel
 
     /// <summary>
     /// Set by the active page to show a native confirmation dialog before deletion.
-    /// Returns true if the user confirmed, false to cancel.
+    /// Returns true if the user confirmed, false to cancel. Used when signed OUT.
     /// </summary>
     public Func<Task<bool>>? ConfirmDeleteAllData { get; set; }
+
+    /// <summary>
+    /// Set by the active page — the signed-in reset choice ("this device only —
+    /// keep my backup" vs "everything, including my backup"). Null = cancelled.
+    /// </summary>
+    public Func<Task<ResetScope?>>? ConfirmDeleteAllDataCloud { get; set; }
 
     public ICommand OpenSettingsCommand { get; }
     public ICommand CloseSettingsCommand { get; }
@@ -113,31 +130,42 @@ public class SettingsViewModel : BaseViewModel
 
     private async Task OnDeleteAllDataAsync()
     {
-        if (ConfirmDeleteAllData != null)
+        if (_cloudAuth.IsSignedIn)
+        {
+            // Signed in, the reset is a CHOICE (the owner was surprised when the
+            // backup vanished — the two consequences must be picked explicitly):
+            //   DeviceOnly  → wipe device, keep backup, sign out.
+            //   Everything  → also tombstone owned pets cloud-wide + leave shared
+            //                 pets (the ownership rule, CLOUD_SYNC_PLAN.md §7).
+            var scope = ConfirmDeleteAllDataCloud != null
+                ? await ConfirmDeleteAllDataCloud()
+                : ResetScope.Everything;
+            if (scope == null)
+                return;
+
+            if (scope == ResetScope.Everything)
+            {
+                // Best-effort: an offline reset still wipes the device — the one
+                // gap is that the cloud copy survives until the next sign-in.
+                try
+                {
+                    await _cloudSync.DeleteCloudDataAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Cloud] reset cloud-delete failed: {ex.Message}");
+                }
+            }
+
+            try { await _cloudAuth.SignOutAsync(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Cloud] reset sign-out failed: {ex.Message}"); }
+            await _cloudSync.DisableBackupAsync();
+        }
+        else if (ConfirmDeleteAllData != null)
         {
             var confirmed = await ConfirmDeleteAllData();
             if (!confirmed)
                 return;
-        }
-
-        // Cloud arm of the reset (the ownership rule, see CLOUD_SYNC_PLAN.md §7):
-        // owned pets are tombstoned cloud-wide, caregiver memberships removed, then
-        // the account is signed out so the wiped device starts truly fresh.
-        // Best-effort: an offline reset still wipes the device — the one gap is
-        // that the cloud copy survives until the user signs in again (v1 accepted).
-        if (_cloudAuth.IsSignedIn)
-        {
-            try
-            {
-                await _cloudSync.DeleteCloudDataAsync();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Cloud] reset cloud-delete failed: {ex.Message}");
-            }
-            try { await _cloudAuth.SignOutAsync(); }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Cloud] reset sign-out failed: {ex.Message}"); }
-            await _cloudSync.DisableBackupAsync();
         }
 
         await _appResetService.ResetDataAsync();
