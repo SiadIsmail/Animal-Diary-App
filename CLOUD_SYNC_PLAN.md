@@ -232,13 +232,15 @@ exactly like the reminder scheduler, so overlapping triggers can't interleave.
 ## 7. Security
 
 - **Auth:** Supabase email + password with email verification, **plus Google
-  Sign-In on Android** via the native account picker (Credential Manager →
-  Google ID token → Supabase `signInWithIdToken`), since Android ships first
-  and the one-tap picker is the smoothest onboarding. Password reset via email.
-  Tokens stored in `SecureStorage`; auto-refresh inside the boundary.
-  *Deferred consequence:* because a social login is offered, the iOS release
-  will require **Sign in with Apple** (App Store policy) — planned for
-  whenever iOS ships, not before.
+  Sign-In on Android**. *Implemented* via the system browser (MAUI
+  `WebAuthenticator` → Supabase OAuth `/authorize` with PKCE → code exchange),
+  **not** the originally-planned native Credential Manager picker — the browser
+  flow keeps the client secret in Supabase, needs no bound native libraries,
+  and is far more maintainable for a solo project (owner decision, 2026-07).
+  Password reset via email. Tokens stored in `SecureStorage`; auto-refresh
+  inside the boundary. *Deferred consequence:* because a social login is
+  offered, the iOS release will require **Sign in with Apple** (App Store
+  policy), so the Google button is Android-gated until iOS ships.
 - **RLS on every table, default deny.** The core policy, applied to all data
   tables:
   `pet_id IN (SELECT pet_id FROM pet_members WHERE user_id = auth.uid())`

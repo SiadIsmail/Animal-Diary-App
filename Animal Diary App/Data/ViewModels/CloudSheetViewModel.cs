@@ -40,6 +40,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         SignOutCommand = new Command(async () => await SignOutAsync());
         DeleteAccountCommand = new Command(async () => await DeleteAccountAsync());
         JoinCommand = new Command(async () => await JoinAsync());
+        ContinueWithGoogleCommand = new Command(async () => await GoogleAsync());
 
         // Session/sync state can change underneath the sheet (expiry, background
         // sync finishing) — re-render, marshalled to the UI thread.
@@ -104,6 +105,13 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
 
     public bool IsIntroVisible => _mode == Mode.Intro;
     public bool IsCredentialsVisible => _mode is Mode.SignIn or Mode.SignUp;
+
+    /// <summary>Google sign-in is offered on Android only — a social login on iOS
+    /// obliges Sign in with Apple (App Store policy), deferred until iOS ships.
+    /// Shown on the pre-account modes.</summary>
+    public bool IsGoogleAvailable =>
+        DeviceInfo.Platform == DevicePlatform.Android &&
+        (_mode == Mode.Intro || _mode == Mode.SignIn || _mode == Mode.SignUp);
     public bool IsSignUpMode => _mode == Mode.SignUp;
     public bool IsSignInMode => _mode == Mode.SignIn;
     public bool IsVerifyVisible => _mode == Mode.VerifyCode;
@@ -154,6 +162,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     public ICommand SignOutCommand { get; }
     public ICommand DeleteAccountCommand { get; }
     public ICommand JoinCommand { get; }
+    public ICommand ContinueWithGoogleCommand { get; }
 
     private async Task OpenAsync()
     {
@@ -213,6 +222,13 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
                 ? _auth.RequestPasswordResetAsync(Email.Trim())
                 : _auth.ResendSignUpCodeAsync(Email.Trim())))
             InfoText = LocalizationManager.Instance.Format("Cloud_CodeBody", Email.Trim());
+    }
+
+    private async Task GoogleAsync()
+    {
+        ErrorText = string.Empty;
+        if (await Run(() => _auth.SignInWithGoogleAsync()))
+            EnterSignedIn();
     }
 
     private void EnterSignedIn()
@@ -294,6 +310,11 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
             await action();
             return true;
         }
+        catch (OperationCanceledException)
+        {
+            // The user backed out of the Google browser flow — not an error.
+            return false;
+        }
         catch (CloudException ex)
         {
             ErrorText = Loc(ex.Kind switch
@@ -341,6 +362,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     {
         OnPropertyChanged(nameof(IsIntroVisible));
         OnPropertyChanged(nameof(IsCredentialsVisible));
+        OnPropertyChanged(nameof(IsGoogleAvailable));
         OnPropertyChanged(nameof(IsSignUpMode));
         OnPropertyChanged(nameof(IsSignInMode));
         OnPropertyChanged(nameof(IsVerifyVisible));
