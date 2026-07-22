@@ -114,6 +114,47 @@
                         </Grid>
                     </VerticalStackLayout>
 
+                    <!-- Include-photo opt-in (only when the pet has a photo) -->
+                    <Border BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 13"
+                            IsVisible="{Binding HasPhoto}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleIncludePhotoCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                            <Label Text="{loc:Translate Export_IncludePhoto}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   TextColor="{StaticResource Ink}"
+                                   VerticalOptions="Center"/>
+                            <!-- Check box: filled teal with a tick when opted in -->
+                            <Border Grid.Column="1"
+                                    WidthRequest="24"
+                                    HeightRequest="24"
+                                    BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}"
+                                    StrokeThickness="1.5"
+                                    StrokeShape="RoundRectangle 7"
+                                    VerticalOptions="Center">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IncludePhoto}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                        <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="✓"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource White}"
+                                       IsVisible="{Binding IncludePhoto}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
                     <!-- Inline "no data in range" / error line (never an alert) -->
                     <Label Text="{Binding StatusMessage}"
                            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"

@@ -54,6 +54,8 @@ public class PetDeletionService
     private readonly ICloudSyncService _sync;
     private readonly ICloudAuthService _auth;
 
+    private readonly PetPhotoService _photos;
+
     public PetDeletionService(
         AppDatabase db,
         MedicationReminderScheduler reminders,
@@ -61,7 +63,8 @@ public class PetDeletionService
         ActivePetService activePet,
         ICloudSharingService sharing,
         ICloudSyncService sync,
-        ICloudAuthService auth)
+        ICloudAuthService auth,
+        PetPhotoService photos)
     {
         _db = db;
         _reminders = reminders;
@@ -70,6 +73,7 @@ public class PetDeletionService
         _sharing = sharing;
         _sync = sync;
         _auth = auth;
+        _photos = photos;
     }
 
     /// <summary>Decide, from the pet's cached cloud role, which removal applies. A pet
@@ -145,6 +149,10 @@ public class PetDeletionService
                 await _reports.DeleteAsync(report);
         }
         catch (Exception ex) { Debug.WriteLine($"[PetDelete] report cleanup failed: {ex.Message}"); }
+
+        // The profile photo is local-only (the file is never synced), so delete it
+        // outright — the tombstoned row keeps the file name but the bytes are gone.
+        _photos.Delete(pet.PhotoFileName);
 
         // Never leave the UI pointing at a pet that's gone. Switch to another pet, or
         // clear the selection when none remain (the page routes to onboarding).

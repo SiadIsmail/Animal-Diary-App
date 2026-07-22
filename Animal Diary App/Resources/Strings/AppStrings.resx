@@ -346,6 +346,7 @@
   <data name="Export_SheetTitle" xml:space="preserve"><value>Vet summary</value></data>
   <data name="Export_SheetSubtitle" xml:space="preserve"><value>One page for {0}'s vet</value></data>
   <data name="Export_PeriodLabel" xml:space="preserve"><value>Period</value></data>
+  <data name="Export_IncludePhoto" xml:space="preserve"><value>Include profile photo</value></data>
   <data name="Export_Days30" xml:space="preserve"><value>30 days</value></data>
   <data name="Export_Days90" xml:space="preserve"><value>90 days</value></data>
   <data name="Export_Days180" xml:space="preserve"><value>180 days</value></data>
@@ -432,7 +433,15 @@
   <data name="CreatePet_Details_Subtitle" xml:space="preserve"><value>This helps Felova follow your pet's health over time.</value></data>
   <data name="CreatePet_NextButton" xml:space="preserve"><value>Next</value></data>
   <data name="CreatePet_PhotoLabel" xml:space="preserve"><value>Profile photo</value></data>
-  <data name="CreatePet_PhotoComingSoon" xml:space="preserve"><value>Photos aren't available yet</value></data>
+  <data name="CreatePet_PhotoAdd" xml:space="preserve"><value>Add a photo (optional)</value></data>
+  <data name="CreatePet_PhotoChange" xml:space="preserve"><value>Change photo</value></data>
+  <data name="CreatePet_PhotoSheetTitle" xml:space="preserve"><value>Profile photo</value></data>
+  <data name="CreatePet_PhotoTake" xml:space="preserve"><value>Take a photo</value></data>
+  <data name="CreatePet_PhotoChoose" xml:space="preserve"><value>Choose from library</value></data>
+  <data name="CreatePet_PhotoRemove" xml:space="preserve"><value>Remove photo</value></data>
+  <data name="CreatePet_PhotoError" xml:space="preserve"><value>Couldn't add that photo. Please try another.</value></data>
+  <data name="CreatePet_PhotoPermissionDenied" xml:space="preserve"><value>Photo access was denied. You can allow it in Settings.</value></data>
+  <data name="CreatePet_PhotoCaptureUnsupported" xml:space="preserve"><value>This device can't take photos.</value></data>
   <data name="CreatePet_BirthdayLabel" xml:space="preserve"><value>Birthday</value></data>
   <data name="CreatePet_BirthdayHint" xml:space="preserve"><value>Only the year is required. Add the month and day if you know them.</value></data>
   <data name="CreatePet_BirthYearLabel" xml:space="preserve"><value>Year</value></data>

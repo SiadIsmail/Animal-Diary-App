@@ -83,28 +83,13 @@
                        IsVisible="{Binding PetVM.DetailsSubtitle, Converter={StaticResource StringToBoolConverter}}"
                        Margin="10,0"/>
 
-                <!-- Avatar preview — reacts to the chosen species -->
+                <!-- Avatar preview — the chosen photo, or the species emoji fallback -->
                 <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                    <Border WidthRequest="100"
-                            HeightRequest="100"
-                            Stroke="{StaticResource GlassLine}"
-                            StrokeThickness="2"
-                            StrokeShape="RoundRectangle 50"
-                            HorizontalOptions="Center">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="{StaticResource SeaHi}" Offset="0"/>
-                                <GradientStop Color="{StaticResource SeaMid}" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Border.Shadow>
-                            <Shadow Brush="#0D3A3C" Offset="0,6" Radius="16" Opacity="0.14"/>
-                        </Border.Shadow>
-                        <Label Text="{Binding PetVM.SelectedTypeEmoji}"
-                               FontSize="52"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center"/>
-                    </Border>
+                    <controls:PetAvatarView Diameter="100"
+                                            FallbackFontSize="52"
+                                            PhotoPath="{Binding PetVM.DraftPhotoPath}"
+                                            FallbackText="{Binding PetVM.SelectedTypeEmoji}"
+                                            HorizontalOptions="Center"/>
                     <Label Text="{Binding PetVM.PreviewName}"
                            FontFamily="{StaticResource FontSerif}"
                            FontSize="18"

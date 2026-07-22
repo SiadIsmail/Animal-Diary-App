@@ -157,25 +157,13 @@
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
 
-                            <!-- Avatar -->
-                            <Border Grid.Column="0"
-                                    WidthRequest="60"
-                                    HeightRequest="60"
-                                    Stroke="{StaticResource TealLine}"
-                                    StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 30"
-                                    VerticalOptions="Center">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="{StaticResource SeaHi}" Offset="0"/>
-                                        <GradientStop Color="{StaticResource SeaMid}" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                                <Label Text="{Binding PetVM.ActivePetEmoji}"
-                                       FontSize="30"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center"/>
-                            </Border>
+                            <!-- Avatar — profile photo, or the type emoji fallback -->
+                            <controls:PetAvatarView Grid.Column="0"
+                                                    Diameter="60"
+                                                    FallbackFontSize="30"
+                                                    PhotoPath="{Binding PetVM.ActivePet.PhotoFullPath}"
+                                                    FallbackText="{Binding PetVM.ActivePetEmoji}"
+                                                    VerticalOptions="Center"/>
 
                             <!-- Info -->
                             <VerticalStackLayout Grid.Column="1"

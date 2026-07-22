@@ -33,9 +33,9 @@ public class VetReportService : IVetReportService
         _library = library;
     }
 
-    public async Task<VetReportFile?> GenerateAsync(int petId, DateTime from, DateTime to)
+    public async Task<VetReportFile?> GenerateAsync(int petId, DateTime from, DateTime to, bool includePhoto = false)
     {
-        var data = await _builder.BuildAsync(petId, from, to);
+        var data = await _builder.BuildAsync(petId, from, to, includePhoto);
         if (!data.HasAnyData)
             return null;
 

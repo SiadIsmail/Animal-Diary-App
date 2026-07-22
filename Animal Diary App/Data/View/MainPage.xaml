@@ -131,26 +131,13 @@
                                                    TrackColor="{StaticResource TealLine}"
                                                    RingThickness="6"/>
 
-                        <!-- Avatar -->
-                        <Border WidthRequest="108"
-                                HeightRequest="108"
-                                Stroke="{StaticResource GlassLine}"
-                                StrokeThickness="1"
-                                StrokeShape="RoundRectangle 54"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0"
-                                                     EndPoint="1,1">
-                                    <GradientStop Color="{StaticResource SeaHi}"
-                                                  Offset="0"/>
-                                    <GradientStop Color="{StaticResource SeaMid}"
-                                                  Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <Image Source="animal1.jpg"
-                                   Aspect="AspectFill"/>
-                        </Border>
+                        <!-- Avatar — profile photo, or the type emoji fallback -->
+                        <controls:PetAvatarView Diameter="108"
+                                                FallbackFontSize="48"
+                                                PhotoPath="{Binding MainPageVM.ActivePet.PhotoFullPath}"
+                                                FallbackText="{Binding PetVM.ActivePetEmoji}"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="Center"/>
                     </Grid>
 
                     <!-- Pet name -->

@@ -187,6 +187,63 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     private readonly IAnalyticsService _analytics;
     private readonly PetConditionService _conditions;
     private readonly MedicationService _medications;
+    private readonly PetPhotoService _photos;
+
+    // ── Draft profile photo ──────────────────────────────────────────────────────
+    // The photo picked on the create/edit form, held as a relative file name until the
+    // pet is saved. `_committedPhotoFileName` is the file the pet ALREADY has on disk
+    // (null when creating) — kept so we know which files are throwaway drafts to clean
+    // up on replace/cancel and which is the pet's real photo to leave alone until save.
+    private string? _committedPhotoFileName;
+
+    private string? draftPhotoFileName;
+    public string? DraftPhotoFileName
+    {
+        get => draftPhotoFileName;
+        private set
+        {
+            if (SetProperty(ref draftPhotoFileName, value))
+            {
+                OnPropertyChanged(nameof(DraftPhotoPath));
+                OnPropertyChanged(nameof(HasDraftPhoto));
+            }
+        }
+    }
+
+    /// <summary>Absolute path of the draft photo for the form's live preview, or null.</summary>
+    public string? DraftPhotoPath => string.IsNullOrEmpty(DraftPhotoFileName)
+        ? null
+        : System.IO.Path.Combine(PetPhotoService.PhotosDirectory, DraftPhotoFileName);
+
+    public bool HasDraftPhoto => !string.IsNullOrEmpty(DraftPhotoFileName);
+
+    /// <summary>Store a newly picked/captured photo as the draft. Deletes any previous
+    /// throwaway draft first (a picked-then-replaced file that was never the pet's real
+    /// photo) so we don't leak orphans; the pet's committed photo is left untouched
+    /// until save.</summary>
+    public async Task SetDraftPhotoAsync(Stream source)
+    {
+        var newName = await _photos.SaveAsync(source);
+        DeleteThrowawayDraft();
+        DraftPhotoFileName = newName;
+    }
+
+    /// <summary>Clear the draft photo (the "Remove photo" action). Deletes a throwaway
+    /// draft file; if the draft is the pet's committed photo, only the reference is
+    /// cleared here — the file itself is removed on save.</summary>
+    public void ClearDraftPhoto()
+    {
+        DeleteThrowawayDraft();
+        DraftPhotoFileName = null;
+    }
+
+    // Delete the current draft file only when it is a throwaway — i.e. not the photo the
+    // pet is already persisted with (which must survive until the user actually saves).
+    private void DeleteThrowawayDraft()
+    {
+        if (!string.IsNullOrEmpty(DraftPhotoFileName) && DraftPhotoFileName != _committedPhotoFileName)
+            _photos.Delete(DraftPhotoFileName);
+    }
 
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
@@ -264,7 +321,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     // navigation), so neither needs a command here anymore.
 
     public PetViewModel(PetService petService, ActivePetService activePetService, SettingsService settingsService, IAnalyticsService analytics,
-        PetConditionService conditions, MedicationService medications)
+        PetConditionService conditions, MedicationService medications, PetPhotoService photos)
     {
         _petService = petService;
         _activePetService = activePetService;
@@ -272,6 +329,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         _analytics = analytics;
         _conditions = conditions;
         _medications = medications;
+        _photos = photos;
 
         SelectPetCommand = new Command<Pet>(SelectPet);
         AddPetCommand = new Command(async () => await SavePetAsync());
@@ -342,10 +400,15 @@ public class PetViewModel : BaseViewModel, IResettableDraft
             BirthYear = ParsedBirthYear!.Value,
             BirthMonth = ParsedBirthMonth,
             BirthDay = ParsedBirthDay,
+            PhotoFileName = DraftPhotoFileName,
         };
         // Snapshot the derived age into the legacy column so anything still reading it
         // stays roughly right; AgeYears remains the live, birthday-derived source.
         pet.Age = pet.AgeYears ?? 0;
+
+        // The draft photo (if any) is now the pet's real photo — mark it committed so
+        // the reset below won't clean it up as a throwaway.
+        _committedPhotoFileName = DraftPhotoFileName;
 
         await _petService.SavePetAsync(pet);
         Pets.Add(pet);
@@ -400,6 +463,11 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         EnteredBirthMonth = pet.BirthMonth?.ToString() ?? string.Empty;
         EnteredBirthDay = pet.BirthDay?.ToString() ?? string.Empty;
 
+        // Start the draft photo from the pet's committed photo so it previews and
+        // survives if the owner doesn't change it.
+        _committedPhotoFileName = pet.PhotoFileName;
+        DraftPhotoFileName = pet.PhotoFileName;
+
         var match = PetTypeOptions.FirstOrDefault(
             o => string.Equals(o.Name, pet.Type, StringComparison.OrdinalIgnoreCase));
         if (match != null)
@@ -452,9 +520,17 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         pet.BirthDay = ParsedBirthDay;
         pet.Age = pet.AgeYears ?? 0; // keep the legacy snapshot in step
 
+        // Apply the draft photo. If the pet had a different photo before, delete the old
+        // file now that it's replaced/removed (the row is the only reference).
+        var previousPhoto = _committedPhotoFileName;
+        pet.PhotoFileName = DraftPhotoFileName;
+        if (!string.IsNullOrEmpty(previousPhoto) && previousPhoto != DraftPhotoFileName)
+            _photos.Delete(previousPhoto);
+        _committedPhotoFileName = DraftPhotoFileName;
+
         await _petService.UpdatePetAsync(pet);
 
-        // Refresh anything bound to the active pet (Care card, subtitle, emoji).
+        // Refresh anything bound to the active pet (Care card, subtitle, emoji, photo).
         OnPropertyChanged(nameof(ActivePet));
         OnPropertyChanged(nameof(ActivePetEmoji));
         OnPropertyChanged(nameof(ActivePetSubtitle));
@@ -475,6 +551,12 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         EnteredBirthMonth = string.Empty;
         EnteredBirthDay = string.Empty;
         ShowCustomPetType = false;
+
+        // Drop any throwaway draft photo (a picked-but-never-saved file); a committed
+        // photo belongs to its saved pet and is left on disk.
+        DeleteThrowawayDraft();
+        DraftPhotoFileName = null;
+        _committedPhotoFileName = null;
 
         PetNameError = string.Empty;
         PetTypeError = string.Empty;

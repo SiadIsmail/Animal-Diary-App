@@ -42,6 +42,7 @@ public class ExportSheetViewModel : BaseViewModel
         OpenCommand = new Command(Open);
         DismissCommand = new Command(() => IsPresented = false);
         SelectPeriodCommand = new Command<string>(SelectPeriod);
+        ToggleIncludePhotoCommand = new Command(() => IncludePhoto = !IncludePhoto);
         GenerateCommand = new Command(async () => await GenerateAsync());
         ViewCommand = new Command(() =>
         {
@@ -67,6 +68,16 @@ public class ExportSheetViewModel : BaseViewModel
     private int _selectedDays = 90;
     public int SelectedDays { get => _selectedDays; set => SetProperty(ref _selectedDays, value); }
 
+    /// <summary>Whether the active pet actually has a photo file on this device — the
+    /// "Include photo" toggle is only shown when true.</summary>
+    private bool _hasPhoto;
+    public bool HasPhoto { get => _hasPhoto; private set => SetProperty(ref _hasPhoto, value); }
+
+    /// <summary>Opt-in: include the pet's profile photo in the report header. Default
+    /// off (the report is data-minimized); reset every time the sheet opens.</summary>
+    private bool _includePhoto;
+    public bool IncludePhoto { get => _includePhoto; set => SetProperty(ref _includePhoto, value); }
+
     private bool _isGenerating;
     public bool IsGenerating { get => _isGenerating; set => SetProperty(ref _isGenerating, value); }
 
@@ -83,6 +94,7 @@ public class ExportSheetViewModel : BaseViewModel
     public ICommand OpenCommand { get; }
     public ICommand DismissCommand { get; }
     public ICommand SelectPeriodCommand { get; }
+    public ICommand ToggleIncludePhotoCommand { get; }
     public ICommand GenerateCommand { get; }
     public ICommand ViewCommand { get; }
     public ICommand ShareCommand { get; }
@@ -97,6 +109,11 @@ public class ExportSheetViewModel : BaseViewModel
         IsGenerating = false;
         StatusMessage = string.Empty;
         SelectedDays = 90;
+
+        // Photo opt-in defaults off every open; the toggle only shows when the pet has
+        // a photo file present on this device.
+        IncludePhoto = false;
+        HasPhoto = _pet.PhotoFullPath is { } p && File.Exists(p);
 
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
@@ -125,7 +142,7 @@ public class ExportSheetViewModel : BaseViewModel
                 _result = _pet.Id == 0
                     ? null // no active pet behaves like "no data"
                     : await _reports.GenerateAsync(
-                        _pet.Id, DateTime.Today.AddDays(-SelectedDays), DateTime.Today);
+                        _pet.Id, DateTime.Today.AddDays(-SelectedDays), DateTime.Today, IncludePhoto);
 #pragma warning restore CS0162
 
             if (_result == null)

@@ -11,8 +11,11 @@ public interface IVetReportService
     /// <summary>Generate the PDF summary for a pet over an inclusive date range,
     /// save it (plus its preview page images) into the report library, and return
     /// the library row. Returns null when the range holds no loggable data at all —
-    /// no empty documents are ever produced.</summary>
-    Task<VetReportFile?> GenerateAsync(int petId, DateTime from, DateTime to);
+    /// no empty documents are ever produced.
+    /// <paramref name="includePhoto"/> is opt-in (default off, matching the report's
+    /// data-minimized ethos): the pet's profile photo appears in the header only when
+    /// the owner ticks it AND a photo file exists.</summary>
+    Task<VetReportFile?> GenerateAsync(int petId, DateTime from, DateTime to, bool includePhoto = false);
 
     /// <summary>Generate a PDF from the fake <see cref="VetReportSampleData"/> — for
     /// iterating on the layout without real logged data. The files land in the
