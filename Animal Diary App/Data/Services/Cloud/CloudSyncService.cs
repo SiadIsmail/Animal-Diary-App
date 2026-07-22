@@ -2,6 +2,7 @@ namespace Animal_Diary_App.Data.Services.Cloud;
 
 using System.Diagnostics;
 using System.Text.Json;
+using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Notifications;
 
@@ -48,6 +49,11 @@ public interface ICloudSyncService
     /// <summary>Stop syncing (local-only again). Cloud data stays; sign-out separate.</summary>
     Task DisableBackupAsync();
 
+    /// <summary>The caller's role for a pet ("owner" / "caregiver"), or null when
+    /// unknown / not a member / never synced. Keyed by the pet's SyncId; refreshed
+    /// on every sync from the cloud membership list.</summary>
+    string? GetPetRole(string petSyncId);
+
     /// <summary>The reset arm: soft-delete owned pets cloud-side + leave shared
     /// pets (rpc delete_my_data). Caller wipes local data afterwards.</summary>
     Task DeleteCloudDataAsync();
@@ -64,6 +70,7 @@ public sealed class CloudSyncService : ICloudSyncService
     private const string KeyLastSynced = "cloud:lastSynced";
     private const string KeyFirstBackupDone = "cloud:firstBackupDone";
     private const string KeyCursorPrefix = "cloud:cursor:";
+    private const string KeyMemberships = "cloud:memberships";
 
     // Push batches must stay smaller than pull pages: all rows of one RPC commit
     // share one server timestamp, and the cursor can only advance safely when a
@@ -77,6 +84,7 @@ public sealed class CloudSyncService : ICloudSyncService
     private readonly ICloudAuthService _auth;
     private readonly SyncStateStore _state;
     private readonly MedicationReminderScheduler _reminders;
+    private readonly ActivePetService _activePet;
     private readonly IAnalyticsService _analytics;
     private readonly IReadOnlyList<ITableSync> _tables = SyncTableMaps.Build();
 
@@ -87,6 +95,7 @@ public sealed class CloudSyncService : ICloudSyncService
 
     private bool _enabled;
     private DateTime? _lastSynced;
+    private Dictionary<string, string> _petRoles = new();
 
     public CloudSyncService(
         AppDatabase db,
@@ -94,6 +103,7 @@ public sealed class CloudSyncService : ICloudSyncService
         ICloudAuthService auth,
         SyncStateStore state,
         MedicationReminderScheduler reminders,
+        ActivePetService activePet,
         IAnalyticsService analytics)
     {
         _db = db;
@@ -101,6 +111,7 @@ public sealed class CloudSyncService : ICloudSyncService
         _auth = auth;
         _state = state;
         _reminders = reminders;
+        _activePet = activePet;
         _analytics = analytics;
 
         // Every repository write funnels through SyncStamp — that one hook is the
@@ -117,7 +128,17 @@ public sealed class CloudSyncService : ICloudSyncService
         _enabled = await _state.GetAsync(KeyEnabled) == "1";
         var last = await _state.GetAsync(KeyLastSynced);
         _lastSynced = last == null ? null : CloudJson.ParseIso(last);
+
+        var roles = await _state.GetAsync(KeyMemberships);
+        if (roles != null)
+        {
+            try { _petRoles = JsonSerializer.Deserialize<Dictionary<string, string>>(roles) ?? new(); }
+            catch { _petRoles = new(); }
+        }
     }
+
+    public string? GetPetRole(string petSyncId)
+        => _petRoles.TryGetValue(petSyncId, out var role) ? role : null;
 
     public void RequestSyncSoon()
     {
@@ -175,6 +196,11 @@ public sealed class CloudSyncService : ICloudSyncService
         {
             var ctx = new SyncRunContext(_db.Connection);
 
+            // Membership first: it drives the shared-pet roles AND the purge of
+            // pets whose access was revoked — RLS makes those invisible, so their
+            // tombstones can never arrive; this explicit diff is the only signal.
+            await SyncMembershipsAsync(session);
+
             // Pull before push: conflicts resolve against the freshest server
             // state, and a brand-new device naturally does a full download.
             foreach (var table in _tables)
@@ -222,6 +248,73 @@ public sealed class CloudSyncService : ICloudSyncService
         finally
         {
             StateChanged?.Invoke();
+        }
+    }
+
+    /// <summary>Fetch the caller's membership list (pet uuid → role), cache it for
+    /// the sharing UI, and purge local pets whose membership is gone — the user
+    /// left, was removed, or the owner deleted the pet elsewhere. Only pets that
+    /// were previously pushed are candidates: a dirty pet may simply be new and
+    /// gets its owner membership by being pushed later this same cycle.</summary>
+    private async Task SyncMembershipsAsync(CloudSession session)
+    {
+        var doc = await _http.RestGetAsync("pet_members?select=pet_id,role", session.AccessToken);
+        var roles = new Dictionary<string, string>();
+        foreach (var el in doc!.RootElement.EnumerateArray())
+            roles[CloudJson.GetString(el, "pet_id")] = CloudJson.GetString(el, "role");
+
+        _petRoles = roles;
+        await _state.SetAsync(KeyMemberships, JsonSerializer.Serialize(roles));
+
+        var pets = await _db.Connection.QueryAsync<Pet>("select * from \"Pet\"");
+        foreach (var pet in pets)
+        {
+            if (string.IsNullOrEmpty(pet.SyncId) || pet.IsDirty || roles.ContainsKey(pet.SyncId))
+                continue;
+            await PurgePetAsync(pet);
+        }
+    }
+
+    /// <summary>Hard-delete a pet and everything that hangs off it from THIS
+    /// device (medical data for a pet the user no longer cares for must not stay
+    /// behind), cancel its reminders, and repair the active-pet selection.</summary>
+    private async Task PurgePetAsync(Pet pet)
+    {
+        Debug.WriteLine($"[Cloud] purging pet {pet.Id} ({pet.SyncId}) — membership revoked");
+
+        var meds = await _db.Connection.QueryAsync<Medication>(
+            "select * from \"Medication\" where PetId = ?", pet.Id);
+
+        await _db.Connection.RunInTransactionAsync(conn =>
+        {
+            foreach (var med in meds)
+                conn.Execute("delete from \"MedicationSchedule\" where MedicationId = ?", med.Id);
+            conn.Execute("delete from \"MedicationDoseLog\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"Medication\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"PetEntry\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"Tracker\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"PetCondition\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"GlucoseEntry\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"AppetiteEntry\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"SeizureEntry\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"Pet\" where Id = ?", pet.Id);
+        });
+
+        // The med rows are gone, so the idempotent sync takes its cancel path
+        // (notifications + pending instances).
+        foreach (var med in meds)
+        {
+            try { await _reminders.SyncMedicationAsync(med.Id); }
+            catch (Exception ex) { Debug.WriteLine($"[Cloud] purge reminder cancel {med.Id} failed: {ex.Message}"); }
+        }
+
+        // Don't leave the UI pointing at a pet that no longer exists.
+        if (_activePet.ActivePet?.Id == pet.Id)
+        {
+            var remaining = await _db.Connection.QueryAsync<Pet>(
+                "select * from \"Pet\" where IsDeleted = 0 limit 1");
+            if (remaining.Count > 0)
+                await _activePet.LoadActivePetAsync(remaining[0].Id);
         }
     }
 

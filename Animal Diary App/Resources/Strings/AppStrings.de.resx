@@ -542,4 +542,27 @@
   <data name="Cloud_ErrWeakPassword" xml:space="preserve"><value>Bitte wähle ein längeres Passwort (mindestens 6 Zeichen).</value></data>
   <data name="Cloud_ErrRateLimited" xml:space="preserve"><value>Zu viele Versuche — bitte warte einen Moment.</value></data>
   <data name="Cloud_ErrGeneric" xml:space="preserve"><value>Etwas ist schiefgelaufen — bitte versuche es erneut.</value></data>
+  <data name="Manage_SharingTitle" xml:space="preserve"><value>Teilen</value></data>
+  <data name="Cloud_SharingRowTitle" xml:space="preserve"><value>Tier teilen</value></data>
+  <data name="Cloud_SharingRowSubtitle" xml:space="preserve"><value>Mitbetreuende einladen und verwalten</value></data>
+  <data name="Cloud_SharingSheetTitle" xml:space="preserve"><value>Tier teilen</value></data>
+  <data name="Cloud_SharingSubtitle" xml:space="preserve"><value>Wer sich um {0} kümmert</value></data>
+  <data name="Cloud_MembersEmpty" xml:space="preserve"><value>Noch niemand eingeladen.</value></data>
+  <data name="Cloud_InviteCaregiver" xml:space="preserve"><value>Mitbetreuende einladen</value></data>
+  <data name="Cloud_InviteCodeHint" xml:space="preserve"><value>Teile diesen Code — er funktioniert einmal und läuft in 7 Tagen ab.</value></data>
+  <data name="Cloud_ShareCode" xml:space="preserve"><value>Code teilen</value></data>
+  <data name="Cloud_ShareCodeText" xml:space="preserve"><value>Hilf mir, {0} in Felova zu betreuen! Mein Einladungscode: {1}</value></data>
+  <data name="Cloud_RoleOwner" xml:space="preserve"><value>Besitzer:in</value></data>
+  <data name="Cloud_RoleCaregiver" xml:space="preserve"><value>Mitbetreuer:in</value></data>
+  <data name="Cloud_Remove" xml:space="preserve"><value>Entfernen</value></data>
+  <data name="Cloud_Leave" xml:space="preserve"><value>Tier verlassen</value></data>
+  <data name="Cloud_LeaveConfirmTitle" xml:space="preserve"><value>Dieses Tier verlassen?</value></data>
+  <data name="Cloud_LeaveConfirmMessage" xml:space="preserve"><value>Du verlierst den Zugriff und die Daten dieses Tieres werden von deinem Gerät entfernt.</value></data>
+  <data name="Cloud_NotSyncedYet" xml:space="preserve"><value>Dieses Tier ist noch nicht fertig synchronisiert — versuche es gleich noch einmal.</value></data>
+  <data name="Cloud_JoinHeader" xml:space="preserve"><value>Geteiltes Tier hinzufügen</value></data>
+  <data name="Cloud_JoinPlaceholder" xml:space="preserve"><value>Einladungscode (z. B. ABCD-1234)</value></data>
+  <data name="Cloud_Join" xml:space="preserve"><value>Beitreten</value></data>
+  <data name="Cloud_JoinSuccess" xml:space="preserve"><value>Geschafft! Das Tier wird jetzt synchronisiert…</value></data>
+  <data name="Cloud_ErrInviteInvalid" xml:space="preserve"><value>Dieser Code ist ungültig oder abgelaufen.</value></data>
+  <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>Du betreust dieses Tier bereits.</value></data>
 </root>

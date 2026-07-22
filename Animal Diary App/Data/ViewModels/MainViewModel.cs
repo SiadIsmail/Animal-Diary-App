@@ -39,6 +39,9 @@ public class MainViewModel
     /// <summary>The Settings → Cloud Features sheet (account + backup).</summary>
     public CloudSheetViewModel CloudVM { get; }
 
+    /// <summary>The Manage-pet "Pet sharing" sheet (invites, members, leave).</summary>
+    public SharingSheetViewModel SharingVM { get; }
+
     // ── Vet-report surfaces (export sheet on Pets, preview page, Documents page) ──
     public ExportSheetViewModel ExportSheetVM { get; }
     public ReportPreviewViewModel ReportPreviewVM { get; }
@@ -70,6 +73,7 @@ public class MainViewModel
  ReportPreviewViewModel reportPreviewVM,
  DocumentsViewModel documentsVM,
  CloudSheetViewModel cloudVM,
+ SharingSheetViewModel sharingVM,
  IAnalyticsService analytics)
     {
         Analytics = analytics;
@@ -93,6 +97,7 @@ public class MainViewModel
         ReportPreviewVM = reportPreviewVM;
         DocumentsVM = documentsVM;
         CloudVM = cloudVM;
+        SharingVM = sharingVM;
 
         _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM };
     }

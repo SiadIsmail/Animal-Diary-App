@@ -559,4 +559,27 @@
   <data name="Cloud_ErrWeakPassword" xml:space="preserve"><value>Please choose a longer password (at least 6 characters).</value></data>
   <data name="Cloud_ErrRateLimited" xml:space="preserve"><value>Too many attempts — please wait a moment.</value></data>
   <data name="Cloud_ErrGeneric" xml:space="preserve"><value>Something went wrong — please try again.</value></data>
+  <data name="Manage_SharingTitle" xml:space="preserve"><value>Sharing</value></data>
+  <data name="Cloud_SharingRowTitle" xml:space="preserve"><value>Pet sharing</value></data>
+  <data name="Cloud_SharingRowSubtitle" xml:space="preserve"><value>Invite caregivers and manage access</value></data>
+  <data name="Cloud_SharingSheetTitle" xml:space="preserve"><value>Pet sharing</value></data>
+  <data name="Cloud_SharingSubtitle" xml:space="preserve"><value>Who cares for {0}</value></data>
+  <data name="Cloud_MembersEmpty" xml:space="preserve"><value>No caregivers connected yet.</value></data>
+  <data name="Cloud_InviteCaregiver" xml:space="preserve"><value>Invite caregiver</value></data>
+  <data name="Cloud_InviteCodeHint" xml:space="preserve"><value>Share this code — it works once and expires in 7 days.</value></data>
+  <data name="Cloud_ShareCode" xml:space="preserve"><value>Share code</value></data>
+  <data name="Cloud_ShareCodeText" xml:space="preserve"><value>Help me care for {0} on Felova! My invite code: {1}</value></data>
+  <data name="Cloud_RoleOwner" xml:space="preserve"><value>Owner</value></data>
+  <data name="Cloud_RoleCaregiver" xml:space="preserve"><value>Caregiver</value></data>
+  <data name="Cloud_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Cloud_Leave" xml:space="preserve"><value>Leave this pet</value></data>
+  <data name="Cloud_LeaveConfirmTitle" xml:space="preserve"><value>Leave this pet?</value></data>
+  <data name="Cloud_LeaveConfirmMessage" xml:space="preserve"><value>You'll lose access, and this pet's data will be removed from your device.</value></data>
+  <data name="Cloud_NotSyncedYet" xml:space="preserve"><value>This pet hasn't finished syncing yet — try again in a moment.</value></data>
+  <data name="Cloud_JoinHeader" xml:space="preserve"><value>Join a shared pet</value></data>
+  <data name="Cloud_JoinPlaceholder" xml:space="preserve"><value>Invite code (e.g. ABCD-1234)</value></data>
+  <data name="Cloud_Join" xml:space="preserve"><value>Join</value></data>
+  <data name="Cloud_JoinSuccess" xml:space="preserve"><value>Added! Syncing the pet now…</value></data>
+  <data name="Cloud_ErrInviteInvalid" xml:space="preserve"><value>That code is invalid or has expired.</value></data>
+  <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>You already care for this pet.</value></data>
 </root>

@@ -9,6 +9,7 @@ public sealed class NullCloudSyncService : ICloudSyncService
     public event Action? StateChanged { add { } remove { } }
 
     public Task InitializeAsync() => Task.CompletedTask;
+    public string? GetPetRole(string petSyncId) => null;
     public Task<SyncOutcome> SyncNowAsync() => Task.FromResult(SyncOutcome.BackupDisabled);
     public void RequestSyncSoon() { }
     public Task<SyncOutcome> EnableBackupAsync() => Task.FromResult(SyncOutcome.BackupDisabled);

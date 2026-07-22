@@ -451,6 +451,54 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <!-- Sharing (visible only with cloud backup active) -->
+                <VerticalStackLayout IsVisible="{Binding SharingVM.IsSharingAvailable}">
+                    <Label Text="{loc:Translate Manage_SharingTitle}"
+                           Style="{StaticResource SectionTitle}"
+                           Margin="2,14,2,2"/>
+
+                    <Border Style="{StaticResource CardSurface}"
+                            Padding="4">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="13"
+                              Padding="12,14">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SharingVM.OpenCommand}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Grid.Column="0"
+                                    WidthRequest="38"
+                                    HeightRequest="38"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    VerticalOptions="Center">
+                                <Label Text="🤝"
+                                       FontSize="17"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1"
+                                                 Spacing="1"
+                                                 VerticalOptions="Center">
+                                <Label Text="{loc:Translate Cloud_SharingRowTitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Text="{loc:Translate Cloud_SharingRowSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </VerticalStackLayout>
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   FontSize="20"
+                                   TextColor="{StaticResource InkTertiary}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
             </VerticalStackLayout>
         </ScrollView>
 
@@ -464,6 +512,7 @@
         <views:AddConditionSheetView BindingContext="{Binding ManageVM}"/>
         <views:RemoveConditionSheetView BindingContext="{Binding ManageVM}"/>
         <views:AdjustTrackerSheetView BindingContext="{Binding ManageVM}"/>
+        <views:SharingSheetView BindingContext="{Binding SharingVM}"/>
 
     </Grid>
 

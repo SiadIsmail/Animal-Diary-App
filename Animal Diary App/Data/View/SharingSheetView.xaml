@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SharingSheetView — the Manage-pet "Pet sharing" sheet on the shared
+     FelovaBottomSheet: member list; invite minting + share (owner); leave
+     (caregiver). BindingContext is a SharingSheetViewModel. -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:SharingSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.SharingSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+            <VerticalStackLayout Spacing="14" Padding="0,2,0,0">
+
+                <!-- Pet not in the cloud yet (backup just enabled / first sync pending) -->
+                <Label IsVisible="{Binding NotSyncedYet}"
+                       Text="{loc:Translate Cloud_NotSyncedYet}"
+                       FontFamily="{StaticResource FontSans}" FontSize="13" LineHeight="1.4"
+                       TextColor="{StaticResource InkSecondary}"/>
+
+                <!-- Member list -->
+                <VerticalStackLayout Spacing="8"
+                                     BindableLayout.ItemsSource="{Binding Members}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:MemberRow">
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 14"
+                                    Padding="14,10">
+                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                                    <VerticalStackLayout Spacing="1" VerticalOptions="Center">
+                                        <Label Text="{Binding Email}"
+                                               FontFamily="{StaticResource FontSans}" FontSize="13"
+                                               FontAttributes="Bold" TextColor="{StaticResource Ink}"
+                                               LineBreakMode="TailTruncation"/>
+                                        <Label Text="{Binding RoleDisplay}"
+                                               FontFamily="{StaticResource FontSans}" FontSize="11"
+                                               TextColor="{StaticResource InkSecondary}"/>
+                                    </VerticalStackLayout>
+                                    <Border Grid.Column="2"
+                                            IsVisible="{Binding CanRemove}"
+                                            BackgroundColor="{StaticResource ClayTint}"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 10"
+                                            Padding="10,6"
+                                            VerticalOptions="Center">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={x:Reference Root}, Path=BindingContext.RemoveMemberCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <Label Text="{loc:Translate Cloud_Remove}"
+                                               FontFamily="{StaticResource FontSans}" FontSize="11.5"
+                                               FontAttributes="Bold" TextColor="{StaticResource Clay}"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label IsVisible="{Binding ShowEmptyHint}"
+                       Text="{loc:Translate Cloud_MembersEmpty}"
+                       FontFamily="{StaticResource FontSans}" FontSize="12.5"
+                       TextColor="{StaticResource InkTertiary}"
+                       HorizontalTextAlignment="Center"/>
+
+                <!-- Owner: fresh invite code, big and shareable -->
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding HasInviteCode}">
+                    <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
+                            StrokeShape="RoundRectangle 14" Padding="14,12">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding InviteCode}"
+                                   FontFamily="{StaticResource FontSans}" FontSize="24"
+                                   FontAttributes="Bold" CharacterSpacing="2"
+                                   TextColor="{StaticResource TealDeep}"
+                                   HorizontalTextAlignment="Center"/>
+                            <Label Text="{loc:Translate Cloud_InviteCodeHint}"
+                                   FontFamily="{StaticResource FontSans}" FontSize="11"
+                                   TextColor="{StaticResource InkSecondary}"
+                                   HorizontalTextAlignment="Center"/>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShareCodeCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Cloud_ShareCode}" FontFamily="{StaticResource FontSans}" FontSize="14"
+                               FontAttributes="Bold" TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center" Padding="0,13"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Owner: mint an invite -->
+                <Border IsVisible="{Binding IsOwner}"
+                        BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 15,13,13,16">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CreateInviteCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate Cloud_InviteCaregiver}" FontFamily="{StaticResource FontSans}" FontSize="14"
+                           FontAttributes="Bold" TextColor="{StaticResource TealDeep}"
+                           HorizontalTextAlignment="Center" Padding="0,13"/>
+                </Border>
+
+                <!-- Caregiver: leave (purges the pet from this device) -->
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding IsCaregiver}">
+                    <Border BackgroundColor="{StaticResource ClayTint}" StrokeThickness="1"
+                            Stroke="#EFD3CE" StrokeShape="RoundRectangle 14">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding LeaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Cloud_Leave}" FontFamily="{StaticResource FontSans}" FontSize="13.5"
+                               FontAttributes="Bold" TextColor="{StaticResource Clay}"
+                               HorizontalTextAlignment="Center" Padding="0,12"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <Label Text="{Binding ErrorText}"
+                       IsVisible="{Binding ErrorText, Converter={StaticResource StringToBoolConverter}}"
+                       FontFamily="{StaticResource FontSans}" FontSize="12" TextColor="{StaticResource Clay}"
+                       HorizontalTextAlignment="Center"/>
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                   Color="{StaticResource Teal}" HeightRequest="22"/>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>

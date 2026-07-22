@@ -172,6 +172,29 @@
                         </Border>
                     </VerticalStackLayout>
 
+                    <!-- Join a shared pet by invite code -->
+                    <Label Text="{loc:Translate Cloud_JoinHeader}"
+                           FontFamily="{StaticResource FontSans}" FontSize="12" FontAttributes="Bold"
+                           TextColor="{StaticResource InkSecondary}" Margin="0,4,0,0"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <Border Style="{StaticResource CloudField}">
+                            <Entry Style="{StaticResource CloudEntry}" Text="{Binding JoinCode}"
+                                   Placeholder="{loc:Translate Cloud_JoinPlaceholder}"/>
+                        </Border>
+                        <Border Grid.Column="1" BackgroundColor="{StaticResource Teal}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12" IsVisible="{Binding CanJoin}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding JoinCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Cloud_Join}" FontFamily="{StaticResource FontSans}" FontSize="13"
+                                   FontAttributes="Bold" TextColor="{StaticResource White}"
+                                   VerticalOptions="Center" Padding="16,0"/>
+                        </Border>
+                    </Grid>
+                    <Label Style="{StaticResource CloudBody}" FontSize="12" TextColor="{StaticResource TealDeep}"
+                           Text="{Binding InfoText}"
+                           IsVisible="{Binding InfoText, Converter={StaticResource StringToBoolConverter}}"/>
+
                     <Label Style="{StaticResource CloudBody}" FontSize="11.5" Text="{loc:Translate Cloud_SignOutHint}"/>
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">

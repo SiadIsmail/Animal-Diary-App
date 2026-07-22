@@ -58,6 +58,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ManagePetViewModel>();
 		builder.Services.AddSingleton<JournalLogViewModel>();
 		builder.Services.AddSingleton<CloudSheetViewModel>();
+		builder.Services.AddSingleton<SharingSheetViewModel>();
 		builder.Services.AddSingleton<PetService>();
 		builder.Services.AddSingleton<MedicationService>();
 		builder.Services.AddSingleton<MedicationDoseLogService>();
@@ -88,9 +89,15 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.SyncStateStore>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudAuthService, Animal_Diary_App.Data.Services.Cloud.CloudAuthService>();
 		if (Animal_Diary_App.Data.Services.Cloud.CloudConfig.Enabled)
+		{
 			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSyncService, Animal_Diary_App.Data.Services.Cloud.CloudSyncService>();
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSharingService, Animal_Diary_App.Data.Services.Cloud.CloudSharingService>();
+		}
 		else
+		{
 			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSyncService, Animal_Diary_App.Data.Services.Cloud.NullCloudSyncService>();
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSharingService, Animal_Diary_App.Data.Services.Cloud.NullCloudSharingService>();
+		}
 
 		// Shell + its three tab pages. Transient so a post-reset relaunch builds a
 		// fresh Shell (with fresh page instances); within one Shell each page is
