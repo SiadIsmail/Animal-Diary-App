@@ -5,10 +5,10 @@ using Animal_Diary_App.Helpers;
 /// <summary>
 /// Central home for every piece of notification copy.
 ///
-/// Tone guide: warm, supportive and personal — we speak directly to the carer
-/// and always name the pet. Notifications should feel like a gentle nudge from
-/// a friend, never a robotic system alert. Keep one emoji at most so the
-/// message stays calm.
+/// Tone guide (see AI/app-voice.md §8): a notification states the fact and nothing
+/// else. Pet name, what, when. No emoji, no exclamation points, no urgency or alarm
+/// words ("overdue", "don't forget"), no guilt, no evaluation of a health number,
+/// and never a re-engagement ping. A reminder is not an emergency.
 ///
 /// All copy is pulled from the localized resources via <see cref="LocalizationManager"/>,
 /// so a notification is rendered in whatever language the user has chosen.
@@ -18,7 +18,7 @@ public static class NotificationMessages
 {
     private static LocalizationManager L => LocalizationManager.Instance;
 
-    /// <summary>Title shown on a medication reminder, e.g. "Time for Bella's medication ❤️".</summary>
+    /// <summary>Title shown on a medication reminder, e.g. "Bella's dose".</summary>
     public static string MedicationTitle(string petName)
         => L.Format("Notif_MedicationTitle", SafePet(petName));
 
