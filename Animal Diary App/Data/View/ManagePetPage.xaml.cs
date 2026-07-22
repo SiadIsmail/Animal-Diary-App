@@ -31,6 +31,17 @@ public partial class ManagePetPage : ContentPage
         vm.ManageVM.RequestAddMedication += OnRequestAddMedication;
         vm.ManageVM.RequestOpenMedication += OnRequestOpenMedication;
 
+        // Leaving a shared pet purges it from this device — confirm natively
+        // (same accepted exception as delete-account), then pop back since the
+        // page's pet is about to vanish.
+        vm.SharingVM.ConfirmLeave = () =>
+            DisplayAlert(
+                Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString("Cloud_LeaveConfirmTitle"),
+                Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString("Cloud_LeaveConfirmMessage"),
+                Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString("Cloud_Leave"),
+                Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString("Common_Cancel"));
+        vm.SharingVM.LeftPet += OnLeftPet;
+
         // Any setup sheet saving should refresh the page's plan + chips.
         vm.DiabetesSetupVM.Saved += OnSheetSaved;
         vm.CkdSetupVM.Saved += OnSheetSaved;
@@ -59,6 +70,15 @@ public partial class ManagePetPage : ContentPage
         vm.DiabetesSetupVM.Saved -= OnSheetSaved;
         vm.CkdSetupVM.Saved -= OnSheetSaved;
         vm.EpilepsySetupVM.Saved -= OnSheetSaved;
+
+        vm.SharingVM.ConfirmLeave = null;
+        vm.SharingVM.LeftPet -= OnLeftPet;
+    }
+
+    private async void OnLeftPet()
+    {
+        try { await Navigation.PopAsync(); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[ManagePetPage] pop after leave failed: {ex.Message}"); }
     }
 
     private async void OnRequestConditionSetup(string conditionId)

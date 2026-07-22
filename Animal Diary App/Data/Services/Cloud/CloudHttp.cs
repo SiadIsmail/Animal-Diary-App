@@ -14,8 +14,10 @@ public enum CloudErrorKind
     EmailNotConfirmed,  // signed in before entering the code
     InvalidCode,        // wrong/expired OTP
     WeakPassword,       // below Supabase's password policy
-    RateLimited,        // 429 — mostly the built-in email sender's cap
+    RateLimited,        // 429 / server-side attempt caps
     AuthExpired,        // refresh token no longer valid → signed out
+    InviteInvalid,      // unknown, expired, or used-up invite code
+    InviteAlreadyMember,// redeeming a code for a pet you already have
     Other
 }
 
@@ -100,8 +102,12 @@ public sealed class CloudHttp
         var lower = body.ToLowerInvariant();
 
         CloudErrorKind kind;
-        if (status == (int)HttpStatusCode.TooManyRequests || lower.Contains("rate limit"))
+        if (status == (int)HttpStatusCode.TooManyRequests || lower.Contains("rate limit") || lower.Contains("too many"))
             kind = CloudErrorKind.RateLimited;
+        else if (lower.Contains("invalid or expired code"))
+            kind = CloudErrorKind.InviteInvalid;
+        else if (lower.Contains("already a member"))
+            kind = CloudErrorKind.InviteAlreadyMember;
         else if (lower.Contains("invalid login credentials") || lower.Contains("invalid_credentials"))
             kind = CloudErrorKind.InvalidCredentials;
         else if (lower.Contains("already registered") || lower.Contains("user_already_exists") || lower.Contains("email_exists"))

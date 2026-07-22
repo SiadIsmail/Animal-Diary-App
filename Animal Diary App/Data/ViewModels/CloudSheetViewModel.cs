@@ -19,12 +19,14 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
 
     private readonly ICloudAuthService _auth;
     private readonly ICloudSyncService _sync;
+    private readonly ICloudSharingService _sharing;
     private Mode _mode = Mode.Intro;
 
-    public CloudSheetViewModel(ICloudAuthService auth, ICloudSyncService sync)
+    public CloudSheetViewModel(ICloudAuthService auth, ICloudSyncService sync, ICloudSharingService sharing)
     {
         _auth = auth;
         _sync = sync;
+        _sharing = sharing;
 
         OpenCommand = new Command(async () => await OpenAsync());
         DismissCommand = new Command(() => IsPresented = false);
@@ -37,6 +39,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         SyncNowCommand = new Command(async () => await SyncNowAsync());
         SignOutCommand = new Command(async () => await SignOutAsync());
         DeleteAccountCommand = new Command(async () => await DeleteAccountAsync());
+        JoinCommand = new Command(async () => await JoinAsync());
 
         // Session/sync state can change underneath the sheet (expiry, background
         // sync finishing) — re-render, marshalled to the UI thread.
@@ -82,7 +85,11 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     public string InfoText { get => _infoText; set => SetProperty(ref _infoText, value); }
 
     private bool _isBusy;
-    public bool IsBusy { get => _isBusy; set { SetProperty(ref _isBusy, value); OnPropertyChanged(nameof(CanSubmit)); } }
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set { SetProperty(ref _isBusy, value); OnPropertyChanged(nameof(CanSubmit)); OnPropertyChanged(nameof(CanJoin)); }
+    }
 
     public bool CanSubmit => !IsBusy && _mode switch
     {
@@ -127,6 +134,12 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     /// (same pattern as <see cref="SettingsViewModel.ConfirmDeleteAllData"/>).</summary>
     public Func<Task<bool>>? ConfirmDeleteAccount { get; set; }
 
+    // ── join a shared pet (invite code) ─────────────────────────────────────
+
+    private string _joinCode = string.Empty;
+    public string JoinCode { get => _joinCode; set { SetProperty(ref _joinCode, value); OnPropertyChanged(nameof(CanJoin)); } }
+    public bool CanJoin => !IsBusy && JoinCode.Trim().Length >= 8;
+
     // ── commands ────────────────────────────────────────────────────────────
 
     public ICommand OpenCommand { get; }
@@ -140,6 +153,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     public ICommand SyncNowCommand { get; }
     public ICommand SignOutCommand { get; }
     public ICommand DeleteAccountCommand { get; }
+    public ICommand JoinCommand { get; }
 
     private async Task OpenAsync()
     {
@@ -244,6 +258,21 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         SetMode(Mode.Intro);
     }
 
+    private async Task JoinAsync()
+    {
+        if (!CanJoin)
+            return;
+        ErrorText = string.Empty;
+        if (await Run(() => _sharing.RedeemInviteAsync(JoinCode)))
+        {
+            JoinCode = string.Empty;
+            InfoText = Loc("Cloud_JoinSuccess");
+            // The membership exists server-side; the sync's membership+pull
+            // brings the pet's data down. Fire-and-forget — status shows in-sheet.
+            _ = _sync.SyncNowAsync();
+        }
+    }
+
     private async Task DeleteAccountAsync()
     {
         if (ConfirmDeleteAccount != null && !await ConfirmDeleteAccount())
@@ -276,6 +305,8 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
                 CloudErrorKind.InvalidCode => "Cloud_ErrCode",
                 CloudErrorKind.WeakPassword => "Cloud_ErrWeakPassword",
                 CloudErrorKind.RateLimited => "Cloud_ErrRateLimited",
+                CloudErrorKind.InviteInvalid => "Cloud_ErrInviteInvalid",
+                CloudErrorKind.InviteAlreadyMember => "Cloud_ErrAlreadyMember",
                 _ => "Cloud_ErrGeneric",
             });
             Debug.WriteLine($"[Cloud] {ex.Kind} ({ex.StatusCode}): {ex.Message}");
