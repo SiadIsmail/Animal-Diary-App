@@ -28,7 +28,6 @@ public class AppDatabase
             _db.CreateTableAsync<MedicationSchedule>(),
             _db.CreateTableAsync<ReminderInstance>(),
             _db.CreateTableAsync<MedicationDoseLog>(),
-            _db.CreateTableAsync<TrackingEntry>(),
             _db.CreateTableAsync<Tracker>(),
             _db.CreateTableAsync<PetCondition>(),
             _db.CreateTableAsync<GlucoseEntry>(),

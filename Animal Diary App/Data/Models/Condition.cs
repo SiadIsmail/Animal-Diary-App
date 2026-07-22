@@ -9,6 +9,3 @@ public record Condition(string Id, string NameKey, string Icon)
     /// <summary>Localized display name, resolved from <see cref="NameKey"/>.</summary>
     public string Name => Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString(NameKey);
 }
-
-// (TrackingItem + InputKind — the removed Tracker Hub's item vocabulary — were
-// deleted; TrackingEntry rows key their item by a plain string id.)

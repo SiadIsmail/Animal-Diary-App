@@ -39,7 +39,6 @@ public class AppResetService
         await _db.Connection.DeleteAllAsync<MedicationSchedule>();
         await _db.Connection.DeleteAllAsync<ReminderInstance>();
         await _db.Connection.DeleteAllAsync<MedicationDoseLog>();
-        await _db.Connection.DeleteAllAsync<TrackingEntry>();
         await _db.Connection.DeleteAllAsync<Tracker>();
         await _db.Connection.DeleteAllAsync<PetCondition>();
         await _db.Connection.DeleteAllAsync<GlucoseEntry>();
