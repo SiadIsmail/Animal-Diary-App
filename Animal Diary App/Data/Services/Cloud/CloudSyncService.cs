@@ -32,6 +32,12 @@ public interface ICloudSyncService
     /// Settings surface re-renders on it.</summary>
     event Action? StateChanged;
 
+    /// <summary>Raised after a sync that actually CHANGED local data (applied
+    /// remote rows or purged a revoked pet). The visible page re-runs its normal
+    /// OnAppearing load on this, so another caregiver's entries show up without
+    /// tab-switching. Raised from a background thread — subscribers marshal.</summary>
+    event Action? RemoteChangesApplied;
+
     /// <summary>Load persisted flags (called once at startup, off the UI path).</summary>
     Task InitializeAsync();
 
@@ -40,6 +46,10 @@ public interface ICloudSyncService
 
     /// <summary>Debounced trigger for "something changed / app resumed".</summary>
     void RequestSyncSoon();
+
+    /// <summary>App lifecycle hook (resume/sleep). Foreground gates the periodic
+    /// pull — a backgrounded app must not keep polling the network.</summary>
+    void NotifyAppState(bool foreground);
 
     /// <summary>Opt this device's data into the account: marks everything dirty
     /// (and re-mints sync identities if the device previously synced to a
@@ -79,6 +89,11 @@ public sealed class CloudSyncService : ICloudSyncService
     private const int PullPageSize = 1000;
     private static readonly TimeSpan Debounce = TimeSpan.FromSeconds(45);
 
+    // Foreground polling cadence: another caregiver's entries should surface
+    // while the owner sits on a page, without real-time infrastructure. A no-op
+    // cycle is ~a dozen tiny range GETs — cheap at this interval.
+    private static readonly TimeSpan ForegroundPoll = TimeSpan.FromMinutes(3);
+
     private readonly AppDatabase _db;
     private readonly CloudHttp _http;
     private readonly ICloudAuthService _auth;
@@ -94,6 +109,7 @@ public sealed class CloudSyncService : ICloudSyncService
     private CancellationTokenSource? _debounce;
 
     private bool _enabled;
+    private bool _foreground = true;
     private DateTime? _lastSynced;
     private Dictionary<string, string> _petRoles = new();
 
@@ -117,11 +133,33 @@ public sealed class CloudSyncService : ICloudSyncService
         // Every repository write funnels through SyncStamp — that one hook is the
         // whole "detect local changes" mechanism (see coding-standards.md).
         SyncStamp.RowTouched += RequestSyncSoon;
+
+        // The foreground poll loop lives for the process; the flags inside make
+        // it a pure no-op whenever cloud is off, signed out, or backgrounded.
+        Task.Run(async () =>
+        {
+            while (true)
+            {
+                await Task.Delay(ForegroundPoll);
+                if (!_foreground || !_enabled || !_auth.IsSignedIn)
+                    continue;
+                try { await SyncNowAsync(); }
+                catch (Exception ex) { Debug.WriteLine($"[Cloud] periodic sync failed: {ex.Message}"); }
+            }
+        });
+    }
+
+    public void NotifyAppState(bool foreground)
+    {
+        _foreground = foreground;
+        if (foreground)
+            RequestSyncSoon();
     }
 
     public bool IsBackupEnabled => _enabled;
     public DateTime? LastSyncedUtc => _lastSynced;
     public event Action? StateChanged;
+    public event Action? RemoteChangesApplied;
 
     public async Task InitializeAsync()
     {
@@ -199,12 +237,12 @@ public sealed class CloudSyncService : ICloudSyncService
             // Membership first: it drives the shared-pet roles AND the purge of
             // pets whose access was revoked — RLS makes those invisible, so their
             // tombstones can never arrive; this explicit diff is the only signal.
-            await SyncMembershipsAsync(session);
+            var changed = await SyncMembershipsAsync(session);
 
             // Pull before push: conflicts resolve against the freshest server
             // state, and a brand-new device naturally does a full download.
             foreach (var table in _tables)
-                await PullTableAsync(table, ctx, session);
+                changed += await PullTableAsync(table, ctx, session);
 
             // Remote schedule/dose changes must re-materialize this device's own
             // reminder instances — reuse the idempotent scheduler path.
@@ -225,6 +263,11 @@ public sealed class CloudSyncService : ICloudSyncService
                 await _state.SetAsync(KeyFirstBackupDone, "1");
                 _analytics.Track(AnalyticsEvents.CloudBackupCompleted);
             }
+
+            // Only when local data actually changed — pushes and no-op cycles
+            // must not cause pointless page reloads.
+            if (changed > 0)
+                RemoteChangesApplied?.Invoke();
 
             return SyncOutcome.Success;
         }
@@ -255,8 +298,9 @@ public sealed class CloudSyncService : ICloudSyncService
     /// the sharing UI, and purge local pets whose membership is gone — the user
     /// left, was removed, or the owner deleted the pet elsewhere. Only pets that
     /// were previously pushed are candidates: a dirty pet may simply be new and
-    /// gets its owner membership by being pushed later this same cycle.</summary>
-    private async Task SyncMembershipsAsync(CloudSession session)
+    /// gets its owner membership by being pushed later this same cycle.
+    /// Returns the number of pets purged (they count as local changes).</summary>
+    private async Task<int> SyncMembershipsAsync(CloudSession session)
     {
         var doc = await _http.RestGetAsync("pet_members?select=pet_id,role", session.AccessToken);
         var roles = new Dictionary<string, string>();
@@ -266,13 +310,16 @@ public sealed class CloudSyncService : ICloudSyncService
         _petRoles = roles;
         await _state.SetAsync(KeyMemberships, JsonSerializer.Serialize(roles));
 
+        var purged = 0;
         var pets = await _db.Connection.QueryAsync<Pet>("select * from \"Pet\"");
         foreach (var pet in pets)
         {
             if (string.IsNullOrEmpty(pet.SyncId) || pet.IsDirty || roles.ContainsKey(pet.SyncId))
                 continue;
             await PurgePetAsync(pet);
+            purged++;
         }
+        return purged;
     }
 
     /// <summary>Hard-delete a pet and everything that hangs off it from THIS
@@ -318,10 +365,12 @@ public sealed class CloudSyncService : ICloudSyncService
         }
     }
 
-    private async Task PullTableAsync(ITableSync table, SyncRunContext ctx, CloudSession session)
+    /// <summary>Returns how many rows were actually applied locally.</summary>
+    private async Task<int> PullTableAsync(ITableSync table, SyncRunContext ctx, CloudSession session)
     {
         var cursorKey = KeyCursorPrefix + table.CloudTable;
         var cursor = await _state.GetAsync(cursorKey) ?? "1970-01-01T00:00:00Z";
+        var applied = 0;
 
         while (true)
         {
@@ -331,15 +380,15 @@ public sealed class CloudSyncService : ICloudSyncService
             var rows = doc!.RootElement;
             var count = rows.GetArrayLength();
             if (count == 0)
-                return;
+                return applied;
 
-            await table.ApplyRowsAsync(ctx, rows);
+            applied += await table.ApplyRowsAsync(ctx, rows);
 
             cursor = CloudJson.GetString(rows[count - 1], "updated_at");
             await _state.SetAsync(cursorKey, cursor);
 
             if (count < PullPageSize)
-                return;
+                return applied;
         }
     }
 

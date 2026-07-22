@@ -146,6 +146,9 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
             {
                 if (local.IsDirty && local.UpdatedAtUtc > incoming.UpdatedAtUtc)
                     continue;                     // local edit is newer; it pushes next
+                if (!local.IsDirty && local.SyncId == incoming.SyncId &&
+                    local.UpdatedAtUtc == incoming.UpdatedAtUtc && local.IsDeleted == incoming.IsDeleted)
+                    continue;                     // echo of a row we already hold (our own push coming back)
                 _copyPayload(local, incoming);
                 local.SyncId = incoming.SyncId;   // natural-key merge adopts the canonical id
                 local.UpdatedAtUtc = incoming.UpdatedAtUtc;

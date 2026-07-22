@@ -53,6 +53,18 @@ public partial class CalendarPage : ContentPage
 		vm.AppetiteSheetVM.Saved += OnSheetSaved;
 		vm.SeizureSheetVM.Saved += OnSheetSaved;
 
+		// Another caregiver's changes landing while the Journal is visible reload
+		// it in place — same stale-context path an appearance uses.
+		vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
+
+		await ReloadDataAsync();
+	}
+
+	/// <summary>The Journal's full stale-context reload — runs on every appearance
+	/// AND when a cloud sync applies remote changes while the page is visible.
+	/// Routes through the (pet, date) marker so it stays deduped.</summary>
+	private async Task ReloadDataAsync()
+	{
 		try
 		{
 			// Data may have changed on other tabs while we were away — mark the
@@ -79,14 +91,18 @@ public partial class CalendarPage : ContentPage
 		catch (Exception ex)
 		{
 			// A failed load must degrade to an empty page, never crash the app
-			// (async void — an escaping exception here kills the process).
-			System.Diagnostics.Debug.WriteLine($"[CalendarPage] OnAppearing failed: {ex}");
+			// (async void callers — an escaping exception here kills the process).
+			System.Diagnostics.Debug.WriteLine($"[CalendarPage] reload failed: {ex}");
 		}
 	}
+
+	private void OnRemoteChangesApplied() =>
+		MainThread.BeginInvokeOnMainThread(async () => await ReloadDataAsync());
 
 	protected override void OnDisappearing()
 	{
 		base.OnDisappearing();
+		vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
 		vm.CalendarVM.PropertyChanged -= OnCalendarVmPropertyChanged;
 		vm.JournalVM.PropertyChanged -= OnJournalVmPropertyChanged;
 		vm.JournalVM.RequestOpenSheet -= OnRequestOpenSheet;
