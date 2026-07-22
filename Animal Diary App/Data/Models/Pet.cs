@@ -7,6 +7,7 @@ using System.ComponentModel;
 public class Pet : INotifyPropertyChanged, ISyncable
 {
     // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    [Indexed]
     public string SyncId { get; set; } = string.Empty;
     public DateTime UpdatedAtUtc { get; set; }
     public bool IsDirty { get; set; }
@@ -116,6 +117,7 @@ public class PetEntry : ISyncable
     public int Id { get; set; }
 
     // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    [Indexed]
     public string SyncId { get; set; } = string.Empty;
     public DateTime UpdatedAtUtc { get; set; }
     public bool IsDirty { get; set; }

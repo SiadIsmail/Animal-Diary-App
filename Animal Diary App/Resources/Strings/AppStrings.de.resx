@@ -413,7 +413,7 @@
   <data name="CreatePet_BirthYearPlaceholder" xml:space="preserve"><value>z. B. 2020</value></data>
   <data name="CreatePet_BirthMonthLabel" xml:space="preserve"><value>MONAT (OPTIONAL)</value></data>
   <data name="CreatePet_BirthMonthPlaceholder" xml:space="preserve"><value>MM</value></data>
-  <data name="CreatePet_BirthDayLabel" xml:space="preserve"><value>TAG (OPTIONAL)</value></data>
+  <data name="CreatePet_DayOfBirthLabel" xml:space="preserve"><value>TAG (OPTIONAL)</value></data>
   <data name="CreatePet_BirthDayPlaceholder" xml:space="preserve"><value>TT</value></data>
   <data name="CreatePet_ConditionsTitle" xml:space="preserve"><value>Erkrankungen &amp; Diagnosen</value></data>
   <data name="CreatePet_ConditionsSubtitle" xml:space="preserve"><value>Gesundheitliche Erkrankungen kannst du später im Tierprofil hinzufügen</value></data>
@@ -496,4 +496,49 @@
   <data name="Notif_WeightCheckInBody" xml:space="preserve"><value>Ein kurzes Wiegen hilft dir, {0} gesund und glücklich zu halten.</value></data>
   <data name="Notif_AppointmentTitle" xml:space="preserve"><value>Bald für {0} ❤️</value></data>
   <data name="Notif_AppointmentBody" xml:space="preserve"><value>Ein kleiner Hinweis: {0}s {1} steht an.</value></data>
+  <data name="Settings_CloudSection" xml:space="preserve"><value>CLOUD</value></data>
+  <data name="Settings_DeleteConfirmMessageCloud" xml:space="preserve"><value>Dies löscht alle Daten auf diesem Gerät, entfernt deine eigenen Tiere dauerhaft aus deinem Cloud-Backup und meldet dich von geteilten Tieren ab.</value></data>
+  <data name="Cloud_RowTitle" xml:space="preserve"><value>Cloud-Funktionen</value></data>
+  <data name="Cloud_RowSubtitleOff" xml:space="preserve"><value>Aus — deine Daten bleiben auf diesem Gerät</value></data>
+  <data name="Cloud_Title" xml:space="preserve"><value>Cloud-Funktionen</value></data>
+  <data name="Cloud_IntroSubtitle" xml:space="preserve"><value>Backup &amp; Teilen, nur wenn du willst</value></data>
+  <data name="Cloud_IntroBody" xml:space="preserve"><value>Erstelle ein Konto, um die Daten deines Tieres zu sichern und auf mehreren Geräten synchron zu halten. Felova bleibt standardmäßig privat — nichts verlässt dieses Gerät, bis du das Backup selbst aktivierst.</value></data>
+  <data name="Cloud_CreateAccount" xml:space="preserve"><value>Konto erstellen</value></data>
+  <data name="Cloud_SignIn" xml:space="preserve"><value>Anmelden</value></data>
+  <data name="Cloud_HaveAccount" xml:space="preserve"><value>Ich habe bereits ein Konto</value></data>
+  <data name="Cloud_NoAccount" xml:space="preserve"><value>Neu hier? Konto erstellen</value></data>
+  <data name="Cloud_EmailPlaceholder" xml:space="preserve"><value>E-Mail</value></data>
+  <data name="Cloud_PasswordPlaceholder" xml:space="preserve"><value>Passwort (mindestens 6 Zeichen)</value></data>
+  <data name="Cloud_CodeTitle" xml:space="preserve"><value>Sieh in dein E-Mail-Postfach</value></data>
+  <data name="Cloud_CodeBody" xml:space="preserve"><value>Wir haben einen 6-stelligen Code an {0} gesendet. Gib ihn unten ein.</value></data>
+  <data name="Cloud_CodePlaceholder" xml:space="preserve"><value>6-stelliger Code</value></data>
+  <data name="Cloud_Verify" xml:space="preserve"><value>Bestätigen</value></data>
+  <data name="Cloud_Resend" xml:space="preserve"><value>Code erneut senden</value></data>
+  <data name="Cloud_Forgot" xml:space="preserve"><value>Passwort vergessen?</value></data>
+  <data name="Cloud_ResetBody" xml:space="preserve"><value>Gib deine E-Mail ein und wir senden dir einen Wiederherstellungscode.</value></data>
+  <data name="Cloud_SendCode" xml:space="preserve"><value>Code senden</value></data>
+  <data name="Cloud_NewPasswordPlaceholder" xml:space="preserve"><value>Neues Passwort (mindestens 6 Zeichen)</value></data>
+  <data name="Cloud_ResetVerify" xml:space="preserve"><value>Neues Passwort speichern</value></data>
+  <data name="Cloud_SignedInAs" xml:space="preserve"><value>Angemeldet als {0}</value></data>
+  <data name="Cloud_BackupOffBody" xml:space="preserve"><value>Das Backup ist aus. Wenn du es aktivierst, werden die Tiere auf diesem Gerät in dein Konto hochgeladen und ab dann synchron gehalten.</value></data>
+  <data name="Cloud_EnableBackup" xml:space="preserve"><value>Backup aktivieren</value></data>
+  <data name="Cloud_EnabledOffline" xml:space="preserve"><value>Backup ist aktiv — es synchronisiert, sobald du wieder online bist.</value></data>
+  <data name="Cloud_BackupOn" xml:space="preserve"><value>Backup ist aktiv</value></data>
+  <data name="Cloud_LastSynced" xml:space="preserve"><value>Zuletzt synchronisiert {0}</value></data>
+  <data name="Cloud_NeverSynced" xml:space="preserve"><value>Noch nicht synchronisiert</value></data>
+  <data name="Cloud_SyncNow" xml:space="preserve"><value>Jetzt synchronisieren</value></data>
+  <data name="Cloud_SignOut" xml:space="preserve"><value>Abmelden</value></data>
+  <data name="Cloud_SignOutHint" xml:space="preserve"><value>Beim Abmelden bleiben deine Daten auf diesem Gerät und in deinem Backup.</value></data>
+  <data name="Cloud_DeleteAccount" xml:space="preserve"><value>Konto löschen</value></data>
+  <data name="Cloud_DeleteAccountConfirmTitle" xml:space="preserve"><value>Konto löschen?</value></data>
+  <data name="Cloud_DeleteAccountConfirmMessage" xml:space="preserve"><value>Dies löscht dein Konto und alle gesicherten Daten dauerhaft. Die Daten auf diesem Gerät bleiben erhalten.</value></data>
+  <data name="Cloud_DeleteAccountConfirmAccept" xml:space="preserve"><value>Konto löschen</value></data>
+  <data name="Cloud_ErrNetwork" xml:space="preserve"><value>Keine Verbindung — bitte versuche es später erneut.</value></data>
+  <data name="Cloud_ErrCredentials" xml:space="preserve"><value>E-Mail oder Passwort ist falsch.</value></data>
+  <data name="Cloud_ErrEmailTaken" xml:space="preserve"><value>Mit dieser E-Mail gibt es bereits ein Konto.</value></data>
+  <data name="Cloud_ErrNotConfirmed" xml:space="preserve"><value>Bitte bestätige zuerst deine E-Mail — wir haben dir einen Code gesendet.</value></data>
+  <data name="Cloud_ErrCode" xml:space="preserve"><value>Der Code hat nicht funktioniert. Prüfe ihn und versuche es erneut.</value></data>
+  <data name="Cloud_ErrWeakPassword" xml:space="preserve"><value>Bitte wähle ein längeres Passwort (mindestens 6 Zeichen).</value></data>
+  <data name="Cloud_ErrRateLimited" xml:space="preserve"><value>Zu viele Versuche — bitte warte einen Moment.</value></data>
+  <data name="Cloud_ErrGeneric" xml:space="preserve"><value>Etwas ist schiefgelaufen — bitte versuche es erneut.</value></data>
 </root>

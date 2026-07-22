@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- CloudSheetView — Settings → Cloud Features on the shared FelovaBottomSheet.
+     One sheet, mode-switched body: intro pitch → sign-in / sign-up → 6-digit
+     code → signed-in status card (backup toggle, sync now, sign out, delete
+     account). BindingContext is a CloudSheetViewModel. -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:CloudSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.CloudSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <Style x:Key="CloudField" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1.5"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 14"/>
+            <Setter Property="Padding" Value="14,2"/>
+        </Style>
+        <Style x:Key="CloudEntry" TargetType="Entry">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+            <Setter Property="PlaceholderColor" Value="{StaticResource InkTertiary}"/>
+            <Setter Property="BackgroundColor" Value="Transparent"/>
+        </Style>
+        <Style x:Key="CloudLink" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="TextColor" Value="{StaticResource TealDeep}"/>
+            <Setter Property="HorizontalTextAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="CloudBody" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="LineHeight" Value="1.4"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+            <VerticalStackLayout Spacing="14" Padding="0,2,0,0">
+
+                <!-- ── Intro: the pitch + the privacy reassurance ── -->
+                <VerticalStackLayout Spacing="14" IsVisible="{Binding IsIntroVisible}">
+                    <Label Style="{StaticResource CloudBody}" Text="{loc:Translate Cloud_IntroBody}"/>
+                    <Border BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoSignUpCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Cloud_CreateAccount}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource White}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                    </Border>
+                    <Label Style="{StaticResource CloudLink}" Text="{loc:Translate Cloud_HaveAccount}" Padding="0,4">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoSignInCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <!-- ── Sign in / sign up: email + password ── -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding IsCredentialsVisible}">
+                    <Border Style="{StaticResource CloudField}">
+                        <Entry Style="{StaticResource CloudEntry}" Text="{Binding Email}"
+                               Placeholder="{loc:Translate Cloud_EmailPlaceholder}" Keyboard="Email"/>
+                    </Border>
+                    <Border Style="{StaticResource CloudField}">
+                        <Entry Style="{StaticResource CloudEntry}" Text="{Binding Password}"
+                               Placeholder="{loc:Translate Cloud_PasswordPlaceholder}" IsPassword="True"/>
+                    </Border>
+                    <Label Style="{StaticResource CloudLink}" Text="{loc:Translate Cloud_Forgot}"
+                           IsVisible="{Binding IsSignInMode}" Padding="0,2">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoForgotCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                    <Label Style="{StaticResource CloudLink}" Text="{loc:Translate Cloud_HaveAccount}"
+                           IsVisible="{Binding IsSignUpMode}" Padding="0,2">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoSignInCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                    <Label Style="{StaticResource CloudLink}" Text="{loc:Translate Cloud_NoAccount}"
+                           IsVisible="{Binding IsSignInMode}" Padding="0,2">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoSignUpCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <!-- ── Verify: the 6-digit emailed code ── -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding IsVerifyVisible}">
+                    <Label Style="{StaticResource CloudBody}" Text="{Binding InfoText}"/>
+                    <Border Style="{StaticResource CloudField}">
+                        <Entry Style="{StaticResource CloudEntry}" Text="{Binding Code}"
+                               Placeholder="{loc:Translate Cloud_CodePlaceholder}" Keyboard="Numeric"/>
+                    </Border>
+                    <Label Style="{StaticResource CloudLink}" Text="{loc:Translate Cloud_Resend}" Padding="0,2">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ResendCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <!-- ── Password recovery: request… ── -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding IsResetRequestVisible}">
+                    <Label Style="{StaticResource CloudBody}" Text="{loc:Translate Cloud_ResetBody}"/>
+                    <Border Style="{StaticResource CloudField}">
+                        <Entry Style="{StaticResource CloudEntry}" Text="{Binding Email}"
+                               Placeholder="{loc:Translate Cloud_EmailPlaceholder}" Keyboard="Email"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- ── …then code + new password ── -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding IsResetVerifyVisible}">
+                    <Label Style="{StaticResource CloudBody}" Text="{Binding InfoText}"/>
+                    <Border Style="{StaticResource CloudField}">
+                        <Entry Style="{StaticResource CloudEntry}" Text="{Binding Code}"
+                               Placeholder="{loc:Translate Cloud_CodePlaceholder}" Keyboard="Numeric"/>
+                    </Border>
+                    <Border Style="{StaticResource CloudField}">
+                        <Entry Style="{StaticResource CloudEntry}" Text="{Binding NewPassword}"
+                               Placeholder="{loc:Translate Cloud_NewPasswordPlaceholder}" IsPassword="True"/>
+                    </Border>
+                    <Label Style="{StaticResource CloudLink}" Text="{loc:Translate Cloud_Resend}" Padding="0,2">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ResendCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <!-- ── Signed in: status + actions ── -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding IsSignedInVisible}">
+
+                    <!-- Backup off → the one-time enable pitch (this IS the upload consent) -->
+                    <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowEnablePrompt}">
+                        <Label Style="{StaticResource CloudBody}" Text="{loc:Translate Cloud_BackupOffBody}"/>
+                        <Border BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 13,16,15,14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding EnableBackupCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Cloud_EnableBackup}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                                   TextColor="{StaticResource White}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Backup on → status + sync now -->
+                    <VerticalStackLayout Spacing="12" IsVisible="{Binding IsBackupEnabled}">
+                        <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0" StrokeShape="RoundRectangle 14" Padding="14,12">
+                            <VerticalStackLayout Spacing="3">
+                                <Label Text="{loc:Translate Cloud_BackupOn}" FontFamily="{StaticResource FontSans}"
+                                       FontSize="13" FontAttributes="Bold" TextColor="{StaticResource TealDeep}"/>
+                                <Label Text="{Binding LastSyncedDisplay}" FontFamily="{StaticResource FontSans}"
+                                       FontSize="11.5" TextColor="{StaticResource InkSecondary}"/>
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0" StrokeShape="RoundRectangle 15,13,13,16">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SyncNowCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Cloud_SyncNow}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                                   TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center" Padding="0,13"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Label Style="{StaticResource CloudBody}" FontSize="11.5" Text="{loc:Translate Cloud_SignOutHint}"/>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Border BackgroundColor="{StaticResource Glass}" Stroke="{StaticResource GlassLine}" StrokeThickness="1.5" StrokeShape="RoundRectangle 14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SignOutCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Cloud_SignOut}" FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}" HorizontalTextAlignment="Center" Padding="0,12"/>
+                        </Border>
+                        <Border Grid.Column="1" BackgroundColor="{StaticResource ClayTint}" StrokeThickness="1" Stroke="#EFD3CE" StrokeShape="RoundRectangle 14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding DeleteAccountCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Cloud_DeleteAccount}" FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                   TextColor="{StaticResource Clay}" HorizontalTextAlignment="Center" Padding="0,12"/>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- ── Shared foot: error line, busy dots, submit ── -->
+                <Label Text="{Binding ErrorText}"
+                       IsVisible="{Binding ErrorText, Converter={StaticResource StringToBoolConverter}}"
+                       FontFamily="{StaticResource FontSans}" FontSize="12" TextColor="{StaticResource Clay}"
+                       HorizontalTextAlignment="Center"/>
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                   Color="{StaticResource Teal}" HeightRequest="22"/>
+
+                <Border BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 13,16,15,14"
+                        IsVisible="{Binding CanSubmit}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SubmitCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{Binding SubmitLabel}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                           TextColor="{StaticResource White}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                </Border>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>
