@@ -13,6 +13,7 @@
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
              xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:DataType="vms:MainViewModel"
              x:Class="Animal_Diary_App.Data.View.ConditionPickerPage"
              NavigationPage.HasNavigationBar="False"
@@ -132,7 +133,7 @@
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnContinueTapped"/>
                 </Border.GestureRecognizers>
-                <Label Text="Continue"
+                <Label Text="{loc:Translate Language_Continue}"
                        FontFamily="{StaticResource FontSans}"
                        FontSize="16"
                        FontAttributes="Bold"
