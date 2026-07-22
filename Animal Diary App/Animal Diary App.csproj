@@ -58,6 +58,19 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
 
+	<!-- Android target API level.
+	     Google Play requires apps to target Android 16 (API 36) or higher. We keep
+	     the framework at plain net9.0-android (compile SDK 35, the .NET 9 default)
+	     rather than net9.0-android36.0, because bumping the framework/bindings is
+	     what broke the Android build previously. AndroidTargetSdkVersion only sets
+	     the manifest's targetSdkVersion attribute — which is all Google Play checks —
+	     while compilation stays on the known-good API 35 bindings.
+	     Build note: MSBuild will emit warning XA4211 (target > compile SDK); that
+	     warning is expected and the build still produces a valid API 36 package. -->
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<AndroidTargetSdkVersion>36</AndroidTargetSdkVersion>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.png"/>
