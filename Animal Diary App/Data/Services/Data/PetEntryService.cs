@@ -14,12 +14,12 @@ public class PetEntryService
 
     public async Task SavePetEntryAsync(PetEntry PetEntry)
     {
-        await _db.InsertAsync(PetEntry);
+        await _db.InsertAsync(SyncStamp.Touch(PetEntry));
     }
 
     public async Task UpdatePetEntryAsync(PetEntry PetEntry)
     {
-        await _db.UpdateAsync(PetEntry);
+        await _db.UpdateAsync(SyncStamp.Touch(PetEntry));
     }
 
     /// <summary>Most recent weight entry for a pet, or null if it has none.
@@ -28,7 +28,7 @@ public class PetEntryService
     public async Task<PetEntry?> GetLatestWeightEntryAsync(int petId)
     {
         return await _db.Table<PetEntry>()
-            .Where(e => e.PetId == petId && e.Weight > 0)
+            .Where(e => e.PetId == petId && e.Weight > 0 && e.IsDeleted == false)
             .OrderByDescending(e => e.Date)
             .FirstOrDefaultAsync();
     }
@@ -38,14 +38,16 @@ public class PetEntryService
     public async Task<PetEntry?> GetLatestMoodEntryAsync(int petId)
     {
         return await _db.Table<PetEntry>()
-            .Where(e => e.PetId == petId && e.MoodLevel > 0)
+            .Where(e => e.PetId == petId && e.MoodLevel > 0 && e.IsDeleted == false)
             .OrderByDescending(e => e.Date)
             .FirstOrDefaultAsync();
     }
 
     public async Task<PetEntry> GetPetEntryByDateAndPetIdAsync(DateTime date, int petId)
     {
-        return await _db.Table<PetEntry>().Where(e => e.Date == date && e.PetId == petId).FirstOrDefaultAsync();
+        return await _db.Table<PetEntry>()
+            .Where(e => e.Date == date && e.PetId == petId && e.IsDeleted == false)
+            .FirstOrDefaultAsync();
     }
 
     /// <summary>All entries for a pet within an inclusive date range (date-only).
@@ -55,7 +57,7 @@ public class PetEntryService
         var from = start.Date;
         var to = end.Date;
         return await _db.Table<PetEntry>()
-            .Where(e => e.PetId == petId && e.Date >= from && e.Date <= to)
+            .Where(e => e.PetId == petId && e.Date >= from && e.Date <= to && e.IsDeleted == false)
             .ToListAsync();
     }
 
@@ -65,7 +67,7 @@ public class PetEntryService
     {
         var from = DateTime.Now.AddDays(-days).Date;
         return await _db.Table<PetEntry>()
-            .Where(e => e.PetId == petId && e.Weight > 0 && e.Date >= from)
+            .Where(e => e.PetId == petId && e.Weight > 0 && e.Date >= from && e.IsDeleted == false)
             .OrderBy(e => e.Date)
             .ToListAsync();
     }
@@ -74,7 +76,7 @@ public class PetEntryService
     {
         var thirtyDaysAgo = DateTime.Now.AddDays(-30).Date;
         return await _db.Table<PetEntry>()
-            .Where(e => e.PetId == petId && e.MoodLevel > 0 && e.Date >= thirtyDaysAgo)
+            .Where(e => e.PetId == petId && e.MoodLevel > 0 && e.Date >= thirtyDaysAgo && e.IsDeleted == false)
             .OrderBy(e => e.Date)
             .ToListAsync();
     }

@@ -25,21 +25,22 @@ public class TrackerService
     /// <summary>All trackers stored for a pet.</summary>
     public Task<List<Tracker>> GetForPetAsync(int petId) =>
         _db.Table<Tracker>()
-            .Where(t => t.PetId == petId)
+            .Where(t => t.PetId == petId && t.IsDeleted == false)
             .ToListAsync();
 
     /// <summary>Insert a new tracker row (Id == 0) or update an existing one.</summary>
     public async Task SaveAsync(Tracker tracker)
     {
         if (tracker.Id == 0)
-            await _db.InsertAsync(tracker);
+            await _db.InsertAsync(SyncStamp.Touch(tracker));
         else
-            await _db.UpdateAsync(tracker);
+            await _db.UpdateAsync(SyncStamp.Touch(tracker));
     }
 
     /// <summary>Delete one tracker row (its logged history in the typed entry tables
-    /// is intentionally left untouched — turning a tracker off never deletes data).</summary>
-    public Task DeleteAsync(Tracker tracker) => _db.DeleteAsync(tracker);
+    /// is intentionally left untouched — turning a tracker off never deletes data).
+    /// Soft delete — the row becomes a tombstone so the removal can sync.</summary>
+    public Task DeleteAsync(Tracker tracker) => _db.UpdateAsync(SyncStamp.MarkDeleted(tracker));
 
     /// <summary>The pet's tracker of a given kind, or null. Filtered in memory rather
     /// than in SQL because <see cref="TrackerId"/> is a <c>[StoreAsText]</c> enum and
@@ -70,7 +71,7 @@ public class TrackerService
     {
         var existing = await GetByTrackerIdAsync(petId, trackerId);
         if (existing != null)
-            await _db.DeleteAsync(existing);
+            await _db.UpdateAsync(SyncStamp.MarkDeleted(existing));
     }
 
     /// <summary>
@@ -101,7 +102,7 @@ public class TrackerService
                 foreach (var t in CarePlanCatalog.BuildDefaultPlan(conditionIds))
                 {
                     t.PetId = petId;
-                    conn.Insert(t);
+                    conn.Insert(SyncStamp.Touch(t));
                 }
             });
 

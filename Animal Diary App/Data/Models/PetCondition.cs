@@ -12,7 +12,7 @@ using SQLite;
 /// <c>PetConditionService</c>), so existing pets keep their condition with no manual
 /// migration step.
 /// </summary>
-public class PetCondition
+public class PetCondition : ISyncable
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
@@ -23,4 +23,10 @@ public class PetCondition
     /// <summary>The condition id (see <see cref="ConditionCatalog"/>), e.g. "diabetes".
     /// Empty ids are never stored.</summary>
     public string ConditionId { get; set; } = string.Empty;
+
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
 }

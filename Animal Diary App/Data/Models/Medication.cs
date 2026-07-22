@@ -4,8 +4,14 @@ using SQLite;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-public class Medication : INotifyPropertyChanged
+public class Medication : INotifyPropertyChanged, ISyncable
 {
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
@@ -85,7 +91,7 @@ public class Medication : INotifyPropertyChanged
     public DateTime CreatedAt { get; set; }
 }
 
-public class MedicationSchedule
+public class MedicationSchedule : ISyncable
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
@@ -94,7 +100,11 @@ public class MedicationSchedule
     public DayOfWeek Day { get; set; }
     public TimeSpan Time { get; set; }
 
-
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
 }
 
 public class FilteredMedication

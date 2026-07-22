@@ -6,7 +6,9 @@ using SQLite;
 /// <summary>
 /// Repository for <see cref="MedicationDoseLog"/> adherence records. A dose is
 /// keyed by (medication, date, time); setting a status is an upsert on that key,
-/// clearing it deletes the row (the "undo" path).
+/// clearing it soft-deletes the row (the "undo" path). A cleared key's tombstone
+/// is revived by the next SetStatus for the same key, so one dose can never map
+/// to two rows — the cloud keys dose logs by (medication, date, time).
 /// </summary>
 public class MedicationDoseLogService
 {
@@ -22,7 +24,7 @@ public class MedicationDoseLogService
     {
         var day = date.Date;
         return _db.Table<MedicationDoseLog>()
-            .Where(l => l.PetId == petId && l.ScheduledDate == day)
+            .Where(l => l.PetId == petId && l.ScheduledDate == day && l.IsDeleted == false)
             .ToListAsync();
     }
 
@@ -32,7 +34,7 @@ public class MedicationDoseLogService
         var start = startDate.Date;
         var end = endDate.Date;
         return _db.Table<MedicationDoseLog>()
-            .Where(l => l.MedicationId == medicationId && l.ScheduledDate >= start && l.ScheduledDate <= end)
+            .Where(l => l.MedicationId == medicationId && l.ScheduledDate >= start && l.ScheduledDate <= end && l.IsDeleted == false)
             .ToListAsync();
     }
 
@@ -46,7 +48,7 @@ public class MedicationDoseLogService
         var start = startDate.Date;
         var end = endDate.Date;
         return await _db.Table<MedicationDoseLog>()
-            .Where(l => medicationIds.Contains(l.MedicationId) && l.ScheduledDate >= start && l.ScheduledDate <= end)
+            .Where(l => medicationIds.Contains(l.MedicationId) && l.ScheduledDate >= start && l.ScheduledDate <= end && l.IsDeleted == false)
             .ToListAsync();
     }
 
@@ -60,18 +62,21 @@ public class MedicationDoseLogService
     /// <summary>Record (or update) the outcome for a single dose.</summary>
     public async Task SetStatusAsync(int medicationId, int petId, DateTime date, TimeSpan time, DoseStatus status)
     {
-        var existing = await GetByKeyAsync(medicationId, date, time);
+        // Include tombstones: an undone dose left one for this key, and reviving
+        // it (rather than inserting a sibling) keeps the key unique across devices.
+        var existing = await GetByKeyAsync(medicationId, date, time, includeDeleted: true);
         var resolvedAt = status == DoseStatus.Missed ? (DateTime?)null : DateTime.Now;
 
         if (existing != null)
         {
             existing.Status = status;
             existing.ResolvedAt = resolvedAt;
-            await _db.UpdateAsync(existing);
+            existing.IsDeleted = false;
+            await _db.UpdateAsync(SyncStamp.Touch(existing));
         }
         else
         {
-            await _db.InsertAsync(new MedicationDoseLog
+            await _db.InsertAsync(SyncStamp.Touch(new MedicationDoseLog
             {
                 MedicationId = medicationId,
                 PetId = petId,
@@ -79,26 +84,31 @@ public class MedicationDoseLogService
                 ScheduledTime = time,
                 Status = status,
                 ResolvedAt = resolvedAt
-            });
+            }));
         }
     }
 
-    /// <summary>Remove the outcome for a single dose (undo).</summary>
+    /// <summary>Remove the outcome for a single dose (undo). Soft delete — the row
+    /// stays as a tombstone so the undo can sync; SetStatus revives it.</summary>
     public async Task ClearStatusAsync(int medicationId, DateTime date, TimeSpan time)
     {
         var existing = await GetByKeyAsync(medicationId, date, time);
         if (existing != null)
-            await _db.DeleteAsync(existing);
+            await _db.UpdateAsync(SyncStamp.MarkDeleted(existing));
     }
 
-    private async Task<MedicationDoseLog?> GetByKeyAsync(int medicationId, DateTime date, TimeSpan time)
+    private async Task<MedicationDoseLog?> GetByKeyAsync(int medicationId, DateTime date, TimeSpan time, bool includeDeleted = false)
     {
         var day = date.Date;
         // Filter date + medication in SQL; match the TimeSpan in memory to avoid
-        // relying on TimeSpan translation in the query provider.
+        // relying on TimeSpan translation in the query provider. An active row wins
+        // over a tombstone when both exist for the key.
         var rows = await _db.Table<MedicationDoseLog>()
             .Where(l => l.MedicationId == medicationId && l.ScheduledDate == day)
             .ToListAsync();
-        return rows.FirstOrDefault(l => l.ScheduledTime == time);
+        return rows
+            .Where(l => l.ScheduledTime == time && (includeDeleted || !l.IsDeleted))
+            .OrderBy(l => l.IsDeleted)
+            .FirstOrDefault();
     }
 }

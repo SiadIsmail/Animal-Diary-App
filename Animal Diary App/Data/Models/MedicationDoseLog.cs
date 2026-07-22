@@ -21,7 +21,7 @@ public enum DoseStatus
 /// no row is simply "not yet acted on". A dose is identified by
 /// (<see cref="MedicationId"/>, <see cref="ScheduledDate"/>, <see cref="ScheduledTime"/>).
 /// </summary>
-public class MedicationDoseLog
+public class MedicationDoseLog : ISyncable
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
@@ -47,4 +47,10 @@ public class MedicationDoseLog
 
     /// <summary>When the user recorded Taken/Skipped; null for sweep-written Missed rows.</summary>
     public DateTime? ResolvedAt { get; set; }
+
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
 }
