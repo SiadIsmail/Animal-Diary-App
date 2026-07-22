@@ -20,7 +20,6 @@ public class VetReportDataBuilder
     private readonly GlucoseEntryService _glucose;
     private readonly AppetiteEntryService _appetite;
     private readonly SeizureEntryService _seizures;
-    private readonly TrackingEntryService _tracking;
     private readonly TrackerService _trackers;
 
     public VetReportDataBuilder(
@@ -32,7 +31,6 @@ public class VetReportDataBuilder
         GlucoseEntryService glucose,
         AppetiteEntryService appetite,
         SeizureEntryService seizures,
-        TrackingEntryService tracking,
         TrackerService trackers)
     {
         _pets = pets;
@@ -43,7 +41,6 @@ public class VetReportDataBuilder
         _glucose = glucose;
         _appetite = appetite;
         _seizures = seizures;
-        _tracking = tracking;
         _trackers = trackers;
     }
 
@@ -62,7 +59,6 @@ public class VetReportDataBuilder
         var glucoseEntries = await _glucose.GetForRangeAsync(petId, from, to);
         var appetiteEntries = await _appetite.GetForRangeAsync(petId, from, to);
         var seizureEntries = await _seizures.GetForRangeAsync(petId, from, to);
-        var trackingEntries = await _tracking.GetForRangeAsync(petId, from, to);
 
         var weightPoints = petEntries
             .Where(e => e.Weight > 0)
@@ -70,7 +66,7 @@ public class VetReportDataBuilder
             .Select(e => new ReportPoint(e.Date, e.Weight))
             .ToList();
 
-        var events = BuildEvents(seizureEntries, appetiteEntries, trackingEntries);
+        var events = BuildEvents(seizureEntries, appetiteEntries);
 
         return new VetReportData
         {
@@ -214,12 +210,10 @@ public class VetReportDataBuilder
 
     private static List<ReportEvent> BuildEvents(
         List<SeizureEntry> seizureEntries,
-        List<AppetiteEntry> appetiteEntries,
-        List<TrackingEntry> trackingEntries)
+        List<AppetiteEntry> appetiteEntries)
     {
         var events = new List<ReportEvent>();
 
-        // Seizures live in the typed Journal store…
         events.AddRange(seizureEntries.Select(s => new ReportEvent
         {
             Kind = ReportEventKind.Seizure,
@@ -229,24 +223,9 @@ public class VetReportDataBuilder
             Note = string.IsNullOrWhiteSpace(s.Note) ? null : s.Note.Trim()
         }));
 
-        // …but the Calendar's older dynamic tracker wrote them to TrackingEntry, so
-        // both stores are read until that data is migrated.
-        events.AddRange(trackingEntries
-            .Where(t => t.ItemId == "seizure" && (t.Flag == true || t.DurationSeconds.HasValue || t.TimeTicks.HasValue))
-            .Select(t => new ReportEvent
-            {
-                Kind = ReportEventKind.Seizure,
-                Date = t.Date,
-                Time = t.TimeTicks.HasValue ? new TimeSpan(t.TimeTicks.Value) : null,
-                DurationMinutes = t.DurationSeconds.HasValue
-                    ? (int)Math.Round(t.DurationSeconds.Value / 60.0, MidpointRounding.AwayFromZero)
-                    : null,
-                Note = string.IsNullOrWhiteSpace(t.Text) ? null : t.Text!.Trim()
-            }));
-
-        events.AddRange(trackingEntries
-            .Where(t => t.ItemId == "vomiting" && t.Flag == true)
-            .Select(t => new ReportEvent { Kind = ReportEventKind.Vomiting, Date = t.Date }));
+        // Vomiting has no logging UI right now, so no producer adds
+        // ReportEventKind.Vomiting here — the kind stays (rendered by
+        // EventsSection, used by the sample harness) for when a sheet exists.
 
         // "Ate nothing / barely anything" readings, reported as the owner's own
         // logged level — a fact, not an assessment.

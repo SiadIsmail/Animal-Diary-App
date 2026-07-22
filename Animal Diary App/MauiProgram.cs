@@ -34,7 +34,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<SettingsViewModel>();
 		builder.Services.AddSingleton<AppDatabase>();
 		builder.Services.AddSingleton<PetEntryService>();
-		builder.Services.AddSingleton<TrackingEntryService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.GlucoseEntryService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.AppetiteEntryService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.SeizureEntryService>();
