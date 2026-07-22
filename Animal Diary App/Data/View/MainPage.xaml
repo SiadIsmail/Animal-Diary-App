@@ -178,7 +178,7 @@
                                     </Span.Text>
                                 </Span>
                                 <Span Text=" · "/>
-                                <Span Text="{Binding MainPageVM.ActivePet.Age}"/>
+                                <Span Text="{Binding MainPageVM.ActivePet.AgeYears}"/>
                                 <Span Text="{loc:Translate Common_YearsSeparator}"/>
                                 <Span Text="{Binding MainPageVM.LatestWeight}"/>
                                 <Span Text="{loc:Translate Common_KgSuffix}"/>

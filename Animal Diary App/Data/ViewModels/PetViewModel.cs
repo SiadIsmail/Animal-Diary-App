@@ -42,6 +42,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         {
             if (SetProperty(ref enteredPetName, value))
             {
+                OnPropertyChanged(nameof(CanContinueIdentity));
                 OnPropertyChanged(nameof(CanSavePet));
                 OnPropertyChanged(nameof(PreviewName));
                 ValidatePetName();
@@ -64,18 +65,52 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         }
     }
 
-    private string enteredPetAge = string.Empty;
+    // ── Birthday ─────────────────────────────────────────────────────────────────
+    // The pet's birthday, entered as three independent parts. Only the year is
+    // required; owners who only know roughly when their pet was born leave month
+    // and/or day blank. We never fill an unknown part with a placeholder value.
 
-    public string EnteredPetAge
+    private string enteredBirthYear = string.Empty;
+    public string EnteredBirthYear
     {
-        get => enteredPetAge;
+        get => enteredBirthYear;
         set
         {
-            if (SetProperty(ref enteredPetAge, value))
+            if (SetProperty(ref enteredBirthYear, value))
             {
-                OnPropertyChanged(nameof(ParsedPetAge));
+                OnPropertyChanged(nameof(ParsedBirthYear));
                 OnPropertyChanged(nameof(CanSavePet));
-                ValidatePetAge();
+                ValidateBirthday();
+            }
+        }
+    }
+
+    private string enteredBirthMonth = string.Empty;
+    public string EnteredBirthMonth
+    {
+        get => enteredBirthMonth;
+        set
+        {
+            if (SetProperty(ref enteredBirthMonth, value))
+            {
+                OnPropertyChanged(nameof(ParsedBirthMonth));
+                OnPropertyChanged(nameof(CanSavePet));
+                ValidateBirthday();
+            }
+        }
+    }
+
+    private string enteredBirthDay = string.Empty;
+    public string EnteredBirthDay
+    {
+        get => enteredBirthDay;
+        set
+        {
+            if (SetProperty(ref enteredBirthDay, value))
+            {
+                OnPropertyChanged(nameof(ParsedBirthDay));
+                OnPropertyChanged(nameof(CanSavePet));
+                ValidateBirthday();
             }
         }
     }
@@ -111,11 +146,11 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         set => SetProperty(ref petTypeError, value);
     }
 
-    private string petAgeError = string.Empty;
-    public string PetAgeError
+    private string birthdayError = string.Empty;
+    public string BirthdayError
     {
-        get => petAgeError;
-        set => SetProperty(ref petAgeError, value);
+        get => birthdayError;
+        set => SetProperty(ref birthdayError, value);
     }
 
     // Validation logic
@@ -125,9 +160,17 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         !string.IsNullOrWhiteSpace(EnteredPetType) &&
         (SelectedPetType?.Name != "Other" || !string.IsNullOrWhiteSpace(EnteredPetType));
 
-    private bool IsPetAgeValid => ParsedPetAge.HasValue && ParsedPetAge.Value >= 0;
+    /// <summary>The birthday is valid when a plausible year is present and every part
+    /// the owner DID fill in is itself valid and not in the future. Blank month/day are
+    /// fine — they're optional. <see cref="ComputeBirthdayError"/> is the single source
+    /// of truth; this just asks whether it found nothing wrong.</summary>
+    private bool IsBirthdayValid => ComputeBirthdayError() is null;
 
-    public bool CanSavePet => IsPetNameValid && IsPetTypeValid && IsPetAgeValid;
+    /// <summary>Gate for the Identity page (page 1): only the name is entered there.</summary>
+    public bool CanContinueIdentity => IsPetNameValid;
+
+    /// <summary>Gate for the final save (page 2): everything must be valid.</summary>
+    public bool CanSavePet => IsPetNameValid && IsPetTypeValid && IsBirthdayValid;
 
     public ObservableCollection<PetTypeOption> PetTypeOptions { get; set; } = new();
 
@@ -191,9 +234,22 @@ public class PetViewModel : BaseViewModel, IResettableDraft
             });
     }
 
-    public string ActivePetSubtitle => ActivePet == null
-        ? string.Empty
-        : LocalizationManager.Instance.Format("Pet_SubtitleFormat", PetTypeNames.Localize(ActivePet.Type), ActivePet.Age);
+    // Type · age, but the age half is dropped when the pet's age is unknown so we never
+    // render a bare "· yrs". In practice a birthday's year is always known, so the age
+    // form is the norm; the fallback only covers legacy pets with no stored age.
+    public string ActivePetSubtitle
+    {
+        get
+        {
+            if (ActivePet == null)
+                return string.Empty;
+
+            var type = PetTypeNames.Localize(ActivePet.Type);
+            return ActivePet.AgeYears is int years
+                ? LocalizationManager.Instance.Format("Pet_SubtitleFormat", type, years)
+                : type;
+        }
+    }
 
     /// <summary>Localized "Medications for {pet}" header shown on the Medications page.</summary>
     public string MedicationsHeader =>
@@ -274,7 +330,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         // Validate before saving
         ValidatePetName();
         ValidatePetType();
-        ValidatePetAge();
+        ValidateBirthday();
 
         if (!CanSavePet)
             return;
@@ -283,8 +339,13 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         {
             Name = EnteredPetName.Trim(),
             Type = EnteredPetType.Trim(),
-            Age = ParsedPetAge!.Value
+            BirthYear = ParsedBirthYear!.Value,
+            BirthMonth = ParsedBirthMonth,
+            BirthDay = ParsedBirthDay,
         };
+        // Snapshot the derived age into the legacy column so anything still reading it
+        // stays roughly right; AgeYears remains the live, birthday-derived source.
+        pet.Age = pet.AgeYears ?? 0;
 
         await _petService.SavePetAsync(pet);
         Pets.Add(pet);
@@ -324,7 +385,20 @@ public class PetViewModel : BaseViewModel, IResettableDraft
             return;
 
         EnteredPetName = pet.Name;
-        EnteredPetAge = pet.Age.ToString();
+
+        // Prefill the birthday from whatever the pet stored. A pet created before the
+        // birthday system has no BirthYear but does have a legacy age — offer a
+        // best-guess year (today − age) as a starting point the owner can correct;
+        // it is only persisted if they save.
+        if (pet.BirthYear > 0)
+            EnteredBirthYear = pet.BirthYear.ToString();
+        else if (pet.Age > 0)
+            EnteredBirthYear = (DateTime.Today.Year - pet.Age).ToString();
+        else
+            EnteredBirthYear = string.Empty;
+
+        EnteredBirthMonth = pet.BirthMonth?.ToString() ?? string.Empty;
+        EnteredBirthDay = pet.BirthDay?.ToString() ?? string.Empty;
 
         var match = PetTypeOptions.FirstOrDefault(
             o => string.Equals(o.Name, pet.Type, StringComparison.OrdinalIgnoreCase));
@@ -340,13 +414,18 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
         PetNameError = string.Empty;
         PetTypeError = string.Empty;
-        PetAgeError = string.Empty;
+        BirthdayError = string.Empty;
     }
 
-    /// <summary>Set the form's title + button for edit mode ("You're editing {X}").</summary>
+    /// <summary>Set both pages' titles + the final button for edit mode
+    /// ("You're editing {X}"). Both onboarding pages share one edit heading.</summary>
     public void ConfigureForEdit()
     {
-        PageTitle = LocalizationManager.Instance.Format("CreatePet_EditTitle", ActivePet?.Name ?? string.Empty);
+        var editTitle = LocalizationManager.Instance.Format("CreatePet_EditTitle", ActivePet?.Name ?? string.Empty);
+        IdentityTitle = editTitle;
+        DetailsTitle = editTitle;
+        IdentitySubtitle = string.Empty;
+        DetailsSubtitle = string.Empty;
         SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_EditSave");
         ShowBackButton = true;
     }
@@ -357,7 +436,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     {
         ValidatePetName();
         ValidatePetType();
-        ValidatePetAge();
+        ValidateBirthday();
 
         if (!CanSavePet)
             return false;
@@ -368,7 +447,10 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
         pet.Name = EnteredPetName.Trim();
         pet.Type = EnteredPetType.Trim();
-        pet.Age = ParsedPetAge!.Value;
+        pet.BirthYear = ParsedBirthYear!.Value;
+        pet.BirthMonth = ParsedBirthMonth;
+        pet.BirthDay = ParsedBirthDay;
+        pet.Age = pet.AgeYears ?? 0; // keep the legacy snapshot in step
 
         await _petService.UpdatePetAsync(pet);
 
@@ -389,12 +471,14 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         SelectedPetType = null;
         EnteredPetName = string.Empty;
         EnteredPetType = string.Empty;
-        EnteredPetAge = string.Empty;
+        EnteredBirthYear = string.Empty;
+        EnteredBirthMonth = string.Empty;
+        EnteredBirthDay = string.Empty;
         ShowCustomPetType = false;
 
         PetNameError = string.Empty;
         PetTypeError = string.Empty;
-        PetAgeError = string.Empty;
+        BirthdayError = string.Empty;
     }
     private Pet selectedPet = null!;
     public Pet SelectedPet
@@ -445,8 +529,15 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(ActivePetSubtitle));
     }
 
-    public int? ParsedPetAge =>
-        int.TryParse(EnteredPetAge, out var age) ? age : null;
+    // Parsed birthday parts: null when the field is blank OR unparseable. Blank month
+    // and day are legitimate ("unknown"); the year is the only required part, enforced
+    // by validation rather than here.
+    public int? ParsedBirthYear =>
+        int.TryParse(EnteredBirthYear, out var y) ? y : null;
+    public int? ParsedBirthMonth =>
+        int.TryParse(EnteredBirthMonth, out var m) ? m : null;
+    public int? ParsedBirthDay =>
+        int.TryParse(EnteredBirthDay, out var d) ? d : null;
 
     /// <summary>Map a pet's stored type to a coarse, non-identifying species bucket for
     /// analytics. Only the fixed known types pass through; any custom/free-text type
@@ -487,17 +578,41 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         await _SettingsService.SetIsFirstLaunchAsync(false);
     }
     private string saveButtonLabel = string.Empty;
+    /// <summary>Label on the final (Details page) save/create button.</summary>
     public string SaveButtonLabel
     {
         get => saveButtonLabel;
         set => SetProperty(ref saveButtonLabel, value);
     }
 
-    private string pageTitle = string.Empty;
-    public string PageTitle
+    // The onboarding form is split across two pages (Identity → Details); each has its
+    // own heading and optional subtitle, set together in the configure methods below.
+    private string identityTitle = string.Empty;
+    public string IdentityTitle
     {
-        get => pageTitle;
-        set => SetProperty(ref pageTitle, value);
+        get => identityTitle;
+        set => SetProperty(ref identityTitle, value);
+    }
+
+    private string identitySubtitle = string.Empty;
+    public string IdentitySubtitle
+    {
+        get => identitySubtitle;
+        set => SetProperty(ref identitySubtitle, value);
+    }
+
+    private string detailsTitle = string.Empty;
+    public string DetailsTitle
+    {
+        get => detailsTitle;
+        set => SetProperty(ref detailsTitle, value);
+    }
+
+    private string detailsSubtitle = string.Empty;
+    public string DetailsSubtitle
+    {
+        get => detailsSubtitle;
+        set => SetProperty(ref detailsSubtitle, value);
     }
 
     private bool showBackButton;
@@ -524,17 +639,24 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         bool isFirstLaunchValue = await IsFirstLaunchAsync();
         IsFirstLaunch = isFirstLaunchValue;
 
+        var loc = LocalizationManager.Instance;
         if (isFirstLaunchValue)
         {
-            SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_FirstLaunchSave");
-            PageTitle = LocalizationManager.Instance.GetString("CreatePet_FirstLaunchTitle");
+            IdentityTitle = loc.GetString("CreatePet_Identity_FirstLaunchTitle");
+            IdentitySubtitle = loc.GetString("CreatePet_Identity_Subtitle");
+            DetailsTitle = loc.GetString("CreatePet_Details_FirstLaunchTitle");
+            DetailsSubtitle = loc.GetString("CreatePet_Details_Subtitle");
+            SaveButtonLabel = loc.GetString("CreatePet_FirstLaunchSave");
             ShowBackButton = false;
             // The flag is cleared in SavePetAsync, once the first pet is saved.
         }
         else
         {
-            SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_AddSave");
-            PageTitle = LocalizationManager.Instance.GetString("CreatePet_AddTitle");
+            IdentityTitle = loc.GetString("CreatePet_Identity_AddTitle");
+            IdentitySubtitle = loc.GetString("CreatePet_Identity_Subtitle");
+            DetailsTitle = loc.GetString("CreatePet_Details_AddTitle");
+            DetailsSubtitle = loc.GetString("CreatePet_Details_Subtitle");
+            SaveButtonLabel = loc.GetString("CreatePet_AddSave");
             ShowBackButton = true;
         }
     }
@@ -562,21 +684,50 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         }
     }
 
-    private void ValidatePetAge()
+    private void ValidateBirthday()
     {
-        if (string.IsNullOrWhiteSpace(EnteredPetAge))
-        {
-            PetAgeError = LocalizationManager.Instance.GetString("Validation_PetAgeRequired");
-        }
-        else if (!int.TryParse(EnteredPetAge, out var age) || age < 0)
-        {
-            PetAgeError = LocalizationManager.Instance.GetString("Validation_PetAgeInvalid");
-        }
-        else
-        {
-            PetAgeError = string.Empty;
-        }
+        var key = ComputeBirthdayError();
+        BirthdayError = key is null ? string.Empty : LocalizationManager.Instance.GetString(key);
     }
 
+    /// <summary>The single rule set for the birthday. Returns the resource key of the
+    /// first problem found, or null when the birthday is acceptable. Enforces: a
+    /// required, plausible year; an optional month in 1–12; an optional day that needs
+    /// a month, must exist in that month, and — with the whole date known — must not be
+    /// in the future. A year-only or year+month birthday is always allowed.</summary>
+    private string? ComputeBirthdayError()
+    {
+        // Year — required.
+        if (string.IsNullOrWhiteSpace(EnteredBirthYear))
+            return "Validation_BirthYearRequired";
 
+        var thisYear = DateTime.Today.Year;
+        // Lower bound is generous (no pet outlives it) but rules out typos like "202".
+        if (ParsedBirthYear is not int year || year < 1900 || year > thisYear)
+            return "Validation_BirthYearInvalid";
+
+        // Month — optional, but if given must be a real month.
+        int? month = null;
+        if (!string.IsNullOrWhiteSpace(EnteredBirthMonth))
+        {
+            if (ParsedBirthMonth is not int m || m < 1 || m > 12)
+                return "Validation_BirthMonthInvalid";
+            month = m;
+        }
+
+        // Day — optional; only meaningful with a month, and must exist in it.
+        if (!string.IsNullOrWhiteSpace(EnteredBirthDay))
+        {
+            if (month is null)
+                return "Validation_BirthDayNeedsMonth";
+            if (ParsedBirthDay is not int day || day < 1 || day > DateTime.DaysInMonth(year, month.Value))
+                return "Validation_BirthDayInvalid";
+
+            // A fully known birthday can't be in the future.
+            if (new DateTime(year, month.Value, day) > DateTime.Today)
+                return "Validation_BirthdayFuture";
+        }
+
+        return null;
+    }
 }

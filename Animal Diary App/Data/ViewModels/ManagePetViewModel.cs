@@ -177,8 +177,12 @@ public class ManagePetViewModel : BaseViewModel
     // ── Identity ─────────────────────────────────────────────────────────────────
     public string PetName => _activePet.ActivePet?.Name ?? string.Empty;
     public string PetInitial => string.IsNullOrEmpty(PetName) ? "·" : PetName.Substring(0, 1).ToUpperInvariant();
+    // Age is dropped when unknown so the subtitle never reads "· yrs" with no number
+    // (see PetViewModel.ActivePetSubtitle — same rule).
     public string PetSubtitle => _activePet.ActivePet is { } p
-        ? Loc.Format("Pet_SubtitleFormat", PetTypeNames.Localize(p.Type), p.Age)
+        ? (p.AgeYears is int years
+            ? Loc.Format("Pet_SubtitleFormat", PetTypeNames.Localize(p.Type), years)
+            : PetTypeNames.Localize(p.Type))
         : string.Empty;
     public string IdentityHint => Loc.GetString("Manage_IdentityHint");
 

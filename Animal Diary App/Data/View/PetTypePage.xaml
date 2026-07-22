@@ -37,9 +37,9 @@
 
             <Entry
                 Placeholder="{loc:Translate Common_EnterText}"
-                Text="{Binding PetVM.EnteredPetAge}"
+                Text="{Binding PetVM.EnteredBirthYear}"
                 Completed="OnEntryCompleted"
-                SemanticProperties.Description="Type your pet's age here"/>
+                SemanticProperties.Description="Type your pet's birth year here"/>
         </VerticalStackLayout>
     </Grid>
 

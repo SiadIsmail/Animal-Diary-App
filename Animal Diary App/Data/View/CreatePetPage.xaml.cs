@@ -7,6 +7,11 @@ public partial class CreatePetPage : ContentPage
     private MainViewModel vm;
     private readonly bool isEditMode;
 
+    // Onboarding step 1 configures the draft exactly once. Coming BACK here from the
+    // details page (step 2) must not reset the draft or it would wipe the name and
+    // details the user already entered.
+    private bool _initialized;
+
     public CreatePetPage(MainViewModel mainViewModel, bool isEditMode = false)
     {
         InitializeComponent();
@@ -14,13 +19,18 @@ public partial class CreatePetPage : ContentPage
         this.isEditMode = isEditMode;
         BindingContext = vm;
     }
-     protected override async void OnAppearing()
+
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
 
+        if (_initialized)
+            return;
+        _initialized = true;
+
         // Edit mode keeps the draft the caller (Manage page) loaded for the pet being
-        // edited, and shows the "You're editing X" title. Add mode opens on a clean
-        // draft so stale inputs from a previous creation don't reappear.
+        // edited, and shows the "You're editing X" title. Add/first-launch mode opens on
+        // a clean draft so stale inputs from a previous creation don't reappear.
         if (isEditMode)
         {
             vm.PetVM.ConfigureForEdit();
@@ -31,27 +41,17 @@ public partial class CreatePetPage : ContentPage
         await vm.PetVM.CheckAndSetFirstLaunchAsync();
     }
 
-    async void OnBackClicked(object? sender, EventArgs args)
+    async void OnCancelClicked(object? sender, EventArgs args)
     {
         // Cancel discards the in-progress draft.
         vm.PetVM.ResetDraft();
         await Navigation.PopAsync();
     }
 
-    async void OnSaveClicked(object? sender, EventArgs args)
+    async void OnNextClicked(object? sender, EventArgs args)
     {
-        if (isEditMode)
-        {
-            // Edit-pet door: save in place and return to Manage (no condition picker).
-            if (await vm.PetVM.SaveEditedPetAsync())
-                await Navigation.PopAsync();
-            return;
-        }
-
-        await vm.PetVM.SavePetAsync();
-
-        // The pet now exists and is the active pet. Ask about its condition next;
-        // the picker performs the final handoff into the tabbed app (Shell) itself.
-        await Navigation.PushAsync(new ConditionPickerPage(vm));
+        // Carry the shared draft to step 2 (technical details). The draft lives on the
+        // singleton PetVM, so nothing needs to be passed explicitly.
+        await Navigation.PushAsync(new PetDetailsPage(vm, isEditMode));
     }
 }

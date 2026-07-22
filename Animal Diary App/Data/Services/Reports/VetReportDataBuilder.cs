@@ -105,7 +105,7 @@ public class VetReportDataBuilder
         {
             Name = pet.Name,
             Species = PetTypeNames.Localize(pet.Type),
-            AgeYears = pet.Age > 0 ? pet.Age : null,
+            AgeYears = pet.AgeYears,
             Conditions = conditionIds
                 .Select(id => ConditionCatalog.GetCondition(id).Name)
                 .ToList(),

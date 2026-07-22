@@ -61,6 +61,7 @@
 
   <!-- ── Common ── -->
   <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
   <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
   <data name="Common_Add" xml:space="preserve"><value>Add</value></data>
   <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
@@ -401,20 +402,32 @@
   <data name="MedEdit_ReminderLabel" xml:space="preserve"><value>REMINDER {0}</value></data>
 
   <!-- ── Create pet ── -->
-  <data name="CreatePet_FirstLaunchTitle" xml:space="preserve"><value>Meet your first pet 🐾</value></data>
-  <data name="CreatePet_AddTitle" xml:space="preserve"><value>Add a Pet</value></data>
   <data name="CreatePet_EditTitle" xml:space="preserve"><value>You're editing {0}</value></data>
   <data name="CreatePet_EditSave" xml:space="preserve"><value>Save changes</value></data>
   <data name="CreatePet_FirstLaunchSave" xml:space="preserve"><value>Let's go! 🐾</value></data>
   <data name="CreatePet_AddSave" xml:space="preserve"><value>Add Pet</value></data>
-  <data name="CreatePet_Subtitle" xml:space="preserve"><value>Tell us about your animal. You can always edit this later.</value></data>
   <data name="CreatePet_WhatAnimal" xml:space="preserve"><value>WHAT KIND OF ANIMAL?</value></data>
   <data name="CreatePet_DescribeType" xml:space="preserve"><value>DESCRIBE YOUR PET'S TYPE</value></data>
   <data name="CreatePet_CustomTypePlaceholder" xml:space="preserve"><value>e.g. Hamster, Iguana…</value></data>
   <data name="CreatePet_NameLabel" xml:space="preserve"><value>PET NAME</value></data>
   <data name="CreatePet_NamePlaceholder" xml:space="preserve"><value>e.g. Mochi, Fofo…</value></data>
-  <data name="CreatePet_AgeLabel" xml:space="preserve"><value>AGE (YEARS)</value></data>
-  <data name="CreatePet_AgePlaceholder" xml:space="preserve"><value>e.g. 3</value></data>
+  <data name="CreatePet_Identity_FirstLaunchTitle" xml:space="preserve"><value>Meet your first pet 🐾</value></data>
+  <data name="CreatePet_Identity_AddTitle" xml:space="preserve"><value>Add a Pet</value></data>
+  <data name="CreatePet_Identity_Subtitle" xml:space="preserve"><value>Let's start with the basics. You can always edit this later.</value></data>
+  <data name="CreatePet_Details_FirstLaunchTitle" xml:space="preserve"><value>A few details</value></data>
+  <data name="CreatePet_Details_AddTitle" xml:space="preserve"><value>A few details</value></data>
+  <data name="CreatePet_Details_Subtitle" xml:space="preserve"><value>This helps Felova follow your pet's health over time.</value></data>
+  <data name="CreatePet_NextButton" xml:space="preserve"><value>Next</value></data>
+  <data name="CreatePet_PhotoLabel" xml:space="preserve"><value>PROFILE PHOTO</value></data>
+  <data name="CreatePet_PhotoComingSoon" xml:space="preserve"><value>Photos are coming soon</value></data>
+  <data name="CreatePet_BirthdayLabel" xml:space="preserve"><value>BIRTHDAY</value></data>
+  <data name="CreatePet_BirthdayHint" xml:space="preserve"><value>Only the year is required — add the month and day if you know them.</value></data>
+  <data name="CreatePet_BirthYearLabel" xml:space="preserve"><value>YEAR</value></data>
+  <data name="CreatePet_BirthYearPlaceholder" xml:space="preserve"><value>e.g. 2020</value></data>
+  <data name="CreatePet_BirthMonthLabel" xml:space="preserve"><value>MONTH (OPTIONAL)</value></data>
+  <data name="CreatePet_BirthMonthPlaceholder" xml:space="preserve"><value>MM</value></data>
+  <data name="CreatePet_BirthDayLabel" xml:space="preserve"><value>DAY (OPTIONAL)</value></data>
+  <data name="CreatePet_BirthDayPlaceholder" xml:space="preserve"><value>DD</value></data>
   <data name="CreatePet_ConditionsTitle" xml:space="preserve"><value>Conditions &amp; diagnoses</value></data>
   <data name="CreatePet_ConditionsSubtitle" xml:space="preserve"><value>You can add health conditions from the pet profile later</value></data>
   <data name="CreatePet_PreviewName" xml:space="preserve"><value>Your pet</value></data>
@@ -469,8 +482,12 @@
   <data name="Validation_PetNameRequired" xml:space="preserve"><value>Pet name is required</value></data>
   <data name="Validation_PetTypeRequired" xml:space="preserve"><value>Pet type is required</value></data>
   <data name="Validation_PetTypeDescribe" xml:space="preserve"><value>Please describe your pet's type</value></data>
-  <data name="Validation_PetAgeRequired" xml:space="preserve"><value>Pet age is required</value></data>
-  <data name="Validation_PetAgeInvalid" xml:space="preserve"><value>Pet age must be a valid positive number</value></data>
+  <data name="Validation_BirthYearRequired" xml:space="preserve"><value>Birth year is required</value></data>
+  <data name="Validation_BirthYearInvalid" xml:space="preserve"><value>Enter a valid year (e.g. 2020)</value></data>
+  <data name="Validation_BirthMonthInvalid" xml:space="preserve"><value>Month must be between 1 and 12</value></data>
+  <data name="Validation_BirthDayInvalid" xml:space="preserve"><value>Enter a valid day for that month</value></data>
+  <data name="Validation_BirthDayNeedsMonth" xml:space="preserve"><value>Add the month before the day</value></data>
+  <data name="Validation_BirthdayFuture" xml:space="preserve"><value>The birthday can't be in the future</value></data>
   <data name="Validation_MedNameRequired" xml:space="preserve"><value>Medication name is required</value></data>
   <data name="Validation_DosageRequired" xml:space="preserve"><value>Dosage is required</value></data>
   <data name="Validation_DosagePositive" xml:space="preserve"><value>Dosage must be a positive number</value></data>

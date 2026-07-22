@@ -15,7 +15,62 @@ public class Pet : INotifyPropertyChanged
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
+
+    /// <summary>LEGACY age-in-years column. Superseded by the birthday fields below —
+    /// new code reads <see cref="AgeYears"/>, which derives the age from the birthday.
+    /// Still written on save as a snapshot fallback, and still the only age source for
+    /// pets created before the birthday system existed. Kept for back-compat (SQLite.NET
+    /// never drops columns); don't key new logic off it.</summary>
     public int Age { get; set; }
+
+    /// <summary>Birth year — the one part of a pet's birthday we always require. Many
+    /// owners only know roughly when their pet was born, so month and day are optional
+    /// (see below). 0 means "no birthday recorded" (only legacy pets).
+    /// SQLite.NET adds this column automatically on the next CreateTableAsync.</summary>
+    public int BirthYear { get; set; }
+
+    /// <summary>Birth month (1–12) when the owner knows it; null = unknown. We never
+    /// fabricate it — an unknown month is stored as null, not "January".</summary>
+    public int? BirthMonth { get; set; }
+
+    /// <summary>Birth day of month (1–31) when known; null = unknown. Only meaningful
+    /// alongside a known <see cref="BirthMonth"/>. Never fabricated.</summary>
+    public int? BirthDay { get; set; }
+
+    /// <summary>The pet's age in completed whole years, or null when nothing is known.
+    /// Derived from the birthday using only the parts the owner actually provided:
+    /// with a year alone it is the plain year difference (we never pretend an exact
+    /// date like January 1st); a known month/day only steps the count back once we can
+    /// tell the birthday hasn't come round yet this year. Falls back to the legacy
+    /// <see cref="Age"/> column for pets created before the birthday system.</summary>
+    [Ignore]
+    public int? AgeYears
+    {
+        get
+        {
+            if (BirthYear > 0)
+            {
+                var today = DateTime.Today;
+                int age = today.Year - BirthYear;
+
+                // Step back a year only when we KNOW the birthday is still ahead this
+                // year. Unknown finer parts are treated as already-passed, so a
+                // year-only birthday reads as the raw year difference.
+                if (BirthMonth is int m)
+                {
+                    if (today.Month < m)
+                        age--;
+                    else if (today.Month == m && BirthDay is int d && today.Day < d)
+                        age--;
+                }
+
+                return age < 0 ? 0 : age;
+            }
+
+            // Legacy pets stored a plain age with no birthday.
+            return Age > 0 ? Age : (int?)null;
+        }
+    }
 
     /// <summary>Id of the pet's ongoing condition (see ConditionCatalog); empty =
     /// "None / Not sure". Chosen in the condition picker after the pet is created
@@ -23,9 +78,12 @@ public class Pet : INotifyPropertyChanged
     /// column automatically on the next CreateTableAsync — no manual migration.</summary>
     public string ConditionId { get; set; } = string.Empty;
 
-    /// <summary>Localized age label, e.g. "(3 yrs)" / "(3 J.)". Used by calendar chips.</summary>
+    /// <summary>Localized age label, e.g. "(3 yrs)" / "(3 J.)". Used by calendar chips.
+    /// Empty when the age is unknown (no birthday and no legacy age).</summary>
     [Ignore]
-    public string AgeDisplay => Animal_Diary_App.Helpers.LocalizationManager.Instance.Format("Common_AgeYearsShort", Age);
+    public string AgeDisplay => AgeYears is int years
+        ? Animal_Diary_App.Helpers.LocalizationManager.Instance.Format("Common_AgeYearsShort", years)
+        : string.Empty;
 
     /// <summary>The pet's care plan — the trackers the Journal asks for. Not a column;
     /// <see cref="Tracker"/> rows are stored separately and loaded into this list by
