@@ -60,6 +60,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<CloudSheetViewModel>();
 		builder.Services.AddSingleton<SharingSheetViewModel>();
 		builder.Services.AddSingleton<PetService>();
+		builder.Services.AddSingleton<PetDeletionService>();
 		builder.Services.AddSingleton<MedicationService>();
 		builder.Services.AddSingleton<MedicationDoseLogService>();
 		builder.Services.AddSingleton<DayDoseService>();

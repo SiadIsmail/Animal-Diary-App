@@ -499,6 +499,21 @@
                     </Border>
                 </VerticalStackLayout>
 
+                <!-- Remove pet: the owner deletes, a caregiver leaves. Understated on
+                     purpose (deletion is never casual, never punishing). -->
+                <Label Text="{Binding ManageVM.RemovePetLabel}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="13.5"
+                       TextColor="{StaticResource InkTertiary}"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       Padding="18,12"
+                       Margin="0,28,0,0">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ManageVM.RemovePetCommand}"/>
+                    </Label.GestureRecognizers>
+                </Label>
+
             </VerticalStackLayout>
         </ScrollView>
 
@@ -513,6 +528,9 @@
         <views:RemoveConditionSheetView BindingContext="{Binding ManageVM}"/>
         <views:AdjustTrackerSheetView BindingContext="{Binding ManageVM}"/>
         <views:SharingSheetView BindingContext="{Binding SharingVM}"/>
+
+        <!-- Export sheet: opened by the "save a copy first" offer before a delete. -->
+        <views:ExportSheetView BindingContext="{Binding ExportSheetVM}"/>
 
     </Grid>
 

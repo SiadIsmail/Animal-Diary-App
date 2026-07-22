@@ -102,7 +102,7 @@
   <data name="Settings_DeleteConfirmAccept" xml:space="preserve"><value>Löschen</value></data>
   <data name="Settings_CommunitySection" xml:space="preserve"><value>Community und Support</value></data>
   <data name="Settings_DiscordTitle" xml:space="preserve"><value>Felova-Community</value></data>
-  <data name="Settings_DiscordSubtitle" xml:space="preserve"><value>Feedback, Support und andere Halter</value></data>
+  <data name="Settings_DiscordSubtitle" xml:space="preserve"><value>Feedback, Support und Austausch</value></data>
   <data name="Settings_WebsiteTitle" xml:space="preserve"><value>Felova-Website besuchen</value></data>
   <data name="Settings_WebsiteSubtitle" xml:space="preserve"><value>Was Felova kann, und was noch kommt</value></data>
   <data name="Settings_PrivacyTitle" xml:space="preserve"><value>Datenschutzerklärung</value></data>
@@ -272,6 +272,18 @@
   <data name="Manage_AddCondition" xml:space="preserve"><value>Erkrankung hinzufügen</value></data>
   <data name="Manage_MedicationsTitle" xml:space="preserve"><value>Medikamente</value></data>
   <data name="Manage_AddMedication" xml:space="preserve"><value>Medikament hinzufügen</value></data>
+  <!-- Tier entfernen. {0} ist der Tiername. Zeile am Fuß der Verwalten-Seite. -->
+  <data name="Manage_RemovePetRow" xml:space="preserve"><value>{0} aus Felova entfernen</value></data>
+  <!-- Action-Sheet, das vor dem Löschen die Kopie anbietet. {0} ist der Tiername. -->
+  <data name="Manage_RemovePetTitle" xml:space="preserve"><value>{0} aus Felova entfernen?</value></data>
+  <data name="Manage_RemovePetSaveCopy" xml:space="preserve"><value>Erst eine Kopie sichern</value></data>
+  <data name="Manage_RemovePetContinue" xml:space="preserve"><value>{0} entfernen</value></data>
+  <!-- Bestätigungsdialog. {0} ist der Tiername. -->
+  <data name="Manage_RemovePetConfirmTitle" xml:space="preserve"><value>{0} aus Felova entfernen?</value></data>
+  <data name="Manage_RemovePetConfirmBody" xml:space="preserve"><value>Das löscht die Medikamente, den Verlauf und alle Notizen. Das lässt sich nicht rückgängig machen.</value></data>
+  <!-- Wenn das Tier gesichert ist und dir gehört. {0} ist der Tiername. -->
+  <data name="Manage_RemovePetConfirmBodyBackup" xml:space="preserve"><value>Das löscht die Medikamente, den Verlauf und alle Notizen, aus deinem Backup und bei allen, die die Betreuung teilen. Das lässt sich nicht rückgängig machen.</value></data>
+  <data name="Manage_RemovePetConfirmAccept" xml:space="preserve"><value>{0} entfernen</value></data>
   <data name="Manage_EmptyPlan" xml:space="preserve"><value>Noch nichts eingerichtet. Und das ist auch in Ordnung.</value></data>
   <data name="Manage_PreviewLabel" xml:space="preserve"><value>So wird {0}s Journal fragen nach…</value></data>
   <data name="Manage_MedsCount" xml:space="preserve"><value>Medikamente ×{0}</value></data>
