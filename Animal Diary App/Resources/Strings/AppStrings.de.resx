@@ -587,4 +587,6 @@
   <data name="Cloud_JoinSuccess" xml:space="preserve"><value>Hinzugefügt. Das Tier wird jetzt synchronisiert…</value></data>
   <data name="Cloud_ErrInviteInvalid" xml:space="preserve"><value>Dieser Code ist ungültig oder abgelaufen. Bitte um einen neuen.</value></data>
   <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>Du betreust dieses Tier bereits.</value></data>
+  <data name="Cloud_ContinueWithGoogle" xml:space="preserve"><value>Mit Google fortfahren</value></data>
+  <data name="Cloud_Or" xml:space="preserve"><value>oder</value></data>
 </root>

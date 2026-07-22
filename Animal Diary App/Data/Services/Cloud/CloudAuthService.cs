@@ -1,7 +1,10 @@
 namespace Animal_Diary_App.Data.Services.Cloud;
 
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
+using Microsoft.Maui.Authentication;
 
 /// <summary>
 /// The only auth API the app uses (mirrors <c>IAnalyticsService</c> /
@@ -29,6 +32,13 @@ public interface ICloudAuthService
     Task ResendSignUpCodeAsync(string email);
     Task VerifySignUpAsync(string email, string code);
     Task SignInAsync(string email, string password);
+
+    /// <summary>Sign in via Google in the system browser (Supabase OAuth + PKCE).
+    /// Throws <see cref="OperationCanceledException"/> if the user backs out.
+    /// Android-only in the UI (a social login on iOS would require Sign in with
+    /// Apple — deferred until iOS ships).</summary>
+    Task SignInWithGoogleAsync();
+
     Task SignOutAsync();
 
     Task RequestPasswordResetAsync(string email);
@@ -123,6 +133,48 @@ public sealed class CloudAuthService : ICloudAuthService
         var doc = await _http.AuthPostAsync("token?grant_type=password", new { email, password });
         await StoreSessionAsync(ParseSession(doc!));
     }
+
+    // The deep-link the browser flow returns to. Must be in Supabase's
+    // "Redirect URLs" allow-list, and the Android callback activity declares the
+    // matching scheme intent-filter (see Platforms/Android + supabase/README.md).
+    private const string OAuthCallback = "felova://auth-callback";
+
+    public async Task SignInWithGoogleAsync()
+    {
+        // PKCE: send a challenge so GoTrue returns a one-time ?code= in the query
+        // (robust — unlike the implicit flow's #fragment, a query survives the
+        // https→custom-scheme redirect) and never exposes tokens in the browser.
+        var verifier = CreateCodeVerifier();
+        var authorizeUrl =
+            $"{CloudConfig.Url}/auth/v1/authorize?provider=google" +
+            $"&redirect_to={Uri.EscapeDataString(OAuthCallback)}" +
+            $"&code_challenge={CreateCodeChallenge(verifier)}&code_challenge_method=s256";
+
+        // WebAuthenticator drives the system browser and resumes on the deep-link;
+        // it throws TaskCanceledException if the user dismisses it.
+        var result = await WebAuthenticator.Default.AuthenticateAsync(
+            new Uri(authorizeUrl), new Uri(OAuthCallback));
+
+        if (result.Properties.TryGetValue("error", out var error))
+            throw new CloudException(CloudErrorKind.Other, 0,
+                result.Properties.TryGetValue("error_description", out var d) ? d : error);
+
+        if (!result.Properties.TryGetValue("code", out var code) || string.IsNullOrEmpty(code))
+            throw new CloudException(CloudErrorKind.Other, 0, "Google sign-in returned no authorization code.");
+
+        // Exchange the code for a real session (same token shape as password grant).
+        var doc = await _http.AuthPostAsync("token?grant_type=pkce",
+            new { auth_code = code, code_verifier = verifier });
+        await StoreSessionAsync(ParseSession(doc!));
+    }
+
+    private static string CreateCodeVerifier() => Base64Url(RandomNumberGenerator.GetBytes(64));
+
+    private static string CreateCodeChallenge(string verifier)
+        => Base64Url(SHA256.HashData(Encoding.ASCII.GetBytes(verifier)));
+
+    private static string Base64Url(byte[] data)
+        => Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
     public async Task SignOutAsync()
     {

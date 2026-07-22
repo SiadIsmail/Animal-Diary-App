@@ -604,4 +604,6 @@
   <data name="Cloud_JoinSuccess" xml:space="preserve"><value>Added. Syncing the pet now…</value></data>
   <data name="Cloud_ErrInviteInvalid" xml:space="preserve"><value>That code is invalid or has expired. Ask for a new one.</value></data>
   <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>You already care for this pet.</value></data>
+  <data name="Cloud_ContinueWithGoogle" xml:space="preserve"><value>Continue with Google</value></data>
+  <data name="Cloud_Or" xml:space="preserve"><value>or</value></data>
 </root>
