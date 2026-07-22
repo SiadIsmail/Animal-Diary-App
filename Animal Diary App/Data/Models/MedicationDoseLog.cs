@@ -49,6 +49,7 @@ public class MedicationDoseLog : ISyncable
     public DateTime? ResolvedAt { get; set; }
 
     // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    [Indexed]
     public string SyncId { get; set; } = string.Empty;
     public DateTime UpdatedAtUtc { get; set; }
     public bool IsDirty { get; set; }

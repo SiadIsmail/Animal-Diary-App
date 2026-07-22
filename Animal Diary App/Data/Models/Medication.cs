@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 public class Medication : INotifyPropertyChanged, ISyncable
 {
     // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    [Indexed]
     public string SyncId { get; set; } = string.Empty;
     public DateTime UpdatedAtUtc { get; set; }
     public bool IsDirty { get; set; }
@@ -101,6 +102,7 @@ public class MedicationSchedule : ISyncable
     public TimeSpan Time { get; set; }
 
     // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    [Indexed]
     public string SyncId { get; set; } = string.Empty;
     public DateTime UpdatedAtUtc { get; set; }
     public bool IsDirty { get; set; }

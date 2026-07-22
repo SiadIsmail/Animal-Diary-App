@@ -32,8 +32,19 @@ public partial class MainPage : ContentPage
         vm.SettingsVM.ConfirmDeleteAllData = () =>
             DisplayAlert(
                 LocalizationManager.Instance.GetString("Settings_DeleteConfirmTitle"),
-                LocalizationManager.Instance.GetString("Settings_DeleteConfirmMessage"),
+                // Signed in → the message must also state the cloud consequences
+                // (owned pets deleted from backup, shared pets left).
+                LocalizationManager.Instance.GetString(vm.SettingsVM.IsCloudSignedIn
+                    ? "Settings_DeleteConfirmMessageCloud"
+                    : "Settings_DeleteConfirmMessage"),
                 LocalizationManager.Instance.GetString("Settings_DeleteConfirmAccept"),
+                LocalizationManager.Instance.GetString("Common_Cancel"));
+
+        vm.CloudVM.ConfirmDeleteAccount = () =>
+            DisplayAlert(
+                LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmTitle"),
+                LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmMessage"),
+                LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmAccept"),
                 LocalizationManager.Instance.GetString("Common_Cancel"));
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
@@ -67,6 +78,7 @@ public partial class MainPage : ContentPage
     {
         base.OnDisappearing();
         vm.SettingsVM.ConfirmDeleteAllData = null;
+        vm.CloudVM.ConfirmDeleteAccount = null;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
     }
 

@@ -11,6 +11,12 @@ using Animal_Diary_App.Data.Models;
 /// </summary>
 public static class SyncStamp
 {
+    /// <summary>Raised on every stamped write. This single hook is how the cloud
+    /// sync layer notices local changes (it debounces a sync behind it) — no
+    /// repository ever talks to the sync engine directly. No-op when nothing
+    /// subscribes (cloud off / signed out).</summary>
+    public static event Action? RowTouched;
+
     /// <summary>Stamp a row as locally written: ensure it has a global identity,
     /// record the write time (UTC, for last-write-wins), and queue it for upload.</summary>
     public static T Touch<T>(T row) where T : ISyncable
@@ -19,6 +25,7 @@ public static class SyncStamp
             row.SyncId = Guid.NewGuid().ToString();
         row.UpdatedAtUtc = DateTime.UtcNow;
         row.IsDirty = true;
+        RowTouched?.Invoke();
         return row;
     }
 

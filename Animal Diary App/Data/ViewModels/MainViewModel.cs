@@ -36,6 +36,9 @@ public class MainViewModel
     /// <summary>The Manage Pet page (identity, conditions, care plan, medications).</summary>
     public ManagePetViewModel ManageVM { get; }
 
+    /// <summary>The Settings → Cloud Features sheet (account + backup).</summary>
+    public CloudSheetViewModel CloudVM { get; }
+
     // ── Vet-report surfaces (export sheet on Pets, preview page, Documents page) ──
     public ExportSheetViewModel ExportSheetVM { get; }
     public ReportPreviewViewModel ReportPreviewVM { get; }
@@ -66,6 +69,7 @@ public class MainViewModel
  ExportSheetViewModel exportSheetVM,
  ReportPreviewViewModel reportPreviewVM,
  DocumentsViewModel documentsVM,
+ CloudSheetViewModel cloudVM,
  IAnalyticsService analytics)
     {
         Analytics = analytics;
@@ -88,8 +92,9 @@ public class MainViewModel
         ExportSheetVM = exportSheetVM;
         ReportPreviewVM = reportPreviewVM;
         DocumentsVM = documentsVM;
+        CloudVM = cloudVM;
 
-        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM };
+        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM };
     }
 
     /// <summary>

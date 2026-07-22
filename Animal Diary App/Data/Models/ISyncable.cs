@@ -28,6 +28,10 @@ namespace Animal_Diary_App.Data.Models;
 /// </summary>
 public interface ISyncable
 {
+    /// <summary>The local autoincrement primary key every entity already has —
+    /// exposed here so the sync engine can address rows generically.</summary>
+    int Id { get; set; }
+
     string SyncId { get; set; }
     DateTime UpdatedAtUtc { get; set; }
     bool IsDirty { get; set; }

@@ -2,6 +2,7 @@ namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
+using Animal_Diary_App.Data.Services.Cloud;
 using Animal_Diary_App.Helpers;
 using System.Windows.Input;
 
@@ -34,16 +35,35 @@ public class SettingsViewModel : BaseViewModel
     public ICommand DeleteAllDataCommand { get; }
     public ICommand SetLanguageCommand { get; }
     public ICommand OpenLinkCommand { get; }
+    public ICommand OpenCloudCommand { get; }
 
     private readonly AppResetService _appResetService;
     private readonly SettingsService _settingsService;
     private readonly IAnalyticsService _analytics;
+    private readonly ICloudAuthService _cloudAuth;
+    private readonly ICloudSyncService _cloudSync;
+    private readonly CloudSheetViewModel _cloudVM;
 
-    public SettingsViewModel(AppResetService appResetService, SettingsService settingsService, IAnalyticsService analytics)
+    /// <summary>Whether a cloud account is signed in — pages pick the reset-confirm
+    /// message with it (the cloud variant explains the ownership rule).</summary>
+    public bool IsCloudSignedIn => _cloudAuth.IsSignedIn;
+
+    public SettingsViewModel(AppResetService appResetService, SettingsService settingsService,
+        IAnalyticsService analytics, ICloudAuthService cloudAuth, ICloudSyncService cloudSync,
+        CloudSheetViewModel cloudVM)
     {
         _appResetService = appResetService;
         _settingsService = settingsService;
         _analytics = analytics;
+        _cloudAuth = cloudAuth;
+        _cloudSync = cloudSync;
+        _cloudVM = cloudVM;
+        // The panel renders above the sheet, so opening the sheet closes the panel.
+        OpenCloudCommand = new Command(() =>
+        {
+            IsPanelOpen = false;
+            _cloudVM.OpenCommand.Execute(null);
+        });
         OpenSettingsCommand = new Command(() =>
         {
             IsPanelOpen = true;
@@ -98,6 +118,26 @@ public class SettingsViewModel : BaseViewModel
             var confirmed = await ConfirmDeleteAllData();
             if (!confirmed)
                 return;
+        }
+
+        // Cloud arm of the reset (the ownership rule, see CLOUD_SYNC_PLAN.md §7):
+        // owned pets are tombstoned cloud-wide, caregiver memberships removed, then
+        // the account is signed out so the wiped device starts truly fresh.
+        // Best-effort: an offline reset still wipes the device — the one gap is
+        // that the cloud copy survives until the user signs in again (v1 accepted).
+        if (_cloudAuth.IsSignedIn)
+        {
+            try
+            {
+                await _cloudSync.DeleteCloudDataAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Cloud] reset cloud-delete failed: {ex.Message}");
+            }
+            try { await _cloudAuth.SignOutAsync(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Cloud] reset sign-out failed: {ex.Message}"); }
+            await _cloudSync.DisableBackupAsync();
         }
 
         await _appResetService.ResetDataAsync();

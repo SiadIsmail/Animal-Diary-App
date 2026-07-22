@@ -1,6 +1,7 @@
 using System.Globalization;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
+using Animal_Diary_App.Data.Services.Cloud;
 using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Data.View;
 using Animal_Diary_App.Data.ViewModels;
@@ -19,9 +20,10 @@ public partial class App : Application
 	private readonly MedicationReminderScheduler _reminderScheduler;
 	private readonly SettingsService _settingsService;
 	private readonly IAnalyticsService _analytics;
+	private readonly ICloudSyncService _cloudSync;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, SettingsService settingsService, IAnalyticsService analytics, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -31,6 +33,7 @@ public partial class App : Application
 		_reminderScheduler = reminderScheduler;
 		_settingsService = settingsService;
 		_analytics = analytics;
+		_cloudSync = cloudSync;
 		_services = services;
 
 		// Re-engagement signal: the app was foregrounded by tapping a medication
@@ -62,6 +65,14 @@ public partial class App : Application
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
 		return new Window(new LoadingPage());
+	}
+
+	protected override void OnResume()
+	{
+		base.OnResume();
+		// Another caregiver/device may have logged while we were backgrounded;
+		// debounced so rapid app-switching doesn't hammer the network.
+		_cloudSync.RequestSyncSoon();
 	}
 
 	private async Task StartAsync()
@@ -143,6 +154,21 @@ public partial class App : Application
 				catch (Exception ex)
 				{
 					System.Diagnostics.Debug.WriteLine(ex);
+				}
+			});
+
+			// Cloud: load persisted state, then run the launch sync — both off the
+			// UI path, both quiet no-ops when signed out / backup disabled / offline.
+			_ = Task.Run(async () =>
+			{
+				try
+				{
+					await _cloudSync.InitializeAsync();
+					await _cloudSync.SyncNowAsync();
+				}
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine($"[Cloud] launch sync failed: {ex.Message}");
 				}
 			});
 		}

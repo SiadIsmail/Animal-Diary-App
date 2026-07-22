@@ -57,6 +57,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<EpilepsySetupSheetViewModel>();
 		builder.Services.AddSingleton<ManagePetViewModel>();
 		builder.Services.AddSingleton<JournalLogViewModel>();
+		builder.Services.AddSingleton<CloudSheetViewModel>();
 		builder.Services.AddSingleton<PetService>();
 		builder.Services.AddSingleton<MedicationService>();
 		builder.Services.AddSingleton<MedicationDoseLogService>();
@@ -78,6 +79,18 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ReminderInstanceService>();
 		builder.Services.AddSingleton<MedicationDoseReconciler>();
 		builder.Services.AddSingleton<MedicationReminderScheduler>();
+
+		// Cloud boundary (mirrors the analytics boundary): the real sync engine
+		// when cloud features are compiled in, else a no-op. Everything holds
+		// ICloudSyncService / ICloudAuthService only — no Supabase types escape
+		// Data/Services/Cloud/.
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.CloudHttp>();
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.SyncStateStore>();
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudAuthService, Animal_Diary_App.Data.Services.Cloud.CloudAuthService>();
+		if (Animal_Diary_App.Data.Services.Cloud.CloudConfig.Enabled)
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSyncService, Animal_Diary_App.Data.Services.Cloud.CloudSyncService>();
+		else
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSyncService, Animal_Diary_App.Data.Services.Cloud.NullCloudSyncService>();
 
 		// Shell + its three tab pages. Transient so a post-reset relaunch builds a
 		// fresh Shell (with fresh page instances); within one Shell each page is

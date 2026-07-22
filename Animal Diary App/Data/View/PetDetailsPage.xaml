@@ -230,7 +230,7 @@
 
                             <!-- Day (optional) -->
                             <VerticalStackLayout Grid.Column="2" Spacing="6">
-                                <Label Text="{loc:Translate CreatePet_BirthDayLabel}"
+                                <Label Text="{loc:Translate CreatePet_DayOfBirthLabel}"
                                        Style="{StaticResource FieldLabel}"/>
                                 <Border Style="{StaticResource FieldBorder}">
                                     <Entry Placeholder="{loc:Translate CreatePet_BirthDayPlaceholder}"

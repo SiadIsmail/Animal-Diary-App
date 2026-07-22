@@ -53,6 +53,13 @@ public static class AnalyticsEvents
     /// <see cref="PropRangeDays"/>.</summary>
     public const string ReportExported = "report_exported";
 
+    /// <summary>The owner enabled cloud backup (account + opt-in). No properties —
+    /// never the email or any account identifier.</summary>
+    public const string CloudEnabled = "cloud_enabled";
+
+    /// <summary>The first successful full sync after enabling completed.</summary>
+    public const string CloudBackupCompleted = "cloud_backup_completed";
+
     // ── Property keys ─────────────────────────────────────────────────────────
     /// <summary>App display version, e.g. "1.3.1". Non-identifying.</summary>
     public const string PropAppVersion = "app_version";
