@@ -15,44 +15,49 @@ public class MedicationService
 
     public async Task SaveMedicationAsync(Medication medication)
     {
-        await _db.InsertAsync(medication);
+        await _db.InsertAsync(SyncStamp.Touch(medication));
     }
 
     public async Task UpdateMedicationAsync(Medication medication)
     {
-        await _db.UpdateAsync(medication);
+        await _db.UpdateAsync(SyncStamp.Touch(medication));
     }
 
-    /// <summary>Delete a medication together with all of its schedule rows.</summary>
+    /// <summary>Delete a medication together with all of its schedule rows.
+    /// Soft deletes — the rows become tombstones so the deletion can sync.</summary>
     public async Task DeleteMedicationAsync(int medicationId)
     {
         await DeleteSchedulesForMedicationAsync(medicationId);
-        await _db.DeleteAsync<Medication>(medicationId);
+        var med = await GetMedicationByIdAsync(medicationId);
+        if (med != null)
+            await _db.UpdateAsync(SyncStamp.MarkDeleted(med));
     }
 
     public async Task<Medication?> GetMedicationByIdAsync(int id)
     {
         return await _db.Table<Medication>()
-            .Where(m => m.Id == id)
+            .Where(m => m.Id == id && m.IsDeleted == false)
             .FirstOrDefaultAsync();
     }
 
     public async Task<List<Medication>> GetMedicationsByPetIdAsync(int id)
     {
         return await _db.Table<Medication>()
-            .Where(m => m.PetId == id)
+            .Where(m => m.PetId == id && m.IsDeleted == false)
             .ToListAsync();
     }
 
     /// <summary>All medications across every pet (used by the global reminder refresh).</summary>
     public async Task<List<Medication>> GetAllMedicationsAsync()
     {
-        return await _db.Table<Medication>().ToListAsync();
+        return await _db.Table<Medication>()
+            .Where(m => m.IsDeleted == false)
+            .ToListAsync();
     }
     public async Task<List<MedicationSchedule>> GetMedicationSchedulesByMedicationIdAsync(int id)
     {
         return await _db.Table<MedicationSchedule>()
-            .Where(s => s.MedicationId == id)
+            .Where(s => s.MedicationId == id && s.IsDeleted == false)
             .ToListAsync();
     }
 
@@ -64,13 +69,13 @@ public class MedicationService
             return new List<MedicationSchedule>();
 
         return await _db.Table<MedicationSchedule>()
-            .Where(s => medicationIds.Contains(s.MedicationId))
+            .Where(s => medicationIds.Contains(s.MedicationId) && s.IsDeleted == false)
             .ToListAsync();
     }
 
     public async Task SaveMedicationScheduleAsync(MedicationSchedule schedule)
     {
-        await _db.InsertAsync(schedule);
+        await _db.InsertAsync(SyncStamp.Touch(schedule));
     }
 
     /// <summary>
@@ -83,24 +88,41 @@ public class MedicationService
     public Task SaveMedicationWithSchedulesAsync(Medication medication, IReadOnlyList<MedicationSchedule> schedules)
         => _db.RunInTransactionAsync(conn =>
         {
+            SyncStamp.Touch(medication);
             if (medication.Id == 0)
                 conn.Insert(medication);            // assigns Id
             else
                 conn.Update(medication);
 
-            conn.Table<MedicationSchedule>().Delete(s => s.MedicationId == medication.Id);
+            // Replace-set, sync-aware: the old rows may already exist in the cloud,
+            // so they become tombstones rather than vanishing…
+            var old = conn.Table<MedicationSchedule>()
+                .Where(s => s.MedicationId == medication.Id && s.IsDeleted == false)
+                .ToList();
+            foreach (var s in old)
+                conn.Update(SyncStamp.MarkDeleted(s));
+
+            // …and the new set is always inserted as FRESH rows. Id/SyncId are
+            // reset because a caller-reused row would otherwise collide with its
+            // own tombstone (same local Id) or share its global identity.
             foreach (var schedule in schedules)
             {
                 schedule.MedicationId = medication.Id;
-                conn.Insert(schedule);
+                schedule.Id = 0;
+                schedule.SyncId = string.Empty;
+                schedule.IsDeleted = false;
+                conn.Insert(SyncStamp.Touch(schedule));
             }
         });
 
-    /// <summary>Remove every schedule row for a medication (used before re-saving an edit, or on delete).</summary>
+    /// <summary>Soft-delete every schedule row for a medication (used before re-saving an edit, or on delete).</summary>
     public async Task DeleteSchedulesForMedicationAsync(int medicationId)
     {
-        await _db.Table<MedicationSchedule>()
-            .DeleteAsync(s => s.MedicationId == medicationId);
+        var rows = await _db.Table<MedicationSchedule>()
+            .Where(s => s.MedicationId == medicationId && s.IsDeleted == false)
+            .ToListAsync();
+        foreach (var row in rows)
+            await _db.UpdateAsync(SyncStamp.MarkDeleted(row));
     }
 
 }

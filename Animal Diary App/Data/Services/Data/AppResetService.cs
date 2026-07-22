@@ -44,6 +44,7 @@ public class AppResetService
         await _db.Connection.DeleteAllAsync<GlucoseEntry>();
         await _db.Connection.DeleteAllAsync<AppetiteEntry>();
         await _db.Connection.DeleteAllAsync<SeizureEntry>();
+        await _db.Connection.DeleteAllAsync<SyncState>();
 
         // Reports are files + rows; the library wipes both (health data is medical
         // data — a reset must not leave PDFs behind in app storage).

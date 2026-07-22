@@ -31,10 +31,16 @@ public enum FoodContext
 
 /// <summary>One blood-glucose reading. Multiple per day are expected (a PerDay
 /// tracker), so these are never upserted — each reading is its own row.</summary>
-public class GlucoseEntry
+public class GlucoseEntry : ISyncable
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
+
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
 
     [Indexed(Name = "IX_Glucose_Pet_Date", Order = 1)]
     public int PetId { get; set; }
@@ -57,10 +63,16 @@ public class GlucoseEntry
 /// <summary>The day's appetite reading — one per day (like Mood + Weight). Stored as
 /// the raw 1–5 level; the word is resolved for display (see
 /// <see cref="AppetiteLevelExtensions"/>). A number is never shown to the owner.</summary>
-public class AppetiteEntry
+public class AppetiteEntry : ISyncable
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
+
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
 
     [Indexed(Name = "IX_Appetite_Pet_Date", Order = 1)]
     public int PetId { get; set; }
@@ -79,10 +91,16 @@ public class AppetiteEntry
 /// useful things an owner can hand a vet, so this captures when it happened, how
 /// long it lasted, and anything noticed — while it's still fresh. Logged from the
 /// "+" sheet (an Event tracker), never nagged for.</summary>
-public class SeizureEntry
+public class SeizureEntry : ISyncable
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
+
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
 
     [Indexed(Name = "IX_Seizure_Pet_Date", Order = 1)]
     public int PetId { get; set; }

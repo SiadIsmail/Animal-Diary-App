@@ -64,10 +64,16 @@ public readonly record struct TargetRange(decimal Lo, decimal Hi)
 /// The primary key <see cref="Id"/> is the row id; <see cref="TrackerId"/> is which
 /// value this is (glucose, mood…).
 /// </summary>
-public class Tracker
+public class Tracker : ISyncable
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
+
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
 
     [Indexed]
     public int PetId { get; set; }

@@ -4,8 +4,14 @@ using SQLite;
 using System.Runtime.CompilerServices;
 using System.ComponentModel;
 
-public class Pet : INotifyPropertyChanged
+public class Pet : INotifyPropertyChanged, ISyncable
 {
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
+
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null)
     {
@@ -104,10 +110,16 @@ public class Pet : INotifyPropertyChanged
         }
     }
 }
-public class PetEntry
+public class PetEntry : ISyncable
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
+
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
 
     // Composite index on (PetId, Date): every entry query filters by pet and a
     // date range, so this covers the weight-chart, mood-timeline and day-lookup
