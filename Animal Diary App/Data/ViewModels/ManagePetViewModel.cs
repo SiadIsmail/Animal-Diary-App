@@ -69,6 +69,15 @@ public class AddConditionOption
     public string Icon { get; init; } = string.Empty;
 }
 
+/// <summary>What the page's native remove dialogs decided: cancel, "save a copy
+/// first" (the page opened the export sheet, nothing to delete), or go ahead.</summary>
+public enum PetRemovalFlowResult
+{
+    Cancel,
+    SavedCopy,
+    Proceed,
+}
+
 /// <summary>A cadence option in the generic "adjust tracker" sheet (Mood / Weight).</summary>
 public class AdjustOption : BaseViewModel
 {
@@ -102,19 +111,22 @@ public class ManagePetViewModel : BaseViewModel
     private readonly TrackerService _trackers;
     private readonly CarePlanService _carePlan;
     private readonly MedicationService _medications;
+    private readonly PetDeletionService _deletion;
 
     public ManagePetViewModel(
         ActivePetService activePet,
         PetConditionService conditions,
         TrackerService trackers,
         CarePlanService carePlan,
-        MedicationService medications)
+        MedicationService medications,
+        PetDeletionService deletion)
     {
         _activePet = activePet;
         _conditions = conditions;
         _trackers = trackers;
         _carePlan = carePlan;
         _medications = medications;
+        _deletion = deletion;
 
         TapIdentityCommand = new Command(() => RequestEditPet?.Invoke());
         AddConditionCommand = new Command(OpenAddConditionSheet);
@@ -134,6 +146,8 @@ public class ManagePetViewModel : BaseViewModel
         SaveAdjustCommand = new Command(async () => await SaveAdjustAsync());
         TurnOffTrackerCommand = new Command(async () => await TurnOffTrackerAsync());
         CloseAdjustCommand = new Command(() => IsAdjustSheetVisible = false);
+
+        RemovePetCommand = new Command(async () => await OnRemovePetAsync());
     }
 
     // ── Events the page acts on ──────────────────────────────────────────────────
@@ -145,6 +159,16 @@ public class ManagePetViewModel : BaseViewModel
     public event Action? RequestAddMedication;
     /// <summary>Open a specific medication (by id).</summary>
     public event Action<int>? RequestOpenMedication;
+
+    /// <summary>Ask the page to run the native remove dialogs for this pet (native
+    /// alerts + the export sheet belong to the page, not the VM). The page offers the
+    /// export first, names the consequence, and returns what to do.</summary>
+    public Func<PetRemovalKind, Task<PetRemovalFlowResult>>? RequestRemoveFlow;
+
+    /// <summary>Raised after the active pet was removed. The flag is whether any pet
+    /// is left: true → pop back to the pet list; false → the owner deleted their last
+    /// pet, so the page returns to onboarding.</summary>
+    public event Action<bool>? PetRemoved;
 
     // ── Bindable lists ───────────────────────────────────────────────────────────
     public ObservableCollection<ManageConditionChip> Conditions { get; } = new();
@@ -209,6 +233,10 @@ public class ManagePetViewModel : BaseViewModel
     public ICommand SaveAdjustCommand { get; }
     public ICommand TurnOffTrackerCommand { get; }
     public ICommand CloseAdjustCommand { get; }
+    public ICommand RemovePetCommand { get; }
+
+    /// <summary>Label for the destructive remove row, e.g. "Remove Charly from Felova".</summary>
+    public string RemovePetLabel => Loc.Format("Manage_RemovePetRow", PetName);
 
     // ── Load ─────────────────────────────────────────────────────────────────────
     public async Task LoadAsync()
@@ -220,6 +248,7 @@ public class ManagePetViewModel : BaseViewModel
         OnPropertyChanged(nameof(PreviewLabel));
         OnPropertyChanged(nameof(IdentityHint));
         OnPropertyChanged(nameof(EmptyPlanText));
+        OnPropertyChanged(nameof(RemovePetLabel));
 
         var pet = _activePet.ActivePet;
         if (pet == null || pet.Id == 0)
@@ -280,6 +309,38 @@ public class ManagePetViewModel : BaseViewModel
         foreach (var c in Conditions)
             ConditionItems.Add(c);
         ConditionItems.Add(AddConditionChipItem.Instance);
+    }
+
+    // ── Remove pet ───────────────────────────────────────────────────────────────
+    // The owner's exit is deleting the pet; a caregiver's is leaving it (the sharing
+    // sheet's Leave is the same operation). The page owns the native dialogs and the
+    // export offer; this VM only decides which removal applies and runs it.
+    private async Task OnRemovePetAsync()
+    {
+        var pet = _activePet.ActivePet;
+        if (pet == null || pet.Id == 0)
+            return;
+
+        var kind = _deletion.DetermineKind(pet);
+
+        var flow = RequestRemoveFlow != null
+            ? await RequestRemoveFlow(kind)
+            : PetRemovalFlowResult.Cancel;
+
+        // Cancelled, or the owner chose to save a copy first (the page opened the
+        // export sheet) — either way there is nothing to remove right now.
+        if (flow != PetRemovalFlowResult.Proceed)
+            return;
+
+        if (kind == PetRemovalKind.Caregiver)
+        {
+            await _deletion.LeaveSharedPetAsync(pet);
+            PetRemoved?.Invoke(true);
+            return;
+        }
+
+        var result = await _deletion.DeletePetAsync(pet);
+        PetRemoved?.Invoke(result.AnyPetsRemain);
     }
 
     // ── Care-plan row build ──────────────────────────────────────────────────────

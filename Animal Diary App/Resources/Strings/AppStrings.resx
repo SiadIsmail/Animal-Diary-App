@@ -285,6 +285,18 @@
   <data name="Manage_AddCondition" xml:space="preserve"><value>Add condition</value></data>
   <data name="Manage_MedicationsTitle" xml:space="preserve"><value>Medications</value></data>
   <data name="Manage_AddMedication" xml:space="preserve"><value>Add medication</value></data>
+  <!-- Remove pet. {0} is the pet's name. Row sits at the foot of the Manage page. -->
+  <data name="Manage_RemovePetRow" xml:space="preserve"><value>Remove {0} from Felova</value></data>
+  <!-- Action-sheet offering the export before deleting. {0} is the pet's name. -->
+  <data name="Manage_RemovePetTitle" xml:space="preserve"><value>Remove {0} from Felova?</value></data>
+  <data name="Manage_RemovePetSaveCopy" xml:space="preserve"><value>Save a copy first</value></data>
+  <data name="Manage_RemovePetContinue" xml:space="preserve"><value>Remove {0}</value></data>
+  <!-- Confirm dialog. {0} is the pet's name. -->
+  <data name="Manage_RemovePetConfirmTitle" xml:space="preserve"><value>Remove {0} from Felova?</value></data>
+  <data name="Manage_RemovePetConfirmBody" xml:space="preserve"><value>This deletes their medications, their timeline, and every note. It can't be undone.</value></data>
+  <!-- Shown when the pet is backed up and the caller owns it. {0} is the pet's name. -->
+  <data name="Manage_RemovePetConfirmBodyBackup" xml:space="preserve"><value>This deletes their medications, their timeline, and every note, from your backup and everyone sharing their care. It can't be undone.</value></data>
+  <data name="Manage_RemovePetConfirmAccept" xml:space="preserve"><value>Remove {0}</value></data>
   <data name="Manage_EmptyPlan" xml:space="preserve"><value>Nothing set up yet. And that's okay too.</value></data>
   <data name="Manage_PreviewLabel" xml:space="preserve"><value>So {0}'s Journal will ask for…</value></data>
   <data name="Manage_MedsCount" xml:space="preserve"><value>Medications ×{0}</value></data>
