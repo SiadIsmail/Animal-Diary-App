@@ -46,7 +46,7 @@ public class VetReportDataBuilder
 
     /// <summary>Snapshot everything the report might show for the pet in
     /// [<paramref name="from"/> .. <paramref name="to"/>] (inclusive, date-only).</summary>
-    public async Task<VetReportData> BuildAsync(int petId, DateTime from, DateTime to)
+    public async Task<VetReportData> BuildAsync(int petId, DateTime from, DateTime to, bool includePhoto = false)
     {
         from = from.Date;
         to = to.Date;
@@ -70,7 +70,7 @@ public class VetReportDataBuilder
 
         return new VetReportData
         {
-            Pet = await BuildPetInfoAsync(pet, conditionIds, weightPoints),
+            Pet = await BuildPetInfoAsync(pet, conditionIds, weightPoints, includePhoto),
             From = from,
             To = to,
             GeneratedAt = DateTime.Now,
@@ -88,7 +88,7 @@ public class VetReportDataBuilder
     }
 
     private async Task<ReportPetInfo> BuildPetInfoAsync(
-        Pet pet, IReadOnlyList<string> conditionIds, List<ReportPoint> weightPoints)
+        Pet pet, IReadOnlyList<string> conditionIds, List<ReportPoint> weightPoints, bool includePhoto)
     {
         // Current weight: last reading in range, else the pet's latest ever (so the
         // header still identifies the pet). Change is only stated when the range
@@ -108,7 +108,9 @@ public class VetReportDataBuilder
             CurrentWeightKg = currentWeight,
             WeightChangeKg = weightPoints.Count >= 2
                 ? weightPoints[^1].Value - weightPoints[0].Value
-                : null
+                : null,
+            // Opt-in only, and only when the file is actually present on this device.
+            PhotoPath = includePhoto && pet.PhotoFullPath is { } p && File.Exists(p) ? p : null,
         };
     }
 

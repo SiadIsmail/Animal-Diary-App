@@ -16,14 +16,16 @@ public class AppResetService
     private readonly ActivePetService _activePetService;
     private readonly INotificationService _notifications;
     private readonly Reports.ReportLibraryService _reportLibrary;
+    private readonly PetPhotoService _petPhotos;
 
     public AppResetService(AppDatabase db, ActivePetService activePetService, INotificationService notifications,
-        Reports.ReportLibraryService reportLibrary)
+        Reports.ReportLibraryService reportLibrary, PetPhotoService petPhotos)
     {
         _db = db;
         _activePetService = activePetService;
         _notifications = notifications;
         _reportLibrary = reportLibrary;
+        _petPhotos = petPhotos;
     }
 
     public async Task ResetDataAsync()
@@ -49,6 +51,9 @@ public class AppResetService
         // Reports are files + rows; the library wipes both (health data is medical
         // data — a reset must not leave PDFs behind in app storage).
         await _reportLibrary.DeleteAllAsync();
+
+        // Pet photos are files with no table of their own; wipe the whole folder.
+        _petPhotos.DeleteAll();
 
         // Forget the reminder catch-up marker so a fresh start can't misread the
         // old install's "last seen" time.

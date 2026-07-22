@@ -1,6 +1,9 @@
 namespace Animal_Diary_App.Data.View;
 
+using System.Diagnostics;
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Helpers;
+using Microsoft.Maui.Media;
 
 public partial class CreatePetPage : ContentPage
 {
@@ -41,6 +44,10 @@ public partial class CreatePetPage : ContentPage
         await vm.PetVM.CheckAndSetFirstLaunchAsync();
     }
 
+    // Android back closes the photo chooser before it navigates.
+    protected override bool OnBackButtonPressed()
+        => Controls.BackDismiss.TryCloseTopmostOverlay(this) || base.OnBackButtonPressed();
+
     async void OnCancelClicked(object? sender, EventArgs args)
     {
         // Cancel discards the in-progress draft.
@@ -53,5 +60,66 @@ public partial class CreatePetPage : ContentPage
         // Carry the shared draft to step 2 (technical details). The draft lives on the
         // singleton PetVM, so nothing needs to be passed explicitly.
         await Navigation.PushAsync(new PetDetailsPage(vm, isEditMode));
+    }
+
+    // ── Profile photo ────────────────────────────────────────────────────────────
+
+    void OnPhotoTapped(object? sender, EventArgs args)
+    {
+        PhotoErrorLabel.IsVisible = false;
+        PhotoChooser.IsPresented = true;
+    }
+
+    async void OnTakePhoto(object? sender, EventArgs args)
+    {
+        if (!MediaPicker.Default.IsCaptureSupported)
+        {
+            ShowPhotoError("CreatePet_PhotoCaptureUnsupported");
+            return;
+        }
+
+        await PickAsync(() => MediaPicker.Default.CapturePhotoAsync());
+    }
+
+    async void OnChooseFromLibrary(object? sender, EventArgs args)
+        => await PickAsync(() => MediaPicker.Default.PickPhotoAsync());
+
+    void OnRemovePhoto(object? sender, EventArgs args)
+    {
+        vm.PetVM.ClearDraftPhoto();
+        PhotoChooser.IsPresented = false;
+    }
+
+    // Shared pick/capture path: run the media action, copy the result into app storage
+    // via the VM, and close the sheet. A cancelled pick returns null (no-op); a denied
+    // permission or any failure degrades to an inline message, never a crash — this is
+    // an async void handler, so an escaping exception would kill the process.
+    private async Task PickAsync(Func<Task<FileResult?>> pick)
+    {
+        try
+        {
+            var result = await pick();
+            if (result is null)
+                return; // user cancelled
+
+            using var stream = await result.OpenReadAsync();
+            await vm.PetVM.SetDraftPhotoAsync(stream);
+            PhotoChooser.IsPresented = false;
+        }
+        catch (PermissionException)
+        {
+            ShowPhotoError("CreatePet_PhotoPermissionDenied");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[CreatePet] photo pick failed: {ex}");
+            ShowPhotoError("CreatePet_PhotoError");
+        }
+    }
+
+    private void ShowPhotoError(string key)
+    {
+        PhotoErrorLabel.Text = LocalizationManager.Instance.GetString(key);
+        PhotoErrorLabel.IsVisible = true;
     }
 }

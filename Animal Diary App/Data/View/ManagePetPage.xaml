@@ -177,29 +177,13 @@
                     </Border.GestureRecognizers>
                     <Grid ColumnDefinitions="Auto,*"
                           ColumnSpacing="15">
-                        <Border Grid.Column="0"
-                                WidthRequest="64"
-                                HeightRequest="64"
-                                Stroke="{StaticResource TealLine}"
-                                StrokeThickness="1"
-                                StrokeShape="RoundRectangle 32"
-                                VerticalOptions="Center">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0"
-                                                     EndPoint="1,1">
-                                    <GradientStop Color="{StaticResource SeaHi}"
-                                                  Offset="0"/>
-                                    <GradientStop Color="{StaticResource SeaMid}"
-                                                  Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <Label Text="{Binding ManageVM.PetInitial}"
-                                   FontFamily="{StaticResource FontSerif}"
-                                   FontSize="28"
-                                   TextColor="{StaticResource TealDeep}"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center"/>
-                        </Border>
+                        <!-- Profile photo, or the name initial fallback -->
+                        <controls:PetAvatarView Grid.Column="0"
+                                                Diameter="64"
+                                                FallbackFontSize="28"
+                                                PhotoPath="{Binding PetVM.ActivePet.PhotoFullPath}"
+                                                FallbackText="{Binding ManageVM.PetInitial}"
+                                                VerticalOptions="Center"/>
                         <VerticalStackLayout Grid.Column="1"
                                              Spacing="2"
                                              VerticalOptions="Center">

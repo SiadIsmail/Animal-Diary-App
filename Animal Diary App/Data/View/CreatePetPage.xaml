@@ -72,31 +72,31 @@
                        IsVisible="{Binding PetVM.IdentitySubtitle, Converter={StaticResource StringToBoolConverter}}"
                        Margin="10,0"/>
 
-                <!-- ── Profile photo — placeholder for the future feature ── -->
+                <!-- ── Profile photo — tap to add/change/remove ── -->
                 <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                    <Border WidthRequest="112"
-                            HeightRequest="112"
-                            BackgroundColor="{StaticResource Glass}"
-                            Stroke="{StaticResource GlassLine}"
-                            StrokeThickness="2"
-                            StrokeShape="RoundRectangle 56"
-                            HorizontalOptions="Center">
-                        <Border.Shadow>
-                            <Shadow Brush="#0D3A3C" Offset="0,6" Radius="16" Opacity="0.12"/>
-                        </Border.Shadow>
-                        <Label Text="📷"
-                               FontSize="40"
-                               Opacity="0.55"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center"/>
-                    </Border>
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnPhotoTapped"/>
+                    </VerticalStackLayout.GestureRecognizers>
+                    <controls:PetAvatarView Diameter="112"
+                                            FallbackFontSize="40"
+                                            FallbackText="📷"
+                                            PhotoPath="{Binding PetVM.DraftPhotoPath}"
+                                            HorizontalOptions="Center"/>
                     <Label Text="{loc:Translate CreatePet_PhotoLabel}"
                            Style="{StaticResource FieldLabel}"
                            HorizontalTextAlignment="Center"/>
-                    <Label Text="{loc:Translate CreatePet_PhotoComingSoon}"
+                    <!-- "Add a photo" until one is set, then "Change photo" -->
+                    <Label Text="{loc:Translate CreatePet_PhotoAdd}"
+                           IsVisible="{Binding PetVM.HasDraftPhoto, Converter={StaticResource InvertedBoolConverter}}"
                            FontFamily="{StaticResource FontSans}"
-                           FontSize="11.5"
-                           TextColor="{StaticResource InkTertiary}"
+                           FontSize="12"
+                           TextColor="{StaticResource TealDeep}"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Text="{loc:Translate CreatePet_PhotoChange}"
+                           IsVisible="{Binding PetVM.HasDraftPhoto}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12"
+                           TextColor="{StaticResource TealDeep}"
                            HorizontalTextAlignment="Center"/>
                 </VerticalStackLayout>
 
@@ -174,6 +174,74 @@
                 </Border>
             </Grid>
         </Border>
+
+        <!-- ══════════ PHOTO SOURCE CHOOSER (FelovaBottomSheet) ══════════ -->
+        <!-- Opened from OnPhotoTapped; the buttons call code-behind handlers because
+             the media picker is a device API (pages own device interaction). -->
+        <controls:FelovaBottomSheet x:Name="PhotoChooser"
+                                    Grid.RowSpan="2"
+                                    Title="{loc:Translate CreatePet_PhotoSheetTitle}">
+            <controls:FelovaBottomSheet.SheetContent>
+                <VerticalStackLayout Spacing="12" Padding="0,2,0,0">
+
+                    <Border BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnTakePhoto"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CreatePet_PhotoTake}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnChooseFromLibrary"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CreatePet_PhotoChoose}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <!-- Remove — only when a photo is set -->
+                    <Border BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 13"
+                            IsVisible="{Binding PetVM.HasDraftPhoto}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnRemovePhoto"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CreatePet_PhotoRemove}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Clay}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <!-- Permission-denied / picker-failed inline line (never an alert) -->
+                    <Label x:Name="PhotoErrorLabel"
+                           IsVisible="False"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12.5"
+                           TextColor="{StaticResource Clay}"
+                           HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+            </controls:FelovaBottomSheet.SheetContent>
+        </controls:FelovaBottomSheet>
 
     </Grid>
 

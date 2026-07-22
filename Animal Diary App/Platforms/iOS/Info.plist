@@ -28,5 +28,11 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	<!-- Profile photo: taking a photo needs the camera; choosing from the library
+	     uses the system picker but the usage string is still required to be safe. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Allow access to the camera so you can take a profile photo of your pet.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow access to your photos so you can choose a profile photo for your pet.</string>
 </dict>
 </plist>

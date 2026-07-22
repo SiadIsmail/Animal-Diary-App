@@ -79,6 +79,23 @@ public class Pet : INotifyPropertyChanged, ISyncable
         }
     }
 
+    /// <summary>File name (relative to <see cref="Animal_Diary_App.Data.Services.PetPhotoService.PhotosDirectory"/>)
+    /// of the pet's profile photo, or null/empty when it has none. Stored relative —
+    /// never an absolute path — because the app-data root can move between installs
+    /// (same reason the report library stores relative names). SQLite.NET adds this
+    /// column automatically. NOTE: this column syncs, but the image file itself does
+    /// NOT — on another device the file is absent, so every avatar surface falls back
+    /// to the type emoji (see <see cref="PhotoFullPath"/> and PetAvatarView).</summary>
+    public string? PhotoFileName { get; set; }
+
+    /// <summary>Absolute path of the profile photo, or null when there is none set.
+    /// UI-agnostic (just a path string); callers still guard on File.Exists because a
+    /// synced-in row can name a file this device doesn't have.</summary>
+    [Ignore]
+    public string? PhotoFullPath => string.IsNullOrEmpty(PhotoFileName)
+        ? null
+        : System.IO.Path.Combine(Animal_Diary_App.Data.Services.PetPhotoService.PhotosDirectory, PhotoFileName);
+
     /// <summary>Id of the pet's ongoing condition (see ConditionCatalog); empty =
     /// "None / Not sure". Chosen in the condition picker after the pet is created
     /// and drives which tracking items the Calendar shows. SQLite.NET adds this

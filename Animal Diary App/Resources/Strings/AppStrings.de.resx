@@ -150,7 +150,7 @@
   <data name="Journal_MoodNarrative" xml:space="preserve"><value>{0} fühlte sich {1}</value></data>
   <data name="Journal_EmptyBig" xml:space="preserve"><value>Eine ruhige Seite für {0}</value></data>
   <data name="Journal_EmptySub" xml:space="preserve"><value>Ruhige Tage sind auch gute Tage.</value></data>
-  <data name="Journal_Celebrate" xml:space="preserve"><value>Kraul {0} von uns.</value></data>
+  <data name="Journal_Celebrate" xml:space="preserve"><value>Streichle {0} von uns.</value></data>
   <data name="Journal_WeighIn" xml:space="preserve"><value>Wiegen</value></data>
   <data name="Journal_Meds" xml:space="preserve"><value>Medis</value></data>
   <data name="Journal_MoodTitle" xml:space="preserve"><value>Stimmung</value></data>
@@ -333,6 +333,7 @@
   <data name="Export_SheetTitle" xml:space="preserve"><value>Tierarztbericht</value></data>
   <data name="Export_SheetSubtitle" xml:space="preserve"><value>Eine Seite für {0}s Tierarzt</value></data>
   <data name="Export_PeriodLabel" xml:space="preserve"><value>Zeitraum</value></data>
+  <data name="Export_IncludePhoto" xml:space="preserve"><value>Profilbild einfügen</value></data>
   <data name="Export_Days30" xml:space="preserve"><value>30 Tage</value></data>
   <data name="Export_Days90" xml:space="preserve"><value>90 Tage</value></data>
   <data name="Export_Days180" xml:space="preserve"><value>180 Tage</value></data>
@@ -419,7 +420,15 @@
   <data name="CreatePet_Details_Subtitle" xml:space="preserve"><value>So kann Felova die Gesundheit deines Tieres über die Zeit begleiten.</value></data>
   <data name="CreatePet_NextButton" xml:space="preserve"><value>Weiter</value></data>
   <data name="CreatePet_PhotoLabel" xml:space="preserve"><value>Profilbild</value></data>
-  <data name="CreatePet_PhotoComingSoon" xml:space="preserve"><value>Fotos gibt es noch nicht</value></data>
+  <data name="CreatePet_PhotoAdd" xml:space="preserve"><value>Foto hinzufügen (optional)</value></data>
+  <data name="CreatePet_PhotoChange" xml:space="preserve"><value>Foto ändern</value></data>
+  <data name="CreatePet_PhotoSheetTitle" xml:space="preserve"><value>Profilbild</value></data>
+  <data name="CreatePet_PhotoTake" xml:space="preserve"><value>Foto aufnehmen</value></data>
+  <data name="CreatePet_PhotoChoose" xml:space="preserve"><value>Aus Galerie wählen</value></data>
+  <data name="CreatePet_PhotoRemove" xml:space="preserve"><value>Foto entfernen</value></data>
+  <data name="CreatePet_PhotoError" xml:space="preserve"><value>Dieses Foto konnte nicht hinzugefügt werden. Bitte versuche ein anderes.</value></data>
+  <data name="CreatePet_PhotoPermissionDenied" xml:space="preserve"><value>Der Fotozugriff wurde verweigert. Du kannst ihn in den Einstellungen erlauben.</value></data>
+  <data name="CreatePet_PhotoCaptureUnsupported" xml:space="preserve"><value>Dieses Gerät kann keine Fotos aufnehmen.</value></data>
   <data name="CreatePet_BirthdayLabel" xml:space="preserve"><value>Geburtstag</value></data>
   <data name="CreatePet_BirthdayHint" xml:space="preserve"><value>Nur das Jahr ist erforderlich. Monat und Tag kannst du ergänzen, wenn du sie kennst.</value></data>
   <data name="CreatePet_BirthYearLabel" xml:space="preserve"><value>Jahr</value></data>
