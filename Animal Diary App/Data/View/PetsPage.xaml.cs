@@ -53,6 +53,9 @@ public partial class PetsPage : ContentPage
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
         vm.ExportSheetVM.ViewRequested += OnReportViewRequested;
+        // Another caregiver's changes landing while this page is visible reload
+        // it in place (e.g. a newly shared pet appearing in the list).
+        vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
 
         try
         {
@@ -76,7 +79,24 @@ public partial class PetsPage : ContentPage
         vm.CloudVM.ConfirmDeleteAccount = null;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;
+        vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
     }
+
+    private void OnRemoteChangesApplied() =>
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            try
+            {
+                // The pet list itself may have changed (joined/purged pets), not
+                // just the active pet's chips — reload both.
+                await vm.LoadAsync();
+                await vm.PetVM.LoadActivePetTagsAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PetsPage] cloud reload failed: {ex}");
+            }
+        });
 
     /// <summary>The export sheet's "View" button — push the in-app preview for the
     /// report it just generated (navigation belongs to pages, not VMs).</summary>

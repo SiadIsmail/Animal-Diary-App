@@ -39,6 +39,11 @@ public class MainViewModel
     /// <summary>The Settings → Cloud Features sheet (account + backup).</summary>
     public CloudSheetViewModel CloudVM { get; }
 
+    /// <summary>The cloud sync boundary — pages subscribe to its
+    /// RemoteChangesApplied so the visible page reloads when another
+    /// device/caregiver's changes land (mirrors how Analytics is exposed).</summary>
+    public Animal_Diary_App.Data.Services.Cloud.ICloudSyncService CloudSync { get; }
+
     /// <summary>The Manage-pet "Pet sharing" sheet (invites, members, leave).</summary>
     public SharingSheetViewModel SharingVM { get; }
 
@@ -74,6 +79,7 @@ public class MainViewModel
  DocumentsViewModel documentsVM,
  CloudSheetViewModel cloudVM,
  SharingSheetViewModel sharingVM,
+ Animal_Diary_App.Data.Services.Cloud.ICloudSyncService cloudSync,
  IAnalyticsService analytics)
     {
         Analytics = analytics;
@@ -98,6 +104,7 @@ public class MainViewModel
         DocumentsVM = documentsVM;
         CloudVM = cloudVM;
         SharingVM = sharingVM;
+        CloudSync = cloudSync;
 
         _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM };
     }

@@ -71,8 +71,15 @@ public partial class App : Application
 	{
 		base.OnResume();
 		// Another caregiver/device may have logged while we were backgrounded;
-		// debounced so rapid app-switching doesn't hammer the network.
-		_cloudSync.RequestSyncSoon();
+		// resuming re-enables the foreground poll and schedules a debounced sync.
+		_cloudSync.NotifyAppState(foreground: true);
+	}
+
+	protected override void OnSleep()
+	{
+		base.OnSleep();
+		// A backgrounded app must not keep polling the network.
+		_cloudSync.NotifyAppState(foreground: false);
 	}
 
 	private async Task StartAsync()

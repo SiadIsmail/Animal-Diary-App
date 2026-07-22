@@ -59,7 +59,17 @@ public partial class MainPage : ContentPage
                 LocalizationManager.Instance.GetString("Common_Cancel"));
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
+        // Another caregiver's changes landing while this page is visible reload
+        // it in place — no tab-switching needed to see them.
+        vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
 
+        await ReloadDataAsync();
+    }
+
+    /// <summary>The page's full data load — runs on every appearance AND when a
+    /// cloud sync applies remote changes while the page is visible.</summary>
+    private async Task ReloadDataAsync()
+    {
         try
         {
             await vm.LoadAsync();
@@ -80,10 +90,13 @@ public partial class MainPage : ContentPage
         catch (Exception ex)
         {
             // A failed load must degrade to an empty page, never crash the app
-            // (async void — an escaping exception here kills the process).
-            System.Diagnostics.Debug.WriteLine($"[MainPage] OnAppearing failed: {ex}");
+            // (async void callers — an escaping exception here kills the process).
+            System.Diagnostics.Debug.WriteLine($"[MainPage] reload failed: {ex}");
         }
     }
+
+    private void OnRemoteChangesApplied() =>
+        MainThread.BeginInvokeOnMainThread(async () => await ReloadDataAsync());
 
     protected override void OnDisappearing()
     {
@@ -92,6 +105,7 @@ public partial class MainPage : ContentPage
         vm.SettingsVM.ConfirmDeleteAllDataCloud = null;
         vm.CloudVM.ConfirmDeleteAccount = null;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
+        vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
     }
 
     private void OnResetCompleted(object? sender, EventArgs e)

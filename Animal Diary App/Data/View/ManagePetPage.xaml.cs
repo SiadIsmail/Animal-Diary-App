@@ -41,6 +41,8 @@ public partial class ManagePetPage : ContentPage
                 Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString("Cloud_Leave"),
                 Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString("Common_Cancel"));
         vm.SharingVM.LeftPet += OnLeftPet;
+        // Remote changes to this pet's plan/meds landing mid-view reload the page.
+        vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
 
         // Any setup sheet saving should refresh the page's plan + chips.
         vm.DiabetesSetupVM.Saved += OnSheetSaved;
@@ -73,7 +75,15 @@ public partial class ManagePetPage : ContentPage
 
         vm.SharingVM.ConfirmLeave = null;
         vm.SharingVM.LeftPet -= OnLeftPet;
+        vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
     }
+
+    private void OnRemoteChangesApplied() =>
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            try { await vm.ManageVM.LoadAsync(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[ManagePetPage] cloud reload failed: {ex}"); }
+        });
 
     private async void OnLeftPet()
     {
