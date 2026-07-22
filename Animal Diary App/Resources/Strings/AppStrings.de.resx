@@ -497,7 +497,8 @@
   <data name="Notif_AppointmentTitle" xml:space="preserve"><value>Bald für {0} ❤️</value></data>
   <data name="Notif_AppointmentBody" xml:space="preserve"><value>Ein kleiner Hinweis: {0}s {1} steht an.</value></data>
   <data name="Settings_CloudSection" xml:space="preserve"><value>CLOUD</value></data>
-  <data name="Settings_DeleteConfirmMessageCloud" xml:space="preserve"><value>Dies löscht alle Daten auf diesem Gerät, entfernt deine eigenen Tiere dauerhaft aus deinem Cloud-Backup und meldet dich von geteilten Tieren ab.</value></data>
+  <data name="Settings_ResetDeviceOnly" xml:space="preserve"><value>Nur dieses Gerät — Backup behalten</value></data>
+  <data name="Settings_ResetEverything" xml:space="preserve"><value>Alles, auch mein Cloud-Backup</value></data>
   <data name="Cloud_RowTitle" xml:space="preserve"><value>Cloud-Funktionen</value></data>
   <data name="Cloud_RowSubtitleOff" xml:space="preserve"><value>Aus — deine Daten bleiben auf diesem Gerät</value></data>
   <data name="Cloud_Title" xml:space="preserve"><value>Cloud-Funktionen</value></data>

@@ -514,7 +514,8 @@
   <data name="Notif_AppointmentTitle" xml:space="preserve"><value>Upcoming for {0} ❤️</value></data>
   <data name="Notif_AppointmentBody" xml:space="preserve"><value>A gentle heads-up: {0}'s {1} is coming up.</value></data>
   <data name="Settings_CloudSection" xml:space="preserve"><value>CLOUD</value></data>
-  <data name="Settings_DeleteConfirmMessageCloud" xml:space="preserve"><value>This deletes all data on this device, permanently deletes the pets you own from your cloud backup, and removes you from any shared pets.</value></data>
+  <data name="Settings_ResetDeviceOnly" xml:space="preserve"><value>This device only — keep my backup</value></data>
+  <data name="Settings_ResetEverything" xml:space="preserve"><value>Everything, including my cloud backup</value></data>
   <data name="Cloud_RowTitle" xml:space="preserve"><value>Cloud Features</value></data>
   <data name="Cloud_RowSubtitleOff" xml:space="preserve"><value>Off — your data stays on this device</value></data>
   <data name="Cloud_Title" xml:space="preserve"><value>Cloud Features</value></data>
