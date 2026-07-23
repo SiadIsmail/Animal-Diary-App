@@ -562,6 +562,10 @@
         <view:CloudSheetView Grid.RowSpan="2"
                              BindingContext="{Binding CloudVM}"/>
 
+        <!-- Hidden developer diagnostics sheet -->
+        <view:DevSheetView Grid.RowSpan="2"
+                           BindingContext="{Binding DevVM}"/>
+
         <!-- Settings panel overlay — last child renders on top of everything -->
         <view:SettingsPanelView Grid.RowSpan="2"
                                 IsPanelOpen="{Binding SettingsVM.IsPanelOpen, Mode=TwoWay}"/>

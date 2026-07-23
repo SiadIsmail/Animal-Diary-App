@@ -58,6 +58,10 @@ public class AppResetService
         // Pet photos are files with no table of their own; wipe the whole folder.
         _petPhotos.DeleteAll();
 
+        // Drop the in-memory cloud diagnostics buffer too (technical logs only,
+        // but a wipe should leave nothing behind).
+        Animal_Diary_App.Data.Services.Cloud.CloudDiagnostics.Clear();
+
         // Forget the reminder catch-up marker so a fresh start can't misread the
         // old install's "last seen" time.
         MedicationReminderScheduler.ClearPersistedState();

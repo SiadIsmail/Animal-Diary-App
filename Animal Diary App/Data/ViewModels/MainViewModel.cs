@@ -48,6 +48,9 @@ public class MainViewModel
     /// <summary>The Manage-pet "Pet sharing" sheet (invites, members, leave).</summary>
     public SharingSheetViewModel SharingVM { get; }
 
+    /// <summary>The hidden developer diagnostics sheet (Settings → "Code").</summary>
+    public DevSheetViewModel DevVM { get; }
+
     // ── Vet-report surfaces (export sheet on Pets, preview page, Documents page) ──
     public ExportSheetViewModel ExportSheetVM { get; }
     public ReportPreviewViewModel ReportPreviewVM { get; }
@@ -81,6 +84,7 @@ public class MainViewModel
  DocumentsViewModel documentsVM,
  CloudSheetViewModel cloudVM,
  SharingSheetViewModel sharingVM,
+ DevSheetViewModel devVM,
  Animal_Diary_App.Data.Services.Cloud.ICloudSyncService cloudSync,
  IAnalyticsService analytics)
     {
@@ -107,9 +111,10 @@ public class MainViewModel
         DocumentsVM = documentsVM;
         CloudVM = cloudVM;
         SharingVM = sharingVM;
+        DevVM = devVM;
         CloudSync = cloudSync;
 
-        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM };
+        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM, DevVM };
     }
 
     /// <summary>

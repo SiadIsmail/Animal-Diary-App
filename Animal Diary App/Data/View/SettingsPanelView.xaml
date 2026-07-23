@@ -360,6 +360,18 @@
                        HorizontalTextAlignment="Center"
                        Margin="0,24,0,4"/>
 
+                <!-- Hidden developer entry point (gated by a code in the sheet). -->
+                <Label Text="Code"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="10.5"
+                       TextColor="{StaticResource InkTertiary}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,2,0,4">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SettingsVM.OpenDevCommand}"/>
+                    </Label.GestureRecognizers>
+                </Label>
+
             </VerticalStackLayout>
             </ScrollView>
         </Border>
