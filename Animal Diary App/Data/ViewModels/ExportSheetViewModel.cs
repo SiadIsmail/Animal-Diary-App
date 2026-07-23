@@ -4,6 +4,7 @@ using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
+using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.Services.Reports;
 using Animal_Diary_App.Helpers;
 
@@ -23,6 +24,8 @@ public class ExportSheetViewModel : BaseViewModel
 {
     private readonly IVetReportService _reports;
     private readonly ActivePetService _activePetService;
+    private readonly WaterEntryService _water;
+    private readonly AppetiteEntryService _appetite;
     private readonly IAnalyticsService _analytics;
 
     /// <summary>Flip to true to generate from <see cref="VetReportSampleData"/>'s
@@ -33,16 +36,23 @@ public class ExportSheetViewModel : BaseViewModel
     private Pet _pet = new();
     private VetReportFile? _result;
 
-    public ExportSheetViewModel(IVetReportService reports, ActivePetService activePetService, IAnalyticsService analytics)
+    public ExportSheetViewModel(IVetReportService reports, ActivePetService activePetService,
+        WaterEntryService water, AppetiteEntryService appetite, IAnalyticsService analytics)
     {
         _reports = reports;
         _activePetService = activePetService;
+        _water = water;
+        _appetite = appetite;
         _analytics = analytics;
 
-        OpenCommand = new Command(Open);
+        OpenCommand = new Command(async () => await OpenAsync());
         DismissCommand = new Command(() => IsPresented = false);
         SelectPeriodCommand = new Command<string>(SelectPeriod);
         ToggleIncludePhotoCommand = new Command(() => IncludePhoto = !IncludePhoto);
+        ToggleIncludeWaterMeasuredCommand = new Command(() => IncludeWaterMeasured = !IncludeWaterMeasured);
+        ToggleIncludeWaterObservationsCommand = new Command(() => IncludeWaterObservations = !IncludeWaterObservations);
+        ToggleIncludeAppetiteMeasuredCommand = new Command(() => IncludeAppetiteMeasured = !IncludeAppetiteMeasured);
+        ToggleIncludeAppetiteObservationsCommand = new Command(() => IncludeAppetiteObservations = !IncludeAppetiteObservations);
         GenerateCommand = new Command(async () => await GenerateAsync());
         ViewCommand = new Command(() =>
         {
@@ -78,6 +88,32 @@ public class ExportSheetViewModel : BaseViewModel
     private bool _includePhoto;
     public bool IncludePhoto { get => _includePhoto; set => SetProperty(ref _includePhoto, value); }
 
+    /// <summary>Whether the pet has ever logged any water — gates the two water
+    /// toggles (only shown when there's water to include, mirroring HasPhoto).</summary>
+    private bool _hasWater;
+    public bool HasWater { get => _hasWater; private set => SetProperty(ref _hasWater, value); }
+
+    /// <summary>Include the objective measured (mL) water graph. Default ON. Kept
+    /// separate from observations — the report never merges or interprets the two.</summary>
+    private bool _includeWaterMeasured = true;
+    public bool IncludeWaterMeasured { get => _includeWaterMeasured; set => SetProperty(ref _includeWaterMeasured, value); }
+
+    /// <summary>Include the subjective owner-observations water graph. Default ON.</summary>
+    private bool _includeWaterObservations = true;
+    public bool IncludeWaterObservations { get => _includeWaterObservations; set => SetProperty(ref _includeWaterObservations, value); }
+
+    /// <summary>Whether the pet has ever logged any appetite — gates the appetite toggles.</summary>
+    private bool _hasAppetite;
+    public bool HasAppetite { get => _hasAppetite; private set => SetProperty(ref _hasAppetite, value); }
+
+    /// <summary>Include the objective measured (grams) appetite graph. Default ON.</summary>
+    private bool _includeAppetiteMeasured = true;
+    public bool IncludeAppetiteMeasured { get => _includeAppetiteMeasured; set => SetProperty(ref _includeAppetiteMeasured, value); }
+
+    /// <summary>Include the subjective observations appetite graph + diet list. Default ON.</summary>
+    private bool _includeAppetiteObservations = true;
+    public bool IncludeAppetiteObservations { get => _includeAppetiteObservations; set => SetProperty(ref _includeAppetiteObservations, value); }
+
     private bool _isGenerating;
     public bool IsGenerating { get => _isGenerating; set => SetProperty(ref _isGenerating, value); }
 
@@ -95,11 +131,15 @@ public class ExportSheetViewModel : BaseViewModel
     public ICommand DismissCommand { get; }
     public ICommand SelectPeriodCommand { get; }
     public ICommand ToggleIncludePhotoCommand { get; }
+    public ICommand ToggleIncludeWaterMeasuredCommand { get; }
+    public ICommand ToggleIncludeWaterObservationsCommand { get; }
+    public ICommand ToggleIncludeAppetiteMeasuredCommand { get; }
+    public ICommand ToggleIncludeAppetiteObservationsCommand { get; }
     public ICommand GenerateCommand { get; }
     public ICommand ViewCommand { get; }
     public ICommand ShareCommand { get; }
 
-    private void Open()
+    private async Task OpenAsync()
     {
         _pet = _activePetService.ActivePet;
 
@@ -114,6 +154,16 @@ public class ExportSheetViewModel : BaseViewModel
         // a photo file present on this device.
         IncludePhoto = false;
         HasPhoto = _pet.PhotoFullPath is { } p && File.Exists(p);
+
+        // Water + appetite: both types included by default; each metric's toggles only
+        // show when the pet has logged it (mirrors the photo toggle's "only when relevant").
+        IncludeWaterMeasured = true;
+        IncludeWaterObservations = true;
+        HasWater = _pet.Id != 0 && await _water.HasAnyAsync(_pet.Id);
+
+        IncludeAppetiteMeasured = true;
+        IncludeAppetiteObservations = true;
+        HasAppetite = _pet.Id != 0 && await _appetite.HasAnyAsync(_pet.Id);
 
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
@@ -142,7 +192,9 @@ public class ExportSheetViewModel : BaseViewModel
                 _result = _pet.Id == 0
                     ? null // no active pet behaves like "no data"
                     : await _reports.GenerateAsync(
-                        _pet.Id, DateTime.Today.AddDays(-SelectedDays), DateTime.Today, IncludePhoto);
+                        _pet.Id, DateTime.Today.AddDays(-SelectedDays), DateTime.Today,
+                        IncludePhoto, IncludeWaterMeasured, IncludeWaterObservations,
+                        IncludeAppetiteMeasured, IncludeAppetiteObservations);
 #pragma warning restore CS0162
 
             if (_result == null)

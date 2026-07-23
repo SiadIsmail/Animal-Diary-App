@@ -124,8 +124,14 @@ public class PetDeletionService
             "select * from \"GlucoseEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
         var appetite = await conn.QueryAsync<AppetiteEntry>(
             "select * from \"AppetiteEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
+        var appetiteAmounts = await conn.QueryAsync<AppetiteAmountEntry>(
+            "select * from \"AppetiteAmountEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
         var seizures = await conn.QueryAsync<SeizureEntry>(
             "select * from \"SeizureEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
+        var waterAmounts = await conn.QueryAsync<WaterAmountEntry>(
+            "select * from \"WaterAmountEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
+        var waterLevels = await conn.QueryAsync<WaterLevelEntry>(
+            "select * from \"WaterLevelEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
 
         await conn.RunInTransactionAsync(txn =>
         {
@@ -137,7 +143,10 @@ public class PetDeletionService
             foreach (var c in conditions) txn.Update(SyncStamp.MarkDeleted(c));
             foreach (var g in glucose) txn.Update(SyncStamp.MarkDeleted(g));
             foreach (var a in appetite) txn.Update(SyncStamp.MarkDeleted(a));
+            foreach (var a in appetiteAmounts) txn.Update(SyncStamp.MarkDeleted(a));
             foreach (var s in seizures) txn.Update(SyncStamp.MarkDeleted(s));
+            foreach (var w in waterAmounts) txn.Update(SyncStamp.MarkDeleted(w));
+            foreach (var w in waterLevels) txn.Update(SyncStamp.MarkDeleted(w));
             txn.Update(SyncStamp.MarkDeleted(pet));
         });
 

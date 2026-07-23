@@ -24,6 +24,30 @@ public static class VetReportSampleData
             if (rng.NextDouble() > 0.25)
                 glucose.Add(new ReportPoint(from.AddDays(d), 9m + (decimal)(rng.NextDouble() * 5 - 2.5)));
 
+        // Water — two DISTINCT types (never merged): measured mL daily totals on some
+        // days, and relative owner observations (1..5) on others. They overlap in time
+        // on purpose, to show the two graphs are kept separate.
+        var waterMeasured = new List<ReportPoint>();
+        for (var d = 0; d <= 90; d += 3)
+            if (rng.NextDouble() > 0.35)
+                waterMeasured.Add(new ReportPoint(from.AddDays(d), 320m + (decimal)(rng.NextDouble() * 260)));
+        var waterObservations = new List<ReportObservation>();
+        for (var d = 1; d <= 90; d += 2)
+            if (rng.NextDouble() > 0.4)
+                waterObservations.Add(new ReportObservation(from.AddDays(d), rng.Next(1, 6)));
+
+        // Appetite — measured grams on some days, qualitative observations on others,
+        // and a small diet list. Same measured-vs-observed separation as water.
+        var appetiteMeasured = new List<ReportPoint>();
+        for (var d = 0; d <= 90; d += 3)
+            if (rng.NextDouble() > 0.4)
+                appetiteMeasured.Add(new ReportPoint(from.AddDays(d), 180m + (decimal)(rng.NextDouble() * 220)));
+        var appetiteObservations = new List<ReportObservation>();
+        for (var d = 1; d <= 90; d += 2)
+            if (rng.NextDouble() > 0.35)
+                appetiteObservations.Add(new ReportObservation(from.AddDays(d), rng.Next(1, 6)));
+        var appetiteFoods = new[] { "Chicken kibble", "Wet food (salmon)", "Boiled rice + turkey" };
+
         // Seizures: a handful across the period.
         var seizureDays = new[] { 8, 9, 31, 55, 56, 80 };
         var events = new List<ReportEvent>();
@@ -37,7 +61,6 @@ public static class VetReportSampleData
                 Note = d == 31 ? "Disoriented for ~20 min afterwards, drank a lot" : null
             });
         events.Add(new ReportEvent { Kind = ReportEventKind.Vomiting, Date = from.AddDays(40) });
-        events.Add(new ReportEvent { Kind = ReportEventKind.LowAppetite, Date = from.AddDays(41), Value = 1 });
         events = events.OrderByDescending(e => e.Date).ThenByDescending(e => e.Time).ToList();
 
         // Seizures per week, derived the same way the real builder does it.
@@ -87,6 +110,17 @@ public static class VetReportSampleData
                 new ReportSeries { Label = "Weight", Unit = "kg", Points = weight },
                 new ReportSeries { Label = "Blood glucose", Unit = "mmol/L", Points = glucose },
                 new ReportSeries { Label = "Seizures per week", Points = seizuresPerWeek }
+            },
+            Water = new ReportWater
+            {
+                Measured = new ReportSeries { Label = "Measured", Unit = "mL", Points = waterMeasured },
+                Observations = waterObservations
+            },
+            Appetite = new ReportAppetite
+            {
+                Measured = new ReportSeries { Label = "Measured", Unit = "g", Points = appetiteMeasured },
+                Observations = appetiteObservations,
+                Foods = appetiteFoods
             },
             Events = events,
             Notes = new ReportNote[]

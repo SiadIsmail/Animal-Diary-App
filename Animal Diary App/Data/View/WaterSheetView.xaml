@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- AppetiteSheetView — five word-tiles with a progressively-filled bowl (no numbers
-     shown), in the shared FelovaBottomSheet. BindingContext is an AppetiteSheetViewModel. -->
+<!-- WaterSheetView — the Journal's "log water" sheet, in the shared FelovaBottomSheet.
+     Two modes flipped by the "Exact measurement" toggle at the top:
+       • off (default) → five relative word-tiles with a progressively-filled glass;
+       • on           → a single millilitre entry field.
+     BindingContext is a WaterSheetViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
-             x:DataType="vms:AppetiteSheetViewModel"
-             x:Class="Animal_Diary_App.Data.View.AppetiteSheetView"
+             x:DataType="vms:WaterSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.WaterSheetView"
              x:Name="Root"
              InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
 
@@ -18,29 +21,31 @@
         <controls:FelovaBottomSheet.SheetContent>
             <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
 
-                <!-- Exact-measurement toggle. Off by default (word-tiles); on swaps in
-                     the grams entry field. -->
+                <!-- Exact-measurement toggle. Off by default (relative tiles); on swaps
+                     in the millilitre entry field. Light inline row: label left, switch
+                     pinned to the right edge. -->
                 <Grid ColumnDefinitions="*,Auto" Padding="4,0" VerticalOptions="Center">
                     <Label Grid.Column="0"
-                           Text="{loc:Translate Journal_AppetiteExactToggle}"
+                           Text="{loc:Translate Journal_WaterExactToggle}"
                            FontFamily="{StaticResource FontSans}"
                            FontSize="12.5"
                            TextColor="{StaticResource InkSecondary}"
                            VerticalOptions="Center"/>
                     <Switch Grid.Column="1"
                             IsToggled="{Binding ExactMode}"
-                            OnColor="{StaticResource HoneyWarm}"
+                            OnColor="{StaticResource Blue}"
                             Scale="0.8"
                             HorizontalOptions="End"
                             VerticalOptions="Center"/>
                 </Grid>
 
+                <!-- Relative mode (default): five word-tiles with a filling glass. -->
                 <FlexLayout IsVisible="{Binding ShowLevels}"
                             BindableLayout.ItemsSource="{Binding Options}"
                             Wrap="NoWrap"
                             JustifyContent="SpaceBetween">
                     <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="vms:AppetiteOption">
+                        <DataTemplate x:DataType="vms:WaterOption">
                             <Border FlexLayout.Basis="18.5%"
                                     BackgroundColor="{StaticResource Glass}"
                                     Stroke="{StaticResource GlassLine}"
@@ -50,7 +55,7 @@
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
                                         <Setter Property="Stroke" Value="{StaticResource Ink}"/>
-                                        <Setter Property="BackgroundColor" Value="{StaticResource HoneyWarmTint}"/>
+                                        <Setter Property="BackgroundColor" Value="{StaticResource BlueTint}"/>
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -59,13 +64,13 @@
                                         CommandParameter="{Binding .}"/>
                                 </Border.GestureRecognizers>
                                 <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
-                                    <!-- empty bowl with a fill anchored to the bottom -->
-                                    <Border WidthRequest="30" HeightRequest="24"
+                                    <!-- empty glass with a fill anchored to the bottom -->
+                                    <Border WidthRequest="26" HeightRequest="24"
                                             BackgroundColor="{StaticResource Well}"
                                             StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 7,7,13,13"
+                                            StrokeShape="RoundRectangle 5,5,9,9"
                                             HorizontalOptions="Center">
-                                        <BoxView Color="{StaticResource HoneyWarm}"
+                                        <BoxView Color="{StaticResource Blue}"
                                                  VerticalOptions="End"
                                                  HeightRequest="{Binding FillHeight}"/>
                                     </Border>
@@ -82,24 +87,24 @@
                     </BindableLayout.ItemTemplate>
                 </FlexLayout>
 
-                <!-- Exact mode: a grams entry field. -->
+                <!-- Exact mode: a single millilitre entry field. -->
                 <VerticalStackLayout IsVisible="{Binding ShowExact}" Spacing="8">
-                    <Label Text="{loc:Translate Journal_AppetiteGramsLabel}"
+                    <Label Text="{loc:Translate Journal_WaterAmountLabel}"
                            FontFamily="{StaticResource FontSans}" FontSize="11" FontAttributes="Bold"
                            CharacterSpacing="1" TextColor="{StaticResource InkSecondary}"/>
                     <Border BackgroundColor="{StaticResource Glass}"
                             Stroke="{StaticResource GlassLine}" StrokeThickness="1"
                             StrokeShape="RoundRectangle 14" Padding="12,2">
                         <Grid ColumnDefinitions="*,Auto">
-                            <Entry Text="{Binding GramsText}"
+                            <Entry Text="{Binding AmountText}"
                                    Keyboard="Numeric"
-                                   Placeholder="{loc:Translate Journal_AppetiteGramsPlaceholder}"
+                                   Placeholder="{loc:Translate Journal_WaterAmountPlaceholder}"
                                    FontFamily="{StaticResource FontSans}"
                                    FontSize="16"
                                    TextColor="{StaticResource Ink}"
                                    PlaceholderColor="{StaticResource InkTertiary}"/>
                             <Label Grid.Column="1"
-                                   Text="{loc:Translate Common_GramSuffix}"
+                                   Text="{loc:Translate Common_MlSuffix}"
                                    FontFamily="{StaticResource FontSans}" FontSize="14"
                                    TextColor="{StaticResource InkSecondary}"
                                    VerticalOptions="Center"/>
@@ -107,23 +112,7 @@
                     </Border>
                 </VerticalStackLayout>
 
-                <!-- Food context (optional, both modes; pre-filled with the last food). -->
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="{loc:Translate Journal_FoodLabel}"
-                           FontFamily="{StaticResource FontSans}" FontSize="11" FontAttributes="Bold"
-                           CharacterSpacing="1" TextColor="{StaticResource InkSecondary}"/>
-                    <Border BackgroundColor="{StaticResource Glass}"
-                            Stroke="{StaticResource GlassLine}" StrokeThickness="1"
-                            StrokeShape="RoundRectangle 14" Padding="12,2">
-                        <Entry Text="{Binding Food}"
-                               Placeholder="{loc:Translate Journal_FoodPlaceholder}"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="16"
-                               TextColor="{StaticResource Ink}"
-                               PlaceholderColor="{StaticResource InkTertiary}"/>
-                    </Border>
-                </VerticalStackLayout>
-
+                <!-- Actions -->
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,4,0,0">
                     <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0" StrokeShape="RoundRectangle 15,13,13,16">
                         <Border.GestureRecognizers>

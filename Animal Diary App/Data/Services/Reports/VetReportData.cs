@@ -30,6 +30,15 @@ public sealed class VetReportData
     /// The document renders one small chart per series, in list order.</summary>
     public IReadOnlyList<ReportSeries> Trends { get; init; } = Array.Empty<ReportSeries>();
 
+    /// <summary>Water intake, kept as two DISTINCT data types that are never merged
+    /// or interpreted — see <see cref="ReportWater"/>. Felova is a communication
+    /// layer, not a medical-interpretation layer.</summary>
+    public ReportWater Water { get; init; } = new();
+
+    /// <summary>Appetite, the same measured-vs-observed shape as water plus the diet
+    /// list — see <see cref="ReportAppetite"/>. Never merged or interpreted.</summary>
+    public ReportAppetite Appetite { get; init; } = new();
+
     /// <summary>Notable dated occurrences (seizures, vomiting, very low appetite),
     /// newest first.</summary>
     public IReadOnlyList<ReportEvent> Events { get; init; } = Array.Empty<ReportEvent>();
@@ -42,7 +51,65 @@ public sealed class VetReportData
     /// <summary>True when the range contains anything at all beyond the pet's
     /// master data. Used to refuse generating an empty document.</summary>
     public bool HasAnyData =>
-        Medications.Count > 0 || Trends.Count > 0 || Events.Count > 0 || Notes.Count > 0;
+        Medications.Count > 0 || Trends.Count > 0 || Water.HasContent || Appetite.HasContent
+        || Events.Count > 0 || Notes.Count > 0;
+}
+
+/// <summary>
+/// Water intake, held as TWO DISTINCT data types that the report keeps apart on
+/// purpose — Felova relays what the owner recorded, it does not interpret it:
+/// <list type="bullet">
+/// <item><b>Measured</b> — objective millilitre readings (a day's total). A
+///   quantitative series, plotted as a graph.</item>
+/// <item><b>Observations</b> — subjective owner readings ("Normal", "More than
+///   usual"). A qualitative series, plotted on its OWN graph.</item>
+/// </list>
+/// The two are NEVER merged into one visualization, observations are NEVER converted
+/// to numbers, and NO trend/verdict is computed from either. Mixing a subjective
+/// observation with a measurement, or drawing a conclusion, needs clinical context
+/// Felova doesn't have — the vet interprets; the report only records. Either type can
+/// be turned off in the export sheet (both default on); an off type is simply null/empty.
+/// </summary>
+public sealed class ReportWater
+{
+    /// <summary>Objective measured intake — one point per day (that day's total mL).
+    /// Null when the owner logged no measurements, or unticked "measured values".</summary>
+    public ReportSeries? Measured { get; init; }
+
+    /// <summary>Subjective owner observations, one per day. Empty when none were
+    /// logged, or the owner unticked "owner observations".</summary>
+    public IReadOnlyList<ReportObservation> Observations { get; init; } = Array.Empty<ReportObservation>();
+
+    public bool HasContent => Measured is { Points.Count: > 0 } || Observations.Count > 0;
+}
+
+/// <summary>One owner observation on a date: a relative level (1..5). Used for both
+/// water and appetite. The document plots it on a category axis LABELLED WITH WORDS —
+/// the number is never shown, averaged, or trended (it only picks which labelled row
+/// the dot sits on).</summary>
+public readonly record struct ReportObservation(DateTime Date, int Level);
+
+/// <summary>
+/// Appetite for the report — the same measured-vs-observed separation as
+/// <see cref="ReportWater"/>, plus the diet list. All three parts are kept distinct
+/// and none is interpreted (no trend, no verdict, observations never numeric):
+/// <list type="bullet">
+/// <item><b>Measured</b> — objective grams eaten, one point per day (that day's
+///   total). Null when none, or the owner unticked "measured values".</item>
+/// <item><b>Observations</b> — the qualitative reading (Didn't eat … Everything),
+///   one per day. Empty when none, or the owner unticked "observations".</item>
+/// <item><b>Foods</b> — the distinct free-text foods recorded in the range, as a
+///   plain diet list. Not food-change tracking; the range itself is the context.</item>
+/// </list>
+/// </summary>
+public sealed class ReportAppetite
+{
+    public ReportSeries? Measured { get; init; }
+    public IReadOnlyList<ReportObservation> Observations { get; init; } = Array.Empty<ReportObservation>();
+    public IReadOnlyList<string> Foods { get; init; } = Array.Empty<string>();
+
+    public bool HasContent =>
+        Measured is { Points.Count: > 0 } || Observations.Count > 0 || Foods.Count > 0;
 }
 
 /// <summary>Master data for the report header. Fields the app doesn't model yet

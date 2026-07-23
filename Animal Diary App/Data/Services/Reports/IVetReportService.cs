@@ -14,8 +14,18 @@ public interface IVetReportService
     /// no empty documents are ever produced.
     /// <paramref name="includePhoto"/> is opt-in (default off, matching the report's
     /// data-minimized ethos): the pet's profile photo appears in the header only when
-    /// the owner ticks it AND a photo file exists.</summary>
-    Task<VetReportFile?> GenerateAsync(int petId, DateTime from, DateTime to, bool includePhoto = false);
+    /// the owner ticks it AND a photo file exists.
+    /// The <c>include…Measured</c> / <c>include…Observations</c> pairs (all default ON)
+    /// independently include a metric's two data types — objective measurements and
+    /// subjective observations — which the report always keeps separate and never
+    /// interprets. Today: water (mL) and appetite (grams).</summary>
+    Task<VetReportFile?> GenerateAsync(
+        int petId, DateTime from, DateTime to,
+        bool includePhoto = false,
+        bool includeWaterMeasured = true,
+        bool includeWaterObservations = true,
+        bool includeAppetiteMeasured = true,
+        bool includeAppetiteObservations = true);
 
     /// <summary>Generate a PDF from the fake <see cref="VetReportSampleData"/> — for
     /// iterating on the layout without real logged data. The files land in the

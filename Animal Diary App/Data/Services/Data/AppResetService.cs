@@ -45,7 +45,10 @@ public class AppResetService
         await _db.Connection.DeleteAllAsync<PetCondition>();
         await _db.Connection.DeleteAllAsync<GlucoseEntry>();
         await _db.Connection.DeleteAllAsync<AppetiteEntry>();
+        await _db.Connection.DeleteAllAsync<AppetiteAmountEntry>();
         await _db.Connection.DeleteAllAsync<SeizureEntry>();
+        await _db.Connection.DeleteAllAsync<WaterAmountEntry>();
+        await _db.Connection.DeleteAllAsync<WaterLevelEntry>();
         await _db.Connection.DeleteAllAsync<SyncState>();
 
         // Reports are files + rows; the library wipes both (health data is medical

@@ -18,6 +18,8 @@ public class VetReportDocument : IDocument
         new HeaderSection(),
         new MedicationsSection(),
         new TrendsSection(),
+        new WaterSection(),
+        new AppetiteSection(),
         new EventsSection(),
         new NotesSection(),
     };

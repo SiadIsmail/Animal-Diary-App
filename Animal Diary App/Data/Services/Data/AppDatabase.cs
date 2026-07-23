@@ -32,7 +32,10 @@ public class AppDatabase
             _db.CreateTableAsync<PetCondition>(),
             _db.CreateTableAsync<GlucoseEntry>(),
             _db.CreateTableAsync<AppetiteEntry>(),
+            _db.CreateTableAsync<AppetiteAmountEntry>(),
             _db.CreateTableAsync<SeizureEntry>(),
+            _db.CreateTableAsync<WaterAmountEntry>(),
+            _db.CreateTableAsync<WaterLevelEntry>(),
             _db.CreateTableAsync<VetReportFile>(),
             _db.CreateTableAsync<SyncState>()
             );
@@ -55,7 +58,10 @@ public class AppDatabase
         Backfill<PetCondition>(conn);
         Backfill<GlucoseEntry>(conn);
         Backfill<AppetiteEntry>(conn);
+        Backfill<AppetiteAmountEntry>(conn);
         Backfill<SeizureEntry>(conn);
+        Backfill<WaterAmountEntry>(conn);
+        Backfill<WaterLevelEntry>(conn);
     }
 
     private static void Backfill<T>(SQLiteConnection conn) where T : ISyncable, new()

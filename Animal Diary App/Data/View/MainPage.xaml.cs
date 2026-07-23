@@ -168,14 +168,15 @@ public partial class MainPage : ContentPage
     }
 
     // Same icons + labels as the Journal's chips, so the card reads as the
-    // first chip of the day. (Water never reaches here — filtered with the
-    // same "no sheet yet" rule the Journal applies.)
+    // first chip of the day. Tapping a tracker card routes to the Journal, where
+    // every tracker (water included) now has its logging sheet.
     private static (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc) => item.TrackerId switch
     {
         TrackerId.Glucose => ("🩸", loc.GetString("Journal_GlucoseCheck")),
         TrackerId.Appetite => ("🍽️", loc.GetString("Journal_Appetite")),
         TrackerId.Weight => ("⚖️", loc.GetString("Journal_WeighIn")),
         TrackerId.Seizure => ("⚡", loc.GetString("Journal_Seizure")),
+        TrackerId.Water => ("💧", loc.GetString("Journal_Water")),
         _ => ("🙂", loc.GetString("Journal_MoodTitle")),
     };
 

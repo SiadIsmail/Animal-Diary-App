@@ -343,7 +343,10 @@ public sealed class CloudSyncService : ICloudSyncService
             conn.Execute("delete from \"PetCondition\" where PetId = ?", pet.Id);
             conn.Execute("delete from \"GlucoseEntry\" where PetId = ?", pet.Id);
             conn.Execute("delete from \"AppetiteEntry\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"AppetiteAmountEntry\" where PetId = ?", pet.Id);
             conn.Execute("delete from \"SeizureEntry\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"WaterAmountEntry\" where PetId = ?", pet.Id);
+            conn.Execute("delete from \"WaterLevelEntry\" where PetId = ?", pet.Id);
             conn.Execute("delete from \"Pet\" where Id = ?", pet.Id);
         });
 
@@ -492,6 +495,7 @@ public sealed class CloudSyncService : ICloudSyncService
     private static readonly string[] LocalTableNames =
     {
         "Pet", "PetEntry", "Medication", "MedicationSchedule", "MedicationDoseLog",
-        "Tracker", "PetCondition", "GlucoseEntry", "AppetiteEntry", "SeizureEntry"
+        "Tracker", "PetCondition", "GlucoseEntry", "AppetiteEntry", "AppetiteAmountEntry",
+        "SeizureEntry", "WaterAmountEntry", "WaterLevelEntry"
     };
 }

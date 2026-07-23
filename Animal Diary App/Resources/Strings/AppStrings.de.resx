@@ -190,6 +190,9 @@
   <data name="Journal_ToastAppetite" xml:space="preserve"><value>Notiert. {0} gefressen.</value></data>
   <data name="Journal_ToastSeizure" xml:space="preserve"><value>Anfall festgehalten.</value></data>
   <data name="Journal_ToastDeleted" xml:space="preserve"><value>Aus der Zeitleiste entfernt.</value></data>
+  <data name="Journal_ToastMedSkipped" xml:space="preserve"><value>{0} als ausgelassen markiert.</value></data>
+  <data name="Journal_ToastDoseCleared" xml:space="preserve"><value>Dosis zurückgesetzt — wieder offen.</value></data>
+  <data name="Journal_MarkSkipped" xml:space="preserve"><value>Als ausgelassen markieren</value></data>
   <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}s Zucker-Check</value></data>
   <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d. MMM}. Eine Zahl, und fertig.</value></data>
   <data name="Journal_GlucoseFieldLabel" xml:space="preserve"><value>Blutzucker · mmol/L</value></data>
@@ -216,11 +219,34 @@
   <data name="Journal_SeizureNoteLabel" xml:space="preserve"><value>Notizen · optional</value></data>
   <data name="Journal_SeizureNotePlaceholder" xml:space="preserve"><value>Was dir aufgefallen ist</value></data>
   <data name="Journal_SaveSeizure" xml:space="preserve"><value>Anfall speichern</value></data>
-  <data name="Appetite_Level1" xml:space="preserve"><value>Kaum</value></data>
+  <data name="Appetite_Level1" xml:space="preserve"><value>Nichts</value></data>
   <data name="Appetite_Level2" xml:space="preserve"><value>Ein wenig</value></data>
   <data name="Appetite_Level3" xml:space="preserve"><value>Etwa die Hälfte</value></data>
   <data name="Appetite_Level4" xml:space="preserve"><value>Das meiste</value></data>
   <data name="Appetite_Level5" xml:space="preserve"><value>Alles</value></data>
+  <!-- Wasser (Journal): zwei Modi — relative Stufen (Water_Level*) oder eine genaue ml-Menge -->
+  <data name="Water_Level1" xml:space="preserve"><value>Kaum</value></data>
+  <data name="Water_Level2" xml:space="preserve"><value>Ein wenig</value></data>
+  <data name="Water_Level3" xml:space="preserve"><value>Normal</value></data>
+  <data name="Water_Level4" xml:space="preserve"><value>Mehr</value></data>
+  <data name="Water_Level5" xml:space="preserve"><value>Viel</value></data>
+  <data name="Journal_WaterTitle" xml:space="preserve"><value>Wie viel hat {0} getrunken?</value></data>
+  <data name="Journal_WaterSub" xml:space="preserve"><value>{0:ddd, d. MMM}</value></data>
+  <data name="Journal_WaterExactToggle" xml:space="preserve"><value>Genaue Menge</value></data>
+  <data name="Journal_WaterAmountLabel" xml:space="preserve"><value>Menge</value></data>
+  <data name="Journal_WaterAmountPlaceholder" xml:space="preserve"><value>z. B. 250</value></data>
+  <data name="Journal_WaterMl" xml:space="preserve"><value>{0} ml</value></data>
+  <data name="Journal_DrankWord" xml:space="preserve"><value>{0} getrunken</value></data>
+  <data name="Journal_ToastWater" xml:space="preserve"><value>Notiert. {0} getrunken.</value></data>
+  <data name="Common_MlSuffix" xml:space="preserve"><value>ml</value></data>
+  <data name="Common_GramSuffix" xml:space="preserve"><value>g</value></data>
+  <!-- Appetit (Journal): zwei Modi — Stufen oder genaue Gramm; optionaler Futter-Kontext -->
+  <data name="Journal_AppetiteExactToggle" xml:space="preserve"><value>Genaue Menge</value></data>
+  <data name="Journal_AppetiteGramsLabel" xml:space="preserve"><value>Menge</value></data>
+  <data name="Journal_AppetiteGramsPlaceholder" xml:space="preserve"><value>z. B. 200</value></data>
+  <data name="Journal_AppetiteGrams" xml:space="preserve"><value>{0} g</value></data>
+  <data name="Journal_FoodLabel" xml:space="preserve"><value>Futter (optional)</value></data>
+  <data name="Journal_FoodPlaceholder" xml:space="preserve"><value>z. B. Hähnchen-Trockenfutter</value></data>
   <data name="Journal_GlucoseTimeline" xml:space="preserve"><value>Zucker · {0} mmol/L</value></data>
   <data name="Journal_AteWord" xml:space="preserve"><value>{0} gefressen</value></data>
   <data name="Journal_SeizureDuration" xml:space="preserve"><value>Dauerte {0} Min.</value></data>
@@ -334,6 +360,12 @@
   <data name="Export_SheetSubtitle" xml:space="preserve"><value>Eine Seite für {0}s Tierarzt</value></data>
   <data name="Export_PeriodLabel" xml:space="preserve"><value>Zeitraum</value></data>
   <data name="Export_IncludePhoto" xml:space="preserve"><value>Profilbild einfügen</value></data>
+  <data name="Export_WaterLabel" xml:space="preserve"><value>Wasseraufnahme</value></data>
+  <data name="Export_IncludeWaterMeasured" xml:space="preserve"><value>Gemessene Werte einfügen</value></data>
+  <data name="Export_IncludeWaterObservations" xml:space="preserve"><value>Beobachtungen des Halters einfügen</value></data>
+  <data name="Export_AppetiteLabel" xml:space="preserve"><value>Appetit</value></data>
+  <data name="Export_IncludeAppetiteMeasured" xml:space="preserve"><value>Gemessene Werte einfügen</value></data>
+  <data name="Export_IncludeAppetiteObservations" xml:space="preserve"><value>Beobachtungen einfügen</value></data>
   <data name="Export_Days30" xml:space="preserve"><value>30 Tage</value></data>
   <data name="Export_Days90" xml:space="preserve"><value>90 Tage</value></data>
   <data name="Export_Days180" xml:space="preserve"><value>180 Tage</value></data>

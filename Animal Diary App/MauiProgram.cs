@@ -37,6 +37,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.GlucoseEntryService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.AppetiteEntryService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.SeizureEntryService>();
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.WaterEntryService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.TrackerService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.PetConditionService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.CarePlanService>();
@@ -52,6 +53,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<WeightSheetViewModel>();
 		builder.Services.AddSingleton<AppetiteSheetViewModel>();
 		builder.Services.AddSingleton<SeizureSheetViewModel>();
+		builder.Services.AddSingleton<WaterSheetViewModel>();
 		builder.Services.AddSingleton<DiabetesSetupSheetViewModel>();
 		builder.Services.AddSingleton<CkdSetupSheetViewModel>();
 		builder.Services.AddSingleton<EpilepsySetupSheetViewModel>();

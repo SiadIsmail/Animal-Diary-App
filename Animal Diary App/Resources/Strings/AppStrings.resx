@@ -195,6 +195,9 @@
   <data name="Journal_ToastAppetite" xml:space="preserve"><value>Noted. Ate {0}.</value></data>
   <data name="Journal_ToastSeizure" xml:space="preserve"><value>Seizure recorded.</value></data>
   <data name="Journal_ToastDeleted" xml:space="preserve"><value>Removed from the timeline.</value></data>
+  <data name="Journal_ToastMedSkipped" xml:space="preserve"><value>{0} marked as skipped.</value></data>
+  <data name="Journal_ToastDoseCleared" xml:space="preserve"><value>Dose cleared — still open again.</value></data>
+  <data name="Journal_MarkSkipped" xml:space="preserve"><value>Mark as skipped</value></data>
   <!-- Glucose sheet -->
   <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}'s glucose check</value></data>
   <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d MMM}. One number, and you're done.</value></data>
@@ -227,11 +230,34 @@
   <data name="Journal_SeizureNotePlaceholder" xml:space="preserve"><value>What you noticed</value></data>
   <data name="Journal_SaveSeizure" xml:space="preserve"><value>Save seizure log</value></data>
   <!-- Appetite levels (word shown to the owner; the int is stored) -->
-  <data name="Appetite_Level1" xml:space="preserve"><value>Barely</value></data>
+  <data name="Appetite_Level1" xml:space="preserve"><value>Nothing</value></data>
   <data name="Appetite_Level2" xml:space="preserve"><value>A little</value></data>
   <data name="Appetite_Level3" xml:space="preserve"><value>About half</value></data>
   <data name="Appetite_Level4" xml:space="preserve"><value>Most of it</value></data>
   <data name="Appetite_Level5" xml:space="preserve"><value>Everything</value></data>
+  <!-- Water (Journal): two modes — relative level tiles (Water_Level*) or an exact ml amount -->
+  <data name="Water_Level1" xml:space="preserve"><value>Barely</value></data>
+  <data name="Water_Level2" xml:space="preserve"><value>A little</value></data>
+  <data name="Water_Level3" xml:space="preserve"><value>Normal</value></data>
+  <data name="Water_Level4" xml:space="preserve"><value>More</value></data>
+  <data name="Water_Level5" xml:space="preserve"><value>A lot</value></data>
+  <data name="Journal_WaterTitle" xml:space="preserve"><value>How much did {0} drink?</value></data>
+  <data name="Journal_WaterSub" xml:space="preserve"><value>{0:ddd, d MMM}</value></data>
+  <data name="Journal_WaterExactToggle" xml:space="preserve"><value>Exact measurement</value></data>
+  <data name="Journal_WaterAmountLabel" xml:space="preserve"><value>Amount</value></data>
+  <data name="Journal_WaterAmountPlaceholder" xml:space="preserve"><value>e.g. 250</value></data>
+  <data name="Journal_WaterMl" xml:space="preserve"><value>{0} ml</value></data>
+  <data name="Journal_DrankWord" xml:space="preserve"><value>Drank {0}</value></data>
+  <data name="Journal_ToastWater" xml:space="preserve"><value>Noted. Drank {0}.</value></data>
+  <data name="Common_MlSuffix" xml:space="preserve"><value>ml</value></data>
+  <data name="Common_GramSuffix" xml:space="preserve"><value>g</value></data>
+  <!-- Appetite (Journal): two modes — level tiles or exact grams; optional food context -->
+  <data name="Journal_AppetiteExactToggle" xml:space="preserve"><value>Exact measurement</value></data>
+  <data name="Journal_AppetiteGramsLabel" xml:space="preserve"><value>Amount</value></data>
+  <data name="Journal_AppetiteGramsPlaceholder" xml:space="preserve"><value>e.g. 200</value></data>
+  <data name="Journal_AppetiteGrams" xml:space="preserve"><value>{0} g</value></data>
+  <data name="Journal_FoodLabel" xml:space="preserve"><value>Food (optional)</value></data>
+  <data name="Journal_FoodPlaceholder" xml:space="preserve"><value>e.g. chicken kibble</value></data>
   <!-- Timeline renderers -->
   <data name="Journal_GlucoseTimeline" xml:space="preserve"><value>Glucose · {0} mmol/L</value></data>
   <data name="Journal_AteWord" xml:space="preserve"><value>Ate {0}</value></data>
@@ -347,6 +373,12 @@
   <data name="Export_SheetSubtitle" xml:space="preserve"><value>One page for {0}'s vet</value></data>
   <data name="Export_PeriodLabel" xml:space="preserve"><value>Period</value></data>
   <data name="Export_IncludePhoto" xml:space="preserve"><value>Include profile photo</value></data>
+  <data name="Export_WaterLabel" xml:space="preserve"><value>Water intake</value></data>
+  <data name="Export_IncludeWaterMeasured" xml:space="preserve"><value>Include measured values</value></data>
+  <data name="Export_IncludeWaterObservations" xml:space="preserve"><value>Include owner observations</value></data>
+  <data name="Export_AppetiteLabel" xml:space="preserve"><value>Appetite</value></data>
+  <data name="Export_IncludeAppetiteMeasured" xml:space="preserve"><value>Include measured values</value></data>
+  <data name="Export_IncludeAppetiteObservations" xml:space="preserve"><value>Include observations</value></data>
   <data name="Export_Days30" xml:space="preserve"><value>30 days</value></data>
   <data name="Export_Days90" xml:space="preserve"><value>90 days</value></data>
   <data name="Export_Days180" xml:space="preserve"><value>180 days</value></data>
