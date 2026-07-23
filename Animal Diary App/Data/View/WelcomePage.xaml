@@ -2,14 +2,17 @@
 <!--
     WelcomePage.xaml
     ─────────────────────────────────────────────────────────
-    First screen shown when Pets.Count == 0.
-    One exit: "Add my first pet" → navigates to CreatePetPage.
-    OnAddPetClicked in code-behind handles navigation.
+    First screen shown when Pets.Count == 0. Two doors:
+      • "Add my first pet" (primary) → CreatePetPage (OnAddPetClicked).
+      • "Sign in" (secondary) → the shared account sheet (OnSignInClicked):
+        sign in, create an account, or redeem an invite code. When signing in
+        or joining pulls a pet down, RemoteChangesApplied hands off to the app.
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
              xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
              x:DataType="vms:MainViewModel"
              x:Class="Animal_Diary_App.Data.View.WelcomePage"
@@ -108,24 +111,50 @@
                              Padding="24,16,24,34"
                              Spacing="14">
 
-            <!-- Primary CTA -->
-            <Border BackgroundColor="{StaticResource Teal}"
-                    StrokeThickness="0"
-                    StrokeShape="RoundRectangle 15,13,13,16">
-                <Border.Shadow>
-                    <Shadow Brush="#149081" Offset="0,6" Radius="16" Opacity="0.32"/>
-                </Border.Shadow>
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnAddPetClicked"/>
-                </Border.GestureRecognizers>
-                <Label Text="{loc:Translate Welcome_AddFirstPet}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="16"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource White}"
-                       HorizontalTextAlignment="Center"
-                       Padding="0,16"/>
-            </Border>
+            <!-- Two doors, side by side: the account door (1/3) for people who already
+                 have an account or an invite code, and the primary "Add my first pet"
+                 (2/3, unchanged teal) for everyone starting fresh. -->
+            <Grid ColumnDefinitions="1*,2*" ColumnSpacing="12">
+
+                <!-- Secondary: the one account door — sign in, create an account, or
+                     (once signed in) redeem a code to become a caregiver. -->
+                <Border Grid.Column="0"
+                        BackgroundColor="{StaticResource Glass}"
+                        Stroke="{StaticResource GlassLine}"
+                        StrokeThickness="1.5"
+                        StrokeShape="RoundRectangle 15,13,13,16">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSignInClicked"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate Welcome_AccountButton}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="15"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Ink}"
+                           HorizontalTextAlignment="Center"
+                           Padding="0,16"/>
+                </Border>
+
+                <!-- Primary CTA (unchanged colour) -->
+                <Border Grid.Column="1"
+                        BackgroundColor="{StaticResource Teal}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 15,13,13,16">
+                    <Border.Shadow>
+                        <Shadow Brush="#149081" Offset="0,6" Radius="16" Opacity="0.32"/>
+                    </Border.Shadow>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAddPetClicked"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate Welcome_AddFirstPet}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource White}"
+                           HorizontalTextAlignment="Center"
+                           Padding="0,16"/>
+                </Border>
+            </Grid>
 
             <!-- Reassurance -->
             <Label Text="{loc:Translate Welcome_Reassurance}"
@@ -134,6 +163,11 @@
                    TextColor="{StaticResource InkTertiary}"
                    HorizontalTextAlignment="Center"/>
         </VerticalStackLayout>
+
+        <!-- Account sheet (sign in / create account / join with a code) — the shared
+             FelovaBottomSheet; click-through while closed so the buttons stay live. -->
+        <view:CloudSheetView Grid.RowSpan="2"
+                             BindingContext="{Binding CloudVM}"/>
 
     </Grid>
 
