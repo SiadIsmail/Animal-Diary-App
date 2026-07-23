@@ -79,6 +79,15 @@ public partial class ConditionPickerPage : ContentPage
             // Finishing first-launch onboarding: this branch runs only when there is no
             // Shell yet (adding a pet from the Pets tab takes the branch above), so it
             // marks the true end of the onboarding funnel.
+
+            // Did the user actually set up a condition, or continue past it? The row
+            // states are current (SyncAsync ran on appear and after every sheet save).
+            // We record only whether setup happened — never which condition.
+            var configuredCondition = vm.ConditionVM.Conditions.Any(c => c.IsSelected && !c.IsNone);
+            vm.Analytics.Track(configuredCondition
+                ? AnalyticsEvents.ConditionSetupCompleted
+                : AnalyticsEvents.ConditionSetupSkipped);
+
             vm.Analytics.Track(AnalyticsEvents.OnboardingCompleted);
 
             // Hand off to the tabbed app.

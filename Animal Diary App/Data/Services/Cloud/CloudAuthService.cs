@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Animal_Diary_App.Data.Services.Analytics;
 using Microsoft.Maui.Authentication;
 
 /// <summary>
@@ -51,16 +52,23 @@ public interface ICloudAuthService
 public sealed class CloudAuthService : ICloudAuthService
 {
     private readonly CloudHttp _http;
+    private readonly IAnalyticsService _analytics;
     // Serializes session load/refresh so parallel callers can't double-refresh
     // (GoTrue rotates the refresh token — a stale second refresh would sign us out).
     private readonly SemaphoreSlim _gate = new(1, 1);
     private CloudSession? _session;
     private bool _loaded;
 
-    public CloudAuthService(CloudHttp http)
+    public CloudAuthService(CloudHttp http, IAnalyticsService analytics)
     {
         _http = http;
+        _analytics = analytics;
     }
+
+    // The single place session state changes are mirrored to the analytics context so
+    // every event can carry a coarse account_state. Only the boolean is shared — no id,
+    // email, or token ever crosses into analytics.
+    private void SyncAnalyticsState() => AnalyticsContext.IsSignedIn = _session != null;
 
     public bool IsSignedIn => _session != null;
     public string? Email => _session?.Email;
@@ -79,6 +87,7 @@ public sealed class CloudAuthService : ICloudAuthService
             {
                 _session = await CloudSession.LoadAsync();
                 _loaded = true;
+                SyncAnalyticsState();
             }
             if (_session == null)
                 return null;
@@ -122,6 +131,9 @@ public sealed class CloudAuthService : ICloudAuthService
         // With "Confirm email" ON this returns a user but NO session — the flow
         // continues in VerifySignUpAsync with the emailed code.
         await _http.AuthPostAsync("signup", new { email, password });
+        // The account now exists (awaiting verification). Fires only on success, so the
+        // gap to sign_up_verified is the real email-code drop-off. No email is sent.
+        _analytics.Track(AnalyticsEvents.SignUpStarted);
     }
 
     public async Task ResendSignUpCodeAsync(string email)
@@ -133,12 +145,15 @@ public sealed class CloudAuthService : ICloudAuthService
     {
         var doc = await _http.AuthPostAsync("verify", new { type = "signup", email, token = code });
         await StoreSessionAsync(ParseSession(doc!));
+        // Account creation completed — the funnel's bottom. No email/id attached.
+        _analytics.Track(AnalyticsEvents.SignUpVerified);
     }
 
     public async Task SignInAsync(string email, string password)
     {
         var doc = await _http.AuthPostAsync("token?grant_type=password", new { email, password });
         await StoreSessionAsync(ParseSession(doc!));
+        _analytics.Track(AnalyticsEvents.SignIn);
     }
 
     // The deep-link the browser flow returns to. Must be in Supabase's
@@ -195,6 +210,9 @@ public sealed class CloudAuthService : ICloudAuthService
         var doc = await _http.AuthPostAsync("token?grant_type=pkce",
             new { auth_code = code, code_verifier = verifier });
         await StoreSessionAsync(ParseSession(doc!));
+        // Browser/PKCE flows can silently drop (see the TaskCanceledException note above),
+        // so measuring successful completions matters. The event carries no identity.
+        _analytics.Track(AnalyticsEvents.GoogleSignIn);
         CloudDiagnostics.Record($"[Cloud] Google sign-in: SUCCESS ({_session?.Email}); expiry {_session?.ExpiresAtUtc:HH:mm:ss}Z");
     }
 
@@ -240,6 +258,7 @@ public sealed class CloudAuthService : ICloudAuthService
         {
             _session = session;
             _loaded = true;
+            SyncAnalyticsState();
             await session.SaveAsync();
         }
         finally
@@ -252,6 +271,7 @@ public sealed class CloudAuthService : ICloudAuthService
     private void ClearLocked()
     {
         _session = null;
+        SyncAnalyticsState();
         CloudSession.Clear();
         SessionChanged?.Invoke();
     }
