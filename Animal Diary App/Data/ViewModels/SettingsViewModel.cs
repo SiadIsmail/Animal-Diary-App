@@ -53,6 +53,7 @@ public class SettingsViewModel : BaseViewModel
     public ICommand SetLanguageCommand { get; }
     public ICommand OpenLinkCommand { get; }
     public ICommand OpenCloudCommand { get; }
+    public ICommand OpenDevCommand { get; }
 
     private readonly AppResetService _appResetService;
     private readonly SettingsService _settingsService;
@@ -60,6 +61,7 @@ public class SettingsViewModel : BaseViewModel
     private readonly ICloudAuthService _cloudAuth;
     private readonly ICloudSyncService _cloudSync;
     private readonly CloudSheetViewModel _cloudVM;
+    private readonly DevSheetViewModel _devVM;
 
     /// <summary>Whether a cloud account is signed in — pages pick the reset-confirm
     /// message with it (the cloud variant explains the ownership rule).</summary>
@@ -67,7 +69,7 @@ public class SettingsViewModel : BaseViewModel
 
     public SettingsViewModel(AppResetService appResetService, SettingsService settingsService,
         IAnalyticsService analytics, ICloudAuthService cloudAuth, ICloudSyncService cloudSync,
-        CloudSheetViewModel cloudVM)
+        CloudSheetViewModel cloudVM, DevSheetViewModel devVM)
     {
         _appResetService = appResetService;
         _settingsService = settingsService;
@@ -75,11 +77,18 @@ public class SettingsViewModel : BaseViewModel
         _cloudAuth = cloudAuth;
         _cloudSync = cloudSync;
         _cloudVM = cloudVM;
+        _devVM = devVM;
         // The panel renders above the sheet, so opening the sheet closes the panel.
         OpenCloudCommand = new Command(() =>
         {
             IsPanelOpen = false;
             _cloudVM.OpenCommand.Execute(null);
+        });
+        // Hidden developer panel (gated by a code inside the sheet).
+        OpenDevCommand = new Command(() =>
+        {
+            IsPanelOpen = false;
+            _devVM.OpenCommand.Execute(null);
         });
         OpenSettingsCommand = new Command(() =>
         {

@@ -61,6 +61,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<JournalLogViewModel>();
 		builder.Services.AddSingleton<CloudSheetViewModel>();
 		builder.Services.AddSingleton<SharingSheetViewModel>();
+		builder.Services.AddSingleton<DevSheetViewModel>();
 		builder.Services.AddSingleton<PetService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.PetPhotoService>();
 		builder.Services.AddSingleton<PetDeletionService>();

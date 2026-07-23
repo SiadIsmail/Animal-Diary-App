@@ -269,10 +269,12 @@ public sealed class CloudSyncService : ICloudSyncService
             if (changed > 0)
                 RemoteChangesApplied?.Invoke();
 
+            CloudDiagnostics.Record($"[Cloud] sync OK ({changed} rows applied)");
             return SyncOutcome.Success;
         }
         catch (CloudException ex) when (ex.Kind == CloudErrorKind.Network)
         {
+            CloudDiagnostics.Record("[Cloud] sync: offline");
             return SyncOutcome.Offline;
         }
         catch (CloudException ex) when (ex.Kind == CloudErrorKind.AuthExpired)
@@ -281,11 +283,12 @@ public sealed class CloudSyncService : ICloudSyncService
             // clears it and the UI hears SessionChanged.
             if (await _auth.GetSessionAsync(forceRefresh: true) != null)
                 return await RunOnceAsync();
+            CloudDiagnostics.Record("[Cloud] sync: auth expired, session could not be refreshed");
             return SyncOutcome.AuthExpired;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Cloud] sync failed: {ex}");
+            CloudDiagnostics.Record($"[Cloud] sync FAILED: {ex.Message}");
             return SyncOutcome.Failed;
         }
         finally

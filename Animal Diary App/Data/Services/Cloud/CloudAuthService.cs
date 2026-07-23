@@ -19,6 +19,8 @@ public interface ICloudAuthService
     bool IsSignedIn { get; }
     string? Email { get; }
     string? UserId { get; }
+    /// <summary>In-memory session expiry (no refresh/network) — for the dev panel.</summary>
+    DateTime? SessionExpiresUtc { get; }
 
     /// <summary>Raised on sign-in, sign-out, and expiry — Settings re-renders on it.</summary>
     event Action? SessionChanged;
@@ -63,6 +65,9 @@ public sealed class CloudAuthService : ICloudAuthService
     public bool IsSignedIn => _session != null;
     public string? Email => _session?.Email;
     public string? UserId => _session?.UserId;
+    /// <summary>In-memory session expiry for the dev panel — a pure read, never
+    /// triggers a refresh or network call.</summary>
+    public DateTime? SessionExpiresUtc => _session?.ExpiresAtUtc;
     public event Action? SessionChanged;
 
     public async Task<CloudSession?> GetSessionAsync(bool forceRefresh = false)
@@ -87,17 +92,19 @@ public sealed class CloudAuthService : ICloudAuthService
                         new { refresh_token = _session.RefreshToken });
                     _session = ParseSession(doc!);
                     await _session.SaveAsync();
+                    CloudDiagnostics.Record($"[Cloud] session refreshed (forced={forceRefresh}); next expiry {_session.ExpiresAtUtc:HH:mm:ss}Z");
                 }
                 catch (CloudException ex) when (ex.Kind == CloudErrorKind.Network)
                 {
                     // Offline: hand back the stale session — data calls will fail
                     // with Network too and the sync cycle reports "offline" cleanly.
+                    CloudDiagnostics.Record("[Cloud] session refresh deferred (offline); keeping stale session");
                     return _session;
                 }
                 catch (CloudException ex)
                 {
                     // The refresh token itself was rejected — we are signed out.
-                    Debug.WriteLine($"[Cloud] session refresh failed: {ex.Kind}");
+                    CloudDiagnostics.Record($"[Cloud] SIGNED OUT — refresh rejected ({ex.Kind}, {ex.StatusCode})");
                     ClearLocked();
                     return null;
                 }
@@ -150,22 +157,45 @@ public sealed class CloudAuthService : ICloudAuthService
             $"&redirect_to={Uri.EscapeDataString(OAuthCallback)}" +
             $"&code_challenge={CreateCodeChallenge(verifier)}&code_challenge_method=s256";
 
+        CloudDiagnostics.Record("[Cloud] Google sign-in: opening browser");
+
         // WebAuthenticator drives the system browser and resumes on the deep-link;
         // it throws TaskCanceledException if the user dismisses it.
-        var result = await WebAuthenticator.Default.AuthenticateAsync(
-            new Uri(authorizeUrl), new Uri(OAuthCallback));
+        WebAuthenticatorResult result;
+        try
+        {
+            result = await WebAuthenticator.Default.AuthenticateAsync(
+                new Uri(authorizeUrl), new Uri(OAuthCallback));
+        }
+        catch (TaskCanceledException)
+        {
+            // NOTE: WebAuthenticator raises this both on genuine user-dismiss AND
+            // when the redirect fails to resume (e.g. app process recycled while
+            // the browser was foreground) — the two are indistinguishable here.
+            CloudDiagnostics.Record("[Cloud] Google sign-in: browser returned no result (cancelled or dropped)");
+            throw;
+        }
 
         if (result.Properties.TryGetValue("error", out var error))
+        {
+            CloudDiagnostics.Record($"[Cloud] Google sign-in error: {(result.Properties.TryGetValue("error_description", out var d) ? d : error)}");
             throw new CloudException(CloudErrorKind.Other, 0,
-                result.Properties.TryGetValue("error_description", out var d) ? d : error);
+                result.Properties.TryGetValue("error_description", out var d2) ? d2 : error);
+        }
 
         if (!result.Properties.TryGetValue("code", out var code) || string.IsNullOrEmpty(code))
+        {
+            CloudDiagnostics.Record("[Cloud] Google sign-in: callback carried no authorization code");
             throw new CloudException(CloudErrorKind.Other, 0, "Google sign-in returned no authorization code.");
+        }
+
+        CloudDiagnostics.Record("[Cloud] Google sign-in: code received, exchanging");
 
         // Exchange the code for a real session (same token shape as password grant).
         var doc = await _http.AuthPostAsync("token?grant_type=pkce",
             new { auth_code = code, code_verifier = verifier });
         await StoreSessionAsync(ParseSession(doc!));
+        CloudDiagnostics.Record($"[Cloud] Google sign-in: SUCCESS ({_session?.Email}); expiry {_session?.ExpiresAtUtc:HH:mm:ss}Z");
     }
 
     private static string CreateCodeVerifier() => Base64Url(RandomNumberGenerator.GetBytes(64));

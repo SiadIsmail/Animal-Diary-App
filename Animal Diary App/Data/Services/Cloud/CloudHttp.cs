@@ -85,13 +85,28 @@ public sealed class CloudHttp
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
         {
             // Offline is a normal state for this app, not an error condition.
+            CloudDiagnostics.Record($"[Cloud] {method} {Endpoint(url)} → network error: {ex.Message}");
             throw new CloudException(CloudErrorKind.Network, 0, ex.Message);
         }
 
         if (!response.IsSuccessStatusCode)
+        {
+            // Single choke point for every server error — trimmed body, no tokens.
+            var trimmed = text.Length > 300 ? text[..300] : text;
+            CloudDiagnostics.Record($"[Cloud] {method} {Endpoint(url)} → {(int)response.StatusCode}: {trimmed}");
             throw Classify((int)response.StatusCode, text);
+        }
 
         return string.IsNullOrWhiteSpace(text) ? null : JsonDocument.Parse(text);
+    }
+
+    /// <summary>The path portion of a Supabase URL, for readable logs (the host is
+    /// constant; access tokens live in a header, never the URL).</summary>
+    private static string Endpoint(string url)
+    {
+        var i = url.IndexOf("/auth/", StringComparison.Ordinal);
+        if (i < 0) i = url.IndexOf("/rest/", StringComparison.Ordinal);
+        return i < 0 ? url : url[i..];
     }
 
     /// <summary>Map a Supabase error body onto the coarse kinds the UI knows. The

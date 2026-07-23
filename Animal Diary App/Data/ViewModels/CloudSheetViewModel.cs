@@ -313,6 +313,8 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         catch (OperationCanceledException)
         {
             // The user backed out of the Google browser flow — not an error.
+            // (Also fires if the redirect failed to resume; the dev panel's
+            // "cancelled or dropped" line disambiguates during debugging.)
             return false;
         }
         catch (CloudException ex)
