@@ -87,7 +87,8 @@
   <!-- ── Welcome ── -->
   <data name="Welcome_Tagline" xml:space="preserve"><value>Ein Gesundheitstagebuch für die Tiere, die du liebst</value></data>
   <data name="Welcome_AddFirstPet" xml:space="preserve"><value>Mein erstes Tier hinzufügen</value></data>
-  <data name="Welcome_Reassurance" xml:space="preserve"><value>Dauert etwa eine Minute. Du kannst es später ändern.</value></data>
+  <data name="Welcome_AccountButton" xml:space="preserve"><value>Anmelden</value></data>
+  <data name="Welcome_Reassurance" xml:space="preserve"><value>Dauert etwa eine Minute. Schon ein Konto oder einen Einladungscode? Melde dich an.</value></data>
 
   <!-- ── Settings ── -->
   <data name="Settings_Title" xml:space="preserve"><value>Einstellungen</value></data>
