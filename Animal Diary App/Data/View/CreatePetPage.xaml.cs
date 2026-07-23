@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.View;
 
 using System.Diagnostics;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Helpers;
 using Microsoft.Maui.Media;
@@ -39,6 +40,10 @@ public partial class CreatePetPage : ContentPage
             vm.PetVM.ConfigureForEdit();
             return;
         }
+
+        // The add/first-launch pet form was opened. Sits between onboarding_started and
+        // pet_created so form abandonment (opened the form, never saved) is visible.
+        vm.Analytics.Track(AnalyticsEvents.PetFormStarted);
 
         vm.PetVM.ResetDraft();
         await vm.PetVM.CheckAndSetFirstLaunchAsync();

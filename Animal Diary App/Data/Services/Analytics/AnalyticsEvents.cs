@@ -28,8 +28,42 @@ public static class AnalyticsEvents
     // ── Onboarding ────────────────────────────────────────────────────────────
     /// <summary>First-launch onboarding began (Welcome screen shown).</summary>
     public const string OnboardingStarted = "onboarding_started";
+    /// <summary>The pet-creation form was opened (add/first-launch path, not edit).
+    /// Sits between <see cref="OnboardingStarted"/> and <see cref="PetCreated"/> so
+    /// form abandonment is visible.</summary>
+    public const string PetFormStarted = "pet_form_started";
+    /// <summary>On the onboarding condition picker's Continue, the pet had at least one
+    /// condition configured.</summary>
+    public const string ConditionSetupCompleted = "condition_setup_completed";
+    /// <summary>On the onboarding condition picker's Continue, the pet had no condition
+    /// (the user chose "None / Not sure" or skipped past). Never says <i>which</i>
+    /// condition — only that setup was or wasn't done.</summary>
+    public const string ConditionSetupSkipped = "condition_setup_skipped";
     /// <summary>First-launch onboarding finished (handed off into the tabbed app).</summary>
     public const string OnboardingCompleted = "onboarding_completed";
+
+    // ── Account lifecycle ─────────────────────────────────────────────────────
+    // These measure WHERE account creation drops off — they never identify the user.
+    // No email, no user id, no code is ever attached (see the account_state note below).
+    /// <summary>Sign-up was submitted and the account was created server-side (awaiting
+    /// the emailed verification code).</summary>
+    public const string SignUpStarted = "sign_up_started";
+    /// <summary>The emailed sign-up code was verified — account creation completed. The
+    /// gap from <see cref="SignUpStarted"/> is the email-verification drop-off.</summary>
+    public const string SignUpVerified = "sign_up_verified";
+    /// <summary>An email + password sign-in succeeded.</summary>
+    public const string SignIn = "sign_in";
+    /// <summary>A Google (browser/PKCE) sign-in succeeded. Measures completion of the
+    /// browser flow, which can silently drop.</summary>
+    public const string GoogleSignIn = "google_sign_in";
+
+    // ── Sharing ───────────────────────────────────────────────────────────────
+    /// <summary>An owner minted a caregiver invite code. The fact only — never the
+    /// code, the pet, or any id.</summary>
+    public const string PetShareInvited = "pet_share_invited";
+    /// <summary>A caregiver redeemed an invite code and joined a shared pet. The fact
+    /// only — never the code, the pet, or any id.</summary>
+    public const string PetShareJoined = "pet_share_joined";
 
     // ── Pet management ────────────────────────────────────────────────────────
     /// <summary>A new pet was saved. Property: <see cref="PropSpecies"/>.</summary>
@@ -49,6 +83,13 @@ public static class AnalyticsEvents
     public const string CalendarOpened = "calendar_opened";
     /// <summary>The settings panel was opened.</summary>
     public const string SettingsOpened = "settings_opened";
+    /// <summary>The Manage-pet page was opened. Feature-discovery signal: distinguishes
+    /// "care management not wanted" from "not discovered".</summary>
+    public const string ManagePetOpened = "manage_pet_opened";
+    /// <summary>The vet-report export sheet was opened. Paired with
+    /// <see cref="ReportExported"/> it gives an open→export conversion rate (was the
+    /// report abandoned at the options screen?).</summary>
+    public const string ExportSheetOpened = "export_sheet_opened";
     /// <summary>A vet-report PDF was successfully generated. Property:
     /// <see cref="PropRangeDays"/>.</summary>
     public const string ReportExported = "report_exported";
@@ -67,6 +108,14 @@ public static class AnalyticsEvents
     public const string PropLanguage = "language";
     /// <summary>OS platform bucket, "Android" / "iOS" / "WinUI" / "macOS".</summary>
     public const string PropPlatform = "platform";
+    /// <summary>Coarse account state — <see cref="AccountStateAnonymous"/> /
+    /// <see cref="AccountStateSignedIn"/> — attached to EVERY event by the central
+    /// payload builder. It reports only <i>whether</i> an anonymous install is signed
+    /// in to cloud, so signed-in vs anonymous behaviour, cloud adoption, and retention
+    /// can be segmented. It is NOT an identity: no user id, email, or account link is
+    /// ever derived from it, and the analytics <c>distinct_id</c> stays a random,
+    /// rotatable GUID unrelated to the Supabase user.</summary>
+    public const string PropAccountState = "account_state";
     /// <summary>Coarse species bucket (dog/cat/bird/rabbit/fish/other) — NEVER the
     /// free-text custom type a user might enter, which could be identifying.</summary>
     public const string PropSpecies = "species";
@@ -88,4 +137,9 @@ public static class AnalyticsEvents
     public const string EntryTypeSeizure = "seizure";
     public const string EntryTypeWater = "water";
     public const string SpeciesOther = "other";
+
+    /// <summary>Not signed in to cloud — the default state of every install.</summary>
+    public const string AccountStateAnonymous = "anonymous";
+    /// <summary>Signed in to a cloud account. Says nothing about <i>who</i>.</summary>
+    public const string AccountStateSignedIn = "signed_in";
 }

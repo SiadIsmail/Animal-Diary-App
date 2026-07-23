@@ -87,6 +87,10 @@ public sealed class PostHogAnalyticsService : IAnalyticsService
         // Non-identifying context we deliberately choose to attach.
         props[AnalyticsEvents.PropAppVersion] = SafeAppVersion();
         props[AnalyticsEvents.PropPlatform] = SafePlatform();
+        // Coarse signed-in/anonymous state on every event (see AnalyticsContext). This is
+        // NOT an identity — it links to no account, only reports whether cloud is on, so
+        // signed-in behaviour can be segmented without ever calling identify().
+        props[AnalyticsEvents.PropAccountState] = AnalyticsContext.AccountState;
         // Only set language if the caller didn't already (app_opened sends it explicitly).
         if (!props.ContainsKey(AnalyticsEvents.PropLanguage))
             props[AnalyticsEvents.PropLanguage] = LocalizationManager.Instance.CurrentLanguage;

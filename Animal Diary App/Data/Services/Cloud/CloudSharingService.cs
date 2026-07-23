@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.Services.Cloud;
 
 using System.Text.Json;
+using Animal_Diary_App.Data.Services.Analytics;
 
 /// <summary>One member of a shared pet, as the sharing sheet shows it. Email is
 /// the only identity the product has; <see cref="IsMe"/> marks the caller's own
@@ -35,17 +36,21 @@ public sealed class CloudSharingService : ICloudSharingService
 {
     private readonly CloudHttp _http;
     private readonly ICloudAuthService _auth;
+    private readonly IAnalyticsService _analytics;
 
-    public CloudSharingService(CloudHttp http, ICloudAuthService auth)
+    public CloudSharingService(CloudHttp http, ICloudAuthService auth, IAnalyticsService analytics)
     {
         _http = http;
         _auth = auth;
+        _analytics = analytics;
     }
 
     public async Task<string> CreateInviteAsync(string petSyncId)
     {
         var session = await RequireSessionAsync();
         var doc = await _http.RpcAsync("create_pet_invite", new { p_pet = petSyncId }, session.AccessToken);
+        // Sharing adoption. The fact only — never the code, the pet, or any id.
+        _analytics.Track(AnalyticsEvents.PetShareInvited);
         return doc!.RootElement.GetString() ?? string.Empty;
     }
 
@@ -53,6 +58,8 @@ public sealed class CloudSharingService : ICloudSharingService
     {
         var session = await RequireSessionAsync();
         var doc = await _http.RpcAsync("redeem_invite", new { p_code = code.Trim().ToUpperInvariant() }, session.AccessToken);
+        // A caregiver joined a shared pet — the virality/retention signal. Code never sent.
+        _analytics.Track(AnalyticsEvents.PetShareJoined);
         return doc!.RootElement.GetString() ?? string.Empty;
     }
 

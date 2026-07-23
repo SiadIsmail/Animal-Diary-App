@@ -168,6 +168,10 @@ public class ExportSheetViewModel : BaseViewModel
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
         IsPresented = true;
+
+        // Feature-discovery signal: paired with report_exported this yields an
+        // open→export conversion rate (did they abandon at the options screen?).
+        _analytics.Track(AnalyticsEvents.ExportSheetOpened);
     }
 
     private void SelectPeriod(string days)

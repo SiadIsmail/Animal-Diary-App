@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Helpers;
 
@@ -12,6 +13,11 @@ using Animal_Diary_App.Helpers;
 public partial class ManagePetPage : ContentPage
 {
     private readonly MainViewModel vm;
+
+    // Feature-discovery counts "opened Manage" once per navigation into the page — the
+    // guard stops OnAppearing re-firing it when returning from the edit-pet or
+    // medications sub-pages (a new page instance is created per entry from the Care tab).
+    private bool _openTracked;
 
     public ManagePetPage(MainViewModel mainViewModel)
     {
@@ -27,6 +33,12 @@ public partial class ManagePetPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        if (!_openTracked)
+        {
+            _openTracked = true;
+            vm.Analytics.Track(AnalyticsEvents.ManagePetOpened);
+        }
 
         vm.ManageVM.RequestConditionSetup += OnRequestConditionSetup;
         vm.ManageVM.RequestEditPet += OnRequestEditPet;
