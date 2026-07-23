@@ -148,6 +148,21 @@
                             <Label Text="{Binding Sub}" IsVisible="{Binding HasSub}"
                                    FontFamily="{StaticResource FontSans}" FontSize="12.5"
                                    TextColor="{StaticResource InkSecondary}"/>
+                            <!-- Mark a dose as skipped (dose cards only, while still actionable) -->
+                            <Border IsVisible="{Binding CanSkipDose}"
+                                    BackgroundColor="{StaticResource GlassSoft}"
+                                    Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 10" Padding="11,5"
+                                    HorizontalOptions="Start" Margin="0,7,0,1">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={x:Reference CalendarPageRoot}, Path=BindingContext.JournalVM.SkipDoseCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:Translate Journal_MarkSkipped}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="11.5" FontAttributes="Bold"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </Border>
                         </VerticalStackLayout>
                     </Border>
                 </Grid>
@@ -548,6 +563,7 @@
         <views:WeightSheetView Grid.RowSpan="2" BindingContext="{Binding WeightSheetVM}"/>
         <views:AppetiteSheetView Grid.RowSpan="2" BindingContext="{Binding AppetiteSheetVM}"/>
         <views:SeizureSheetView Grid.RowSpan="2" BindingContext="{Binding SeizureSheetVM}"/>
+        <views:WaterSheetView Grid.RowSpan="2" BindingContext="{Binding WaterSheetVM}"/>
         <views:AddAnythingSheetView Grid.RowSpan="2" BindingContext="{Binding JournalVM}"/>
 
     </Grid>

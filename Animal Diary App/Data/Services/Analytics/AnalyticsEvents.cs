@@ -86,5 +86,6 @@ public static class AnalyticsEvents
     public const string EntryTypeGlucose = "glucose";
     public const string EntryTypeAppetite = "appetite";
     public const string EntryTypeSeizure = "seizure";
+    public const string EntryTypeWater = "water";
     public const string SpeciesOther = "other";
 }

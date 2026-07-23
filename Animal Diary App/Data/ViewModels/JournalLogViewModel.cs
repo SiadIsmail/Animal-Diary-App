@@ -19,7 +19,7 @@ using Animal_Diary_App.Helpers;
 //  knows trackers and med doses.
 // ─────────────────────────────────────────────────────────────────────────────
 
-public enum JournalChipKind { Medication, Glucose, Mood, Appetite, Weight, Seizure, Add }
+public enum JournalChipKind { Medication, Glucose, Mood, Appetite, Weight, Seizure, Water, Add }
 
 /// <summary>One "Still to do" chip.</summary>
 public class JournalChip
@@ -50,7 +50,7 @@ public class JournalChip
 /// <summary>Which kind of entry a <see cref="TimelineItem"/> represents. Drives only
 /// the template pick (Mood gets the washi-note card, everything else the standard
 /// card) — never the ordering, which is purely by time.</summary>
-public enum TimelineKind { Mood, Weight, Glucose, Appetite, Seizure, Dose }
+public enum TimelineKind { Mood, Weight, Glucose, Appetite, AppetiteAmount, Seizure, WaterAmount, WaterLevel, Dose }
 
 /// <summary>One entry on the Journal's single chronological timeline, whatever its
 /// kind. Everything logged for the day — mood, weight, glucose, appetite, seizures
@@ -67,8 +67,9 @@ public class TimelineItem
     /// on their shared PetEntry) and for doses (not a deletable log).</summary>
     public int EntryId { get; init; }
 
-    /// <summary>Whether this entry offers a delete (✕) affordance. True for every
-    /// logged reading; false for scheduled doses, which aren't user-created logs.</summary>
+    /// <summary>Whether this entry offers a ✕ affordance. True for every logged
+    /// reading; for a dose it means "an outcome is recorded" — the ✕ then clears that
+    /// outcome (a still-open dose has nothing to clear and shows none).</summary>
     public bool CanDelete { get; init; }
 
     /// <summary>Time of day the entry was recorded, or null for a legacy mood/weight
@@ -92,6 +93,28 @@ public class TimelineItem
 
     /// <summary>Mood only: the warm-paper washi note line.</summary>
     public string Note { get; init; } = string.Empty;
+
+    // ── Dose-only action state (Kind == Dose) ──────────────────────────────────────
+    // A dose card can clear its outcome (the shared ✕) or be marked skipped (its own
+    // button). Both need the dose's identity (medication + time) and its current
+    // outcome; non-dose kinds leave these at their defaults.
+    /// <summary>Medication this dose belongs to — for the ✕ (clear) and skip actions.</summary>
+    public int MedicationId { get; init; }
+
+    /// <summary>The dose's scheduled time-of-day (its key, not its resolved time).</summary>
+    public TimeSpan DoseTime { get; init; }
+
+    /// <summary>The dose's recorded outcome, or null when it hasn't been acted on.</summary>
+    public DoseStatus? DoseOutcome { get; init; }
+
+    /// <summary>A past or already-due dose (never a future occurrence) — the only ones
+    /// that can be skipped or cleared.</summary>
+    public bool DoseActionable { get; init; }
+
+    public bool IsDose => Kind == TimelineKind.Dose;
+
+    /// <summary>Show the "Mark as skipped" button: an actionable dose not already skipped.</summary>
+    public bool CanSkipDose => IsDose && DoseActionable && DoseOutcome != DoseStatus.Skipped;
 }
 
 /// <summary>A log type offered in the "+" (add-anything) sheet.</summary>
@@ -114,6 +137,7 @@ public class JournalLogViewModel : BaseViewModel
     private readonly GlucoseEntryService _glucose;
     private readonly AppetiteEntryService _appetite;
     private readonly SeizureEntryService _seizures;
+    private readonly WaterEntryService _water;
 
     private DateTime _date = DateTime.Now.Date;
 
@@ -127,7 +151,8 @@ public class JournalLogViewModel : BaseViewModel
         PetEntryService petEntries,
         GlucoseEntryService glucose,
         AppetiteEntryService appetite,
-        SeizureEntryService seizures)
+        SeizureEntryService seizures,
+        WaterEntryService water)
     {
         _pending = pending;
         _carePlan = carePlan;
@@ -139,11 +164,13 @@ public class JournalLogViewModel : BaseViewModel
         _glucose = glucose;
         _appetite = appetite;
         _seizures = seizures;
+        _water = water;
 
         OpenAddSheetCommand = new Command(async () => await OpenAddSheetAsync());
         CloseAddSheetCommand = new Command(() => IsAddSheetVisible = false);
         SelectAddOptionCommand = new Command<AddOption>(OnSelectAddOption);
         DeleteItemCommand = new Command<TimelineItem>(async i => await DeleteItemAsync(i));
+        SkipDoseCommand = new Command<TimelineItem>(async i => await SkipDoseAsync(i));
     }
 
     // Short-hand for the localized string manager (usable from the static chip builders).
@@ -159,8 +186,12 @@ public class JournalLogViewModel : BaseViewModel
     public event Action<JournalSaveResult>? ItemDeleted;
 
     /// <summary>Delete one logged timeline entry (the ✕ on a card). Dispatches to the
-    /// right store by kind; scheduled doses aren't deletable and are ignored.</summary>
+    /// right store by kind; a dose's ✕ clears its recorded outcome instead.</summary>
     public ICommand DeleteItemCommand { get; }
+
+    /// <summary>Mark a dose as skipped (the "Mark as skipped" button on a dose card).
+    /// A skip is a first-class non-adherence fact that reaches the vet report.</summary>
+    public ICommand SkipDoseCommand { get; }
 
     // ── Chip row ────────────────────────────────────────────────────────────────
     public ObservableCollection<JournalChip> Chips { get; } = new();
@@ -303,11 +334,6 @@ public class JournalLogViewModel : BaseViewModel
         int i = 0;
         foreach (var item in pending)
         {
-            // Water has no logging sheet yet (TODO: a later task adds it). Skip it so
-            // it never surfaces as a dead-end chip; every other pending item has a sheet.
-            if (item.Kind == PendingKind.Tracker && item.TrackerId == TrackerId.Water)
-                continue;
-
             var tilt = (i++ % 2 == 0) ? -0.4 : 0.4;
             Chips.Add(item.Kind == PendingKind.Medication
                 ? MedChip(item, tilt)
@@ -347,7 +373,7 @@ public class JournalLogViewModel : BaseViewModel
         TrackerId.Appetite => Simple(JournalChipKind.Appetite, "🍽️", Loc.GetString("Journal_Appetite"), tilt, Loc.GetString("Journal_A11yLogAppetite")),
         TrackerId.Weight => Simple(JournalChipKind.Weight, "⚖️", Loc.GetString("Journal_WeighIn"), tilt, Loc.GetString("Journal_A11yLogWeight")),
         TrackerId.Mood => Simple(JournalChipKind.Mood, "🙂", Loc.GetString("Journal_MoodTitle"), tilt, Loc.GetString("Journal_A11yLogMood")),
-        TrackerId.Water => Simple(JournalChipKind.Weight, "💧", Loc.GetString("Journal_Water"), tilt, Loc.GetString("Journal_A11yLogWater")), // no sheet yet; filtered in BuildChips
+        TrackerId.Water => Simple(JournalChipKind.Water, "💧", Loc.GetString("Journal_Water"), tilt, Loc.GetString("Journal_A11yLogWater")),
         _ => Simple(JournalChipKind.Mood, "🙂", Loc.GetString("Journal_MoodTitle"), tilt, Loc.GetString("Journal_A11yLogMood"))
     };
 
@@ -429,7 +455,9 @@ public class JournalLogViewModel : BaseViewModel
             });
         }
 
-        // Appetite (honey).
+        // Appetite (honey) — two kinds that can both appear: the day's qualitative
+        // reading (Didn't eat … everything) and any exact grams events. Both may carry
+        // a food label. Never judged.
         foreach (var a in await _appetite.GetForDateAsync(pet.Id, _date))
         {
             var word = ((AppetiteLevel)a.Level).GetDisplayName().ToLowerInvariant();
@@ -442,7 +470,55 @@ public class JournalLogViewModel : BaseViewModel
                 Icon = "🍽️",
                 Tint = Tint("HoneyWarmTint"),
                 Title = Loc.GetString("Journal_Appetite"),
-                Sub = Loc.Format("Journal_AteWord", word)
+                Sub = WithFood(Loc.Format("Journal_AteWord", word), a.Food)
+            });
+        }
+        foreach (var a in await _appetite.GetAmountsForDateAsync(pet.Id, _date))
+        {
+            items.Add(new TimelineItem
+            {
+                Kind = TimelineKind.AppetiteAmount,
+                CanDelete = true,
+                EntryId = a.Id,
+                Time = a.Time,
+                Icon = "🍽️",
+                Tint = Tint("HoneyWarmTint"),
+                Title = Loc.GetString("Journal_Appetite"),
+                Sub = WithFood(Loc.Format("Journal_AppetiteGrams", a.Grams.ToString("0.#", CultureInfo.CurrentCulture)), a.Food)
+            });
+        }
+
+        // Water (blue) — two independent kinds that can both appear on a day:
+        //   • exact ml readings, one card each (additive events), and
+        //   • the day's single relative reading (Barely … a lot).
+        // Never judged; the value is a plain fact.
+        foreach (var w in await _water.GetAmountsForDateAsync(pet.Id, _date))
+        {
+            items.Add(new TimelineItem
+            {
+                Kind = TimelineKind.WaterAmount,
+                CanDelete = true,
+                EntryId = w.Id,
+                Time = w.Time,
+                Icon = "💧",
+                Tint = Tint("BlueTint"),
+                Title = Loc.GetString("Journal_Water"),
+                Sub = Loc.Format("Journal_WaterMl", w.AmountMl.ToString("0.#", CultureInfo.CurrentCulture))
+            });
+        }
+        foreach (var w in await _water.GetLevelsForDateAsync(pet.Id, _date))
+        {
+            var word = ((WaterLevel)w.Level).GetDisplayName().ToLowerInvariant();
+            items.Add(new TimelineItem
+            {
+                Kind = TimelineKind.WaterLevel,
+                CanDelete = true,
+                EntryId = w.Id,
+                Time = w.Time,
+                Icon = "💧",
+                Tint = Tint("BlueTint"),
+                Title = Loc.GetString("Journal_Water"),
+                Sub = Loc.Format("Journal_DrankWord", word)
             });
         }
 
@@ -489,6 +565,7 @@ public class JournalLogViewModel : BaseViewModel
 
         var petId = pet.Id;
         Func<Task>? undo = null;
+        var message = Loc.GetString("Journal_ToastDeleted");
 
         switch (item.Kind)
         {
@@ -510,7 +587,18 @@ public class JournalLogViewModel : BaseViewModel
                 await _appetite.DeleteAsync(row.Id);
                 undo = () => _appetite.InsertAsync(new AppetiteEntry
                 {
-                    PetId = row.PetId, Date = row.Date, Time = row.Time, Level = row.Level
+                    PetId = row.PetId, Date = row.Date, Time = row.Time, Level = row.Level, Food = row.Food
+                });
+                break;
+            }
+            case TimelineKind.AppetiteAmount:
+            {
+                var row = (await _appetite.GetAmountsForDateAsync(petId, _date)).FirstOrDefault(r => r.Id == item.EntryId);
+                if (row == null) return;
+                await _appetite.DeleteAmountAsync(row.Id);
+                undo = () => _appetite.InsertAmountAsync(new AppetiteAmountEntry
+                {
+                    PetId = row.PetId, Date = row.Date, Time = row.Time, Grams = row.Grams, Food = row.Food
                 });
                 break;
             }
@@ -523,6 +611,28 @@ public class JournalLogViewModel : BaseViewModel
                 {
                     PetId = row.PetId, Date = row.Date, Time = row.Time,
                     DurationMinutes = row.DurationMinutes, Note = row.Note
+                });
+                break;
+            }
+            case TimelineKind.WaterAmount:
+            {
+                var row = (await _water.GetAmountsForDateAsync(petId, _date)).FirstOrDefault(r => r.Id == item.EntryId);
+                if (row == null) return;
+                await _water.DeleteAmountAsync(row.Id);
+                undo = () => _water.InsertAmountAsync(new WaterAmountEntry
+                {
+                    PetId = row.PetId, Date = row.Date, Time = row.Time, AmountMl = row.AmountMl
+                });
+                break;
+            }
+            case TimelineKind.WaterLevel:
+            {
+                var row = (await _water.GetLevelsForDateAsync(petId, _date)).FirstOrDefault(r => r.Id == item.EntryId);
+                if (row == null) return;
+                await _water.DeleteLevelAsync(row.Id);
+                undo = () => _water.InsertLevelAsync(new WaterLevelEntry
+                {
+                    PetId = row.PetId, Date = row.Date, Time = row.Time, Level = row.Level
                 });
                 break;
             }
@@ -558,15 +668,75 @@ public class JournalLogViewModel : BaseViewModel
                 };
                 break;
             }
+            case TimelineKind.Dose:
+            {
+                // The ✕ on a dose clears its recorded outcome (back to "still open") —
+                // it doesn't delete a row so much as undo the log. Clearing must re-arm
+                // the reminder that logging cancelled (SyncMedicationAsync is idempotent);
+                // undo re-applies the same outcome and re-cancels the occurrence.
+                if (item.DoseOutcome is not DoseStatus prev)
+                    return; // nothing recorded to clear
+                var medId = item.MedicationId; var time = item.DoseTime; var date = _date;
+                await _doseLogs.ClearStatusAsync(medId, date, time);
+                await _reminders.SyncMedicationAsync(medId);
+                undo = async () =>
+                {
+                    await _doseLogs.SetStatusAsync(medId, petId, date, time, prev);
+                    await _reminders.MarkDoseHandledAsync(medId, date, time);
+                };
+                message = Loc.GetString("Journal_ToastDoseCleared");
+                break;
+            }
             default:
-                return; // doses aren't a deletable log
+                return; // any other non-deletable kind
         }
 
         if (undo == null)
             return;
 
+        ItemDeleted?.Invoke(new JournalSaveResult(message, undo));
+    }
+
+    // ── Mark a dose as skipped (the "Mark as skipped" button on a dose card) ──────
+    // A skip is a first-class outcome, not a delete: it records deliberate
+    // non-adherence (which the vet report counts) and stops the reminder nagging.
+    // Undo restores whatever the dose was before — usually "still open", occasionally
+    // an earlier "given". Reuses the same refresh + undo-toast path as a delete.
+    private async Task SkipDoseAsync(TimelineItem? item)
+    {
+        var pet = _activePet.ActivePet;
+        if (item == null || !item.IsDose || !item.DoseActionable || pet == null || pet.Id == 0)
+            return;
+        if (item.DoseOutcome == DoseStatus.Skipped)
+            return; // already skipped — nothing to do
+
+        var petId = pet.Id;
+        var medId = item.MedicationId;
+        var time = item.DoseTime;
+        var date = _date;
+        var prev = item.DoseOutcome;
+
+        await _doseLogs.SetStatusAsync(medId, petId, date, time, DoseStatus.Skipped);
+        // A skipped dose is handled — don't let its reminder fire late or re-send.
+        await _reminders.MarkDoseHandledAsync(medId, date, time);
+
+        Func<Task> undo = async () =>
+        {
+            if (prev is DoseStatus previous)
+            {
+                await _doseLogs.SetStatusAsync(medId, petId, date, time, previous);
+                await _reminders.MarkDoseHandledAsync(medId, date, time);
+            }
+            else
+            {
+                // Was still open → clear back to pending and re-arm its reminder.
+                await _doseLogs.ClearStatusAsync(medId, date, time);
+                await _reminders.SyncMedicationAsync(medId);
+            }
+        };
+
         ItemDeleted?.Invoke(new JournalSaveResult(
-            Loc.GetString("Journal_ToastDeleted"), undo));
+            Loc.Format("Journal_ToastMedSkipped", item.Title), undo));
     }
 
     // Today's scheduled doses as timeline entries, from the shared DayDoseService
@@ -581,6 +751,7 @@ public class JournalLogViewModel : BaseViewModel
         foreach (var d in await _dayDoses.GetForDayAsync(petId, date))
         {
             var canToggle = date < now.Date || (date == now.Date && d.ScheduledTime <= now.TimeOfDay);
+            var outcome = d.Log?.Status;
             result.Add(new TimelineItem
             {
                 Kind = TimelineKind.Dose,
@@ -588,7 +759,14 @@ public class JournalLogViewModel : BaseViewModel
                 Icon = "💊",
                 Tint = honey,
                 Title = d.Medication.Name,
-                Sub = $"{d.Medication.Dosage} {d.Medication.Unit} · {DoseStatusText(d.Log, canToggle)}"
+                Sub = $"{d.Medication.Dosage} {d.Medication.Unit} · {DoseStatusText(d.Log, canToggle)}",
+                MedicationId = d.Medication.Id,
+                DoseTime = d.ScheduledTime,
+                DoseOutcome = outcome,
+                DoseActionable = canToggle,
+                // The ✕ clears a recorded outcome, so only offer it once one exists
+                // (a dose still "open" has nothing to undo — it's a chip, not a delete).
+                CanDelete = canToggle && outcome is DoseStatus.Taken or DoseStatus.Skipped
             });
         }
 
@@ -602,6 +780,13 @@ public class JournalLogViewModel : BaseViewModel
         DoseStatus.Missed => Loc.GetString("Dose_Missed"),
         _ => Loc.GetString(canToggle ? "Dose_NotTaken" : "Dose_Upcoming")
     };
+
+    // Append an optional food label to an appetite line: "Ate everything · chicken".
+    private static string WithFood(string basis, string? food)
+    {
+        food = food?.Trim() ?? string.Empty;
+        return food.Length > 0 ? $"{basis} · {food}" : basis;
+    }
 
     // Duration and note are both optional; join whichever are present.
     private static string SeizureSub(SeizureEntry s)
@@ -679,6 +864,7 @@ public class JournalLogViewModel : BaseViewModel
         if (Has(TrackerId.Glucose)) options.Add(new AddOption { Kind = JournalChipKind.Glucose, Icon = "🩸", Label = Loc.GetString("Journal_GlucoseCheck") });
         options.Add(new AddOption { Kind = JournalChipKind.Mood, Icon = "🙂", Label = Loc.GetString("Journal_MoodTitle") });
         if (Has(TrackerId.Appetite)) options.Add(new AddOption { Kind = JournalChipKind.Appetite, Icon = "🍽️", Label = Loc.GetString("Journal_Appetite") });
+        if (Has(TrackerId.Water)) options.Add(new AddOption { Kind = JournalChipKind.Water, Icon = "💧", Label = Loc.GetString("Journal_Water") });
         options.Add(new AddOption { Kind = JournalChipKind.Weight, Icon = "⚖️", Label = Loc.GetString("Journal_WeighIn") });
         if (Has(TrackerId.Seizure)) options.Add(new AddOption { Kind = JournalChipKind.Seizure, Icon = "⚡", Label = Loc.GetString("Journal_Seizure") });
         AddOptions = options;

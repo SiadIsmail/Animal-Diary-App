@@ -52,6 +52,7 @@ public partial class CalendarPage : ContentPage
 		vm.WeightSheetVM.Saved += OnSheetSaved;
 		vm.AppetiteSheetVM.Saved += OnSheetSaved;
 		vm.SeizureSheetVM.Saved += OnSheetSaved;
+		vm.WaterSheetVM.Saved += OnSheetSaved;
 
 		// Another caregiver's changes landing while the Journal is visible reload
 		// it in place — same stale-context path an appearance uses.
@@ -112,6 +113,7 @@ public partial class CalendarPage : ContentPage
 		vm.WeightSheetVM.Saved -= OnSheetSaved;
 		vm.AppetiteSheetVM.Saved -= OnSheetSaved;
 		vm.SeizureSheetVM.Saved -= OnSheetSaved;
+		vm.WaterSheetVM.Saved -= OnSheetSaved;
 	}
 
 	/// <summary>Jump-to-today: snap the selection back to the current date.</summary>
@@ -171,6 +173,7 @@ public partial class CalendarPage : ContentPage
 			JournalChipKind.Glucose => AnalyticsEvents.EntryTypeGlucose,
 			JournalChipKind.Appetite => AnalyticsEvents.EntryTypeAppetite,
 			JournalChipKind.Seizure => AnalyticsEvents.EntryTypeSeizure,
+			JournalChipKind.Water => AnalyticsEvents.EntryTypeWater,
 			_ => null,
 		};
 		if (entryType is null)
@@ -207,6 +210,7 @@ public partial class CalendarPage : ContentPage
 			case JournalChipKind.Weight: await vm.WeightSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Appetite: await vm.AppetiteSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Seizure: await vm.SeizureSheetVM.OpenAsync(petId, name, date); break;
+			case JournalChipKind.Water: await vm.WaterSheetVM.OpenAsync(petId, name, date); break;
 		}
 	}
 

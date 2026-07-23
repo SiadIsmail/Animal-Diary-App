@@ -468,6 +468,7 @@ internal static class SyncTableMaps
                     ["entry_date"] = CloudJson.ToDateOnly(a.Date),
                     ["time_ticks"] = a.Time.Ticks,
                     ["level"] = a.Level,
+                    ["food"] = a.Food,
                     ["client_updated_at"] = CloudJson.ToIso(a.UpdatedAtUtc),
                     ["deleted_at"] = a.IsDeleted ? CloudJson.ToIso(a.UpdatedAtUtc) : null,
                 };
@@ -483,6 +484,126 @@ internal static class SyncTableMaps
                     Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
                     Time = CloudJson.GetTicksTime(el, "time_ticks"),
                     Level = CloudJson.GetInt(el, "level"),
+                    Food = CloudJson.GetString(el, "food"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.Level = inc.Level; local.Food = inc.Food;
+            },
+            naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<AppetiteEntry>(
+                "select * from \"AppetiteEntry\" where PetId = ? and Date = ? order by IsDeleted asc limit 1",
+                inc.PetId, inc.Date)).FirstOrDefault()),
+
+        // ── appetite amounts (exact grams; additive events, keyed by id) ─────
+        new TableSync<AppetiteAmountEntry>("appetite_amount_entries",
+            toCloud: async (a, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(a.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = a.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(a.Date),
+                    ["time_ticks"] = a.Time.Ticks,
+                    ["grams"] = a.Grams,
+                    ["food"] = a.Food,
+                    ["client_updated_at"] = CloudJson.ToIso(a.UpdatedAtUtc),
+                    ["deleted_at"] = a.IsDeleted ? CloudJson.ToIso(a.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new AppetiteAmountEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    Grams = CloudJson.GetDecimal(el, "grams"),
+                    Food = CloudJson.GetString(el, "food"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.Grams = inc.Grams; local.Food = inc.Food;
+            }),
+
+        // ── water amounts (exact ml; additive events, keyed by id like glucose) ──
+        new TableSync<WaterAmountEntry>("water_amount_entries",
+            toCloud: async (w, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(w.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = w.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(w.Date),
+                    ["time_ticks"] = w.Time.Ticks,
+                    ["amount_ml"] = w.AmountMl,
+                    ["client_updated_at"] = CloudJson.ToIso(w.UpdatedAtUtc),
+                    ["deleted_at"] = w.IsDeleted ? CloudJson.ToIso(w.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new WaterAmountEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    AmountMl = CloudJson.GetDecimal(el, "amount_ml"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.AmountMl = inc.AmountMl;
+            }),
+
+        // ── water level (relative; one row per pet per day, like appetite) ───
+        new TableSync<WaterLevelEntry>("water_level_entries",
+            toCloud: async (w, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(w.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = w.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(w.Date),
+                    ["time_ticks"] = w.Time.Ticks,
+                    ["level"] = w.Level,
+                    ["client_updated_at"] = CloudJson.ToIso(w.UpdatedAtUtc),
+                    ["deleted_at"] = w.IsDeleted ? CloudJson.ToIso(w.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new WaterLevelEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    Level = CloudJson.GetInt(el, "level"),
                     UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
                     IsDeleted = CloudJson.IsDeleted(el),
                 };
@@ -491,8 +612,8 @@ internal static class SyncTableMaps
             {
                 local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time; local.Level = inc.Level;
             },
-            naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<AppetiteEntry>(
-                "select * from \"AppetiteEntry\" where PetId = ? and Date = ? order by IsDeleted asc limit 1",
+            naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<WaterLevelEntry>(
+                "select * from \"WaterLevelEntry\" where PetId = ? and Date = ? order by IsDeleted asc limit 1",
                 inc.PetId, inc.Date)).FirstOrDefault()),
 
         // ── seizures (append-only events) ────────────────────────────────────

@@ -21,19 +21,22 @@ public class PendingItemsService
     private readonly PetEntryService _petEntries;
     private readonly GlucoseEntryService _glucose;
     private readonly AppetiteEntryService _appetite;
+    private readonly WaterEntryService _water;
 
     public PendingItemsService(
         CarePlanService carePlan,
         DayDoseService dayDoses,
         PetEntryService petEntries,
         GlucoseEntryService glucose,
-        AppetiteEntryService appetite)
+        AppetiteEntryService appetite,
+        WaterEntryService water)
     {
         _carePlan = carePlan;
         _dayDoses = dayDoses;
         _petEntries = petEntries;
         _glucose = glucose;
         _appetite = appetite;
+        _water = water;
     }
 
     /// <summary>What's still to do for this pet, today.</summary>
@@ -51,16 +54,14 @@ public class PendingItemsService
     /// <summary>
     /// The Today page's snapshot: the pending list (same rules as the Journal's
     /// chips) plus the care ring's done/total counts, computed from ONE gather so
-    /// the two can never disagree. Water is excluded from both sides — it has no
-    /// logging sheet yet (the Journal filters its chip the same way), so it must
-    /// neither surface as a dead-end next-up card nor hold the ring below full.
+    /// the two can never disagree. Water is a full tracker like the rest now — its
+    /// next-up card routes to the Journal's water sheet, so it counts toward the
+    /// ring exactly like glucose or appetite.
     /// </summary>
     public async Task<TodayCare> GetTodayCareAsync(Pet pet, DateTime date)
     {
         var day = date.Date;
-        var plan = (await _carePlan.GetPlanAsync(pet))
-            .Where(t => t.TrackerId != TrackerId.Water)
-            .ToList();
+        var plan = await _carePlan.GetPlanAsync(pet);
 
         var doses = await GatherDosesAsync(pet.Id, day);
         var entries = await GatherEntryDatesAsync(pet.Id, day);
@@ -84,8 +85,8 @@ public class PendingItemsService
     }
 
     // Each tracker's recent entry dates (rolling 7 days, enough for the weekly
-    // window). Mood + weight live on PetEntry; glucose + appetite in their own
-    // tables. Trackers without a store here simply contribute no dates.
+    // window). Mood + weight live on PetEntry; glucose, appetite + water in their
+    // own tables. Trackers without a store here simply contribute no dates.
     private async Task<IReadOnlyDictionary<TrackerId, IReadOnlyList<DateTime>>> GatherEntryDatesAsync(int petId, DateTime day)
     {
         var from = day.AddDays(-6);
@@ -93,13 +94,23 @@ public class PendingItemsService
         var petEntries = await _petEntries.GetPetEntriesByPetIdAndRangeAsync(petId, from, day);
         var glucose = await _glucose.GetForRangeAsync(petId, from, day);
         var appetite = await _appetite.GetForRangeAsync(petId, from, day);
+        var appetiteAmounts = await _appetite.GetAmountsForRangeAsync(petId, from, day);
+        var waterAmounts = await _water.GetAmountsForRangeAsync(petId, from, day);
+        var waterLevels = await _water.GetLevelsForRangeAsync(petId, from, day);
 
         return new Dictionary<TrackerId, IReadOnlyList<DateTime>>
         {
             [TrackerId.Mood] = petEntries.Where(e => e.MoodLevel > 0).Select(e => e.Date.Date).ToList(),
             [TrackerId.Weight] = petEntries.Where(e => e.Weight > 0).Select(e => e.Date.Date).ToList(),
             [TrackerId.Glucose] = glucose.Select(g => g.Date.Date).ToList(),
-            [TrackerId.Appetite] = appetite.Select(a => a.Date.Date).ToList(),
+            // A day counts as fed if EITHER a qualitative reading or a measured amount
+            // was logged — the union of both appetite stores' dates.
+            [TrackerId.Appetite] = appetite.Select(a => a.Date.Date)
+                .Concat(appetiteAmounts.Select(a => a.Date.Date)).ToList(),
+            // A day counts as "watered" if EITHER an exact ml reading or a relative
+            // reading was logged — the union of both stores' dates.
+            [TrackerId.Water] = waterAmounts.Select(w => w.Date.Date)
+                .Concat(waterLevels.Select(w => w.Date.Date)).ToList(),
         };
     }
 }

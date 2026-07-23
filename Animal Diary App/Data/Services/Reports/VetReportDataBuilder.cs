@@ -20,6 +20,7 @@ public class VetReportDataBuilder
     private readonly GlucoseEntryService _glucose;
     private readonly AppetiteEntryService _appetite;
     private readonly SeizureEntryService _seizures;
+    private readonly WaterEntryService _water;
     private readonly TrackerService _trackers;
 
     public VetReportDataBuilder(
@@ -31,6 +32,7 @@ public class VetReportDataBuilder
         GlucoseEntryService glucose,
         AppetiteEntryService appetite,
         SeizureEntryService seizures,
+        WaterEntryService water,
         TrackerService trackers)
     {
         _pets = pets;
@@ -41,12 +43,19 @@ public class VetReportDataBuilder
         _glucose = glucose;
         _appetite = appetite;
         _seizures = seizures;
+        _water = water;
         _trackers = trackers;
     }
 
     /// <summary>Snapshot everything the report might show for the pet in
     /// [<paramref name="from"/> .. <paramref name="to"/>] (inclusive, date-only).</summary>
-    public async Task<VetReportData> BuildAsync(int petId, DateTime from, DateTime to, bool includePhoto = false)
+    public async Task<VetReportData> BuildAsync(
+        int petId, DateTime from, DateTime to,
+        bool includePhoto = false,
+        bool includeWaterMeasured = true,
+        bool includeWaterObservations = true,
+        bool includeAppetiteMeasured = true,
+        bool includeAppetiteObservations = true)
     {
         from = from.Date;
         to = to.Date;
@@ -66,7 +75,7 @@ public class VetReportDataBuilder
             .Select(e => new ReportPoint(e.Date, e.Weight))
             .ToList();
 
-        var events = BuildEvents(seizureEntries, appetiteEntries);
+        var events = BuildEvents(seizureEntries);
 
         return new VetReportData
         {
@@ -76,6 +85,8 @@ public class VetReportDataBuilder
             GeneratedAt = DateTime.Now,
             Medications = await BuildMedicationsAsync(petId, from, to),
             Trends = await BuildTrendsAsync(petId, weightPoints, glucoseEntries, events, from, to),
+            Water = await BuildWaterAsync(petId, from, to, includeWaterMeasured, includeWaterObservations),
+            Appetite = await BuildAppetiteAsync(petId, appetiteEntries, from, to, includeAppetiteMeasured, includeAppetiteObservations),
             Events = events,
             // Only notes the owner explicitly opted into appear here; every other
             // note stays stored but private. Legacy entries default to false.
@@ -210,9 +221,96 @@ public class VetReportDataBuilder
         return trends;
     }
 
-    private static List<ReportEvent> BuildEvents(
-        List<SeizureEntry> seizureEntries,
-        List<AppetiteEntry> appetiteEntries)
+    // Water intake, kept as two DISTINCT data types (see ReportWater). The report is
+    // a communication layer, not an interpretation one: measured millilitres and
+    // subjective observations are built independently, never merged, and no trend or
+    // verdict is derived from either. Each type is included only when the owner left
+    // its export toggle on (both default on).
+    private async Task<ReportWater> BuildWaterAsync(
+        int petId, DateTime from, DateTime to, bool includeMeasured, bool includeObservations)
+    {
+        ReportSeries? measured = null;
+        if (includeMeasured)
+        {
+            // Objective measurements. Exact readings are additive, so a day's value is
+            // the SUM of that day's readings (four 100 mL logs and one 400 mL log both
+            // read 400 mL for the day) — one point per day. This is aggregation of like
+            // measurements, not a trend or a judgement.
+            var points = (await _water.GetAmountsForRangeAsync(petId, from, to))
+                .Where(w => w.AmountMl > 0)
+                .GroupBy(w => w.Date.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new ReportPoint(g.Key, g.Sum(w => w.AmountMl)))
+                .ToList();
+            if (points.Count > 0)
+                measured = new ReportSeries { Label = "Measured", Unit = "mL", Points = points };
+        }
+
+        IReadOnlyList<ReportObservation> observations = Array.Empty<ReportObservation>();
+        if (includeObservations)
+        {
+            // Subjective owner observations — the relative reading as-logged. Passed
+            // through verbatim (date + level); the document renders them on a word
+            // axis. Never converted to a number, never averaged, never trended.
+            observations = (await _water.GetLevelsForRangeAsync(petId, from, to))
+                .Where(w => w.Level is >= 1 and <= 5)
+                .OrderBy(w => w.Date).ThenBy(w => w.Time)
+                .Select(w => new ReportObservation(w.Date, w.Level))
+                .ToList();
+        }
+
+        return new ReportWater { Measured = measured, Observations = observations };
+    }
+
+    // Appetite — the same communication-not-interpretation stance as water, plus the
+    // diet list. Measured grams, qualitative observations and the recorded foods are
+    // built independently; nothing is merged, numbered from a word, or trended.
+    // <paramref name="levelEntries"/> is the already-fetched qualitative range.
+    private async Task<ReportAppetite> BuildAppetiteAsync(
+        int petId, List<AppetiteEntry> levelEntries, DateTime from, DateTime to,
+        bool includeMeasured, bool includeObservations)
+    {
+        var amountEntries = await _appetite.GetAmountsForRangeAsync(petId, from, to);
+
+        ReportSeries? measured = null;
+        if (includeMeasured)
+        {
+            // Objective grams. Additive, so a day's value is the SUM of that day's
+            // measured meals — one point per day. Aggregation, not a trend.
+            var points = amountEntries
+                .Where(a => a.Grams > 0)
+                .GroupBy(a => a.Date.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new ReportPoint(g.Key, g.Sum(a => a.Grams)))
+                .ToList();
+            if (points.Count > 0)
+                measured = new ReportSeries { Label = "Measured", Unit = "g", Points = points };
+        }
+
+        IReadOnlyList<ReportObservation> observations = Array.Empty<ReportObservation>();
+        if (includeObservations)
+        {
+            observations = levelEntries
+                .Where(a => a.Level is >= 1 and <= 5)
+                .OrderBy(a => a.Date).ThenBy(a => a.Time)
+                .Select(a => new ReportObservation(a.Date, a.Level))
+                .ToList();
+        }
+
+        // Diet list: the distinct foods recorded across both stores in the range,
+        // most-recent first. A plain factual list — the range is the only context.
+        var foods = levelEntries.Select(a => new { a.Food, a.Date, a.Time })
+            .Concat(amountEntries.Select(a => new { a.Food, a.Date, a.Time }))
+            .Where(x => !string.IsNullOrWhiteSpace(x.Food))
+            .OrderByDescending(x => x.Date).ThenByDescending(x => x.Time)
+            .Select(x => x.Food.Trim())
+            .Distinct(StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        return new ReportAppetite { Measured = measured, Observations = observations, Foods = foods };
+    }
+
+    private static List<ReportEvent> BuildEvents(List<SeizureEntry> seizureEntries)
     {
         var events = new List<ReportEvent>();
 
@@ -228,18 +326,12 @@ public class VetReportDataBuilder
         // Vomiting has no logging UI right now, so no producer adds
         // ReportEventKind.Vomiting here — the kind stays (rendered by
         // EventsSection, used by the sample harness) for when a sheet exists.
-
-        // "Ate nothing / barely anything" readings, reported as the owner's own
-        // logged level — a fact, not an assessment.
-        events.AddRange(appetiteEntries
-            .Where(a => a.Level <= (int)AppetiteLevel.Barely)
-            .Select(a => new ReportEvent
-            {
-                Kind = ReportEventKind.LowAppetite,
-                Date = a.Date,
-                Time = a.Time,
-                Value = a.Level
-            }));
+        //
+        // Appetite is NO LONGER surfaced as "low appetite" events. It now has its own
+        // measured-vs-observed section (BuildAppetiteAsync / AppetiteSection): the
+        // qualitative reading is shown as-logged on its own graph, not re-labelled
+        // "low" — the report records, it does not flag. ReportEventKind.LowAppetite
+        // stays for the sample harness / back-compat but has no real producer.
 
         return events
             .OrderByDescending(e => e.Date)

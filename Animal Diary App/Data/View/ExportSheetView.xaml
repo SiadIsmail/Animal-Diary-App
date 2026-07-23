@@ -155,6 +155,133 @@
                         </Grid>
                     </Border>
 
+                    <!-- Water intake: two independent data types, each its own opt-in
+                         (both default on). Only shown when the pet logs water. The
+                         report keeps measured amounts and owner observations on
+                         separate graphs and never interprets either. -->
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding HasWater}">
+                        <Label Text="{loc:Translate Export_WaterLabel}" Style="{StaticResource FieldLabel}"/>
+
+                        <Border BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 13">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleIncludeWaterMeasuredCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                <Label Text="{loc:Translate Export_IncludeWaterMeasured}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="14"
+                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                        BackgroundColor="{StaticResource Glass}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeWaterMeasured}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource White}"
+                                           IsVisible="{Binding IncludeWaterMeasured}"
+                                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 13">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleIncludeWaterObservationsCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                <Label Text="{loc:Translate Export_IncludeWaterObservations}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="14"
+                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                        BackgroundColor="{StaticResource Glass}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeWaterObservations}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource White}"
+                                           IsVisible="{Binding IncludeWaterObservations}"
+                                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Appetite: same two-type opt-in as water (both default on), only
+                         shown when the pet logs appetite. Measured grams and owner
+                         observations stay on separate graphs; nothing is interpreted. -->
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding HasAppetite}">
+                        <Label Text="{loc:Translate Export_AppetiteLabel}" Style="{StaticResource FieldLabel}"/>
+
+                        <Border BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 13">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleIncludeAppetiteMeasuredCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                <Label Text="{loc:Translate Export_IncludeAppetiteMeasured}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="14"
+                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                        BackgroundColor="{StaticResource Glass}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeAppetiteMeasured}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource White}"
+                                           IsVisible="{Binding IncludeAppetiteMeasured}"
+                                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 13">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleIncludeAppetiteObservationsCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                <Label Text="{loc:Translate Export_IncludeAppetiteObservations}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="14"
+                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                        BackgroundColor="{StaticResource Glass}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeAppetiteObservations}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource White}"
+                                           IsVisible="{Binding IncludeAppetiteObservations}"
+                                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
                     <!-- Inline "no data in range" / error line (never an alert) -->
                     <Label Text="{Binding StatusMessage}"
                            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
