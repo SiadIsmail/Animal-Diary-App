@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    KeepSafePage.xaml
+    ─────────────────────────────────────────────────────────
+    Shown once at the end of first-launch onboarding, right after the first pet
+    exists (the concrete-value moment) — and only when backup isn't already on.
+    A calm, skippable offer to back up + share, reusing the shared account sheet
+    (CloudSheetView). "Set up backup" opens it; turning backup on, or "Maybe later",
+    hands off to the app. Nothing here pushes — see AI/app-voice.md §3.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:view="clr-namespace:Animal_Diary_App.Data.View"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             x:DataType="vms:MainViewModel"
+             x:Class="Animal_Diary_App.Data.View.KeepSafePage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
+             BackgroundColor="#C4E6E3">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Water background — bottom layer, spans the whole page -->
+        <controls:WaterBackground Grid.RowSpan="2"/>
+
+        <!-- ── MAIN CONTENT — vertically centred ── -->
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="30,0"
+                                 Spacing="0"
+                                 VerticalOptions="Center">
+
+                <Label Text="☁️"
+                       FontSize="48"
+                       HorizontalOptions="Center"
+                       Margin="0,0,0,18"/>
+
+                <!-- Title carries the pet's name (set in code-behind). -->
+                <Label x:Name="TitleLabel"
+                       FontFamily="{StaticResource FontSerif}"
+                       FontSize="26"
+                       TextColor="{StaticResource Ink}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,0,0,10"/>
+
+                <Label Text="{loc:Translate KeepSafe_Body}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="14"
+                       LineHeight="1.45"
+                       TextColor="{StaticResource InkSecondary}"
+                       HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ── BOTTOM ACTION ── -->
+        <VerticalStackLayout Grid.Row="1"
+                             Padding="24,16,24,34"
+                             Spacing="12">
+
+            <!-- Primary: open the shared account sheet (create account then enable backup,
+                 or just enable backup if already signed in). -->
+            <Border BackgroundColor="{StaticResource Teal}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 15,13,13,16">
+                <Border.Shadow>
+                    <Shadow Brush="#149081" Offset="0,6" Radius="16" Opacity="0.32"/>
+                </Border.Shadow>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSetUpClicked"/>
+                </Border.GestureRecognizers>
+                <Label Text="{loc:Translate KeepSafe_SetUp}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource White}"
+                       HorizontalTextAlignment="Center"
+                       Padding="0,16"/>
+            </Border>
+
+            <!-- Secondary: skip, plainly available (no dark pattern). -->
+            <Label Text="{loc:Translate KeepSafe_Later}"
+                   FontFamily="{StaticResource FontSans}"
+                   FontSize="13.5"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource InkTertiary}"
+                   HorizontalTextAlignment="Center"
+                   Padding="0,8">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnLaterClicked"/>
+                </Label.GestureRecognizers>
+            </Label>
+        </VerticalStackLayout>
+
+        <!-- Account sheet (create account / sign in / enable backup) — shared sheet,
+             click-through while closed so the buttons stay live. -->
+        <view:CloudSheetView Grid.RowSpan="2"
+                             BindingContext="{Binding CloudVM}"/>
+
+    </Grid>
+
+</ContentPage>

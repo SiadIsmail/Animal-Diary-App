@@ -90,6 +90,12 @@
   <data name="Welcome_AccountButton" xml:space="preserve"><value>Anmelden</value></data>
   <data name="Welcome_Reassurance" xml:space="preserve"><value>Dauert etwa eine Minute. Schon ein Konto oder einen Einladungscode? Melde dich an.</value></data>
 
+  <!-- ── Onboarding: keep-safe (post-first-pet backup/share offer) ── -->
+  <data name="KeepSafe_Title" xml:space="preserve"><value>{0}s Daten sichern</value></data>
+  <data name="KeepSafe_Body" xml:space="preserve"><value>Ein Konto sichert alles, was du hier festhältst — ein verlorenes Handy bedeutet dann keine verlorene Historie. Du kannst den Alltag auch mit Familie oder einer Betreuungsperson teilen. Standardmäßig privat — nichts verlässt dieses Gerät, bis du das Backup selbst einschaltest.</value></data>
+  <data name="KeepSafe_SetUp" xml:space="preserve"><value>Backup einrichten</value></data>
+  <data name="KeepSafe_Later" xml:space="preserve"><value>Vielleicht später</value></data>
+
   <!-- ── Settings ── -->
   <data name="Settings_Title" xml:space="preserve"><value>Einstellungen</value></data>
   <data name="Settings_DataSection" xml:space="preserve"><value>Daten</value></data>
@@ -618,6 +624,10 @@
   <data name="Cloud_JoinPlaceholder" xml:space="preserve"><value>Einladungscode, etwa ABCD-1234</value></data>
   <data name="Cloud_Join" xml:space="preserve"><value>Beitreten</value></data>
   <data name="Cloud_JoinSuccess" xml:space="preserve"><value>Hinzugefügt. Das Tier wird jetzt synchronisiert…</value></data>
+  <data name="Cloud_JoinRowTitle" xml:space="preserve"><value>Einem Tier beitreten</value></data>
+  <data name="Cloud_JoinRowSubtitle" xml:space="preserve"><value>Einladungscode? Hilf bei der Pflege mit</value></data>
+  <data name="Cloud_JoinSubtitle" xml:space="preserve"><value>Gib den Code ein, den dir jemand geschickt hat</value></data>
+  <data name="Cloud_JoinBody" xml:space="preserve"><value>Gib den Einladungscode ein, den dir jemand geschickt hat. Du siehst dann das Tagebuch des Tieres und kannst es mitpflegen.</value></data>
   <data name="Cloud_ErrInviteInvalid" xml:space="preserve"><value>Dieser Code ist ungültig oder abgelaufen. Bitte um einen neuen.</value></data>
   <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>Du betreust dieses Tier bereits.</value></data>
   <data name="Cloud_ContinueWithGoogle" xml:space="preserve"><value>Mit Google fortfahren</value></data>

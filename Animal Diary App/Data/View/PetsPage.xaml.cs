@@ -57,6 +57,17 @@ public partial class PetsPage : ContentPage
         // it in place (e.g. a newly shared pet appearing in the list).
         vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
 
+        // The sharing sheet is hosted here too now (the "Shared care" row). A caregiver
+        // leaving purges the pet from this device — confirm natively (same accepted
+        // exception as delete-account), then reload the list once it's gone.
+        vm.SharingVM.ConfirmLeave = () =>
+            DisplayAlert(
+                LocalizationManager.Instance.GetString("Cloud_LeaveConfirmTitle"),
+                LocalizationManager.Instance.GetString("Cloud_LeaveConfirmMessage"),
+                LocalizationManager.Instance.GetString("Cloud_Leave"),
+                LocalizationManager.Instance.GetString("Common_Cancel"));
+        vm.SharingVM.LeftPet += OnLeftPet;
+
         try
         {
             // Re-read on every appearance so conditions or medications changed on
@@ -80,6 +91,44 @@ public partial class PetsPage : ContentPage
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
+        vm.SharingVM.ConfirmLeave = null;
+        vm.SharingVM.LeftPet -= OnLeftPet;
+    }
+
+    // Shared care is a first-class action here. Sharing rides the cloud sync (the invite
+    // carries the pet's data), so it needs an account + backup — when that isn't set up
+    // yet, open the account door (the same one the Welcome screen uses) rather than a
+    // sheet that can only say "not synced yet".
+    void OnShareClicked(object? sender, EventArgs args)
+    {
+        if (vm.SharingVM.IsSharingAvailable)
+            vm.SharingVM.OpenCommand.Execute(null);
+        else
+            vm.CloudVM.OpenCommand.Execute(null);
+    }
+
+    // Join a shared pet with an invite code. CloudVM.OpenJoinAsync owns the routing:
+    // signed in + backup on → the focused code input; otherwise the account door first
+    // (joining needs sync on to pull the shared pet), landing on the code input after.
+    void OnJoinPetClicked(object? sender, EventArgs args)
+    {
+        vm.CloudVM.OpenJoinCommand.Execute(null);
+    }
+
+    // A caregiver left the pet from the sharing sheet (which closed itself). The pet is
+    // being purged from this device by the membership-diff sync that follows the leave;
+    // reload now, and RemoteChangesApplied reloads again if the purge lands later.
+    private async void OnLeftPet()
+    {
+        try
+        {
+            await vm.LoadAsync();
+            await vm.PetVM.LoadActivePetTagsAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PetsPage] reload after leave failed: {ex}");
+        }
     }
 
     private void OnRemoteChangesApplied() =>

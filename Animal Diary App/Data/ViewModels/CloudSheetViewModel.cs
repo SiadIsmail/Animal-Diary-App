@@ -15,12 +15,17 @@ using Animal_Diary_App.Helpers;
 /// </summary>
 public class CloudSheetViewModel : BaseViewModel, IResettableDraft
 {
-    private enum Mode { Intro, SignIn, SignUp, VerifyCode, ResetRequest, ResetVerify, SignedIn }
+    private enum Mode { Intro, SignIn, SignUp, VerifyCode, ResetRequest, ResetVerify, SignedIn, Join }
 
     private readonly ICloudAuthService _auth;
     private readonly ICloudSyncService _sync;
     private readonly ICloudSharingService _sharing;
     private Mode _mode = Mode.Intro;
+
+    // Set when the user arrived via the Pets page "Join a pet" action but wasn't set up
+    // yet (joining needs an account AND backup on to pull the shared pet). Once setup
+    // completes we drop them on the invite-code input instead of the generic signed-in card.
+    private bool _pendingJoin;
 
     public CloudSheetViewModel(ICloudAuthService auth, ICloudSyncService sync, ICloudSharingService sharing)
     {
@@ -40,6 +45,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         SignOutCommand = new Command(async () => await SignOutAsync());
         DeleteAccountCommand = new Command(async () => await DeleteAccountAsync());
         JoinCommand = new Command(async () => await JoinAsync());
+        OpenJoinCommand = new Command(async () => await OpenJoinAsync());
         ContinueWithGoogleCommand = new Command(async () => await GoogleAsync());
 
         // Session/sync state can change underneath the sheet (expiry, background
@@ -57,11 +63,12 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         set => SetProperty(ref _isPresented, value);
     }
 
-    public string Title => Loc("Cloud_Title");
+    public string Title => _mode == Mode.Join ? Loc("Cloud_JoinRowTitle") : Loc("Cloud_Title");
     public string Subtitle => _mode switch
     {
         Mode.SignedIn => LocalizationManager.Instance.Format("Cloud_SignedInAs", _auth.Email ?? ""),
         Mode.VerifyCode or Mode.ResetVerify => Loc("Cloud_CodeTitle"),
+        Mode.Join => Loc("Cloud_JoinSubtitle"),
         _ => Loc("Cloud_IntroSubtitle"),
     };
 
@@ -118,6 +125,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     public bool IsResetRequestVisible => _mode == Mode.ResetRequest;
     public bool IsResetVerifyVisible => _mode == Mode.ResetVerify;
     public bool IsSignedInVisible => _mode == Mode.SignedIn;
+    public bool IsJoinVisible => _mode == Mode.Join;
 
     public string SubmitLabel => _mode switch
     {
@@ -162,15 +170,44 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     public ICommand SignOutCommand { get; }
     public ICommand DeleteAccountCommand { get; }
     public ICommand JoinCommand { get; }
+    public ICommand OpenJoinCommand { get; }
     public ICommand ContinueWithGoogleCommand { get; }
 
     private async Task OpenAsync()
     {
         ErrorText = string.Empty;
         InfoText = string.Empty;
+        _pendingJoin = false;
         // GetSessionAsync is the authoritative check (it refreshes / detects expiry).
         var session = await Guarded(() => _auth.GetSessionAsync());
         SetMode(session != null ? Mode.SignedIn : Mode.Intro);
+        IsPresented = true;
+    }
+
+    /// <summary>The Pets page "Join a pet" action. Joining pulls a shared pet down, which
+    /// needs an account AND backup (sync) on — so when the user isn't set up yet, route
+    /// through the account door first and remember to land on the code input once they
+    /// are. When already set up, go straight to the focused invite-code screen.</summary>
+    private async Task OpenJoinAsync()
+    {
+        ErrorText = string.Empty;
+        InfoText = string.Empty;
+        var session = await Guarded(() => _auth.GetSessionAsync());
+        if (session == null)
+        {
+            _pendingJoin = true;
+            SetMode(Mode.Intro);
+        }
+        else if (!_sync.IsBackupEnabled)
+        {
+            _pendingJoin = true;
+            SetMode(Mode.SignedIn); // leads with the Enable-backup prompt
+        }
+        else
+        {
+            _pendingJoin = false;
+            SetMode(Mode.Join);
+        }
         IsPresented = true;
     }
 
@@ -237,6 +274,14 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         Code = string.Empty;
         NewPassword = string.Empty;
         InfoText = string.Empty;
+        // Signed in specifically to join a pet, and backup is already on? Skip the
+        // signed-in card and go straight to the invite-code input.
+        if (_pendingJoin && _sync.IsBackupEnabled)
+        {
+            _pendingJoin = false;
+            SetMode(Mode.Join);
+            return;
+        }
         SetMode(Mode.SignedIn);
     }
 
@@ -252,6 +297,12 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
                 InfoText = Loc("Cloud_EnabledOffline");
         });
         RefreshStateFromServices();
+        // Turning backup on was the last thing blocking a pending join — surface the code input.
+        if (_pendingJoin && _sync.IsBackupEnabled)
+        {
+            _pendingJoin = false;
+            SetMode(Mode.Join);
+        }
     }
 
     private async Task SyncNowAsync()
@@ -371,8 +422,10 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(IsResetRequestVisible));
         OnPropertyChanged(nameof(IsResetVerifyVisible));
         OnPropertyChanged(nameof(IsSignedInVisible));
+        OnPropertyChanged(nameof(IsJoinVisible));
         OnPropertyChanged(nameof(SubmitLabel));
         OnPropertyChanged(nameof(Subtitle));
+        OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(CanSubmit));
         OnPropertyChanged(nameof(SignedInEmail));
         OnPropertyChanged(nameof(IsBackupEnabled));
@@ -393,6 +446,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     {
         Email = Password = Code = NewPassword = string.Empty;
         ErrorText = InfoText = string.Empty;
+        _pendingJoin = false;
         IsPresented = false;
         SetMode(Mode.Intro);
     }

@@ -88,10 +88,20 @@ public partial class ConditionPickerPage : ContentPage
                 ? AnalyticsEvents.ConditionSetupCompleted
                 : AnalyticsEvents.ConditionSetupSkipped);
 
-            vm.Analytics.Track(AnalyticsEvents.OnboardingCompleted);
-
-            // Hand off to the tabbed app.
-            (Application.Current as App)?.SwitchToMainApp();
+            // Now that the pet exists, offer backup + sharing once at this concrete-value
+            // moment — unless the owner already turned backup on (e.g. via the Welcome
+            // account door), in which case there's nothing to offer and we go straight in.
+            // KeepSafePage fires OnboardingCompleted at its own handoff, so the funnel
+            // still closes exactly once, on entering the app.
+            if (vm.CloudSync.IsBackupEnabled)
+            {
+                vm.Analytics.Track(AnalyticsEvents.OnboardingCompleted);
+                (Application.Current as App)?.SwitchToMainApp();
+            }
+            else
+            {
+                await Navigation.PushAsync(new KeepSafePage(vm));
+            }
         }
     }
 }

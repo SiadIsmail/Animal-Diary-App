@@ -90,6 +90,12 @@
   <data name="Welcome_AccountButton" xml:space="preserve"><value>Sign in</value></data>
   <data name="Welcome_Reassurance" xml:space="preserve"><value>Takes about a minute. Already have an account or an invite code? Sign in.</value></data>
 
+  <!-- ── Onboarding: keep-safe (post-first-pet backup/share offer) ── -->
+  <data name="KeepSafe_Title" xml:space="preserve"><value>Keep {0}'s records safe</value></data>
+  <data name="KeepSafe_Body" xml:space="preserve"><value>An account backs up everything you log here, so a lost phone never means lost history. You can also share the day-to-day with family or a caregiver. Private by default. Nothing leaves this device until you turn on backup.</value></data>
+  <data name="KeepSafe_SetUp" xml:space="preserve"><value>Set up backup</value></data>
+  <data name="KeepSafe_Later" xml:space="preserve"><value>Maybe later</value></data>
+
   <!-- ── Settings ── -->
   <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
   <data name="Settings_DataSection" xml:space="preserve"><value>Data</value></data>
@@ -635,6 +641,10 @@
   <data name="Cloud_JoinPlaceholder" xml:space="preserve"><value>Invite code, like ABCD-1234</value></data>
   <data name="Cloud_Join" xml:space="preserve"><value>Join</value></data>
   <data name="Cloud_JoinSuccess" xml:space="preserve"><value>Added. Syncing the pet now…</value></data>
+  <data name="Cloud_JoinRowTitle" xml:space="preserve"><value>Join a pet</value></data>
+  <data name="Cloud_JoinRowSubtitle" xml:space="preserve"><value>Have an invite code? Help with the care</value></data>
+  <data name="Cloud_JoinSubtitle" xml:space="preserve"><value>Enter the code someone shared with you</value></data>
+  <data name="Cloud_JoinBody" xml:space="preserve"><value>Enter the invite code someone shared with you. You'll see their pet's diary and can help keep it up to date.</value></data>
   <data name="Cloud_ErrInviteInvalid" xml:space="preserve"><value>That code is invalid or has expired. Ask for a new one.</value></data>
   <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>You already care for this pet.</value></data>
   <data name="Cloud_ContinueWithGoogle" xml:space="preserve"><value>Continue with Google</value></data>
