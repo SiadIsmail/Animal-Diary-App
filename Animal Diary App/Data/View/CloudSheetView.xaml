@@ -234,6 +234,29 @@
                     </Grid>
                 </VerticalStackLayout>
 
+                <!-- ── Join: focused invite-code entry (the Pets "Join a pet" action) ── -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding IsJoinVisible}">
+                    <Label Style="{StaticResource CloudBody}" Text="{loc:Translate Cloud_JoinBody}"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <Border Style="{StaticResource CloudField}">
+                            <Entry Style="{StaticResource CloudEntry}" Text="{Binding JoinCode}"
+                                   Placeholder="{loc:Translate Cloud_JoinPlaceholder}"/>
+                        </Border>
+                        <Border Grid.Column="1" BackgroundColor="{StaticResource Teal}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12" IsVisible="{Binding CanJoin}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding JoinCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Cloud_Join}" FontFamily="{StaticResource FontSans}" FontSize="13"
+                                   FontAttributes="Bold" TextColor="{StaticResource White}"
+                                   VerticalOptions="Center" Padding="16,0"/>
+                        </Border>
+                    </Grid>
+                    <Label Style="{StaticResource CloudBody}" FontSize="12" TextColor="{StaticResource TealDeep}"
+                           Text="{Binding InfoText}"
+                           IsVisible="{Binding InfoText, Converter={StaticResource StringToBoolConverter}}"/>
+                </VerticalStackLayout>
+
                 <!-- ── Shared foot: error line, busy dots, submit ── -->
                 <Label Text="{Binding ErrorText}"
                        IsVisible="{Binding ErrorText, Converter={StaticResource StringToBoolConverter}}"
