@@ -2,7 +2,7 @@
 	<Import Project="keystore.props" Condition="Exists('keystore.props')" />
 
 	<PropertyGroup>
-		<TargetFrameworks>net9.0-android</TargetFrameworks>
+		<TargetFrameworks>net9.0-android36.0</TargetFrameworks>
 		<TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('linux'))">$(TargetFrameworks);net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
 
@@ -59,14 +59,16 @@
 	</PropertyGroup>
 
 	<!-- Android target API level.
-	     Google Play requires apps to target Android 16 (API 36) or higher. We keep
-	     the framework at plain net9.0-android (compile SDK 35, the .NET 9 default)
-	     rather than net9.0-android36.0, because bumping the framework/bindings is
-	     what broke the Android build previously. AndroidTargetSdkVersion only sets
-	     the manifest's targetSdkVersion attribute — which is all Google Play checks —
-	     while compilation stays on the known-good API 35 bindings.
-	     Build note: MSBuild will emit warning XA4211 (target > compile SDK); that
-	     warning is expected and the build still produces a valid API 36 package. -->
+	     Google Play requires apps to target Android 16 (API 36) or higher.
+	     The framework moniker is net9.0-android36.0 (not plain net9.0-android): the
+	     ".36.0" suffix compiles against the API 36 bindings, so targetSdkVersion 36
+	     is actually emitted into the AAB. Plain net9.0-android compiles against API 35
+	     and the toolchain then CLAMPS targetSdkVersion back down to 35 (which is why an
+	     earlier AndroidTargetSdkVersion=36 override alone had no effect on Play).
+	     We stay on the .NET 9 runtime / MAUI 9 — only the Android platform API moved to
+	     36 — to avoid the broader .NET 10 / MAUI 10 migration that broke the build before.
+	     AndroidTargetSdkVersion is set explicitly as belt-and-suspenders / documentation;
+	     with a compile SDK of 36 it is now consistent rather than clamped. -->
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 		<AndroidTargetSdkVersion>36</AndroidTargetSdkVersion>
 	</PropertyGroup>
