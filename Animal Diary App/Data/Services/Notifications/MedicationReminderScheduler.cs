@@ -26,14 +26,14 @@ public class MedicationReminderScheduler
 
     // How far ahead we pre-schedule concrete notifications. Re-extended on every
     // app launch and device boot, so it only needs to cover a typical gap
-    // between app opens, while staying well under the OS exact-alarm budget.
+    // between app opens, while staying well under the OS alarm budget.
     private const int HorizonDays = 14;
 
     // Upper bound of materialized occurrences per medication (14 days × 5
     // times/day = 70 covers the full horizon).
     private const int MaxInstancesPerMedication = 70;
 
-    // Android caps an app at 500 exact alarms; beyond it scheduling silently
+    // Android caps an app at ~500 scheduled alarms; beyond it scheduling silently
     // fails or throws depending on the OS. Keep total pending instances under
     // this budget — meds synced later in a pass get fewer occurrences, and the
     // horizon is re-extended on the next launch/boot anyway.
@@ -52,6 +52,7 @@ public class MedicationReminderScheduler
     private readonly ReminderInstanceService _instances;
     private readonly MedicationDoseLogService _doseLogService;
     private readonly MedicationDoseReconciler _doseReconciler;
+    private readonly PetPauseService _pause;
 
     // Serializes every mutation of the instance store + OS schedule. The global
     // catch-up (launch / boot / time-change receivers) and user-triggered syncs
@@ -65,7 +66,8 @@ public class MedicationReminderScheduler
         PetService petService,
         ReminderInstanceService instances,
         MedicationDoseLogService doseLogService,
-        MedicationDoseReconciler doseReconciler)
+        MedicationDoseReconciler doseReconciler,
+        PetPauseService pause)
     {
         _notifications = notifications;
         _medicationService = medicationService;
@@ -73,10 +75,18 @@ public class MedicationReminderScheduler
         _instances = instances;
         _doseLogService = doseLogService;
         _doseReconciler = doseReconciler;
+        _pause = pause;
     }
 
-    /// <summary>Ask the OS for exact-alarm permission before scheduling reminders.</summary>
-    public Task<bool> RequestPermissionAsync() => _notifications.RequestNotificationPermissionAsync(requestExactAlarm: true);
+    /// <summary>
+    /// Ask the OS for notification permission before scheduling reminders. We do
+    /// *not* request exact-alarm capability: reminders are delivered as inexact
+    /// allow-while-idle alarms (the plugin falls back to that automatically when the
+    /// app can't schedule exact alarms), so the carer sees a single POST_NOTIFICATIONS
+    /// prompt instead of a second detour to the system "Alarms & reminders" screen.
+    /// See AI/design-decisions.md -> "Reminders use inexact (allow-while-idle) alarms".
+    /// </summary>
+    public Task<bool> RequestPermissionAsync() => _notifications.RequestNotificationPermissionAsync(requestExactAlarm: false);
 
     // ── Per-medication sync (create / edit / restore) ────────────────────
 
@@ -108,6 +118,16 @@ public class MedicationReminderScheduler
             return;
         }
 
+        // Paused on this device (AI/app-voice.md §15): stop arming reminders and clear
+        // any already-armed ones. Nothing must fire for a paused pet — a reminder naming
+        // a pet who died is the worst string this product can show. The record is
+        // untouched; resuming re-arms from the saved schedule rules.
+        if (_pause.IsPaused(medication.PetId))
+        {
+            await CancelMedicationCoreAsync(medicationId);
+            return;
+        }
+
         // Clean slate for future occurrences; fired/missed history is preserved.
         await ClearPendingAsync(medicationId);
 
@@ -133,7 +153,7 @@ public class MedicationReminderScheduler
                 occurrences.Add((when, slot));
         }
 
-        // Respect the OS exact-alarm budget: this med may only take what's left
+        // Respect the OS alarm budget: this med may only take what's left
         // after every other medication's already-pending occurrences.
         var pendingOthers = (await _instances.GetAllAsync())
             .Count(i => i.Status == ReminderStatus.Pending);
@@ -166,6 +186,46 @@ public class MedicationReminderScheduler
                 NotifyTime = instance.ScheduledTime,
                 Recurrence = NotificationRecurrence.Once
             });
+        }
+    }
+
+    // ── Per-pet pause / resume (AI/app-voice.md §15) ─────────────────────────
+
+    /// <summary>
+    /// Cancel every armed reminder for one pet's medications, without deleting any
+    /// data. Called when the pet is paused on this device. Pending instances stay in
+    /// the store as-is; a later <see cref="SyncPetAsync"/> (resume) re-materializes them.
+    /// The paused flag itself is owned by <see cref="PetPauseService"/> — the caller
+    /// sets it before calling here, so the launch/boot catch-up also skips this pet.
+    /// </summary>
+    public async Task CancelPetAsync(int petId)
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            foreach (var med in await _medicationService.GetMedicationsByPetIdAsync(petId))
+                await CancelMedicationCoreAsync(med.Id);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <summary>Re-arm every reminder for one pet's medications from their saved
+    /// schedule rules. Called on resume; a no-op for archived meds and (defensively)
+    /// still paused pets, since <see cref="SyncMedicationCoreAsync"/> self-guards both.</summary>
+    public async Task SyncPetAsync(int petId)
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            foreach (var med in await _medicationService.GetMedicationsByPetIdAsync(petId))
+                await SyncMedicationCoreAsync(med.Id);
+        }
+        finally
+        {
+            _gate.Release();
         }
     }
 
@@ -326,7 +386,7 @@ public class MedicationReminderScheduler
         foreach (var group in missed.GroupBy(m => m.MedicationId))
         {
             var med = await _medicationService.GetMedicationByIdAsync(group.Key);
-            if (med == null || med.IsArchived)
+            if (med == null || med.IsArchived || _pause.IsPaused(med.PetId))
                 continue;
 
             var pet = await _petService.GetPetByIdAsync(med.PetId);

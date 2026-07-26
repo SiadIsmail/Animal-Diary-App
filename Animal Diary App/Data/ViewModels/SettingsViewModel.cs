@@ -3,6 +3,7 @@ namespace Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Cloud;
+using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Helpers;
 using System.Windows.Input;
 
@@ -62,6 +63,7 @@ public class SettingsViewModel : BaseViewModel
     private readonly ICloudSyncService _cloudSync;
     private readonly CloudSheetViewModel _cloudVM;
     private readonly DevSheetViewModel _devVM;
+    private readonly DailyCareReminderScheduler _dailyReminders;
 
     /// <summary>Whether a cloud account is signed in — pages pick the reset-confirm
     /// message with it (the cloud variant explains the ownership rule).</summary>
@@ -69,7 +71,7 @@ public class SettingsViewModel : BaseViewModel
 
     public SettingsViewModel(AppResetService appResetService, SettingsService settingsService,
         IAnalyticsService analytics, ICloudAuthService cloudAuth, ICloudSyncService cloudSync,
-        CloudSheetViewModel cloudVM, DevSheetViewModel devVM)
+        CloudSheetViewModel cloudVM, DevSheetViewModel devVM, DailyCareReminderScheduler dailyReminders)
     {
         _appResetService = appResetService;
         _settingsService = settingsService;
@@ -78,6 +80,7 @@ public class SettingsViewModel : BaseViewModel
         _cloudSync = cloudSync;
         _cloudVM = cloudVM;
         _devVM = devVM;
+        _dailyReminders = dailyReminders;
         // The panel renders above the sheet, so opening the sheet closes the panel.
         OpenCloudCommand = new Command(() =>
         {
@@ -115,6 +118,43 @@ public class SettingsViewModel : BaseViewModel
             // Ignore — no browser available or the launch was cancelled.
         }
     }
+
+    // ── Daily care reminder (device-local, app-wide) ─────────────────────────────
+    // Off by default. Enabling arms today's reminder for each pet; changing the time
+    // re-arms. State lives in DailyCareReminderSettings (Preferences); the scheduler
+    // does the arm/cancel and skips paused pets and empty days.
+
+    /// <summary>Master on/off for the once-a-day care reminder.</summary>
+    public bool DailyReminderEnabled
+    {
+        get => DailyCareReminderSettings.Enabled;
+        set
+        {
+            if (value == DailyCareReminderSettings.Enabled)
+                return;
+            DailyCareReminderSettings.Enabled = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DailyReminderTimeVisible));
+            _ = _dailyReminders.RefreshAsync();
+        }
+    }
+
+    /// <summary>The time of day the reminder fires. Bound to a native TimePicker.</summary>
+    public TimeSpan DailyReminderTime
+    {
+        get => DailyCareReminderSettings.Time;
+        set
+        {
+            if (value == DailyCareReminderSettings.Time)
+                return;
+            DailyCareReminderSettings.Time = value;
+            OnPropertyChanged();
+            _ = _dailyReminders.RefreshAsync();
+        }
+    }
+
+    /// <summary>The time row only makes sense once the reminder is on.</summary>
+    public bool DailyReminderTimeVisible => DailyReminderEnabled;
 
     /// <summary>Two-letter code of the active language ("en" / "de").</summary>
     public string CurrentLanguage => LocalizationManager.Instance.CurrentLanguage;

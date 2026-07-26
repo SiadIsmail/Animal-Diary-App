@@ -18,12 +18,13 @@ public partial class App : Application
 	private readonly AppDatabase _database;
 	private readonly ActivePetService _activePetService;
 	private readonly MedicationReminderScheduler _reminderScheduler;
+	private readonly DailyCareReminderScheduler _dailyReminderScheduler;
 	private readonly SettingsService _settingsService;
 	private readonly IAnalyticsService _analytics;
 	private readonly ICloudSyncService _cloudSync;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -31,6 +32,7 @@ public partial class App : Application
 		_database = database;
 		_activePetService = activePetService;
 		_reminderScheduler = reminderScheduler;
+		_dailyReminderScheduler = dailyReminderScheduler;
 		_settingsService = settingsService;
 		_analytics = analytics;
 		_cloudSync = cloudSync;
@@ -73,6 +75,10 @@ public partial class App : Application
 		// Another caregiver/device may have logged while we were backgrounded;
 		// resuming re-enables the foreground poll and schedules a debounced sync.
 		_cloudSync.NotifyAppState(foreground: true);
+
+		// Re-evaluate today's daily care reminder: the day may have rolled over, or
+		// items were logged in another session, so it may now need arming or cancelling.
+		_ = _dailyReminderScheduler.RefreshAsync();
 	}
 
 	protected override void OnSleep()
@@ -157,6 +163,8 @@ public partial class App : Application
 				try
 				{
 					await _reminderScheduler.CatchUpAndRefreshAsync(resendMissed: false);
+					// Arm/refresh today's daily care reminder for each pet (no-op when off).
+					await _dailyReminderScheduler.RefreshAsync();
 				}
 				catch (Exception ex)
 				{

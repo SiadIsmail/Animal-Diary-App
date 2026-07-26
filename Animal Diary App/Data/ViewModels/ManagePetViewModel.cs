@@ -6,6 +6,7 @@ using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Journal;
+using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Helpers;
 
 // ── Small display records for the page's bindable lists ──────────────────────────
@@ -112,6 +113,9 @@ public class ManagePetViewModel : BaseViewModel
     private readonly CarePlanService _carePlan;
     private readonly MedicationService _medications;
     private readonly PetDeletionService _deletion;
+    private readonly PetPauseService _pause;
+    private readonly MedicationReminderScheduler _reminders;
+    private readonly DailyCareReminderScheduler _dailyReminders;
 
     public ManagePetViewModel(
         ActivePetService activePet,
@@ -119,7 +123,10 @@ public class ManagePetViewModel : BaseViewModel
         TrackerService trackers,
         CarePlanService carePlan,
         MedicationService medications,
-        PetDeletionService deletion)
+        PetDeletionService deletion,
+        PetPauseService pause,
+        MedicationReminderScheduler reminders,
+        DailyCareReminderScheduler dailyReminders)
     {
         _activePet = activePet;
         _conditions = conditions;
@@ -127,6 +134,9 @@ public class ManagePetViewModel : BaseViewModel
         _carePlan = carePlan;
         _medications = medications;
         _deletion = deletion;
+        _pause = pause;
+        _reminders = reminders;
+        _dailyReminders = dailyReminders;
 
         TapIdentityCommand = new Command(() => RequestEditPet?.Invoke());
         AddConditionCommand = new Command(OpenAddConditionSheet);
@@ -148,6 +158,7 @@ public class ManagePetViewModel : BaseViewModel
         CloseAdjustCommand = new Command(() => IsAdjustSheetVisible = false);
 
         RemovePetCommand = new Command(async () => await OnRemovePetAsync());
+        TogglePauseCommand = new Command(async () => await OnTogglePauseAsync());
     }
 
     // ── Events the page acts on ──────────────────────────────────────────────────
@@ -169,6 +180,11 @@ public class ManagePetViewModel : BaseViewModel
     /// is left: true → pop back to the pet list; false → the owner deleted their last
     /// pet, so the page returns to onboarding.</summary>
     public event Action<bool>? PetRemoved;
+
+    /// <summary>Raised right after a pet is paused, so the page can quietly offer the
+    /// export once (AI/app-voice.md §15.5). The page owns the native offer; the VM
+    /// doesn't care about the answer.</summary>
+    public event Action? RequestPauseExportOffer;
 
     // ── Bindable lists ───────────────────────────────────────────────────────────
     public ObservableCollection<ManageConditionChip> Conditions { get; } = new();
@@ -234,9 +250,36 @@ public class ManagePetViewModel : BaseViewModel
     public ICommand TurnOffTrackerCommand { get; }
     public ICommand CloseAdjustCommand { get; }
     public ICommand RemovePetCommand { get; }
+    public ICommand TogglePauseCommand { get; }
 
     /// <summary>Label for the destructive remove row, e.g. "Remove Charly from Felova".</summary>
     public string RemovePetLabel => Loc.Format("Manage_RemovePetRow", PetName);
+
+    // ── Pause everything (AI/app-voice.md §15) ───────────────────────────────────
+    // Per-device (PetPauseService): pausing stops every reminder for this pet on this
+    // device and keeps the whole record. It never touches data and never syncs — one
+    // carer stepping back doesn't silence the other's reminders.
+    private bool _isPaused;
+    public bool IsPaused
+    {
+        get => _isPaused;
+        private set
+        {
+            if (SetProperty(ref _isPaused, value))
+            {
+                OnPropertyChanged(nameof(PauseRowLabel));
+                OnPropertyChanged(nameof(PausedNotice));
+            }
+        }
+    }
+
+    /// <summary>Row label: "Pause everything for Charly" ⇄ "Resume everything for Charly".</summary>
+    public string PauseRowLabel => IsPaused
+        ? Loc.Format("Manage_ResumeRow", PetName)
+        : Loc.Format("Manage_PauseRow", PetName);
+
+    /// <summary>Short status line shown only while paused (§15: plain, no euphemism).</summary>
+    public string PausedNotice => IsPaused ? Loc.Format("Manage_PausedNotice", PetName) : string.Empty;
 
     // ── Load ─────────────────────────────────────────────────────────────────────
     public async Task LoadAsync()
@@ -251,6 +294,12 @@ public class ManagePetViewModel : BaseViewModel
         OnPropertyChanged(nameof(RemovePetLabel));
 
         var pet = _activePet.ActivePet;
+
+        // Reflect this device's pause state for the active pet (raises the row label
+        // and the paused notice through the IsPaused setter).
+        IsPaused = pet != null && pet.Id != 0 && _pause.IsPaused(pet.Id);
+        OnPropertyChanged(nameof(PauseRowLabel));
+
         if (pet == null || pet.Id == 0)
         {
             ClearAll();
@@ -341,6 +390,34 @@ public class ManagePetViewModel : BaseViewModel
 
         var result = await _deletion.DeletePetAsync(pet);
         PetRemoved?.Invoke(result.AnyPetsRemain);
+    }
+
+    // ── Pause / resume everything for this pet ───────────────────────────────────
+    private async Task OnTogglePauseAsync()
+    {
+        var pet = _activePet.ActivePet;
+        if (pet == null || pet.Id == 0)
+            return;
+
+        if (IsPaused)
+        {
+            // Resume: clear the flag, then re-arm reminders from the saved schedules.
+            _pause.Resume(pet.Id);
+            IsPaused = false;
+            await _reminders.SyncPetAsync(pet.Id);
+            await _dailyReminders.RefreshAsync();
+            return;
+        }
+
+        // Pause: set the flag first so any concurrent catch-up already skips this pet,
+        // then cancel everything already armed. §15.1 — one tap stops everything.
+        _pause.Pause(pet.Id);
+        IsPaused = true;
+        await _reminders.CancelPetAsync(pet.Id);
+        await _dailyReminders.RefreshAsync();
+
+        // Offer the export once, quietly (§15.5). Never deletes anything.
+        RequestPauseExportOffer?.Invoke();
     }
 
     // ── Care-plan row build ──────────────────────────────────────────────────────

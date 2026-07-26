@@ -20,6 +20,11 @@ namespace Animal_Diary_App.Data.Services.Data.Device
         public string Message { get; set; } = string.Empty;
         public DateTime NotifyTime { get; set; }
         public NotificationRecurrence Recurrence { get; set; } = NotificationRecurrence.Daily;
+
+        /// <summary>When true, the notification is posted without sound or vibration
+        /// (AI/app-voice.md §8.7: only a user-configured medication reminder may make a
+        /// sound). Medication reminders leave this false; the daily care reminder sets it.</summary>
+        public bool Silent { get; set; }
     }
 
     /// <summary>

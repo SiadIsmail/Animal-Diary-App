@@ -297,6 +297,11 @@ exactly like the reminder scheduler, so overlapping triggers can't interleave.
 
 ## 9. Monetization fit
 
+> **Superseded (2026-07-25):** a paid tier now exists. See
+> [MONETIZATION_PLAN.md](MONETIZATION_PLAN.md) — a 24-day free trial then a
+> care-only read state gated by RevenueCat. The `profiles.plan` hook below stays
+> the future cloud-side anchor. The section below is kept for historical context.
+
 **Decision (owner):** there is no premium tier today. Cloud is part of the free
 trial experience — the only gate is *creating an account*, and only for users
 who opt into cloud. Nothing entitlement-shaped gets built now.

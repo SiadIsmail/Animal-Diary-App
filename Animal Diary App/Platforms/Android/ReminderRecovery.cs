@@ -32,6 +32,11 @@ internal static class ReminderRecovery
                 var scheduler = services.GetService<MedicationReminderScheduler>();
                 if (scheduler is not null)
                     await scheduler.CatchUpAndRefreshAsync(resendMissed);
+
+                // Re-arm today's daily care reminder too (a reboot clears the OS alarm).
+                var dailyScheduler = services.GetService<DailyCareReminderScheduler>();
+                if (dailyScheduler is not null)
+                    await dailyScheduler.RefreshAsync();
             }
             catch (Exception ex)
             {
