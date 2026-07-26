@@ -89,10 +89,12 @@
   <data name="Welcome_AddFirstPet" xml:space="preserve"><value>Mein erstes Tier hinzufügen</value></data>
   <data name="Welcome_AccountButton" xml:space="preserve"><value>Anmelden</value></data>
   <data name="Welcome_Reassurance" xml:space="preserve"><value>Dauert etwa eine Minute. Schon ein Konto oder einen Einladungscode? Melde dich an.</value></data>
+  <data name="Welcome_DevNote" xml:space="preserve"><value>Felova ist entstanden, weil wir selbst einen Hund mit Epilepsie haben: Charly. Zettel und Handy-Wecker haben uns immer wieder im Stich gelassen, also haben wir das Werkzeug gebaut, das wir uns damals gewünscht hätten. Deine Daten bleiben auf deinem Handy, bis du dich fürs Backup entscheidest.</value></data>
+  <data name="Welcome_DevSignature" xml:space="preserve"><value>Charlys Familie</value></data>
 
   <!-- ── Onboarding: keep-safe (post-first-pet backup/share offer) ── -->
   <data name="KeepSafe_Title" xml:space="preserve"><value>{0}s Daten sichern</value></data>
-  <data name="KeepSafe_Body" xml:space="preserve"><value>Ein Konto sichert alles, was du hier festhältst — ein verlorenes Handy bedeutet dann keine verlorene Historie. Du kannst den Alltag auch mit Familie oder einer Betreuungsperson teilen. Standardmäßig privat — nichts verlässt dieses Gerät, bis du das Backup selbst einschaltest.</value></data>
+  <data name="KeepSafe_Body" xml:space="preserve"><value>Ein Konto sichert alles, was du hier festhältst. Ein verlorenes Handy bedeutet dann keine verlorene Historie. Du kannst den Alltag auch mit Familie oder einer Betreuungsperson teilen. Standardmäßig privat. Nichts verlässt dieses Gerät, bis du das Backup selbst einschaltest.</value></data>
   <data name="KeepSafe_SetUp" xml:space="preserve"><value>Backup einrichten</value></data>
   <data name="KeepSafe_Later" xml:space="preserve"><value>Vielleicht später</value></data>
 
