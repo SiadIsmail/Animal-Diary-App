@@ -104,6 +104,24 @@
                    TextColor="{StaticResource InkSecondary}"
                    HorizontalTextAlignment="Center"
                    Margin="20,0"/>
+
+            <!-- A short, personal note from the people who made it. Kept lean and
+                 in-voice on purpose (app-voice §3 been-there; §17 no value-prop wall). -->
+            <Label Text="{loc:Translate Welcome_DevNote}"
+                   FontFamily="{StaticResource FontSans}"
+                   FontSize="13"
+                   LineHeight="1.45"
+                   TextColor="{StaticResource InkSecondary}"
+                   HorizontalTextAlignment="Center"
+                   Margin="14,26,14,0"/>
+
+            <!-- Handwritten sign-off (Caveat / FontHand, used sparingly). -->
+            <Label Text="{loc:Translate Welcome_DevSignature}"
+                   FontFamily="{StaticResource FontHand}"
+                   FontSize="19"
+                   TextColor="{StaticResource TealDeep}"
+                   HorizontalTextAlignment="Center"
+                   Margin="0,8,0,0"/>
         </VerticalStackLayout>
 
         <!-- ══════════ BOTTOM ACTION ══════════ -->
