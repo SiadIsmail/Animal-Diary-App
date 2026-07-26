@@ -112,6 +112,19 @@
 		     revenue is under $1M USD — see VetReportService where it is declared. -->
 		<PackageReference Include="QuestPDF" Version="2023.12.6" />
 		<PackageReference Include="Plugin.LocalNotification" Version="12.0.2" />
+
+		<!-- 16 KB page-size alignment (Google Play requirement for API 36 updates).
+		     These native .so libraries arrive TRANSITIVELY — SkiaSharp/HarfBuzzSharp via
+		     QuestPDF, e_sqlite3 via sqlite-net-pcl — and the versions those packages pull
+		     (SkiaSharp 2.88.7, HarfBuzzSharp 7.3.0.1, SQLitePCLRaw 2.1.2) were built with
+		     an old NDK that aligns to 4 KB, which crashes on 16 KB-page devices. These
+		     explicit references override the transitive ones with NDK-r28 / 16 KB-aligned
+		     builds. SkiaSharp stays on the 2.88.x line so QuestPDF 2023.12.6 (pinned above)
+		     is unaffected; bundle_green 2.1.10 is the same package sqlite-net-pcl uses,
+		     just newer. -->
+		<PackageReference Include="SkiaSharp" Version="2.88.9" />
+		<PackageReference Include="HarfBuzzSharp" Version="7.3.0.3" />
+		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.10" />
 	</ItemGroup>
 
 	<PropertyGroup Condition="'$(Configuration)' == 'Release' AND '$(TargetFramework)' == 'net9.0-android'">
