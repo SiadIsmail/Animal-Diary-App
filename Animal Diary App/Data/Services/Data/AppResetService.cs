@@ -66,6 +66,13 @@ public class AppResetService
         // old install's "last seen" time.
         MedicationReminderScheduler.ClearPersistedState();
 
+        // Forget per-device pause state (AI/app-voice.md §15) so a fresh start begins
+        // with every pet active, not silently paused from the wiped install.
+        PetPauseService.ClearPersistedState();
+
+        // Forget the daily care reminder opt-in + time (device-local).
+        Notifications.DailyCareReminderSettings.ClearPersistedState();
+
         // Privacy: a data wipe also throws away the anonymous analytics id and mints a
         // fresh one, so a reset install starts a brand-new anonymous identity — past
         // events can no longer be associated with the new one. No personal data is

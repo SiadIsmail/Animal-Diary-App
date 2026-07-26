@@ -102,6 +102,11 @@
   <data name="Settings_DeleteAllData" xml:space="preserve"><value>Delete all data</value></data>
   <data name="Settings_ResetSubtitle" xml:space="preserve"><value>Clears everything and starts fresh</value></data>
   <data name="Settings_LanguageSection" xml:space="preserve"><value>Language</value></data>
+  <!-- Daily care reminder settings (device-local, app-wide). -->
+  <data name="Settings_RemindersSection" xml:space="preserve"><value>Reminders</value></data>
+  <data name="Settings_DailyReminderTitle" xml:space="preserve"><value>Daily reminder</value></data>
+  <data name="Settings_DailyReminderSubtitle" xml:space="preserve"><value>Once a day, at a time you pick, a quiet nudge to write something down. Only when something's still open.</value></data>
+  <data name="Settings_DailyReminderTime" xml:space="preserve"><value>Reminder time</value></data>
   <data name="Settings_Language" xml:space="preserve"><value>Language</value></data>
   <data name="Settings_LanguageSubtitle" xml:space="preserve"><value>Choose your language</value></data>
   <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Delete all data</value></data>
@@ -330,6 +335,15 @@
   <!-- Shown when the pet is backed up and the caller owns it. {0} is the pet's name. -->
   <data name="Manage_RemovePetConfirmBodyBackup" xml:space="preserve"><value>This deletes their medications, their timeline, and every note, from your backup and everyone sharing their care. It can't be undone.</value></data>
   <data name="Manage_RemovePetConfirmAccept" xml:space="preserve"><value>Remove {0}</value></data>
+  <!-- Pause everything (§15). Per-device, reversible. {0} is the pet's name. Row sits
+       above the Remove row on the Manage page. -->
+  <data name="Manage_PauseRow" xml:space="preserve"><value>Pause everything for {0}</value></data>
+  <data name="Manage_ResumeRow" xml:space="preserve"><value>Resume everything for {0}</value></data>
+  <data name="Manage_PausedNotice" xml:space="preserve"><value>Reminders for {0} are paused on this device. Their record stays.</value></data>
+  <!-- Quiet export offer shown once, right after pausing. {0} is the pet's name. -->
+  <data name="Manage_PausedExportTitle" xml:space="preserve"><value>Everything for {0} is paused.</value></data>
+  <data name="Manage_PausedExportBody" xml:space="preserve"><value>{0}'s record stays here for as long as you want it.</value></data>
+  <data name="Manage_PausedExportSave" xml:space="preserve"><value>Save a copy</value></data>
   <data name="Manage_EmptyPlan" xml:space="preserve"><value>Nothing set up yet. And that's okay too.</value></data>
   <data name="Manage_PreviewLabel" xml:space="preserve"><value>So {0}'s Journal will ask for…</value></data>
   <data name="Manage_MedsCount" xml:space="preserve"><value>Medications ×{0}</value></data>
@@ -568,6 +582,9 @@
   <data name="Notif_MissedTitle" xml:space="preserve"><value>{0}'s dose is still open</value></data>
   <data name="Notif_MissedBodyOne" xml:space="preserve"><value>{1} wasn't recorded while your device was off. It's still open when you're ready.</value></data>
   <data name="Notif_MissedBodyMany" xml:space="preserve"><value>{0} has {1} {2} doses still open from while your device was off.</value></data>
+  <!-- Daily care reminder. {0} is the pet's name. States the fact, carries no count. -->
+  <data name="Notif_DailyCareTitle" xml:space="preserve"><value>{0}'s care today</value></data>
+  <data name="Notif_DailyCareBody" xml:space="preserve"><value>A few things are still open for today.</value></data>
   <data name="Notif_MoodCheckInTitle" xml:space="preserve"><value>How is {0} today?</value></data>
   <data name="Notif_MoodCheckInBody" xml:space="preserve"><value>You can note how {0} is feeling when you have a moment.</value></data>
   <data name="Notif_WeightCheckInTitle" xml:space="preserve"><value>{0}'s weigh-in</value></data>

@@ -502,7 +502,7 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
         var permissionGranted = await _reminderScheduler.RequestPermissionAsync();
         if (!permissionGranted)
         {
-            System.Diagnostics.Debug.WriteLine("[MedicationViewModel] Exact-alarm permission was not granted; reminders will use the platform fallback.");
+            System.Diagnostics.Debug.WriteLine("[MedicationViewModel] Notification permission was not granted; reminders won't be delivered until it's enabled.");
         }
 
         await _reminderScheduler.SyncMedicationAsync(medicationId);

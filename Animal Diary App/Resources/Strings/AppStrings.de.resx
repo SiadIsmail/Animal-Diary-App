@@ -102,6 +102,11 @@
   <data name="Settings_DeleteAllData" xml:space="preserve"><value>Alle Daten löschen</value></data>
   <data name="Settings_ResetSubtitle" xml:space="preserve"><value>Löscht alles und beginnt von vorn</value></data>
   <data name="Settings_LanguageSection" xml:space="preserve"><value>Sprache</value></data>
+  <!-- Tägliche Erinnerung (gerätelokal, app-weit). -->
+  <data name="Settings_RemindersSection" xml:space="preserve"><value>Erinnerungen</value></data>
+  <data name="Settings_DailyReminderTitle" xml:space="preserve"><value>Tägliche Erinnerung</value></data>
+  <data name="Settings_DailyReminderSubtitle" xml:space="preserve"><value>Einmal am Tag, zu einer Zeit, die du wählst, ein leiser Anstoß, etwas festzuhalten. Nur wenn noch etwas offen ist.</value></data>
+  <data name="Settings_DailyReminderTime" xml:space="preserve"><value>Uhrzeit</value></data>
   <data name="Settings_Language" xml:space="preserve"><value>Sprache</value></data>
   <data name="Settings_LanguageSubtitle" xml:space="preserve"><value>Sprache wählen</value></data>
   <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Alle Daten löschen</value></data>
@@ -317,6 +322,13 @@
   <!-- Wenn das Tier gesichert ist und dir gehört. {0} ist der Tiername. -->
   <data name="Manage_RemovePetConfirmBodyBackup" xml:space="preserve"><value>Das löscht die Medikamente, den Verlauf und alle Notizen, aus deinem Backup und bei allen, die die Betreuung teilen. Das lässt sich nicht rückgängig machen.</value></data>
   <data name="Manage_RemovePetConfirmAccept" xml:space="preserve"><value>{0} entfernen</value></data>
+  <!-- Alles pausieren (§15). Gerätelokal, umkehrbar. {0} ist der Name des Tiers. -->
+  <data name="Manage_PauseRow" xml:space="preserve"><value>Alles für {0} pausieren</value></data>
+  <data name="Manage_ResumeRow" xml:space="preserve"><value>Alles für {0} fortsetzen</value></data>
+  <data name="Manage_PausedNotice" xml:space="preserve"><value>Erinnerungen für {0} sind auf diesem Gerät pausiert. Die Einträge bleiben.</value></data>
+  <data name="Manage_PausedExportTitle" xml:space="preserve"><value>Alles für {0} ist pausiert.</value></data>
+  <data name="Manage_PausedExportBody" xml:space="preserve"><value>{0}s Einträge bleiben hier, so lange du möchtest.</value></data>
+  <data name="Manage_PausedExportSave" xml:space="preserve"><value>Kopie sichern</value></data>
   <data name="Manage_EmptyPlan" xml:space="preserve"><value>Noch nichts eingerichtet. Und das ist auch in Ordnung.</value></data>
   <data name="Manage_PreviewLabel" xml:space="preserve"><value>So wird {0}s Journal fragen nach…</value></data>
   <data name="Manage_MedsCount" xml:space="preserve"><value>Medikamente ×{0}</value></data>
@@ -551,6 +563,9 @@
   <data name="Notif_MissedTitle" xml:space="preserve"><value>{0}s Dosis ist noch offen</value></data>
   <data name="Notif_MissedBodyOne" xml:space="preserve"><value>{1} wurde nicht erfasst, während dein Gerät aus war. Sie ist noch offen, wenn du soweit bist.</value></data>
   <data name="Notif_MissedBodyMany" xml:space="preserve"><value>{0} hat {1} {2}-Dosen, die noch offen sind, seit das Gerät aus war.</value></data>
+  <!-- Tägliche Erinnerung. {0} ist der Name des Tiers. Nennt die Tatsache, ohne Zahl. -->
+  <data name="Notif_DailyCareTitle" xml:space="preserve"><value>Heute für {0}</value></data>
+  <data name="Notif_DailyCareBody" xml:space="preserve"><value>Ein paar Dinge sind heute noch offen.</value></data>
   <data name="Notif_MoodCheckInTitle" xml:space="preserve"><value>Wie geht es {0} heute?</value></data>
   <data name="Notif_MoodCheckInBody" xml:space="preserve"><value>Du kannst festhalten, wie es {0} geht, wenn du einen Moment hast.</value></data>
   <data name="Notif_WeightCheckInTitle" xml:space="preserve"><value>{0}s Wiegen</value></data>

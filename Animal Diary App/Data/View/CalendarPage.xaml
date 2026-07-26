@@ -148,21 +148,41 @@
                             <Label Text="{Binding Sub}" IsVisible="{Binding HasSub}"
                                    FontFamily="{StaticResource FontSans}" FontSize="12.5"
                                    TextColor="{StaticResource InkSecondary}"/>
-                            <!-- Mark a dose as skipped (dose cards only, while still actionable) -->
-                            <Border IsVisible="{Binding CanSkipDose}"
-                                    BackgroundColor="{StaticResource GlassSoft}"
-                                    Stroke="{StaticResource GlassLine}" StrokeThickness="1"
-                                    StrokeShape="RoundRectangle 10" Padding="11,5"
-                                    HorizontalOptions="Start" Margin="0,7,0,1">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                        Command="{Binding Source={x:Reference CalendarPageRoot}, Path=BindingContext.JournalVM.SkipDoseCommand}"
-                                        CommandParameter="{Binding .}"/>
-                                </Border.GestureRecognizers>
-                                <Label Text="{loc:Translate Journal_MarkSkipped}"
-                                       FontFamily="{StaticResource FontSans}" FontSize="11.5" FontAttributes="Bold"
-                                       TextColor="{StaticResource InkSecondary}"/>
-                            </Border>
+                            <!-- Dose actions (dose cards only, while still actionable): mark a
+                                 late/forgotten dose as given — including one auto-marked Missed —
+                                 or record a deliberate skip. Both may show at once (e.g. Missed). -->
+                            <HorizontalStackLayout Spacing="8" Margin="0,7,0,1">
+                                <!-- Mark as given — honey primary, the med accent -->
+                                <Border IsVisible="{Binding CanGiveDose}"
+                                        BackgroundColor="{StaticResource HoneyWarmTint}"
+                                        Stroke="{StaticResource HoneyWarm}" StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 10" Padding="11,5"
+                                        HorizontalOptions="Start">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference CalendarPageRoot}, Path=BindingContext.JournalVM.GiveDoseCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Journal_MarkGiven}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="11.5" FontAttributes="Bold"
+                                           TextColor="{StaticResource HoneyWarmDeep}"/>
+                                </Border>
+                                <!-- Mark as skipped — subtle glass secondary -->
+                                <Border IsVisible="{Binding CanSkipDose}"
+                                        BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 10" Padding="11,5"
+                                        HorizontalOptions="Start">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference CalendarPageRoot}, Path=BindingContext.JournalVM.SkipDoseCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Journal_MarkSkipped}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="11.5" FontAttributes="Bold"
+                                           TextColor="{StaticResource InkSecondary}"/>
+                                </Border>
+                            </HorizontalStackLayout>
                         </VerticalStackLayout>
                     </Border>
                 </Grid>

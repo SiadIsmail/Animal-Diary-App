@@ -5,7 +5,11 @@
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-	<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+	<!-- No SCHEDULE_EXACT_ALARM: reminders use inexact allow-while-idle delivery so the
+	     app needs only POST_NOTIFICATIONS (one prompt, no "Alarms & reminders" settings
+	     detour) and carries no Play exact-alarm policy exposure. A reminder is not an
+	     emergency, and the bounded-horizon re-arm covers the real reliability gap.
+	     See AI/design-decisions.md -> "Reminders use inexact (allow-while-idle) alarms". -->
 	<!-- Profile-photo capture. Library picking uses the system photo picker and needs
 	     no storage permission; the FileProvider MediaPicker relies on is contributed
 	     automatically by .NET MAUI Essentials. -->

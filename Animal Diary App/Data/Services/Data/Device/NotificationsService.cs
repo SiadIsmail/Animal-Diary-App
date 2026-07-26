@@ -35,6 +35,8 @@ public class NotificationService : INotificationService
             NotificationId = content.Id,
             Title = content.Title,
             Description = content.Message,
+            // §8.7: the daily care reminder is silent; medication reminders keep their sound.
+            Silent = content.Silent,
             Schedule = new NotificationRequestSchedule
             {
                 NotifyTime = content.NotifyTime,

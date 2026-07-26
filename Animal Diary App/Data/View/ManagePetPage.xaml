@@ -483,6 +483,32 @@
                     </Border>
                 </VerticalStackLayout>
 
+                <!-- Pause everything (AI/app-voice.md §15): a one-tap, reversible way to
+                     stop every reminder for this pet on this device, keeping the record.
+                     Per-device, so it never touches the other carer's reminders. -->
+                <VerticalStackLayout Spacing="4" Margin="0,28,0,0">
+                    <Label Text="{Binding ManageVM.PauseRowLabel}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="13.5"
+                           TextColor="{StaticResource InkSecondary}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           Padding="18,12">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ManageVM.TogglePauseCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                    <!-- Plain status line, shown only while paused (no euphemism, §15). -->
+                    <Label Text="{Binding ManageVM.PausedNotice}"
+                           IsVisible="{Binding ManageVM.IsPaused}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12"
+                           TextColor="{StaticResource InkTertiary}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           Padding="24,0"/>
+                </VerticalStackLayout>
+
                 <!-- Remove pet: the owner deletes, a caregiver leaves. Understated on
                      purpose (deletion is never casual, never punishing). -->
                 <Label Text="{Binding ManageVM.RemovePetLabel}"

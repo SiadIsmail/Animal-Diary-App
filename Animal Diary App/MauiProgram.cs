@@ -63,6 +63,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<SharingSheetViewModel>();
 		builder.Services.AddSingleton<DevSheetViewModel>();
 		builder.Services.AddSingleton<PetService>();
+		builder.Services.AddSingleton<PetPauseService>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.PetPhotoService>();
 		builder.Services.AddSingleton<PetDeletionService>();
 		builder.Services.AddSingleton<MedicationService>();
@@ -85,6 +86,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ReminderInstanceService>();
 		builder.Services.AddSingleton<MedicationDoseReconciler>();
 		builder.Services.AddSingleton<MedicationReminderScheduler>();
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Notifications.DailyCareReminderScheduler>();
 
 		// Cloud boundary (mirrors the analytics boundary): the real sync engine
 		// when cloud features are compiled in, else a no-op. Everything holds

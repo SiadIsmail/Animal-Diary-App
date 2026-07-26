@@ -62,6 +62,8 @@ public partial class ManagePetPage : ContentPage
         // then name the consequence) and the after-removal navigation.
         vm.ManageVM.RequestRemoveFlow = OnRequestRemoveFlow;
         vm.ManageVM.PetRemoved += OnPetRemoved;
+        // Pausing a pet quietly offers the export once (§15.5) — the page owns the offer.
+        vm.ManageVM.RequestPauseExportOffer += OnPauseExportOffer;
         // The export sheet is hosted here too (the "save a copy first" offer opens it);
         // "View" on its done face pushes the preview, exactly as the Pets page does.
         vm.ExportSheetVM.ViewRequested += OnReportViewRequested;
@@ -101,7 +103,30 @@ public partial class ManagePetPage : ContentPage
 
         vm.ManageVM.RequestRemoveFlow = null;
         vm.ManageVM.PetRemoved -= OnPetRemoved;
+        vm.ManageVM.RequestPauseExportOffer -= OnPauseExportOffer;
         vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;
+    }
+
+    // After a pet is paused, quietly offer the export once (AI/app-voice.md §15.5).
+    // Reversible and non-destructive, so it's a gentle offer, not a confirmation.
+    private async void OnPauseExportOffer()
+    {
+        try
+        {
+            var loc = LocalizationManager.Instance;
+            var name = vm.ManageVM.PetName;
+            var saveCopy = await DisplayAlert(
+                loc.Format("Manage_PausedExportTitle", name),
+                loc.Format("Manage_PausedExportBody", name),
+                loc.GetString("Manage_PausedExportSave"),
+                loc.GetString("Common_NotNow"));
+            if (saveCopy)
+                vm.ExportSheetVM.OpenCommand.Execute(null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ManagePetPage] pause export offer failed: {ex.Message}");
+        }
     }
 
     // Runs the native remove dialogs for the active pet and returns what the VM

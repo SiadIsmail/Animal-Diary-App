@@ -113,6 +113,11 @@ public class TimelineItem
 
     public bool IsDose => Kind == TimelineKind.Dose;
 
+    /// <summary>Show the "Mark as given" button: an actionable dose not already taken.
+    /// This is the path back from a Missed (or Skipped) dose — a pill given late or
+    /// logged after the fact — and stays available on a still-open past dose.</summary>
+    public bool CanGiveDose => IsDose && DoseActionable && DoseOutcome != DoseStatus.Taken;
+
     /// <summary>Show the "Mark as skipped" button: an actionable dose not already skipped.</summary>
     public bool CanSkipDose => IsDose && DoseActionable && DoseOutcome != DoseStatus.Skipped;
 }
@@ -133,6 +138,7 @@ public class JournalLogViewModel : BaseViewModel
     private readonly DayDoseService _dayDoses;
     private readonly MedicationDoseLogService _doseLogs;
     private readonly MedicationReminderScheduler _reminders;
+    private readonly DailyCareReminderScheduler _dailyReminders;
     private readonly PetEntryService _petEntries;
     private readonly GlucoseEntryService _glucose;
     private readonly AppetiteEntryService _appetite;
@@ -148,6 +154,7 @@ public class JournalLogViewModel : BaseViewModel
         DayDoseService dayDoses,
         MedicationDoseLogService doseLogs,
         MedicationReminderScheduler reminders,
+        DailyCareReminderScheduler dailyReminders,
         PetEntryService petEntries,
         GlucoseEntryService glucose,
         AppetiteEntryService appetite,
@@ -160,6 +167,7 @@ public class JournalLogViewModel : BaseViewModel
         _dayDoses = dayDoses;
         _doseLogs = doseLogs;
         _reminders = reminders;
+        _dailyReminders = dailyReminders;
         _petEntries = petEntries;
         _glucose = glucose;
         _appetite = appetite;
@@ -170,6 +178,7 @@ public class JournalLogViewModel : BaseViewModel
         CloseAddSheetCommand = new Command(() => IsAddSheetVisible = false);
         SelectAddOptionCommand = new Command<AddOption>(OnSelectAddOption);
         DeleteItemCommand = new Command<TimelineItem>(async i => await DeleteItemAsync(i));
+        GiveDoseCommand = new Command<TimelineItem>(async i => await GiveDoseAsync(i));
         SkipDoseCommand = new Command<TimelineItem>(async i => await SkipDoseAsync(i));
     }
 
@@ -188,6 +197,11 @@ public class JournalLogViewModel : BaseViewModel
     /// <summary>Delete one logged timeline entry (the ✕ on a card). Dispatches to the
     /// right store by kind; a dose's ✕ clears its recorded outcome instead.</summary>
     public ICommand DeleteItemCommand { get; }
+
+    /// <summary>Mark a dose as given (the "Mark as given" button on a dose card).
+    /// The way to record a pill given late or logged after the fact — including a
+    /// dose the reconciler already marked Missed.</summary>
+    public ICommand GiveDoseCommand { get; }
 
     /// <summary>Mark a dose as skipped (the "Mark as skipped" button on a dose card).
     /// A skip is a first-class non-adherence fact that reaches the vet report.</summary>
@@ -327,6 +341,13 @@ public class JournalLogViewModel : BaseViewModel
         }
 
         NotifyStates();
+
+        // After-write hook: a logging change today alters what's still pending, so
+        // re-evaluate the daily care reminder (it may now need cancelling because the
+        // day is handled, or arming). Fire-and-forget — it has its own gate and must
+        // not slow the Journal reload. Only relevant for today's board.
+        if (IsToday)
+            _ = _dailyReminders.RefreshAsync();
     }
 
     private void BuildChips(IReadOnlyList<PendingItem> pending)
@@ -695,6 +716,48 @@ public class JournalLogViewModel : BaseViewModel
             return;
 
         ItemDeleted?.Invoke(new JournalSaveResult(message, undo));
+    }
+
+    // ── Mark a dose as given (the "Mark as given" button on a dose card) ──────────
+    // The timeline counterpart to one-tap chip logging, for a dose that's no longer a
+    // chip: a pill given late, forgotten and logged after the fact, or one the
+    // reconciler already stamped Missed. Records Taken, cancels the (late) reminder,
+    // and offers undo restoring whatever the dose was before (Missed / Skipped / open).
+    private async Task GiveDoseAsync(TimelineItem? item)
+    {
+        var pet = _activePet.ActivePet;
+        if (item == null || !item.IsDose || !item.DoseActionable || pet == null || pet.Id == 0)
+            return;
+        if (item.DoseOutcome == DoseStatus.Taken)
+            return; // already given — nothing to do
+
+        var petId = pet.Id;
+        var medId = item.MedicationId;
+        var time = item.DoseTime;
+        var date = _date;
+        var prev = item.DoseOutcome;
+
+        await _doseLogs.SetStatusAsync(medId, petId, date, time, DoseStatus.Taken);
+        // A given dose is handled — don't let its reminder fire late or re-send.
+        await _reminders.MarkDoseHandledAsync(medId, date, time);
+
+        Func<Task> undo = async () =>
+        {
+            if (prev is DoseStatus previous)
+            {
+                await _doseLogs.SetStatusAsync(medId, petId, date, time, previous);
+                await _reminders.MarkDoseHandledAsync(medId, date, time);
+            }
+            else
+            {
+                // Was still open → clear back to pending and re-arm its reminder.
+                await _doseLogs.ClearStatusAsync(medId, date, time);
+                await _reminders.SyncMedicationAsync(medId);
+            }
+        };
+
+        ItemDeleted?.Invoke(new JournalSaveResult(
+            Loc.Format("Journal_ToastMedGiven", item.Title), undo));
     }
 
     // ── Mark a dose as skipped (the "Mark as skipped" button on a dose card) ──────

@@ -63,6 +63,19 @@ public static class NotificationMessages
             : L.Format("Notif_MissedBodyMany", pet, count, med);
     }
 
+    /// <summary>Title for the once-a-day care reminder, e.g. "Charly's care today".</summary>
+    public static string DailyCareTitle(string petName)
+        => L.Format("Notif_DailyCareTitle", SafePet(petName));
+
+    /// <summary>
+    /// Body for the daily care reminder. Deliberately carries NO count of what's
+    /// pending: a number set when the notification is armed (often hours before it
+    /// fires) can be stale by the time it shows, and a stale number reads as wrong.
+    /// A plain, always-true line can't be. States a fact, never a nudge (§8).
+    /// </summary>
+    public static string DailyCareBody(string petName)
+        => L.Format("Notif_DailyCareBody", SafePet(petName));
+
     // ── Reserved for future reminder types ───────────────────────────────
 
     public static string MoodCheckInTitle(string petName) => L.Format("Notif_MoodCheckInTitle", SafePet(petName));
