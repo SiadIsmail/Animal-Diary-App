@@ -31,6 +31,8 @@ public sealed class EntitlementService : IEntitlementService
 
     public int TrialDaysLeft => _trial.DaysLeft;
 
+    public TimeSpan TrialTimeRemaining => _trial.TimeRemaining;
+
     public IReadOnlyList<SubscriptionOffer> Offers => _store.Offers;
 
     public event Action? StateChanged;

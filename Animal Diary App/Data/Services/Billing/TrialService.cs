@@ -38,10 +38,21 @@ public sealed class TrialService
     {
         get
         {
-            if (_startUtc is not DateTime start)
-                return 0;
-            var remaining = (start + BillingConfig.TrialLength) - DateTime.UtcNow;
+            var remaining = TimeRemaining;
             return remaining <= TimeSpan.Zero ? 0 : (int)Math.Ceiling(remaining.TotalDays);
+        }
+    }
+
+    /// <summary>Exact time left in the trial, or <see cref="TimeSpan.Zero"/> once elapsed
+    /// / never started.</summary>
+    public TimeSpan TimeRemaining
+    {
+        get
+        {
+            if (_startUtc is not DateTime start)
+                return TimeSpan.Zero;
+            var remaining = (start + BillingConfig.TrialLength) - DateTime.UtcNow;
+            return remaining <= TimeSpan.Zero ? TimeSpan.Zero : remaining;
         }
     }
 

@@ -36,6 +36,11 @@ public interface IEntitlementService
     /// Drives the pre-end nudge copy; never a live countdown UI.</summary>
     int TrialDaysLeft { get; }
 
+    /// <summary>Exact time left in the app-side trial (<see cref="TimeSpan.Zero"/> once
+    /// expired / subscribed / not started). Lets the UI show "3 days left" or, near the
+    /// end, "45 minutes left". Read on demand — it is not a ticking clock.</summary>
+    TimeSpan TrialTimeRemaining { get; }
+
     /// <summary>The store's subscription offers to show on the subscribe sheet
     /// (yearly first). Empty until <see cref="InitializeAsync"/> has run, when the
     /// store is unreachable, or under the Null implementation.</summary>

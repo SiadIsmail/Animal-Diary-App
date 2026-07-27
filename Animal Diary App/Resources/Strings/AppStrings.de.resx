@@ -673,6 +673,13 @@
   <data name="Settings_SubscriptionSection" xml:space="preserve"><value>Abo</value></data>
   <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Dein Abo</value></data>
   <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Kostenlose Testphase</value></data>
+  <data name="Settings_SubscriptionTrialFormat" xml:space="preserve"><value>Kostenlose Testphase (noch {0})</value></data>
+  <data name="Time_Day" xml:space="preserve"><value>{0} Tag</value></data>
+  <data name="Time_Days" xml:space="preserve"><value>{0} Tage</value></data>
+  <data name="Time_Hour" xml:space="preserve"><value>{0} Stunde</value></data>
+  <data name="Time_Hours" xml:space="preserve"><value>{0} Stunden</value></data>
+  <data name="Time_Minute" xml:space="preserve"><value>{0} Minute</value></data>
+  <data name="Time_Minutes" xml:space="preserve"><value>{0} Minuten</value></data>
   <data name="Settings_SubscriptionActive" xml:space="preserve"><value>Abonniert</value></data>
   <data name="Settings_SubscriptionEnded" xml:space="preserve"><value>Zum Weitermachen tippen</value></data>
   <data name="Notif_ChannelMedicationName" xml:space="preserve"><value>Medikamenten-Erinnerungen</value></data>

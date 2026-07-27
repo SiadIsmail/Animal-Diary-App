@@ -68,14 +68,40 @@ public class SettingsViewModel : BaseViewModel
     private readonly DevSheetViewModel _devVM;
 
     /// <summary>Subtitle for the Settings → Subscription row: the current state, in the
-    /// user's words (never "read-only" or "expired").</summary>
-    public string SubscriptionRowSubtitle => LocalizationManager.Instance.GetString(
-        _entitlements.State switch
+    /// user's words (never "read-only" or "expired"). In the trial it carries the time
+    /// left, e.g. "Free trial (3 days left)" or, near the end, "Free trial (12 minutes
+    /// left)". Re-read when the panel opens and when the entitlement changes — not a
+    /// ticking clock (a live countdown would push urgency this brand avoids).</summary>
+    public string SubscriptionRowSubtitle => _entitlements.State switch
+    {
+        Animal_Diary_App.Data.Services.Billing.AccessState.Subscribed
+            => LocalizationManager.Instance.GetString("Settings_SubscriptionActive"),
+        Animal_Diary_App.Data.Services.Billing.AccessState.TrialExpired
+            => LocalizationManager.Instance.GetString("Settings_SubscriptionEnded"),
+        _ => LocalizationManager.Instance.Format(
+            "Settings_SubscriptionTrialFormat", FormatTimeLeft(_entitlements.TrialTimeRemaining)),
+    };
+
+    /// <summary>Human phrase for the time left: the largest sensible unit, pluralized.
+    /// "3 days" / "1 day" / "5 hours" / "12 minutes".</summary>
+    private static string FormatTimeLeft(TimeSpan remaining)
+    {
+        if (remaining.TotalDays >= 1)
         {
-            Animal_Diary_App.Data.Services.Billing.AccessState.Subscribed => "Settings_SubscriptionActive",
-            Animal_Diary_App.Data.Services.Billing.AccessState.TrialExpired => "Settings_SubscriptionEnded",
-            _ => "Settings_SubscriptionTrial",
-        });
+            var d = (int)Math.Ceiling(remaining.TotalDays);
+            return Plural(d, "Time_Day", "Time_Days");
+        }
+        if (remaining.TotalHours >= 1)
+        {
+            var h = (int)Math.Ceiling(remaining.TotalHours);
+            return Plural(h, "Time_Hour", "Time_Hours");
+        }
+        var m = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
+        return Plural(m, "Time_Minute", "Time_Minutes");
+    }
+
+    private static string Plural(int n, string singularKey, string pluralKey)
+        => LocalizationManager.Instance.Format(n == 1 ? singularKey : pluralKey, n);
     private readonly DailyCareReminderScheduler _dailyReminders;
     private readonly MedicationReminderScheduler _reminders;
 
@@ -123,6 +149,8 @@ public class SettingsViewModel : BaseViewModel
         OpenSettingsCommand = new Command(() =>
         {
             IsPanelOpen = true;
+            // The trial time left moves on; recompute the row subtitle for this opening.
+            OnPropertyChanged(nameof(SubscriptionRowSubtitle));
             _analytics.Track(AnalyticsEvents.SettingsOpened);
         });
         CloseSettingsCommand = new Command(() => IsPanelOpen = false);
