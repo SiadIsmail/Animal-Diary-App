@@ -101,6 +101,29 @@ public static class AnalyticsEvents
     /// <summary>The first successful full sync after enabling completed.</summary>
     public const string CloudBackupCompleted = "cloud_backup_completed";
 
+    // ── Trial & subscription funnel ───────────────────────────────────────────
+    // Coarse and anonymous like everything else: no price is a person, no plan is an
+    // identity. With ~10 users the shape of the funnel + the founder's conversations
+    // are the signal, not the counts.
+    /// <summary>The app-side free trial clock started (once, at onboarding completion).</summary>
+    public const string TrialStarted = "trial_started";
+    /// <summary>The user completed their first real log (dose given or journal entry).
+    /// The bonding milestone the trial explainer waits for.</summary>
+    public const string FirstLogCompleted = "first_log_completed";
+    /// <summary>The reassuring post-first-log trial explainer was shown.</summary>
+    public const string TrialExplainerShown = "trial_explainer_shown";
+    /// <summary>The single pre-trial-end nudge was shown. Property: <see cref="PropTrialDay"/>.</summary>
+    public const string PreEndNudgeShown = "pre_end_nudge_shown";
+    /// <summary>The app entered the care-only read state (trial elapsed / subscription
+    /// lapsed) and showed the reassurance. Property: <see cref="PropTrialDay"/>.</summary>
+    public const string ReadOnlyEntered = "read_only_entered";
+    /// <summary>The subscribe sheet was viewed. Property: <see cref="PropSubscribeSource"/>
+    /// — this is the "where were they when they considered paying" signal.</summary>
+    public const string SubscribeScreenViewed = "subscribe_screen_viewed";
+    /// <summary>A subscription was purchased. Properties: <see cref="PropPlan"/>,
+    /// <see cref="PropPrice"/>, <see cref="PropSubscribeSource"/>.</summary>
+    public const string SubscriptionPurchased = "subscription_purchased";
+
     // ── Property keys ─────────────────────────────────────────────────────────
     /// <summary>App display version, e.g. "1.3.1". Non-identifying.</summary>
     public const string PropAppVersion = "app_version";
@@ -128,6 +151,17 @@ public static class AnalyticsEvents
     public const string PropDaysPerWeek = "days_per_week";
     /// <summary>Report look-back window in days (30/90/180).</summary>
     public const string PropRangeDays = "range_days";
+    /// <summary>Where the subscribe sheet was opened from — <see cref="SubscribeSourceSettings"/>
+    /// / <see cref="SubscribeSourceNudge"/> / <see cref="SubscribeSourceReadOnly"/> /
+    /// <see cref="SubscribeSourceExplainer"/>.</summary>
+    public const string PropSubscribeSource = "source";
+    /// <summary>Subscription cadence — <see cref="PlanYearly"/> / <see cref="PlanMonthly"/>.</summary>
+    public const string PropPlan = "plan";
+    /// <summary>Store-formatted price string (e.g. "€24.99"). Not personal.</summary>
+    public const string PropPrice = "price";
+    /// <summary>Which day of the trial an event happened on (1-based). Coarse
+    /// engagement/timing signal; not identifying.</summary>
+    public const string PropTrialDay = "trial_day";
 
     // ── Property values (kept as constants so producers agree on spelling) ──────
     public const string EntryTypeMood = "mood";
@@ -137,6 +171,15 @@ public static class AnalyticsEvents
     public const string EntryTypeSeizure = "seizure";
     public const string EntryTypeWater = "water";
     public const string SpeciesOther = "other";
+
+    // Subscribe-sheet sources.
+    public const string SubscribeSourceSettings = "settings";
+    public const string SubscribeSourceNudge = "nudge";
+    public const string SubscribeSourceReadOnly = "read_only";
+    public const string SubscribeSourceExplainer = "explainer";
+    // Subscription plans.
+    public const string PlanYearly = "yearly";
+    public const string PlanMonthly = "monthly";
 
     /// <summary>Not signed in to cloud — the default state of every install.</summary>
     public const string AccountStateAnonymous = "anonymous";

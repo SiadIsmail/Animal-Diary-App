@@ -22,9 +22,10 @@ public partial class App : Application
 	private readonly SettingsService _settingsService;
 	private readonly IAnalyticsService _analytics;
 	private readonly ICloudSyncService _cloudSync;
+	private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -36,6 +37,7 @@ public partial class App : Application
 		_settingsService = settingsService;
 		_analytics = analytics;
 		_cloudSync = cloudSync;
+		_entitlements = entitlements;
 		_services = services;
 
 		// Re-engagement signal: the app was foregrounded by tapping a medication
@@ -79,6 +81,10 @@ public partial class App : Application
 		// Re-evaluate today's daily care reminder: the day may have rolled over, or
 		// items were logged in another session, so it may now need arming or cancelling.
 		_ = _dailyReminderScheduler.RefreshAsync();
+
+		// A subscription may have been bought/renewed/cancelled elsewhere while we were
+		// backgrounded; re-check the entitlement. No-op under the Null boundary.
+		_ = _entitlements.RefreshAsync();
 	}
 
 	protected override void OnSleep()
@@ -184,6 +190,25 @@ public partial class App : Application
 				catch (Exception ex)
 				{
 					System.Diagnostics.Debug.WriteLine($"[Cloud] launch sync failed: {ex.Message}");
+				}
+			});
+
+			// Billing: initialize the entitlement boundary and, for an already-onboarded
+			// user (pets exist) landing on this build, start the trial clock if it hasn't
+			// begun — new users start theirs at onboarding completion (KeepSafePage). All
+			// off the UI path and a quiet no-op under the Null boundary.
+			var hasPets = pets.Count > 0;
+			_ = Task.Run(async () =>
+			{
+				try
+				{
+					await _entitlements.InitializeAsync();
+					if (hasPets && await _entitlements.EnsureTrialStartedAsync())
+						_analytics.Track(AnalyticsEvents.TrialStarted);
+				}
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine($"[Billing] launch init failed: {ex.Message}");
 				}
 			});
 		}

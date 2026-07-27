@@ -61,6 +61,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<JournalLogViewModel>();
 		builder.Services.AddSingleton<CloudSheetViewModel>();
 		builder.Services.AddSingleton<SharingSheetViewModel>();
+		builder.Services.AddSingleton<SubscribeSheetViewModel>();
+		builder.Services.AddSingleton<TrialMessageViewModel>();
 		builder.Services.AddSingleton<DevSheetViewModel>();
 		builder.Services.AddSingleton<PetService>();
 		builder.Services.AddSingleton<PetPauseService>();
@@ -105,6 +107,28 @@ public static class MauiProgram
 			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSyncService, Animal_Diary_App.Data.Services.Cloud.NullCloudSyncService>();
 			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSharingService, Animal_Diary_App.Data.Services.Cloud.NullCloudSharingService>();
 		}
+
+		// Billing / monetization boundary (mirrors the cloud & analytics boundaries):
+		// the real trial + entitlement service only on a mobile store AND when a key +
+		// binding are wired (BillingConfig.Enabled); otherwise a no-op that grants full
+		// access. Windows/macOS dev always gets the no-op, so it can never lock.
+#if ANDROID || IOS
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.TrialService>();
+		if (Animal_Diary_App.Data.Services.Billing.BillingConfig.Enabled)
+		{
+			// The RevenueCat binding's own DI (registers IRevenueCatBilling), then our
+			// seam over it and the composed entitlement gate.
+			Maui.RevenueCat.InAppBilling.RevenueCatBillingInstaller.AddRevenueCatBilling(builder.Services);
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IStoreBilling, Animal_Diary_App.Data.Services.Billing.RevenueCatStoreBilling>();
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.EntitlementService>();
+		}
+		else
+		{
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.NullEntitlementService>();
+		}
+#else
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.NullEntitlementService>();
+#endif
 
 		// Shell + its three tab pages. Transient so a post-reset relaunch builds a
 		// fresh Shell (with fresh page instances); within one Shell each page is

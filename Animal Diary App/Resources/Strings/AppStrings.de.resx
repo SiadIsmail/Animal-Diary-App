@@ -649,4 +649,26 @@
   <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>Du betreust dieses Tier bereits.</value></data>
   <data name="Cloud_ContinueWithGoogle" xml:space="preserve"><value>Mit Google fortfahren</value></data>
   <data name="Cloud_Or" xml:space="preserve"><value>oder</value></data>
+  <!-- Testphase & Abo (siehe MONETIZATION_PLAN.md). Nativ geschrieben, nicht übersetzt. -->
+  <data name="Common_Okay" xml:space="preserve"><value>Okay</value></data>
+  <data name="Subscribe_Title" xml:space="preserve"><value>Mit Felova weitermachen</value></data>
+  <data name="Subscribe_Subtitle" xml:space="preserve"><value>Halte weiter fest, wie es deinem Tier geht.</value></data>
+  <data name="Subscribe_PlanYearly" xml:space="preserve"><value>Jährlich</value></data>
+  <data name="Subscribe_PlanMonthly" xml:space="preserve"><value>Monatlich</value></data>
+  <data name="Subscribe_BestValue" xml:space="preserve"><value>Am günstigsten</value></data>
+  <data name="Subscribe_Restore" xml:space="preserve"><value>Kauf wiederherstellen</value></data>
+  <data name="Subscribe_NoOffers" xml:space="preserve"><value>Die Optionen sind gerade nicht verfügbar. Schau gleich noch einmal vorbei.</value></data>
+  <data name="Subscribe_ContinueLabel" xml:space="preserve"><value>Mit Felova weitermachen</value></data>
+  <data name="Subscribe_PurchaseProblem" xml:space="preserve"><value>Das hat nicht geklappt. Du kannst es noch einmal versuchen.</value></data>
+  <data name="Subscribe_RestoreDone" xml:space="preserve"><value>Dein Abo ist wieder da.</value></data>
+  <data name="Subscribe_RestoreNone" xml:space="preserve"><value>Kein Abo zum Wiederherstellen gefunden.</value></data>
+  <data name="Subscribe_RestoreProblem" xml:space="preserve"><value>Konnte gerade nicht prüfen. Versuch es gleich noch einmal.</value></data>
+  <data name="Subscribe_ExplainerTitle" xml:space="preserve"><value>Deine ersten {0} Tage gehen auf uns</value></data>
+  <data name="Subscribe_ExplainerBody" xml:space="preserve"><value>Halte alles für {0} fest, ganz ohne Karte. Danach bleibt {0}s Verlauf immer für dich sichtbar. Neue Einträge gehen mit einem Abo weiter, wann immer du so weit bist.</value></data>
+  <data name="Subscribe_ExplainerFootnote" xml:space="preserve"><value>Du kannst jederzeit in den Einstellungen ein Abo abschließen.</value></data>
+  <data name="Subscribe_NudgeTitle" xml:space="preserve"><value>Halte {0}s Verlauf weiter fest</value></data>
+  <data name="Subscribe_NudgeBody" xml:space="preserve"><value>Du hast {0} Dosen und {1} Wochen von {2}s Verlauf festgehalten. Es bleibt für dich sichtbar, und mit einem Abo kannst du weiter dazuschreiben.</value></data>
+  <data name="Subscribe_ReadOnlyTitle" xml:space="preserve"><value>{0}s Verlauf ist sicher</value></data>
+  <data name="Subscribe_ReadOnlyBody" xml:space="preserve"><value>Alles ist noch da und bleibt es auch. Um {0}s Pflege weiter festzuhalten, mach mit Felova weiter, wann immer du magst.</value></data>
+  <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Abo</value></data>
 </root>

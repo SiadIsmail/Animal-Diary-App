@@ -48,6 +48,17 @@ public class MainViewModel
     /// <summary>The Manage-pet "Pet sharing" sheet (invites, members, leave).</summary>
     public SharingSheetViewModel SharingVM { get; }
 
+    /// <summary>The monetization boundary — the single gate every add/edit surface
+    /// checks (<c>HasFullAccess</c>). Exposed here so hand-built pages reach it through
+    /// the shared VM, like <see cref="Analytics"/> and <see cref="CloudSync"/>.</summary>
+    public Animal_Diary_App.Data.Services.Billing.IEntitlementService Entitlements { get; }
+
+    /// <summary>The subscribe sheet (yearly + monthly + restore).</summary>
+    public SubscribeSheetViewModel SubscribeVM { get; }
+
+    /// <summary>The reusable trial-message sheet (explainer / pre-end nudge / read-only).</summary>
+    public TrialMessageViewModel TrialMessageVM { get; }
+
     /// <summary>The hidden developer diagnostics sheet (Settings → "Code").</summary>
     public DevSheetViewModel DevVM { get; }
 
@@ -84,6 +95,9 @@ public class MainViewModel
  DocumentsViewModel documentsVM,
  CloudSheetViewModel cloudVM,
  SharingSheetViewModel sharingVM,
+ SubscribeSheetViewModel subscribeVM,
+ TrialMessageViewModel trialMessageVM,
+ Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
  DevSheetViewModel devVM,
  Animal_Diary_App.Data.Services.Cloud.ICloudSyncService cloudSync,
  IAnalyticsService analytics)
@@ -111,10 +125,13 @@ public class MainViewModel
         DocumentsVM = documentsVM;
         CloudVM = cloudVM;
         SharingVM = sharingVM;
+        SubscribeVM = subscribeVM;
+        TrialMessageVM = trialMessageVM;
+        Entitlements = entitlements;
         DevVM = devVM;
         CloudSync = cloudSync;
 
-        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM, DevVM };
+        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM, SubscribeVM, DevVM };
     }
 
     /// <summary>

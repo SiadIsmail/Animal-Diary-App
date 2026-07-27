@@ -254,6 +254,87 @@ no prices, no ids — README rule): `paywall_shown`, `trial_expired`,
 
 ---
 
+## RevenueCat wired (2026-07-27)
+
+- **Binding:** `Kebechet.Maui.RevenueCat.InAppBilling` 7.1.0 (Android/iOS-only
+  `PackageReference`), which bundles native RevenueCat Android 10.1.2 — recent enough
+  to support the **Test Store** (`test_`) key. Chosen over hand-binding the Gradle AAR
+  (Kotlin binding pain for a solo maintainer). All RC types are confined to
+  `RevenueCatStoreBilling.cs` (behind `IStoreBilling`).
+- **Key:** a RevenueCat **Test Store** key (`test_…`) in the git-ignored
+  `BillingConfig.Secret.cs` (verified ignored). Test Store simulates purchases from the
+  RevenueCat dashboard — no Play Console products needed to test on-device. Swap to
+  `goog_…`/`appl_…` public keys for production.
+- **`BillingConfig.Enabled = true`** → on Android/iOS the real `EntitlementService` +
+  `RevenueCatStoreBilling` are live; Windows/macOS still get the no-op.
+- **Verified:** Windows build 0 errors. **Not yet verified:** the Android build — this
+  sandbox has **.NET 10-band MAUI workloads but the project targets net9.0-android**, so
+  restore can't produce the `net9.0-android` target here (fails before compiling any
+  code; unrelated to the RC changes). The code is written against the binding's actual
+  source API. **Your phone build is the real compile+run test.**
+- **Watch:** restore emits `NU1608` — the binding pins older `Xamarin.AndroidX.Lifecycle`
+  than MAUI 9; NuGet resolves the higher version. Usually benign, but if the Android
+  build/run misbehaves around AndroidX, that's the first suspect.
+
+**Still not wired (the next slice): the paywall UI + read-only enforcement.** With
+Enabled=true the SDK initializes and the trial clock runs, but there is **no paywall
+sheet shown and no edit gating yet** — so on-device you can test SDK health and
+dashboard connectivity now, and the full purchase/gate flow after the UI slice.
+
+## Build status (2026-07-27)
+
+Owner confirmed all recommendations; extra caregivers are gated. Implemented and
+**verified compiling on Windows (0 errors)**, currently inert because
+`BillingConfig.Enabled = false` (Null boundary → app behaves exactly as before):
+
+**Done — the reversible logic layer (no keys needed):**
+- `Data/Services/Billing/`: `IEntitlementService` (the single `HasFullAccess` gate),
+  `EntitlementService` (composes trial + store), `NullEntitlementService`,
+  `TrialService` (app-side 14-day clock, `BillingConfig.TrialLength`), `IStoreBilling`
+  + `NullStoreBilling` (the RevenueCat seam — all RC code will live behind this only).
+- `BillingConfig` with the key supplied by an **untracked** `BillingConfig.Secret.cs`
+  (git-ignored; `.example` committed) via an optional partial — compiles with or
+  without it.
+- `SettingsService`: `TrialStartUtc` + one-shot flags (`SettingsFlags`).
+- DI in `MauiProgram` (real on Android/iOS **and** `Enabled`; Null otherwise — Windows/
+  macOS dev never locks). Analytics funnel constants in `AnalyticsEvents`.
+- `SubscribeSheetViewModel` (yearly-first offers, purchase, restore, source-tagged
+  analytics) and `TrialMessageViewModel` (explainer / pre-end nudge / read-only
+  reassurance, one reusable VM), exposed on `MainViewModel`.
+- Trial **starts**: at onboarding completion (`KeepSafePage.HandOff`) and, for already-
+  onboarded users, at launch (`App.StartAsync`); entitlement refresh on resume.
+  `trial_started` fires once.
+- EN + DE copy for every new string (native German; app-voice compliant).
+
+**Remaining — the view + enforcement slice (do with the key + binding + a design pass,
+ideally runnable):**
+1. **Slice 1 spike:** pick a MAUI RevenueCat binding on a real Android sandbox purchase;
+   implement `RevenueCatStoreBilling : IStoreBilling`; swap it in the `MauiProgram`
+   `Enabled` branch; set `BillingConfig.Enabled = true`.
+2. **XAML sheet views** (`SubscribeSheetView`, `TrialMessageSheetView`) on
+   `FelovaBottomSheet`, hosted on the pages (mirror `CloudSheetView`).
+3. **Gate enforcement wiring:** `JournalLogViewModel` add-sheet chokepoint (leave
+   `GiveDose`/`Skip` free), medication add/edit, extra-pet add, `ManagePet` edits, and
+   **caregiver-invite creation** → route to the subscribe sheet when `!HasFullAccess`.
+4. **Presentation hooks:** first-log → explainer; pre-end nudge (launch/resume check
+   with real dose/weeks counts); read-only reassurance on the state transition; a
+   Settings → Subscription row (`Settings_SubscriptionRow`).
+
+**Known simplification to revisit:** the nudge copy interpolates a raw count
+("{0} doses"), so it reads "1 doses" at n=1. Fine for the ~10-user stage; swap to a
+plural rule before wider release.
+
+### Key handoff (keep the key out of git)
+
+1. Copy `Animal Diary App/Data/Services/Billing/BillingConfig.Secret.cs.example` to
+   `BillingConfig.Secret.cs` (same folder). It is already git-ignored.
+2. Paste the RevenueCat **public** SDK keys (`goog_…`, `appl_…`) into it. Never the
+   RevenueCat **secret** API key — that is server-side only and never ships in the app.
+3. After slice-1's binding is wired, set `BillingConfig.Enabled = true`.
+4. In RevenueCat/Play: entitlement `premium`, offering `default` with a **yearly** and
+   **monthly** base plan, each **with no store-side free-trial offer** (the app-side
+   trial is the only trial — see the stacking guard in §Point 1 / above).
+
 ## Resolved decisions (owner, 2026-07-25)
 
 1. **Trial length:** 24 days (tunable constant), then care-only read state.
