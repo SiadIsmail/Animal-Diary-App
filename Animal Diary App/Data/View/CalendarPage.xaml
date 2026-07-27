@@ -586,6 +586,10 @@
         <views:WaterSheetView Grid.RowSpan="2" BindingContext="{Binding WaterSheetVM}"/>
         <views:AddAnythingSheetView Grid.RowSpan="2" BindingContext="{Binding JournalVM}"/>
 
+        <!-- Monetization sheets: the subscribe ask + the reassuring trial messages. -->
+        <views:SubscribeSheetView Grid.RowSpan="2" BindingContext="{Binding SubscribeVM}"/>
+        <views:TrialMessageSheetView Grid.RowSpan="2" BindingContext="{Binding TrialMessageVM}"/>
+
     </Grid>
 
 </ContentPage>

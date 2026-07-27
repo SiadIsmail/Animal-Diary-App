@@ -279,10 +279,30 @@ no prices, no ids — README rule): `paywall_shown`, `trial_expired`,
   than MAUI 9; NuGet resolves the higher version. Usually benign, but if the Android
   build/run misbehaves around AndroidX, that's the first suspect.
 
-**Still not wired (the next slice): the paywall UI + read-only enforcement.** With
-Enabled=true the SDK initializes and the trial clock runs, but there is **no paywall
-sheet shown and no edit gating yet** — so on-device you can test SDK health and
-dashboard connectivity now, and the full purchase/gate flow after the UI slice.
+## Paywall UI + enforcement slice (2026-07-27)
+
+Shipped and Windows-clean (0 errors):
+- **`SubscribeSheetView`** (yearly emphasized + monthly from the store, Restore) and
+  **`TrialMessageSheetView`** (explainer / nudge / read-only reassurance), both on
+  `FelovaBottomSheet`, hosted on all three tab pages (Today / Journal / Pets).
+- **Read-only gate on Journal logging:** the "+" add sheet and every non-medication
+  tracker chip route to the subscribe sheet when `!HasFullAccess`. **The scheduled-dose
+  loop (mark given / skip) stays free**, as does the vet export.
+- **Extra-pet add** (`PetsPage.OnAddPetClicked`) and **caregiver-invite minting**
+  (`SharingSheetViewModel.CreateInviteAsync`) are gated → subscribe sheet.
+- **First-log → explainer** (once, during trial); **read-only reassurance** once on the
+  transition (App launch/resume); **Settings → Subscription row** with a state subtitle.
+- EN/DE copy for all of it.
+
+**Still not wired (small follow-up):**
+- **Pre-end nudge** — needs the real dose/history counts; the VM (`ShowNudge`) and copy
+  exist, only the launch/resume trigger + count queries remain.
+- **Gates on the Manage/Medications pages:** adding/editing a **medication** or schedule,
+  editing a **pet profile**, and **condition/care-plan setup**. These pages don't host
+  the subscribe sheet yet; each needs the sheet hosted + the trigger gated (same pattern
+  as PetsPage). Until then a locked user can still add/edit meds and edit a pet.
+- None of the deferred items weaken the safety invariants (reminders, dose loop, export
+  always free).
 
 ## Build status (2026-07-27)
 

@@ -2,6 +2,7 @@ namespace Animal_Diary_App.Data.View;
 
 using System.ComponentModel;
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
@@ -25,11 +26,52 @@ public partial class CalendarPage : ContentPage
 	// journal_entry_created with the right entry_type. Undo does not pass through here.
 	private JournalChipKind? _lastOpenedSheetKind;
 
-	public CalendarPage(MainViewModel mainViewModel)
+	private readonly SettingsService _settings;
+
+	public CalendarPage(MainViewModel mainViewModel, SettingsService settings)
 	{
 		InitializeComponent();
 		vm = mainViewModel;
+		_settings = settings;
 		BindingContext = vm;
+	}
+
+	/// <summary>The read-only gate for a NEW-entry action. When the trial has ended and
+	/// there's no subscription, open the subscribe sheet instead and report that the
+	/// action was blocked. The scheduled-dose loop never calls this — logging a given
+	/// dose stays free (owner decision, MONETIZATION_PLAN.md).</summary>
+	private bool BlockedByPaywall()
+	{
+		if (vm.Entitlements.HasFullAccess)
+			return false;
+		vm.SubscribeVM.Open(AnalyticsEvents.SubscribeSourceReadOnly);
+		return true;
+	}
+
+	/// <summary>First real log (dose or journal entry): record the milestone once and,
+	/// during the trial, show the reassuring explainer once. Never blocks the log.</summary>
+	private async Task MaybeHandleFirstLogAsync()
+	{
+		try
+		{
+			if (await _settings.GetFlagAsync(SettingsFlags.FirstLogDone))
+				return;
+			await _settings.SetFlagAsync(SettingsFlags.FirstLogDone, true);
+			vm.Analytics.Track(AnalyticsEvents.FirstLogCompleted);
+
+			if (vm.Entitlements.State == Animal_Diary_App.Data.Services.Billing.AccessState.Trial
+				&& !await _settings.GetFlagAsync(SettingsFlags.TrialExplainerShown))
+			{
+				await _settings.SetFlagAsync(SettingsFlags.TrialExplainerShown, true);
+				// Let the just-saved sheet finish sliding out before this one slides in.
+				await Task.Delay(ReducedMotion.IsEnabled ? 60 : 300);
+				vm.TrialMessageVM.ShowExplainer(vm.CalendarVM.ActivePetName);
+			}
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[Billing] first-log handling failed: {ex.Message}");
+		}
 	}
 
 	// Android back closes an open sheet (or the settings panel) before it navigates.
@@ -136,9 +178,12 @@ public partial class CalendarPage : ContentPage
 			switch (chip.Kind)
 			{
 				case JournalChipKind.Add:
-					vm.JournalVM.OpenAddSheetCommand.Execute(null);
+					// Adding a new entry is gated in read-only; the "+" leads to the paywall.
+					if (!BlockedByPaywall())
+						vm.JournalVM.OpenAddSheetCommand.Execute(null);
 					break;
 				case JournalChipKind.Medication:
+					// The scheduled-dose adherence loop is always free.
 					await LogDoseFlowAsync(chip, v);
 					break;
 				default:
@@ -160,6 +205,7 @@ public partial class CalendarPage : ContentPage
 		_ = BurstBubblesAsync(anchor);
 		await ReloadJournalAsync();
 		ShowUndoToast(result);
+		await MaybeHandleFirstLogAsync();
 	}
 
 	// Emit journal_entry_created for the sheet that just saved. Only the coarse entry
@@ -196,6 +242,11 @@ public partial class CalendarPage : ContentPage
 
 	private async Task OpenSheetForKindAsync(JournalChipKind kind)
 	{
+		// The single funnel for opening a NON-medication input sheet (tracker chip or
+		// the add-anything selection) — the one place to gate new journal/symptom logging.
+		if (BlockedByPaywall())
+			return;
+
 		int petId = vm.CalendarVM.CurrentPetId;
 		string name = vm.CalendarVM.ActivePetName;
 		var date = vm.CalendarVM.CurrentSelectedDate;
@@ -227,6 +278,7 @@ public partial class CalendarPage : ContentPage
 			_ = BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62));
 			await ReloadJournalAsync();
 			ShowUndoToast(result);
+			await MaybeHandleFirstLogAsync();
 		}
 		catch (Exception ex)
 		{

@@ -562,6 +562,10 @@
         <view:CloudSheetView Grid.RowSpan="2"
                              BindingContext="{Binding CloudVM}"/>
 
+        <!-- Monetization sheets (subscribe + trial messages) -->
+        <view:SubscribeSheetView Grid.RowSpan="2" BindingContext="{Binding SubscribeVM}"/>
+        <view:TrialMessageSheetView Grid.RowSpan="2" BindingContext="{Binding TrialMessageVM}"/>
+
         <!-- Hidden developer diagnostics sheet -->
         <view:DevSheetView Grid.RowSpan="2"
                            BindingContext="{Binding DevVM}"/>

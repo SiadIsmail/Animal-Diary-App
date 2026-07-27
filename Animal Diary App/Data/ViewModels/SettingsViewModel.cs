@@ -54,6 +54,7 @@ public class SettingsViewModel : BaseViewModel
     public ICommand SetLanguageCommand { get; }
     public ICommand OpenLinkCommand { get; }
     public ICommand OpenCloudCommand { get; }
+    public ICommand OpenSubscribeCommand { get; }
     public ICommand OpenDevCommand { get; }
 
     private readonly AppResetService _appResetService;
@@ -62,7 +63,19 @@ public class SettingsViewModel : BaseViewModel
     private readonly ICloudAuthService _cloudAuth;
     private readonly ICloudSyncService _cloudSync;
     private readonly CloudSheetViewModel _cloudVM;
+    private readonly SubscribeSheetViewModel _subscribeVM;
+    private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
     private readonly DevSheetViewModel _devVM;
+
+    /// <summary>Subtitle for the Settings → Subscription row: the current state, in the
+    /// user's words (never "read-only" or "expired").</summary>
+    public string SubscriptionRowSubtitle => LocalizationManager.Instance.GetString(
+        _entitlements.State switch
+        {
+            Animal_Diary_App.Data.Services.Billing.AccessState.Subscribed => "Settings_SubscriptionActive",
+            Animal_Diary_App.Data.Services.Billing.AccessState.TrialExpired => "Settings_SubscriptionEnded",
+            _ => "Settings_SubscriptionTrial",
+        });
     private readonly DailyCareReminderScheduler _dailyReminders;
 
     /// <summary>Whether a cloud account is signed in — pages pick the reset-confirm
@@ -71,7 +84,8 @@ public class SettingsViewModel : BaseViewModel
 
     public SettingsViewModel(AppResetService appResetService, SettingsService settingsService,
         IAnalyticsService analytics, ICloudAuthService cloudAuth, ICloudSyncService cloudSync,
-        CloudSheetViewModel cloudVM, DevSheetViewModel devVM, DailyCareReminderScheduler dailyReminders)
+        CloudSheetViewModel cloudVM, DevSheetViewModel devVM, DailyCareReminderScheduler dailyReminders,
+        SubscribeSheetViewModel subscribeVM, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements)
     {
         _appResetService = appResetService;
         _settingsService = settingsService;
@@ -81,11 +95,21 @@ public class SettingsViewModel : BaseViewModel
         _cloudVM = cloudVM;
         _devVM = devVM;
         _dailyReminders = dailyReminders;
+        _subscribeVM = subscribeVM;
+        _entitlements = entitlements;
+        // Keep the row subtitle fresh when the entitlement changes (purchase/expiry).
+        _entitlements.StateChanged += () => OnPropertyChanged(nameof(SubscriptionRowSubtitle));
         // The panel renders above the sheet, so opening the sheet closes the panel.
         OpenCloudCommand = new Command(() =>
         {
             IsPanelOpen = false;
             _cloudVM.OpenCommand.Execute(null);
+        });
+        // Subscription row → the subscribe sheet, tagged as opened from Settings.
+        OpenSubscribeCommand = new Command(() =>
+        {
+            IsPanelOpen = false;
+            _subscribeVM.Open(AnalyticsEvents.SubscribeSourceSettings);
         });
         // Hidden developer panel (gated by a code inside the sheet).
         OpenDevCommand = new Command(() =>

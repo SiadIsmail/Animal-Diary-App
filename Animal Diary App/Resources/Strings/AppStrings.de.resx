@@ -670,5 +670,9 @@
   <data name="Subscribe_NudgeBody" xml:space="preserve"><value>Du hast {0} Dosen und {1} Wochen von {2}s Verlauf festgehalten. Es bleibt für dich sichtbar, und mit einem Abo kannst du weiter dazuschreiben.</value></data>
   <data name="Subscribe_ReadOnlyTitle" xml:space="preserve"><value>{0}s Verlauf ist sicher</value></data>
   <data name="Subscribe_ReadOnlyBody" xml:space="preserve"><value>Alles ist noch da und bleibt es auch. Um {0}s Pflege weiter festzuhalten, mach mit Felova weiter, wann immer du magst.</value></data>
-  <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Abo</value></data>
+  <data name="Settings_SubscriptionSection" xml:space="preserve"><value>Abo</value></data>
+  <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Dein Abo</value></data>
+  <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Kostenlose Testphase</value></data>
+  <data name="Settings_SubscriptionActive" xml:space="preserve"><value>Abonniert</value></data>
+  <data name="Settings_SubscriptionEnded" xml:space="preserve"><value>Zum Weitermachen tippen</value></data>
 </root>

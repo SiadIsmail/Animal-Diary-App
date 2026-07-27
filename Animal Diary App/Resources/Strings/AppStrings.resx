@@ -689,5 +689,9 @@
   <data name="Subscribe_NudgeBody" xml:space="preserve"><value>You've written down {0} doses and {1} weeks of {2}'s history. It stays yours to see, and you can keep adding to it with a subscription.</value></data>
   <data name="Subscribe_ReadOnlyTitle" xml:space="preserve"><value>{0}'s history is safe</value></data>
   <data name="Subscribe_ReadOnlyBody" xml:space="preserve"><value>It's all still here, and always will be. To keep writing down {0}'s care, continue with Felova whenever you're ready.</value></data>
-  <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Subscription</value></data>
+  <data name="Settings_SubscriptionSection" xml:space="preserve"><value>Subscription</value></data>
+  <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Your subscription</value></data>
+  <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Free trial</value></data>
+  <data name="Settings_SubscriptionActive" xml:space="preserve"><value>Subscribed</value></data>
+  <data name="Settings_SubscriptionEnded" xml:space="preserve"><value>Tap to continue</value></data>
 </root>

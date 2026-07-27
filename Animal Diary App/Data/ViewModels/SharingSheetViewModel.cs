@@ -40,17 +40,23 @@ public class SharingSheetViewModel : BaseViewModel
     private readonly ICloudSyncService _sync;
     private readonly ICloudAuthService _auth;
     private readonly ActivePetService _activePet;
+    private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
+    private readonly SubscribeSheetViewModel _subscribe;
 
     public SharingSheetViewModel(
         ICloudSharingService sharing,
         ICloudSyncService sync,
         ICloudAuthService auth,
-        ActivePetService activePet)
+        ActivePetService activePet,
+        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
+        SubscribeSheetViewModel subscribe)
     {
         _sharing = sharing;
         _sync = sync;
         _auth = auth;
         _activePet = activePet;
+        _entitlements = entitlements;
+        _subscribe = subscribe;
 
         OpenCommand = new Command(async () => await OpenAsync());
         DismissCommand = new Command(() => IsPresented = false);
@@ -161,6 +167,16 @@ public class SharingSheetViewModel : BaseViewModel
         var pet = _activePet.ActivePet;
         if (pet == null || string.IsNullOrEmpty(pet.SyncId))
             return;
+
+        // Adding a new caregiver is "adding more" — gated in the read-only state. Existing
+        // shared care keeps working; only minting a fresh invite routes to the paywall.
+        if (!_entitlements.HasFullAccess)
+        {
+            IsPresented = false;
+            _subscribe.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceReadOnly);
+            return;
+        }
+
         await Run(async () => InviteCode = await _sharing.CreateInviteAsync(pet.SyncId));
     }
 
