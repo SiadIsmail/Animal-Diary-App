@@ -177,6 +177,13 @@ public partial class PetsPage : ContentPage
 
     async void OnAddPetClicked(object? sender, EventArgs args)
     {
+        // Adding another pet is "adding more" — gated in the read-only state. The first
+        // pet is created during onboarding (a different path), so it is never gated here.
+        if (!vm.Entitlements.HasFullAccess)
+        {
+            vm.SubscribeVM.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceReadOnly);
+            return;
+        }
         await Navigation.PushAsync(new CreatePetPage(vm));
     }
 

@@ -83,8 +83,37 @@ public partial class App : Application
 		_ = _dailyReminderScheduler.RefreshAsync();
 
 		// A subscription may have been bought/renewed/cancelled elsewhere while we were
-		// backgrounded; re-check the entitlement. No-op under the Null boundary.
-		_ = _entitlements.RefreshAsync();
+		// backgrounded; re-check the entitlement. No-op under the Null boundary. Then, if
+		// the trial has quietly elapsed while away, show the one-time reassurance.
+		_ = Task.Run(async () =>
+		{
+			await _entitlements.RefreshAsync();
+			await MaybeShowReadOnlyReassuranceAsync();
+		});
+	}
+
+	/// <summary>Once, when the app first finds itself in the care-only read state (trial
+	/// elapsed, no subscription), reassure the owner their data is safe. Reassures first;
+	/// the continue-to-subscribe ask lives inside that sheet. No-op under the Null boundary
+	/// (state is always Subscribed there).</summary>
+	private async Task MaybeShowReadOnlyReassuranceAsync()
+	{
+		try
+		{
+			if (_entitlements.State != Animal_Diary_App.Data.Services.Billing.AccessState.TrialExpired)
+				return;
+			if (await _settingsService.GetFlagAsync(SettingsFlags.ReadOnlyReassuranceShown))
+				return;
+			await _settingsService.SetFlagAsync(SettingsFlags.ReadOnlyReassuranceShown, true);
+
+			var petName = _vm.PetVM.ActivePet?.Name ?? string.Empty;
+			var trialDay = (int)Animal_Diary_App.Data.Services.Billing.BillingConfig.TrialLength.TotalDays;
+			MainThread.BeginInvokeOnMainThread(() => _vm.TrialMessageVM.ShowReadOnly(petName, trialDay));
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[Billing] read-only reassurance failed: {ex.Message}");
+		}
 	}
 
 	protected override void OnSleep()
@@ -205,6 +234,7 @@ public partial class App : Application
 					await _entitlements.InitializeAsync();
 					if (hasPets && await _entitlements.EnsureTrialStartedAsync())
 						_analytics.Track(AnalyticsEvents.TrialStarted);
+					await MaybeShowReadOnlyReassuranceAsync();
 				}
 				catch (Exception ex)
 				{
