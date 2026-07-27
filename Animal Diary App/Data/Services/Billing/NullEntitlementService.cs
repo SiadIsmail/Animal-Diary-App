@@ -12,6 +12,7 @@ public sealed class NullEntitlementService : IEntitlementService
     public bool HasFullAccess => true;
     public AccessState State => AccessState.Subscribed;
     public int TrialDaysLeft => 0;
+    public TimeSpan TrialTimeRemaining => TimeSpan.Zero;
     public IReadOnlyList<SubscriptionOffer> Offers => Array.Empty<SubscriptionOffer>();
 
 #pragma warning disable CS0067 // Never raised: access never changes here.

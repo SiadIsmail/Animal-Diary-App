@@ -692,6 +692,13 @@
   <data name="Settings_SubscriptionSection" xml:space="preserve"><value>Subscription</value></data>
   <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Your subscription</value></data>
   <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Free trial</value></data>
+  <data name="Settings_SubscriptionTrialFormat" xml:space="preserve"><value>Free trial ({0} left)</value></data>
+  <data name="Time_Day" xml:space="preserve"><value>{0} day</value></data>
+  <data name="Time_Days" xml:space="preserve"><value>{0} days</value></data>
+  <data name="Time_Hour" xml:space="preserve"><value>{0} hour</value></data>
+  <data name="Time_Hours" xml:space="preserve"><value>{0} hours</value></data>
+  <data name="Time_Minute" xml:space="preserve"><value>{0} minute</value></data>
+  <data name="Time_Minutes" xml:space="preserve"><value>{0} minutes</value></data>
   <data name="Settings_SubscriptionActive" xml:space="preserve"><value>Subscribed</value></data>
   <data name="Settings_SubscriptionEnded" xml:space="preserve"><value>Tap to continue</value></data>
   <data name="Notif_ChannelMedicationName" xml:space="preserve"><value>Medication reminders</value></data>
