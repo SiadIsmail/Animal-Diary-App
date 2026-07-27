@@ -86,6 +86,25 @@ public partial class KeepSafePage : ContentPage
 		// same handoff the condition picker and the Welcome restore path use.
 		vm.CloudVM.DismissCommand.Execute(null);
 		vm.Analytics.Track(AnalyticsEvents.OnboardingCompleted);
+
+		// Onboarding is done and the first pet exists — begin the free trial now. Quiet
+		// no-op under the Null boundary (dev / billing disabled). Fire-and-forget so the
+		// handoff into the app isn't blocked.
+		_ = StartTrialAsync();
+
 		(Application.Current as App)?.SwitchToMainApp();
+	}
+
+	private async Task StartTrialAsync()
+	{
+		try
+		{
+			if (await vm.Entitlements.EnsureTrialStartedAsync())
+				vm.Analytics.Track(AnalyticsEvents.TrialStarted);
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[Billing] trial start failed: {ex.Message}");
+		}
 	}
 }

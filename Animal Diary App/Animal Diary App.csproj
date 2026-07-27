@@ -127,6 +127,15 @@
 		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.10" />
 	</ItemGroup>
 
+	<!-- RevenueCat (in-app subscriptions). Community MAUI binding that bundles the
+	     native RevenueCat SDK; mobile stores only, so it is referenced on Android/iOS
+	     alone. The Windows/macOS dev build never sees it (and registers the no-op
+	     NullEntitlementService instead). v7.1.0 bundles native Android 10.1.2, which
+	     supports the Test Store (test_) API key. -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' OR $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+		<PackageReference Include="Kebechet.Maui.RevenueCat.InAppBilling" Version="7.1.0" />
+	</ItemGroup>
+
 	<PropertyGroup Condition="'$(Configuration)' == 'Release' AND '$(TargetFramework)' == 'net9.0-android'">
 		<AndroidKeyStore>true</AndroidKeyStore>
 		<AndroidSigningKeyStore>felova-upload.keystore</AndroidSigningKeyStore>

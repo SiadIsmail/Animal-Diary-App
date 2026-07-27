@@ -668,4 +668,26 @@
   <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>You already care for this pet.</value></data>
   <data name="Cloud_ContinueWithGoogle" xml:space="preserve"><value>Continue with Google</value></data>
   <data name="Cloud_Or" xml:space="preserve"><value>or</value></data>
+  <!-- Trial & subscription (see MONETIZATION_PLAN.md). {0}/{1}/{2} are positional. -->
+  <data name="Common_Okay" xml:space="preserve"><value>Okay</value></data>
+  <data name="Subscribe_Title" xml:space="preserve"><value>Continue with Felova</value></data>
+  <data name="Subscribe_Subtitle" xml:space="preserve"><value>Keep writing down your pet's care.</value></data>
+  <data name="Subscribe_PlanYearly" xml:space="preserve"><value>Yearly</value></data>
+  <data name="Subscribe_PlanMonthly" xml:space="preserve"><value>Monthly</value></data>
+  <data name="Subscribe_BestValue" xml:space="preserve"><value>Best value</value></data>
+  <data name="Subscribe_Restore" xml:space="preserve"><value>Restore purchase</value></data>
+  <data name="Subscribe_NoOffers" xml:space="preserve"><value>Options aren't available right now. Check back in a moment.</value></data>
+  <data name="Subscribe_ContinueLabel" xml:space="preserve"><value>Continue with Felova</value></data>
+  <data name="Subscribe_PurchaseProblem" xml:space="preserve"><value>That didn't go through. You can try again.</value></data>
+  <data name="Subscribe_RestoreDone" xml:space="preserve"><value>Your subscription is back.</value></data>
+  <data name="Subscribe_RestoreNone" xml:space="preserve"><value>No subscription found to restore.</value></data>
+  <data name="Subscribe_RestoreProblem" xml:space="preserve"><value>Couldn't check just now. Try again in a moment.</value></data>
+  <data name="Subscribe_ExplainerTitle" xml:space="preserve"><value>Your first {0} days are on us</value></data>
+  <data name="Subscribe_ExplainerBody" xml:space="preserve"><value>Write down everything for {0}, no card needed. After that, {0}'s history is always yours to see. Adding new entries continues with a subscription, whenever you're ready.</value></data>
+  <data name="Subscribe_ExplainerFootnote" xml:space="preserve"><value>You can subscribe anytime in Settings.</value></data>
+  <data name="Subscribe_NudgeTitle" xml:space="preserve"><value>Keep {0}'s record going</value></data>
+  <data name="Subscribe_NudgeBody" xml:space="preserve"><value>You've written down {0} doses and {1} weeks of {2}'s history. It stays yours to see, and you can keep adding to it with a subscription.</value></data>
+  <data name="Subscribe_ReadOnlyTitle" xml:space="preserve"><value>{0}'s history is safe</value></data>
+  <data name="Subscribe_ReadOnlyBody" xml:space="preserve"><value>It's all still here, and always will be. To keep writing down {0}'s care, continue with Felova whenever you're ready.</value></data>
+  <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Subscription</value></data>
 </root>
