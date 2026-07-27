@@ -78,8 +78,24 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
             if (result.IsSuccess)
             {
                 // Trust the returned info, then re-read to be certain the entitlement is live.
+                LogCustomerInfo("purchase result", result.CustomerInfo);
                 SetEntitlement(IsPremiumActive(result.CustomerInfo));
                 await RefreshEntitlementAsync();
+
+                // Access is defined by the entitlement, not by the transaction. If the
+                // store says the buy went through but our entitlement is still inactive,
+                // the RevenueCat dashboard is misconfigured (the '{EntitlementId}'
+                // entitlement isn't attached to this product, or Sandbox Testing Access is
+                // restricting grants). Surface it instead of silently staying locked.
+                if (!_hasEntitlement)
+                {
+                    Debug.WriteLine(
+                        $"[Billing] purchase succeeded but entitlement '{BillingConfig.EntitlementId}' " +
+                        "is NOT active. Check the RevenueCat dashboard: (1) an entitlement with this " +
+                        "exact id exists, (2) it's attached to the purchased product, (3) Sandbox " +
+                        "Testing Access grants entitlements to this tester.");
+                    return PurchaseOutcome.Failed;
+                }
                 return PurchaseOutcome.Success;
             }
 
@@ -102,6 +118,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         try
         {
             var info = await _rc.RestoreTransactions();
+            LogCustomerInfo("restore result", info);
             var active = IsPremiumActive(info);
             SetEntitlement(active);
             return active ? PurchaseOutcome.Success : PurchaseOutcome.NothingToRestore;
@@ -139,6 +156,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
     private async Task RefreshEntitlementAsync()
     {
         var info = await _rc.GetCustomerInfo();
+        LogCustomerInfo("customer info", info);
         SetEntitlement(IsPremiumActive(info));
     }
 
@@ -147,6 +165,24 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
     /// raw product/subscription ids in <c>ActiveSubscriptions</c>.)</summary>
     private static bool IsPremiumActive(CustomerInfoDto? info) =>
         info?.Entitlements.Any(e => e.Identifier == BillingConfig.EntitlementId && e.IsActive) ?? false;
+
+    /// <summary>Dump what RevenueCat reports so a "paid but still locked" case is
+    /// diagnosable from logcat: the entitlements it knows about (id + active) and the raw
+    /// active subscription ids. Debug builds only.</summary>
+    [System.Diagnostics.Conditional("DEBUG")]
+    private static void LogCustomerInfo(string context, CustomerInfoDto? info)
+    {
+        if (info is null)
+        {
+            Debug.WriteLine($"[Billing] {context}: <null>");
+            return;
+        }
+        var ents = info.Entitlements.Count == 0
+            ? "(none)"
+            : string.Join(", ", info.Entitlements.Select(e => $"{e.Identifier}:active={e.IsActive}"));
+        var subs = info.ActiveSubscriptions.Count == 0 ? "(none)" : string.Join(", ", info.ActiveSubscriptions);
+        Debug.WriteLine($"[Billing] {context}: looking for entitlement '{BillingConfig.EntitlementId}' | entitlements=[{ents}] | activeSubscriptions=[{subs}]");
+    }
 
     private void SetEntitlement(bool value)
     {
