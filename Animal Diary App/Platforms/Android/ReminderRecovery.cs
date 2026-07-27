@@ -62,12 +62,19 @@ internal static class ReminderRecovery
                 return false;
 
             var component = new ComponentName(ctx, Java.Lang.Class.FromType(typeof(ReminderRecoveryJobService)));
-            var info = new JobInfo.Builder(JobId, component)
-                // Run as soon as the system is willing; a deadline is required for a job
-                // with no other constraints.
+            var builder = new JobInfo.Builder(JobId, component);
+            if (builder is null)
+                return false;
+
+            // Run as soon as the system is willing; a deadline is required for a job
+            // with no other constraints.
+            var info = builder
                 .SetOverrideDeadline(1_000)
-                .SetPersisted(false)
-                .Build();
+                ?.SetPersisted(false)
+                ?.Build();
+
+            if (info is null)
+                return false;
 
             return scheduler.Schedule(info) == JobScheduler.ResultSuccess;
         }

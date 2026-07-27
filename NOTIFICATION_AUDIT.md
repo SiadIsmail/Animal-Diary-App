@@ -8,7 +8,40 @@ drive them.
 `Data/Services/Data/Device/`, `Platforms/Android/`, and all call sites; cross-checked
 against the **actual v12.0.1 source of Plugin.LocalNotification** (the shipped pin is
 12.0.2) and against Android/Apple platform documentation.
-**Constraint honoured:** no code was changed.
+**Constraint honoured:** no code was changed *for the audit itself*. Fixes were
+implemented afterwards, on request — see §0.
+
+---
+
+## 0. Remediation status (2026-07-27)
+
+Everything below was written against the pre-fix code and is kept as the record of
+what was wrong and why. All findings except **H9** have since been fixed and both
+targets build clean (Windows and Android, 0 errors).
+
+| Finding | Status |
+|---|---|
+| H1 scheduling failures invisible | **Fixed** — `ScheduleNotification` returns `bool`; rejected instances are dropped, not recorded as armed |
+| H2 permission requested once, no recovery | **Fixed** — also requested at the daily-care opt-in; Today page shows `RemindersBlocked` with a settings link, re-checked live on every appearance |
+| H3 boot/launch race swallows missed doses | **Fixed** — `MarkBootRecoveryPending()` persists the intent; whichever pass runs first honours it |
+| H4 `ClearPendingAsync` deletes past-due rows | **Fixed** — time-filtered to future occurrences; budget count excludes the medication being synced |
+| H5 stale resend `NotifyTime` | **Fixed** — clock read at send time, per notification |
+| H6 receiver ANR budget | **Fixed** — receivers enqueue `ReminderRecoveryJobService` (platform `JobScheduler`, no new dependency); inline `goAsync` kept as fallback |
+| H7 iOS 64-request cap | **Fixed** — budget/horizon are `#if IOS \|\| MACCATALYST` conditional (56 / 7 days). Still needs on-device verification before an iOS release |
+| H8 `LastSeen` too wide | **Fixed** — stamped in `App.OnSleep`; deliberately *not* on resume (would collapse a real gap at cold start) |
+| H9 inferred `Missed` in the vet report | **Won't fix — product decision.** There is no third source of truth for whether a dose was given, and an owner who exports a report for a vet is assumed to be logging deliberately. Recorded in `AI/known-constraints.md`; §4 below stands as the residual risk if vets ever report confusion |
+| M1/M2 channels | **Fixed** — `felova.medication.v1` (High, `CATEGORY_REMINDER`) and `felova.dailycare.v1` (Low, silent), registered lazily so no schedule can lose the race and permanently pin Default importance |
+| M3 teardown-and-rebuild every launch | **Fixed** — day-anchored horizon + fast path that no-ops when the armed set already matches |
+| M4 app update | **Fixed** — `BootReceiver` also handles `ACTION_MY_PACKAGE_REPLACED` (no re-send: not a device-off gap) |
+| M5 time-zone travel | **Documented** in `AI/known-constraints.md`; no behaviour change |
+| M6 Doze drift understated | **Documented** with the real figures (1 hour / 9 minutes / standby buckets) |
+| M7 `Recurrence` default | **Fixed** — defaults to `Once` |
+| M8 boot locale | **Fixed** — `ReminderRecovery` applies the saved language before scheduling |
+| L1/L2/L3/L5/L6 | **Fixed** — dead enum removed, legacy id purge gated behind a one-time flag, per-medication `SafeAsync` isolation, unused overload removed, file renamed |
+| L4 no tests | **Not done** — needs a project restructure, not a quick add: the app is a MAUI project targeting mobile TFMs, so a test project can't reference it without extracting the pure helpers (`MedicationScheduleExpander`, `PendingEngine`) into a shared library first. Worth doing as its own change |
+
+Design rationale for the fixes is in `AI/design-decisions.md`; the accepted limits
+are in `AI/known-constraints.md`. §9's three device-verification items still stand.
 
 ---
 

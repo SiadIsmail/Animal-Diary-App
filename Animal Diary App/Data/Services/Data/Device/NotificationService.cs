@@ -55,8 +55,16 @@ public class NotificationService : INotificationService
         }
     }
 
+    // Guards the lazy registration below. Channel importance is immutable once the
+    // channel exists, so "registered late" is not a recoverable state.
+    private bool _channelsRegistered;
+
     public Task EnsureChannelsAsync()
     {
+        // Set even if registration throws, and on platforms without channels: the
+        // per-schedule guard must not turn into a retry on every notification.
+        _channelsRegistered = true;
+
 #if ANDROID
         try
         {
@@ -100,6 +108,14 @@ public class NotificationService : INotificationService
 
     public async Task<bool> ScheduleNotification(NotificationContent content)
     {
+        // Register before the first post, whatever the call order. The plugin creates
+        // any channel id it doesn't recognise itself — at DEFAULT importance, with its
+        // own generic name — and a channel's importance can never be raised afterwards.
+        // Losing that race once would permanently demote medication reminders on that
+        // install, so this must not depend on startup having got there first.
+        if (!_channelsRegistered)
+            await EnsureChannelsAsync();
+
         var request = new NotificationRequest
         {
             NotificationId = content.Id,
