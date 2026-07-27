@@ -272,6 +272,9 @@ no prices, no ids — README rule): `paywall_shown`, `trial_expired`,
   restore can't produce the `net9.0-android` target here (fails before compiling any
   code; unrelated to the RC changes). The code is written against the binding's actual
   source API. **Your phone build is the real compile+run test.**
+- **minSdk raised 21 → 24** (`SupportedOSPlatformVersion` android): the RevenueCat SDK
+  and its Play Billing / AndroidX dependencies declare minSdk 23-24 and fail the manifest
+  merge below that. Drops pre-Android-7.0 devices (negligible by 2026).
 - **Watch:** restore emits `NU1608` — the binding pins older `Xamarin.AndroidX.Lifecycle`
   than MAUI 9; NuGet resolves the higher version. Usually benign, but if the Android
   build/run misbehaves around AndroidX, that's the first suspect.
