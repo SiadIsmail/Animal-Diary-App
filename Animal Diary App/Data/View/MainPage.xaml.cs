@@ -82,7 +82,10 @@ public partial class MainPage : ContentPage
                 vm.MainPageVM.LoadWeightChartAsync(),
                 vm.MainPageVM.LoadMoodTimelineAsync(),
                 vm.MainPageVM.LoadLatestMoodAsync(),
-                vm.MainPageVM.LoadTodayCareAsync());
+                vm.MainPageVM.LoadTodayCareAsync(),
+                // Live check, on every appearance: notifications can be switched off
+                // in system settings at any time, and reminders then stop silently.
+                vm.MainPageVM.RefreshReminderHealthAsync());
 
             SetAside();
             RefreshNextUp();
