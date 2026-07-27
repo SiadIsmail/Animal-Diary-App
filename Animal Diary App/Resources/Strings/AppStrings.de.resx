@@ -675,4 +675,11 @@
   <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Kostenlose Testphase</value></data>
   <data name="Settings_SubscriptionActive" xml:space="preserve"><value>Abonniert</value></data>
   <data name="Settings_SubscriptionEnded" xml:space="preserve"><value>Zum Weitermachen tippen</value></data>
+  <data name="Notif_ChannelMedicationName" xml:space="preserve"><value>Medikamenten-Erinnerungen</value></data>
+  <data name="Notif_ChannelMedicationDescription" xml:space="preserve"><value>Erinnerungen an die Gaben, die du eingerichtet hast, und an Gaben, die noch offen sind, weil dein Gerät aus war.</value></data>
+  <data name="Notif_ChannelDailyCareName" xml:space="preserve"><value>Tägliche Erinnerung</value></data>
+  <data name="Notif_ChannelDailyCareDescription" xml:space="preserve"><value>Eine leise Erinnerung am Tag, nur wenn noch etwas offen ist.</value></data>
+  <data name="Today_RemindersOffTitle" xml:space="preserve"><value>Erinnerungen sind ausgeschaltet</value></data>
+  <data name="Today_RemindersOffBody" xml:space="preserve"><value>Mitteilungen sind für Felova ausgeschaltet, deine Erinnerungen kommen deshalb nicht an. Alles, was du eingerichtet hast, ist weiterhin gespeichert.</value></data>
+  <data name="Today_RemindersOffAction" xml:space="preserve"><value>Einstellungen öffnen</value></data>
 </root>

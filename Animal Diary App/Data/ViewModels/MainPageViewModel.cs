@@ -345,6 +345,56 @@ public class MainPageViewModel : BaseViewModel
         }
     }
 
+    // ── Reminder health (AI/design-decisions.md → notifications) ────────────────
+    //
+    // The runtime notification permission can be declined at the prompt or switched
+    // off in system settings months later, and the OS then simply refuses everything
+    // the app schedules. Without this the carer's reminders just stop, silently and
+    // permanently — the worst failure this product has. So the Today page states the
+    // fact, once, wherever it's true, and offers the one action that fixes it.
+    //
+    // Only surfaced when the carer actually has reminders set up: telling someone
+    // with no medications that their notifications are off is noise, not help.
+
+    private bool _remindersBlocked;
+
+    /// <summary>True when reminders are configured but the OS won't deliver them.</summary>
+    public bool RemindersBlocked
+    {
+        get => _remindersBlocked;
+        private set => SetProperty(ref _remindersBlocked, value);
+    }
+
+    /// <summary>Opens this app's system notification settings — the only place the
+    /// carer can undo a denial, since Android stops showing the prompt after two.</summary>
+    public ICommand OpenNotificationSettingsCommand { get; } = new Command(() =>
+    {
+        try { AppInfo.Current.ShowSettingsUI(); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MainPage] settings open failed: {ex.Message}"); }
+    });
+
+    /// <summary>
+    /// Re-check whether the OS will deliver reminders. A live check on every
+    /// appearance and resume, never a cached setup flag — the permission can be
+    /// revoked without the app running.
+    /// </summary>
+    public async Task RefreshReminderHealthAsync()
+    {
+        try
+        {
+            var hasReminders = DailyCareReminderSettings.Enabled
+                || (await _medicationService.GetAllMedicationsAsync()).Any(m => !m.IsArchived);
+
+            RemindersBlocked = hasReminders && !await _reminderScheduler.AreRemindersDeliverableAsync();
+        }
+        catch (Exception ex)
+        {
+            // A failed probe must never light the banner falsely.
+            System.Diagnostics.Debug.WriteLine($"[MainPage] reminder health check failed: {ex.Message}");
+            RemindersBlocked = false;
+        }
+    }
+
     /// <summary>Record the current next-up medication dose as taken (the card's
     /// one-tap action), then re-derive the ring + next-up. Same dose-log write and
     /// reminder bookkeeping as the Journal's chip tap.</summary>

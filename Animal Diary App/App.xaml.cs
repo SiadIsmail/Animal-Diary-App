@@ -19,13 +19,14 @@ public partial class App : Application
 	private readonly ActivePetService _activePetService;
 	private readonly MedicationReminderScheduler _reminderScheduler;
 	private readonly DailyCareReminderScheduler _dailyReminderScheduler;
+	private readonly Animal_Diary_App.Data.Services.Data.Device.INotificationService _notifications;
 	private readonly SettingsService _settingsService;
 	private readonly IAnalyticsService _analytics;
 	private readonly ICloudSyncService _cloudSync;
 	private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -34,6 +35,7 @@ public partial class App : Application
 		_activePetService = activePetService;
 		_reminderScheduler = reminderScheduler;
 		_dailyReminderScheduler = dailyReminderScheduler;
+		_notifications = notifications;
 		_settingsService = settingsService;
 		_analytics = analytics;
 		_cloudSync = cloudSync;
@@ -121,6 +123,13 @@ public partial class App : Application
 		base.OnSleep();
 		// A backgrounded app must not keep polling the network.
 		_cloudSync.NotifyAppState(foreground: false);
+
+		// Last moment we can be certain the app was alive. The boot catch-up treats
+		// everything after this marker as "could not have fired while the device was
+		// off"; without stamping it here the marker only moved at cold start, so a
+		// carer who used the app all week and then rebooted got a week-wide window and
+		// a burst of missed-dose alerts for doses that had fired normally.
+		MedicationReminderScheduler.MarkSeen();
 	}
 
 	private async Task StartAsync()
@@ -191,12 +200,19 @@ public partial class App : Application
 
 			// Re-arm all future reminders on launch. resendMissed:false — the
 			// device was on, so the OS already delivered any past reminders;
-			// re-sending here would duplicate them. Missed-dose re-sending is the
-			// boot receiver's job. Runs off the UI path so startup isn't blocked.
+			// re-sending here would duplicate them. A genuine device-off gap comes
+			// back through the boot receiver, which records that intent durably, so
+			// this pass still honours it if it happens to run first (starting the
+			// process after a reboot runs this path too).
+			// Runs off the UI path so startup isn't blocked.
 			_ = Task.Run(async () =>
 			{
 				try
 				{
+					// Channels must exist before anything is posted to them, and
+					// re-registering refreshes their names in the applied language.
+					await _notifications.EnsureChannelsAsync();
+
 					await _reminderScheduler.CatchUpAndRefreshAsync(resendMissed: false);
 					// Arm/refresh today's daily care reminder for each pet (no-op when off).
 					await _dailyReminderScheduler.RefreshAsync();

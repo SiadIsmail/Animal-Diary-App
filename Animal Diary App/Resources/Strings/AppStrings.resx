@@ -694,4 +694,11 @@
   <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Free trial</value></data>
   <data name="Settings_SubscriptionActive" xml:space="preserve"><value>Subscribed</value></data>
   <data name="Settings_SubscriptionEnded" xml:space="preserve"><value>Tap to continue</value></data>
+  <data name="Notif_ChannelMedicationName" xml:space="preserve"><value>Medication reminders</value></data>
+  <data name="Notif_ChannelMedicationDescription" xml:space="preserve"><value>Reminders for the doses you've set up, and doses still open from while your device was off.</value></data>
+  <data name="Notif_ChannelDailyCareName" xml:space="preserve"><value>Daily care reminder</value></data>
+  <data name="Notif_ChannelDailyCareDescription" xml:space="preserve"><value>One quiet reminder a day, only when something is still open.</value></data>
+  <data name="Today_RemindersOffTitle" xml:space="preserve"><value>Reminders are switched off</value></data>
+  <data name="Today_RemindersOffBody" xml:space="preserve"><value>Notifications are turned off for Felova, so your reminders won't arrive. Everything you've set up is still saved.</value></data>
+  <data name="Today_RemindersOffAction" xml:space="preserve"><value>Open settings</value></data>
 </root>

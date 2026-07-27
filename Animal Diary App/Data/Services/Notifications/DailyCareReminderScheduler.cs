@@ -121,6 +121,9 @@ public class DailyCareReminderScheduler
                 NotifyTime = fireToday,
                 Recurrence = NotificationRecurrence.Once,
                 Silent = true, // §8.7: only medication reminders may make a sound.
+                // Its own channel, so a carer can silence the daily nudge in system
+                // settings WITHOUT also silencing medication reminders.
+                Channel = NotificationChannelKind.DailyCare,
             });
         }
     }

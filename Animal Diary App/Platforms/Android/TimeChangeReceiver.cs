@@ -37,6 +37,6 @@ public class TimeChangeReceiver : BroadcastReceiver
             return;
         }
 
-        ReminderRecovery.Run(this, resendMissed: false);
+        ReminderRecovery.Enqueue(this, context, isBootRecovery: false);
     }
 }

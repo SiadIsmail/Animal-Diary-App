@@ -77,6 +77,7 @@ public class SettingsViewModel : BaseViewModel
             _ => "Settings_SubscriptionTrial",
         });
     private readonly DailyCareReminderScheduler _dailyReminders;
+    private readonly MedicationReminderScheduler _reminders;
 
     /// <summary>Whether a cloud account is signed in — pages pick the reset-confirm
     /// message with it (the cloud variant explains the ownership rule).</summary>
@@ -85,6 +86,7 @@ public class SettingsViewModel : BaseViewModel
     public SettingsViewModel(AppResetService appResetService, SettingsService settingsService,
         IAnalyticsService analytics, ICloudAuthService cloudAuth, ICloudSyncService cloudSync,
         CloudSheetViewModel cloudVM, DevSheetViewModel devVM, DailyCareReminderScheduler dailyReminders,
+        MedicationReminderScheduler reminders,
         SubscribeSheetViewModel subscribeVM, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements)
     {
         _appResetService = appResetService;
@@ -95,6 +97,7 @@ public class SettingsViewModel : BaseViewModel
         _cloudVM = cloudVM;
         _devVM = devVM;
         _dailyReminders = dailyReminders;
+        _reminders = reminders;
         _subscribeVM = subscribeVM;
         _entitlements = entitlements;
         // Keep the row subtitle fresh when the entitlement changes (purchase/expiry).
@@ -159,7 +162,30 @@ public class SettingsViewModel : BaseViewModel
             DailyCareReminderSettings.Enabled = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(DailyReminderTimeVisible));
-            _ = _dailyReminders.RefreshAsync();
+            _ = EnableDailyReminderAsync(value);
+        }
+    }
+
+    /// <summary>
+    /// Turning the reminder on is an opt-in to notifications, so ask for the permission
+    /// here — it was previously only ever requested when saving a medication, which
+    /// meant a carer who enabled this without medications got a switch that said "on"
+    /// and a reminder the OS would never deliver. A refusal doesn't undo the toggle:
+    /// the setting is the carer's intent, and the Today page tells them delivery is
+    /// blocked and offers the way back.
+    /// </summary>
+    private async Task EnableDailyReminderAsync(bool enabled)
+    {
+        try
+        {
+            if (enabled)
+                await _reminders.RequestPermissionAsync();
+
+            await _dailyReminders.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Settings] daily reminder toggle failed: {ex.Message}");
         }
     }
 

@@ -111,6 +111,33 @@
                     </Border>
                 </Grid>
 
+                <!-- 1b ── Reminders blocked notice ──
+                     Shown only when reminders are set up AND the OS won't deliver
+                     them (permission declined, or notifications switched off later).
+                     States the fact and offers the one action that fixes it; no
+                     alarm words, no guilt. Reassures that nothing is lost. -->
+                <Border Style="{StaticResource GlassCard}"
+                        IsVisible="{Binding MainPageVM.RemindersBlocked}">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="{loc:Translate Today_RemindersOffTitle}"
+                               Style="{StaticResource SerifHeading}"/>
+                        <Label Text="{loc:Translate Today_RemindersOffBody}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="13"
+                               TextColor="{StaticResource InkSecondary}"/>
+                        <Label Text="{loc:Translate Today_RemindersOffAction}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               Margin="0,2,0,0">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding MainPageVM.OpenNotificationSettingsCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </VerticalStackLayout>
+                </Border>
+
                 <!-- 2 ── Active pet hero: precise care ring + avatar ── -->
                 <VerticalStackLayout HorizontalOptions="Center"
                                      Spacing="3"
