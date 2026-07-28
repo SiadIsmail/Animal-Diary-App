@@ -24,7 +24,7 @@ public static partial class BillingConfig
     public const bool Enabled = true;
 
     /// <summary>The free-trial length. One editable value — tune freely (owner will).</summary>
-    public static readonly TimeSpan TrialLength = TimeSpan.FromMinutes(2);
+    public static readonly TimeSpan TrialLength = TimeSpan.FromDays(14);
 
     /// <summary>Show the pre-end nudge once when the trial has this many days left.</summary>
     public const int PreEndNudgeDaysBefore = 3;
