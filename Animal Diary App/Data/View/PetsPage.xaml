@@ -415,6 +415,38 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <!-- Feedback / something broken — last thing on the page, understated on
+                     purpose. Opens a sheet with the only two doors we actually staff:
+                     the Discord community, or a direct email. -->
+                <Border Style="{StaticResource CardSurface}"
+                        Padding="14,15">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding FeedbackVM.OpenCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                        <Border Grid.Column="0"
+                                WidthRequest="40" HeightRequest="40"
+                                BackgroundColor="{StaticResource HoneyWarmTint}"
+                                StrokeThickness="0" StrokeShape="RoundRectangle 13"
+                                VerticalOptions="Center">
+                            <Label Text="💬" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                            <Label Text="{loc:Translate Feedback_RowTitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14" FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"/>
+                            <Label Text="{loc:Translate Feedback_RowSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
+                        <Label Grid.Column="2" Text="›"
+                               FontSize="22" TextColor="{StaticResource InkTertiary}"
+                               VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+
             </VerticalStackLayout>
         </ScrollView>
 
@@ -437,6 +469,10 @@
         <!-- Shared-care sheet (FelovaBottomSheet; click-through while closed) -->
         <view:SharingSheetView Grid.RowSpan="2"
                                BindingContext="{Binding SharingVM}"/>
+
+        <!-- Feedback sheet (FelovaBottomSheet; click-through while closed) -->
+        <view:FeedbackSheetView Grid.RowSpan="2"
+                                BindingContext="{Binding FeedbackVM}"/>
 
         <!-- Hidden developer diagnostics sheet -->
         <view:DevSheetView Grid.RowSpan="2"

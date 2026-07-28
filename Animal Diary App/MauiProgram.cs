@@ -63,6 +63,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<SharingSheetViewModel>();
 		builder.Services.AddSingleton<SubscribeSheetViewModel>();
 		builder.Services.AddSingleton<TrialMessageViewModel>();
+		builder.Services.AddSingleton<FeedbackSheetViewModel>();
 		builder.Services.AddSingleton<DevSheetViewModel>();
 		builder.Services.AddSingleton<PetService>();
 		builder.Services.AddSingleton<PetPauseService>();

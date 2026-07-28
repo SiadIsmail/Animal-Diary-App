@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- FeedbackSheetView — the two ways to reach us, on the shared FelovaBottomSheet.
+     Discord (other owners see it too) or a direct email. No form, no ticket, no
+     account. BindingContext is a FeedbackSheetViewModel. -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:FeedbackSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.FeedbackSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <!-- Mirrors the Settings panel's link card, so the two "reach us" surfaces
+             look like the same thing in two places. -->
+        <Style x:Key="FeedbackLinkCard" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1.5"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 16"/>
+            <Setter Property="Padding" Value="16,14"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{loc:Translate Feedback_SheetTitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+            <VerticalStackLayout Spacing="12" Padding="0,2,0,0">
+
+                <Label Text="{loc:Translate Feedback_SheetBody}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="14"
+                       LineHeight="1.45"
+                       TextColor="{StaticResource InkSecondary}"/>
+
+                <!-- Discord -->
+                <Border Style="{StaticResource FeedbackLinkCard}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenDiscordCommand}"/>
+                    </Border.GestureRecognizers>
+
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                        <Border WidthRequest="42"
+                                HeightRequest="42"
+                                BackgroundColor="{StaticResource TealTint}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                VerticalOptions="Center">
+                            <Image Source="communityicon.png"
+                                   WidthRequest="22"
+                                   HeightRequest="22"
+                                   Aspect="AspectFit"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{loc:Translate Feedback_DiscordTitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"/>
+                            <Label Text="{loc:Translate Feedback_DiscordSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   LineHeight="1.35"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
+
+                        <Label Grid.Column="2"
+                               Text="›"
+                               FontSize="22"
+                               TextColor="{StaticResource InkTertiary}"
+                               VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Direct email. The address is spelled out rather than hidden behind
+                     the row, so it's still usable if no mail app answers the launch. -->
+                <Border Style="{StaticResource FeedbackLinkCard}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenEmailCommand}"/>
+                    </Border.GestureRecognizers>
+
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                        <Border WidthRequest="42"
+                                HeightRequest="42"
+                                BackgroundColor="{StaticResource HoneyWarmTint}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                VerticalOptions="Center">
+                            <Label Text="✉️"
+                                   FontSize="18"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{loc:Translate Feedback_EmailTitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"/>
+                            <Label Text="{Binding EmailAddress}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   LineHeight="1.35"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
+
+                        <Label Grid.Column="2"
+                               Text="›"
+                               FontSize="22"
+                               TextColor="{StaticResource InkTertiary}"
+                               VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Handcrafted line (AI/app-voice.md §4.6, "settings and quiet corners").
+                     One per screen, makes no claim, nothing to act on. -->
+                <Label Text="{loc:Translate Feedback_Footer}"
+                       FontFamily="{StaticResource FontHand}"
+                       FontSize="16"
+                       TextColor="{StaticResource TealDeep}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,4,0,0"/>
+
+                <!-- Dismiss -->
+                <Label Text="{loc:Translate Common_Okay}"
+                       Padding="0,4"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="12.5"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource TealDeep}"
+                       HorizontalTextAlignment="Center">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                    </Label.GestureRecognizers>
+                </Label>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>
