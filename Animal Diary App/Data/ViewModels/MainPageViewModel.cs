@@ -96,6 +96,10 @@ public class MainPageViewModel : BaseViewModel
 
     public ObservableCollection<ChartDataPoint> WeightChartData { get; } = new();
 
+    /// <summary>Which weight-chart load is the current one. A load whose generation is
+    /// stale by the time its query returns discards its result instead of writing it.</summary>
+    private int _weightChartGeneration;
+
     /// <summary>Raised after the weight series is reloaded so the chart surface
     /// (a GraphicsView) can pull fresh values and invalidate itself.</summary>
     public event Action? WeightChartUpdated;
@@ -205,9 +209,20 @@ public class MainPageViewModel : BaseViewModel
     {
         if (ActivePet == null) return;
 
-        WeightChartData.Clear();
+        // Gather first, mutate after (see coding-standards.md, "Rebuilding an
+        // ObservableCollection"): clearing before the await let an overlapping load
+        // clear between this one's Clear and its Adds, doubling the series — which
+        // also skewed the min/max axis padding computed below.
+        var generation = ++_weightChartGeneration;
         var entries = await _petEntryService.GetWeightEntriesForRangeAsync(ActivePet.Id, ChartRangeDays);
 
+        // A newer load started while this one queried (a pet switch, or a second
+        // appearance). Its data is the current one — drop these rather than draw the
+        // previous pet's weights.
+        if (generation != _weightChartGeneration)
+            return;
+
+        WeightChartData.Clear();
         foreach (var entry in entries)
         {
             WeightChartData.Add(new ChartDataPoint

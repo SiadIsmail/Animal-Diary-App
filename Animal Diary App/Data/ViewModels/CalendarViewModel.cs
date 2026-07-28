@@ -163,28 +163,49 @@ public class CalendarViewModel : BaseViewModel
 
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
 
+    /// <summary>
+    /// The ONE place chip selection is written. A single pass over the live list sets
+    /// exactly one flag and clears every other, so no path can leave two chips looking
+    /// selected. Matching is by id, never by reference: the list is rebuilt from fresh
+    /// SQLite rows on every load, so the "same" pet is a different object each time.
+    /// </summary>
+    private void ApplySelection(int petId)
+    {
+        foreach (var p in Pets)
+            p.IsSelected = p.Id == petId;
+    }
+
     private async Task LoadPetsAsync()
     {
-        Pets.Clear();
+        // Read everything first, then swap the list in one synchronous block (no await
+        // between the Clear and the last Add). Two loads overlap routinely — switching
+        // tabs starts the Journal's load while the previous page's is still in flight —
+        // and clearing before the await let the second one clear between the first one's
+        // Clear and its Adds, leaving the same pet in the list twice.
         var petsFromDb = await _petService.GetPetsAsync();
-
-        foreach (var pet in petsFromDb)
-        {
-            Pets.Add(pet);
-        }
-        if (petsFromDb.Count == 0)
-            return;
 
         // Prefer the in-memory active pet: the saved id is written fire-and-forget
         // by ActivePetService, so reading it right after a switch on another tab
         // could race and stomp the user's selection back to the previous pet.
         var currentId = _activePetService.ActivePet?.Id ?? 0;
         var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
+
+        Pets.Clear();
+        foreach (var pet in petsFromDb)
+        {
+            Pets.Add(pet);
+        }
+        if (Pets.Count == 0)
+            return;
+
+        // Every candidate comes out of Pets itself. The old last-resort fallback read
+        // the query result instead, which could pick an instance that is not in the
+        // bound list — the chip for it then never highlights.
         var selected = Pets.FirstOrDefault(p => p.Id == currentId)
             ?? Pets.FirstOrDefault(p => p.Id == savedPetId)
-            ?? petsFromDb[0];
+            ?? Pets[0];
         _activePetService.ActivePet = selected;
-        selected.IsSelected = true;
+        ApplySelection(selected.Id);
     }
 
     /// <summary>Load the selected day's mood/weight so HasMood/HasWeight reflect the
@@ -404,12 +425,8 @@ public class CalendarViewModel : BaseViewModel
         if (pet == null)
             return;
 
-        foreach (var p in Pets)
-        {
-            p.IsSelected = false;
-        }
-        pet.IsSelected = true;
         _activePetService.ActivePet = pet;
+        ApplySelection(pet.Id);
         await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
         NotifyDerived();
     }

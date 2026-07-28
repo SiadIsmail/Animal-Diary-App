@@ -162,6 +162,10 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
 
     public ObservableCollection<FilteredMedication> FilteredMedications { get; set; } = new ObservableCollection<FilteredMedication>();
 
+    /// <summary>Which medication-list load is the current one. A load whose generation
+    /// is stale by the time its queries return discards its result instead of writing it.</summary>
+    private int _medicationListGeneration;
+
     // Which tab the Medications list is showing: "active" or "archived".
     private string activeTab = "active";
     public string ActiveTab
@@ -174,7 +178,11 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
 
     public async Task LoadFilteredMedicationAsync()
     {
-        FilteredMedications.Clear();
+        // Gather first, mutate after (see coding-standards.md, "Rebuilding an
+        // ObservableCollection"): clearing up here left the whole run of awaits below
+        // as a window in which an overlapping load cleared between this one's Clear
+        // and its Adds, listing every medication twice.
+        var generation = ++_medicationListGeneration;
         var showArchived = ActiveTab == "archived";
         var petId = await _activePetService.GetSavedActivePetIdAsync();
         List<Medication> medicationFromDb = await _medicationService.GetMedicationsByPetIdAsync(petId);
@@ -186,6 +194,12 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
         var schedulesByMed = (await _medicationService.GetSchedulesForMedicationsAsync(visible.Select(m => m.Id).ToList()))
             .ToLookup(s => s.MedicationId);
 
+        // A newer load started while this one queried — it may be for a different pet
+        // or the other tab, so drop these rows rather than show the wrong list.
+        if (generation != _medicationListGeneration)
+            return;
+
+        FilteredMedications.Clear();
         foreach (var medication in visible)
         {
             var distinctTimes = schedulesByMed[medication.Id].Select(s => s.Time).Distinct().OrderBy(t => t).ToList();
