@@ -160,11 +160,20 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         SetEntitlement(IsPremiumActive(info));
     }
 
-    /// <summary>Our entitlement is active iff RevenueCat reports the configured
-    /// entitlement id as active. (Entitlements are the durable unlock, distinct from the
-    /// raw product/subscription ids in <c>ActiveSubscriptions</c>.)</summary>
-    private static bool IsPremiumActive(CustomerInfoDto? info) =>
-        info?.Entitlements.Any(e => e.Identifier == BillingConfig.EntitlementId && e.IsActive) ?? false;
+    /// <summary>Whether the user has full access per RevenueCat. Prefers an exact match on
+    /// the configured entitlement id; falls back to "any active entitlement", because this
+    /// app has a single paid tier = full access, so a dashboard rename or an
+    /// identifier-vs-display-name mismatch must never silently re-lock a paying user.
+    /// (Entitlements are the durable unlock, distinct from the raw product/subscription
+    /// ids in <c>ActiveSubscriptions</c>.)</summary>
+    private static bool IsPremiumActive(CustomerInfoDto? info)
+    {
+        if (info is null || info.Entitlements.Count == 0)
+            return false;
+        if (info.Entitlements.Any(e => e.Identifier == BillingConfig.EntitlementId && e.IsActive))
+            return true;
+        return info.Entitlements.Any(e => e.IsActive);
+    }
 
     /// <summary>Dump what RevenueCat reports so a "paid but still locked" case is
     /// diagnosable from logcat: the entitlements it knows about (id + active) and the raw

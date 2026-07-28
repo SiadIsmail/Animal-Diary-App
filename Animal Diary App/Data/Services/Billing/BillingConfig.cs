@@ -29,8 +29,11 @@ public static partial class BillingConfig
     /// <summary>Show the pre-end nudge once when the trial has this many days left.</summary>
     public const int PreEndNudgeDaysBefore = 3;
 
-    /// <summary>RevenueCat entitlement identifier that unlocks full access.</summary>
-    public const string EntitlementId = "premium";
+    /// <summary>RevenueCat entitlement identifier that unlocks full access. Must match the
+    /// identifier in the RevenueCat dashboard EXACTLY (it is "Felova Full", spaces and
+    /// all). As a safety net the check also treats any active entitlement as full access,
+    /// since this app has a single paid tier — see RevenueCatStoreBilling.IsPremiumActive.</summary>
+    public const string EntitlementId = "Felova Full";
 
     /// <summary>RevenueCat offering identifier holding the yearly + monthly packages.</summary>
     public const string OfferingId = "default";
