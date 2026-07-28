@@ -22,6 +22,8 @@ public sealed class NullEntitlementService : IEntitlementService
     public Task InitializeAsync() => Task.CompletedTask;
     public Task<bool> EnsureTrialStartedAsync() => Task.FromResult(false);
     public Task RefreshAsync() => Task.CompletedTask;
+    public Task RefreshOffersAsync() => Task.CompletedTask;
     public Task<PurchaseOutcome> PurchaseAsync(SubscriptionPlan plan) => Task.FromResult(PurchaseOutcome.Unavailable);
     public Task<PurchaseOutcome> RestoreAsync() => Task.FromResult(PurchaseOutcome.Unavailable);
+    public Task<string?> GetManagementUrlAsync() => Task.FromResult<string?>(null);
 }

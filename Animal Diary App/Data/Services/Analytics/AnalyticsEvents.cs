@@ -123,6 +123,17 @@ public static class AnalyticsEvents
     /// <summary>A subscription was purchased. Properties: <see cref="PropPlan"/>,
     /// <see cref="PropPrice"/>, <see cref="PropSubscribeSource"/>.</summary>
     public const string SubscriptionPurchased = "subscription_purchased";
+    /// <summary>A purchase attempt did not complete. Property: <see cref="PropReason"/>
+    /// (coarse bucket — never a store message). This is how purchase friction is visible
+    /// in production, where debug logs aren't.</summary>
+    public const string PurchaseFailed = "purchase_failed";
+    /// <summary>A restore attempt failed (not "nothing to restore"). Property:
+    /// <see cref="PropReason"/>.</summary>
+    public const string RestoreFailed = "restore_failed";
+    /// <summary>The subscribe sheet finished loading with no offers to show. Property:
+    /// <see cref="PropReason"/> (offline vs empty) — surfaces store/config/connectivity
+    /// friction that would otherwise be invisible.</summary>
+    public const string OffersLoadFailed = "offers_load_failed";
 
     // ── Property keys ─────────────────────────────────────────────────────────
     /// <summary>App display version, e.g. "1.3.1". Non-identifying.</summary>
@@ -162,6 +173,10 @@ public static class AnalyticsEvents
     /// <summary>Which day of the trial an event happened on (1-based). Coarse
     /// engagement/timing signal; not identifying.</summary>
     public const string PropTrialDay = "trial_day";
+    /// <summary>Coarse failure bucket for billing events — <see cref="ReasonFailed"/> /
+    /// <see cref="ReasonUnavailable"/> / <see cref="ReasonOffline"/> / <see cref="ReasonEmpty"/>.
+    /// Never a raw store message.</summary>
+    public const string PropReason = "reason";
 
     // ── Property values (kept as constants so producers agree on spelling) ──────
     public const string EntryTypeMood = "mood";
@@ -180,6 +195,11 @@ public static class AnalyticsEvents
     // Subscription plans.
     public const string PlanYearly = "yearly";
     public const string PlanMonthly = "monthly";
+    // Billing failure reasons (coarse buckets).
+    public const string ReasonFailed = "failed";
+    public const string ReasonUnavailable = "unavailable";
+    public const string ReasonOffline = "offline";
+    public const string ReasonEmpty = "empty";
 
     /// <summary>Not signed in to cloud — the default state of every install.</summary>
     public const string AccountStateAnonymous = "anonymous";

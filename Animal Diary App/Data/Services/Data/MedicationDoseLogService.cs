@@ -19,6 +19,13 @@ public class MedicationDoseLogService
         _db = database.Connection;
     }
 
+    /// <summary>How many doses this pet has recorded as given (Taken). Used only for the
+    /// trial pre-end nudge's "you've written down N doses" copy — never a judgement.</summary>
+    public Task<int> GetGivenCountAsync(int petId)
+        => _db.Table<MedicationDoseLog>()
+            .Where(l => l.PetId == petId && l.IsDeleted == false && l.Status == DoseStatus.Taken)
+            .CountAsync();
+
     /// <summary>All dose logs for a pet on a given day.</summary>
     public Task<List<MedicationDoseLog>> GetByPetAndDateAsync(int petId, DateTime date)
     {

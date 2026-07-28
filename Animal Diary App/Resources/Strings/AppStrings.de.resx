@@ -662,8 +662,11 @@
   <data name="Subscribe_Manage" xml:space="preserve"><value>Ändern oder kündigen</value></data>
   <data name="Common_Done" xml:space="preserve"><value>Fertig</value></data>
   <data name="Subscribe_NoOffers" xml:space="preserve"><value>Die Optionen sind gerade nicht verfügbar. Schau gleich noch einmal vorbei.</value></data>
+  <data name="Subscribe_Offline" xml:space="preserve"><value>Du bist offline. Prüfe deine Verbindung und versuch es noch einmal.</value></data>
+  <data name="Subscribe_Retry" xml:space="preserve"><value>Erneut versuchen</value></data>
   <data name="Subscribe_ContinueLabel" xml:space="preserve"><value>Mit Felova weitermachen</value></data>
   <data name="Subscribe_PurchaseProblem" xml:space="preserve"><value>Das hat nicht geklappt. Du kannst es noch einmal versuchen.</value></data>
+  <data name="Subscribe_PurchasePending" xml:space="preserve"><value>Deine Zahlung wird verarbeitet. Sobald sie durch ist, hast du vollen Zugriff.</value></data>
   <data name="Subscribe_RestoreDone" xml:space="preserve"><value>Dein Abo ist wieder da.</value></data>
   <data name="Subscribe_RestoreNone" xml:space="preserve"><value>Kein Abo zum Wiederherstellen gefunden.</value></data>
   <data name="Subscribe_RestoreProblem" xml:space="preserve"><value>Konnte gerade nicht prüfen. Versuch es gleich noch einmal.</value></data>

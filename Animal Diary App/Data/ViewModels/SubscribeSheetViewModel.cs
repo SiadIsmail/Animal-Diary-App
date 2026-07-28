@@ -34,6 +34,7 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         PurchaseCommand = new Command<SubscriptionOfferItem>(async o => await PurchaseAsync(o));
         RestoreCommand = new Command(async () => await RestoreAsync());
         ManageCommand = new Command(async () => await OpenManageAsync());
+        RetryCommand = new Command(async () => await LoadOffersAsync());
 
         // The entitlement can change under the sheet (a restore completes, a purchase
         // lands) — reflect it. Marshalled to the UI thread by the raiser's callers.
@@ -66,12 +67,38 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
     /// the store loads / under the Null boundary.</summary>
     public ObservableCollection<SubscriptionOfferItem> Offers { get; } = new();
 
-    public bool HasOffers => Offers.Count > 0;
+    private bool _isLoadingOffers;
+    /// <summary>True while the offerings are being (re)fetched on open — shows a spinner
+    /// instead of prematurely deciding the offers are missing.</summary>
+    public bool IsLoadingOffers
+    {
+        get => _isLoadingOffers;
+        private set
+        {
+            if (SetProperty(ref _isLoadingOffers, value))
+            {
+                OnPropertyChanged(nameof(ShowOfferList));
+                OnPropertyChanged(nameof(ShowLoadingOffers));
+                OnPropertyChanged(nameof(ShowOffersProblem));
+            }
+        }
+    }
 
-    /// <summary>Shown in place of the buttons when the store has no offers yet
-    /// (loading, offline, or not wired) so the sheet is never an empty dead-end. Only
-    /// relevant on the offers face.</summary>
-    public bool ShowNoOffersNote => ShowOffers && Offers.Count == 0;
+    /// <summary>Have offers, done loading → show the purchase buttons.</summary>
+    public bool ShowOfferList => ShowOffers && !IsLoadingOffers && Offers.Count > 0;
+
+    /// <summary>Fetching → show the spinner.</summary>
+    public bool ShowLoadingOffers => ShowOffers && IsLoadingOffers;
+
+    /// <summary>Done loading with nothing to show → the problem message + Try again.</summary>
+    public bool ShowOffersProblem => ShowOffers && !IsLoadingOffers && Offers.Count == 0;
+
+    /// <summary>The problem message distinguishes the two causes a user can act on:
+    /// offline (check your connection) vs. everything else (our end / store hiccup).</summary>
+    public string OffersProblemMessage => Loc(IsOffline ? "Subscribe_Offline" : "Subscribe_NoOffers");
+
+    private static bool IsOffline =>
+        Microsoft.Maui.Networking.Connectivity.Current.NetworkAccess != Microsoft.Maui.Networking.NetworkAccess.Internet;
 
     private string _statusText = string.Empty;
     /// <summary>Transient line under the buttons — a restore result, or a purchase error.
@@ -97,6 +124,9 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
     /// cancel). Android only for now.</summary>
     public ICommand ManageCommand { get; }
 
+    /// <summary>Re-fetch the offerings after a load failure (the "Try again" link).</summary>
+    public ICommand RetryCommand { get; }
+
     /// <summary>Open the sheet, recording where it was opened from. <paramref name="source"/>
     /// is one of the <c>AnalyticsEvents.SubscribeSource*</c> constants.</summary>
     public void Open(string source)
@@ -109,6 +139,36 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
             [AnalyticsEvents.PropSubscribeSource] = source,
         });
         IsPresented = true;
+        // Re-fetch on open: the initial load may still be in flight or have failed on a
+        // flaky launch, which is exactly when the empty-offers dead-end appeared.
+        if (ShowOffers)
+            _ = LoadOffersAsync();
+    }
+
+    /// <summary>(Re)fetch the offerings with a visible loading state, then reflect the
+    /// result. Non-throwing.</summary>
+    private async Task LoadOffersAsync()
+    {
+        if (IsLoadingOffers)
+            return;
+        IsLoadingOffers = true;
+        try
+        {
+            await _entitlements.RefreshOffersAsync();
+        }
+        finally
+        {
+            IsLoadingOffers = false;
+            RefreshMode();
+        }
+
+        // Production visibility (debug logs aren't in the field): record when the sheet
+        // ends up with nothing to show, split by cause.
+        if (ShowOffersProblem)
+            _analytics.Track(AnalyticsEvents.OffersLoadFailed, new Dictionary<string, object?>
+            {
+                [AnalyticsEvents.PropReason] = IsOffline ? AnalyticsEvents.ReasonOffline : AnalyticsEvents.ReasonEmpty,
+            });
     }
 
     /// <summary>Rebuild both faces of the sheet: the offer list and the subscribed/offers
@@ -120,8 +180,10 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         foreach (var offer in _entitlements.Offers.OrderBy(o => o.Plan == SubscriptionPlan.Yearly ? 0 : 1))
             Offers.Add(new SubscriptionOfferItem(offer, isBest: offer.Plan == SubscriptionPlan.Yearly));
 
-        OnPropertyChanged(nameof(HasOffers));
-        OnPropertyChanged(nameof(ShowNoOffersNote));
+        OnPropertyChanged(nameof(ShowOfferList));
+        OnPropertyChanged(nameof(ShowLoadingOffers));
+        OnPropertyChanged(nameof(ShowOffersProblem));
+        OnPropertyChanged(nameof(OffersProblemMessage));
         OnPropertyChanged(nameof(IsSubscribed));
         OnPropertyChanged(nameof(ShowSubscribed));
         OnPropertyChanged(nameof(ShowOffers));
@@ -129,9 +191,13 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(SheetSubtitle));
     }
 
-    private static async Task OpenManageAsync()
+    private async Task OpenManageAsync()
     {
-        try { await Launcher.OpenAsync("https://play.google.com/store/account/subscriptions"); }
+        // Prefer the store's per-platform management URL (deep-links to this subscription);
+        // fall back to the generic Play subscriptions page.
+        var url = await _entitlements.GetManagementUrlAsync()
+                  ?? "https://play.google.com/store/account/subscriptions";
+        try { await Launcher.OpenAsync(url); }
         catch { /* no store app / cancelled — nothing to do */ }
     }
 
@@ -164,8 +230,18 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
                 case PurchaseOutcome.Cancelled:
                     // The user backed out of the store sheet — not an error, say nothing.
                     break;
-                default:
+                case PurchaseOutcome.Pending:
+                    // Deferred payment / entitlement not surfaced yet — NOT a failure. Say
+                    // it's processing and leave it; a resume/refresh will unlock it.
+                    StatusText = Loc("Subscribe_PurchasePending");
+                    break;
+                default: // Failed / Unavailable
                     StatusText = Loc("Subscribe_PurchaseProblem");
+                    _analytics.Track(AnalyticsEvents.PurchaseFailed, new Dictionary<string, object?>
+                    {
+                        [AnalyticsEvents.PropReason] = outcome == PurchaseOutcome.Unavailable
+                            ? AnalyticsEvents.ReasonUnavailable : AnalyticsEvents.ReasonFailed,
+                    });
                     break;
             }
         }
@@ -191,10 +267,18 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
                 StatusText = string.Empty;
                 RefreshMode();
             }
+            else if (outcome == PurchaseOutcome.NothingToRestore)
+            {
+                StatusText = Loc("Subscribe_RestoreNone");
+            }
             else
             {
-                StatusText = Loc(outcome == PurchaseOutcome.NothingToRestore
-                    ? "Subscribe_RestoreNone" : "Subscribe_RestoreProblem");
+                // Distinguish offline (actionable) from a generic problem, like the offers path.
+                StatusText = Loc(IsOffline ? "Subscribe_Offline" : "Subscribe_RestoreProblem");
+                _analytics.Track(AnalyticsEvents.RestoreFailed, new Dictionary<string, object?>
+                {
+                    [AnalyticsEvents.PropReason] = IsOffline ? AnalyticsEvents.ReasonOffline : AnalyticsEvents.ReasonFailed,
+                });
             }
         }
         finally

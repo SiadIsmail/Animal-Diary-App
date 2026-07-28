@@ -66,6 +66,10 @@ public interface IEntitlementService
     /// elsewhere). Non-throwing.</summary>
     Task RefreshAsync();
 
+    /// <summary>Re-fetch the purchasable <see cref="Offers"/> (called when the subscribe
+    /// sheet opens, so a slow/failed initial load recovers). Non-throwing.</summary>
+    Task RefreshOffersAsync();
+
     /// <summary>Buy one of the <see cref="Offers"/>. Routes through native store
     /// billing; returns an outcome rather than throwing.</summary>
     Task<PurchaseOutcome> PurchaseAsync(SubscriptionPlan plan);
@@ -73,6 +77,10 @@ public interface IEntitlementService
     /// <summary>Restore a subscription bought on another device / after reinstall.
     /// Required by the stores; returns an outcome rather than throwing.</summary>
     Task<PurchaseOutcome> RestoreAsync();
+
+    /// <summary>The store's "manage / change / cancel this subscription" URL for the
+    /// current platform (Play or App Store), or null if unavailable. Non-throwing.</summary>
+    Task<string?> GetManagementUrlAsync();
 }
 
 /// <summary>Coarse access state, for copy selection and analytics only.</summary>
@@ -105,6 +113,9 @@ public enum PurchaseOutcome
     Cancelled,
     /// <summary>No active subscription was found to restore.</summary>
     NothingToRestore,
+    /// <summary>The payment is deferred (slow card, family approval) or the entitlement
+    /// hasn't propagated yet. Not a failure — it may complete shortly and unlock then.</summary>
+    Pending,
     /// <summary>Billing is unavailable (no store, offline, misconfigured).</summary>
     Unavailable,
     /// <summary>The store reported a failure.</summary>

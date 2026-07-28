@@ -113,6 +113,7 @@ public static class MauiProgram
 		// binding are wired (BillingConfig.Enabled); otherwise a no-op that grants full
 		// access. Windows/macOS dev always gets the no-op, so it can never lock.
 #if ANDROID || IOS
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.ITrialStore>(sp => sp.GetRequiredService<SettingsService>());
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.TrialService>();
 		if (Animal_Diary_App.Data.Services.Billing.BillingConfig.Enabled)
 		{
