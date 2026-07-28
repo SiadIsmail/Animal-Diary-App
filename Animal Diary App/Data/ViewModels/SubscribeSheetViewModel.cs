@@ -33,10 +33,11 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         DismissCommand = new Command(() => IsPresented = false);
         PurchaseCommand = new Command<SubscriptionOfferItem>(async o => await PurchaseAsync(o));
         RestoreCommand = new Command(async () => await RestoreAsync());
+        ManageCommand = new Command(async () => await OpenManageAsync());
 
         // The entitlement can change under the sheet (a restore completes, a purchase
         // lands) — reflect it. Marshalled to the UI thread by the raiser's callers.
-        _entitlements.StateChanged += () => MainThread.BeginInvokeOnMainThread(RefreshOffers);
+        _entitlements.StateChanged += () => MainThread.BeginInvokeOnMainThread(RefreshMode);
     }
 
     // ── sheet shell ───────────────────────────────────────────────────────────
@@ -48,6 +49,19 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         set => SetProperty(ref _isPresented, value);
     }
 
+    /// <summary>True once a subscription is active — the sheet then shows the quiet
+    /// thank-you / subscribed view instead of the purchase offers (so re-opening it from
+    /// Settings, or landing here right after buying, never re-pitches the sale).</summary>
+    public bool IsSubscribed => _entitlements.State == AccessState.Subscribed;
+
+    /// <summary>Which face of the sheet shows.</summary>
+    public bool ShowSubscribed => IsSubscribed;
+    public bool ShowOffers => !IsSubscribed;
+
+    /// <summary>Sheet header, mode-aware.</summary>
+    public string SheetTitle => Loc(IsSubscribed ? "Subscribe_SubscribedTitle" : "Subscribe_Title");
+    public string SheetSubtitle => IsSubscribed ? string.Empty : Loc("Subscribe_Subtitle");
+
     /// <summary>The offers, yearly first, each with a store-localized price. Empty until
     /// the store loads / under the Null boundary.</summary>
     public ObservableCollection<SubscriptionOfferItem> Offers { get; } = new();
@@ -55,8 +69,9 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
     public bool HasOffers => Offers.Count > 0;
 
     /// <summary>Shown in place of the buttons when the store has no offers yet
-    /// (loading, offline, or not wired) so the sheet is never an empty dead-end.</summary>
-    public bool ShowNoOffersNote => Offers.Count == 0;
+    /// (loading, offline, or not wired) so the sheet is never an empty dead-end. Only
+    /// relevant on the offers face.</summary>
+    public bool ShowNoOffersNote => ShowOffers && Offers.Count == 0;
 
     private string _statusText = string.Empty;
     /// <summary>Transient line under the buttons — a restore result, or a purchase error.
@@ -78,13 +93,17 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
     public ICommand PurchaseCommand { get; }
     public ICommand RestoreCommand { get; }
 
+    /// <summary>Subscribed view: open the store's subscription management page (change /
+    /// cancel). Android only for now.</summary>
+    public ICommand ManageCommand { get; }
+
     /// <summary>Open the sheet, recording where it was opened from. <paramref name="source"/>
     /// is one of the <c>AnalyticsEvents.SubscribeSource*</c> constants.</summary>
     public void Open(string source)
     {
         _source = source;
         StatusText = string.Empty;
-        RefreshOffers();
+        RefreshMode();
         _analytics.Track(AnalyticsEvents.SubscribeScreenViewed, new Dictionary<string, object?>
         {
             [AnalyticsEvents.PropSubscribeSource] = source,
@@ -92,7 +111,9 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         IsPresented = true;
     }
 
-    private void RefreshOffers()
+    /// <summary>Rebuild both faces of the sheet: the offer list and the subscribed/offers
+    /// switch. Called on open and whenever the entitlement changes underneath it.</summary>
+    private void RefreshMode()
     {
         Offers.Clear();
         // Yearly first (the emphasized/default option); highlight whichever is yearly.
@@ -101,6 +122,17 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
 
         OnPropertyChanged(nameof(HasOffers));
         OnPropertyChanged(nameof(ShowNoOffersNote));
+        OnPropertyChanged(nameof(IsSubscribed));
+        OnPropertyChanged(nameof(ShowSubscribed));
+        OnPropertyChanged(nameof(ShowOffers));
+        OnPropertyChanged(nameof(SheetTitle));
+        OnPropertyChanged(nameof(SheetSubtitle));
+    }
+
+    private static async Task OpenManageAsync()
+    {
+        try { await Launcher.OpenAsync("https://play.google.com/store/account/subscriptions"); }
+        catch { /* no store app / cancelled — nothing to do */ }
     }
 
     private async Task PurchaseAsync(SubscriptionOfferItem? item)
@@ -123,7 +155,11 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
                         [AnalyticsEvents.PropPrice] = item.Offer.PriceLabel,
                         [AnalyticsEvents.PropSubscribeSource] = _source,
                     });
-                    IsPresented = false;
+                    // Don't just vanish — flip to the thank-you / subscribed view so the
+                    // purchase is confirmed. RefreshMode also runs via StateChanged, but
+                    // call it directly so the transition is immediate.
+                    StatusText = string.Empty;
+                    RefreshMode();
                     break;
                 case PurchaseOutcome.Cancelled:
                     // The user backed out of the store sheet — not an error, say nothing.
@@ -149,14 +185,17 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         try
         {
             var outcome = await _entitlements.RestoreAsync();
-            StatusText = outcome switch
-            {
-                PurchaseOutcome.Success => Loc("Subscribe_RestoreDone"),
-                PurchaseOutcome.NothingToRestore => Loc("Subscribe_RestoreNone"),
-                _ => Loc("Subscribe_RestoreProblem"),
-            };
             if (outcome == PurchaseOutcome.Success)
-                IsPresented = false;
+            {
+                // Restored → flip to the subscribed view (its own confirmation).
+                StatusText = string.Empty;
+                RefreshMode();
+            }
+            else
+            {
+                StatusText = Loc(outcome == PurchaseOutcome.NothingToRestore
+                    ? "Subscribe_RestoreNone" : "Subscribe_RestoreProblem");
+            }
         }
         finally
         {
