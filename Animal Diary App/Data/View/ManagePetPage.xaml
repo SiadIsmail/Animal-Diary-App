@@ -542,6 +542,9 @@
         <!-- Export sheet: opened by the "save a copy first" offer before a delete. -->
         <views:ExportSheetView BindingContext="{Binding ExportSheetVM}"/>
 
+        <!-- Subscribe sheet: gated edit actions (edit pet / condition setup) route here. -->
+        <views:SubscribeSheetView BindingContext="{Binding SubscribeVM}"/>
+
     </Grid>
 
 </ContentPage>

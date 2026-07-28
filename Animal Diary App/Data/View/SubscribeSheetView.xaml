@@ -24,8 +24,11 @@
                 <!-- ── OFFERS face (not subscribed) ── -->
                 <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowOffers}">
 
-                    <!-- The offers (yearly first, monthly below) -->
-                    <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Offers}">
+                    <!-- The offers (yearly first, monthly below). Disabled (dimmed, no taps)
+                         while a purchase is in flight so a second tap can't double-fire. -->
+                    <VerticalStackLayout Spacing="10" IsVisible="{Binding ShowOfferList}"
+                                         IsEnabled="{Binding CanInteract}"
+                                         BindableLayout.ItemsSource="{Binding Offers}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vms:SubscriptionOfferItem">
                                 <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
@@ -52,11 +55,23 @@
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
 
-                    <!-- No offers yet (loading / offline / not configured) -->
-                    <Label Text="{loc:Translate Subscribe_NoOffers}"
-                           IsVisible="{Binding ShowNoOffersNote}"
-                           FontFamily="{StaticResource FontSans}" FontSize="13" LineHeight="1.4"
-                           TextColor="{StaticResource InkSecondary}"/>
+                    <!-- Fetching the offerings -->
+                    <ActivityIndicator IsVisible="{Binding ShowLoadingOffers}" IsRunning="{Binding ShowLoadingOffers}"
+                                       Color="{StaticResource Teal}" HeightRequest="24"/>
+
+                    <!-- Loaded, but nothing to show → say WHY (offline vs our end) + Try again -->
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding ShowOffersProblem}">
+                        <Label Text="{Binding OffersProblemMessage}"
+                               FontFamily="{StaticResource FontSans}" FontSize="13" LineHeight="1.4"
+                               TextColor="{StaticResource InkSecondary}"/>
+                        <Label Text="{loc:Translate Subscribe_Retry}" Padding="0,2"
+                               FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding RetryCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </VerticalStackLayout>
 
                     <!-- Restore purchase (required by the stores) -->
                     <Label Text="{loc:Translate Subscribe_Restore}" Padding="0,6"

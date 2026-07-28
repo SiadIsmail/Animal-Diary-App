@@ -13,11 +13,22 @@ namespace Animal_Diary_App.Data.Services.Billing;
 /// </summary>
 public sealed class TrialService
 {
-    private readonly SettingsService _settings;
+    private readonly ITrialStore _settings;
+    private readonly Func<DateTime> _utcNow;
     private DateTime? _startUtc;
     private bool _loaded;
 
-    public TrialService(SettingsService settings) => _settings = settings;
+    /// <param name="settings">Persistence for the trial start instant (SQLite in the app,
+    /// a fake in tests) — an <see cref="ITrialStore"/> so this class stays MAUI/SQLite-free.</param>
+    /// <param name="utcNow">Clock, injectable so trial-expiry can be unit-tested. Defaults
+    /// to the system UTC clock. NB: because the clock is the device's, a user setting it
+    /// back extends the trial — an accepted limitation for a non-aggressive, no-account
+    /// trial (a reinstall also wipes their data, so gaming it is self-defeating).</param>
+    public TrialService(ITrialStore settings, Func<DateTime>? utcNow = null)
+    {
+        _settings = settings;
+        _utcNow = utcNow ?? (() => DateTime.UtcNow);
+    }
 
     /// <summary>Load the persisted start instant. Idempotent; call once at startup.</summary>
     public async Task InitializeAsync()
@@ -30,7 +41,7 @@ public sealed class TrialService
 
     /// <summary>The trial has begun and its window has not yet elapsed.</summary>
     public bool IsActive =>
-        _startUtc is DateTime start && DateTime.UtcNow < start + BillingConfig.TrialLength;
+        _startUtc is DateTime start && _utcNow() < start + BillingConfig.TrialLength;
 
     /// <summary>Whole days remaining in the trial (rounded up), or 0 once elapsed /
     /// never started. Used only for the pre-end nudge copy.</summary>
@@ -51,7 +62,7 @@ public sealed class TrialService
         {
             if (_startUtc is not DateTime start)
                 return TimeSpan.Zero;
-            var remaining = (start + BillingConfig.TrialLength) - DateTime.UtcNow;
+            var remaining = (start + BillingConfig.TrialLength) - _utcNow();
             return remaining <= TimeSpan.Zero ? TimeSpan.Zero : remaining;
         }
     }
@@ -66,7 +77,7 @@ public sealed class TrialService
         if (_startUtc.HasValue)
             return false;
 
-        var now = DateTime.UtcNow;
+        var now = _utcNow();
         _startUtc = now;
         await _settings.SetTrialStartUtcAsync(now);
         return true;

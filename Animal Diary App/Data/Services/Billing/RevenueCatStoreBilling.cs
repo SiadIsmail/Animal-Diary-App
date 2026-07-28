@@ -13,32 +13,51 @@ using Maui.RevenueCat.InAppBilling.Services;
 /// sees the plain <see cref="IStoreBilling"/> / <see cref="IEntitlementService"/>.
 /// Android/iOS only; the whole file is compiled out elsewhere.
 ///
-/// <para>State is cached so <see cref="IStoreBilling"/>'s synchronous properties
-/// (<see cref="HasActiveEntitlement"/>, <see cref="Offers"/>) never block. All binding
-/// calls are defensive: a store/network hiccup degrades to "no entitlement / no offers",
-/// never a crash — <see cref="EntitlementService"/> wraps too, this is belt-and-braces.</para>
+/// <para>State is cached in immutable snapshots so <see cref="IStoreBilling"/>'s
+/// synchronous properties (<see cref="HasActiveEntitlement"/>, <see cref="Offers"/>)
+/// never block and are safe to read from the UI thread while a background refresh
+/// mutates. Every binding call is defensive and time-bounded: a store/network hiccup
+/// degrades to "no entitlement / no offers", never a crash or a hung spinner.</para>
 /// </summary>
 public sealed class RevenueCatStoreBilling : IStoreBilling
 {
+    // Upper bound on any single background store call so a stalled network can't hang the
+    // subscribe sheet's spinner (the SDK has internal timeouts; this guarantees UI recovery).
+    private const int StoreCallTimeoutSeconds = 15;
+
     private readonly IRevenueCatBilling _rc;
 
-    private readonly List<SubscriptionOffer> _offers = new();
-    private readonly Dictionary<SubscriptionPlan, PackageDto> _packages = new();
+    // Immutable snapshots, swapped by reference so readers never see a torn/mutating list.
+    private volatile SubscriptionOffer[] _offers = Array.Empty<SubscriptionOffer>();
+    private volatile Dictionary<SubscriptionPlan, PackageDto> _packages = new();
+
+    // Serializes offerings loads (init-time vs sheet-open) so they don't interleave.
+    private readonly SemaphoreSlim _offersGate = new(1, 1);
+
+    // configure-once: cached so concurrent callers await the same operation.
+    private readonly object _initLock = new();
+    private Task? _initTask;
+
+    private volatile bool _configured;   // _rc.Initialize succeeded
+    private volatile bool _entitlementKnown;
     private bool _hasEntitlement;
-    private bool _initialized;
 
     public RevenueCatStoreBilling(IRevenueCatBilling rc) => _rc = rc;
 
     public bool HasActiveEntitlement => _hasEntitlement;
+    public bool EntitlementKnown => _entitlementKnown;
     public IReadOnlyList<SubscriptionOffer> Offers => _offers;
 
     public event Action? Changed;
 
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
-        if (_initialized)
-            return;
+        lock (_initLock)
+            return _initTask ??= InitCoreAsync();
+    }
 
+    private async Task InitCoreAsync()
+    {
         var key = ApiKey();
         if (string.IsNullOrWhiteSpace(key))
             return; // No key configured → stays "unavailable"; access can only come from the trial.
@@ -47,7 +66,10 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         {
             // The binding wants Initialize called after app start, on the main thread.
             await MainThread.InvokeOnMainThreadAsync(() => _rc.Initialize(key));
-            _initialized = true;
+            _configured = true;
+            // The RevenueCat customer id — use it to find this device in the dashboard's
+            // Customers list (e.g. to cancel a Test Store subscription while testing).
+            Debug.WriteLine($"[Billing] RevenueCat app user id: {_rc.GetAppUserId()} (anonymous={_rc.IsAnonymous()})");
             await LoadOfferingsAsync();
             await RefreshEntitlementAsync();
         }
@@ -59,7 +81,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
 
     public async Task RefreshAsync()
     {
-        if (!_initialized)
+        if (!_configured)
         {
             await InitializeAsync();
             return;
@@ -67,41 +89,60 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         await RefreshEntitlementAsync();
     }
 
+    public async Task RefreshOffersAsync()
+    {
+        if (!_configured)
+        {
+            // Not configured yet (init still running or failed) — running init also loads
+            // the offerings (and InitializeAsync is cached, so this is cheap/idempotent).
+            await InitializeAsync();
+            return;
+        }
+        try { await LoadOfferingsAsync(); }
+        catch (Exception ex) { Debug.WriteLine($"[Billing] offers refresh failed: {ex.Message}"); }
+        Changed?.Invoke();
+    }
+
     public async Task<PurchaseOutcome> PurchaseAsync(SubscriptionPlan plan)
     {
-        if (!_initialized || !_packages.TryGetValue(plan, out var package))
+        var package = PackageFor(plan);
+        if (!_configured || package is null)
             return PurchaseOutcome.Unavailable;
 
         try
         {
+            // Note: the purchase itself is NOT time-bounded — the user may be entering card
+            // details in the store sheet; only our background fetches are.
             var result = await _rc.PurchaseProduct(package);
             if (result.IsSuccess)
             {
-                // Trust the returned info, then re-read to be certain the entitlement is live.
                 LogCustomerInfo("purchase result", result.CustomerInfo);
                 SetEntitlement(IsPremiumActive(result.CustomerInfo));
                 await RefreshEntitlementAsync();
+                if (_hasEntitlement)
+                    return PurchaseOutcome.Success;
 
-                // Access is defined by the entitlement, not by the transaction. If the
-                // store says the buy went through but our entitlement is still inactive,
-                // the RevenueCat dashboard is misconfigured (the '{EntitlementId}'
-                // entitlement isn't attached to this product, or Sandbox Testing Access is
-                // restricting grants). Surface it instead of silently staying locked.
-                if (!_hasEntitlement)
-                {
-                    Debug.WriteLine(
-                        $"[Billing] purchase succeeded but entitlement '{BillingConfig.EntitlementId}' " +
-                        "is NOT active. Check the RevenueCat dashboard: (1) an entitlement with this " +
-                        "exact id exists, (2) it's attached to the purchased product, (3) Sandbox " +
-                        "Testing Access grants entitlements to this tester.");
-                    return PurchaseOutcome.Failed;
-                }
-                return PurchaseOutcome.Success;
+                // The money went through but no active entitlement yet: either propagation
+                // lag, or a dashboard misconfig (the entitlement isn't attached to this
+                // product, or Sandbox Testing Access is restricting grants). It is NEVER a
+                // failure — surface it as pending and log the config hint.
+                Debug.WriteLine(
+                    $"[Billing] purchase succeeded but entitlement '{BillingConfig.EntitlementId}' " +
+                    "is not active yet. If this persists, check the RevenueCat dashboard: an " +
+                    "entitlement with this id exists, is attached to the product, and Sandbox " +
+                    "Testing Access grants it.");
+                return PurchaseOutcome.Pending;
             }
 
-            return result.ErrorStatus == PurchaseErrorStatus.PurchaseCancelledError
-                ? PurchaseOutcome.Cancelled
-                : PurchaseOutcome.Failed;
+            return result.ErrorStatus switch
+            {
+                PurchaseErrorStatus.PurchaseCancelledError => PurchaseOutcome.Cancelled,
+                // Deferred payment (slow card, family approval): may complete later.
+                PurchaseErrorStatus.PaymentPendingError => PurchaseOutcome.Pending,
+                // Already owned on this store account → reconcile to the existing entitlement.
+                PurchaseErrorStatus.ProductAlreadyPurchasedError => await ResolveAlreadyOwnedAsync(),
+                _ => PurchaseOutcome.Failed,
+            };
         }
         catch (Exception ex)
         {
@@ -110,15 +151,44 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         }
     }
 
+    /// <summary>The store says this product is already owned (e.g. bought on another
+    /// device, or a stale local state) — make our entitlement reflect it rather than
+    /// reporting a confusing error. Falls back to a restore, then reports pending if it
+    /// still hasn't surfaced.</summary>
+    private async Task<PurchaseOutcome> ResolveAlreadyOwnedAsync()
+    {
+        await RefreshEntitlementAsync();
+        if (_hasEntitlement)
+            return PurchaseOutcome.Success;
+
+        try
+        {
+            var info = await WithTimeout(_rc.RestoreTransactions(), StoreCallTimeoutSeconds, (CustomerInfoDto?)null);
+            LogCustomerInfo("already-owned restore", info);
+            if (info is not null)
+            {
+                SetEntitlement(IsPremiumActive(info));
+                _entitlementKnown = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Billing] already-owned restore failed: {ex.Message}");
+        }
+        return _hasEntitlement ? PurchaseOutcome.Success : PurchaseOutcome.Pending;
+    }
+
     public async Task<PurchaseOutcome> RestoreAsync()
     {
-        if (!_initialized)
+        if (!_configured)
             return PurchaseOutcome.Unavailable;
 
         try
         {
-            var info = await _rc.RestoreTransactions();
+            var info = await WithTimeout(_rc.RestoreTransactions(), StoreCallTimeoutSeconds, (CustomerInfoDto?)null);
             LogCustomerInfo("restore result", info);
+            if (info is not null)
+                _entitlementKnown = true;
             var active = IsPremiumActive(info);
             SetEntitlement(active);
             return active ? PurchaseOutcome.Success : PurchaseOutcome.NothingToRestore;
@@ -130,49 +200,96 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         }
     }
 
+    public async Task<string?> GetManagementUrlAsync()
+    {
+        if (!_configured)
+            return null;
+        try { return await _rc.GetManagementSubscriptionUrl(); }
+        catch (Exception ex) { Debug.WriteLine($"[Billing] management url failed: {ex.Message}"); return null; }
+    }
+
     // ── internals ───────────────────────────────────────────────────────────
+
+    private PackageDto? PackageFor(SubscriptionPlan plan)
+        => _packages.TryGetValue(plan, out var package) ? package : null;
 
     private async Task LoadOfferingsAsync()
     {
-        var offerings = await _rc.GetOfferings();
-        // Prefer the offering flagged current; fall back to the first available.
-        var current = offerings.FirstOrDefault(o => o.IsCurrent) ?? offerings.FirstOrDefault();
-
-        _offers.Clear();
-        _packages.Clear();
-        if (current is null)
-            return;
-
-        foreach (var package in current.AvailablePackages)
+        await _offersGate.WaitAsync();
+        try
         {
-            var plan = MapPlan(package.Identifier);
-            if (plan is null)
-                continue; // ignore weekly/lifetime/etc — we only sell yearly + monthly
-            _packages[plan.Value] = package;
-            _offers.Add(new SubscriptionOffer(plan.Value, package.Product.Pricing.PriceLocalized, package.Product.Sku));
+            // On a timeout/failure we keep whatever we already had (build into locals and
+            // only swap on success) rather than wiping a good list.
+            var offerings = await WithTimeout(_rc.GetOfferings(), StoreCallTimeoutSeconds, new List<OfferingDto>());
+            // Prefer the offering flagged current; fall back to the first available.
+            var current = offerings.FirstOrDefault(o => o.IsCurrent) ?? offerings.FirstOrDefault();
+            if (current is null)
+                return;
+
+            var offers = new List<SubscriptionOffer>();
+            var packages = new Dictionary<SubscriptionPlan, PackageDto>();
+            foreach (var package in current.AvailablePackages)
+            {
+                var plan = MapPlan(package.Identifier);
+                if (plan is null)
+                    continue; // ignore weekly/lifetime/etc — we only sell yearly + monthly
+                packages[plan.Value] = package;
+                offers.Add(new SubscriptionOffer(plan.Value, package.Product.Pricing.PriceLocalized, package.Product.Sku));
+            }
+
+            // Atomic snapshot swap — readers see either the old or the new list, never a
+            // half-built one.
+            _offers = offers.ToArray();
+            _packages = packages;
+        }
+        finally
+        {
+            _offersGate.Release();
         }
     }
 
     private async Task RefreshEntitlementAsync()
     {
-        var info = await _rc.GetCustomerInfo();
+        var info = await WithTimeout(_rc.GetCustomerInfo(), StoreCallTimeoutSeconds, (CustomerInfoDto?)null);
         LogCustomerInfo("customer info", info);
+        if (info is null)
+            return; // timed out — leave the entitlement "unknown" so the gate stays optimistic
         SetEntitlement(IsPremiumActive(info));
+        _entitlementKnown = true;
     }
 
     /// <summary>Whether the user has full access per RevenueCat. Prefers an exact match on
     /// the configured entitlement id; falls back to "any active entitlement", because this
     /// app has a single paid tier = full access, so a dashboard rename or an
-    /// identifier-vs-display-name mismatch must never silently re-lock a paying user.
-    /// (Entitlements are the durable unlock, distinct from the raw product/subscription
-    /// ids in <c>ActiveSubscriptions</c>.)</summary>
+    /// identifier-vs-display-name mismatch must never silently re-lock a paying user. The
+    /// fallback logs, so a mismatch is visible rather than silent (M2).</summary>
     private static bool IsPremiumActive(CustomerInfoDto? info)
     {
         if (info is null || info.Entitlements.Count == 0)
             return false;
         if (info.Entitlements.Any(e => e.Identifier == BillingConfig.EntitlementId && e.IsActive))
             return true;
-        return info.Entitlements.Any(e => e.IsActive);
+        var anyActive = info.Entitlements.Any(e => e.IsActive);
+        if (anyActive)
+            Debug.WriteLine(
+                $"[Billing] entitlement '{BillingConfig.EntitlementId}' not found, but another " +
+                "entitlement is active — granting via fallback. Align BillingConfig.EntitlementId " +
+                "with the dashboard identifier to remove this fallback.");
+        return anyActive;
+    }
+
+    /// <summary>Run a store call with an upper time bound so the UI can't hang on a stalled
+    /// network. Returns <paramref name="onTimeout"/> if it doesn't finish in time; rethrows
+    /// the call's own exception if it faults.</summary>
+    private static async Task<T> WithTimeout<T>(Task<T> task, int seconds, T onTimeout)
+    {
+        var done = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(seconds)));
+        if (done != task)
+        {
+            Debug.WriteLine($"[Billing] a store call timed out after {seconds}s");
+            return onTimeout;
+        }
+        return await task;
     }
 
     /// <summary>Dump what RevenueCat reports so a "paid but still locked" case is

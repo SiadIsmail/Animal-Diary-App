@@ -308,6 +308,10 @@
         <view:AddEditMedicationsView Grid.Row="0"
                                      Grid.RowSpan="2"/>
 
+        <!-- Subscribe sheet: a gated add/edit-medication attempt routes here. -->
+        <view:SubscribeSheetView Grid.Row="0" Grid.RowSpan="2"
+                                 BindingContext="{Binding SubscribeVM}"/>
+
     </Grid>
 
 </ContentPage>

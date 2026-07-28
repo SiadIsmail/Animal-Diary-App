@@ -230,6 +230,9 @@ public partial class ManagePetPage : ContentPage
 
     private async void OnRequestConditionSetup(string conditionId)
     {
+        // Setting up a condition / care plan is "adding more" — gated in read-only.
+        if (PaywallBlocks())
+            return;
         switch (conditionId)
         {
             case "diabetes": await vm.DiabetesSetupVM.OpenAsync(); break;
@@ -238,12 +241,25 @@ public partial class ManagePetPage : ContentPage
         }
     }
 
+    /// <summary>Read-only gate for the Manage page's add/edit actions → the subscribe
+    /// sheet (hosted on this page). Returns true = blocked.</summary>
+    private bool PaywallBlocks()
+    {
+        if (vm.Entitlements.HasFullAccess)
+            return false;
+        vm.SubscribeVM.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceReadOnly);
+        return true;
+    }
+
     private async void OnSheetSaved() => await vm.ManageVM.LoadAsync();
 
     // Edit-pet door: prefill the create form from the active pet, then reuse it in edit
     // mode (it saves in place and pops back — no condition picker).
     private async void OnRequestEditPet()
     {
+        // Editing the pet profile is gated in read-only.
+        if (PaywallBlocks())
+            return;
         vm.PetVM.LoadDraftFromActivePet();
         await Navigation.PushAsync(new CreatePetPage(vm, isEditMode: true));
     }

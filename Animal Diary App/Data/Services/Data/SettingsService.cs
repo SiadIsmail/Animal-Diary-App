@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Models;
 using SQLite;
 
-public class SettingsService
+public class SettingsService : Animal_Diary_App.Data.Services.Billing.ITrialStore
 {
     private readonly SQLiteAsyncConnection _db;
     public SettingsService(AppDatabase database)

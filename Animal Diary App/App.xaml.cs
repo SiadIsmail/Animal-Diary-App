@@ -24,9 +24,10 @@ public partial class App : Application
 	private readonly IAnalyticsService _analytics;
 	private readonly ICloudSyncService _cloudSync;
 	private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
+	private readonly MedicationDoseLogService _doseLogs;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, MedicationDoseLogService doseLogs, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -40,6 +41,7 @@ public partial class App : Application
 		_analytics = analytics;
 		_cloudSync = cloudSync;
 		_entitlements = entitlements;
+		_doseLogs = doseLogs;
 		_services = services;
 
 		// Re-engagement signal: the app was foregrounded by tapping a medication
@@ -91,7 +93,41 @@ public partial class App : Application
 		{
 			await _entitlements.RefreshAsync();
 			await MaybeShowReadOnlyReassuranceAsync();
+			await MaybeShowPreEndNudgeAsync();
 		});
+	}
+
+	/// <summary>Once, a few days before the trial ends, a gentle heads-up anchored to what
+	/// the owner has actually built (real dose count + weeks tracked) — loss aversion, not a
+	/// countdown drumbeat. Mutually exclusive with the read-only reassurance (that's
+	/// TrialExpired, this is Trial). No-op under the Null boundary.</summary>
+	private async Task MaybeShowPreEndNudgeAsync()
+	{
+		try
+		{
+			if (_entitlements.State != Animal_Diary_App.Data.Services.Billing.AccessState.Trial)
+				return;
+			if (_entitlements.TrialDaysLeft > Animal_Diary_App.Data.Services.Billing.BillingConfig.PreEndNudgeDaysBefore)
+				return;
+			if (await _settingsService.GetFlagAsync(SettingsFlags.PreEndNudgeShown))
+				return;
+			await _settingsService.SetFlagAsync(SettingsFlags.PreEndNudgeShown, true);
+
+			var pet = _vm.PetVM.ActivePet;
+			var petName = pet?.Name ?? string.Empty;
+			var doseCount = pet != null ? await _doseLogs.GetGivenCountAsync(pet.Id) : 0;
+			var startUtc = await _settingsService.GetTrialStartUtcAsync();
+			var weeks = startUtc is DateTime s
+				? Math.Max(1, (int)Math.Ceiling((DateTime.UtcNow - s).TotalDays / 7))
+				: 1;
+			var daysLeft = _entitlements.TrialDaysLeft;
+
+			MainThread.BeginInvokeOnMainThread(() => _vm.TrialMessageVM.ShowNudge(petName, daysLeft, doseCount, weeks));
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[Billing] pre-end nudge failed: {ex.Message}");
+		}
 	}
 
 	/// <summary>Once, when the app first finds itself in the care-only read state (trial
@@ -251,6 +287,7 @@ public partial class App : Application
 					if (hasPets && await _entitlements.EnsureTrialStartedAsync())
 						_analytics.Track(AnalyticsEvents.TrialStarted);
 					await MaybeShowReadOnlyReassuranceAsync();
+					await MaybeShowPreEndNudgeAsync();
 				}
 				catch (Exception ex)
 				{

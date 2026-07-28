@@ -22,10 +22,15 @@ public sealed class EntitlementService : IEntitlementService
         _store.Changed += () => StateChanged?.Invoke();
     }
 
-    public bool HasFullAccess => _trial.IsActive || _store.HasActiveEntitlement;
+    // Optimistic-until-known: while the store hasn't confirmed the entitlement yet (the
+    // brief launch fetch), keep access open so a paying subscriber is never locked in that
+    // window. A genuinely-expired user gets ~1s of grace on a cold launch — harmless.
+    public bool HasFullAccess =>
+        _trial.IsActive || _store.HasActiveEntitlement || !_store.EntitlementKnown;
 
     public AccessState State =>
-        _store.HasActiveEntitlement ? AccessState.Subscribed
+        !_store.EntitlementKnown ? AccessState.Unknown
+        : _store.HasActiveEntitlement ? AccessState.Subscribed
         : _trial.IsActive ? AccessState.Trial
         : AccessState.TrialExpired;
 
@@ -54,6 +59,13 @@ public sealed class EntitlementService : IEntitlementService
         StateChanged?.Invoke();
     }
 
+    public async Task RefreshOffersAsync()
+    {
+        try { await _store.RefreshOffersAsync(); }
+        catch (Exception ex) { Debug.WriteLine($"[Billing] store offers refresh failed: {ex.Message}"); }
+        StateChanged?.Invoke();
+    }
+
     public async Task<PurchaseOutcome> PurchaseAsync(SubscriptionPlan plan)
     {
         PurchaseOutcome outcome;
@@ -70,5 +82,11 @@ public sealed class EntitlementService : IEntitlementService
         catch (Exception ex) { Debug.WriteLine($"[Billing] restore failed: {ex.Message}"); outcome = PurchaseOutcome.Failed; }
         StateChanged?.Invoke();
         return outcome;
+    }
+
+    public async Task<string?> GetManagementUrlAsync()
+    {
+        try { return await _store.GetManagementUrlAsync(); }
+        catch (Exception ex) { Debug.WriteLine($"[Billing] management url failed: {ex.Message}"); return null; }
     }
 }
