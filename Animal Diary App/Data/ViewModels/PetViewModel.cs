@@ -261,6 +261,11 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     /// (Manage owns that).</summary>
     public ObservableCollection<PetProfileTag> ActivePetTags { get; } = new();
 
+    /// <summary>Which tag load is the current one. Incremented on entry to
+    /// <see cref="LoadActivePetTagsAsync"/>; a load whose generation is stale by the
+    /// time its queries return discards its result instead of writing it.</summary>
+    private int _tagLoadGeneration;
+
     /// <summary>Rebuild <see cref="ActivePetTags"/> from the authoritative stores.
     /// Conditions come from <see cref="PetConditionService"/> (never the legacy
     /// <c>Pet.ConditionId</c>); the count covers non-archived medications only, the
@@ -269,15 +274,33 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     public async Task LoadActivePetTagsAsync()
     {
         var pet = ActivePet;
+        // Bumped on entry so only the newest load may write. Two are in flight often:
+        // the ActivePet PropertyChanged handler starts one fire-and-forget on every
+        // pet load, while the page awaits its own on every appearance.
+        var generation = ++_tagLoadGeneration;
 
-        ActivePetTags.Clear();
         if (pet == null || pet.Id == 0)
+        {
+            ActivePetTags.Clear();
             return;
+        }
 
-        // Gather before touching the observable collection.
+        // Gather before touching the observable collection. Clearing up here instead
+        // left a window across these awaits where an overlapping load cleared between
+        // this one's Clear and its Adds, so both sets of chips landed in the list —
+        // the doubled conditions and doubled medication count on the Care card.
         var conditionIds = await _conditions.GetConditionIdsAsync(pet);
         var medCount = (await _medications.GetMedicationsByPetIdAsync(pet.Id))
             .Count(m => !m.IsArchived);
+
+        // A newer load started while this one was querying. Its results describe the
+        // current pet, so drop these rather than paint the previous pet's chips over
+        // the card (the "sometimes it doesn't load correctly" half of the same race).
+        if (generation != _tagLoadGeneration)
+            return;
+
+        // Everything below is synchronous, so the swap can't be interleaved.
+        ActivePetTags.Clear();
 
         foreach (var id in conditionIds)
             ActivePetTags.Add(new PetProfileTag { ResourceKey = ConditionCatalog.GetCondition(id).NameKey });
@@ -577,7 +600,11 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     }
     public async Task LoadPetsAsync()
     {
+        // Read first, then swap the list in one synchronous block (no await between the
+        // Clear and the last Add) — overlapping loads would otherwise interleave and
+        // leave the same pet in the list twice. Same reasoning as CalendarViewModel.
         var allPets = await _petService.GetPetsAsync();
+        var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
 
         Pets.Clear();
         foreach (var pet in allPets)
@@ -587,11 +614,23 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
         if (Pets.Count > 0)
         {
-            var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
             var petToSelect = Pets.FirstOrDefault(p => p.Id == savedPetId) ?? Pets[0];
             SelectPet(petToSelect);
             SelectedPet = petToSelect;
         }
+    }
+
+    /// <summary>
+    /// The ONE place chip selection is written. A single pass sets exactly one flag and
+    /// clears every other, so no path can leave two chips looking selected. Matching is
+    /// by id, never by reference: the list is rebuilt from fresh SQLite rows on every
+    /// load, so the "same" pet is a different object each time (this also covers the
+    /// medication editor's pet Picker, which can hand back a stale instance).
+    /// </summary>
+    private void ApplySelection(int petId)
+    {
+        foreach (var p in Pets)
+            p.IsSelected = p.Id == petId;
     }
 
     private void SelectPet(Pet pet)
@@ -599,10 +638,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         if (pet == null)
             return;
 
-        foreach (var p in Pets)
-            p.IsSelected = false;
-
-        pet.IsSelected = true;
+        ApplySelection(pet.Id);
 
         _activePetService.ActivePet = pet;
 

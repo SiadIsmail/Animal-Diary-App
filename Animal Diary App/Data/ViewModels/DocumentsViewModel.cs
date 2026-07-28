@@ -57,11 +57,19 @@ public class DocumentsViewModel : BaseViewModel
         // A pending delete from a previous visit must not resurrect on reload.
         await CommitPendingDeleteAsync();
 
-        Reports.Clear();
+        // Gather first, mutate after (see coding-standards.md, "Rebuilding an
+        // ObservableCollection"): awaiting the query with the collection already
+        // cleared let an overlapping load clear between this one's Clear and its Adds,
+        // listing every report twice. This list is a non-virtualized BindableLayout, so
+        // a doubled row is a doubled view, not just a doubled item.
         var petId = _activePetService.ActivePet.Id;
-        if (petId != 0)
-            foreach (var row in await _library.GetForPetAsync(petId))
-                Reports.Add(new ReportListItem(row));
+        var rows = petId == 0
+            ? new List<Data.Models.VetReportFile>()
+            : await _library.GetForPetAsync(petId);
+
+        Reports.Clear();
+        foreach (var row in rows)
+            Reports.Add(new ReportListItem(row));
 
         IsEmpty = Reports.Count == 0;
         OnPropertyChanged(nameof(Subtitle));
