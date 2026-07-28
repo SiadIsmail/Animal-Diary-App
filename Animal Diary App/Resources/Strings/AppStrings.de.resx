@@ -657,6 +657,10 @@
   <data name="Subscribe_PlanMonthly" xml:space="preserve"><value>Monatlich</value></data>
   <data name="Subscribe_BestValue" xml:space="preserve"><value>Am günstigsten</value></data>
   <data name="Subscribe_Restore" xml:space="preserve"><value>Kauf wiederherstellen</value></data>
+  <data name="Subscribe_SubscribedTitle" xml:space="preserve"><value>Du bist dabei</value></data>
+  <data name="Subscribe_ThanksBody" xml:space="preserve"><value>Danke, dass du Felova unterstützt.</value></data>
+  <data name="Subscribe_Manage" xml:space="preserve"><value>Ändern oder kündigen</value></data>
+  <data name="Common_Done" xml:space="preserve"><value>Fertig</value></data>
   <data name="Subscribe_NoOffers" xml:space="preserve"><value>Die Optionen sind gerade nicht verfügbar. Schau gleich noch einmal vorbei.</value></data>
   <data name="Subscribe_ContinueLabel" xml:space="preserve"><value>Mit Felova weitermachen</value></data>
   <data name="Subscribe_PurchaseProblem" xml:space="preserve"><value>Das hat nicht geklappt. Du kannst es noch einmal versuchen.</value></data>

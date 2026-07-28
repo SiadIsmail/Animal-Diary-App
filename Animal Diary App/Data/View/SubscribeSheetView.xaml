@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- SubscribeSheetView — the dignified ask on the shared FelovaBottomSheet. Yearly is
-     emphasized (listed first + "best value" badge), monthly below, Restore beneath.
-     Never a "subscribe now to unlock" wall. BindingContext is a SubscribeSheetViewModel. -->
+<!-- SubscribeSheetView — the dignified ask on the shared FelovaBottomSheet. Two faces:
+     the OFFERS face (not subscribed: yearly emphasized + monthly + restore) and the
+     SUBSCRIBED face (a quiet thank-you + change/cancel + done). A successful purchase
+     lands on the subscribed face, so it doubles as the confirmation. Never a
+     "subscribe now to unlock" wall. BindingContext is a SubscribeSheetViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
@@ -13,47 +15,87 @@
              InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
 
     <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
-                                Title="{loc:Translate Subscribe_Title}"
-                                Subtitle="{loc:Translate Subscribe_Subtitle}"
+                                Title="{Binding SheetTitle}"
+                                Subtitle="{Binding SheetSubtitle}"
                                 DismissCommand="{Binding DismissCommand}">
         <controls:FelovaBottomSheet.SheetContent>
             <VerticalStackLayout Spacing="12" Padding="0,2,0,0">
 
-                <!-- The offers (yearly first, monthly below) -->
-                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Offers}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="vms:SubscriptionOfferItem">
-                            <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 15,13,13,16" Padding="16,14">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                        Command="{Binding Source={x:Reference Root}, Path=BindingContext.PurchaseCommand}"
-                                        CommandParameter="{Binding}"/>
-                                </Border.GestureRecognizers>
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                                        <Label Text="{Binding PlanLabel}" FontFamily="{StaticResource FontSans}"
-                                               FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TealDeep}"/>
-                                        <Label Text="{loc:Translate Subscribe_BestValue}" FontFamily="{StaticResource FontSans}"
-                                               FontSize="11.5" TextColor="{StaticResource InkSecondary}"
-                                               IsVisible="{Binding IsBest}"/>
-                                    </VerticalStackLayout>
-                                    <Label Grid.Column="1" Text="{Binding PriceLabel}" VerticalOptions="Center"
-                                           FontFamily="{StaticResource FontSans}" FontSize="15" FontAttributes="Bold"
-                                           TextColor="{StaticResource TealDeep}"/>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
+                <!-- ── OFFERS face (not subscribed) ── -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowOffers}">
+
+                    <!-- The offers (yearly first, monthly below) -->
+                    <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Offers}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:SubscriptionOfferItem">
+                                <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 15,13,13,16" Padding="16,14">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference Root}, Path=BindingContext.PurchaseCommand}"
+                                            CommandParameter="{Binding}"/>
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                        <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                            <Label Text="{Binding PlanLabel}" FontFamily="{StaticResource FontSans}"
+                                                   FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TealDeep}"/>
+                                            <Label Text="{loc:Translate Subscribe_BestValue}" FontFamily="{StaticResource FontSans}"
+                                                   FontSize="11.5" TextColor="{StaticResource InkSecondary}"
+                                                   IsVisible="{Binding IsBest}"/>
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="1" Text="{Binding PriceLabel}" VerticalOptions="Center"
+                                               FontFamily="{StaticResource FontSans}" FontSize="15" FontAttributes="Bold"
+                                               TextColor="{StaticResource TealDeep}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <!-- No offers yet (loading / offline / not configured) -->
+                    <Label Text="{loc:Translate Subscribe_NoOffers}"
+                           IsVisible="{Binding ShowNoOffersNote}"
+                           FontFamily="{StaticResource FontSans}" FontSize="13" LineHeight="1.4"
+                           TextColor="{StaticResource InkSecondary}"/>
+
+                    <!-- Restore purchase (required by the stores) -->
+                    <Label Text="{loc:Translate Subscribe_Restore}" Padding="0,6"
+                           FontFamily="{StaticResource FontSans}" FontSize="12.5" FontAttributes="Bold"
+                           TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding RestoreCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
                 </VerticalStackLayout>
 
-                <!-- No offers yet (loading / offline / not configured) -->
-                <Label Text="{loc:Translate Subscribe_NoOffers}"
-                       IsVisible="{Binding ShowNoOffersNote}"
-                       FontFamily="{StaticResource FontSans}" FontSize="13" LineHeight="1.4"
-                       TextColor="{StaticResource InkSecondary}"/>
+                <!-- ── SUBSCRIBED face (thank-you + manage + done) ── -->
+                <VerticalStackLayout Spacing="16" IsVisible="{Binding ShowSubscribed}">
 
-                <!-- Transient status (restore result / purchase problem) -->
+                    <Label Text="{loc:Translate Subscribe_ThanksBody}" FontFamily="{StaticResource FontSans}"
+                           FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"/>
+
+                    <!-- Change or cancel → the store's subscription page -->
+                    <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
+                            StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ManageCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Subscribe_Manage}" FontFamily="{StaticResource FontSans}" FontSize="14"
+                               FontAttributes="Bold" TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center" Padding="0,13"/>
+                    </Border>
+
+                    <!-- Done -->
+                    <Label Text="{loc:Translate Common_Done}" Padding="0,4"
+                           FontFamily="{StaticResource FontSans}" FontSize="12.5" FontAttributes="Bold"
+                           TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <!-- ── Shared: transient status + busy ── -->
                 <Label Text="{Binding StatusText}"
                        IsVisible="{Binding StatusText, Converter={StaticResource StringToBoolConverter}}"
                        FontFamily="{StaticResource FontSans}" FontSize="12.5" HorizontalTextAlignment="Center"
@@ -61,15 +103,6 @@
 
                 <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                    Color="{StaticResource Teal}" HeightRequest="22"/>
-
-                <!-- Restore purchase (required by the stores) -->
-                <Label Text="{loc:Translate Subscribe_Restore}" Padding="0,6"
-                       FontFamily="{StaticResource FontSans}" FontSize="12.5" FontAttributes="Bold"
-                       TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding RestoreCommand}"/>
-                    </Label.GestureRecognizers>
-                </Label>
 
             </VerticalStackLayout>
         </controls:FelovaBottomSheet.SheetContent>
