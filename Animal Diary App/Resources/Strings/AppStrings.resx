@@ -715,4 +715,14 @@
   <data name="Today_RemindersOffTitle" xml:space="preserve"><value>Reminders are switched off</value></data>
   <data name="Today_RemindersOffBody" xml:space="preserve"><value>Notifications are turned off for Felova, so your reminders won't arrive. Everything you've set up is still saved.</value></data>
   <data name="Today_RemindersOffAction" xml:space="preserve"><value>Open settings</value></data>
+  <!-- ── Feedback sheet (bottom of the Care page) ── -->
+  <data name="Feedback_RowTitle" xml:space="preserve"><value>Feedback or a problem</value></data>
+  <data name="Feedback_RowSubtitle" xml:space="preserve"><value>Discord, or a direct email</value></data>
+  <data name="Feedback_SheetTitle" xml:space="preserve"><value>Reach us</value></data>
+  <data name="Feedback_SheetBody" xml:space="preserve"><value>Tell us what's broken, what's missing, or what's confusing. Both ways land with the same two people.</value></data>
+  <data name="Feedback_DiscordTitle" xml:space="preserve"><value>Find us on Discord</value></data>
+  <data name="Feedback_DiscordSubtitle" xml:space="preserve"><value>Ask there and other owners see it too</value></data>
+  <data name="Feedback_EmailTitle" xml:space="preserve"><value>Send an email</value></data>
+  <data name="Feedback_EmailSubject" xml:space="preserve"><value>Felova feedback</value></data>
+  <data name="Feedback_Footer" xml:space="preserve"><value>Built by two people and a dog.</value></data>
 </root>

@@ -59,6 +59,9 @@ public class MainViewModel
     /// <summary>The reusable trial-message sheet (explainer / pre-end nudge / read-only).</summary>
     public TrialMessageViewModel TrialMessageVM { get; }
 
+    /// <summary>The Care page's "feedback or a problem" sheet (Discord / direct email).</summary>
+    public FeedbackSheetViewModel FeedbackVM { get; }
+
     /// <summary>The hidden developer diagnostics sheet (Settings → "Code").</summary>
     public DevSheetViewModel DevVM { get; }
 
@@ -97,6 +100,7 @@ public class MainViewModel
  SharingSheetViewModel sharingVM,
  SubscribeSheetViewModel subscribeVM,
  TrialMessageViewModel trialMessageVM,
+ FeedbackSheetViewModel feedbackVM,
  Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
  DevSheetViewModel devVM,
  Animal_Diary_App.Data.Services.Cloud.ICloudSyncService cloudSync,
@@ -127,6 +131,7 @@ public class MainViewModel
         SharingVM = sharingVM;
         SubscribeVM = subscribeVM;
         TrialMessageVM = trialMessageVM;
+        FeedbackVM = feedbackVM;
         Entitlements = entitlements;
         DevVM = devVM;
         CloudSync = cloudSync;

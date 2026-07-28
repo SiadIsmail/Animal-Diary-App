@@ -696,4 +696,14 @@
   <data name="Today_RemindersOffTitle" xml:space="preserve"><value>Erinnerungen sind ausgeschaltet</value></data>
   <data name="Today_RemindersOffBody" xml:space="preserve"><value>Mitteilungen sind für Felova ausgeschaltet, deine Erinnerungen kommen deshalb nicht an. Alles, was du eingerichtet hast, ist weiterhin gespeichert.</value></data>
   <data name="Today_RemindersOffAction" xml:space="preserve"><value>Einstellungen öffnen</value></data>
+  <!-- ── Feedback-Sheet (unten auf der Pflege-Seite) ── -->
+  <data name="Feedback_RowTitle" xml:space="preserve"><value>Feedback oder ein Problem</value></data>
+  <data name="Feedback_RowSubtitle" xml:space="preserve"><value>Discord oder direkt per E-Mail</value></data>
+  <data name="Feedback_SheetTitle" xml:space="preserve"><value>Schreib uns</value></data>
+  <data name="Feedback_SheetBody" xml:space="preserve"><value>Sag uns, was kaputt ist, was fehlt oder was unklar ist. Beide Wege landen bei denselben zwei Leuten.</value></data>
+  <data name="Feedback_DiscordTitle" xml:space="preserve"><value>Auf Discord schreiben</value></data>
+  <data name="Feedback_DiscordSubtitle" xml:space="preserve"><value>Dort lesen andere Halterinnen und Halter mit</value></data>
+  <data name="Feedback_EmailTitle" xml:space="preserve"><value>E-Mail schreiben</value></data>
+  <data name="Feedback_EmailSubject" xml:space="preserve"><value>Felova Feedback</value></data>
+  <data name="Feedback_Footer" xml:space="preserve"><value>Gebaut von zwei Menschen und einem Hund.</value></data>
 </root>
