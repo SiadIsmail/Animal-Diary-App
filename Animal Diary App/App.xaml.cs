@@ -59,6 +59,59 @@ public partial class App : Application
 		catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Analytics] notification_opened failed: {ex.Message}"); }
 	}
 
+	// ── Root-page publication ────────────────────────────────────────────────────
+	// Startup and window creation are two independent events with no guaranteed
+	// order, and on Android window creation happens MORE THAN ONCE per process. The
+	// LoadingPage used to be a dead end under both facts, so this pair exists to make
+	// "what the app should be showing" a value that either side can pick up:
+	//
+	//  • StartAsync publishes a factory once it has decided the root.
+	//  • CreateWindow uses it if it's already there, otherwise applies it on arrival.
+	//
+	// A factory, not a Page: MAUI recreates the Activity (and calls CreateWindow
+	// again) on memory pressure, on "don't keep activities", and on config changes
+	// this app doesn't declare — and a Page instance can only belong to one Window.
+
+	// The factory is a mutable field and the TCS only signals "startup has decided",
+	// because the root changes again afterwards (the language picker hands over to the
+	// real root). A TaskCompletionSource<Func<Page>> cannot express that — TrySetResult
+	// on an already-completed source is a silent no-op, which would send a recreated
+	// window back to the language picker forever.
+	private Func<Page>? _rootFactory;
+	private readonly TaskCompletionSource _rootReady =
+		new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+	/// <summary>The current root, or the error page if startup never published one.</summary>
+	private Page BuildCurrentRoot() => (_rootFactory ?? BuildErrorPage)();
+
+	/// <summary>Whether onboarding is behind us, read by <see cref="BuildRootPage"/>.
+	/// A field rather than a captured local: <see cref="CreateWindow"/> can run hours
+	/// after startup, and by then "did this user have pets at launch" is the wrong
+	/// question — a pet added during the session, or a data reset, moves this.</summary>
+	private bool _hasPets;
+
+	/// <summary>The window to navigate. Deliberately not <c>Windows[0]</c>: Android can
+	/// add a second <see cref="Window"/> when the Activity is recreated, and the first
+	/// entry is then the detached one, so writing to it changes nothing on screen.</summary>
+	private static Window? ActiveWindow => Application.Current?.Windows.LastOrDefault();
+
+	/// <summary>The real root for the current state. Called once per Window, so every
+	/// window gets its own page instances (the pages and the Shell are transient).</summary>
+	private Page BuildRootPage() => _hasPets
+		? _services.GetRequiredService<AppShell>()
+		: new NavigationPage(new WelcomePage(_vm));
+
+	private static Page BuildErrorPage() => new ContentPage
+	{
+		Content = new Label
+		{
+			Text = LocalizationManager.Instance.GetString("App_StartError"),
+			Margin = 24,
+			HorizontalTextAlignment = TextAlignment.Center,
+			VerticalTextAlignment = TextAlignment.Center
+		}
+	};
+
 	/// <summary>
 	/// Swap the window root to the tabbed <see cref="AppShell"/>. Called when the
 	/// user leaves onboarding (first pet saved). A fresh Shell is resolved so a
@@ -66,13 +119,71 @@ public partial class App : Application
 	/// </summary>
 	public void SwitchToMainApp()
 	{
-		if (Windows.Count > 0)
-			Windows[0].Page = _services.GetRequiredService<AppShell>();
+		// Recorded before the swap so a later Activity recreation rebuilds the Shell
+		// rather than dropping the user back on the welcome screen. Both fields are
+		// set explicitly so this is correct however the caller got here (in practice
+		// the language picker has already handed over).
+		_hasPets = true;
+		_rootFactory = BuildRootPage;
+		_rootReady.TrySetResult();
+		if (ActiveWindow is Window window)
+			window.Page = _services.GetRequiredService<AppShell>();
 	}
+
+	/// <summary>Return to onboarding after a full data reset. Routed through here so the
+	/// "no pets" state is recorded for any later window, not just applied to this one.</summary>
+	public void SwitchToOnboarding()
+	{
+		_hasPets = false;
+		_rootFactory = BuildRootPage;
+		_rootReady.TrySetResult();
+		if (ActiveWindow is Window window)
+			window.Page = new NavigationPage(new WelcomePage(_vm));
+	}
+
+	private int _windowsCreated;
 
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
-		return new Window(new LoadingPage());
+		// Breadcrumb: a second invocation in one process means the Activity was
+		// recreated, which is the case that used to strand the user on LoadingPage.
+		System.Diagnostics.Debug.WriteLine(
+			$"[Startup] CreateWindow #{++_windowsCreated}, root ready: {_rootReady.Task.IsCompleted}");
+
+		// Startup already finished. App is a singleton, so StartAsync will NOT run
+		// again to navigate away from a loading screen — build the real root now.
+		if (_rootReady.Task.IsCompletedSuccessfully)
+		{
+			try
+			{
+				return new Window(BuildCurrentRoot());
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[Startup] root rebuild failed: {ex}");
+				return new Window(BuildErrorPage());
+			}
+		}
+
+		// First launch. Show the loading screen and apply the root the moment startup
+		// publishes it — whichever of the two gets there first.
+		var loadingWindow = new Window(new LoadingPage());
+		_rootReady.Task.ContinueWith(
+			_ => MainThread.BeginInvokeOnMainThread(() =>
+			{
+				try
+				{
+					loadingWindow.Page = BuildCurrentRoot();
+				}
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine($"[Startup] root apply failed: {ex}");
+					loadingWindow.Page = BuildErrorPage();
+				}
+			}),
+			TaskScheduler.Default);
+
+		return loadingWindow;
 	}
 
 	protected override void OnResume()
@@ -184,20 +295,18 @@ public partial class App : Application
 				await _activePetService.LoadActivePetAsync(activePet.Id);
 			}
 
-			// Build the post-onboarding landing page lazily so it inflates *after*
-			// the chosen language has been applied.
-			Page BuildNextPage() => pets.Count == 0
-				? new NavigationPage(new WelcomePage(_vm))
-				: _services.GetRequiredService<AppShell>();
+			// Drives BuildRootPage from here on. The post-onboarding landing page is
+			// built lazily (inside that factory) so it inflates *after* the chosen
+			// language has been applied.
+			_hasPets = pets.Count > 0;
 
 			var savedLanguage = await _settingsService.GetLanguageAsync();
 
-			Page firstPage;
 			if (savedLanguage != null)
 			{
 				// Returning user: apply their saved language and go straight in.
 				LocalizationManager.Instance.SetLanguage(savedLanguage);
-				firstPage = BuildNextPage();
+				_rootFactory = BuildRootPage;
 			}
 			else
 			{
@@ -206,17 +315,19 @@ public partial class App : Application
 				var deviceLanguage = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de" ? "de" : "en";
 				LocalizationManager.Instance.SetLanguage(deviceLanguage);
 
-				firstPage = new LanguageSelectionPage(_settingsService, code =>
+				_rootFactory = () => new LanguageSelectionPage(_settingsService, code =>
 				{
-					if (Application.Current?.Windows.Count > 0)
-						Application.Current.Windows[0].Page = BuildNextPage();
+					// The picker is done: from now on the root is the real one, for
+					// this window and for any window a later recreation builds.
+					_rootFactory = BuildRootPage;
+					if (ActiveWindow is Window window)
+						window.Page = BuildRootPage();
 				});
 			}
 
-			if (Application.Current?.Windows.Count > 0)
-			{
-				Application.Current.Windows[0].Page = firstPage;
-			}
+			// Publish rather than navigate. The window may not exist yet (nothing
+			// orders StartAsync against CreateWindow), and it may be replaced later.
+			_rootReady.TrySetResult();
 
 			// Analytics: prepare the anonymous id, then record the launch. Fired here so
 			// the language property is already applied above and rides along with the
@@ -298,19 +409,11 @@ public partial class App : Application
 		catch (Exception ex)
 		{
 			System.Diagnostics.Debug.WriteLine(ex);
-			if (Application.Current?.Windows.Count > 0)
-			{
-				Application.Current.Windows[0].Page = new ContentPage
-				{
-					Content = new Label
-					{
-						Text = LocalizationManager.Instance.GetString("App_StartError"),
-						Margin = 24,
-						HorizontalTextAlignment = TextAlignment.Center,
-						VerticalTextAlignment = TextAlignment.Center
-					}
-				};
-			}
+			// Published, not assigned: a throw before the window exists used to hit the
+			// same silent guard as the success path, so the failure showed up as a
+			// permanent loading screen instead of a message the user could act on.
+			_rootFactory = BuildErrorPage;
+			_rootReady.TrySetResult();
 		}
 	}
 }
