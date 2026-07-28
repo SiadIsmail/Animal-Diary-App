@@ -167,7 +167,10 @@ public partial class PetsPage : ContentPage
         // Clear in-memory form drafts so stale inputs don't survive the wipe
         // (the ViewModels are singletons).
         vm.ResetDrafts();
-        Application.Current!.Windows[0].Page = new NavigationPage(new WelcomePage(vm));
+        // Through App, not Windows[0]: it records the "no pets" state so an Activity
+        // recreation later rebuilds onboarding rather than the Shell, and it targets
+        // the window actually on screen.
+        (Application.Current as App)?.SwitchToOnboarding();
     }
 
     public async void OnEntryCompleted(object? sender, EventArgs e)

@@ -186,8 +186,9 @@ public partial class ManagePetPage : ContentPage
             if (!anyPetsRemain)
             {
                 // The owner deleted their last pet — back to onboarding, as after a
-                // full reset (a freshly resolved page, no stale instances).
-                Application.Current!.Windows[0].Page = new NavigationPage(new WelcomePage(vm));
+                // full reset (a freshly resolved page, no stale instances). Through App
+                // so the "no pets" state sticks for any window a recreation builds.
+                (Application.Current as App)?.SwitchToOnboarding();
                 return;
             }
 
