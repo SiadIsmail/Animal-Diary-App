@@ -82,9 +82,17 @@ public static class MauiProgram
 		// when analytics is enabled AND a project key is configured, else a no-op that
 		// collects and sends nothing. Every consumer holds IAnalyticsService only.
 		if (Animal_Diary_App.Data.Services.Analytics.AnalyticsConfig.Enabled)
+		{
+			// Backing store for the offline retry queue. Registered only on this branch:
+			// with analytics off there is nothing to buffer, and the no-op sender must not
+			// so much as touch the file system.
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Analytics.IAnalyticsQueueStore, Animal_Diary_App.Data.Services.Analytics.FileAnalyticsQueueStore>();
 			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Analytics.IAnalyticsService, Animal_Diary_App.Data.Services.Analytics.PostHogAnalyticsService>();
+		}
 		else
+		{
 			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Analytics.IAnalyticsService, Animal_Diary_App.Data.Services.Analytics.NullAnalyticsService>();
+		}
 
 		builder.Services.AddSingleton<ReminderInstanceService>();
 		builder.Services.AddSingleton<MedicationDoseReconciler>();

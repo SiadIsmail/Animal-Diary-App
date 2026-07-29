@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Billing unit tests. Targets plain net9.0 (no MAUI, no SQLite) and compile-LINKS the
-       pure billing sources from the app project, so the trial + gate logic is testable
-       without the MAUI app's platform TFMs. Run with: dotnet test on this csproj. -->
+  <!-- Billing + analytics unit tests. Targets plain net9.0 (no MAUI, no SQLite) and
+       compile-LINKS the pure sources from the app project, so the trial/gate logic and the
+       analytics session, tenure, and offline-queue rules are testable without the MAUI
+       app's platform TFMs. Run with: dotnet test on this csproj. -->
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -29,6 +30,17 @@
     <Compile Include="..\Animal Diary App\Data\Services\Billing\ITrialStore.cs" Link="Billing\ITrialStore.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IStoreBilling.cs" Link="Billing\IStoreBilling.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\BillingConfig.cs" Link="Billing\BillingConfig.cs" />
+  </ItemGroup>
+
+  <!-- Pure (MAUI-free) analytics sources under test. The MAUI-bound pieces —
+       AnalyticsIdentity (Preferences), FileAnalyticsQueueStore (FileSystem) and
+       PostHogAnalyticsService (HttpClient/AppInfo) — are deliberately NOT linked; the
+       decisions worth testing were kept out of them. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsSession.cs" Link="Analytics\AnalyticsSession.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsTenure.cs" Link="Analytics\AnalyticsTenure.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsEventQueue.cs" Link="Analytics\AnalyticsEventQueue.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\IAnalyticsQueueStore.cs" Link="Analytics\IAnalyticsQueueStore.cs" />
   </ItemGroup>
 
 </Project>

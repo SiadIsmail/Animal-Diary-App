@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
+using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Helpers;
@@ -144,6 +145,7 @@ public class JournalLogViewModel : BaseViewModel
     private readonly AppetiteEntryService _appetite;
     private readonly SeizureEntryService _seizures;
     private readonly WaterEntryService _water;
+    private readonly IAnalyticsService _analytics;
 
     private DateTime _date = DateTime.Now.Date;
 
@@ -159,7 +161,8 @@ public class JournalLogViewModel : BaseViewModel
         GlucoseEntryService glucose,
         AppetiteEntryService appetite,
         SeizureEntryService seizures,
-        WaterEntryService water)
+        WaterEntryService water,
+        IAnalyticsService analytics)
     {
         _pending = pending;
         _carePlan = carePlan;
@@ -173,6 +176,7 @@ public class JournalLogViewModel : BaseViewModel
         _appetite = appetite;
         _seizures = seizures;
         _water = water;
+        _analytics = analytics;
 
         OpenAddSheetCommand = new Command(async () => await OpenAddSheetAsync());
         CloseAddSheetCommand = new Command(() => IsAddSheetVisible = false);
@@ -718,6 +722,22 @@ public class JournalLogViewModel : BaseViewModel
         ItemDeleted?.Invoke(new JournalSaveResult(message, undo));
     }
 
+    /// <summary>Emit <c>dose_logged</c> for a dose outcome the owner just recorded. Only
+    /// the coarse taken/skipped bucket is sent — never the medication, dose, time, or pet.
+    ///
+    /// <para>Called from the three user gestures (chip tap, "Mark as given", "Mark as
+    /// skipped") rather than from <see cref="MedicationDoseLogService"/>, which would also
+    /// catch the reconciler stamping doses Missed on its own — a machine action, not a
+    /// person caring for a pet. Forward paths only: undo doesn't fire it again, matching
+    /// <c>journal_entry_created</c>.</para></summary>
+    private void TrackDoseLogged(string status)
+    {
+        _analytics.Track(AnalyticsEvents.DoseLogged, new Dictionary<string, object?>
+        {
+            [AnalyticsEvents.PropDoseStatus] = status,
+        });
+    }
+
     // ── Mark a dose as given (the "Mark as given" button on a dose card) ──────────
     // The timeline counterpart to one-tap chip logging, for a dose that's no longer a
     // chip: a pill given late, forgotten and logged after the fact, or one the
@@ -755,6 +775,8 @@ public class JournalLogViewModel : BaseViewModel
                 await _reminders.SyncMedicationAsync(medId);
             }
         };
+
+        TrackDoseLogged(AnalyticsEvents.DoseStatusTaken);
 
         ItemDeleted?.Invoke(new JournalSaveResult(
             Loc.Format("Journal_ToastMedGiven", item.Title), undo));
@@ -797,6 +819,8 @@ public class JournalLogViewModel : BaseViewModel
                 await _reminders.SyncMedicationAsync(medId);
             }
         };
+
+        TrackDoseLogged(AnalyticsEvents.DoseStatusSkipped);
 
         ItemDeleted?.Invoke(new JournalSaveResult(
             Loc.Format("Journal_ToastMedSkipped", item.Title), undo));
@@ -892,6 +916,8 @@ public class JournalLogViewModel : BaseViewModel
         await _doseLogs.SetStatusAsync(chip.MedicationId, chip.PetId, _date, chip.DoseTime, DoseStatus.Taken);
         // Don't let this occurrence's reminder fire late or re-send.
         await _reminders.MarkDoseHandledAsync(chip.MedicationId, _date, chip.DoseTime);
+
+        TrackDoseLogged(AnalyticsEvents.DoseStatusTaken);
 
         var medId = chip.MedicationId;
         var time = chip.DoseTime;

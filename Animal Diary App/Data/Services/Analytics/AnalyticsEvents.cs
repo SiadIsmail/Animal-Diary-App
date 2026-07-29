@@ -20,7 +20,16 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 public static class AnalyticsEvents
 {
     // ── App lifecycle ─────────────────────────────────────────────────────────
-    /// <summary>App was launched (fired once startup has applied the language).</summary>
+    /// <summary>A user-visible session began: the app was opened, or returned to after
+    /// being away longer than <see cref="AnalyticsSession.IdleTimeout"/>.
+    ///
+    /// <para>NOT "the process started". It fires from window creation and resume, never
+    /// from <c>App.StartAsync</c>, because a reboot or a Play Store update starts the
+    /// process headlessly with no window and no user — those were being counted as
+    /// launches. And it is session-gated rather than once-per-process, because a process
+    /// that survives a week of daily use would otherwise report a single open. Both
+    /// corrections matter for the "came back later" funnel step, which reads this event
+    /// filtered on <see cref="PropDaysSinceInstall"/>.</para></summary>
     public const string AppOpened = "app_opened";
     /// <summary>App was brought to the foreground by tapping a local notification.</summary>
     public const string NotificationOpened = "notification_opened";
@@ -74,6 +83,20 @@ public static class AnalyticsEvents
     /// One unified event covers all sheet types so "which logging features are used"
     /// is a single breakdown with no double-counting.</summary>
     public const string JournalEntryCreated = "journal_entry_created";
+    /// <summary>The owner recorded an outcome for a scheduled dose — the app's core daily
+    /// action. Property: <see cref="PropDoseStatus"/>.
+    ///
+    /// <para>Fires on all three user gestures (one-tap chip, "Mark as given", "Mark as
+    /// skipped") and <b>only</b> on those: the reconciler's automatic Missed stamping is
+    /// machine-generated, not a person tending to their pet, which is why this is tracked
+    /// at the gesture layer and not in <c>MedicationDoseLogService</c>. Never the
+    /// medication, dose, time, or pet.</para>
+    ///
+    /// <para>Without this, the most frequent thing anyone does in Felova was invisible
+    /// after the first one (folded into <see cref="FirstLogCompleted"/>), so retention
+    /// could only be measured on journal sheets and understated the most engaged
+    /// users.</para></summary>
+    public const string DoseLogged = "dose_logged";
     /// <summary>A medication (with its reminder schedule) was created.
     /// Properties: <see cref="PropReminderCount"/>, <see cref="PropDaysPerWeek"/>.</summary>
     public const string MedicationCreated = "medication_created";
@@ -150,11 +173,27 @@ public static class AnalyticsEvents
     /// ever derived from it, and the analytics <c>distinct_id</c> stays a random,
     /// rotatable GUID unrelated to the Supabase user.</summary>
     public const string PropAccountState = "account_state";
+    /// <summary>Coarse age of the install in UTC calendar days, as a bucket
+    /// (<c>0</c>/<c>1</c>/<c>2-3</c>/<c>4-7</c>/<c>8-14</c>/<c>15+</c> — see
+    /// <see cref="AnalyticsTenure"/>). Attached to EVERY event by the central payload
+    /// builder. It exists because a PostHog funnel has only a <i>maximum</i> conversion
+    /// window and cannot require that a step happen a day or more after the previous one;
+    /// as a property, "came back on a later day" becomes a plain filter
+    /// (<c>app_opened where days_since_install != 0</c>). Bucketed, not exact: a precise
+    /// install age alongside a timestamp is a far narrower fingerprint, and the coarse
+    /// value answers every question we actually ask of it.</summary>
+    public const string PropDaysSinceInstall = "days_since_install";
     /// <summary>Coarse species bucket (dog/cat/bird/rabbit/fish/other) — NEVER the
     /// free-text custom type a user might enter, which could be identifying.</summary>
     public const string PropSpecies = "species";
-    /// <summary>Journal entry kind: mood/weight/glucose/appetite/seizure.</summary>
+    /// <summary>Journal entry kind: mood/weight/glucose/appetite/seizure/water.</summary>
     public const string PropEntryType = "entry_type";
+    /// <summary>What the owner recorded for a dose — <see cref="DoseStatusTaken"/> /
+    /// <see cref="DoseStatusSkipped"/>. Deliberately the only property on
+    /// <see cref="DoseLogged"/>: whether it was logged from the chip or after the fact
+    /// from the timeline would be interesting, but it is not needed to answer "did they
+    /// keep caring for the pet", and data minimization wins ties.</summary>
+    public const string PropDoseStatus = "dose_status";
     /// <summary>How many reminder times per day a medication has (1–5). Not the name,
     /// dose, or schedule detail.</summary>
     public const string PropReminderCount = "reminder_count";
@@ -186,6 +225,12 @@ public static class AnalyticsEvents
     public const string EntryTypeSeizure = "seizure";
     public const string EntryTypeWater = "water";
     public const string SpeciesOther = "other";
+
+    // Dose outcomes the owner can record. A skip is a first-class fact here exactly as it
+    // is in the vet report — non-adherence is still the owner tending to the pet, and both
+    // values count as engagement for retention.
+    public const string DoseStatusTaken = "taken";
+    public const string DoseStatusSkipped = "skipped";
 
     // Subscribe-sheet sources.
     public const string SubscribeSourceSettings = "settings";
