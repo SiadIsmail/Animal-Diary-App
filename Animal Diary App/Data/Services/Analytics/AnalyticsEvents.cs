@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Analytics;
+﻿namespace Animal_Diary_App.Data.Services.Analytics;
 
 /// <summary>
 /// The single source of truth for every analytics event name and property key.
@@ -249,6 +249,10 @@ public static class AnalyticsEvents
     public const string ReasonFailed = "failed";
     public const string ReasonUnavailable = "unavailable";
     public const string ReasonOffline = "offline";
+    /// <summary>The store account owns a subscription held by a DIFFERENT app account, so it
+    /// cannot be granted here. Worth its own bucket: it is not a failure to fix, it is a
+    /// support conversation, and its rate tells you how often people switch accounts.</summary>
+    public const string ReasonOwnedByOtherAccount = "owned_by_other_account";
     public const string ReasonEmpty = "empty";
 
     /// <summary>Not signed in to cloud — the default state of every install.</summary>

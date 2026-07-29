@@ -86,11 +86,31 @@ Then RevenueCat Dashboard → **Integrations → Webhooks**:
 - **URL:** `https://<project>.supabase.co/functions/v1/revenuecat-webhook`
 - **Authorization header:** the same value as `REVENUECAT_WEBHOOK_SECRET`.
 
-Also check **Project settings → transfer behavior**. The app now calls RevenueCat
-`Login` when someone signs in, which aliases their anonymous purchase onto their
-account. If transfer behavior keeps purchases with the original id, a customer whoopenssl rand -hex 32
-bought *before* making an account loses their subscription the moment they make one.
-**Verify this in sandbox** — the failure is silent and hits paying users.
+### Transfer behaviour must be "keep with original App User ID"
+
+RevenueCat Dashboard → **Project settings → transfer behavior** (wording varies by
+dashboard version; it is the setting about what happens when a store account's purchase
+is claimed by a second App User ID).
+
+**Felova needs "keep with original", not "transfer to new".** A Play/App Store
+subscription belongs to the *store* account, not the Felova account, so with transfer
+enabled anyone who signs into a second Felova account on the same phone inherits the
+first one's subscription. Access decides who may **sponsor caregivers**, so one purchase
+would mint several sponsoring accounts.
+
+What still works with "keep with original":
+
+- **Anonymous → identified** is an alias/merge, not a transfer, so someone who paid before
+  ever making an account keeps their subscription when they create one.
+- **The same account on a second device** restores normally.
+
+What changes: a genuine account migration (moving to a new email) no longer carries the
+subscription across. At this scale, handle those by hand.
+
+The app surfaces the resulting state rather than failing: a purchase or restore blocked
+because the store account's subscription belongs to another Felova account returns
+`PurchaseOutcome.OwnedByAnotherAccount` and says so, with the two real ways out (sign in
+as that account, or manage it in the store).
 
 The trial half needs no configuration: the app claims its own anchor through
 `claim_trial_anchor` on the first sync after signing in.

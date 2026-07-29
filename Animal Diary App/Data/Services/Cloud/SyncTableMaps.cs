@@ -171,7 +171,16 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
         {
             var payload = await _toCloud(row, ctx);
             if (payload == null)
-                continue;                          // parent has no cloud identity yet
+            {
+                // The parent has no cloud identity. Local SyncIds are assigned on write and
+                // backfilled at startup, so in practice this means the parent row is GONE:
+                // an orphan that can never be pushed and stays IsDirty forever. It is
+                // invisible in the UI too (every read filters by parent id), so the only
+                // symptom is a "changes not yet saved" count that never goes down.
+                Debug.WriteLine(
+                    $"[Cloud] {_localTable} id={row.Id} is dirty but unpushable (orphaned parent) — skipping");
+                continue;
+            }
 
             var snapshotId = row.Id;
             var snapshotStamp = row.UpdatedAtUtc;

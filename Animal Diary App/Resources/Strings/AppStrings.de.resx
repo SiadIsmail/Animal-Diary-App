@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -679,6 +679,8 @@
   <data name="Subscribe_PurchasePending" xml:space="preserve"><value>Deine Zahlung wird verarbeitet. Sobald sie durch ist, hast du vollen Zugriff.</value></data>
   <data name="Subscribe_RestoreDone" xml:space="preserve"><value>Dein Abo ist wieder da.</value></data>
   <data name="Subscribe_RestoreNone" xml:space="preserve"><value>Kein Abo zum Wiederherstellen gefunden.</value></data>
+  <data name="Subscribe_AlreadySubscribed" xml:space="preserve"><value>Du hast auf diesem Store-Konto bereits ein Felova-Abo, es gab also nichts zu kaufen. Es ist jetzt hier aktiv.</value></data>
+  <data name="Subscribe_OwnedByOtherAccount" xml:space="preserve"><value>Auf diesem Store-Konto liegt bereits ein Felova-Abo, und es gehört zu einem anderen Felova-Konto. Melde dich mit diesem Konto an, um es hier zu nutzen, oder ändere es in deinen Store-Abos.</value></data>
   <data name="Subscribe_RestoreProblem" xml:space="preserve"><value>Konnte gerade nicht prüfen. Versuch es gleich noch einmal.</value></data>
   <data name="Subscribe_ExplainerTitle" xml:space="preserve"><value>Deine ersten {0} Tage gehen auf uns</value></data>
   <data name="Subscribe_ExplainerBody" xml:space="preserve"><value>Halte alles für {0} fest, ganz ohne Karte. Danach bleibt {0}s Verlauf immer für dich sichtbar. Neue Einträge gehen mit einem Abo weiter, wann immer du so weit bist.</value></data>

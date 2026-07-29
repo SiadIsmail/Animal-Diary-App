@@ -227,6 +227,23 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
                     StatusText = string.Empty;
                     RefreshMode();
                     break;
+                case PurchaseOutcome.AlreadySubscribed:
+                    // Nothing was bought — the store account already had it and it belongs to
+                    // this account. Access is on, so flip to the subscribed view, but never
+                    // claim a purchase just happened: that reads as a second charge.
+                    StatusText = Loc("Subscribe_AlreadySubscribed");
+                    RefreshMode();
+                    break;
+                case PurchaseOutcome.OwnedByAnotherAccount:
+                    // The store won't sell a second subscription and we can't grant this one
+                    // here. Name the situation and the two real ways out; "try again" is not
+                    // one of them.
+                    StatusText = Loc("Subscribe_OwnedByOtherAccount");
+                    _analytics.Track(AnalyticsEvents.PurchaseFailed, new Dictionary<string, object?>
+                    {
+                        [AnalyticsEvents.PropReason] = AnalyticsEvents.ReasonOwnedByOtherAccount,
+                    });
+                    break;
                 case PurchaseOutcome.Cancelled:
                     // The user backed out of the store sheet — not an error, say nothing.
                     break;
@@ -261,11 +278,17 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         try
         {
             var outcome = await _entitlements.RestoreAsync();
-            if (outcome == PurchaseOutcome.Success)
+            if (outcome is PurchaseOutcome.Success or PurchaseOutcome.AlreadySubscribed)
             {
                 // Restored → flip to the subscribed view (its own confirmation).
                 StatusText = string.Empty;
                 RefreshMode();
+            }
+            else if (outcome == PurchaseOutcome.OwnedByAnotherAccount)
+            {
+                // Restore is how most people meet this: the store account's subscription is
+                // held by a different Felova account, so there is nothing to restore HERE.
+                StatusText = Loc("Subscribe_OwnedByOtherAccount");
             }
             else if (outcome == PurchaseOutcome.NothingToRestore)
             {

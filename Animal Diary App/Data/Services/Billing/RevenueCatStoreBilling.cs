@@ -139,8 +139,13 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
                 PurchaseErrorStatus.PurchaseCancelledError => PurchaseOutcome.Cancelled,
                 // Deferred payment (slow card, family approval): may complete later.
                 PurchaseErrorStatus.PaymentPendingError => PurchaseOutcome.Pending,
-                // Already owned on this store account → reconcile to the existing entitlement.
+                // Already owned on this store account → work out whether it is ours.
                 PurchaseErrorStatus.ProductAlreadyPurchasedError => await ResolveAlreadyOwnedAsync(),
+                // The store account's receipt is held by a different app account. Not a
+                // failure they can retry — the store will never sell them a second one.
+                PurchaseErrorStatus.ReceiptAlreadyInUseError
+                    or PurchaseErrorStatus.ReceiptInUseByOtherSubscriberError
+                    or PurchaseErrorStatus.PurchaseBelongsToOtherUser => PurchaseOutcome.OwnedByAnotherAccount,
                 _ => PurchaseOutcome.Failed,
             };
         }
@@ -151,15 +156,25 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         }
     }
 
-    /// <summary>The store says this product is already owned (e.g. bought on another
-    /// device, or a stale local state) — make our entitlement reflect it rather than
-    /// reporting a confusing error. Falls back to a restore, then reports pending if it
-    /// still hasn't surfaced.</summary>
+    /// <summary>
+    /// The store refused the sale because this store account already owns the product. Two
+    /// very different situations hide behind that one error, and they need opposite messages:
+    ///
+    /// <list type="bullet">
+    ///   <item><b>It's ours</b> — reinstall, or a second device on the same store account.
+    ///   The entitlement resolves and access is already on: <see cref="PurchaseOutcome.AlreadySubscribed"/>.</item>
+    ///   <item><b>It belongs to another app account</b> — the store account bought it while
+    ///   signed in as someone else, and RevenueCat is configured to keep purchases with the
+    ///   account that made them. Nothing we can do here grants it, and the store will not
+    ///   sell a second one, so saying "pending" or "failed" strands them:
+    ///   <see cref="PurchaseOutcome.OwnedByAnotherAccount"/>.</item>
+    /// </list>
+    /// </summary>
     private async Task<PurchaseOutcome> ResolveAlreadyOwnedAsync()
     {
         await RefreshEntitlementAsync();
         if (_hasEntitlement)
-            return PurchaseOutcome.Success;
+            return PurchaseOutcome.AlreadySubscribed;
 
         try
         {
@@ -173,9 +188,37 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         }
         catch (Exception ex)
         {
+            // The restore itself reports "this receipt is another user's" as an exception.
+            // That is the confirmation, not a failure — it tells us which of the two cases
+            // above we are in.
             Debug.WriteLine($"[Billing] already-owned restore failed: {ex.Message}");
+            if (IsOwnedByAnotherAccount(ex))
+                return PurchaseOutcome.OwnedByAnotherAccount;
         }
-        return _hasEntitlement ? PurchaseOutcome.Success : PurchaseOutcome.Pending;
+
+        if (_hasEntitlement)
+            return PurchaseOutcome.AlreadySubscribed;
+
+        // Owned by the store account, not grantable here, and the restore did not say why.
+        // Still the honest answer: they cannot buy it and cannot use it on this account.
+        Debug.WriteLine(
+            "[Billing] product already owned by this store account but no entitlement resolved — " +
+            "most likely held by a different app account (RevenueCat transfer behaviour is " +
+            "'keep with original App User ID').");
+        return PurchaseOutcome.OwnedByAnotherAccount;
+    }
+
+    /// <summary>Does this error mean "the store account owns it, but under a different app
+    /// account"? These are the codes RevenueCat raises when transfer behaviour keeps a
+    /// purchase with the account that made it.</summary>
+    private static bool IsOwnedByAnotherAccount(Exception ex)
+    {
+        var text = ex.Message ?? string.Empty;
+        return text.Contains(nameof(PurchaseErrorStatus.ReceiptAlreadyInUseError), StringComparison.OrdinalIgnoreCase)
+            || text.Contains(nameof(PurchaseErrorStatus.ReceiptInUseByOtherSubscriberError), StringComparison.OrdinalIgnoreCase)
+            || text.Contains(nameof(PurchaseErrorStatus.PurchaseBelongsToOtherUser), StringComparison.OrdinalIgnoreCase)
+            || text.Contains("already in use", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("belongs to", StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task<PurchaseOutcome> RestoreAsync()
@@ -196,7 +239,11 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         catch (Exception ex)
         {
             Debug.WriteLine($"[Billing] restore failed: {ex.Message}");
-            return PurchaseOutcome.Failed;
+            // "Restore" on a store account whose purchase belongs to another app account is
+            // the single most likely way someone meets this state — they try Restore first.
+            return IsOwnedByAnotherAccount(ex)
+                ? PurchaseOutcome.OwnedByAnotherAccount
+                : PurchaseOutcome.Failed;
         }
     }
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -698,6 +698,8 @@
   <data name="Subscribe_PurchasePending" xml:space="preserve"><value>Your payment is processing. You'll have full access once it goes through.</value></data>
   <data name="Subscribe_RestoreDone" xml:space="preserve"><value>Your subscription is back.</value></data>
   <data name="Subscribe_RestoreNone" xml:space="preserve"><value>No subscription found to restore.</value></data>
+  <data name="Subscribe_AlreadySubscribed" xml:space="preserve"><value>You already have a Felova subscription on this store account, so there was nothing to buy. It is active here now.</value></data>
+  <data name="Subscribe_OwnedByOtherAccount" xml:space="preserve"><value>This store account already has a Felova subscription, and it belongs to a different Felova account. Sign in with that account to use it here, or change it in your store subscriptions.</value></data>
   <data name="Subscribe_RestoreProblem" xml:space="preserve"><value>Couldn't check just now. Try again in a moment.</value></data>
   <data name="Subscribe_ExplainerTitle" xml:space="preserve"><value>Your first {0} days are on us</value></data>
   <data name="Subscribe_ExplainerBody" xml:space="preserve"><value>Write down everything for {0}, no card needed. After that, {0}'s history is always yours to see. Adding new entries continues with a subscription, whenever you're ready.</value></data>
