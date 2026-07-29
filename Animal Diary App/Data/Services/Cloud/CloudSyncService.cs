@@ -689,10 +689,23 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
             catch (Exception ex) { Debug.WriteLine($"[Cloud] final push before sign-out failed: {ex.Message}"); }
         }
 
+        // Count what would ACTUALLY upload, by asking the same collector the push uses —
+        // not raw IsDirty flags. The two differ: a row whose parent no longer exists is
+        // permanently unpushable, and counting it reports "N changes not yet saved" forever,
+        // on a device where nothing is pending and another sync would not help. Warning
+        // someone about work that cannot be lost (because it cannot be saved either) trains
+        // them to ignore the one warning here that matters.
         var unsynced = 0;
-        foreach (var t in LocalTableNames)
-            unsynced += await _db.Connection.ExecuteScalarAsync<int>(
-                $"select count(*) from \"{t}\" where IsDirty = 1 and IsDeleted = 0");
+        try
+        {
+            var ctx = new SyncRunContext(_db.Connection);
+            foreach (var table in _tables)
+                unsynced += (await table.CollectDirtyAsync(ctx)).Count;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Cloud] counting unsynced rows failed: {ex.Message}");
+        }
 
         // Only pets this account actually holds. A pet created locally and never pushed is
         // not in the membership map, is not this account's, and is not removed — it is

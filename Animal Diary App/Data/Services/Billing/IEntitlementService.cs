@@ -137,6 +137,17 @@ public enum PurchaseOutcome
 {
     /// <summary>Bought/restored; the entitlement is now active.</summary>
     Success,
+    /// <summary>Nothing was bought because this store account already owns a subscription,
+    /// and it belongs to <b>this</b> app account — so access is now active. Distinct from
+    /// <see cref="Success"/> because telling someone "you subscribed" when they didn't is a
+    /// small lie that reads as a double charge. Reachable after a reinstall, or on a second
+    /// device sharing the store account.</summary>
+    AlreadySubscribed,
+    /// <summary>This store account already owns a subscription, but it is attached to a
+    /// DIFFERENT app account, so it cannot be granted here. The store will not sell a second
+    /// one, so the only ways forward are signing in as the account that holds it or managing
+    /// it in the store — say that, rather than reporting a failure they cannot act on.</summary>
+    OwnedByAnotherAccount,
     /// <summary>The user backed out of the store sheet. Not an error.</summary>
     Cancelled,
     /// <summary>No active subscription was found to restore.</summary>

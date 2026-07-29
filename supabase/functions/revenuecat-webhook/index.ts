@@ -11,6 +11,13 @@
 //  app keeps working offline and someone who never makes an account is entirely
 //  unaffected by this function. See AI/design-decisions.md.
 //
+//  Two properties this function must keep (see migration 0011):
+//   • ORDER-INDEPENDENT. Retries and out-of-order delivery are normal. Every
+//     write is guarded by an event-time watermark, so a stale EXPIRATION can
+//     never revoke an owner who has since renewed.
+//   • FAIL-SAFE, NOT FAIL-OPEN. A permanently bad payload is accepted (200) and
+//     logged rather than retried forever; only transient faults return 500.
+//
 //  Deploy:  supabase functions deploy revenuecat-webhook --no-verify-jwt
 //  Secrets: supabase secrets set REVENUECAT_WEBHOOK_SECRET=<value>
 //           (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are injected automatically)
@@ -24,68 +31,171 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-// Entitlement ids that grant full access. Mirrors BillingConfig.EntitlementId, plus
-// the same "single paid tier ⇒ any active entitlement counts" fallback the client
-// applies, so a dashboard rename can never silently strip a paying owner's carers.
+// Mirrors BillingConfig.EntitlementId, plus the same "single paid tier ⇒ any active
+// entitlement counts" fallback the client applies, so a dashboard rename can never
+// silently strip a paying owner's carers.
 const ENTITLEMENT_ID = "Felova Full";
 
 // Events after which the user HAS access. RENEWAL/UNCANCELLATION included because a
 // lapse followed by a renewal must restore sponsorship immediately.
+//
+// TRANSFER is deliberately NOT here: it moves a purchase between app user ids, so it must
+// revoke the old owner as well as grant the new one. Handling it as a plain grant left the
+// previous account active forever — and since access here decides who may SPONSOR
+// caregivers, that turned one store purchase into two sponsoring accounts.
 const GRANTING = new Set([
   "INITIAL_PURCHASE",
   "RENEWAL",
   "UNCANCELLATION",
   "NON_RENEWING_PURCHASE",
   "SUBSCRIPTION_EXTENDED",
-  "TRANSFER",
 ]);
 
 // Events after which they do NOT. CANCELLATION is deliberately absent: a cancelled
-// subscription still runs to the end of its paid period, and revoking a carer's
-// access early would be both wrong and unkind.
+// subscription still runs to the end of its paid period, and revoking a carer's access
+// early would be both wrong and unkind — expiry handles it when the period actually ends.
 const REVOKING = new Set(["EXPIRATION", "SUBSCRIPTION_PAUSED", "REFUND"]);
 
-function timingSafeEqual(a: string, b: string): boolean {
-  const ea = new TextEncoder().encode(a);
-  const eb = new TextEncoder().encode(b);
-  if (ea.length !== eb.length) return false;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/// Constant-time comparison over fixed-length digests, so neither the value nor its
+/// LENGTH leaks through timing.
+async function secretMatches(given: string, expected: string): Promise<boolean> {
+  const enc = new TextEncoder();
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest("SHA-256", enc.encode(given)),
+    crypto.subtle.digest("SHA-256", enc.encode(expected)),
+  ]);
+  const x = new Uint8Array(a), y = new Uint8Array(b);
   let diff = 0;
-  for (let i = 0; i < ea.length; i++) diff |= ea[i] ^ eb[i];
+  for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i];
   return diff === 0;
 }
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
 Deno.serve(async (req) => {
   const expected = Deno.env.get("REVENUECAT_WEBHOOK_SECRET");
   if (!expected) {
     console.error("revenuecat-webhook: REVENUECAT_WEBHOOK_SECRET is not set");
-    return new Response("not configured", { status: 500 });
+    return json({ error: "not configured" }, 500);
   }
-  if (!timingSafeEqual(req.headers.get("Authorization") ?? "", expected)) {
-    return new Response("unauthorized", { status: 401 });
+  if (!await secretMatches(req.headers.get("Authorization") ?? "", expected)) {
+    return json({ error: "unauthorized" }, 401);
   }
 
   let event: Record<string, unknown>;
   try {
-    event = (await req.json()).event ?? {};
+    event = ((await req.json())?.event ?? {}) as Record<string, unknown>;
   } catch {
-    return new Response("bad json", { status: 400 });
+    return json({ error: "bad json" }, 400);   // never retryable
   }
 
   const type = String(event.type ?? "");
-  // app_user_id is the Supabase user id ONLY once the app has called Login on
-  // sign-in. Anonymous ids ($RCAnonymousID:…) belong to people with no account —
-  // they have no caregivers to sponsor, so there is nothing to record.
-  const appUserId = String(event.app_user_id ?? "");
-  if (!appUserId || appUserId.startsWith("$RCAnonymousID")) {
-    return new Response(JSON.stringify({ ok: true, skipped: "anonymous" }), { status: 200 });
+  const environment = String(event.environment ?? "");
+
+  // When the event was RAISED. Everything below is ordered by this, never by arrival:
+  // RevenueCat retries with backoff and gives no ordering guarantee, so a retried
+  // EXPIRATION can land after the RENEWAL that superseded it.
+  const eventMs = Number(event.event_timestamp_ms ?? 0);
+  const eventAt = new Date(eventMs > 0 ? eventMs : Date.now()).toISOString();
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
+  /// Write the entitlement for one or more app user ids, ignoring any that is older than
+  /// what the row already has.
+  ///
+  /// Returns how many rows were actually written. Zero is meaningful and always worth a
+  /// look: no profile row (deleted account, or the app never called Login so the id is not
+  /// a Supabase user), or a newer event already applied.
+  async function setEntitlement(ids: string[], active: boolean, expiresAt: string | null) {
+    // Anonymous ids belong to people with no account — they have no caregivers to sponsor.
+    // Non-UUIDs would raise "invalid input syntax for type uuid", and returning 500 for a
+    // payload that can never succeed would retry it forever.
+    const real = ids.filter((id) => id && !id.startsWith("$RCAnonymousID") && UUID.test(id));
+    const rejected = ids.filter((id) => id && !real.includes(id));
+    if (rejected.length > 0)
+      console.log(`revenuecat-webhook: skipping ${rejected.length} non-account id(s)`);
+    if (real.length === 0)
+      return { error: null, written: 0, skipped: true };
+
+    // Update, never upsert: the profile row is created by on_auth_user_created, and an id
+    // with no row means the account is gone — inserting would resurrect billing state for
+    // a deleted user.
+    //
+    // .lte is the watermark: apply only when this event is at least as new as the one
+    // already recorded. That makes the whole function order-independent and idempotent
+    // under retries. The column is NOT NULL DEFAULT '-infinity' (migration 0011) precisely
+    // so this stays a single typed filter — no or(), no filter-string quoting on the path
+    // that must never fail open.
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        entitlement_active: active,
+        entitlement_expires_at: active ? expiresAt : null,
+        entitlement_event_at: eventAt,
+        entitlement_updated_at: new Date().toISOString(),
+      })
+      .in("id", real)
+      .lte("entitlement_event_at", eventAt)
+      .select("id");
+
+    return { error, written: data?.length ?? 0, skipped: false };
   }
+
+  // ── TRANSFER: a purchase moved between app user ids ───────────────────────
+  // Revoke first: if the grant then fails and RevenueCat retries, over-revoking is
+  // recoverable (they restore) while over-granting silently hands out free access.
+  if (type === "TRANSFER") {
+    const from = (event.transferred_from ?? []) as string[];
+    // Some payloads carry only app_user_id for the new owner; prefer the explicit list.
+    const to = ((event.transferred_to ?? []) as string[]).length > 0
+      ? (event.transferred_to as string[])
+      : [String(event.app_user_id ?? "")].filter(Boolean);
+
+    if (from.length === 0 && to.length === 0) {
+      // Both empty means the payload does not look like we expect — most likely the field
+      // names differ in this API version. Say so loudly: silently returning ok here would
+      // leave a transferred purchase granting access to BOTH accounts, which is exactly
+      // the bug this branch exists to prevent.
+      console.error(
+        `revenuecat-webhook: TRANSFER carried no transferred_from/transferred_to. ` +
+          `Keys present: [${Object.keys(event).join(", ")}]. Entitlements NOT updated.`,
+      );
+      return json({ ok: false, type, reason: "no transfer ids in payload" });
+    }
+
+    const expires = Number(event.expiration_at_ms ?? 0);
+    const revoked = await setEntitlement(from, false, null);
+    if (revoked.error) {
+      console.error(`revenuecat-webhook: TRANSFER revoke failed: ${revoked.error.message}`);
+      return json({ error: "revoke failed" }, 500);
+    }
+    const granted = await setEntitlement(to, true, expires > 0 ? new Date(expires).toISOString() : null);
+    if (granted.error) {
+      console.error(`revenuecat-webhook: TRANSFER grant failed: ${granted.error.message}`);
+      return json({ error: "grant failed" }, 500);
+    }
+    console.log(
+      `revenuecat-webhook: TRANSFER revoked=${revoked.written} granted=${granted.written} (${environment})`,
+    );
+    return json({ ok: true, type, revoked: revoked.written, granted: granted.written });
+  }
+
+  // app_user_id is the Supabase user id only once the app has called Login on sign-in.
+  const appUserId = String(event.app_user_id ?? "");
 
   let active: boolean;
   if (GRANTING.has(type)) active = true;
   else if (REVOKING.has(type)) active = false;
   else {
     // CANCELLATION, BILLING_ISSUE, PRODUCT_CHANGE, TEST… — no access change.
-    return new Response(JSON.stringify({ ok: true, skipped: type }), { status: 200 });
+    // A TEST event reaching here is the success signal for webhook setup.
+    return json({ ok: true, skipped: type });
   }
 
   const entitlementIds = (event.entitlement_ids ?? []) as string[];
@@ -99,34 +209,22 @@ Deno.serve(async (req) => {
   const expiresMs = Number(event.expiration_at_ms ?? 0);
   const expiresAt = expiresMs > 0 ? new Date(expiresMs).toISOString() : null;
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
-
-  // Update, never upsert: the profile row is created by the on_auth_user_created
-  // trigger. An id with no row means the account is gone, and inserting one here
-  // would resurrect billing state for a deleted user.
-  const { error, count } = await supabase
-    .from("profiles")
-    .update(
-      {
-        entitlement_active: active,
-        entitlement_expires_at: expiresAt,
-        entitlement_updated_at: new Date().toISOString(),
-      },
-      { count: "exact" },
-    )
-    .eq("id", appUserId);
-
+  const { error, written, skipped } = await setEntitlement([appUserId], active, expiresAt);
   if (error) {
-    // 500 so RevenueCat retries — a dropped grant leaves carers locked out.
+    // 500 so RevenueCat retries — a dropped grant leaves carers locked out. Only the
+    // message goes to the log; the response stays generic.
     console.error(`revenuecat-webhook: update failed for ${type}: ${error.message}`);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return json({ error: "update failed" }, 500);
   }
-  if (count === 0) {
-    console.warn(`revenuecat-webhook: no profile for app_user_id (deleted account?)`);
+  if (!skipped && written === 0) {
+    // Not an error, but never silent: either the account is gone, or a newer event already
+    // applied and this one was correctly ignored.
+    console.warn(
+      `revenuecat-webhook: ${type} matched no profile row (deleted account, or superseded ` +
+        `by a newer event). event_at=${eventAt}`,
+    );
   }
 
-  return new Response(JSON.stringify({ ok: true, type, active }), { status: 200 });
+  console.log(`revenuecat-webhook: ${type} active=${active} written=${written} (${environment})`);
+  return json({ ok: true, type, active, written });
 });
