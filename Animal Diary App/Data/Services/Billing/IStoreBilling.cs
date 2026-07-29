@@ -48,6 +48,16 @@ public interface IStoreBilling
 
     /// <summary>The platform's manage-subscription URL, or null when unavailable.</summary>
     Task<string?> GetManagementUrlAsync();
+
+    /// <summary>Tie the store identity to the app account, so one subscription follows the
+    /// person across their devices instead of being stranded on the install that bought it.
+    /// Pass the account id on sign-in and null on sign-out. Non-throwing; idempotent.
+    ///
+    /// <para><b>Purchasing never requires an account</b> — with no account the store stays on
+    /// its anonymous per-install identity and everything works exactly as before. This only
+    /// adds continuity for people who do sign in, including someone who paid first and
+    /// created an account months later.</para></summary>
+    Task IdentifyAsync(string? accountId);
 }
 
 /// <summary>
@@ -71,4 +81,5 @@ public sealed class NullStoreBilling : IStoreBilling
     public Task<PurchaseOutcome> PurchaseAsync(SubscriptionPlan plan) => Task.FromResult(PurchaseOutcome.Unavailable);
     public Task<PurchaseOutcome> RestoreAsync() => Task.FromResult(PurchaseOutcome.Unavailable);
     public Task<string?> GetManagementUrlAsync() => Task.FromResult<string?>(null);
+    public Task IdentifyAsync(string? accountId) => Task.CompletedTask;
 }

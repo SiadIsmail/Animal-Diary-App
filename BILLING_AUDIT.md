@@ -61,15 +61,28 @@ tests pass** (`Animal Diary App.Tests`, `dotnet test`).
 | **L5** restore offline undistinguished | ✅ Fixed | offline vs generic on restore, like offers |
 | **L6** buttons not dimmed mid-purchase | ✅ Fixed | offer list `IsEnabled` bound to `CanInteract` |
 
-### M6 — caregiver billing (product decision, documented)
-Each device runs its own trial + entitlement: RevenueCat uses a per-install anonymous
-id, not linked to the Supabase account, and subscriptions are per-store-account. So a
-caregiver who joins a shared pet on their own phone gets **their own** 14-day trial and,
-after that, **their own** paywall — the owner's subscription does not extend to them.
-That may be the intended model (each user pays) or undesirable (owner covers caregivers).
-Making the owner's subscription cover caregivers would require **server-side entitlement
-linking** keyed off the Supabase account (out of RevenueCat's default model) — a real
-design task, not a code tweak. **Current behavior: independent per-user billing.**
+### M6 — caregiver billing — ✅ RESOLVED (2026-07-29)
+Was: each device ran its own trial + entitlement (RevenueCat anonymous per-install id, not
+linked to the Supabase account), so a caregiver joining a shared pet needed **their own**
+subscription to log anything.
+
+Now: **caregivers ride the owner's access.** The write gate is per pet
+(`IEntitlementService.CanEditPet`), the owner's access is computed server-side
+(`owner_has_access`, migration 0010) from either the webhook-written entitlement or a live
+trial, and it is delivered on the membership fetch the sync already runs. Sponsorship never
+covers a pet you own; caps are 5 caregivers/pet and 10/owner. Your own access is unchanged —
+still local, still works signed out and offline. Design + corollaries in
+`AI/design-decisions.md`; rules in `AI/domain.md`.
+
+Also closed alongside it:
+- **P2 (per-install identity)** — `IStoreBilling.IdentifyAsync` calls RevenueCat
+  `Login`/`Logout` on `SessionChanged`, so one subscription follows the person across
+  devices. ⚠️ The dashboard **transfer behavior** setting governs whether a purchase moves
+  with the alias — verify in sandbox; the failure mode is a paying customer losing access
+  the moment they sign in.
+- **L1 (clock-trustful trial)** — hardened for signed-in users: the anchor is reconciled
+  with the account set-if-earlier, so a device clock or a fresh email cannot extend it.
+  Still local-only for people without an account, by design.
 
 ## Architecture
 

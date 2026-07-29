@@ -10,7 +10,9 @@ namespace Animal_Diary_App.Data.Services.Billing;
 public sealed class NullEntitlementService : IEntitlementService
 {
     public bool HasFullAccess => true;
+    public bool CanEditPet(string? petSyncId) => true;
     public AccessState State => AccessState.Subscribed;
+    public bool TrialEverStarted => false;
     public int TrialDaysLeft => 0;
     public TimeSpan TrialTimeRemaining => TimeSpan.Zero;
     public IReadOnlyList<SubscriptionOffer> Offers => Array.Empty<SubscriptionOffer>();
@@ -22,6 +24,7 @@ public sealed class NullEntitlementService : IEntitlementService
     public Task InitializeAsync() => Task.CompletedTask;
     public Task<bool> EnsureTrialStartedAsync() => Task.FromResult(false);
     public Task RefreshAsync() => Task.CompletedTask;
+    public Task IdentifyAsync(string? accountId) => Task.CompletedTask;
     public Task RefreshOffersAsync() => Task.CompletedTask;
     public Task<PurchaseOutcome> PurchaseAsync(SubscriptionPlan plan) => Task.FromResult(PurchaseOutcome.Unavailable);
     public Task<PurchaseOutcome> RestoreAsync() => Task.FromResult(PurchaseOutcome.Unavailable);

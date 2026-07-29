@@ -2,15 +2,23 @@ namespace Animal_Diary_App.Data.Services.Cloud;
 
 /// <summary>Registered when <see cref="CloudConfig.Enabled"/> is false — the app
 /// carries zero cloud behaviour, mirroring <c>NullAnalyticsService</c>.</summary>
-public sealed class NullCloudSyncService : ICloudSyncService
+public sealed class NullCloudSyncService : ICloudSyncService, Billing.IPetAccessSource
 {
     public bool IsBackupEnabled => false;
     public DateTime? LastSyncedUtc => null;
     public event Action? StateChanged { add { } remove { } }
     public event Action? RemoteChangesApplied { add { } remove { } }
+    public event Action<IReadOnlyList<string>>? SponsorshipRevoked { add { } remove { } }
 
     public Task InitializeAsync() => Task.CompletedTask;
     public string? GetPetRole(string petSyncId) => null;
+    public bool OwnsASharedPet => false;
+
+    // No cloud ⇒ nothing to wait for and nothing sponsored, so the billing gate falls back
+    // entirely to the local trial/subscription. Reporting AccessKnown=false here would hold
+    // the read-only state open forever.
+    public bool AccessKnown => true;
+    public Billing.PetAccessInfo? GetPetAccess(string? petSyncId) => null;
     public Task<SyncOutcome> SyncNowAsync() => Task.FromResult(SyncOutcome.BackupDisabled);
     public void RequestSyncSoon() { }
     public void NotifyAppState(bool foreground) { }

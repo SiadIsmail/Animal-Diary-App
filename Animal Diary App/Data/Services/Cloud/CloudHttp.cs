@@ -18,6 +18,7 @@ public enum CloudErrorKind
     AuthExpired,        // refresh token no longer valid → signed out
     InviteInvalid,      // unknown, expired, or used-up invite code
     InviteAlreadyMember,// redeeming a code for a pet you already have
+    CarerLimitReached,  // the pet's (or the owner's) caregiver cap is full
     Other
 }
 
@@ -117,7 +118,11 @@ public sealed class CloudHttp
         var lower = body.ToLowerInvariant();
 
         CloudErrorKind kind;
-        if (status == (int)HttpStatusCode.TooManyRequests || lower.Contains("rate limit") || lower.Contains("too many"))
+        // Before the rate-limit check: a full carer list is a real, actionable limit, not a
+        // "slow down". Matches the shared wording of all three cap errors in migration 0010.
+        if (lower.Contains("maximum number of carers"))
+            kind = CloudErrorKind.CarerLimitReached;
+        else if (status == (int)HttpStatusCode.TooManyRequests || lower.Contains("rate limit") || lower.Contains("too many"))
             kind = CloudErrorKind.RateLimited;
         else if (lower.Contains("invalid or expired code"))
             kind = CloudErrorKind.InviteInvalid;

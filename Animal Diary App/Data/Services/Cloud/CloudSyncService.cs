@@ -64,6 +64,21 @@ public interface ICloudSyncService
     /// on every sync from the cloud membership list.</summary>
     string? GetPetRole(string petSyncId);
 
+    /// <summary>True when this user owns at least one pet that someone else is caring for.
+    /// Used for exactly one thing: when the owner's own access ends, telling them their
+    /// carers just went read-only too — they are the only person who can change that.</summary>
+    bool OwnsASharedPet { get; }
+
+    /// <summary>Raised when a pet's SPONSORSHIP changed between two syncs — the owner
+    /// subscribed, lapsed, or their trial ran out. Carries the pets that just lost
+    /// sponsored access, so the UI can say so once rather than letting the app quietly
+    /// go read-only. Raised from a background thread; subscribers marshal.
+    ///
+    /// <para>Distinct from <see cref="RemoteChangesApplied"/>: no local row changed, only
+    /// what this user is allowed to write. Also distinct from losing MEMBERSHIP, which
+    /// purges the pet outright and needs no message.</para></summary>
+    event Action<IReadOnlyList<string>>? SponsorshipRevoked;
+
     /// <summary>The reset arm: soft-delete owned pets cloud-side + leave shared
     /// pets (rpc delete_my_data). Caller wipes local data afterwards.</summary>
     Task DeleteCloudDataAsync();
@@ -72,7 +87,11 @@ public interface ICloudSyncService
     Task DeleteAccountAsync();
 }
 
-public sealed class CloudSyncService : ICloudSyncService
+/// <summary>One cached row of <c>list_my_pet_access</c>, as persisted in SyncState.
+/// Public only so <c>System.Text.Json</c> can round-trip it.</summary>
+public sealed record PetAccessRow(string Role, bool OwnerAccess, int CarerCount, DateTime FetchedUtc);
+
+public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSource
 {
     // SyncState keys — the engine owns this vocabulary (see SyncStateStore).
     private const string KeyEnabled = "cloud:backupEnabled";
@@ -81,6 +100,18 @@ public sealed class CloudSyncService : ICloudSyncService
     private const string KeyFirstBackupDone = "cloud:firstBackupDone";
     private const string KeyCursorPrefix = "cloud:cursor:";
     private const string KeyMemberships = "cloud:memberships";
+
+    // A NEW key, deliberately not a reshape of KeyMemberships: the old value is a
+    // Dictionary<string,string> and a device upgrading into this build would fail to
+    // deserialize it, emptying the role cache until the next successful sync (the sharing
+    // sheet would read "not synced yet" for every pet in the meantime). A new key lets the
+    // old one keep answering GetPetRole until this one is populated.
+    private const string KeyPetAccess = "cloud:petAccess:v2";
+
+    // The trial anchor we last reconciled with the account. Stored so the claim RPC runs
+    // once per (account, anchor) rather than on every cycle, but still re-runs when the
+    // anchor appears later — a caregiver who finally creates their own pet.
+    private const string KeyTrialAnchor = "cloud:trialAnchor";
 
     // Push batches must stay smaller than pull pages: all rows of one RPC commit
     // share one server timestamp, and the cursor can only advance safely when a
@@ -101,6 +132,7 @@ public sealed class CloudSyncService : ICloudSyncService
     private readonly MedicationReminderScheduler _reminders;
     private readonly ActivePetService _activePet;
     private readonly IAnalyticsService _analytics;
+    private readonly Billing.ITrialAnchor _trialAnchor;
     private readonly IReadOnlyList<ITableSync> _tables = SyncTableMaps.Build();
 
     // One run at a time; a request during a run coalesces into one follow-up run.
@@ -113,6 +145,12 @@ public sealed class CloudSyncService : ICloudSyncService
     private DateTime? _lastSynced;
     private Dictionary<string, string> _petRoles = new();
 
+    // Sponsorship cache (pet SyncId → role + whether that pet's owner had access when we
+    // last asked). Read synchronously by the billing gate on the UI thread, rewritten by
+    // reference from the sync thread — so it is swapped whole, never mutated in place.
+    private volatile Dictionary<string, PetAccessRow> _petAccess = new();
+    private volatile bool _accessLoaded;
+
     public CloudSyncService(
         AppDatabase db,
         CloudHttp http,
@@ -120,7 +158,8 @@ public sealed class CloudSyncService : ICloudSyncService
         SyncStateStore state,
         MedicationReminderScheduler reminders,
         ActivePetService activePet,
-        IAnalyticsService analytics)
+        IAnalyticsService analytics,
+        Billing.ITrialAnchor trialAnchor)
     {
         _db = db;
         _http = http;
@@ -129,6 +168,7 @@ public sealed class CloudSyncService : ICloudSyncService
         _reminders = reminders;
         _activePet = activePet;
         _analytics = analytics;
+        _trialAnchor = trialAnchor;
 
         // Every repository write funnels through SyncStamp — that one hook is the
         // whole "detect local changes" mechanism (see coding-standards.md).
@@ -160,6 +200,7 @@ public sealed class CloudSyncService : ICloudSyncService
     public DateTime? LastSyncedUtc => _lastSynced;
     public event Action? StateChanged;
     public event Action? RemoteChangesApplied;
+    public event Action<IReadOnlyList<string>>? SponsorshipRevoked;
 
     public async Task InitializeAsync()
     {
@@ -173,10 +214,41 @@ public sealed class CloudSyncService : ICloudSyncService
             try { _petRoles = JsonSerializer.Deserialize<Dictionary<string, string>>(roles) ?? new(); }
             catch { _petRoles = new(); }
         }
+
+        var access = await _state.GetAsync(KeyPetAccess);
+        if (access != null)
+        {
+            try
+            {
+                _petAccess = JsonSerializer.Deserialize<Dictionary<string, PetAccessRow>>(access) ?? new();
+                _accessLoaded = true;
+            }
+            catch { _petAccess = new(); }
+        }
     }
 
     public string? GetPetRole(string petSyncId)
         => _petRoles.TryGetValue(petSyncId, out var role) ? role : null;
+
+    public bool OwnsASharedPet
+        => _petAccess.Values.Any(r => r.Role == "owner" && r.CarerCount > 0);
+
+    // ── IPetAccessSource: what the billing gate reads ───────────────────────
+
+    /// <summary>Unknown ONLY while a signed-in, backup-on device still owes its first
+    /// access fetch. Every other configuration has nothing to wait for and reports true —
+    /// reporting false when signed out would hold the read-only gate permanently open.</summary>
+    public bool AccessKnown => _accessLoaded || !_enabled || !_auth.IsSignedIn;
+
+    public Billing.PetAccessInfo? GetPetAccess(string? petSyncId)
+    {
+        if (string.IsNullOrEmpty(petSyncId))
+            return null;
+        // Read the field once: the sync thread swaps the whole dictionary.
+        return _petAccess.TryGetValue(petSyncId, out var row)
+            ? new Billing.PetAccessInfo(row.Role == "caregiver", row.OwnerAccess, row.FetchedUtc)
+            : null;
+    }
 
     public void RequestSyncSoon()
     {
@@ -303,15 +375,81 @@ public sealed class CloudSyncService : ICloudSyncService
     /// were previously pushed are candidates: a dirty pet may simply be new and
     /// gets its owner membership by being pushed later this same cycle.
     /// Returns the number of pets purged (they count as local changes).</summary>
+    /// <summary>Reconcile this device's trial anchor with the account's, so the server can
+    /// answer "is this owner still in their trial?" when their caregivers ask.
+    ///
+    /// <para>Runs only when the two disagree — the first sync after signing in, and again
+    /// if the trial starts later (a caregiver who finally creates a pet of their own).
+    /// <c>claim_trial_anchor</c> is set-if-earlier server-side, so this can confirm an
+    /// anchor but never push one later and mint a fresh sponsorship window.</para></summary>
+    private async Task ReconcileTrialAnchorAsync(CloudSession session)
+    {
+        var local = await _trialAnchor.GetStartUtcAsync();
+        var localIso = local is DateTime d ? CloudJson.ToIso(d) : NoAnchor;
+        if (await _state.GetAsync(KeyTrialAnchor) == localIso)
+            return;
+
+        var doc = await _http.RpcAsync(
+            "claim_trial_anchor",
+            new { p_started = local is DateTime v ? CloudJson.ToIso(v) : null },
+            session.AccessToken);
+
+        DateTime? server = null;
+        if (doc != null && doc.RootElement.ValueKind == JsonValueKind.String)
+            server = CloudJson.ParseIso(doc.RootElement.GetString()!);
+
+        await _trialAnchor.AdoptAsync(server);
+
+        // Stamp what we actually ended up with, so an adopted (earlier) anchor doesn't
+        // look like a disagreement and re-claim on every subsequent cycle.
+        var settled = await _trialAnchor.GetStartUtcAsync();
+        await _state.SetAsync(KeyTrialAnchor, settled is DateTime s ? CloudJson.ToIso(s) : NoAnchor);
+    }
+
+    /// <summary>Sentinel for "this device has no trial anchor" — distinct from "never
+    /// reconciled" (no stored value at all), which must still trigger a claim.</summary>
+    private const string NoAnchor = "none";
+
     private async Task<int> SyncMembershipsAsync(CloudSession session)
     {
-        var doc = await _http.RestGetAsync("pet_members?select=pet_id,role", session.AccessToken);
+        // The owner's trial anchor has to reach the server before it can answer
+        // "does this owner still have access?" for their caregivers. Reconciled first so
+        // this same response already reflects it.
+        await ReconcileTrialAnchorAsync(session);
+
+        var doc = await _http.RpcAsync("list_my_pet_access", new { }, session.AccessToken);
         var roles = new Dictionary<string, string>();
+        var access = new Dictionary<string, PetAccessRow>();
+        var now = DateTime.UtcNow;
         foreach (var el in doc!.RootElement.EnumerateArray())
-            roles[CloudJson.GetString(el, "pet_id")] = CloudJson.GetString(el, "role");
+        {
+            var petId = CloudJson.GetString(el, "pet_id");
+            var role = CloudJson.GetString(el, "member_role");
+            roles[petId] = role;
+            access[petId] = new PetAccessRow(
+                role, CloudJson.GetBool(el, "owner_access"), CloudJson.GetInt(el, "carer_count"), now);
+        }
+
+        // Pets this user was being sponsored for a moment ago and no longer is — the owner
+        // lapsed or their trial ended. Membership is intact, so the pet stays; only the
+        // right to write to it went away, and that is worth saying out loud once.
+        var previous = _petAccess;
+        var lostSponsorship = access
+            .Where(kv => kv.Value.Role == "caregiver" && !kv.Value.OwnerAccess)
+            .Where(kv => previous.TryGetValue(kv.Key, out var was) && was.Role == "caregiver" && was.OwnerAccess)
+            .Select(kv => kv.Key)
+            .ToList();
 
         _petRoles = roles;
+        _petAccess = access;
+        _accessLoaded = true;
         await _state.SetAsync(KeyMemberships, JsonSerializer.Serialize(roles));
+        // Written even when empty, so "signed in with no shared pets" resolves to KNOWN on
+        // the next launch instead of leaving the gate optimistically open.
+        await _state.SetAsync(KeyPetAccess, JsonSerializer.Serialize(access));
+
+        if (lostSponsorship.Count > 0)
+            SponsorshipRevoked?.Invoke(lostSponsorship);
 
         var purged = 0;
         var pets = await _db.Connection.QueryAsync<Pet>("select * from \"Pet\"");

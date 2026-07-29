@@ -243,10 +243,15 @@ public partial class ManagePetPage : ContentPage
     }
 
     /// <summary>Read-only gate for the Manage page's add/edit actions → the subscribe
-    /// sheet (hosted on this page). Returns true = blocked.</summary>
+    /// sheet (hosted on this page). Returns true = blocked.
+    ///
+    /// <para>Pet-scoped: a caregiver whose owner has access edits the care plan and profile
+    /// of that pet freely. The genuinely owner-only actions on this page — minting invites,
+    /// removing members, deleting the pet cloud-wide — are enforced server-side by role and
+    /// need no billing gate at all.</para></summary>
     private bool PaywallBlocks()
     {
-        if (vm.Entitlements.HasFullAccess)
+        if (vm.CanEditActivePet)
             return false;
         vm.SubscribeVM.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceReadOnly);
         return true;

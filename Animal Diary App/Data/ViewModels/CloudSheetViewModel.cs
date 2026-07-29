@@ -325,6 +325,10 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         SetMode(Mode.Intro);
     }
 
+    /// <summary>Join a shared pet by code. Deliberately NOT behind the paywall, unlike
+    /// minting an invite: someone in the read-only state accepting an invitation is exactly
+    /// the person we want in the app, and the owner's subscription may well be what covers
+    /// them once they are in. (Owner decision; see MONETIZATION_PLAN.md.)</summary>
     private async Task JoinAsync()
     {
         if (!CanJoin)
@@ -381,6 +385,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
                 CloudErrorKind.RateLimited => "Cloud_ErrRateLimited",
                 CloudErrorKind.InviteInvalid => "Cloud_ErrInviteInvalid",
                 CloudErrorKind.InviteAlreadyMember => "Cloud_ErrAlreadyMember",
+                CloudErrorKind.CarerLimitReached => "Cloud_ErrCarerLimitJoin",
                 _ => "Cloud_ErrGeneric",
             });
             Debug.WriteLine($"[Cloud] {ex.Kind} ({ex.StatusCode}): {ex.Message}");

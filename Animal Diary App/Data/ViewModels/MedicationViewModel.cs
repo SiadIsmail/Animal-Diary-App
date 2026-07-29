@@ -256,10 +256,14 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
 
     /// <summary>Read-only gate: adding/editing a medication is "adding more", so it's
     /// gated. Existing medications keep firing their reminders and can be dosed; only
-    /// creating/changing one routes to the subscribe sheet. Returns true = blocked.</summary>
+    /// creating/changing one routes to the subscribe sheet. Returns true = blocked.
+    ///
+    /// <para>Pet-scoped: a caregiver on a covered pet may change its medications. A dose
+    /// change from the vet is care, not administration, and the caregiver is often the one
+    /// who was at the appointment.</para></summary>
     private bool BlockedByPaywall()
     {
-        if (_entitlements.HasFullAccess)
+        if (_entitlements.CanEditPet(_activePetService.ActivePet?.SyncId))
             return false;
         _subscribe.Open(AnalyticsEvents.SubscribeSourceReadOnly);
         return true;

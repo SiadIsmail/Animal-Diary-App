@@ -14,3 +14,30 @@ public interface ITrialStore
     /// <summary>Persist the trial start instant.</summary>
     Task SetTrialStartUtcAsync(DateTime startUtc);
 }
+
+/// <summary>
+/// The trial anchor as the cloud layer sees it — the sibling seam to
+/// <see cref="IPetAccessSource"/>, pointing the other way. The sync engine reconciles this
+/// device's anchor with the account's so that the SERVER can answer "is this owner still
+/// in their trial?" when deciding whether they sponsor their caregivers.
+///
+/// <para><b>Reconciliation is monotone: signing in can only ever move the anchor EARLIER,
+/// never later.</b> Otherwise a new email address would hand out a fresh sponsorship
+/// window, and a long-time local user whose trial expired would start sponsoring
+/// caregivers while locked out of their own app.</para>
+/// </summary>
+public interface ITrialAnchor
+{
+    /// <summary>This device's trial start, or null when the trial has never started
+    /// (which, per the "trial begins with your first own pet" rule, is the normal state
+    /// for someone who only ever cares for other people's animals).
+    ///
+    /// <para>Async because the sync engine can reach this before billing has initialized;
+    /// a synchronous read would see a not-yet-loaded null, report "no trial", and then
+    /// never re-claim.</para></summary>
+    Task<DateTime?> GetStartUtcAsync();
+
+    /// <summary>Take the account-wide anchor the server returned. Keeps the earlier of the
+    /// two; a null server value changes nothing. Idempotent.</summary>
+    Task AdoptAsync(DateTime? serverStartUtc);
+}

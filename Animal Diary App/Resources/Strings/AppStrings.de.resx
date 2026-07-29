@@ -619,6 +619,8 @@
   <data name="Cloud_ErrCode" xml:space="preserve"><value>Der Code hat nicht funktioniert. Prüf ihn und versuch es erneut.</value></data>
   <data name="Cloud_ErrWeakPassword" xml:space="preserve"><value>Bitte wähle ein längeres Passwort, mindestens 6 Zeichen.</value></data>
   <data name="Cloud_ErrRateLimited" xml:space="preserve"><value>Zu viele Versuche. Bitte warte einen Moment.</value></data>
+  <data name="Cloud_ErrCarerLimit" xml:space="preserve"><value>Dieses Tier hat bereits so viele Betreuende, wie Felova unterstützt. Entferne jemanden aus der Liste, um eine neue Person aufzunehmen.</value></data>
+  <data name="Cloud_ErrCarerLimitJoin" xml:space="preserve"><value>Dieses Tier hat bereits so viele Betreuende, wie Felova unterstützt. Bitte den Besitzer, einen Platz frei zu machen.</value></data>
   <data name="Cloud_ErrGeneric" xml:space="preserve"><value>Das hat nicht geklappt. Bitte versuch es erneut.</value></data>
   <data name="Manage_SharingTitle" xml:space="preserve"><value>Gemeinsame Pflege</value></data>
   <data name="Cloud_SharingRowTitle" xml:space="preserve"><value>Gemeinsame Pflege</value></data>
@@ -677,6 +679,11 @@
   <data name="Subscribe_NudgeBody" xml:space="preserve"><value>Du hast {0} Dosen und {1} Wochen von {2}s Verlauf festgehalten. Es bleibt für dich sichtbar, und mit einem Abo kannst du weiter dazuschreiben.</value></data>
   <data name="Subscribe_ReadOnlyTitle" xml:space="preserve"><value>{0}s Verlauf ist sicher</value></data>
   <data name="Subscribe_ReadOnlyBody" xml:space="preserve"><value>Alles ist noch da und bleibt es auch. Um {0}s Pflege weiter festzuhalten, mach mit Felova weiter, wann immer du magst.</value></data>
+  <data name="Subscribe_ReadOnlyCarersClause" xml:space="preserve"><value>Die anderen, die sich um {0} kümmern, sehen weiterhin alles und können Dosen weiterhin als gegeben markieren.</value></data>
+  <data name="Subscribe_SponsorEndedTitle" xml:space="preserve"><value>Du siehst weiterhin alles zu {0}</value></data>
+  <data name="Subscribe_SponsorEndedBody" xml:space="preserve"><value>{0}s Besitzer hat kein Abo mehr, deshalb pausieren neue Einträge vorerst. Du kannst den gesamten Verlauf weiter lesen, und Dosen als gegeben zu markieren funktioniert weiterhin. Wenn du selbst weiter festhalten möchtest, kannst du mit Felova weitermachen.</value></data>
+  <data name="Subscribe_SponsorEndedTitleGeneric" xml:space="preserve"><value>Du siehst weiterhin alles</value></data>
+  <data name="Subscribe_SponsorEndedBodyGeneric" xml:space="preserve"><value>Der Besitzer eines Tieres, bei dem du mithilfst, hat kein Abo mehr, deshalb pausieren neue Einträge vorerst. Du kannst den gesamten Verlauf weiter lesen, und Dosen als gegeben zu markieren funktioniert weiterhin. Wenn du selbst weiter festhalten möchtest, kannst du mit Felova weitermachen.</value></data>
   <data name="Settings_SubscriptionSection" xml:space="preserve"><value>Abo</value></data>
   <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Dein Abo</value></data>
   <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Kostenlose Testphase</value></data>

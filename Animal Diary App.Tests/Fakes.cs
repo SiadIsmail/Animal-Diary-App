@@ -49,4 +49,45 @@ internal sealed class FakeStore : IStoreBilling
     }
 
     public Task<string?> GetManagementUrlAsync() => Task.FromResult(ManagementUrl);
+
+    public string? IdentifiedAs { get; private set; }
+    public int IdentifyCount { get; private set; }
+    public Task IdentifyAsync(string? accountId)
+    {
+        IdentifyCount++;
+        IdentifiedAs = accountId;
+        return Task.CompletedTask;
+    }
+}
+
+/// <summary>Scriptable sponsorship cache — stands in for the cloud sync engine.</summary>
+internal sealed class FakePetAccess : IPetAccessSource
+{
+    public bool AccessKnown { get; set; } = true;
+    public Dictionary<string, PetAccessInfo> Pets { get; } = new();
+
+    public PetAccessInfo? GetPetAccess(string? petSyncId)
+        => petSyncId != null && Pets.TryGetValue(petSyncId, out var info) ? info : null;
+
+    /// <summary>Someone else's pet whose owner is currently paying (or in trial).</summary>
+    public FakePetAccess Sponsored(string petSyncId, DateTime fetchedUtc)
+    {
+        Pets[petSyncId] = new PetAccessInfo(IsCaregiver: true, OwnerHasAccess: true, fetchedUtc);
+        return this;
+    }
+
+    /// <summary>Someone else's pet whose owner has lapsed.</summary>
+    public FakePetAccess Lapsed(string petSyncId, DateTime fetchedUtc)
+    {
+        Pets[petSyncId] = new PetAccessInfo(IsCaregiver: true, OwnerHasAccess: false, fetchedUtc);
+        return this;
+    }
+
+    /// <summary>A pet you own. OwnerHasAccess is your own state, and must never be
+    /// treated as sponsorship.</summary>
+    public FakePetAccess Owned(string petSyncId, DateTime fetchedUtc, bool ownerAccess = true)
+    {
+        Pets[petSyncId] = new PetAccessInfo(IsCaregiver: false, OwnerHasAccess: ownerAccess, fetchedUtc);
+        return this;
+    }
 }

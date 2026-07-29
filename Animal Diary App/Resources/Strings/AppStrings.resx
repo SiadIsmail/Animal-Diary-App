@@ -638,6 +638,8 @@
   <data name="Cloud_ErrCode" xml:space="preserve"><value>That code didn't work. Check it and try again.</value></data>
   <data name="Cloud_ErrWeakPassword" xml:space="preserve"><value>Please choose a longer password, at least 6 characters.</value></data>
   <data name="Cloud_ErrRateLimited" xml:space="preserve"><value>Too many attempts. Please wait a moment.</value></data>
+  <data name="Cloud_ErrCarerLimit" xml:space="preserve"><value>This pet already has as many carers as Felova supports. Remove someone from the list to add a new person.</value></data>
+  <data name="Cloud_ErrCarerLimitJoin" xml:space="preserve"><value>This pet already has as many carers as Felova supports. Ask the owner to free up a place.</value></data>
   <data name="Cloud_ErrGeneric" xml:space="preserve"><value>That didn't go through. Please try again.</value></data>
   <data name="Manage_SharingTitle" xml:space="preserve"><value>Shared care</value></data>
   <data name="Cloud_SharingRowTitle" xml:space="preserve"><value>Shared care</value></data>
@@ -696,6 +698,11 @@
   <data name="Subscribe_NudgeBody" xml:space="preserve"><value>You've written down {0} doses and {1} weeks of {2}'s history. It stays yours to see, and you can keep adding to it with a subscription.</value></data>
   <data name="Subscribe_ReadOnlyTitle" xml:space="preserve"><value>{0}'s history is safe</value></data>
   <data name="Subscribe_ReadOnlyBody" xml:space="preserve"><value>It's all still here, and always will be. To keep writing down {0}'s care, continue with Felova whenever you're ready.</value></data>
+  <data name="Subscribe_ReadOnlyCarersClause" xml:space="preserve"><value>The other people caring for {0} can still see everything, and can still mark doses given.</value></data>
+  <data name="Subscribe_SponsorEndedTitle" xml:space="preserve"><value>You can still see everything for {0}</value></data>
+  <data name="Subscribe_SponsorEndedBody" xml:space="preserve"><value>{0}'s owner is no longer subscribed, so new entries are paused for now. You can still read the full history, and marking doses given still works. If you'd like to keep writing things down yourself, you can continue with Felova.</value></data>
+  <data name="Subscribe_SponsorEndedTitleGeneric" xml:space="preserve"><value>You can still see everything</value></data>
+  <data name="Subscribe_SponsorEndedBodyGeneric" xml:space="preserve"><value>The owner of a pet you help care for is no longer subscribed, so new entries are paused for now. You can still read the full history, and marking doses given still works. If you'd like to keep writing things down yourself, you can continue with Felova.</value></data>
   <data name="Settings_SubscriptionSection" xml:space="preserve"><value>Subscription</value></data>
   <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Your subscription</value></data>
   <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Free trial</value></data>

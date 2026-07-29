@@ -239,6 +239,9 @@ public class SharingSheetViewModel : BaseViewModel
             {
                 CloudErrorKind.Network => "Cloud_ErrNetwork",
                 CloudErrorKind.RateLimited => "Cloud_ErrRateLimited",
+                // Surfaced at MINT time as well as redeem time, so the owner — the only
+                // person who can free a slot — is the one who hears about it.
+                CloudErrorKind.CarerLimitReached => "Cloud_ErrCarerLimit",
                 CloudErrorKind.AuthExpired => "Cloud_ErrGeneric",
                 _ => "Cloud_ErrGeneric",
             });

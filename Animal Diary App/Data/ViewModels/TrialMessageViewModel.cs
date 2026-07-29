@@ -22,7 +22,7 @@ using Animal_Diary_App.Helpers;
 /// </summary>
 public sealed class TrialMessageViewModel : BaseViewModel
 {
-    private enum Mode { Explainer, Nudge, ReadOnly }
+    private enum Mode { Explainer, Nudge, ReadOnly, SponsorshipEnded }
 
     private readonly SubscribeSheetViewModel _subscribe;
     private readonly IAnalyticsService _analytics;
@@ -102,13 +102,40 @@ public sealed class TrialMessageViewModel : BaseViewModel
         });
     }
 
+    /// <summary>
+    /// A caregiver's cover ended — the owner's subscription lapsed or their trial ran out.
+    /// A separate mode from <see cref="ShowReadOnly"/> because this person never had a
+    /// trial of their own (the clock starts with your first OWN pet), so the read-only copy
+    /// would tell them something untrue. States the real reason, does not blame the owner,
+    /// and still offers a subscription of their own as the way to carry on.
+    /// </summary>
+    /// <param name="petName">The affected pet, but only when it is the one on screen;
+    /// empty selects the general wording rather than naming an off-screen pet.</param>
+    public void ShowSponsorshipEnded(string petName)
+    {
+        _mode = Mode.SponsorshipEnded;
+        _subscribeSource = AnalyticsEvents.SubscribeSourceSponsorshipEnded;
+        var named = !string.IsNullOrEmpty(petName);
+        Title = named ? Fmt("Subscribe_SponsorEndedTitle", petName) : Loc("Subscribe_SponsorEndedTitleGeneric");
+        Body = named ? Fmt("Subscribe_SponsorEndedBody", petName) : Loc("Subscribe_SponsorEndedBodyGeneric");
+        Footnote = string.Empty;
+        ShowContinue = true;
+        DismissLabel = Loc("Common_Okay");
+        Present();
+        _analytics.Track(AnalyticsEvents.SponsorshipEnded);
+    }
+
     /// <summary>The care-only state begins: reassure first, then offer to continue.</summary>
-    public void ShowReadOnly(string petName, int trialDayReached)
+    /// <param name="hasCaregivers">Whether this owner shares any pet. When they do, the
+    /// copy adds that their carers can now only view too — they are the only person who can
+    /// change that, and finding out by watching someone else fail to log a dose is worse.</param>
+    public void ShowReadOnly(string petName, int trialDayReached, bool hasCaregivers = false)
     {
         _mode = Mode.ReadOnly;
         _subscribeSource = AnalyticsEvents.SubscribeSourceReadOnly;
         Title = Fmt("Subscribe_ReadOnlyTitle", petName);
-        Body = Fmt("Subscribe_ReadOnlyBody", petName);
+        Body = Fmt("Subscribe_ReadOnlyBody", petName)
+             + (hasCaregivers ? " " + Fmt("Subscribe_ReadOnlyCarersClause", petName) : string.Empty);
         Footnote = string.Empty;
         ShowContinue = true;
         DismissLabel = Loc("Common_NotNow");
