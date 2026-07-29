@@ -141,6 +141,40 @@ public partial class App : Application
 			window.Page = new NavigationPage(new WelcomePage(_vm));
 	}
 
+	/// <summary>
+	/// Record <c>app_opened</c> if this appearance begins a new session.
+	///
+	/// <para>Called only from touchpoints that <b>require a real Activity</b> — window
+	/// creation and resume. That is the fix for the headless launch: a reboot or a Play
+	/// Store update starts the process through the boot receiver (it resolves services,
+	/// which constructs <c>App</c> and runs <c>StartAsync</c>) with no window and nobody
+	/// looking at it, and those were being counted as launches.</para>
+	///
+	/// <para>The session gate then handles the other direction. Firing on every one of
+	/// these touchpoints would over-count — Android recreates the Activity on memory
+	/// pressure and configuration changes, and resume fires on every app-switch — while
+	/// firing once per process under-counts, because a process can survive a week of daily
+	/// use. An idle window (<see cref="AnalyticsSession.IdleTimeout"/>) counts one open per
+	/// visit, which is what the funnel's "came back later" step reads.</para>
+	/// </summary>
+	private void TrackSessionStart()
+	{
+		try
+		{
+			if (!AnalyticsIdentity.TryBeginSession())
+				return;
+
+			_analytics.Track(AnalyticsEvents.AppOpened, new Dictionary<string, object?>
+			{
+				[AnalyticsEvents.PropLanguage] = LocalizationManager.Instance.CurrentLanguage,
+			});
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[Analytics] app_opened failed: {ex.Message}");
+		}
+	}
+
 	private int _windowsCreated;
 
 	protected override Window CreateWindow(IActivationState? activationState)
@@ -154,6 +188,11 @@ public partial class App : Application
 		// again to navigate away from a loading screen — build the real root now.
 		if (_rootReady.Task.IsCompletedSuccessfully)
 		{
+			// A window exists and the language is applied, so this is a countable open —
+			// unless the session gate says we're still inside the previous one, which is
+			// what makes an Activity recreation free.
+			TrackSessionStart();
+
 			try
 			{
 				return new Window(BuildCurrentRoot());
@@ -180,6 +219,12 @@ public partial class App : Application
 					System.Diagnostics.Debug.WriteLine($"[Startup] root apply failed: {ex}");
 					loadingWindow.Page = BuildErrorPage();
 				}
+
+				// Counted here rather than beside the loading window: startup has now
+				// chosen and applied the language, so app_opened carries the real one.
+				// Fired even if the root failed — the user did open the app, and hiding
+				// broken launches from the funnel would hide the breakage with them.
+				TrackSessionStart();
 			}),
 			TaskScheduler.Default);
 
@@ -189,6 +234,13 @@ public partial class App : Application
 	protected override void OnResume()
 	{
 		base.OnResume();
+
+		// The return path into the app. Only counts when the user has been away longer
+		// than the session window, so an app-switch to read a text stays one visit while
+		// coming back tomorrow is a new open — the event the funnel's "came back later"
+		// step reads.
+		TrackSessionStart();
+
 		// Another caregiver/device may have logged while we were backgrounded;
 		// resuming re-enables the foreground poll and schedules a debounced sync.
 		_cloudSync.NotifyAppState(foreground: true);
@@ -268,6 +320,14 @@ public partial class App : Application
 	protected override void OnSleep()
 	{
 		base.OnSleep();
+
+		// Start the analytics idle clock from the moment the user actually left, not from
+		// whenever the last event happened — otherwise a long read-only session would age
+		// out while still on screen and count the next glance as a new open. Distinct from
+		// MedicationReminderScheduler.MarkSeen below: same instant, unrelated purpose.
+		try { AnalyticsIdentity.TouchActivity(); }
+		catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Analytics] activity stamp failed: {ex.Message}"); }
+
 		// A backgrounded app must not keep polling the network.
 		_cloudSync.NotifyAppState(foreground: false);
 
@@ -329,20 +389,18 @@ public partial class App : Application
 			// orders StartAsync against CreateWindow), and it may be replaced later.
 			_rootReady.TrySetResult();
 
-			// Analytics: prepare the anonymous id, then record the launch. Fired here so
-			// the language property is already applied above and rides along with the
-			// event. Wrapped defensively — telemetry must never affect startup.
+			// Analytics: prepare the anonymous id and flush anything the last session
+			// couldn't deliver. Deliberately does NOT record the launch — see
+			// TrackSessionStart: this method also runs in the headless process a reboot or
+			// an app update starts, where there is no window and no user to count. Wrapped
+			// defensively — telemetry must never affect startup.
 			try
 			{
 				await _analytics.InitializeAsync();
-				_analytics.Track(AnalyticsEvents.AppOpened, new Dictionary<string, object?>
-				{
-					[AnalyticsEvents.PropLanguage] = LocalizationManager.Instance.CurrentLanguage,
-				});
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine($"[Analytics] app_opened failed: {ex.Message}");
+				System.Diagnostics.Debug.WriteLine($"[Analytics] init failed: {ex.Message}");
 			}
 
 			// Re-arm all future reminders on launch. resendMissed:false — the
