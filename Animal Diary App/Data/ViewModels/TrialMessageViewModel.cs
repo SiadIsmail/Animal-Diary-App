@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Services.Analytics;
@@ -22,12 +22,9 @@ using Animal_Diary_App.Helpers;
 /// </summary>
 public sealed class TrialMessageViewModel : BaseViewModel
 {
-    private enum Mode { Explainer, Nudge, ReadOnly, SponsorshipEnded }
-
     private readonly SubscribeSheetViewModel _subscribe;
     private readonly IAnalyticsService _analytics;
 
-    private Mode _mode = Mode.Explainer;
     private string _subscribeSource = AnalyticsEvents.SubscribeSourceExplainer;
 
     public TrialMessageViewModel(SubscribeSheetViewModel subscribe, IAnalyticsService analytics)
@@ -70,7 +67,6 @@ public sealed class TrialMessageViewModel : BaseViewModel
     /// <summary>After the first log: reassuring explainer, no prominent ask.</summary>
     public void ShowExplainer(string petName)
     {
-        _mode = Mode.Explainer;
         _subscribeSource = AnalyticsEvents.SubscribeSourceExplainer;
         // Title carries the trial length (config-driven), body carries the pet name.
         var days = (int)Billing_TrialDays();
@@ -86,7 +82,6 @@ public sealed class TrialMessageViewModel : BaseViewModel
     /// <summary>A few days before the trial ends: anchored to what they built.</summary>
     public void ShowNudge(string petName, int daysLeft, int doseCount, int weeksTracked)
     {
-        _mode = Mode.Nudge;
         _subscribeSource = AnalyticsEvents.SubscribeSourceNudge;
         Title = Fmt("Subscribe_NudgeTitle", petName);
         // Body references the real accumulated record; the caller passes the counts.
@@ -113,7 +108,6 @@ public sealed class TrialMessageViewModel : BaseViewModel
     /// empty selects the general wording rather than naming an off-screen pet.</param>
     public void ShowSponsorshipEnded(string petName)
     {
-        _mode = Mode.SponsorshipEnded;
         _subscribeSource = AnalyticsEvents.SubscribeSourceSponsorshipEnded;
         var named = !string.IsNullOrEmpty(petName);
         Title = named ? Fmt("Subscribe_SponsorEndedTitle", petName) : Loc("Subscribe_SponsorEndedTitleGeneric");
@@ -131,7 +125,6 @@ public sealed class TrialMessageViewModel : BaseViewModel
     /// change that, and finding out by watching someone else fail to log a dose is worse.</param>
     public void ShowReadOnly(string petName, int trialDayReached, bool hasCaregivers = false)
     {
-        _mode = Mode.ReadOnly;
         _subscribeSource = AnalyticsEvents.SubscribeSourceReadOnly;
         Title = Fmt("Subscribe_ReadOnlyTitle", petName);
         Body = Fmt("Subscribe_ReadOnlyBody", petName)

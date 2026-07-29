@@ -26,6 +26,24 @@ public static partial class BillingConfig
     /// <summary>The free-trial length. One editable value — tune freely (owner will).</summary>
     public static readonly TimeSpan TrialLength = TimeSpan.FromDays(14);
 
+    /// <summary>
+    /// DEBUG-ONLY testing switch: run the REAL entitlement gate on Windows/macOS, over a
+    /// no-op store. Access then comes from the trial or from caregiver sponsorship — the
+    /// two things worth testing on a desktop — while purchases stay unavailable.
+    ///
+    /// <para>Off by default, and deliberately opt-in rather than "on in Debug": the whole
+    /// point of the desktop no-op is that day-to-day development can never be locked out of
+    /// the app. Turn it on only while testing gating, and remember a desktop build cannot
+    /// buy anything, so the only way back out of the read-only state there is to turn this
+    /// off again or move the trial anchor.</para>
+    ///
+    /// <para>Why it exists: on desktop the gate is <c>NullEntitlementService</c>, which
+    /// reports <c>Subscribed</c> for every account unconditionally. A caregiver test run
+    /// with a desktop as the second device therefore passes every gate check without
+    /// exercising a single one.</para>
+    /// </summary>
+    public const bool ForceGateOnDesktop = true;
+
     /// <summary>Show the pre-end nudge once when the trial has this many days left.</summary>
     public const int PreEndNudgeDaysBefore = 3;
 
