@@ -300,6 +300,13 @@ public partial class App : Application
 		// the trial has quietly elapsed while away, show the one-time reassurance.
 		_ = Task.Run(async () =>
 		{
+			// Re-assert the store identity before re-checking. IdentifyAsync only fires on
+			// SessionChanged, so if it failed (offline at sign-up, store unreachable) the
+			// purchase would stay stranded on the anonymous id forever — the user keeps
+			// access on THIS device but never on a second one, and the server never learns
+			// they pay, so they silently cannot sponsor caregivers. Idempotent: it returns
+			// immediately when the id already matches.
+			await _entitlements.IdentifyAsync(_cloudAuth.UserId);
 			await _entitlements.RefreshAsync();
 			await MaybeShowReadOnlyReassuranceAsync();
 			await MaybeShowPreEndNudgeAsync();
@@ -516,6 +523,9 @@ public partial class App : Application
 				try
 				{
 					await _entitlements.InitializeAsync();
+					// Same self-heal as OnResume: recover a store identity that never got
+					// linked because sign-up happened offline. No-op when already linked.
+					await _entitlements.IdentifyAsync(_cloudAuth.UserId);
 					// Idempotent — just re-reads persisted state; the launch sync above may
 					// not have got here yet and ownership comes from that cached role map.
 					await _cloudSync.InitializeAsync();
