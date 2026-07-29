@@ -30,6 +30,7 @@
     <Compile Include="..\Animal Diary App\Data\Services\Billing\ITrialStore.cs" Link="Billing\ITrialStore.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IStoreBilling.cs" Link="Billing\IStoreBilling.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IPetAccessSource.cs" Link="Billing\IPetAccessSource.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Cloud\SignOutImpact.cs" Link="Cloud\SignOutImpact.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\BillingConfig.cs" Link="Billing\BillingConfig.cs" />
   </ItemGroup>
 

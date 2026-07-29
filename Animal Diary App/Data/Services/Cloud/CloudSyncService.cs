@@ -56,8 +56,33 @@ public interface ICloudSyncService
     /// DIFFERENT account) and runs the first sync.</summary>
     Task<SyncOutcome> EnableBackupAsync();
 
-    /// <summary>Stop syncing (local-only again). Cloud data stays; sign-out separate.</summary>
+    /// <summary>Stop syncing (local-only again). Cloud data stays; sign-out separate.
+    /// <b>Local data stays too</b> — this is the reversible exit ("these are still my pets,
+    /// this device just stops syncing"). Do not collapse it into sign-out, which is the
+    /// exit that removes them.</summary>
     Task DisableBackupAsync();
+
+    /// <summary>
+    /// Step 1 of signing out: push anything outstanding (best effort, needs a connection),
+    /// then report what signing out will actually cost. The caller shows this and asks; it
+    /// changes nothing on its own.
+    /// </summary>
+    Task<SignOutImpact> PrepareSignOutAsync();
+
+    /// <summary>
+    /// Step 2 of signing out: remove every pet belonging to the account being left and clear
+    /// all account-scoped sync state. Call <b>before</b> <c>ICloudAuthService.SignOutAsync</c>
+    /// — this needs the membership map that signing out invalidates.
+    ///
+    /// <para>Only ever for a <b>deliberate</b> sign-out. An expired refresh token also clears
+    /// the session, but that is the same account involuntarily: the cursors are still valid,
+    /// the user will sign back in, and tearing down there would delete their pets because
+    /// their token aged out.</para>
+    /// </summary>
+    /// <returns>How many pets remain on the device afterwards. Zero means the app has
+    /// nothing left to show and belongs back in onboarding — the same routing the owner's
+    /// last-pet deletion already does.</returns>
+    Task<int> SignOutTeardownAsync();
 
     /// <summary>The caller's role for a pet ("owner" / "caregiver"), or null when
     /// unknown / not a member / never synced. Keyed by the pet's SyncId; refreshed
@@ -91,9 +116,17 @@ public interface ICloudSyncService
 /// Public only so <c>System.Text.Json</c> can round-trip it.</summary>
 public sealed record PetAccessRow(string Role, bool OwnerAccess, int CarerCount, DateTime FetchedUtc);
 
+
 public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSource
 {
     // SyncState keys — the engine owns this vocabulary (see SyncStateStore).
+    //
+    // INVARIANT: every key below is account-scoped and MUST carry this prefix, so
+    // SignOutTeardownAsync's single ClearPrefixAsync can never miss one. Anything that must
+    // survive a sign-out (the trial anchor, language, preferences) belongs in AppSettings,
+    // which is device-scoped — not here.
+    private const string CloudStatePrefix = "cloud:";
+
     private const string KeyEnabled = "cloud:backupEnabled";
     private const string KeyAccount = "cloud:lastAccount";
     private const string KeyLastSynced = "cloud:lastSynced";
@@ -304,6 +337,13 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
 
         try
         {
+            // Belt and braces for A3: if state from a DIFFERENT account is still here, every
+            // cursor sits ahead of this account's rows and the pull would silently return
+            // nothing — permanently. A proper sign-out has already torn this down; this
+            // catches devices that got into the state before the teardown existed, and any
+            // path that clears the session without going through it.
+            await DiscardOtherAccountStateAsync(session);
+
             var ctx = new SyncRunContext(_db.Connection);
 
             // Membership first: it drives the shared-pet roles AND the purge of
@@ -603,6 +643,97 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         // (now-failing) logout round-trip.
         await _auth.SignOutAsync();
         await DisableBackupAsync();
+    }
+
+    /// <summary>
+    /// Drop cursors and caches left behind by a different account, and stamp the current one.
+    ///
+    /// <para>Cursors are a high-water mark for ONE account (<c>updated_at=gt.{cursor}</c>).
+    /// Left in place across an account change they sit ahead of every row the other account
+    /// owns, so the pull returns nothing and stays that way — the device holds no data and
+    /// will never ask for any. Sign-out teardown normally prevents this; this repairs it.</para>
+    ///
+    /// <para>Deliberately does NOT re-mint <c>SyncId</c>s. That belongs to the intentional
+    /// "move this device's data to a new account" flow (<see cref="EnableBackupAsync"/>);
+    /// doing it on a plain sign-in would upload one account's pets into another's.</para>
+    /// </summary>
+    private async Task DiscardOtherAccountStateAsync(CloudSession session)
+    {
+        var lastAccount = await _state.GetAsync(KeyAccount);
+        if (lastAccount == session.UserId)
+            return;
+
+        if (lastAccount != null)
+        {
+            Debug.WriteLine($"[Cloud] account changed since last sync — discarding stale cursors/caches");
+            foreach (var table in _tables)
+                await _state.RemoveAsync(KeyCursorPrefix + table.CloudTable);
+            await _state.RemoveAsync(KeyMemberships);
+            await _state.RemoveAsync(KeyPetAccess);
+            await _state.RemoveAsync(KeyTrialAnchor);
+            _petRoles = new();
+            _petAccess = new();
+            _accessLoaded = false;
+        }
+
+        await _state.SetAsync(KeyAccount, session.UserId);
+    }
+
+    public async Task<SignOutImpact> PrepareSignOutAsync()
+    {
+        // Last chance to get outstanding work to the server. Best effort: offline is the
+        // normal reason there is anything left, and it must not block signing out.
+        if (_enabled && _auth.IsSignedIn)
+        {
+            try { await SyncNowAsync(); }
+            catch (Exception ex) { Debug.WriteLine($"[Cloud] final push before sign-out failed: {ex.Message}"); }
+        }
+
+        var unsynced = 0;
+        foreach (var t in LocalTableNames)
+            unsynced += await _db.Connection.ExecuteScalarAsync<int>(
+                $"select count(*) from \"{t}\" where IsDirty = 1 and IsDeleted = 0");
+
+        // Only pets this account actually holds. A pet created locally and never pushed is
+        // not in the membership map, is not this account's, and is not removed — it is
+        // counted above instead, because it exists nowhere else.
+        var names = new List<string>();
+        foreach (var pet in await _db.Connection.QueryAsync<Pet>("select * from \"Pet\""))
+        {
+            if (!string.IsNullOrEmpty(pet.SyncId) && _petRoles.ContainsKey(pet.SyncId))
+                names.Add(pet.Name);
+        }
+
+        return new SignOutImpact(names, unsynced);
+    }
+
+    public async Task<int> SignOutTeardownAsync()
+    {
+        // Data follows access. Signing out of an account is losing access to its pets, and
+        // the app already commits to "medical data for a pet you no longer care for never
+        // stays behind" for revoked caregivers — same rule, same mechanism (reminders
+        // cancelled, active-pet selection repaired).
+        foreach (var pet in await _db.Connection.QueryAsync<Pet>("select * from \"Pet\""))
+        {
+            if (!string.IsNullOrEmpty(pet.SyncId) && _petRoles.ContainsKey(pet.SyncId))
+                await PurgePetAsync(pet);
+        }
+
+        // Everything account-scoped, in one call that a future key cannot escape. NB the
+        // trial anchor itself lives in AppSettings and is DEVICE-scoped: clearing it here
+        // would hand out a fresh 14-day trial on every sign-out. Only the reconciliation
+        // marker (cloud:trialAnchor) is account-scoped, and it goes with this prefix.
+        await _state.ClearPrefixAsync(CloudStatePrefix);
+
+        _enabled = false;
+        _lastSynced = null;
+        _petRoles = new();
+        _petAccess = new();
+        _accessLoaded = false;
+        StateChanged?.Invoke();
+
+        return await _db.Connection.ExecuteScalarAsync<int>(
+            "select count(*) from \"Pet\" where IsDeleted = 0");
     }
 
     /// <summary>Queue every active row for upload (tombstones stay local noise).</summary>

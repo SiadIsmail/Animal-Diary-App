@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.View;
+﻿namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services.Analytics;
@@ -45,6 +45,8 @@ public partial class KeepSafePage : ContentPage
 				LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmAccept"),
 				LocalizationManager.Instance.GetString("Common_Cancel"));
 
+		vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null);
+
 		// Turning backup on inside the sheet fulfils the offer — hand off to the app.
 		vm.CloudSync.StateChanged += OnCloudStateChanged;
 	}
@@ -53,6 +55,7 @@ public partial class KeepSafePage : ContentPage
 	{
 		base.OnDisappearing();
 		vm.CloudVM.ConfirmDeleteAccount = null;
+		vm.CloudVM.ConfirmSignOut = null;
 		vm.CloudSync.StateChanged -= OnCloudStateChanged;
 	}
 

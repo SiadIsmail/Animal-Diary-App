@@ -24,6 +24,9 @@ public sealed class NullCloudSyncService : ICloudSyncService, Billing.IPetAccess
     public void NotifyAppState(bool foreground) { }
     public Task<SyncOutcome> EnableBackupAsync() => Task.FromResult(SyncOutcome.BackupDisabled);
     public Task DisableBackupAsync() => Task.CompletedTask;
+    public Task<SignOutImpact> PrepareSignOutAsync()
+        => Task.FromResult(new SignOutImpact(Array.Empty<string>(), 0));
+    public Task<int> SignOutTeardownAsync() => Task.FromResult(0);
     public Task DeleteCloudDataAsync() => Task.CompletedTask;
     public Task DeleteAccountAsync() => Task.CompletedTask;
 }
