@@ -112,11 +112,76 @@ public partial class FelovaBottomSheet : ContentView
 
     private static async void OnIsPresentedChanged(BindableObject bindable, object oldValue, object newValue)
     {
-        var sheet = (FelovaBottomSheet)bindable;
-        if ((bool)newValue)
-            await sheet.ShowAsync();
-        else
-            await sheet.HideAsync();
+        // async void: an escaping exception here kills the process, so it never escapes
+        // (coding-standards.md, "Async safety"). A sheet that fails to animate must
+        // still end up in a consistent state, which the finally in RunToTargetAsync does.
+        try
+        {
+            await ((FelovaBottomSheet)bindable).RunToTargetAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Sheet] animation failed: {ex}");
+        }
+    }
+
+    /// <summary>
+    /// Animate until the sheet matches <see cref="IsPresented"/>, then pin it there.
+    /// </summary>
+    /// <remarks>
+    /// This loops rather than running one animation because the flag can flip *during*
+    /// an animation — a dismiss tapped inside the 420ms open slide, an Android back
+    /// press, or one sheet closing as another opens. The old code returned early in
+    /// that case and the new state was simply dropped, which desynchronized the two
+    /// halves of "open":
+    ///
+    ///   • input — the host ContentView's InputTransparent is bound to the inverse of
+    ///     the same VM flag, so it follows the flip immediately and unconditionally;
+    ///   • visual — TranslationY and the scrim only move if an animation actually runs.
+    ///
+    /// Dropping the transition left those permanently disagreeing: a sheet fully
+    /// visible and dimming the screen while every touch passed through to the page
+    /// behind it, with nothing to re-reconcile it short of a restart. Re-reading the
+    /// flag after each animation is what makes a mid-flight change land instead.
+    /// </remarks>
+    private async Task RunToTargetAsync()
+    {
+        // Still the overlap guard: a second call while animating returns, because the
+        // loop below already owns the reconciliation and will pick up the new target.
+        if (isAnimating)
+            return;
+
+        isAnimating = true;
+        try
+        {
+            bool target;
+            do
+            {
+                target = IsPresented;
+                if (target)
+                    await ShowAsync();
+                else
+                    await HideAsync();
+            }
+            while (target != IsPresented);
+        }
+        finally
+        {
+            // An animation can also be cancelled outright (a competing animation on the
+            // same element, the view detaching mid-slide), which returns without having
+            // reached the end value and would park the sheet half-way. Snapping makes
+            // the end state depend on the flag alone, never on the tween finishing.
+            ApplyFinalState(IsPresented);
+            isAnimating = false;
+        }
+    }
+
+    /// <summary>Pin every visual and input property to the given state, no animation.</summary>
+    private void ApplyFinalState(bool presented)
+    {
+        SheetContainer.TranslationY = presented ? 0 : HiddenOffset;
+        Scrim.Opacity = presented ? 1 : 0;
+        InputTransparent = !presented;
     }
 
     // ── Layout + motion ────────────────────────────────────────────────────────
@@ -131,12 +196,11 @@ public partial class FelovaBottomSheet : ContentView
             SheetContainer.MaximumHeightRequest = height * 0.9;
     }
 
+    // Both halves are plain animations now: the overlap guard, the loop that reacts to
+    // a flag flipped mid-slide, and the final pinning all live in RunToTargetAsync.
+
     private async Task ShowAsync()
     {
-        if (isAnimating)
-            return;
-        isAnimating = true;
-
         var reduce = ReducedMotion.IsEnabled;
 
         // Start just below the screen and transparent, then slide up + fade the scrim
@@ -145,29 +209,22 @@ public partial class FelovaBottomSheet : ContentView
         // Android snap the container to its untransformed spot before sliding.
         SheetContainer.TranslationY = HiddenOffset;
         Scrim.Opacity = 0;
+        // Set up front, not on completion, so the sheet takes touches for the whole
+        // slide-in rather than letting them fall through to the page for 420ms.
         InputTransparent = false;
 
         await Task.WhenAll(
             Scrim.FadeTo(1, reduce ? ReducedMs : ScrimInMs, Easing.CubicOut),
             SheetContainer.TranslateTo(0, 0, reduce ? ReducedMs : SlideInMs, SheetEasing));
-
-        isAnimating = false;
     }
 
     private async Task HideAsync()
     {
-        if (isAnimating)
-            return;
-        isAnimating = true;
-
         var reduce = ReducedMotion.IsEnabled;
 
         await Task.WhenAll(
             Scrim.FadeTo(0, reduce ? ReducedMs : ScrimOutMs, Easing.CubicIn),
             SheetContainer.TranslateTo(0, HiddenOffset, reduce ? ReducedMs : SlideOutMs, SheetEasing));
-
-        InputTransparent = true;
-        isAnimating = false;
     }
 
     private void OnScrimTapped(object? sender, TappedEventArgs e)

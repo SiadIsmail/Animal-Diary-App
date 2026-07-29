@@ -50,17 +50,17 @@ last-write-wins conflict resolution; the cloud design is documented in
 
 ## Getting started
 
-Prerequisites: .NET 9 SDK with the MAUI workload (`dotnet workload install maui`).
+Prerequisites: .NET 10 SDK with the MAUI workload (`dotnet workload install maui`).
 
 ```bash
 git clone <this repo>
 cd Animal-Diary-App
 
 # Fastest compile check (Windows)
-dotnet build "Animal Diary App/Animal Diary App.csproj" -f net9.0-windows10.0.19041.0 -c Debug
+dotnet build "Animal Diary App/Animal Diary App.csproj" -f net10.0-windows10.0.19041.0 -c Debug
 
 # Android
-dotnet build "Animal Diary App/Animal Diary App.csproj" -f net9.0-android -c Debug
+dotnet build "Animal Diary App/Animal Diary App.csproj" -f net10.0-android -c Debug
 ```
 
 The app runs fully without any backend. To develop the optional cloud
