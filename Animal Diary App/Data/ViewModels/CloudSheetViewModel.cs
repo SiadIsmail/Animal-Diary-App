@@ -319,11 +319,60 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         RefreshStateFromServices();
     }
 
+    /// <summary>
+    /// Sign out: push what we can, tell the user what leaves the device, then tear down.
+    ///
+    /// <para>The pets are removed from the DEVICE, not from the account — signing back in
+    /// restores them, and <see cref="ConfirmSignOut"/>'s copy has to say so, or a reversible
+    /// action reads as deletion. The removal itself is not optional: leaving one account's
+    /// medical records on the device for whoever signs in next is the thing the caregiver
+    /// revocation rule already forbids.</para>
+    /// </summary>
     private async Task SignOutAsync()
     {
-        await Run(() => _auth.SignOutAsync());
+        IsBusy = true;
+        SignOutImpact impact;
+        try
+        {
+            impact = await _sync.PrepareSignOutAsync();
+        }
+        catch (Exception ex)
+        {
+            // Never trap someone in an account because we couldn't measure the cost.
+            Debug.WriteLine($"[Cloud] sign-out impact failed: {ex.Message}");
+            impact = new SignOutImpact(Array.Empty<string>(), 0);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+
+        if (impact.RemovesAnything && ConfirmSignOut != null && !await ConfirmSignOut(impact))
+            return;
+
+        var remaining = 0;
+        await Run(async () =>
+        {
+            // Before SignOutAsync: the teardown needs the membership map that signing out
+            // invalidates.
+            remaining = await _sync.SignOutTeardownAsync();
+            await _auth.SignOutAsync();
+        });
         SetMode(Mode.Intro);
+        IsPresented = false;
+        SignedOut?.Invoke(remaining > 0);
     }
+
+    /// <summary>Set by the hosting page — native confirm before signing out, given what it
+    /// will cost. Return true to proceed. A page that hosts the export sheet may instead open
+    /// it and return false ("save a copy first"), mirroring the pet-deletion flow.</summary>
+    public Func<SignOutImpact, Task<bool>>? ConfirmSignOut { get; set; }
+
+    /// <summary>Raised after a completed sign-out. The argument is whether any pet remains
+    /// on the device: false means the app has nothing left to show and belongs back in
+    /// onboarding, the same routing the owner's last-pet deletion already does. Navigation
+    /// is the page's job, not this VM's.</summary>
+    public event Action<bool>? SignedOut;
 
     /// <summary>Join a shared pet by code. Deliberately NOT behind the paywall, unlike
     /// minting an invite: someone in the read-only state accepting an invitation is exactly

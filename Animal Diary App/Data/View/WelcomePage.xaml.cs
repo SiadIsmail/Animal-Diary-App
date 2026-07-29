@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.View;
+﻿namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services.Analytics;
@@ -53,6 +53,8 @@ public partial class WelcomePage : ContentPage
 				LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmAccept"),
 				LocalizationManager.Instance.GetString("Common_Cancel"));
 
+		vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null);
+
 		// Signing in or joining a shared pet pulls data down; the first sync that adds a
 		// pet lands here and completes onboarding straight into the app.
 		vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
@@ -62,6 +64,7 @@ public partial class WelcomePage : ContentPage
 	{
 		base.OnDisappearing();
 		vm.CloudVM.ConfirmDeleteAccount = null;
+		vm.CloudVM.ConfirmSignOut = null;
 		vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
 	}
 

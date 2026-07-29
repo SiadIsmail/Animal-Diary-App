@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.View;
+﻿namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services.Journal;
@@ -58,6 +58,10 @@ public partial class MainPage : ContentPage
                 LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmAccept"),
                 LocalizationManager.Instance.GetString("Common_Cancel"));
 
+        // No export sheet on this page, so no "save a copy" option here.
+        vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null);
+        vm.CloudVM.SignedOut += OnSignedOut;
+
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
         // Another caregiver's changes landing while this page is visible reload
         // it in place — no tab-switching needed to see them.
@@ -98,6 +102,26 @@ public partial class MainPage : ContentPage
         }
     }
 
+    // Signing out removed this account's pets from the device. If nothing is left, the app
+    // has nothing to show — route to onboarding exactly as deleting the last pet does.
+    // Otherwise reload in place; local-only pets can still be here.
+    private async void OnSignedOut(bool anyPetsRemain)
+    {
+        try
+        {
+            if (!anyPetsRemain)
+            {
+                (Application.Current as App)?.SwitchToOnboarding();
+                return;
+            }
+            await vm.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cloud] after-sign-out refresh failed: {ex.Message}");
+        }
+    }
+
     private void OnRemoteChangesApplied() =>
         MainThread.BeginInvokeOnMainThread(async () => await ReloadDataAsync());
 
@@ -107,6 +131,8 @@ public partial class MainPage : ContentPage
         vm.SettingsVM.ConfirmDeleteAllData = null;
         vm.SettingsVM.ConfirmDeleteAllDataCloud = null;
         vm.CloudVM.ConfirmDeleteAccount = null;
+        vm.CloudVM.ConfirmSignOut = null;
+        vm.CloudVM.SignedOut -= OnSignedOut;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
     }

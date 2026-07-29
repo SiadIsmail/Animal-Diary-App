@@ -626,7 +626,15 @@
   <data name="Cloud_NeverSynced" xml:space="preserve"><value>Not synced yet</value></data>
   <data name="Cloud_SyncNow" xml:space="preserve"><value>Sync now</value></data>
   <data name="Cloud_SignOut" xml:space="preserve"><value>Sign out</value></data>
-  <data name="Cloud_SignOutHint" xml:space="preserve"><value>Signing out keeps your data on this device and in your backup.</value></data>
+  <data name="Cloud_SignOutHint" xml:space="preserve"><value>Signing out removes your pets from this device. They stay in your account and come back when you sign in.</value></data>
+  <data name="Cloud_SignOutTitle" xml:space="preserve"><value>Sign out of this account?</value></data>
+  <data name="Cloud_SignOutBody" xml:space="preserve"><value>{0} will be removed from this device. Everything stays in your account and comes back when you sign in.</value></data>
+  <data name="Cloud_SignOutUnsyncedOne" xml:space="preserve"><value>One change hasn't been backed up yet, and that one will be lost.</value></data>
+  <data name="Cloud_SignOutUnsynced" xml:space="preserve"><value>{0} changes haven't been backed up yet, and those will be lost.</value></data>
+  <data name="Cloud_SignOutConfirm" xml:space="preserve"><value>Sign out</value></data>
+  <data name="Cloud_SignOutSaveCopy" xml:space="preserve"><value>Save a copy first</value></data>
+  <data name="Cloud_SignOutPetsMoreOne" xml:space="preserve"><value>{0} and 1 other</value></data>
+  <data name="Cloud_SignOutPetsMore" xml:space="preserve"><value>{0} and {1} others</value></data>
   <data name="Cloud_DeleteAccount" xml:space="preserve"><value>Delete account</value></data>
   <data name="Cloud_DeleteAccountConfirmTitle" xml:space="preserve"><value>Delete your account?</value></data>
   <data name="Cloud_DeleteAccountConfirmMessage" xml:space="preserve"><value>This permanently deletes your account and everything backed up to it. The data on this device stays.</value></data>

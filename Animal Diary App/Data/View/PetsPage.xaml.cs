@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.View;
+﻿namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
@@ -51,6 +51,11 @@ public partial class PetsPage : ContentPage
                 LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmAccept"),
                 LocalizationManager.Instance.GetString("Common_Cancel"));
 
+        // This page hosts the export sheet, so sign-out can offer "save a copy first".
+        vm.CloudVM.ConfirmSignOut = impact =>
+            SignOutPrompt.AskAsync(this, impact, () => vm.ExportSheetVM.OpenCommand.Execute(null));
+        vm.CloudVM.SignedOut += OnSignedOut;
+
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
         vm.ExportSheetVM.ViewRequested += OnReportViewRequested;
         // Another caregiver's changes landing while this page is visible reload
@@ -88,6 +93,8 @@ public partial class PetsPage : ContentPage
         vm.SettingsVM.ConfirmDeleteAllData = null;
         vm.SettingsVM.ConfirmDeleteAllDataCloud = null;
         vm.CloudVM.ConfirmDeleteAccount = null;
+        vm.CloudVM.ConfirmSignOut = null;
+        vm.CloudVM.SignedOut -= OnSignedOut;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
@@ -128,6 +135,27 @@ public partial class PetsPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PetsPage] reload after leave failed: {ex}");
+        }
+    }
+
+    // Signing out removed this account's pets from the device. If nothing is left, the app
+    // has nothing to show — route to onboarding exactly as deleting the last pet does.
+    // Otherwise reload in place; local-only pets can still be here.
+    private async void OnSignedOut(bool anyPetsRemain)
+    {
+        try
+        {
+            if (!anyPetsRemain)
+            {
+                (Application.Current as App)?.SwitchToOnboarding();
+                return;
+            }
+            await vm.LoadAsync();
+            await vm.PetVM.LoadActivePetTagsAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cloud] after-sign-out refresh failed: {ex.Message}");
         }
     }
 

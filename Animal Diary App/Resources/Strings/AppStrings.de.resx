@@ -607,7 +607,15 @@
   <data name="Cloud_NeverSynced" xml:space="preserve"><value>Noch nicht synchronisiert</value></data>
   <data name="Cloud_SyncNow" xml:space="preserve"><value>Jetzt synchronisieren</value></data>
   <data name="Cloud_SignOut" xml:space="preserve"><value>Abmelden</value></data>
-  <data name="Cloud_SignOutHint" xml:space="preserve"><value>Beim Abmelden bleiben deine Daten auf diesem Gerät und in deinem Backup.</value></data>
+  <data name="Cloud_SignOutHint" xml:space="preserve"><value>Beim Abmelden werden deine Tiere von diesem Gerät entfernt. Sie bleiben in deinem Konto und sind wieder da, sobald du dich anmeldest.</value></data>
+  <data name="Cloud_SignOutTitle" xml:space="preserve"><value>Von diesem Konto abmelden?</value></data>
+  <data name="Cloud_SignOutBody" xml:space="preserve"><value>{0} wird von diesem Gerät entfernt. Alles bleibt in deinem Konto und ist wieder da, sobald du dich anmeldest.</value></data>
+  <data name="Cloud_SignOutUnsyncedOne" xml:space="preserve"><value>Eine Änderung ist noch nicht gesichert und geht dabei verloren.</value></data>
+  <data name="Cloud_SignOutUnsynced" xml:space="preserve"><value>{0} Änderungen sind noch nicht gesichert und gehen dabei verloren.</value></data>
+  <data name="Cloud_SignOutConfirm" xml:space="preserve"><value>Abmelden</value></data>
+  <data name="Cloud_SignOutSaveCopy" xml:space="preserve"><value>Erst eine Kopie sichern</value></data>
+  <data name="Cloud_SignOutPetsMoreOne" xml:space="preserve"><value>{0} und 1 weiteres</value></data>
+  <data name="Cloud_SignOutPetsMore" xml:space="preserve"><value>{0} und {1} weitere</value></data>
   <data name="Cloud_DeleteAccount" xml:space="preserve"><value>Konto löschen</value></data>
   <data name="Cloud_DeleteAccountConfirmTitle" xml:space="preserve"><value>Konto löschen?</value></data>
   <data name="Cloud_DeleteAccountConfirmMessage" xml:space="preserve"><value>Das löscht dein Konto und alle gesicherten Daten dauerhaft. Die Daten auf diesem Gerät bleiben erhalten.</value></data>
