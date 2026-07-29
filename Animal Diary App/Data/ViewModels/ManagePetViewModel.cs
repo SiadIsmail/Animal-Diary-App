@@ -252,8 +252,23 @@ public class ManagePetViewModel : BaseViewModel
     public ICommand RemovePetCommand { get; }
     public ICommand TogglePauseCommand { get; }
 
-    /// <summary>Label for the destructive remove row, e.g. "Remove Charly from Felova".</summary>
-    public string RemovePetLabel => Loc.Format("Manage_RemovePetRow", PetName);
+    /// <summary>
+    /// Label for the destructive remove row. It must say what the action ACTUALLY does for
+    /// this viewer: an owner deletes the pet, a caregiver only leaves it. The dialogs behind
+    /// the row already branch on role, but the row itself used to read "Remove Charly from
+    /// Felova" for everyone — telling a caregiver they were about to delete someone else's
+    /// animal, which is both false and frightening.
+    /// </summary>
+    public string RemovePetLabel
+    {
+        get
+        {
+            var pet = _activePet.ActivePet;
+            if (pet != null && pet.Id != 0 && _deletion.DetermineKind(pet) == PetRemovalKind.Caregiver)
+                return Loc.Format("Manage_LeavePetRow", PetName);
+            return Loc.Format("Manage_RemovePetRow", PetName);
+        }
+    }
 
     // ── Pause everything (AI/app-voice.md §15) ───────────────────────────────────
     // Per-device (PetPauseService): pausing stops every reminder for this pet on this

@@ -327,6 +327,7 @@
   <data name="Manage_AddMedication" xml:space="preserve"><value>Add medication</value></data>
   <!-- Remove pet. {0} is the pet's name. Row sits at the foot of the Manage page. -->
   <data name="Manage_RemovePetRow" xml:space="preserve"><value>Remove {0} from Felova</value></data>
+  <data name="Manage_LeavePetRow" xml:space="preserve"><value>Stop caring for {0}</value></data>
   <!-- Action-sheet offering the export before deleting. {0} is the pet's name. -->
   <data name="Manage_RemovePetTitle" xml:space="preserve"><value>Remove {0} from Felova?</value></data>
   <data name="Manage_RemovePetSaveCopy" xml:space="preserve"><value>Save a copy first</value></data>

@@ -314,6 +314,7 @@
   <data name="Manage_AddMedication" xml:space="preserve"><value>Medikament hinzufügen</value></data>
   <!-- Tier entfernen. {0} ist der Tiername. Zeile am Fuß der Verwalten-Seite. -->
   <data name="Manage_RemovePetRow" xml:space="preserve"><value>{0} aus Felova entfernen</value></data>
+  <data name="Manage_LeavePetRow" xml:space="preserve"><value>Die Betreuung von {0} beenden</value></data>
   <!-- Action-Sheet, das vor dem Löschen die Kopie anbietet. {0} ist der Tiername. -->
   <data name="Manage_RemovePetTitle" xml:space="preserve"><value>{0} aus Felova entfernen?</value></data>
   <data name="Manage_RemovePetSaveCopy" xml:space="preserve"><value>Erst eine Kopie sichern</value></data>

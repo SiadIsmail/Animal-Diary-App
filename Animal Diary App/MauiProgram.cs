@@ -149,6 +149,21 @@ public static class MauiProgram
 		{
 			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.NullEntitlementService>();
 		}
+#elif DEBUG
+		// Desktop normally gets the no-op so development can never be locked out. That also
+		// makes a desktop useless as a caregiver TEST device: NullEntitlementService reports
+		// Subscribed for every account, so every gate check passes without exercising one.
+		// This opt-in runs the real gate over a no-op store — access from trial or
+		// sponsorship only, purchases unavailable.
+		if (Animal_Diary_App.Data.Services.Billing.BillingConfig.ForceGateOnDesktop)
+		{
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IStoreBilling, Animal_Diary_App.Data.Services.Billing.NullStoreBilling>();
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.EntitlementService>();
+		}
+		else
+		{
+			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.NullEntitlementService>();
+		}
 #else
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.NullEntitlementService>();
 #endif

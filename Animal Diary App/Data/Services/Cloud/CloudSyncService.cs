@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Cloud;
+﻿namespace Animal_Diary_App.Data.Services.Cloud;
 
 using System.Diagnostics;
 using System.Text.Json;
@@ -140,11 +140,6 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     // sheet would read "not synced yet" for every pet in the meantime). A new key lets the
     // old one keep answering GetPetRole until this one is populated.
     private const string KeyPetAccess = "cloud:petAccess:v2";
-
-    // The trial anchor we last reconciled with the account. Stored so the claim RPC runs
-    // once per (account, anchor) rather than on every cycle, but still re-runs when the
-    // anchor appears later — a caregiver who finally creates their own pet.
-    private const string KeyTrialAnchor = "cloud:trialAnchor";
 
     // Push batches must stay smaller than pull pages: all rows of one RPC commit
     // share one server timestamp, and the cursor can only advance safely when a
@@ -424,31 +419,29 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     /// anchor but never push one later and mint a fresh sponsorship window.</para></summary>
     private async Task ReconcileTrialAnchorAsync(CloudSession session)
     {
-        var local = await _trialAnchor.GetStartUtcAsync();
-        var localIso = local is DateTime d ? CloudJson.ToIso(d) : NoAnchor;
-        if (await _state.GetAsync(KeyTrialAnchor) == localIso)
-            return;
+        try
+        {
+            var local = await _trialAnchor.GetStartUtcAsync();
 
-        var doc = await _http.RpcAsync(
-            "claim_trial_anchor",
-            new { p_started = local is DateTime v ? CloudJson.ToIso(v) : null },
-            session.AccessToken);
+            var doc = await _http.RpcAsync(
+                "claim_trial_anchor",
+                new { p_started = local is DateTime v ? CloudJson.ToIso(v) : null },
+                session.AccessToken);
 
-        DateTime? server = null;
-        if (doc != null && doc.RootElement.ValueKind == JsonValueKind.String)
-            server = CloudJson.ParseIso(doc.RootElement.GetString()!);
+            DateTime? server = null;
+            if (doc != null && doc.RootElement.ValueKind == JsonValueKind.String)
+                server = CloudJson.ParseIso(doc.RootElement.GetString()!);
 
-        await _trialAnchor.AdoptAsync(server);
-
-        // Stamp what we actually ended up with, so an adopted (earlier) anchor doesn't
-        // look like a disagreement and re-claim on every subsequent cycle.
-        var settled = await _trialAnchor.GetStartUtcAsync();
-        await _state.SetAsync(KeyTrialAnchor, settled is DateTime s ? CloudJson.ToIso(s) : NoAnchor);
+            // Keeps whichever is earlier, so this converges from either side.
+            await _trialAnchor.AdoptAsync(server);
+        }
+        catch (Exception ex)
+        {
+            // The anchor is not needed to move pet data. A failure here must not abort the
+            // whole cycle and leave someone unable to sync their pet's records.
+            Debug.WriteLine($"[Cloud] trial anchor reconcile failed: {ex.Message}");
+        }
     }
-
-    /// <summary>Sentinel for "this device has no trial anchor" — distinct from "never
-    /// reconciled" (no stored value at all), which must still trigger a claim.</summary>
-    private const string NoAnchor = "none";
 
     private async Task<int> SyncMembershipsAsync(CloudSession session)
     {
@@ -468,6 +461,25 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
             roles[petId] = role;
             access[petId] = new PetAccessRow(
                 role, CloudJson.GetBool(el, "owner_access"), CloudJson.GetInt(el, "carer_count"), now);
+        }
+
+        // ── newly granted access needs a FULL pull, not an incremental one ──────
+        // The pull is incremental (updated_at > cursor). Joining a pet changes what this
+        // user may SEE, but it does not touch a single updated_at — every row of that pet
+        // was written before we got here, so an incremental pull will never ask for any of
+        // them and the caregiver ends up a member with no data.
+        //
+        // Resetting the cursors makes the pull that follows (same cycle, right after this
+        // method) fetch everything. Occasionally redundant — pushing your own new pet also
+        // looks like a gained membership — but a re-pull is idempotent (apply is LWW plus
+        // natural-key matching) and a caregiver silently seeing nothing is not a failure
+        // worth optimising a few requests for.
+        var gained = roles.Keys.Where(k => !_petRoles.ContainsKey(k)).ToList();
+        if (gained.Count > 0)
+        {
+            Debug.WriteLine($"[Cloud] {gained.Count} newly accessible pet(s) — resetting cursors for a full pull");
+            foreach (var table in _tables)
+                await _state.RemoveAsync(KeyCursorPrefix + table.CloudTable);
         }
 
         // Pets this user was being sponsored for a moment ago and no longer is — the owner
@@ -670,7 +682,6 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
                 await _state.RemoveAsync(KeyCursorPrefix + table.CloudTable);
             await _state.RemoveAsync(KeyMemberships);
             await _state.RemoveAsync(KeyPetAccess);
-            await _state.RemoveAsync(KeyTrialAnchor);
             _petRoles = new();
             _petAccess = new();
             _accessLoaded = false;
