@@ -23,11 +23,12 @@ public partial class App : Application
 	private readonly SettingsService _settingsService;
 	private readonly IAnalyticsService _analytics;
 	private readonly ICloudSyncService _cloudSync;
+	private readonly ICloudAuthService _cloudAuth;
 	private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
 	private readonly MedicationDoseLogService _doseLogs;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, MedicationDoseLogService doseLogs, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, ICloudAuthService cloudAuth, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, MedicationDoseLogService doseLogs, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -40,9 +41,21 @@ public partial class App : Application
 		_settingsService = settingsService;
 		_analytics = analytics;
 		_cloudSync = cloudSync;
+		_cloudAuth = cloudAuth;
 		_entitlements = entitlements;
 		_doseLogs = doseLogs;
 		_services = services;
+
+		// Keep the store identity on the signed-in account, so one subscription follows the
+		// person across devices instead of being stranded on the install that bought it.
+		// Signing in is never required to buy or to keep access — with no account the store
+		// simply stays anonymous, exactly as before.
+		_cloudAuth.SessionChanged += OnCloudSessionChanged;
+
+		// A caregiver's cover can end mid-session when a sync lands (the owner lapsed, or
+		// their trial ran out). Say so once rather than letting the app quietly stop
+		// accepting entries.
+		_cloudSync.SponsorshipRevoked += OnSponsorshipRevoked;
 
 		// Re-engagement signal: the app was foregrounded by tapping a medication
 		// reminder. This is the ONLY place the notification-tap hook is used for
@@ -50,6 +63,39 @@ public partial class App : Application
 		LocalNotificationCenter.Current.NotificationActionTapped += OnNotificationTapped;
 
 		_ = StartAsync();
+	}
+
+	/// <summary>Sign-in/out: alias the store identity onto the account, or back off it.
+	/// Fire-and-forget — nothing about signing in should wait on the store.</summary>
+	private void OnCloudSessionChanged() => _ = Task.Run(async () =>
+	{
+		try { await _entitlements.IdentifyAsync(_cloudAuth.UserId); }
+		catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Billing] identify failed: {ex.Message}"); }
+	});
+
+	/// <summary>A pet this user was caring for under someone else's subscription is no
+	/// longer covered. Tell them once, naming the real reason — they never had a trial of
+	/// their own, so "your trial has ended" would be false. Fires per transition, not once
+	/// forever: if the owner resubscribes and lapses again, this is worth saying again.</summary>
+	private void OnSponsorshipRevoked(IReadOnlyList<string> petSyncIds)
+	{
+		if (petSyncIds.Count == 0)
+			return;
+		MainThread.BeginInvokeOnMainThread(() =>
+		{
+			try
+			{
+				// Name the pet only when it is the one on screen; otherwise stay general
+				// rather than pulling an off-screen pet into view.
+				var active = _vm.PetVM.ActivePet;
+				var name = active != null && petSyncIds.Contains(active.SyncId) ? active.Name : string.Empty;
+				_vm.TrialMessageVM.ShowSponsorshipEnded(name);
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[Billing] sponsorship notice failed: {ex.Message}");
+			}
+		});
 	}
 
 	private void OnNotificationTapped(Plugin.LocalNotification.EventArgs.NotificationActionEventArgs e)
@@ -303,13 +349,25 @@ public partial class App : Application
 		{
 			if (_entitlements.State != Animal_Diary_App.Data.Services.Billing.AccessState.TrialExpired)
 				return;
+			// This copy says the trial has ended, so it is only ever true for someone who
+			// had one. A caregiver who only tends another person's pet never started a
+			// trial; when their cover ends they get the sponsorship message instead.
+			if (!_entitlements.TrialEverStarted)
+				return;
 			if (await _settingsService.GetFlagAsync(SettingsFlags.ReadOnlyReassuranceShown))
 				return;
 			await _settingsService.SetFlagAsync(SettingsFlags.ReadOnlyReassuranceShown, true);
 
 			var petName = _vm.PetVM.ActivePet?.Name ?? string.Empty;
 			var trialDay = (int)Animal_Diary_App.Data.Services.Billing.BillingConfig.TrialLength.TotalDays;
-			MainThread.BeginInvokeOnMainThread(() => _vm.TrialMessageVM.ShowReadOnly(petName, trialDay));
+
+			// If they share a pet, their carers just went read-only too. The owner is the
+			// only person who can change that, and hearing it here beats discovering it
+			// when someone else can't log a dose.
+			var hasCaregivers = _cloudSync.OwnsASharedPet;
+
+			MainThread.BeginInvokeOnMainThread(
+				() => _vm.TrialMessageVM.ShowReadOnly(petName, trialDay, hasCaregivers));
 		}
 		catch (Exception ex)
 		{
@@ -444,16 +502,26 @@ public partial class App : Application
 			});
 
 			// Billing: initialize the entitlement boundary and, for an already-onboarded
-			// user (pets exist) landing on this build, start the trial clock if it hasn't
-			// begun — new users start theirs at onboarding completion (KeepSafePage). All
-			// off the UI path and a quiet no-op under the Null boundary.
-			var hasPets = pets.Count > 0;
+			// user landing on this build, start the trial clock if it hasn't begun — new
+			// users start theirs at onboarding completion (KeepSafePage). All off the UI
+			// path and a quiet no-op under the Null boundary.
+			//
+			// The trial begins with a pet you OWN. Caring for someone else's animal never
+			// starts your clock: a caregiver is covered by that owner's subscription while
+			// it lasts, and starting a trial for them here would burn it on a record they
+			// don't own and hand them a paywall the owner is already paying to avoid.
+			var petsAtLaunch = pets;
 			_ = Task.Run(async () =>
 			{
 				try
 				{
 					await _entitlements.InitializeAsync();
-					if (hasPets && await _entitlements.EnsureTrialStartedAsync())
+					// Idempotent — just re-reads persisted state; the launch sync above may
+					// not have got here yet and ownership comes from that cached role map.
+					await _cloudSync.InitializeAsync();
+					var ownsAPet = petsAtLaunch.Any(p =>
+						_cloudSync.GetPetRole(p.SyncId ?? string.Empty) != "caregiver");
+					if (ownsAPet && await _entitlements.EnsureTrialStartedAsync())
 						_analytics.Track(AnalyticsEvents.TrialStarted);
 					await MaybeShowReadOnlyReassuranceAsync();
 					await MaybeShowPreEndNudgeAsync();

@@ -374,9 +374,40 @@ plural rule before wider release.
    `Data/Services/Billing/`, mirroring the cloud boundary. Native binding
    required (purchases can't go over REST).
 
+## Sponsored caregivers (2026-07-29)
+
+A pet owner with an active subscription **or a live trial** now covers everyone caring for
+their pets. Implemented; Windows build clean, 73 unit tests pass.
+
+**The rule:** `CanEditPet = my own access OR (I am a caregiver on this pet AND its owner
+has access)`. Sponsorship never covers a pet you own.
+
+Owner decisions behind it:
+1. **Trial sponsors too**, not only a paid subscription — so the anchor moved server-side
+   (`profiles.trial_started_at`, reconciled set-if-earlier).
+2. **Caps:** 5 caregivers per pet, 10 sponsored caregivers per owner. Enforced at *both*
+   mint and redeem, so the owner — the only person who can free a slot — hears about it.
+3. **Sponsored caregivers get logging parity**, including medications and the care plan.
+   Genuinely owner-only actions (invite, remove member, delete cloud-wide) are already
+   role-enforced server-side and carry no billing gate.
+4. **The end of cover is announced**, once per transition, with copy that names the real
+   reason — a caregiver never had a trial, so "your trial ended" would be false. The owner
+   is told too, in their read-only sheet, when they have carers.
+5. **Redeeming an invite stays free** while locked. Minting one does not.
+6. **The trial starts with your first OWN pet.** A caregiver-only user never starts one.
+7. **No "covered by your subscription" badge** in the member list — caregivers are family.
+
+Also fixed here: a caregiver joining through the Welcome door used to land in read-only
+until the app was relaunched (the trial only started at launch when pets already existed).
+
+**Still owner-side, not code:** deploy migration 0010, deploy
+`supabase/functions/revenuecat-webhook`, set `REVENUECAT_WEBHOOK_SECRET`, point RevenueCat's
+webhook at it, and **verify the dashboard transfer behavior in sandbox** (see BILLING_AUDIT
+M6).
+
 ## Open questions
 
-- **Sharing/invites while locked** — gated as "adding more", or kept free? (§4)
+- **Sharing/invites while locked** — resolved: redeem free, mint gated (§Sponsored above).
 - **Price point and subscription cadence** (monthly / annual / both) — set on the
   RevenueCat dashboard, surfaced from `Offerings`, never hardcoded.
 - **Binding choice** — resolved by slice 1's spike.

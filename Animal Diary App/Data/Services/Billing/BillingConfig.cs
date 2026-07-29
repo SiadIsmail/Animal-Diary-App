@@ -29,6 +29,23 @@ public static partial class BillingConfig
     /// <summary>Show the pre-end nudge once when the trial has this many days left.</summary>
     public const int PreEndNudgeDaysBefore = 3;
 
+    /// <summary>How long a cached sponsorship keeps working without reaching the server.
+    /// A caregiver at the vet with no signal must still be able to log what just happened,
+    /// so this is deliberately generous.
+    ///
+    /// <para>This bounds ONLY the "owner's subscription lapsed" case. Losing <i>membership</i>
+    /// (removed, or you left) is bounded by sync instead: the membership diff purges the pet
+    /// and all its data from the device outright. Two different bounds because they answer
+    /// two different questions — billing vs. privacy. Do not unify them.</para></summary>
+    public static readonly TimeSpan SponsorshipOfflineGrace = TimeSpan.FromDays(14);
+
+    /// <summary>Max caregivers sharing one pet, and max sponsored caregivers one owner may
+    /// have across all their pets. Mirrored in migration 0010 — the server is the real
+    /// enforcement; these exist so the client can explain the limit in the owner's language.
+    /// Never applied retroactively: an owner already over the cap keeps everyone.</summary>
+    public const int MaxCaregiversPerPet = 5;
+    public const int MaxSponsoredCaregiversPerOwner = 10;
+
     /// <summary>RevenueCat entitlement identifier that unlocks full access. Must match the
     /// identifier in the RevenueCat dashboard EXACTLY (it is "Felova Full", spaces and
     /// all). As a safety net the check also treats any active entitlement as full access,

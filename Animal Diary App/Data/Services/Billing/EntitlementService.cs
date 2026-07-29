@@ -12,11 +12,23 @@ public sealed class EntitlementService : IEntitlementService
 {
     private readonly TrialService _trial;
     private readonly IStoreBilling _store;
+    private readonly IPetAccessSource _access;
+    private readonly Func<DateTime> _utcNow;
 
-    public EntitlementService(TrialService trial, IStoreBilling store)
+    /// <param name="access">Cloud sponsorship cache. <see cref="NullPetAccessSource"/>
+    /// wherever there is no cloud, which makes <see cref="CanEditPet"/> collapse to
+    /// <see cref="HasFullAccess"/>.</param>
+    /// <param name="utcNow">Clock, injectable so the sponsorship grace window is testable.</param>
+    public EntitlementService(
+        TrialService trial,
+        IStoreBilling store,
+        IPetAccessSource access,
+        Func<DateTime>? utcNow = null)
     {
         _trial = trial;
         _store = store;
+        _access = access;
+        _utcNow = utcNow ?? (() => DateTime.UtcNow);
         // The store can change the entitlement underneath us (restore on another
         // device, a renewal, an expiry push) — bubble it up as our own change.
         _store.Changed += () => StateChanged?.Invoke();
@@ -33,6 +45,34 @@ public sealed class EntitlementService : IEntitlementService
         : _store.HasActiveEntitlement ? AccessState.Subscribed
         : _trial.IsActive ? AccessState.Trial
         : AccessState.TrialExpired;
+
+    public bool CanEditPet(string? petSyncId)
+    {
+        // Your own access first, and without touching cloud state at all — a local-only
+        // subscriber has no memberships, no session and no sync, and must never be routed
+        // through anything that could throw or block.
+        if (HasFullAccess)
+            return true;
+
+        // Still waiting on the first access fetch: stay open, exactly as the entitlement
+        // does above. Signed-out / backup-off / cloud-disabled report Known=true, so this
+        // can never hold the read-only state open for a local-only user.
+        if (!_access.AccessKnown)
+            return true;
+
+        if (_access.GetPetAccess(petSyncId) is not PetAccessInfo info)
+            return false;
+
+        // Sponsorship covers caregivers only. On a pet you OWN, your own (already-failed)
+        // access is the whole answer — otherwise a subscription could be laundered into
+        // free access for the sponsor's own record.
+        if (!info.IsCaregiver || !info.OwnerHasAccess)
+            return false;
+
+        return _utcNow() - info.FetchedUtc < BillingConfig.SponsorshipOfflineGrace;
+    }
+
+    public bool TrialEverStarted => _trial.HasStarted;
 
     public int TrialDaysLeft => _trial.DaysLeft;
 
@@ -56,6 +96,13 @@ public sealed class EntitlementService : IEntitlementService
     {
         try { await _store.RefreshAsync(); }
         catch (Exception ex) { Debug.WriteLine($"[Billing] store refresh failed: {ex.Message}"); }
+        StateChanged?.Invoke();
+    }
+
+    public async Task IdentifyAsync(string? accountId)
+    {
+        try { await _store.IdentifyAsync(accountId); }
+        catch (Exception ex) { Debug.WriteLine($"[Billing] identify failed: {ex.Message}"); }
         StateChanged?.Invoke();
     }
 

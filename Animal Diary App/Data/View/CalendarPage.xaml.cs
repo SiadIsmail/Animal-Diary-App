@@ -39,10 +39,13 @@ public partial class CalendarPage : ContentPage
 	/// <summary>The read-only gate for a NEW-entry action. When the trial has ended and
 	/// there's no subscription, open the subscribe sheet instead and report that the
 	/// action was blocked. The scheduled-dose loop never calls this — logging a given
-	/// dose stays free (owner decision, MONETIZATION_PLAN.md).</summary>
+	/// dose stays free (owner decision, MONETIZATION_PLAN.md).
+	///
+	/// <para>Pet-scoped, so a caregiver logging on an owner who subscribes (or is still in
+	/// their trial) passes without needing their own subscription.</para></summary>
 	private bool BlockedByPaywall()
 	{
-		if (vm.Entitlements.HasFullAccess)
+		if (vm.CanEditActivePet)
 			return false;
 		vm.SubscribeVM.Open(AnalyticsEvents.SubscribeSourceReadOnly);
 		return true;

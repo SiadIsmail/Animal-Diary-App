@@ -103,6 +103,15 @@ public static class MauiProgram
 		// when cloud features are compiled in, else a no-op. Everything holds
 		// ICloudSyncService / ICloudAuthService only — no Supabase types escape
 		// Data/Services/Cloud/.
+		// The trial clock is registered on EVERY platform, ahead of the cloud block: the
+		// sync engine reconciles this device's trial anchor with the account (so the server
+		// can tell a caregiver whether their pet's owner is still in trial), and cloud
+		// registration is not platform-gated. Harmless where billing is off — the Null
+		// entitlement service ignores it, so Windows/macOS dev still never locks.
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.ITrialStore>(sp => sp.GetRequiredService<SettingsService>());
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.TrialService>();
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.ITrialAnchor>(sp => sp.GetRequiredService<Animal_Diary_App.Data.Services.Billing.TrialService>());
+
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.CloudHttp>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.SyncStateStore>();
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudAuthService, Animal_Diary_App.Data.Services.Cloud.CloudAuthService>();
@@ -117,13 +126,17 @@ public static class MauiProgram
 			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSharingService, Animal_Diary_App.Data.Services.Cloud.NullCloudSharingService>();
 		}
 
+		// Billing reads sponsorship through the cloud engine, but only ever as the pure
+		// IPetAccessSource — the Billing folder must not learn about Supabase. Both sync
+		// implementations provide it, so this resolves in either branch above.
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IPetAccessSource>(sp =>
+			(Animal_Diary_App.Data.Services.Billing.IPetAccessSource)sp.GetRequiredService<Animal_Diary_App.Data.Services.Cloud.ICloudSyncService>());
+
 		// Billing / monetization boundary (mirrors the cloud & analytics boundaries):
 		// the real trial + entitlement service only on a mobile store AND when a key +
 		// binding are wired (BillingConfig.Enabled); otherwise a no-op that grants full
 		// access. Windows/macOS dev always gets the no-op, so it can never lock.
 #if ANDROID || IOS
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.ITrialStore>(sp => sp.GetRequiredService<SettingsService>());
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.TrialService>();
 		if (Animal_Diary_App.Data.Services.Billing.BillingConfig.Enabled)
 		{
 			// The RevenueCat binding's own DI (registers IRevenueCatBilling), then our

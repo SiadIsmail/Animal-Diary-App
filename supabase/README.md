@@ -63,8 +63,41 @@ development. Before launch, configure custom SMTP under
 **Authentication → Emails → SMTP settings** (e.g. Resend) — tracked as a
 pre-launch task, nothing to do now.
 
-## 5. Keys
+## 5. RevenueCat webhook (sponsored caregivers)
+
+Migration `0010_sponsored_caregivers.sql` lets a pet's **owner** cover everyone caring
+for that pet, so caregivers do not each need a subscription. It needs one server-side
+fact the app cannot be trusted to assert: is this owner actually subscribed?
+
+`supabase/functions/revenuecat-webhook/` is the **only** writer of
+`profiles.entitlement_active`.
+
+```bash
+supabase secrets set REVENUECAT_WEBHOOK_SECRET=<a long random string>
+supabase functions deploy revenuecat-webhook --no-verify-jwt
+```
+
+`--no-verify-jwt` is required: RevenueCat sends its own shared secret, not a Supabase
+JWT. That secret check is therefore the only thing standing between this and an open
+write endpoint.
+
+Then RevenueCat Dashboard → **Integrations → Webhooks**:
+
+- **URL:** `https://<project>.supabase.co/functions/v1/revenuecat-webhook`
+- **Authorization header:** the same value as `REVENUECAT_WEBHOOK_SECRET`.
+
+Also check **Project settings → transfer behavior**. The app now calls RevenueCat
+`Login` when someone signs in, which aliases their anonymous purchase onto their
+account. If transfer behavior keeps purchases with the original id, a customer whoopenssl rand -hex 32
+bought *before* making an account loses their subscription the moment they make one.
+**Verify this in sandbox** — the failure is silent and hits paying users.
+
+The trial half needs no configuration: the app claims its own anchor through
+`claim_trial_anchor` on the first sync after signing in.
+
+## 6. Keys
 
 The app embeds the project URL + publishable key (`CloudConfig` in
 `Data/Services/Cloud/`). The **service-role key is never used by the app and
-never committed** — it stays in the dashboard.
+never committed** — it stays in the dashboard. The edge function above receives it
+from Supabase's own environment; it is not stored in this repo.

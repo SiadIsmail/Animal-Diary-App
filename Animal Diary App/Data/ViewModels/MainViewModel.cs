@@ -49,9 +49,18 @@ public class MainViewModel
     public SharingSheetViewModel SharingVM { get; }
 
     /// <summary>The monetization boundary — the single gate every add/edit surface
-    /// checks (<c>HasFullAccess</c>). Exposed here so hand-built pages reach it through
-    /// the shared VM, like <see cref="Analytics"/> and <see cref="CloudSync"/>.</summary>
+    /// checks. Exposed here so hand-built pages reach it through the shared VM, like
+    /// <see cref="Analytics"/> and <see cref="CloudSync"/>.</summary>
     public Animal_Diary_App.Data.Services.Billing.IEntitlementService Entitlements { get; }
+
+    /// <summary>The gate for the pet-scoped surfaces (Journal, Manage, Medications): true
+    /// when you may write to the pet currently being looked at. Differs from
+    /// <c>Entitlements.HasFullAccess</c> for a <b>caregiver on someone else's pet</b>, who
+    /// is covered by that owner's subscription or trial.
+    ///
+    /// <para>Read it per action, never cache it: the active pet changes under the page,
+    /// and sponsorship can end mid-session when a sync lands.</para></summary>
+    public bool CanEditActivePet => Entitlements.CanEditPet(PetVM.ActivePet?.SyncId);
 
     /// <summary>The subscribe sheet (yearly + monthly + restore).</summary>
     public SubscribeSheetViewModel SubscribeVM { get; }

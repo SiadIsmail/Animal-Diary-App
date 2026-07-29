@@ -140,6 +140,10 @@ public static class AnalyticsEvents
     /// <summary>The app entered the care-only read state (trial elapsed / subscription
     /// lapsed) and showed the reassurance. Property: <see cref="PropTrialDay"/>.</summary>
     public const string ReadOnlyEntered = "read_only_entered";
+    /// <summary>A caregiver's cover under someone else's subscription ended (that owner
+    /// lapsed or their trial ran out) and we said so. The fact only — never which pet,
+    /// which owner, or how many people were affected.</summary>
+    public const string SponsorshipEnded = "sponsorship_ended";
     /// <summary>The subscribe sheet was viewed. Property: <see cref="PropSubscribeSource"/>
     /// — this is the "where were they when they considered paying" signal.</summary>
     public const string SubscribeScreenViewed = "subscribe_screen_viewed";
@@ -237,6 +241,7 @@ public static class AnalyticsEvents
     public const string SubscribeSourceNudge = "nudge";
     public const string SubscribeSourceReadOnly = "read_only";
     public const string SubscribeSourceExplainer = "explainer";
+    public const string SubscribeSourceSponsorshipEnded = "sponsorship_ended";
     // Subscription plans.
     public const string PlanYearly = "yearly";
     public const string PlanMonthly = "monthly";

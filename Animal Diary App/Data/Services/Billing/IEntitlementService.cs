@@ -24,13 +24,36 @@ namespace Animal_Diary_App.Data.Services.Billing;
 /// </summary>
 public interface IEntitlementService
 {
-    /// <summary>The one gate every add/edit surface checks. True while the trial is
-    /// running or a subscription is active; false in the care-only read state.</summary>
+    /// <summary><b>Your own</b> access: true while your trial is running or your
+    /// subscription is active; false in the care-only read state. This is the gate for
+    /// actions that are yours alone — creating another pet, minting an invite. For
+    /// anything scoped to a particular pet use <see cref="CanEditPet"/>, which also
+    /// honours sponsorship.</summary>
     bool HasFullAccess { get; }
+
+    /// <summary>The gate for every write scoped to ONE pet (journal entries, medications,
+    /// care plan, pet profile). True when you have your own access, <b>or</b> you are a
+    /// caregiver on this pet and its owner has access — the sponsorship rule:
+    ///
+    /// <para><c>CanEditPet = HasFullAccess || (I am a caregiver here &amp;&amp; the owner has access)</c></para>
+    ///
+    /// Sponsorship never reaches your own pets, which is what stops one subscription from
+    /// becoming unlimited free accounts. Pure, synchronous and local-first: it short-circuits
+    /// on <see cref="HasFullAccess"/> before looking at any cloud state, so a signed-out
+    /// subscriber is never affected by it. Never throws.</summary>
+    /// <param name="petSyncId">The pet's <c>SyncId</c>. Null/empty is treated as "not
+    /// shared", so the answer collapses to <see cref="HasFullAccess"/>.</param>
+    bool CanEditPet(string? petSyncId);
 
     /// <summary>Coarse state for copy/telemetry only — <b>not</b> the gate.
     /// <see cref="HasFullAccess"/> is the gate.</summary>
     AccessState State { get; }
+
+    /// <summary>Whether a trial was ever started at all. False for someone who only ever
+    /// cared for another person's pet — the trial begins with your FIRST OWN pet. Copy
+    /// must check this before saying "your trial has ended", which would otherwise be
+    /// told to a caregiver who never had one.</summary>
+    bool TrialEverStarted { get; }
 
     /// <summary>Whole days left in the app-side trial (0 once expired or subscribed).
     /// Drives the pre-end nudge copy; never a live countdown UI.</summary>
@@ -65,6 +88,11 @@ public interface IEntitlementService
     /// <summary>Re-check the entitlement with the store (app resume / after a purchase
     /// elsewhere). Non-throwing.</summary>
     Task RefreshAsync();
+
+    /// <summary>Tie the subscription to the signed-in account (null on sign-out), so it
+    /// follows the person across devices. Called from the cloud auth session hook. An
+    /// account is never required to buy or to keep access. Non-throwing.</summary>
+    Task IdentifyAsync(string? accountId);
 
     /// <summary>Re-fetch the purchasable <see cref="Offers"/> (called when the subscribe
     /// sheet opens, so a slow/failed initial load recovers). Non-throwing.</summary>

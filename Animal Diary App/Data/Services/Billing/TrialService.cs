@@ -11,7 +11,7 @@ namespace Animal_Diary_App.Data.Services.Billing;
 /// restarts; reset by a reinstall/clear-data — an accepted limitation, since a
 /// reinstall also wipes the owner's pet data). All times are UTC.</para>
 /// </summary>
-public sealed class TrialService
+public sealed class TrialService : ITrialAnchor
 {
     private readonly ITrialStore _settings;
     private readonly Func<DateTime> _utcNow;
@@ -39,6 +39,12 @@ public sealed class TrialService
         _loaded = true;
     }
 
+    /// <summary>Whether a trial was ever started on this account/device at all. Distinct
+    /// from <see cref="IsActive"/>: someone who only ever cared for another person's pet
+    /// has never started one, so "your trial has ended" would be a lie to them.
+    /// Meaningful only after <see cref="InitializeAsync"/>.</summary>
+    public bool HasStarted => _startUtc.HasValue;
+
     /// <summary>The trial has begun and its window has not yet elapsed.</summary>
     public bool IsActive =>
         _startUtc is DateTime start && _utcNow() < start + BillingConfig.TrialLength;
@@ -65,6 +71,34 @@ public sealed class TrialService
             var remaining = (start + BillingConfig.TrialLength) - _utcNow();
             return remaining <= TimeSpan.Zero ? TimeSpan.Zero : remaining;
         }
+    }
+
+    /// <summary>This device's anchor (<see cref="ITrialAnchor"/>). Null until the trial
+    /// starts, which happens when the user creates their FIRST OWN pet — a caregiver who
+    /// only tends someone else's animal never starts one, and is covered by that owner's
+    /// sponsorship instead. Loads on demand: the sync engine can ask before billing has
+    /// initialized.</summary>
+    public async Task<DateTime?> GetStartUtcAsync()
+    {
+        if (!_loaded)
+            await InitializeAsync();
+        return _startUtc;
+    }
+
+    /// <summary>Adopt the account-wide anchor, keeping whichever is EARLIER. Signing in
+    /// can therefore shorten a trial (another device started it first) but never extend
+    /// one — the property that stops a fresh account from minting a fresh trial.</summary>
+    public async Task AdoptAsync(DateTime? serverStartUtc)
+    {
+        if (!_loaded)
+            await InitializeAsync();
+        if (serverStartUtc is not DateTime server)
+            return;
+        if (_startUtc is DateTime local && local <= server)
+            return;
+
+        _startUtc = server;
+        await _settings.SetTrialStartUtcAsync(server);
     }
 
     /// <summary>Start the clock if it has not started. Returns true only on the launch

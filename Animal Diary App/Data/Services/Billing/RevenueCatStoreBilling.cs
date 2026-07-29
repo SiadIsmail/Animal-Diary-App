@@ -248,6 +248,61 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         }
     }
 
+    /// <summary>
+    /// Alias the store identity onto the app account (sign-in) or back off it (sign-out).
+    /// Without this, RevenueCat stays on a per-INSTALL anonymous id: the same person on a
+    /// phone and a tablet looks like two customers, and someone who bought before ever
+    /// making an account would lose the subscription the moment they made one.
+    ///
+    /// <para><b>Login aliases the anonymous id onto the account id.</b> Whether the purchase
+    /// travels with it is governed by the RevenueCat dashboard's <i>transfer behavior</i>
+    /// setting, not by this code — verify it in sandbox before release, because the failure
+    /// mode is a paying customer silently losing access at the exact moment they sign in.</para>
+    ///
+    /// <para>Logout on an already-anonymous user is an error in the SDK, not a problem —
+    /// swallowed here, since "no account to leave" is the expected state for most users.</para>
+    /// </summary>
+    public async Task IdentifyAsync(string? accountId)
+    {
+        if (!_configured)
+        {
+            try { await InitializeAsync(); }
+            catch (Exception ex) { Debug.WriteLine($"[Billing] identify: init failed: {ex.Message}"); return; }
+        }
+
+        try
+        {
+            CustomerInfoDto? info;
+            if (!string.IsNullOrEmpty(accountId))
+            {
+                if (_rc.GetAppUserId() == accountId)
+                    return;   // already this account — Login again would be a no-op round trip
+                info = await WithTimeout(_rc.Login(accountId, CancellationToken.None),
+                    StoreCallTimeoutSeconds, (CustomerInfoDto?)null);
+            }
+            else
+            {
+                if (_rc.IsAnonymous())
+                    return;   // nothing to leave
+                info = await WithTimeout(_rc.Logout(CancellationToken.None),
+                    StoreCallTimeoutSeconds, (CustomerInfoDto?)null);
+            }
+
+            LogCustomerInfo(accountId is null ? "after logout" : "after login", info);
+            if (info is null)
+                return;   // timed out — leave the entitlement as it was; resume will re-check
+
+            SetEntitlement(IsPremiumActive(info));
+            _entitlementKnown = true;
+        }
+        catch (Exception ex)
+        {
+            // Identity is an optimization, never a gate. A failure here must not cost a
+            // paying user their access, so the previous entitlement simply stands.
+            Debug.WriteLine($"[Billing] identify failed: {ex.Message}");
+        }
+    }
+
     private async Task RefreshEntitlementAsync()
     {
         var info = await WithTimeout(_rc.GetCustomerInfo(), StoreCallTimeoutSeconds, (CustomerInfoDto?)null);

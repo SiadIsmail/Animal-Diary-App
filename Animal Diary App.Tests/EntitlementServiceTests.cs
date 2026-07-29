@@ -20,7 +20,9 @@ public class EntitlementServiceTests
         };
         var trial = new TrialService(tstore, () => T0);
         await trial.InitializeAsync();
-        return (new EntitlementService(trial, store), store);
+        // No sponsorship in these cases: this suite is about your OWN access, which must be
+        // decided without consulting the cloud at all. Sponsorship has its own suite.
+        return (new EntitlementService(trial, store, new NullPetAccessSource(), () => T0), store);
     }
 
     [Fact]
