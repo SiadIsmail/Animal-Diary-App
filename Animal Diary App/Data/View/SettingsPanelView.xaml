@@ -216,8 +216,8 @@
                                     StrokeShape="RoundRectangle 12"
                                     VerticalOptions="Center">
                                 <Image Source="communityicon.png"
-                                       WidthRequest="22"
-                                       HeightRequest="22"
+                                       WidthRequest="30"
+                                       HeightRequest="30"
                                        Aspect="AspectFit"
                                        HorizontalOptions="Center"
                                        VerticalOptions="Center"/>
@@ -259,8 +259,8 @@
                                     StrokeShape="RoundRectangle 12"
                                     VerticalOptions="Center">
                                 <Image Source="websiteicon.png"
-                                       WidthRequest="22"
-                                       HeightRequest="22"
+                                       WidthRequest="30"
+                                       HeightRequest="30"
                                        Aspect="AspectFit"
                                        HorizontalOptions="Center"
                                        VerticalOptions="Center"/>
@@ -302,8 +302,8 @@
                                     StrokeShape="RoundRectangle 12"
                                     VerticalOptions="Center">
                                 <Image Source="privacyicon.png"
-                                       WidthRequest="22"
-                                       HeightRequest="22"
+                                       WidthRequest="30"
+                                       HeightRequest="30"
                                        Aspect="AspectFit"
                                        HorizontalOptions="Center"
                                        VerticalOptions="Center"/>
