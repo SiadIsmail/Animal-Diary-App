@@ -176,59 +176,73 @@
                                FontSize="12"
                                TextColor="{StaticResource InkTertiary}"/>
 
-                        <Grid ColumnDefinitions="1.4*,*,*" ColumnSpacing="10">
+                        <!--
+                            Labels and boxes are separate grid ROWS, not three
+                            independent stacks. "Month · optional" and "Day · optional"
+                            wrap to two lines in the narrow columns while "Year" doesn't,
+                            so per-column stacks left the year's box sitting a line higher
+                            than the other two. One shared label row sizes to the tallest
+                            label and every box starts at the same y, in any language.
+                        -->
+                        <Grid ColumnDefinitions="1.4*,*,*"
+                              RowDefinitions="Auto,Auto"
+                              ColumnSpacing="10"
+                              RowSpacing="6">
 
                             <!-- Year (required) -->
-                            <VerticalStackLayout Grid.Column="0" Spacing="6">
-                                <Label Text="{loc:Translate CreatePet_BirthYearLabel}"
-                                       Style="{StaticResource FieldLabel}"/>
-                                <Border Style="{StaticResource FieldBorder}">
-                                    <Entry Placeholder="{loc:Translate CreatePet_BirthYearPlaceholder}"
-                                           Text="{Binding PetVM.EnteredBirthYear}"
-                                           Keyboard="Numeric"
-                                           MaxLength="4"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="15"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource Ink}"
-                                           PlaceholderColor="{StaticResource InkTertiary}"
-                                           Margin="14,0"/>
-                                </Border>
-                            </VerticalStackLayout>
+                            <Label Grid.Row="0" Grid.Column="0"
+                                   Text="{loc:Translate CreatePet_BirthYearLabel}"
+                                   Style="{StaticResource FieldLabel}"
+                                   VerticalOptions="End"/>
+                            <Border Grid.Row="1" Grid.Column="0"
+                                    Style="{StaticResource FieldBorder}">
+                                <Entry Placeholder="{loc:Translate CreatePet_BirthYearPlaceholder}"
+                                       Text="{Binding PetVM.EnteredBirthYear}"
+                                       Keyboard="Numeric"
+                                       MaxLength="4"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="15"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"
+                                       PlaceholderColor="{StaticResource InkTertiary}"
+                                       Margin="14,0"/>
+                            </Border>
 
                             <!-- Month (optional) -->
-                            <VerticalStackLayout Grid.Column="1" Spacing="6">
-                                <Label Text="{loc:Translate CreatePet_BirthMonthLabel}"
-                                       Style="{StaticResource FieldLabel}"/>
-                                <Border Style="{StaticResource FieldBorder}">
-                                    <Entry Placeholder="{loc:Translate CreatePet_BirthMonthPlaceholder}"
-                                           Text="{Binding PetVM.EnteredBirthMonth}"
-                                           Keyboard="Numeric"
-                                           MaxLength="2"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="15"
-                                           TextColor="{StaticResource Ink}"
-                                           PlaceholderColor="{StaticResource InkTertiary}"
-                                           Margin="14,0"/>
-                                </Border>
-                            </VerticalStackLayout>
+                            <Label Grid.Row="0" Grid.Column="1"
+                                   Text="{loc:Translate CreatePet_BirthMonthLabel}"
+                                   Style="{StaticResource FieldLabel}"
+                                   VerticalOptions="End"/>
+                            <Border Grid.Row="1" Grid.Column="1"
+                                    Style="{StaticResource FieldBorder}">
+                                <Entry Placeholder="{loc:Translate CreatePet_BirthMonthPlaceholder}"
+                                       Text="{Binding PetVM.EnteredBirthMonth}"
+                                       Keyboard="Numeric"
+                                       MaxLength="2"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="15"
+                                       TextColor="{StaticResource Ink}"
+                                       PlaceholderColor="{StaticResource InkTertiary}"
+                                       Margin="14,0"/>
+                            </Border>
 
                             <!-- Day (optional) -->
-                            <VerticalStackLayout Grid.Column="2" Spacing="6">
-                                <Label Text="{loc:Translate CreatePet_DayOfBirthLabel}"
-                                       Style="{StaticResource FieldLabel}"/>
-                                <Border Style="{StaticResource FieldBorder}">
-                                    <Entry Placeholder="{loc:Translate CreatePet_BirthDayPlaceholder}"
-                                           Text="{Binding PetVM.EnteredBirthDay}"
-                                           Keyboard="Numeric"
-                                           MaxLength="2"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="15"
-                                           TextColor="{StaticResource Ink}"
-                                           PlaceholderColor="{StaticResource InkTertiary}"
-                                           Margin="14,0"/>
-                                </Border>
-                            </VerticalStackLayout>
+                            <Label Grid.Row="0" Grid.Column="2"
+                                   Text="{loc:Translate CreatePet_DayOfBirthLabel}"
+                                   Style="{StaticResource FieldLabel}"
+                                   VerticalOptions="End"/>
+                            <Border Grid.Row="1" Grid.Column="2"
+                                    Style="{StaticResource FieldBorder}">
+                                <Entry Placeholder="{loc:Translate CreatePet_BirthDayPlaceholder}"
+                                       Text="{Binding PetVM.EnteredBirthDay}"
+                                       Keyboard="Numeric"
+                                       MaxLength="2"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="15"
+                                       TextColor="{StaticResource Ink}"
+                                       PlaceholderColor="{StaticResource InkTertiary}"
+                                       Margin="14,0"/>
+                            </Border>
                         </Grid>
 
                         <Label Text="{Binding PetVM.BirthdayError}"

@@ -18,14 +18,17 @@ public interface IVetReportService
     /// The <c>include…Measured</c> / <c>include…Observations</c> pairs (all default ON)
     /// independently include a metric's two data types — objective measurements and
     /// subjective observations — which the report always keeps separate and never
-    /// interprets. Today: water (mL) and appetite (grams).</summary>
+    /// interprets. Today: water (mL) and appetite (grams).
+    /// <paramref name="includeMood"/> (default ON) covers the daily mood readings, which
+    /// are observations only — there is no measured counterpart to pair it with.</summary>
     Task<VetReportFile?> GenerateAsync(
         int petId, DateTime from, DateTime to,
         bool includePhoto = false,
         bool includeWaterMeasured = true,
         bool includeWaterObservations = true,
         bool includeAppetiteMeasured = true,
-        bool includeAppetiteObservations = true);
+        bool includeAppetiteObservations = true,
+        bool includeMood = true);
 
     /// <summary>Generate a PDF from the fake <see cref="VetReportSampleData"/> — for
     /// iterating on the layout without real logged data. The files land in the

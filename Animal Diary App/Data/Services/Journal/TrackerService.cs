@@ -54,12 +54,25 @@ public class TrackerService
     /// <summary>Insert-or-update the single tracker of this kind for the pet, applying
     /// <paramref name="configure"/> to the row (existing row edited in place, else a
     /// new one created). This is how the condition setup sheets write their trackers.</summary>
-    public async Task UpsertAsync(int petId, TrackerId trackerId, Action<Tracker> configure)
-    {
-        var tracker = await GetByTrackerIdAsync(petId, trackerId)
-                      ?? new Tracker { PetId = petId, TrackerId = trackerId };
+    public Task UpsertAsync(int petId, TrackerId trackerId, Action<Tracker> configure) =>
+        UpsertAsync(petId, trackerId, (tracker, _) => configure(tracker));
 
-        configure(tracker);
+    /// <summary>
+    /// As above, but <paramref name="configure"/> is also told whether the row is being
+    /// CREATED (true) or edited in place (false).
+    ///
+    /// That distinction matters for <see cref="Tracker.FromCondition"/>. The breadcrumb
+    /// is what condition removal keys on, so stamping it onto a tracker the owner added
+    /// themselves would hand their choice to a condition — and then quietly delete it,
+    /// with its history, when that condition is removed. Only a newly created tracker
+    /// may be claimed by a condition.
+    /// </summary>
+    public async Task UpsertAsync(int petId, TrackerId trackerId, Action<Tracker, bool> configure)
+    {
+        var existing = await GetByTrackerIdAsync(petId, trackerId);
+        var tracker = existing ?? new Tracker { PetId = petId, TrackerId = trackerId };
+
+        configure(tracker, existing is null);
         tracker.PetId = petId;
         tracker.TrackerId = trackerId;
         await SaveAsync(tracker);

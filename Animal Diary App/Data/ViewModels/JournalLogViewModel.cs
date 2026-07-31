@@ -273,6 +273,32 @@ public class JournalLogViewModel : BaseViewModel
         private set => SetProperty(ref _addOptions, value);
     }
 
+    /// <summary>
+    /// The log types NOT in this pet's care plan, offered below the plan's own in the
+    /// "+" sheet. Logging never required a tracker — no sheet ViewModel reads the care
+    /// plan — so the plan was only ever deciding what the Journal ASKS for, while the
+    /// sheet quietly made everything else unreachable. A diabetes owner who wanted to
+    /// note water had to claim their pet also had kidney disease.
+    ///
+    /// Picking one here logs it, once. It does NOT join the care plan: that is a
+    /// separate, deliberate act in Manage, so a single entry can't sign someone up to
+    /// be asked about it every day.
+    /// </summary>
+    private IReadOnlyList<AddOption> _moreOptions = System.Array.Empty<AddOption>();
+    public IReadOnlyList<AddOption> MoreOptions
+    {
+        get => _moreOptions;
+        private set
+        {
+            if (SetProperty(ref _moreOptions, value))
+                OnPropertyChanged(nameof(HasMoreOptions));
+        }
+    }
+
+    /// <summary>Whether the second group has anything in it — hides its heading and
+    /// hint once a pet's plan already covers everything.</summary>
+    public bool HasMoreOptions => MoreOptions.Count > 0;
+
     private bool _isAddSheetVisible;
     public bool IsAddSheetVisible { get => _isAddSheetVisible; set => SetProperty(ref _isAddSheetVisible, value); }
 
@@ -430,13 +456,17 @@ public class JournalLogViewModel : BaseViewModel
         {
             if (entry.MoodLevel > 0)
             {
-                var moodWord = ((MoodLevel)entry.MoodLevel).GetDisplayName();
+                // A recorded mood, so show the one the owner actually chose rather than
+                // a fixed face. (The Journal CHIP keeps its neutral icon: that one stands
+                // for "mood check still to do", where there is no mood to show yet.)
+                var mood = (MoodLevel)entry.MoodLevel;
+                var moodWord = mood.GetDisplayName();
                 items.Add(new TimelineItem
                 {
                     Kind = TimelineKind.Mood,
                     CanDelete = true,
                     Time = TicksToTime(entry.MoodTimeTicks),
-                    Icon = "😊",
+                    Icon = mood.GetEmoji(),
                     Tint = Tint("TealTint"),
                     Title = Loc.GetString("Journal_MoodTitle"),
                     Note = !string.IsNullOrWhiteSpace(entry.MoodNote)
@@ -935,28 +965,48 @@ public class JournalLogViewModel : BaseViewModel
             });
     }
 
-    // ── Add-anything options (tracker sheets present in the plan) ──────────────────
+    // ── Add-anything options ──────────────────────────────────────────────────────
+    // Everything the app can record, in two groups: the pet's plan first, then the
+    // rest. The rest used to be hidden entirely, which made a built-in log type look
+    // unavailable when it was only unasked-for. The "still to do" CHIP row is
+    // deliberately not changed — that one is a to-do list, and putting unopted-in
+    // trackers there would nag about things nobody agreed to.
+    private static readonly (TrackerId Tracker, JournalChipKind Kind, string Icon, string LabelKey)[] LoggableTypes =
+    {
+        (TrackerId.Glucose,  JournalChipKind.Glucose,  "🩸",  "Journal_GlucoseCheck"),
+        (TrackerId.Mood,     JournalChipKind.Mood,     "🙂",  "Journal_MoodTitle"),
+        (TrackerId.Appetite, JournalChipKind.Appetite, "🍽️", "Journal_Appetite"),
+        (TrackerId.Water,    JournalChipKind.Water,    "💧",  "Journal_Water"),
+        (TrackerId.Weight,   JournalChipKind.Weight,   "⚖️",  "Journal_WeighIn"),
+        (TrackerId.Seizure,  JournalChipKind.Seizure,  "⚡",  "Journal_Seizure"),
+    };
+
     private async Task BuildAddOptionsAsync()
     {
         var pet = _activePet.ActivePet;
         if (pet == null)
         {
             AddOptions = System.Array.Empty<AddOption>();
+            MoreOptions = System.Array.Empty<AddOption>();
             return;
         }
 
         var plan = await _carePlan.GetPlanAsync(pet);
         bool Has(TrackerId id) => plan.Any(t => t.TrackerId == id);
 
-        // Build a fresh list and assign it (see AddOptions' note above).
-        var options = new List<AddOption>();
-        if (Has(TrackerId.Glucose)) options.Add(new AddOption { Kind = JournalChipKind.Glucose, Icon = "🩸", Label = Loc.GetString("Journal_GlucoseCheck") });
-        options.Add(new AddOption { Kind = JournalChipKind.Mood, Icon = "🙂", Label = Loc.GetString("Journal_MoodTitle") });
-        if (Has(TrackerId.Appetite)) options.Add(new AddOption { Kind = JournalChipKind.Appetite, Icon = "🍽️", Label = Loc.GetString("Journal_Appetite") });
-        if (Has(TrackerId.Water)) options.Add(new AddOption { Kind = JournalChipKind.Water, Icon = "💧", Label = Loc.GetString("Journal_Water") });
-        options.Add(new AddOption { Kind = JournalChipKind.Weight, Icon = "⚖️", Label = Loc.GetString("Journal_WeighIn") });
-        if (Has(TrackerId.Seizure)) options.Add(new AddOption { Kind = JournalChipKind.Seizure, Icon = "⚡", Label = Loc.GetString("Journal_Seizure") });
-        AddOptions = options;
+        // Mood and weight are in every pet's default plan, so they normally land in the
+        // first group on their own merit; Has() decides for them like everything else.
+        var inPlan = new List<AddOption>();
+        var rest = new List<AddOption>();
+        foreach (var (tracker, kind, icon, labelKey) in LoggableTypes)
+        {
+            var option = new AddOption { Kind = kind, Icon = icon, Label = Loc.GetString(labelKey) };
+            (Has(tracker) ? inPlan : rest).Add(option);
+        }
+
+        // Build fresh lists and assign them (see AddOptions' note above).
+        AddOptions = inPlan;
+        MoreOptions = rest;
     }
 
     private void NotifyStates()

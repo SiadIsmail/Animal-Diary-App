@@ -27,8 +27,14 @@ public class DiabetesSetupSheetViewModel : ConditionSetupSheetViewModel
     }
 
     public override string ConditionId => "diabetes";
-    public override string TitleText => LocalizationManager.Instance.GetString("CondSetup_DiabetesTitle");
-    public override string SubtitleText => LocalizationManager.Instance.GetString("CondSetup_DiabetesSub");
+
+    // Two doors, two framings. Opened from the condition it reads as setting up
+    // diabetes; opened from the Glucose care-plan row it is simply the glucose editor,
+    // because a target range belongs to the reading and not to a diagnosis.
+    public override string TitleText => LocalizationManager.Instance.GetString(
+        LinkCondition ? "CondSetup_DiabetesTitle" : "CondSetup_GlucoseTitle");
+    public override string SubtitleText => LocalizationManager.Instance.GetString(
+        LinkCondition ? "CondSetup_DiabetesSub" : "CondSetup_GlucoseSub");
 
     public ICommand PickFrequencyCommand { get; }
 
@@ -106,7 +112,7 @@ public class DiabetesSetupSheetViewModel : ConditionSetupSheetViewModel
     {
         TryReadRange(out var lo, out var hi); // valid by now (Validate passed)
 
-        await Trackers.UpsertAsync(petId, TrackerId.Glucose, t =>
+        await Trackers.UpsertAsync(petId, TrackerId.Glucose, (t, isNew) =>
         {
             if (_freq == "asneeded")
             {
@@ -122,7 +128,8 @@ public class DiabetesSetupSheetViewModel : ConditionSetupSheetViewModel
             t.Unit = "mmol/L";
             t.TargetLo = lo;
             t.TargetHi = hi;
-            t.FromCondition ??= "diabetes";
+            if (isNew)
+                t.FromCondition = "diabetes";
         });
     }
 

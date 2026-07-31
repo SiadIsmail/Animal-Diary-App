@@ -32,6 +32,26 @@ public class TrendsSection : IVetReportSection
                                 .FontColor(VetReportStyles.InkSecondary);
                     });
 
+                    // A single reading can't be a line — one point on axes implies a
+                    // flatness that isn't in the data. State it instead, dated, so one
+                    // weigh-in still reaches the vet rather than being dropped.
+                    if (series.Points.Count == 0)
+                        return;
+
+                    if (series.Points.Count == 1)
+                    {
+                        var only = series.Points[0];
+                        chart.Item().Text(text =>
+                        {
+                            text.Span($"{only.Value:0.##} ").SemiBold();
+                            if (!string.IsNullOrEmpty(series.Unit))
+                                text.Span($"{series.Unit} ");
+                            text.Span($"on {only.Date.ToString(VetReportStyles.DateFormat)}")
+                                .FontColor(VetReportStyles.InkSecondary);
+                        });
+                        return;
+                    }
+
                     chart.Item()
                         .Height(VetReportStyles.ChartHeight)
                         .Canvas((canvas, size) => ChartRenderer.Draw(canvas, size.Width, size.Height, series));

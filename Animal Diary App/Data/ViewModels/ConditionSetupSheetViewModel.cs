@@ -59,10 +59,24 @@ public abstract class ConditionSetupSheetViewModel : BaseViewModel
     public ICommand SaveCommand { get; }
     public ICommand DismissCommand { get; }
 
+    /// <summary>
+    /// Whether saving also LINKS the condition to the pet.
+    ///
+    /// False when the sheet is opened as a plain tracker editor — tapping the Glucose
+    /// row to set a target range must not quietly record that the pet has diabetes.
+    /// Wanting to watch a number is not a diagnosis, and the app must never put words
+    /// in an owner's mouth about their animal. Subclasses also read this to title
+    /// themselves after the measurement rather than the condition.
+    /// </summary>
+    protected bool LinkCondition { get; private set; } = true;
+
     /// <summary>Pre-fill the controls from the pet's current plan (so reopening an
-    /// already-configured condition edits it) and present.</summary>
-    public async Task OpenAsync()
+    /// already-configured condition edits it) and present.
+    /// <paramref name="linkCondition"/>: see <see cref="LinkCondition"/>.</summary>
+    public async Task OpenAsync(bool linkCondition = true)
     {
+        LinkCondition = linkCondition;
+
         var pet = ActivePet.ActivePet;
         if (pet != null && pet.Id != 0)
             await LoadAsync(pet.Id);
@@ -96,9 +110,11 @@ public abstract class ConditionSetupSheetViewModel : BaseViewModel
         if (!Validate())
             return;
 
-        // Link the condition, guarantee the always-on defaults (Mood + Weight) exist,
-        // then let the subclass write its condition-specific trackers on top.
-        await Conditions.AddAsync(pet.Id, ConditionId);
+        // Link the condition (unless this is the tracker-editor door), guarantee the
+        // always-on defaults (Mood + Weight) exist, then let the subclass write its
+        // trackers on top.
+        if (LinkCondition)
+            await Conditions.AddAsync(pet.Id, ConditionId);
         await Trackers.EnsureSeededAsync(pet.Id, System.Array.Empty<string>());
         await PersistAsync(pet.Id);
 

@@ -66,15 +66,28 @@
                         Margin="0,0,8,8">
                     <HorizontalStackLayout Spacing="8"
                                            VerticalOptions="Center">
-                        <Label Text="{Binding Icon}"
-                               FontSize="14"
-                               VerticalOptions="Center"/>
-                        <Label Text="{Binding Name}"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="12.5"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource Ink}"
-                               VerticalOptions="Center"/>
+                        <!-- Icon + name reopen the condition's setup; the ✕ beside them
+                             removes it. The tap lives on this inner layout rather than
+                             on the chip so the two can't be confused for each other.
+                             Without it a condition could only be reconfigured through
+                             the tracker row it happened to create, which is not a door
+                             anyone would find. -->
+                        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                            <HorizontalStackLayout.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ManageVM.OpenConditionCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </HorizontalStackLayout.GestureRecognizers>
+                            <Label Text="{Binding Icon}"
+                                   FontSize="14"
+                                   VerticalOptions="Center"/>
+                            <Label Text="{Binding Name}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12.5"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
                         <Border WidthRequest="20"
                                 HeightRequest="20"
                                 BackgroundColor="{StaticResource Well}"
@@ -304,6 +317,40 @@
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </VerticalStackLayout>
+
+                        <!-- Add a tracker: the deliberate "keep asking me about this".
+                             Mirrors the Add-medication row below. The Journal's "+"
+                             already lets anything be written down once without joining
+                             the plan, so this row is only about being reminded. -->
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="13"
+                              Padding="12,14"
+                              IsVisible="{Binding ManageVM.CanAddTracker}">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ManageVM.AddTrackerCommand}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Grid.Column="0"
+                                    WidthRequest="38"
+                                    HeightRequest="38"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    VerticalOptions="Center">
+                                <Label Text="＋"
+                                       FontSize="17"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                            <Label Grid.Column="1"
+                                   Text="{loc:Translate Manage_AddTracker}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
 
@@ -535,6 +582,7 @@
 
         <!-- Manage-owned sheets -->
         <views:AddConditionSheetView BindingContext="{Binding ManageVM}"/>
+        <views:AddTrackerSheetView BindingContext="{Binding ManageVM}"/>
         <views:RemoveConditionSheetView BindingContext="{Binding ManageVM}"/>
         <views:AdjustTrackerSheetView BindingContext="{Binding ManageVM}"/>
         <views:SharingSheetView BindingContext="{Binding SharingVM}"/>

@@ -41,6 +41,7 @@ public partial class ManagePetPage : ContentPage
         }
 
         vm.ManageVM.RequestConditionSetup += OnRequestConditionSetup;
+        vm.ManageVM.RequestTrackerSetup += OnRequestTrackerSetup;
         vm.ManageVM.RequestEditPet += OnRequestEditPet;
         vm.ManageVM.RequestAddMedication += OnRequestAddMedication;
         vm.ManageVM.RequestOpenMedication += OnRequestOpenMedication;
@@ -89,6 +90,7 @@ public partial class ManagePetPage : ContentPage
         base.OnDisappearing();
 
         vm.ManageVM.RequestConditionSetup -= OnRequestConditionSetup;
+        vm.ManageVM.RequestTrackerSetup -= OnRequestTrackerSetup;
         vm.ManageVM.RequestEditPet -= OnRequestEditPet;
         vm.ManageVM.RequestAddMedication -= OnRequestAddMedication;
         vm.ManageVM.RequestOpenMedication -= OnRequestOpenMedication;
@@ -239,6 +241,21 @@ public partial class ManagePetPage : ContentPage
             case "diabetes": await vm.DiabetesSetupVM.OpenAsync(); break;
             case "ckd": await vm.CkdSetupVM.OpenAsync(); break;
             case "epilepsy": await vm.EpilepsySetupVM.OpenAsync(); break;
+        }
+    }
+
+    /// <summary>A tracker's own editor, reached by tapping its care-plan row. Reuses the
+    /// condition sheets because they already hold the right controls, but with
+    /// linkCondition:false — editing a glucose range must never record that the pet has
+    /// diabetes, and a seizure log must never claim epilepsy.</summary>
+    private async void OnRequestTrackerSetup(Data.Models.TrackerId trackerId)
+    {
+        if (PaywallBlocks())
+            return;
+        switch (trackerId)
+        {
+            case Data.Models.TrackerId.Glucose: await vm.DiabetesSetupVM.OpenAsync(linkCondition: false); break;
+            case Data.Models.TrackerId.Seizure: await vm.EpilepsySetupVM.OpenAsync(linkCondition: false); break;
         }
     }
 

@@ -194,6 +194,8 @@
   <data name="Journal_ChipAddMore" xml:space="preserve"><value>＋ Add something else</value></data>
   <data name="Journal_ChipAddDay" xml:space="preserve"><value>＋ Add to this day</value></data>
   <data name="Journal_AddMoreTitle" xml:space="preserve"><value>Add something else</value></data>
+  <data name="Journal_MoreToLog" xml:space="preserve"><value>Anything else</value></data>
+  <data name="Journal_MoreToLogHint" xml:space="preserve"><value>Write these down whenever you like. To be asked about one every day, add it to the care plan under Manage.</value></data>
   <data name="Journal_AddDayTitle" xml:space="preserve"><value>Add to this day</value></data>
   <data name="Journal_AddSheetSub" xml:space="preserve"><value>{0} · {1:ddd, d MMM}</value></data>
   <!-- Screen-reader labels -->
@@ -312,6 +314,10 @@
   <data name="CondSetup_WaterToggle" xml:space="preserve"><value>Water intake · daily</value></data>
   <data name="CondSetup_CkdSave" xml:space="preserve"><value>Set up kidney care</value></data>
   <data name="CondSetup_EpilepsyTitle" xml:space="preserve"><value>Epilepsy</value></data>
+  <data name="CondSetup_GlucoseTitle" xml:space="preserve"><value>Glucose checks</value></data>
+  <data name="CondSetup_GlucoseSub" xml:space="preserve"><value>How often, and the range your vet gave you</value></data>
+  <data name="CondSetup_SeizureTitle" xml:space="preserve"><value>Seizures</value></data>
+  <data name="CondSetup_SeizureSub" xml:space="preserve"><value>Nothing to schedule</value></data>
   <data name="CondSetup_EpilepsySub" xml:space="preserve"><value>Nothing to schedule. Just a place to write it down.</value></data>
   <data name="CondSetup_EpilepsyBody" xml:space="preserve"><value>Seizures can't be planned, so this adds a seizure log instead of a daily task. It waits under + in the Journal, ready for when it happened, how long it lasted, and what you noticed.</value></data>
   <data name="CondSetup_EpilepsySave" xml:space="preserve"><value>Add seizure log</value></data>
@@ -356,6 +362,9 @@
   <data name="Manage_NoTarget" xml:space="preserve"><value>No target range yet</value></data>
   <data name="Manage_AddConditionTitle" xml:space="preserve"><value>Add a condition</value></data>
   <data name="Manage_AddConditionSub" xml:space="preserve"><value>This sets up the right trackers</value></data>
+  <data name="Manage_AddTracker" xml:space="preserve"><value>Add a tracker</value></data>
+  <data name="Manage_AddTrackerTitle" xml:space="preserve"><value>Add a tracker</value></data>
+  <data name="Manage_AddTrackerSub" xml:space="preserve"><value>The Journal will start asking for it</value></data>
   <data name="Manage_RemoveTitle" xml:space="preserve"><value>Remove {0}?</value></data>
   <data name="Manage_RemoveLinked" xml:space="preserve"><value>This set up: {0}. All history is kept either way. Nothing is ever deleted.</value></data>
   <data name="Manage_RemoveNoLinked" xml:space="preserve"><value>No trackers came from this condition. All history is kept.</value></data>
@@ -403,6 +412,8 @@
   <data name="Export_AppetiteLabel" xml:space="preserve"><value>Appetite</value></data>
   <data name="Export_IncludeAppetiteMeasured" xml:space="preserve"><value>Include measured values</value></data>
   <data name="Export_IncludeAppetiteObservations" xml:space="preserve"><value>Include observations</value></data>
+  <data name="Export_MoodLabel" xml:space="preserve"><value>Mood</value></data>
+  <data name="Export_IncludeMood" xml:space="preserve"><value>Include daily mood</value></data>
   <data name="Export_Days30" xml:space="preserve"><value>30 days</value></data>
   <data name="Export_Days90" xml:space="preserve"><value>90 days</value></data>
   <data name="Export_Days180" xml:space="preserve"><value>180 days</value></data>
@@ -452,6 +463,9 @@
   <data name="Med_EmptySubtitle" xml:space="preserve"><value>Add a medication and Felova will remind you when it's time.</value></data>
   <data name="Med_OnceDaily" xml:space="preserve"><value>Once daily</value></data>
   <data name="Med_TimesDaily" xml:space="preserve"><value>{0}× daily</value></data>
+  <data name="Med_OnceWeekly" xml:space="preserve"><value>Once a week</value></data>
+  <data name="Med_TimesWeekly" xml:space="preserve"><value>{0}× a week</value></data>
+  <data name="Med_NoSchedule" xml:space="preserve"><value>No times set</value></data>
   <data name="Med_Unknown" xml:space="preserve"><value>Unknown</value></data>
 
   <!-- ── Add / Edit medication sheet ── -->

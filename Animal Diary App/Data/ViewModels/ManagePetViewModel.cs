@@ -63,6 +63,15 @@ public class ManageMedRow
 }
 
 /// <summary>A condition offered in the "add condition" sheet.</summary>
+/// <summary>A log type the pet's care plan doesn't cover yet, offered in the
+/// "Add a tracker" sheet.</summary>
+public class AddTrackerOption
+{
+    public TrackerId TrackerId { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Icon { get; init; } = string.Empty;
+}
+
 public class AddConditionOption
 {
     public string Id { get; init; } = string.Empty;
@@ -83,6 +92,12 @@ public enum PetRemovalFlowResult
 public class AdjustOption : BaseViewModel
 {
     public TrackerKind Kind { get; init; }
+
+    /// <summary>Checks per day when <see cref="Kind"/> is <see cref="TrackerKind.PerDay"/>;
+    /// 0 otherwise. Carried on the option so a multi-times-a-day cadence can be offered
+    /// as its own row ("3× daily") without the sheet needing a separate counter.</summary>
+    public int PerDayCount { get; init; }
+
     public string Label { get; init; } = string.Empty;
 
     private bool _isSelected;
@@ -140,11 +155,15 @@ public class ManagePetViewModel : BaseViewModel
 
         TapIdentityCommand = new Command(() => RequestEditPet?.Invoke());
         AddConditionCommand = new Command(OpenAddConditionSheet);
+        AddTrackerCommand = new Command(OpenAddTrackerSheet);
+        PickAddTrackerCommand = new Command<AddTrackerOption>(async o => await OnPickAddTrackerAsync(o));
+        CloseAddTrackerCommand = new Command(() => IsAddTrackerSheetVisible = false);
         RemoveConditionCommand = new Command<ManageConditionChip>(OpenRemoveSheet);
         TapCarePlanRowCommand = new Command<CarePlanRow>(async r => await OnTapCarePlanRowAsync(r));
         AddMedicationCommand = new Command(() => RequestAddMedication?.Invoke());
         TapMedicationCommand = new Command<ManageMedRow>(m => { if (m != null) RequestOpenMedication?.Invoke(m.Id); });
 
+        OpenConditionCommand = new Command<ManageConditionChip>(OnOpenCondition);
         PickAddConditionCommand = new Command<AddConditionOption>(async o => await OnPickAddConditionAsync(o));
         CloseAddConditionCommand = new Command(() => IsAddConditionSheetVisible = false);
 
@@ -164,6 +183,11 @@ public class ManagePetViewModel : BaseViewModel
     // ── Events the page acts on ──────────────────────────────────────────────────
     /// <summary>Open the reusable setup sheet for this condition id (diabetes/ckd/epilepsy).</summary>
     public event Action<string>? RequestConditionSetup;
+
+    /// <summary>Open a tracker's own editor (Glucose, Seizure). Distinct from
+    /// <see cref="RequestConditionSetup"/> because it reuses the same sheets WITHOUT
+    /// linking their condition — editing a target range must not record a diagnosis.</summary>
+    public event Action<TrackerId>? RequestTrackerSetup;
     /// <summary>Open the edit-pet door (prefilled CreatePetPage).</summary>
     public event Action? RequestEditPet;
     /// <summary>Open the medication add flow.</summary>
@@ -235,6 +259,14 @@ public class ManagePetViewModel : BaseViewModel
     // ── Commands ─────────────────────────────────────────────────────────────────
     public ICommand TapIdentityCommand { get; }
     public ICommand AddConditionCommand { get; }
+
+    /// <summary>Tapping a condition chip's name reopens that condition's setup, so it
+    /// can be reconfigured from the condition itself. Conditions with nothing to
+    /// configure (no setup sheet) do nothing — there is no screen to show.</summary>
+    public ICommand OpenConditionCommand { get; }
+    public ICommand AddTrackerCommand { get; }
+    public ICommand PickAddTrackerCommand { get; }
+    public ICommand CloseAddTrackerCommand { get; }
     public ICommand RemoveConditionCommand { get; }
     public ICommand TapCarePlanRowCommand { get; }
     public ICommand AddMedicationCommand { get; }
@@ -339,6 +371,8 @@ public class ManagePetViewModel : BaseViewModel
         CarePlanRows.Clear();
         foreach (var t in plan)
             CarePlanRows.Add(BuildRow(t));
+
+        CanAddTracker = CarePlanRows.Count < System.Enum.GetValues<TrackerId>().Length;
 
         BuildPreview(plan, meds.Count);
 
@@ -498,6 +532,19 @@ public class ManagePetViewModel : BaseViewModel
         if (row == null)
             return;
 
+        // Glucose and Seizure always open their own editor, condition or not. Both hold
+        // settings the plain cadence picker can't express — a target range, and "as it
+        // happens" — and both are properties of the measurement rather than of a
+        // diagnosis. Routing on the tracker instead of on FromCondition also means a
+        // hand-added Glucose can no longer land in a picker that offers neither its
+        // per-day frequency nor its range, and silently overwrite both on save.
+        // The sheets are opened WITHOUT linking their condition: see LinkCondition.
+        if (row.TrackerId is TrackerId.Glucose or TrackerId.Seizure)
+        {
+            RequestTrackerSetup?.Invoke(row.TrackerId);
+            return;
+        }
+
         if (ConditionSetup.HasSheet(row.FromCondition))
         {
             RequestConditionSetup?.Invoke(row.FromCondition!);
@@ -505,6 +552,14 @@ public class ManagePetViewModel : BaseViewModel
         }
 
         await OpenAdjustSheetAsync(row.TrackerId);
+    }
+
+    private void OnOpenCondition(ManageConditionChip? chip)
+    {
+        // Reconfiguring here DOES link the condition (it is already linked — this is the
+        // condition's own door), unlike the tracker-row door which must not.
+        if (chip != null && ConditionSetup.HasSheet(chip.Id))
+            RequestConditionSetup?.Invoke(chip.Id);
     }
 
     // ── Add condition ────────────────────────────────────────────────────────────
@@ -541,12 +596,15 @@ public class ManagePetViewModel : BaseViewModel
         await _conditions.AddAsync(pet.Id, option.Id);
         await _trackers.EnsureSeededAsync(pet.Id, System.Array.Empty<string>());
         foreach (var seed in CarePlanCatalog.ForCondition(option.Id))
-            await _trackers.UpsertAsync(pet.Id, seed.TrackerId, t =>
+            // isNew — see ConditionPickerViewModel: a tracker the owner added on their
+            // own is never claimed by a condition added afterwards.
+            await _trackers.UpsertAsync(pet.Id, seed.TrackerId, (t, isNew) =>
             {
                 t.Kind = seed.Kind;
                 t.PerDayCount = seed.PerDayCount;
                 t.Unit = seed.Unit;
-                t.FromCondition ??= option.Id;
+                if (isNew)
+                    t.FromCondition = option.Id;
             });
 
         await LoadAsync();
@@ -557,6 +615,74 @@ public class ManagePetViewModel : BaseViewModel
     {
         get => _isAddConditionSheetVisible;
         set => SetProperty(ref _isAddConditionSheetVisible, value);
+    }
+
+    // ── Add a tracker ────────────────────────────────────────────────────────────
+    // The deliberate half of the pair the Journal's "+" completes. There, picking a
+    // log type outside the plan records it once and commits to nothing; here, the
+    // owner is saying "keep asking me about this", so it joins the care plan and the
+    // "still to do" row. Conditions were only ever a shortcut for filling this in —
+    // wanting to note water shouldn't require claiming a kidney diagnosis.
+    private void OpenAddTrackerSheet()
+    {
+        var already = CarePlanRows.Select(r => r.TrackerId).ToHashSet();
+        AddTrackerOptions = System.Enum.GetValues<TrackerId>()
+            .Where(id => !already.Contains(id))
+            .Select(id =>
+            {
+                var (icon, _, _) = Visual(id);
+                return new AddTrackerOption { TrackerId = id, Name = Loc.GetString(LabelKey(id)), Icon = icon };
+            })
+            .ToList();
+        IsAddTrackerSheetVisible = true;
+    }
+
+    private async Task OnPickAddTrackerAsync(AddTrackerOption? option)
+    {
+        if (option == null)
+            return;
+
+        IsAddTrackerSheetVisible = false;
+
+        var pet = _activePet.ActivePet;
+        if (pet == null || pet.Id == 0)
+            return;
+
+        // Same cadence a condition would have given it, so a hand-added tracker and a
+        // seeded one are indistinguishable once they exist. FromCondition stays null:
+        // this is the owner's own choice, and removing a condition must never take it.
+        var seed = CarePlanCatalog.DefaultFor(option.TrackerId);
+        await _trackers.UpsertAsync(pet.Id, option.TrackerId, (t, _) =>
+        {
+            t.Kind = seed.Kind;
+            t.PerDayCount = seed.PerDayCount;
+            t.Unit = seed.Unit;
+        });
+
+        await LoadAsync();
+    }
+
+    private IReadOnlyList<AddTrackerOption> _addTrackerOptions = System.Array.Empty<AddTrackerOption>();
+    public IReadOnlyList<AddTrackerOption> AddTrackerOptions
+    {
+        get => _addTrackerOptions;
+        private set => SetProperty(ref _addTrackerOptions, value);
+    }
+
+    private bool _isAddTrackerSheetVisible;
+    public bool IsAddTrackerSheetVisible
+    {
+        get => _isAddTrackerSheetVisible;
+        set => SetProperty(ref _isAddTrackerSheetVisible, value);
+    }
+
+    /// <summary>Whether any log type is still missing from this pet's plan. The row is
+    /// hidden once they're all in, rather than opening an empty sheet.</summary>
+    private bool _canAddTracker = true;
+    public bool CanAddTracker
+    {
+        get => _canAddTracker;
+        private set => SetProperty(ref _canAddTracker, value);
     }
 
     // ── Remove condition ─────────────────────────────────────────────────────────
@@ -646,18 +772,41 @@ public class ManagePetViewModel : BaseViewModel
         AdjustTitle = Loc.GetString(LabelKey(trackerId));
 
         var current = await _trackers.GetByTrackerIdAsync(pet.Id, trackerId);
-        var currentKind = current?.Kind ?? DefaultKind(trackerId);
+        var defaults = CarePlanCatalog.DefaultFor(trackerId);
+        var currentKind = current?.Kind ?? defaults.Kind;
+        var currentPerDay = current?.PerDayCount ?? defaults.PerDayCount;
 
         // Fresh list (not in-place mutation) — see the AdjustOptions field note.
-        AdjustOptions = OptionsFor(trackerId)
+        // A PerDay rung has to match on the COUNT too, or "3× daily" and "2× daily"
+        // would both light up for the same tracker.
+        var options = OptionsFor(trackerId)
             .Select(o => new AdjustOption
             {
-                Kind = o.Item1,
-                Label = Loc.GetString(o.Item2),
-                IsSelected = o.Item1 == currentKind
+                Kind = o.Kind,
+                PerDayCount = o.PerDay,
+                Label = CadenceLabel(o.Kind, o.PerDay),
+                IsSelected = o.Kind == currentKind
+                             && (o.Kind != TrackerKind.PerDay || o.PerDay == currentPerDay)
             })
             .ToList();
 
+        // The tracker's CURRENT cadence is always offered, even if the ladder above
+        // wouldn't propose it. Without this the sheet can open with nothing selected,
+        // and then any save silently rewrites the tracker to a cadence the owner never
+        // had — which is how a seizure log could become a daily chore. The invariant
+        // to keep: every setting reachable by SaveAdjustAsync is one the sheet showed.
+        if (options.All(o => !o.IsSelected))
+        {
+            options.Insert(0, new AdjustOption
+            {
+                Kind = currentKind,
+                PerDayCount = currentPerDay,
+                Label = CadenceLabel(currentKind, currentPerDay),
+                IsSelected = true
+            });
+        }
+
+        AdjustOptions = options;
         IsAdjustSheetVisible = true;
     }
 
@@ -679,7 +828,13 @@ public class ManagePetViewModel : BaseViewModel
             return;
         }
 
-        await _trackers.UpsertAsync(pet.Id, _adjustTrackerId, t => t.Kind = chosen.Kind);
+        await _trackers.UpsertAsync(pet.Id, _adjustTrackerId, t =>
+        {
+            t.Kind = chosen.Kind;
+            // Cleared when leaving PerDay, or a stale count outlives the cadence that
+            // gave it meaning and the row reads "0× daily" if it ever comes back.
+            t.PerDayCount = chosen.Kind == TrackerKind.PerDay ? chosen.PerDayCount : 0;
+        });
         IsAdjustSheetVisible = false;
         await LoadAsync();
     }
@@ -715,27 +870,55 @@ public class ManagePetViewModel : BaseViewModel
     public string AdjustSubtitle => Loc.GetString("Manage_AdjustSub");
 
     // ── Static maps ──────────────────────────────────────────────────────────────
-    private static TrackerKind DefaultKind(TrackerId id) => id switch
-    {
-        TrackerId.Weight => TrackerKind.Weekly,
-        _ => TrackerKind.Daily
-    };
+    /// <summary>Cadence for a tracker with no stored row yet. Delegates to the catalog
+    /// so this can't drift from what a bare add or a condition seed would produce —
+    /// the local copy used to answer "Daily" for Seizure, which is an Event.</summary>
+    private static TrackerKind DefaultKind(TrackerId id) => CarePlanCatalog.DefaultFor(id).Kind;
 
-    // The cadence options offered for a default tracker in the adjust sheet.
-    private static IReadOnlyList<(TrackerKind, string)> OptionsFor(TrackerId id) => id switch
+    // The cadence ladder, offered per tracker in the adjust sheet.
+    //
+    // Every rung the pending engine actually understands is on offer here: several
+    // times a day, once a day, a couple of times a week, weekly, or never asked for.
+    // Rungs are only withheld where they'd be meaningless for that particular thing —
+    // weighing a pet three times a day isn't a routine, it's a fixation, and mood is
+    // one reading of a day rather than a series of them.
+    //
+    // Glucose (PerDay + a target range) and Seizure (Event) never reach here: they have
+    // their own editors, because neither fits a plain single-select list.
+    private static IReadOnlyList<(TrackerKind Kind, int PerDay)> OptionsFor(TrackerId id) => id switch
     {
-        TrackerId.Weight => new[]
+        // Meals and drinking happen several times a day, so those rungs are real here.
+        TrackerId.Appetite or TrackerId.Water => new[]
         {
-            (TrackerKind.Daily, "CondSetup_FreqDaily"),
-            (TrackerKind.TwiceWeekly, "CondSetup_FreqTwiceWeekly"),
-            (TrackerKind.Weekly, "CondSetup_FreqWeekly"),
+            (TrackerKind.PerDay, 3),
+            (TrackerKind.PerDay, 2),
+            (TrackerKind.Daily, 0),
+            (TrackerKind.TwiceWeekly, 0),
+            (TrackerKind.Weekly, 0),
+            (TrackerKind.AsNeeded, 0),
         },
         _ => new[]
         {
-            (TrackerKind.Daily, "CondSetup_FreqDaily"),
-            (TrackerKind.AsNeeded, "CondSetup_FreqAsNeeded"),
+            (TrackerKind.Daily, 0),
+            (TrackerKind.TwiceWeekly, 0),
+            (TrackerKind.Weekly, 0),
+            (TrackerKind.AsNeeded, 0),
         }
     };
+
+    /// <summary>One cadence written out. Also used for the safety row that shows a
+    /// tracker's current setting when the ladder above wouldn't have offered it.</summary>
+    private static string CadenceLabel(TrackerKind kind, int perDayCount) =>
+        kind == TrackerKind.PerDay
+            ? Loc.Format("Manage_FreqPerDay", perDayCount)
+            : Loc.GetString(kind switch
+            {
+                TrackerKind.Daily => "CondSetup_FreqDaily",
+                TrackerKind.TwiceWeekly => "CondSetup_FreqTwiceWeekly",
+                TrackerKind.Weekly => "CondSetup_FreqWeekly",
+                TrackerKind.AsNeeded => "CondSetup_FreqAsNeeded",
+                _ => "Manage_Event"
+            });
 
     private static string LabelKey(TrackerId id) => id switch
     {

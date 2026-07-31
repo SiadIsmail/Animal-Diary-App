@@ -26,6 +26,7 @@ public class ExportSheetViewModel : BaseViewModel
     private readonly ActivePetService _activePetService;
     private readonly WaterEntryService _water;
     private readonly AppetiteEntryService _appetite;
+    private readonly PetEntryService _petEntries;
     private readonly IAnalyticsService _analytics;
 
     /// <summary>Flip to true to generate from <see cref="VetReportSampleData"/>'s
@@ -37,12 +38,14 @@ public class ExportSheetViewModel : BaseViewModel
     private VetReportFile? _result;
 
     public ExportSheetViewModel(IVetReportService reports, ActivePetService activePetService,
-        WaterEntryService water, AppetiteEntryService appetite, IAnalyticsService analytics)
+        WaterEntryService water, AppetiteEntryService appetite, PetEntryService petEntries,
+        IAnalyticsService analytics)
     {
         _reports = reports;
         _activePetService = activePetService;
         _water = water;
         _appetite = appetite;
+        _petEntries = petEntries;
         _analytics = analytics;
 
         OpenCommand = new Command(async () => await OpenAsync());
@@ -53,6 +56,7 @@ public class ExportSheetViewModel : BaseViewModel
         ToggleIncludeWaterObservationsCommand = new Command(() => IncludeWaterObservations = !IncludeWaterObservations);
         ToggleIncludeAppetiteMeasuredCommand = new Command(() => IncludeAppetiteMeasured = !IncludeAppetiteMeasured);
         ToggleIncludeAppetiteObservationsCommand = new Command(() => IncludeAppetiteObservations = !IncludeAppetiteObservations);
+        ToggleIncludeMoodCommand = new Command(() => IncludeMood = !IncludeMood);
         GenerateCommand = new Command(async () => await GenerateAsync());
         ViewCommand = new Command(() =>
         {
@@ -114,6 +118,16 @@ public class ExportSheetViewModel : BaseViewModel
     private bool _includeAppetiteObservations = true;
     public bool IncludeAppetiteObservations { get => _includeAppetiteObservations; set => SetProperty(ref _includeAppetiteObservations, value); }
 
+    /// <summary>Whether the pet has ever logged a mood — gates the mood toggle.</summary>
+    private bool _hasMood;
+    public bool HasMood { get => _hasMood; private set => SetProperty(ref _hasMood, value); }
+
+    /// <summary>Include the daily mood graph. Default ON, like every other metric.
+    /// Mood is observations only — there is no measured counterpart, so it is a single
+    /// toggle rather than the measured/observed pair water and appetite carry.</summary>
+    private bool _includeMood = true;
+    public bool IncludeMood { get => _includeMood; set => SetProperty(ref _includeMood, value); }
+
     private bool _isGenerating;
     public bool IsGenerating { get => _isGenerating; set => SetProperty(ref _isGenerating, value); }
 
@@ -135,6 +149,7 @@ public class ExportSheetViewModel : BaseViewModel
     public ICommand ToggleIncludeWaterObservationsCommand { get; }
     public ICommand ToggleIncludeAppetiteMeasuredCommand { get; }
     public ICommand ToggleIncludeAppetiteObservationsCommand { get; }
+    public ICommand ToggleIncludeMoodCommand { get; }
     public ICommand GenerateCommand { get; }
     public ICommand ViewCommand { get; }
     public ICommand ShareCommand { get; }
@@ -164,6 +179,12 @@ public class ExportSheetViewModel : BaseViewModel
         IncludeAppetiteMeasured = true;
         IncludeAppetiteObservations = true;
         HasAppetite = _pet.Id != 0 && await _appetite.HasAnyAsync(_pet.Id);
+
+        // Mood: same "on by default, hidden when never logged" rule. One reading is
+        // enough for the toggle to matter — an owner who logged a mood once and doesn't
+        // want it in front of their vet can simply untick it.
+        IncludeMood = true;
+        HasMood = _pet.Id != 0 && await _petEntries.GetLatestMoodEntryAsync(_pet.Id) is not null;
 
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
@@ -198,7 +219,7 @@ public class ExportSheetViewModel : BaseViewModel
                     : await _reports.GenerateAsync(
                         _pet.Id, DateTime.Today.AddDays(-SelectedDays), DateTime.Today,
                         IncludePhoto, IncludeWaterMeasured, IncludeWaterObservations,
-                        IncludeAppetiteMeasured, IncludeAppetiteObservations);
+                        IncludeAppetiteMeasured, IncludeAppetiteObservations, IncludeMood);
 #pragma warning restore CS0162
 
             if (_result == null)

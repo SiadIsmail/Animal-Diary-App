@@ -219,6 +219,41 @@
                         </Border>
                     </VerticalStackLayout>
 
+                    <!-- Mood: observations only, so a single toggle rather than the
+                         measured/observed pair. On by default like the rest; an owner who
+                         logged a mood once and would rather not show it just unticks it. -->
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding HasMood}">
+                        <Label Text="{loc:Translate Export_MoodLabel}" Style="{StaticResource FieldLabel}"/>
+
+                        <Border BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 13">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleIncludeMoodCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                <Label Text="{loc:Translate Export_IncludeMood}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="14"
+                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                        BackgroundColor="{StaticResource Glass}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeMood}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource White}"
+                                           IsVisible="{Binding IncludeMood}"
+                                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
                     <!-- Appetite: same two-type opt-in as water (both default on), only
                          shown when the pet logs appetite. Measured grams and owner
                          observations stay on separate graphs; nothing is interpreted. -->

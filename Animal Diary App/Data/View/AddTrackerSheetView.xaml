@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- AddTrackerSheetView — the log types this pet's care plan doesn't cover yet.
+     Picking one adds it to the plan, so the Journal starts asking for it. (Logging
+     something once needs none of this: the Journal's "+" offers every type outright.)
+     BindingContext is the ManagePetViewModel. -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:ManagePetViewModel"
+             x:Class="Animal_Diary_App.Data.View.AddTrackerSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsAddTrackerSheetVisible, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsAddTrackerSheetVisible}"
+                                Title="{loc:Translate Manage_AddTrackerTitle}"
+                                Subtitle="{loc:Translate Manage_AddTrackerSub}"
+                                DismissCommand="{Binding CloseAddTrackerCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <!-- BindableLayout, not CollectionView: a handful of fixed rows with no
+                 scrolling is BindableLayout's documented use case, and CollectionView's
+                 RecyclerView wouldn't render inside this auto-sized sheet until scrolled.
+                 Safe here because FelovaBottomSheet keeps its body realised while hidden
+                 (translated off-screen, never IsVisible=false). -->
+            <VerticalStackLayout Spacing="10" Padding="0,2,0,0"
+                                 BindableLayout.ItemsSource="{Binding AddTrackerOptions}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vms:AddTrackerOption">
+                        <Border BackgroundColor="{StaticResource GlassSoft}"
+                                Stroke="{StaticResource GlassLine}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 15,13,14,15"
+                                Padding="14,13">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={x:Reference Root}, Path=BindingContext.PickAddTrackerCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="13">
+                                <Label Grid.Column="0" Text="{Binding Icon}" FontSize="22" VerticalOptions="Center"/>
+                                <Label Grid.Column="1"
+                                       Text="{Binding Name}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14.5"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"
+                                       VerticalOptions="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>
