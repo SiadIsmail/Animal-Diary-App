@@ -146,12 +146,16 @@ public class ConditionPickerViewModel : BaseViewModel
         await _conditions.AddAsync(petId, conditionId);
         await _trackers.EnsureSeededAsync(petId, System.Array.Empty<string>());
         foreach (var seed in CarePlanCatalog.ForCondition(conditionId))
-            await _trackers.UpsertAsync(petId, seed.TrackerId, t =>
+            // isNew: only a tracker this condition actually created carries its
+            // breadcrumb. One the owner added themselves stays theirs, so removing the
+            // condition later can't take it (and its history) with it.
+            await _trackers.UpsertAsync(petId, seed.TrackerId, (t, isNew) =>
             {
                 t.Kind = seed.Kind;
                 t.PerDayCount = seed.PerDayCount;
                 t.Unit = seed.Unit;
-                t.FromCondition ??= conditionId;
+                if (isNew)
+                    t.FromCondition = conditionId;
             });
     }
 

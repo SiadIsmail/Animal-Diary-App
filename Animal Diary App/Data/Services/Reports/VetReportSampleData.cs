@@ -48,6 +48,13 @@ public static class VetReportSampleData
                 appetiteObservations.Add(new ReportObservation(from.AddDays(d), rng.Next(1, 6)));
         var appetiteFoods = new[] { "Chicken kibble", "Wet food (salmon)", "Boiled rice + turkey" };
 
+        // Mood — most days but not all, so the layout harness shows how the chart reads
+        // with gaps in it (an unlogged day must not look like a bad one).
+        var moodObservations = new List<ReportObservation>();
+        for (var d = 0; d <= 90; d++)
+            if (rng.NextDouble() > 0.25)
+                moodObservations.Add(new ReportObservation(from.AddDays(d), rng.Next(1, 6)));
+
         // Seizures: a handful across the period.
         var seizureDays = new[] { 8, 9, 31, 55, 56, 80 };
         var events = new List<ReportEvent>();
@@ -122,6 +129,7 @@ public static class VetReportSampleData
                 Observations = appetiteObservations,
                 Foods = appetiteFoods
             },
+            Mood = new ReportMood { Observations = moodObservations },
             Events = events,
             Notes = new ReportNote[]
             {

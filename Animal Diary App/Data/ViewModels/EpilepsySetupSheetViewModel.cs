@@ -22,16 +22,24 @@ public class EpilepsySetupSheetViewModel : ConditionSetupSheetViewModel
     }
 
     public override string ConditionId => "epilepsy";
-    public override string TitleText => LocalizationManager.Instance.GetString("CondSetup_EpilepsyTitle");
-    public override string SubtitleText => LocalizationManager.Instance.GetString("CondSetup_EpilepsySub");
+
+    // Doubles as the Seizure tracker's editor. It has no controls — its whole job is to
+    // say why seizures are written down as they happen rather than scheduled — which is
+    // exactly the right answer when someone taps a Seizure row expecting a frequency
+    // picker. Opened that way it neither claims epilepsy nor offers a cadence to break.
+    public override string TitleText => LocalizationManager.Instance.GetString(
+        LinkCondition ? "CondSetup_EpilepsyTitle" : "CondSetup_SeizureTitle");
+    public override string SubtitleText => LocalizationManager.Instance.GetString(
+        LinkCondition ? "CondSetup_EpilepsySub" : "CondSetup_SeizureSub");
 
     /// <summary>The one short explanation of WHY this is a log, not a daily task.</summary>
     public string BodyText => LocalizationManager.Instance.GetString("CondSetup_EpilepsyBody");
 
     protected override Task PersistAsync(int petId) =>
-        Trackers.UpsertAsync(petId, TrackerId.Seizure, t =>
+        Trackers.UpsertAsync(petId, TrackerId.Seizure, (t, isNew) =>
         {
             t.Kind = TrackerKind.Event;
-            t.FromCondition ??= "epilepsy";
+            if (isNew)
+                t.FromCondition = "epilepsy";
         });
 }

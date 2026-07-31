@@ -69,6 +69,28 @@ public static class CarePlanCatalog
         return plan;
     }
 
+    /// <summary>
+    /// The sensible starting shape for a tracker added on its own, with no condition
+    /// behind it — the owner who just wants to keep an eye on water without claiming
+    /// their pet has kidney disease.
+    ///
+    /// Deliberately the SAME cadences the conditions seed above, so a tracker added by
+    /// hand and the same tracker seeded by a condition are indistinguishable once they
+    /// exist. <see cref="Tracker.FromCondition"/> stays null here: that breadcrumb is
+    /// what condition removal keys on, and an owner's own choice must survive dropping
+    /// a condition.
+    /// </summary>
+    public static Tracker DefaultFor(TrackerId id) => id switch
+    {
+        TrackerId.Glucose => Glucose(perDayCount: 3, fromCondition: null),
+        TrackerId.Mood => Simple(TrackerId.Mood, TrackerKind.Daily),
+        TrackerId.Appetite => Simple(TrackerId.Appetite, TrackerKind.Daily),
+        TrackerId.Weight => Simple(TrackerId.Weight, TrackerKind.Weekly),
+        TrackerId.Water => Simple(TrackerId.Water, TrackerKind.Daily),
+        TrackerId.Seizure => Simple(TrackerId.Seizure, TrackerKind.Event),
+        _ => Simple(id, TrackerKind.AsNeeded),
+    };
+
     // ── Factories ─────────────────────────────────────────────────────────────
     private static Tracker Simple(TrackerId id, TrackerKind kind, string? fromCondition = null) => new()
     {

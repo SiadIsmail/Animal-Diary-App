@@ -369,6 +369,11 @@
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 6"
                                         VerticalOptions="Center"/>
+                                <!-- The recorded mood's own face. The swatch stays: it
+                                     ties this card to the ribbon's colour legend below. -->
+                                <Label Text="{Binding MainPageVM.LatestMoodEmoji}"
+                                       FontSize="17"
+                                       VerticalOptions="Center"/>
                                 <Label Text="{Binding MainPageVM.LatestMoodLabel}"
                                        FontFamily="{StaticResource FontSerif}"
                                        FontSize="20"

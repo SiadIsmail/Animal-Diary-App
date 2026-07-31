@@ -202,22 +202,86 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
         FilteredMedications.Clear();
         foreach (var medication in visible)
         {
-            var distinctTimes = schedulesByMed[medication.Id].Select(s => s.Time).Distinct().OrderBy(t => t).ToList();
-            var timesPerDay = distinctTimes.Count;
+            // Both dimensions of the schedule, not just the times — see DescribeFrequency.
+            var rows = schedulesByMed[medication.Id].ToList();
+            var distinctTimes = rows.Select(s => s.Time).Distinct().OrderBy(t => t).ToList();
+            var distinctDays = rows.Select(s => s.Day).Distinct().ToList();
+
             FilteredMedications.Add(new FilteredMedication
             {
                 Id = medication.Id,
                 Name = medication.Name,
                 PetName = pet?.Name ?? LocalizationManager.Instance.GetString("Med_Unknown"),
                 DoseDisplay = $"{medication.Dosage} {medication.Unit}",
-                FrequencyDisplay = timesPerDay <= 1
-                    ? LocalizationManager.Instance.GetString("Med_OnceDaily")
-                    : LocalizationManager.Instance.Format("Med_TimesDaily", timesPerDay),
-                TimesDisplay = string.Join(" · ", distinctTimes.Select(t => t.ToString(@"hh\:mm"))),
+                // rows.Count is the exact number of doses in a week — one row per
+                // (day × time) — so the weekly wording never has to assume the
+                // editor's rectangular shape.
+                FrequencyDisplay = DescribeFrequency(distinctDays.Count, distinctTimes.Count, rows.Count),
+                TimesDisplay = DescribeTimes(distinctDays, distinctTimes),
                 Note = medication.Notes
             });
         }
     }
+
+    /// <summary>
+    /// The cadence tag. Reads BOTH dimensions of the schedule: a medication is stored
+    /// as one row per (day × time), so a Mondays-only dose and an every-day dose both
+    /// have exactly one distinct time. Describing the cadence from the times alone
+    /// therefore labelled every weekly medication "once daily" — and a Mon+Wed dose at
+    /// two times "2× daily" when it is 4× a week.
+    /// </summary>
+    private static string DescribeFrequency(int daysPerWeek, int timesPerDay, int dosesPerWeek)
+    {
+        var loc = LocalizationManager.Instance;
+
+        // Defensive: the editor requires at least one day and one time, but synced or
+        // legacy rows could arrive without either, and "once daily" would be a lie.
+        if (daysPerWeek == 0 || timesPerDay == 0)
+            return loc.GetString("Med_NoSchedule");
+
+        if (daysPerWeek >= 7)
+            return timesPerDay <= 1
+                ? loc.GetString("Med_OnceDaily")
+                : loc.Format("Med_TimesDaily", timesPerDay);
+
+        // Counted, not multiplied: days × times is only right for the rectangular
+        // schedules the editor writes, and would overstate a row set that isn't
+        // (e.g. Monday morning plus Wednesday evening is 2 a week, not 4).
+        return dosesPerWeek <= 1
+            ? loc.GetString("Med_OnceWeekly")
+            : loc.Format("Med_TimesWeekly", dosesPerWeek);
+    }
+
+    /// <summary>
+    /// The "when" tag: which days, then the times of day. Days are omitted when it's
+    /// every day, because the cadence tag beside it already says "daily" — otherwise
+    /// "4× a week" leaves the owner with no way to know WHICH days.
+    /// </summary>
+    private static string DescribeTimes(IReadOnlyCollection<DayOfWeek> days, IReadOnlyCollection<TimeSpan> times)
+    {
+        var loc = LocalizationManager.Instance;
+        var clock = string.Join(" · ", times.Select(t => t.ToString(@"hh\:mm")));
+
+        if (days.Count == 0 || days.Count >= 7)
+            return clock;
+
+        var names = string.Join(", ", days
+            .OrderBy(d => ((int)d + 6) % 7) // Monday-first, matching the day picker
+            .Select(d => loc.GetString(DayResourceKey(d))));
+
+        return string.IsNullOrEmpty(clock) ? names : $"{names} · {clock}";
+    }
+
+    private static string DayResourceKey(DayOfWeek day) => day switch
+    {
+        DayOfWeek.Monday => "Day_Mon",
+        DayOfWeek.Tuesday => "Day_Tue",
+        DayOfWeek.Wednesday => "Day_Wed",
+        DayOfWeek.Thursday => "Day_Thu",
+        DayOfWeek.Friday => "Day_Fri",
+        DayOfWeek.Saturday => "Day_Sat",
+        _ => "Day_Sun",
+    };
 
     /// <summary>
     /// Archive (or restore) a medication. Archiving cancels its reminders;

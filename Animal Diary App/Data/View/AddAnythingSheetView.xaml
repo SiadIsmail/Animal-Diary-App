@@ -5,6 +5,7 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
              x:DataType="vms:JournalLogViewModel"
              x:Class="Animal_Diary_App.Data.View.AddAnythingSheetView"
@@ -21,35 +22,92 @@
                  RecyclerView wouldn't render inside this auto-sized sheet until scrolled.
                  Safe here because FelovaBottomSheet keeps its body realised while hidden
                  (translated off-screen, never IsVisible=false). -->
-            <VerticalStackLayout Spacing="9" Padding="0,2,0,2"
-                                 BindableLayout.ItemsSource="{Binding AddOptions}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="vms:AddOption">
-                        <Border BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}"
-                                StrokeThickness="1"
-                                StrokeShape="RoundRectangle 16,13,15,14"
-                                Padding="13,13">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding Source={x:Reference Root}, Path=BindingContext.SelectAddOptionCommand}"
-                                    CommandParameter="{Binding .}"/>
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="36,*" ColumnSpacing="13">
-                                <Border Grid.Column="0" WidthRequest="36" HeightRequest="36"
-                                        BackgroundColor="{StaticResource TealTint}"
-                                        StrokeThickness="0" StrokeShape="RoundRectangle 12"
-                                        VerticalOptions="Center">
-                                    <Label Text="{Binding Icon}" FontSize="18"
-                                           HorizontalOptions="Center" VerticalOptions="Center"/>
-                                </Border>
-                                <Label Grid.Column="1" Text="{Binding Label}"
-                                       FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
+            <VerticalStackLayout Spacing="9" Padding="0,2,0,2">
+
+                <!-- In this pet's care plan. -->
+                <VerticalStackLayout Spacing="9"
+                                     BindableLayout.ItemsSource="{Binding AddOptions}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:AddOption">
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 16,13,15,14"
+                                    Padding="13,13">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={x:Reference Root}, Path=BindingContext.SelectAddOptionCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="36,*" ColumnSpacing="13">
+                                    <Border Grid.Column="0" WidthRequest="36" HeightRequest="36"
+                                            BackgroundColor="{StaticResource TealTint}"
+                                            StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                            VerticalOptions="Center">
+                                        <Label Text="{Binding Icon}" FontSize="18"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                    <Label Grid.Column="1" Text="{Binding Label}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <!-- Everything else the app can record. Same rows, quieter tint, so the
+                     plan still reads as the pet's own routine. Hidden entirely once a
+                     plan covers everything. -->
+                <VerticalStackLayout Spacing="6" Margin="0,6,0,0"
+                                     IsVisible="{Binding HasMoreOptions}">
+                    <Label Text="{loc:Translate Journal_MoreToLog}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="11"
+                           FontAttributes="Bold"
+                           CharacterSpacing="1.2"
+                           TextColor="{StaticResource InkTertiary}"/>
+                    <!-- Says where the permanent version of this lives, so the one-off
+                         log doesn't have to double as a commitment. -->
+                    <Label Text="{loc:Translate Journal_MoreToLogHint}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12"
+                           LineHeight="1.35"
+                           TextColor="{StaticResource InkSecondary}"
+                           Margin="0,0,0,3"/>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="9"
+                                     BindableLayout.ItemsSource="{Binding MoreOptions}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:AddOption">
+                            <Border BackgroundColor="{StaticResource GlassSoft}"
+                                    Stroke="{StaticResource GlassLine}"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 16,13,15,14"
+                                    Padding="13,13">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={x:Reference Root}, Path=BindingContext.SelectAddOptionCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="36,*" ColumnSpacing="13">
+                                    <Border Grid.Column="0" WidthRequest="36" HeightRequest="36"
+                                            BackgroundColor="{StaticResource Well}"
+                                            StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                                            VerticalOptions="Center">
+                                        <Label Text="{Binding Icon}" FontSize="18"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                    <Label Grid.Column="1" Text="{Binding Label}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource InkSecondary}" VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
             </VerticalStackLayout>
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>

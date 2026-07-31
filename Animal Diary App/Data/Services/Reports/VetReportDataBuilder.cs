@@ -55,7 +55,8 @@ public class VetReportDataBuilder
         bool includeWaterMeasured = true,
         bool includeWaterObservations = true,
         bool includeAppetiteMeasured = true,
-        bool includeAppetiteObservations = true)
+        bool includeAppetiteObservations = true,
+        bool includeMood = true)
     {
         from = from.Date;
         to = to.Date;
@@ -87,6 +88,7 @@ public class VetReportDataBuilder
             Trends = await BuildTrendsAsync(petId, weightPoints, glucoseEntries, events, from, to),
             Water = await BuildWaterAsync(petId, from, to, includeWaterMeasured, includeWaterObservations),
             Appetite = await BuildAppetiteAsync(petId, appetiteEntries, from, to, includeAppetiteMeasured, includeAppetiteObservations),
+            Mood = includeMood ? BuildMood(petEntries) : new ReportMood(),
             Events = events,
             // Only notes the owner explicitly opted into appear here; every other
             // note stays stored but private. Legacy entries default to false.
@@ -182,6 +184,21 @@ public class VetReportDataBuilder
         return result;
     }
 
+    /// <summary>
+    /// The day's mood readings as qualitative observations. The stored level is 1–5
+    /// (see <c>MoodLevel</c>) which is exactly what <see cref="ReportObservation"/>
+    /// wants: a row index, never a value to be averaged or trended. Days with no mood
+    /// recorded are absent rather than zero — a gap is a gap, not a bad day.
+    /// </summary>
+    private static ReportMood BuildMood(IReadOnlyList<PetEntry> petEntries) => new()
+    {
+        Observations = petEntries
+            .Where(e => e.MoodLevel > 0)
+            .OrderBy(e => e.Date)
+            .Select(e => new ReportObservation(e.Date, e.MoodLevel))
+            .ToList()
+    };
+
     private async Task<List<ReportSeries>> BuildTrendsAsync(
         int petId,
         List<ReportPoint> weightPoints,
@@ -192,10 +209,14 @@ public class VetReportDataBuilder
     {
         var trends = new List<ReportSeries>();
 
-        if (weightPoints.Count >= 2)
+        // One reading is enough to be worth stating. It can't be plotted — a one-point
+        // line says nothing — so TrendsSection prints it as a dated value instead. The
+        // old >= 2 threshold dropped it entirely, which is how an owner with a single
+        // weigh-in was told nothing had been written down.
+        if (weightPoints.Count >= 1)
             trends.Add(new ReportSeries { Label = "Weight", Unit = "kg", Points = weightPoints });
 
-        if (glucoseEntries.Count >= 2)
+        if (glucoseEntries.Count >= 1)
         {
             // The unit lives on the pet's glucose tracker ("mmol/L" today).
             var tracker = await _trackers.GetByTrackerIdAsync(petId, TrackerId.Glucose);

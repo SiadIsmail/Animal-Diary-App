@@ -39,6 +39,10 @@ public sealed class VetReportData
     /// list — see <see cref="ReportAppetite"/>. Never merged or interpreted.</summary>
     public ReportAppetite Appetite { get; init; } = new();
 
+    /// <summary>The owner's daily read on how the pet seemed — qualitative only, in the
+    /// same shape as the water/appetite observations. See <see cref="ReportMood"/>.</summary>
+    public ReportMood Mood { get; init; } = new();
+
     /// <summary>Notable dated occurrences (seizures, vomiting, very low appetite),
     /// newest first.</summary>
     public IReadOnlyList<ReportEvent> Events { get; init; } = Array.Empty<ReportEvent>();
@@ -52,7 +56,24 @@ public sealed class VetReportData
     /// master data. Used to refuse generating an empty document.</summary>
     public bool HasAnyData =>
         Medications.Count > 0 || Trends.Count > 0 || Water.HasContent || Appetite.HasContent
-        || Events.Count > 0 || Notes.Count > 0;
+        || Mood.HasContent || Events.Count > 0 || Notes.Count > 0;
+}
+
+/// <summary>
+/// The owner's daily read on how their pet seemed. Purely qualitative, and held the
+/// same way as water and appetite OBSERVATIONS — never a number, never averaged,
+/// never trended. The level only picks which labelled row the dot sits on.
+///
+/// Mood is one of the two trackers every pet gets by default, so leaving it out of
+/// the report meant an owner who logged faithfully every day was still told nothing
+/// had been written down. It earns a place here on the same grounds as appetite
+/// observations: subjective, but it is what a vet asks about first.
+/// </summary>
+public sealed class ReportMood
+{
+    public IReadOnlyList<ReportObservation> Observations { get; init; } = Array.Empty<ReportObservation>();
+
+    public bool HasContent => Observations.Count > 0;
 }
 
 /// <summary>

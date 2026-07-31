@@ -282,6 +282,11 @@ public class MainPageViewModel : BaseViewModel
     /// same accepted convention TimelineItem uses.</summary>
     public Color LatestMoodColor => latestMood.GetColor();
 
+    /// <summary>Face for the latest mood, empty when none has been recorded. Shown only
+    /// where a real reading exists — the "still to do" card keeps a neutral icon, since
+    /// nothing has been chosen there yet.</summary>
+    public string LatestMoodEmoji => HasLoggedMood ? latestMood.GetEmoji() : string.Empty;
+
     /// <summary>"Logged today" / "Logged yesterday" / "Logged 5 days ago" for the most
     /// recent mood.</summary>
     public string LatestMoodLoggedLabel => RelativeLoggedLabel(latestMoodDate);
@@ -298,6 +303,7 @@ public class MainPageViewModel : BaseViewModel
         OnPropertyChanged(nameof(HasLoggedMood));
         OnPropertyChanged(nameof(LatestMoodLabel));
         OnPropertyChanged(nameof(LatestMoodColor));
+        OnPropertyChanged(nameof(LatestMoodEmoji));
         OnPropertyChanged(nameof(LatestMoodLoggedLabel));
     }
 
