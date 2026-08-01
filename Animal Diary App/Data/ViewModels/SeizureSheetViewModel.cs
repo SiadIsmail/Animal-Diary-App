@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -8,7 +8,7 @@ using Animal_Diary_App.Helpers;
 /// <summary>
 /// Backs the Journal's seizure sheet — a time picker plus two optional fields
 /// (duration in minutes and a note), in the shared
-/// <see cref="Controls.FelovaBottomSheet"/>. Seizures are an Event tracker: logged
+/// <c>FelovaBottomSheet</c>. Seizures are an Event tracker: logged
 /// as they happen from the "+" sheet, one <see cref="SeizureEntry"/> per occurrence
 /// (never upserted). Mirrors <see cref="AppetiteSheetViewModel"/>; Save's undo
 /// removes the just-logged occurrence.

@@ -6,9 +6,15 @@ using Animal_Diary_App.Data.Services.Notifications;
 
 /// <summary>
 /// The "delete all data" path. Invariant: this must wipe EVERY table created in
-/// <c>AppDatabase.InitAsync</c> (add new tables here in the same commit), cancel
-/// every notification armed with the OS, and clear persisted scheduler state —
-/// health data is medical data, and nothing may survive a reset the user asked for.
+/// <c>AppDatabase.InitAsync</c>, cancel every notification armed with the OS, and
+/// clear persisted scheduler state — health data is medical data, and nothing may
+/// survive a reset the user asked for.
+///
+/// <para>The table half of that invariant is now structural: both this method and
+/// <c>AppDatabase</c> iterate <see cref="SyncedTables.Everything"/>, so they cannot
+/// disagree about what exists. What still needs care is everything that is
+/// <b>not</b> a table — files on disk, <c>Preferences</c> keys, in-memory caches —
+/// which is what the rest of this method is.</para>
 /// </summary>
 public class AppResetService
 {
@@ -34,22 +40,11 @@ public class AppResetService
         // 14 days, naming the deleted pet and medication.
         await _notifications.CancelAllNotifications();
 
-        await _db.Connection.DeleteAllAsync<Pet>();
-        await _db.Connection.DeleteAllAsync<PetEntry>();
-        await _db.Connection.DeleteAllAsync<Medication>();
-        await _db.Connection.DeleteAllAsync<AppSettings>();
-        await _db.Connection.DeleteAllAsync<MedicationSchedule>();
-        await _db.Connection.DeleteAllAsync<ReminderInstance>();
-        await _db.Connection.DeleteAllAsync<MedicationDoseLog>();
-        await _db.Connection.DeleteAllAsync<Tracker>();
-        await _db.Connection.DeleteAllAsync<PetCondition>();
-        await _db.Connection.DeleteAllAsync<GlucoseEntry>();
-        await _db.Connection.DeleteAllAsync<AppetiteEntry>();
-        await _db.Connection.DeleteAllAsync<AppetiteAmountEntry>();
-        await _db.Connection.DeleteAllAsync<SeizureEntry>();
-        await _db.Connection.DeleteAllAsync<WaterAmountEntry>();
-        await _db.Connection.DeleteAllAsync<WaterLevelEntry>();
-        await _db.Connection.DeleteAllAsync<SyncState>();
+        // Every table the app creates, from the one registry — including the
+        // device-local ones. A new table is a line in SyncedTables, never an edit
+        // here, which is what makes "a reset wipes everything" hold by construction.
+        foreach (var table in SyncedTables.Everything)
+            await table.DeleteEveryRowAsync(_db.Connection);
 
         // Reports are files + rows; the library wipes both (health data is medical
         // data — a reset must not leave PDFs behind in app storage).

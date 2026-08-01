@@ -1,9 +1,21 @@
 # Monetization — Free Trial + RevenueCat Subscription
 
-> Status: **proposal / plan** — nothing in this document is built yet.
-> Scope: a time-limited free trial that, on expiry, puts the app into a
-> **care-only read state** until the user subscribes through RevenueCat. Owner
-> decisions recorded 2026-07-25.
+> Status: **BUILT.** This is the original design document, kept as the record of
+> *why* the billing layer has the shape it has. It is **not** a description of the
+> current implementation — for that see [AI/architecture.md](../../AI/architecture.md) §6,
+> [AI/domain.md](../../AI/domain.md) (the access rules) and `Data/Services/Billing/`.
+>
+> Shipped: the app-side trial (`TrialService`), the composed gate
+> (`EntitlementService.HasFullAccess` / `CanEditPet`), the RevenueCat store seam
+> (`RevenueCatStoreBilling`), the subscribe + trial-message surfaces, and sponsored
+> caregivers (migration 0010 + the `revenuecat-webhook` edge function). Live config
+> is in `BillingConfig` — **it, not this document, is the source of truth for trial
+> length and entitlement ids.** The post-build review is in
+> [BILLING_AUDIT.md](BILLING_AUDIT.md).
+>
+> Scope as originally written: a time-limited free trial that, on expiry, puts the
+> app into a **care-only read state** until the user subscribes through RevenueCat.
+> Owner decisions recorded 2026-07-25.
 >
 > **This supersedes [CLOUD_SYNC_PLAN.md](CLOUD_SYNC_PLAN.md) §9**, which recorded
 > "there is no premium tier today… zero billing code, zero trial timers, zero
@@ -16,7 +28,7 @@
 ## 1. Philosophy (read first — it governs every other section)
 
 Felova is a safety net for a sick animal's medication routine. The README and
-[AI/app-voice.md](AI/app-voice.md) build the whole product around one promise:
+[AI/app-voice.md](../../AI/app-voice.md) build the whole product around one promise:
 the owner can go to bed knowing the 8pm dose happened, and walk into the vet with
 an answer instead of a guess. **Monetization is not allowed to break that
 promise.** A paywall that stops someone recording an insulin dose, or silences a
@@ -377,7 +389,7 @@ plural rule before wider release.
 ## Sponsored caregivers (2026-07-29)
 
 A pet owner with an active subscription **or a live trial** now covers everyone caring for
-their pets. Implemented; Windows build clean, 73 unit tests pass.
+their pets. Implemented; Windows build clean, unit tests green.
 
 **The rule:** `CanEditPet = my own access OR (I am a caregiver on this pet AND its owner
 has access)`. Sponsorship never covers a pet you own.

@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Cloud;
+﻿namespace Animal_Diary_App.Data.Services.Cloud;
 
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -97,9 +97,9 @@ public sealed class CloudAuthService : ICloudAuthService
             {
                 try
                 {
-                    var doc = await _http.AuthPostAsync("token?grant_type=refresh_token",
+                    var doc = await _http.AuthPostRequiredAsync("token?grant_type=refresh_token",
                         new { refresh_token = _session.RefreshToken });
-                    _session = ParseSession(doc!);
+                    _session = ParseSession(doc);
                     await _session.SaveAsync();
                     CloudDiagnostics.Record($"[Cloud] session refreshed (forced={forceRefresh}); next expiry {_session.ExpiresAtUtc:HH:mm:ss}Z");
                 }
@@ -143,16 +143,16 @@ public sealed class CloudAuthService : ICloudAuthService
 
     public async Task VerifySignUpAsync(string email, string code)
     {
-        var doc = await _http.AuthPostAsync("verify", new { type = "signup", email, token = code });
-        await StoreSessionAsync(ParseSession(doc!));
+        var doc = await _http.AuthPostRequiredAsync("verify", new { type = "signup", email, token = code });
+        await StoreSessionAsync(ParseSession(doc));
         // Account creation completed — the funnel's bottom. No email/id attached.
         _analytics.Track(AnalyticsEvents.SignUpVerified);
     }
 
     public async Task SignInAsync(string email, string password)
     {
-        var doc = await _http.AuthPostAsync("token?grant_type=password", new { email, password });
-        await StoreSessionAsync(ParseSession(doc!));
+        var doc = await _http.AuthPostRequiredAsync("token?grant_type=password", new { email, password });
+        await StoreSessionAsync(ParseSession(doc));
         _analytics.Track(AnalyticsEvents.SignIn);
     }
 
@@ -207,13 +207,17 @@ public sealed class CloudAuthService : ICloudAuthService
         CloudDiagnostics.Record("[Cloud] Google sign-in: code received, exchanging");
 
         // Exchange the code for a real session (same token shape as password grant).
-        var doc = await _http.AuthPostAsync("token?grant_type=pkce",
+        var doc = await _http.AuthPostRequiredAsync("token?grant_type=pkce",
             new { auth_code = code, code_verifier = verifier });
-        await StoreSessionAsync(ParseSession(doc!));
+        await StoreSessionAsync(ParseSession(doc));
         // Browser/PKCE flows can silently drop (see the TaskCanceledException note above),
         // so measuring successful completions matters. The event carries no identity.
         _analytics.Track(AnalyticsEvents.GoogleSignIn);
-        CloudDiagnostics.Record($"[Cloud] Google sign-in: SUCCESS ({_session?.Email}); expiry {_session?.ExpiresAtUtc:HH:mm:ss}Z");
+        // No email here. CloudDiagnostics is a copyable buffer the dev panel shows and
+        // people paste into support threads, and it promises coarse technical detail
+        // only — the fact of a successful sign-in and the expiry are what debugging a
+        // dropped browser flow needs; who signed in is not.
+        CloudDiagnostics.Record($"[Cloud] Google sign-in: SUCCESS; expiry {_session?.ExpiresAtUtc:HH:mm:ss}Z");
     }
 
     private static string CreateCodeVerifier() => Base64Url(RandomNumberGenerator.GetBytes(64));
@@ -245,8 +249,8 @@ public sealed class CloudAuthService : ICloudAuthService
 
     public async Task VerifyPasswordResetAsync(string email, string code, string newPassword)
     {
-        var doc = await _http.AuthPostAsync("verify", new { type = "recovery", email, token = code });
-        var session = ParseSession(doc!);
+        var doc = await _http.AuthPostRequiredAsync("verify", new { type = "recovery", email, token = code });
+        var session = ParseSession(doc);
         await _http.AuthPutUserAsync(new { password = newPassword }, session.AccessToken);
         await StoreSessionAsync(session);
     }

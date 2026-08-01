@@ -27,7 +27,7 @@ strictly opt-in: nothing leaves the device until the owner creates an account
 
 | Layer | Choice |
 |---|---|
-| UI | .NET MAUI 9 (XAML), MVVM, Microsoft DI |
+| UI | .NET MAUI 10 (XAML), MVVM, Microsoft DI |
 | Local data | SQLite (`sqlite-net-pcl`) — the on-device source of truth |
 | Reminders | `Plugin.LocalNotification`, bounded materialized occurrences |
 | PDF | QuestPDF **pinned to 2023.12.6** (last Android-compatible release — do not upgrade) |
@@ -37,16 +37,18 @@ strictly opt-in: nothing leaves the device until the owner creates an account
 ## Architecture in one paragraph
 
 UI binds to ViewModels, ViewModels call services, services own SQLite and the
-device APIs — nothing above a service touches the database. Five service
-subsystems: **Data** (repositories), **Notifications** (schedules expanded into
-bounded concrete reminder instances), **Journal** (care plan + pure pending
-engine + typed entry stores), **Reports** (three-layer vet PDF with no MAUI
-dependency in the document layer), and **Cloud** (an optional sync layer behind
+device APIs — nothing above a service touches the database. Services are grouped
+into subsystems, each behind its own folder and — where it talks to the outside
+world — its own interface: **Data** (repositories), **Notifications** (schedules
+expanded into bounded concrete reminder instances), **Journal** (care plan + pure
+pending engine + typed entry stores), **Reports** (three-layer vet PDF with no MAUI
+dependency in the document layer), **Billing** (the trial + entitlement gate),
+**Analytics** (anonymous product telemetry), and **Cloud** (an optional sync layer behind
 `ICloudSyncService`; when disabled, a null implementation is registered and the
 app carries zero cloud behaviour). Sync is pull→apply→push against Postgres
 with client-generated GUID identities, soft-delete tombstones, and
 last-write-wins conflict resolution; the cloud design is documented in
-[CLOUD_SYNC_PLAN.md](CLOUD_SYNC_PLAN.md).
+[docs/history/CLOUD_SYNC_PLAN.md](docs/history/CLOUD_SYNC_PLAN.md).
 
 ## Getting started
 

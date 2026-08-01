@@ -479,8 +479,8 @@ public class ManagePetViewModel : BaseViewModel
             TrackerId = t.TrackerId,
             FromCondition = from,
             Icon = icon,
-            IconBackground = Color.FromArgb(bg),
-            IconForeground = Color.FromArgb(fg),
+            IconBackground = bg,
+            IconForeground = fg,
             Title = Loc.GetString(LabelKey(t.TrackerId)),
             Description = Describe(t),
             FromLabel = string.IsNullOrEmpty(from) ? string.Empty : ConditionCatalog.GetCondition(from).Name
@@ -920,26 +920,13 @@ public class ManagePetViewModel : BaseViewModel
                 _ => "Manage_Event"
             });
 
-    private static string LabelKey(TrackerId id) => id switch
-    {
-        TrackerId.Glucose => "Journal_GlucoseCheck",
-        TrackerId.Mood => "Journal_MoodTitle",
-        TrackerId.Appetite => "Journal_Appetite",
-        TrackerId.Weight => "Journal_WeighIn",
-        TrackerId.Water => "Journal_Water",
-        TrackerId.Seizure => "Journal_Seizure",
-        _ => "Journal_MoodTitle"
-    };
+    private static string LabelKey(TrackerId id) => TrackerVisuals.For(id).LabelKey;
 
-    // Rockpool icon + tint/deep per tracker (hex literals, per the app's convention).
-    private static (string icon, string bg, string fg) Visual(TrackerId id) => id switch
+    // Rockpool icon + row tint/ink per tracker, from the shared TrackerVisuals table
+    // and resolved against Colors.xaml — never hex literals, which no theme can reach.
+    private static (string icon, Color bg, Color fg) Visual(TrackerId id)
     {
-        TrackerId.Glucose => ("🩸", "#24BE5F76", "#8C3B50"),
-        TrackerId.Mood => ("🙂", "#21149081", "#0C6A5D"),
-        TrackerId.Appetite => ("🍽️", "#29D9973C", "#8A5D14"),
-        TrackerId.Weight => ("⚖️", "#243E8FB0", "#2A6E8C"),
-        TrackerId.Water => ("💧", "#243E8FB0", "#2A6E8C"),
-        TrackerId.Seizure => ("⚡", "#267B6BAE", "#584A8A"),
-        _ => ("•", "#57FFFFFF", "#0D3A3C")
-    };
+        var v = TrackerVisuals.For(id);
+        return (v.Icon, AppColors.Resolve(v.RowTintKey), AppColors.Resolve(v.RowInkKey));
+    }
 }

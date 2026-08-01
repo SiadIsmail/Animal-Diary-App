@@ -5,6 +5,7 @@ using System.Text.Json;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Notifications;
+using Animal_Diary_App.Helpers;
 
 public enum SyncOutcome
 {
@@ -164,14 +165,25 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     private readonly IReadOnlyList<ITableSync> _tables = SyncTableMaps.Build();
 
     // One run at a time; a request during a run coalesces into one follow-up run.
+    // _runQueued is written by callers that lost the gate and read by the holder, so it
+    // crosses threads without the gate protecting it — volatile, or a coalesced request
+    // can be dropped and its write sits unsynced until the next trigger.
     private readonly SemaphoreSlim _runGate = new(1, 1);
-    private bool _runQueued;
+    private volatile bool _runQueued;
+
+    // The open debounce window, or null when none is pending. Guarded by _debounceGate
+    // because RowTouched fires from whatever thread performed the write.
+    private readonly object _debounceGate = new();
     private CancellationTokenSource? _debounce;
 
     private bool _enabled;
-    private bool _foreground = true;
+    private volatile bool _foreground = true;
     private DateTime? _lastSynced;
-    private Dictionary<string, string> _petRoles = new();
+
+    // Swapped whole from the sync thread, read from the UI thread (GetPetRole feeds
+    // PetDeletionService.DetermineKind — owner-deletes-for-everyone vs caregiver-leaves).
+    // Same treatment as _petAccess below, for the same reason.
+    private volatile Dictionary<string, string> _petRoles = new();
 
     // Sponsorship cache (pet SyncId → role + whether that pet's owner had access when we
     // last asked). Read synchronously by the billing gate on the UI thread, rewritten by
@@ -282,8 +294,20 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     {
         if (!_enabled || !_auth.IsSignedIn)
             return;
-        _debounce?.Cancel();
-        var cts = _debounce = new CancellationTokenSource();
+
+        // A window is already open — let it run out rather than restarting it. This is
+        // called from SyncStamp.RowTouched, i.e. once per stamped row, so deleting a pet
+        // with a year of history used to cancel and re-create thousands of token sources
+        // and delay tasks in a tight loop. Coalescing on the existing window costs at
+        // most Debounce of extra latency and allocates nothing.
+        CancellationTokenSource cts;
+        lock (_debounceGate)
+        {
+            if (_debounce != null)
+                return;
+            cts = _debounce = new CancellationTokenSource();
+        }
+
         Task.Run(async () =>
         {
             try
@@ -291,9 +315,19 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
                 await Task.Delay(Debounce, cts.Token);
                 await SyncNowAsync();
             }
-            catch (TaskCanceledException) { /* superseded by a newer write */ }
+            catch (OperationCanceledException) { /* cancelled on teardown */ }
             catch (Exception ex) { Debug.WriteLine($"[Cloud] debounced sync failed: {ex.Message}"); }
-        });
+            finally
+            {
+                // Reopen the window so the next write starts a fresh one.
+                lock (_debounceGate)
+                {
+                    if (ReferenceEquals(_debounce, cts))
+                        _debounce = null;
+                }
+                cts.Dispose();
+            }
+        }).Forget();
     }
 
     public async Task<SyncOutcome> SyncNowAsync()
@@ -324,7 +358,12 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         }
     }
 
-    private async Task<SyncOutcome> RunOnceAsync()
+    /// <param name="retriedAfterRefresh">Set on the one retry a forced token refresh
+    /// earns. It is a hard stop, not a counter: the refresh can keep succeeding while
+    /// the data call keeps returning 401 (a revoked role, a skewed clock, or a plain
+    /// 401 that <c>CloudHttp.Classify</c> buckets as AuthExpired), and without this the
+    /// method recursed forever — unbounded requests and stack growth on a phone.</param>
+    private async Task<SyncOutcome> RunOnceAsync(bool retriedAfterRefresh = false)
     {
         var session = await _auth.GetSessionAsync();
         if (session == null)
@@ -386,11 +425,14 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         }
         catch (CloudException ex) when (ex.Kind == CloudErrorKind.AuthExpired)
         {
-            // One forced refresh; if the session is truly dead GetSessionAsync
+            // Exactly one forced refresh; if the session is truly dead GetSessionAsync
             // clears it and the UI hears SessionChanged.
-            if (await _auth.GetSessionAsync(forceRefresh: true) != null)
-                return await RunOnceAsync();
-            CloudDiagnostics.Record("[Cloud] sync: auth expired, session could not be refreshed");
+            if (!retriedAfterRefresh && await _auth.GetSessionAsync(forceRefresh: true) != null)
+                return await RunOnceAsync(retriedAfterRefresh: true);
+
+            CloudDiagnostics.Record(retriedAfterRefresh
+                ? "[Cloud] sync: auth expired again immediately after a successful refresh — giving up this cycle"
+                : "[Cloud] sync: auth expired, session could not be refreshed");
             return SyncOutcome.AuthExpired;
         }
         catch (Exception ex)
@@ -450,11 +492,11 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         // this same response already reflects it.
         await ReconcileTrialAnchorAsync(session);
 
-        var doc = await _http.RpcAsync("list_my_pet_access", new { }, session.AccessToken);
+        var doc = await _http.RpcRequiredAsync("list_my_pet_access", new { }, session.AccessToken);
         var roles = new Dictionary<string, string>();
         var access = new Dictionary<string, PetAccessRow>();
         var now = DateTime.UtcNow;
-        foreach (var el in doc!.RootElement.EnumerateArray())
+        foreach (var el in doc.RootElement.EnumerateArray())
         {
             var petId = CloudJson.GetString(el, "pet_id");
             var role = CloudJson.GetString(el, "member_role");
@@ -525,22 +567,15 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         var meds = await _db.Connection.QueryAsync<Medication>(
             "select * from \"Medication\" where PetId = ?", pet.Id);
 
+        // Children before parents, straight off the registry — MedicationSchedule's
+        // predicate is a subquery over Medication, so it must run while those rows
+        // still exist, which InDeletionOrder guarantees. Hard deletes, not tombstones:
+        // this removal is local-only and must never propagate (see PetDeletionService
+        // for the delete that does).
         await _db.Connection.RunInTransactionAsync(conn =>
         {
-            foreach (var med in meds)
-                conn.Execute("delete from \"MedicationSchedule\" where MedicationId = ?", med.Id);
-            conn.Execute("delete from \"MedicationDoseLog\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"Medication\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"PetEntry\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"Tracker\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"PetCondition\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"GlucoseEntry\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"AppetiteEntry\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"AppetiteAmountEntry\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"SeizureEntry\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"WaterAmountEntry\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"WaterLevelEntry\" where PetId = ?", pet.Id);
-            conn.Execute("delete from \"Pet\" where Id = ?", pet.Id);
+            foreach (var table in SyncedTables.InDeletionOrder)
+                conn.Execute($"delete from \"{table.LocalTable}\" where {table.PetPredicate}", pet.Id);
         });
 
         // The med rows are gone, so the idempotent sync takes its cancel path
@@ -572,8 +607,8 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         {
             var path = $"{table.CloudTable}?select=*&order=updated_at.asc,id.asc" +
                        $"&updated_at=gt.{Uri.EscapeDataString(cursor)}&limit={PullPageSize}";
-            var doc = await _http.RestGetAsync(path, session.AccessToken);
-            var rows = doc!.RootElement;
+            var doc = await _http.RestGetRequiredAsync(path, session.AccessToken);
+            var rows = doc.RootElement;
             var count = rows.GetArrayLength();
             if (count == 0)
                 return applied;
@@ -593,7 +628,9 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         var pending = await table.CollectDirtyAsync(ctx);
         for (int i = 0; i < pending.Count; i += PushBatchSize)
         {
-            var batch = pending.Skip(i).Take(PushBatchSize).ToList();
+            // GetRange, not Skip().Take() — the latter re-walks the list from the head
+            // on every batch, which is quadratic across a first full backup.
+            var batch = pending.GetRange(i, Math.Min(PushBatchSize, pending.Count - i));
             await _http.RpcAsync("push_rows", new
             {
                 p_table = table.CloudTable,
@@ -763,7 +800,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     /// <summary>Queue every active row for upload (tombstones stay local noise).</summary>
     private async Task MarkAllDirtyAsync()
     {
-        foreach (var t in LocalTableNames)
+        foreach (var t in SyncedTables.LocalTableNames)
             await _db.Connection.ExecuteAsync($"update \"{t}\" set IsDirty = 1 where IsDeleted = 0");
     }
 
@@ -774,7 +811,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     {
         await _db.Connection.RunInTransactionAsync(conn =>
         {
-            foreach (var t in LocalTableNames)
+            foreach (var t in SyncedTables.LocalTableNames)
             {
                 conn.Execute($"update \"{t}\" set IsDirty = 0 where IsDeleted = 1");
                 var ids = conn.QueryScalars<int>($"select Id from \"{t}\" where IsDeleted = 0");
@@ -787,11 +824,4 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
             await _state.RemoveAsync(KeyCursorPrefix + table.CloudTable);
         await _state.RemoveAsync(KeyFirstBackupDone);
     }
-
-    private static readonly string[] LocalTableNames =
-    {
-        "Pet", "PetEntry", "Medication", "MedicationSchedule", "MedicationDoseLog",
-        "Tracker", "PetCondition", "GlucoseEntry", "AppetiteEntry", "AppetiteAmountEntry",
-        "SeizureEntry", "WaterAmountEntry", "WaterLevelEntry"
-    };
 }

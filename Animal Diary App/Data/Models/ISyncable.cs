@@ -1,8 +1,8 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 /// <summary>
 /// The four sync-tracking columns carried by every entity that will reach the
-/// cloud (see CLOUD_SYNC_PLAN.md). Local <c>int Id</c> stays the primary key and
+/// cloud (see docs/history/CLOUD_SYNC_PLAN.md). Local <c>int Id</c> stays the primary key and
 /// every existing query keeps working; these columns exist only for the sync
 /// layer:
 ///

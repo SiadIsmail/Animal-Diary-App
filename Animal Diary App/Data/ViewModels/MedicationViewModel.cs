@@ -1,9 +1,8 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
-using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Data.Services.Data.Device;
 using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Helpers;

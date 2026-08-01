@@ -1,14 +1,13 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Globalization;
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services.Journal;
-using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
-/// Backs the Journal's glucose sheet (a <see cref="Controls.FelovaBottomSheet"/>
+/// Backs the Journal's glucose sheet (a <c>FelovaBottomSheet</c>
 /// body). New functionality, so it lives in its own ViewModel rather than growing
 /// the CalendarViewModel. Opening pre-fills the stepper from the pet's most recent
 /// reading and pre-selects Before/After food by time of day; Save writes one

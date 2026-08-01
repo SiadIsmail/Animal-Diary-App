@@ -74,6 +74,11 @@ internal sealed record PendingPush(
 internal interface ITableSync
 {
     string CloudTable { get; }
+
+    /// <summary>The local table this maps, so the mapping set can be checked against
+    /// <c>SyncedTables</c> (see <c>SyncTableMaps.Build</c>).</summary>
+    string LocalTable { get; }
+
     Task<int> ApplyRowsAsync(SyncRunContext ctx, JsonElement rows);
     Task<List<PendingPush>> CollectDirtyAsync(SyncRunContext ctx);
 }
@@ -90,6 +95,8 @@ internal interface ITableSync
 internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new()
 {
     private readonly string _localTable = typeof(T).Name;
+
+    public string LocalTable => _localTable;
     private readonly Func<T, SyncRunContext, Task<Dictionary<string, object?>?>> _toCloud;
     private readonly Func<JsonElement, SyncRunContext, Task<T?>> _fromCloud;
     private readonly Action<T, T> _copyPayload;
@@ -200,11 +207,45 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
     }
 }
 
-/// <summary>The ten table mappings, in dependency order (parents before children —
-/// both pull and push walk this order so FKs always resolve).</summary>
+/// <summary>
+/// The cloud mapping for every synced table, in dependency order (parents before
+/// children — both pull and push walk this order so FKs always resolve).
+///
+/// <para>The <i>set</i> of tables is owned by <c>SyncedTables</c>; this file owns each
+/// one's cloud name and column translation, which is genuinely bespoke and can't be
+/// generated. <see cref="Build"/> checks the two agree, so adding a table to the
+/// registry without a mapping here fails immediately instead of silently never
+/// syncing that table's data.</para>
+/// </summary>
 internal static class SyncTableMaps
 {
-    public static IReadOnlyList<ITableSync> Build() => new ITableSync[]
+    public static IReadOnlyList<ITableSync> Build()
+    {
+        var maps = BuildMaps();
+
+        // A table in the registry with no mapping would pull and push nothing, forever,
+        // with no error — the owner's data would simply never leave the device. A mapping
+        // with no registry entry is the mirror image: it syncs, but is never created,
+        // backfilled, wiped on reset, or purged with its pet. Both are silent, so neither
+        // is allowed to compile-and-run.
+        var registry = SyncedTables.All.Select(t => t.LocalTable).ToHashSet(StringComparer.Ordinal);
+        var mapped = maps.Select(m => m.LocalTable).ToHashSet(StringComparer.Ordinal);
+
+        var unmapped = registry.Except(mapped).OrderBy(n => n, StringComparer.Ordinal).ToList();
+        var unregistered = mapped.Except(registry).OrderBy(n => n, StringComparer.Ordinal).ToList();
+        if (unmapped.Count > 0 || unregistered.Count > 0)
+        {
+            throw new InvalidOperationException(
+                "SyncTableMaps is out of step with SyncedTables. " +
+                $"In the registry but not mapped: [{string.Join(", ", unmapped)}]. " +
+                $"Mapped but not in the registry: [{string.Join(", ", unregistered)}]. " +
+                "Add the missing line to whichever list is short — see SyncedTables.");
+        }
+
+        return maps;
+    }
+
+    private static IReadOnlyList<ITableSync> BuildMaps() => new ITableSync[]
     {
         // ── pets (root) ──────────────────────────────────────────────────────
         new TableSync<Pet>("pets",

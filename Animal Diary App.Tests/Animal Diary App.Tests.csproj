@@ -1,18 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Billing + analytics unit tests. Targets plain net9.0 (no MAUI, no SQLite) and
-       compile-LINKS the pure sources from the app project, so the trial/gate logic and the
-       analytics session, tenure, and offline-queue rules are testable without the MAUI
-       app's platform TFMs. Run with: dotnet test on this csproj. -->
+  <!-- Unit tests over the app's PURE logic. Targets plain net10.0 — no platform suffix,
+       so no MAUI and no SQLite, while still being the same runtime and language version
+       the app ships on. (It was net9.0, which meant the linked sources were compiled
+       against a different BCL from the one they run on.)
+
+       Sources are compile-LINKED from the app project rather than referenced, because the
+       app only produces platform TFMs. Keep the link list to genuinely MAUI-free files;
+       anything needing Preferences, FileSystem or HttpClient belongs on the other side of
+       an interface instead. Run with: dotnet test. -->
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <RootNamespace>Animal_Diary_App.Tests</RootNamespace>
-    <!-- The linked BillingConfig has const feature switches; silence the resulting
-         unreachable-code notes in this test assembly. -->
-    <NoWarn>$(NoWarn);CS0162</NoWarn>
+    <!-- CS0162: same const feature switches as the app (BillingConfig.Enabled and
+         friends) — the unreachable branch is the point of a compile-time switch.
+         NU1903: sqlite-net-pcl drags in SQLitePCLRaw, which has an open advisory in
+         every release to date. It comes along only for the [Table]/[Indexed] attributes
+         on the linked models; this project never opens a connection, so no SQLite code
+         executes here at all. The app pins the newest available build and documents the
+         same advisory in its csproj. -->
+    <!-- NETSDK1206 comes from the same transitive SQLitePCLRaw: it ships alpine-specific
+         RIDs that .NET 8+ no longer resolves. Irrelevant here — no native SQLite is ever
+         loaded. -->
+    <NoWarn>$(NoWarn);CS0162;NU1903;NETSDK1206</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,6 +56,25 @@
     <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsTenure.cs" Link="Analytics\AnalyticsTenure.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsEventQueue.cs" Link="Analytics\AnalyticsEventQueue.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Analytics\IAnalyticsQueueStore.cs" Link="Analytics\IAnalyticsQueueStore.cs" />
+  </ItemGroup>
+
+  <!-- The care logic: what is still due today, and when a schedule rule actually fires.
+       Both are pure by design and both were untested — the two most safety-relevant
+       algorithms in the app had no coverage while billing had thirty tests.
+
+       PendingEngine reads Tracker/TrackerId from Data/Models, which carry sqlite-net
+       attributes, so the package comes along. It contributes attributes only; no
+       connection is ever opened here. -->
+  <ItemGroup>
+    <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Services\Notifications\MedicationScheduleExpander.cs" Link="Care\MedicationScheduleExpander.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\PendingEngine.cs" Link="Care\PendingEngine.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\PendingItem.cs" Link="Care\PendingItem.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\CarePlan.cs" Link="Care\CarePlan.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\ISyncable.cs" Link="Care\ISyncable.cs" />
   </ItemGroup>
 
 </Project>

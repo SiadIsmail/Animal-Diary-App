@@ -1,11 +1,11 @@
-namespace Animal_Diary_App.Data.View.Controls;
+﻿namespace Animal_Diary_App.Data.View.Controls;
 
 using Animal_Diary_App.Helpers;
 
 /// <summary>
 /// Code-behind for the shared confirmation/undo pill (behaviour ported verbatim
 /// from CalendarPage's original private toast). One toast at a time: a newer
-/// <see cref="Show"/> supersedes the pending auto-hide via a sequence counter.
+/// <c>Show</c> supersedes the pending auto-hide via a sequence counter.
 ///
 /// Semantics: <c>undoAsync</c> runs only when the user taps Undo;
 /// <c>expiredAsync</c> runs only when the toast times out WITHOUT an undo — the

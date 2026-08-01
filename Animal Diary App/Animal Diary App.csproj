@@ -61,6 +61,41 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
 
+	<!-- ══ Warnings ══════════════════════════════════════════════════════════════
+	     A clean build is 0 errors and 0 warnings, so anything that appears is new and
+	     worth looking at. That only works if the permanently-accepted noise is
+	     suppressed HERE, with a reason each, instead of being carried as a number in a
+	     doc that nobody can verify. Never add a code below without a comment saying why
+	     it can never be fixed — "it's noisy" is not a reason.
+
+	     Deliberately NOT suppressed anywhere: CS4014 (un-awaited Task), which
+	     .editorconfig promotes to an error — fire-and-forget goes through .Forget().
+	-->
+	<PropertyGroup>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<NoWarn>
+			$(NoWarn);
+			<!-- CS0618: .NET 10 deprecated the non-Async animation + dialog helpers
+			     (FadeTo/TranslateTo/DisplayAlert/DisplayActionSheet) in favour of the
+			     *Async forms. ~85 call sites across the pages; the migration is real
+			     debt, tracked in AI/known-constraints.md, not something to fix under a
+			     build flag. -->
+			CS0618;
+			<!-- CS0162: AnalyticsConfig.Enabled / CloudConfig.Enabled / BillingConfig.Enabled
+			     are consts, so the null-service branch of each boundary is unreachable in
+			     any given build. That is the point of a compile-time feature switch — the
+			     dead branch is what makes flipping one line a complete change. -->
+			CS0162
+		</NoWarn>
+		<!-- NU1608 (Xamarin.AndroidX version constraint) and NU1903 (CVE-2025-6965 in
+		     every SQLitePCLRaw release to date — see the package comment below) are
+		     restore-time, so they need MSBuildWarningsNotAsErrors rather than NoWarn:
+		     they stay visible, they just don't fail the build. Re-check NU1903 whenever
+		     SQLitePCLRaw ships a build bundling SQLite >= 3.50.2. -->
+		<MSBuildWarningsNotAsErrors>$(MSBuildWarningsNotAsErrors);NU1608;NU1903</MSBuildWarningsNotAsErrors>
+		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1608;NU1903</WarningsNotAsErrors>
+	</PropertyGroup>
+
 	<!-- Android target API level.
 	     Google Play requires apps to target Android 16 (API 36) or higher. Per the
 	     .NET docs, .NET 9 caps out at API 35 — API 36 is only supported on .NET 10,
@@ -89,8 +124,7 @@
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
-		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
-		
+
 		<!-- Custom Fonts -->
 		<MauiFont Include="Resources\Fonts\*" />
 
@@ -100,11 +134,13 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<!-- Debug-only: MauiProgram registers the debug logger inside #if DEBUG, so
+		     shipping the package in Release was dead weight in the app bundle. -->
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0"
+		                  Condition="'$(Configuration)' == 'Debug'" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Data\View\" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 		<!-- Pinned to 2023.12.x on purpose: it is the LAST QuestPDF version that runs
 		     on Android (2024.3+ replaced SkiaSharp with a custom native Skia layer that

@@ -1,10 +1,9 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Journal;
-using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Helpers;
 
 /// <summary>

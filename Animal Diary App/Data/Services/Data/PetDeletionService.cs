@@ -109,45 +109,20 @@ public class PetDeletionService
         // Load every live row that belongs to the pet, then tombstone the lot in one
         // transaction. Soft delete keeps each row as a sync tombstone (see ISyncable);
         // stamping goes through SyncStamp so no write path forgets a sync column.
-        var schedules = await conn.QueryAsync<MedicationSchedule>(
-            "select s.* from \"MedicationSchedule\" s join \"Medication\" m on m.Id = s.MedicationId " +
-            "where m.PetId = ? and s.IsDeleted = 0", pet.Id);
-        var doseLogs = await conn.QueryAsync<MedicationDoseLog>(
-            "select * from \"MedicationDoseLog\" where PetId = ? and IsDeleted = 0", pet.Id);
-        var entries = await conn.QueryAsync<PetEntry>(
-            "select * from \"PetEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
-        var trackers = await conn.QueryAsync<Tracker>(
-            "select * from \"Tracker\" where PetId = ? and IsDeleted = 0", pet.Id);
-        var conditions = await conn.QueryAsync<PetCondition>(
-            "select * from \"PetCondition\" where PetId = ? and IsDeleted = 0", pet.Id);
-        var glucose = await conn.QueryAsync<GlucoseEntry>(
-            "select * from \"GlucoseEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
-        var appetite = await conn.QueryAsync<AppetiteEntry>(
-            "select * from \"AppetiteEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
-        var appetiteAmounts = await conn.QueryAsync<AppetiteAmountEntry>(
-            "select * from \"AppetiteAmountEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
-        var seizures = await conn.QueryAsync<SeizureEntry>(
-            "select * from \"SeizureEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
-        var waterAmounts = await conn.QueryAsync<WaterAmountEntry>(
-            "select * from \"WaterAmountEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
-        var waterLevels = await conn.QueryAsync<WaterLevelEntry>(
-            "select * from \"WaterLevelEntry\" where PetId = ? and IsDeleted = 0", pet.Id);
+        //
+        // Both the table list and the ordering come from SyncedTables: children before
+        // parents, with the pet row itself last (its PetScope.Root predicate matches it,
+        // so no separate case is needed). Loading happens outside the transaction and
+        // the writes inside it — Android process death mid-write is normal, and a torn
+        // cascade would leave a half-deleted pet.
+        var toTombstone = new List<ISyncable>();
+        foreach (var table in SyncedTables.InDeletionOrder)
+            toTombstone.AddRange(await table.LoadLivePetRowsAsync(conn, pet.Id));
 
         await conn.RunInTransactionAsync(txn =>
         {
-            foreach (var s in schedules) txn.Update(SyncStamp.MarkDeleted(s));
-            foreach (var m in meds) txn.Update(SyncStamp.MarkDeleted(m));
-            foreach (var d in doseLogs) txn.Update(SyncStamp.MarkDeleted(d));
-            foreach (var e in entries) txn.Update(SyncStamp.MarkDeleted(e));
-            foreach (var t in trackers) txn.Update(SyncStamp.MarkDeleted(t));
-            foreach (var c in conditions) txn.Update(SyncStamp.MarkDeleted(c));
-            foreach (var g in glucose) txn.Update(SyncStamp.MarkDeleted(g));
-            foreach (var a in appetite) txn.Update(SyncStamp.MarkDeleted(a));
-            foreach (var a in appetiteAmounts) txn.Update(SyncStamp.MarkDeleted(a));
-            foreach (var s in seizures) txn.Update(SyncStamp.MarkDeleted(s));
-            foreach (var w in waterAmounts) txn.Update(SyncStamp.MarkDeleted(w));
-            foreach (var w in waterLevels) txn.Update(SyncStamp.MarkDeleted(w));
-            txn.Update(SyncStamp.MarkDeleted(pet));
+            foreach (var row in toTombstone)
+                txn.Update(SyncStamp.MarkDeleted(row));
         });
 
         // Report PDFs + preview PNGs are local-only (VetReportFile isn't synced), so

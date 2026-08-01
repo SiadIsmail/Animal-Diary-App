@@ -1,4 +1,4 @@
-using Android.App;
+﻿using Android.App;
 using Android.App.Job;
 using Android.Content;
 using Animal_Diary_App.Data.Services;
@@ -88,12 +88,12 @@ internal static class ReminderRecovery
     private static void RunInline(BroadcastReceiver receiver)
     {
         var pending = receiver.GoAsync();
-        _ = Task.Run(async () =>
+        Task.Run(async () =>
         {
             try { await RunWorkAsync(); }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
             finally { pending?.Finish(); }
-        });
+        }).Forget();
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ public class ReminderRecoveryJobService : JobService
 {
     public override bool OnStartJob(JobParameters? parameters)
     {
-        _ = Task.Run(async () =>
+        Task.Run(async () =>
         {
             try
             {
@@ -184,7 +184,7 @@ public class ReminderRecoveryJobService : JobService
                 try { JobFinished(parameters, false); }
                 catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Reminders] JobFinished failed: {ex.Message}"); }
             }
-        });
+        }).Forget();
 
         return true;    // work continues on another thread
     }

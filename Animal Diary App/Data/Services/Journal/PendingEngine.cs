@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Journal;
+﻿namespace Animal_Diary_App.Data.Services.Journal;
 
 using Animal_Diary_App.Data.Models;
 
@@ -11,7 +11,7 @@ using Animal_Diary_App.Data.Models;
 /// recent entry dates) and this decides what's pending. That makes every rule here
 /// trivially unit-testable, and keeps the medical logic in one auditable place.
 ///
-/// Rules (all relative to <paramref name="date"/>, which is always TODAY in the app):
+/// Rules (all relative to the <c>date</c> argument, which is always TODAY in the app):
 ///   • Medication doses — every scheduled dose today not yet given. Insulin is a
 ///     medication like any other; nothing here is special-cased.
 ///   • PerDay trackers (glucose) — pending while today's count &lt; PerDayCount; the

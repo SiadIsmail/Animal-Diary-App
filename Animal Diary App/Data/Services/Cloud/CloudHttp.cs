@@ -65,9 +65,38 @@ public sealed class CloudHttp
     public async Task<JsonDocument?> RpcAsync(string function, object args, string accessToken)
         => await SendAsync(HttpMethod.Post, $"{CloudConfig.Url}/rest/v1/rpc/{function}", args, accessToken);
 
+    // ── The "a body is required" variants ────────────────────────────────────────
+    // A 2xx with an empty body is a real outcome of SendAsync, so every caller that
+    // then reads .RootElement had to write `doc!` — turning that case into a
+    // NullReferenceException instead of the CloudException this whole layer exists to
+    // produce. It surfaced as "Object reference not set" in the diagnostics log, which
+    // is exactly the unnamed failure the "cloud failures must name themselves" decision
+    // forbids. These wrappers name it instead.
+
+    public async Task<JsonDocument> AuthPostRequiredAsync(string pathAndQuery, object body, string? accessToken = null)
+        => Require(await AuthPostAsync(pathAndQuery, body, accessToken), $"auth/{Trim(pathAndQuery)}");
+
+    public async Task<JsonDocument> RestGetRequiredAsync(string pathAndQuery, string accessToken)
+        => Require(await RestGetAsync(pathAndQuery, accessToken), $"rest/{Trim(pathAndQuery)}");
+
+    public async Task<JsonDocument> RpcRequiredAsync(string function, object args, string accessToken)
+        => Require(await RpcAsync(function, args, accessToken), $"rpc/{function}");
+
+    private static JsonDocument Require(JsonDocument? doc, string what) =>
+        doc ?? throw new CloudException(
+            CloudErrorKind.Other, 0, $"{what}: server returned success with an empty body");
+
+    /// <summary>Endpoint name without its query string — enough to locate the call,
+    /// and it cannot carry a value from the row being synced.</summary>
+    private static string Trim(string pathAndQuery)
+    {
+        var q = pathAndQuery.IndexOf('?');
+        return q < 0 ? pathAndQuery : pathAndQuery[..q];
+    }
+
     private static async Task<JsonDocument?> SendAsync(HttpMethod method, string url, object? body, string? accessToken)
     {
-        HttpResponseMessage response;
+        int status;
         string text;
         try
         {
@@ -80,7 +109,11 @@ public sealed class CloudHttp
                 request.Content = new StringContent(
                     body as string ?? JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
 
-            response = await Http.SendAsync(request);
+            // Disposed here, unlike the request-only `using` this used to have: the
+            // response owns the content stream, and an undisposed one holds the
+            // connection until the GC gets to it.
+            using var response = await Http.SendAsync(request);
+            status = (int)response.StatusCode;
             text = await response.Content.ReadAsStringAsync();
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
@@ -90,12 +123,12 @@ public sealed class CloudHttp
             throw new CloudException(CloudErrorKind.Network, 0, ex.Message);
         }
 
-        if (!response.IsSuccessStatusCode)
+        if (status is < 200 or > 299)
         {
             // Single choke point for every server error — trimmed body, no tokens.
             var trimmed = text.Length > 300 ? text[..300] : text;
-            CloudDiagnostics.Record($"[Cloud] {method} {Endpoint(url)} → {(int)response.StatusCode}: {trimmed}");
-            throw Classify((int)response.StatusCode, text);
+            CloudDiagnostics.Record($"[Cloud] {method} {Endpoint(url)} → {status}: {trimmed}");
+            throw Classify(status, text);
         }
 
         return string.IsNullOrWhiteSpace(text) ? null : JsonDocument.Parse(text);

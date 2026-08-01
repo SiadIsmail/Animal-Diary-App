@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.View;
+﻿namespace Animal_Diary_App.Data.View;
 
 using System.ComponentModel;
 using Animal_Diary_App.Data.ViewModels;
@@ -39,7 +39,7 @@ public partial class CalendarPage : ContentPage
 	/// <summary>The read-only gate for a NEW-entry action. When the trial has ended and
 	/// there's no subscription, open the subscribe sheet instead and report that the
 	/// action was blocked. The scheduled-dose loop never calls this — logging a given
-	/// dose stays free (owner decision, MONETIZATION_PLAN.md).
+	/// dose stays free (owner decision, docs/history/MONETIZATION_PLAN.md).
 	///
 	/// <para>Pet-scoped, so a caregiver logging on an owner who subscribes (or is still in
 	/// their trial) passes without needing their own subscription.</para></summary>
@@ -205,7 +205,7 @@ public partial class CalendarPage : ContentPage
 	private async Task LogDoseFlowAsync(JournalChip chip, View anchor)
 	{
 		var result = await vm.JournalVM.LogDoseAsync(chip);
-		_ = BurstBubblesAsync(anchor);
+		BurstBubblesAsync(anchor).Forget();
 		await ReloadJournalAsync();
 		ShowUndoToast(result);
 		await MaybeHandleFirstLogAsync();
@@ -234,7 +234,7 @@ public partial class CalendarPage : ContentPage
 		});
 	}
 
-	private void OnRequestOpenSheet(JournalChipKind kind) => _ = OpenAfterAddSheetAsync(kind);
+	private void OnRequestOpenSheet(JournalChipKind kind) => OpenAfterAddSheetAsync(kind).Forget();
 
 	// Let the "+" sheet finish sliding out before the chosen sheet slides in.
 	private async Task OpenAfterAddSheetAsync(JournalChipKind kind)
@@ -278,7 +278,7 @@ public partial class CalendarPage : ContentPage
 			// runs through the toast callback, so undone saves aren't counted.
 			TrackJournalEntry();
 
-			_ = BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62));
+			BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62)).Forget();
 			await ReloadJournalAsync();
 			ShowUndoToast(result);
 			await MaybeHandleFirstLogAsync();
@@ -460,7 +460,7 @@ public partial class CalendarPage : ContentPage
 		for (int i = 0; i < paws.Length; i++)
 		{
 			await Task.Delay(180);
-			_ = paws[i].FadeTo(0.85, 500, Easing.CubicOut);
+			paws[i].FadeTo(0.85, 500, Easing.CubicOut).Forget();
 		}
 	}
 }

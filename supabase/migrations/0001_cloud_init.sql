@@ -3,7 +3,7 @@
 --  Run this in the Supabase SQL editor (or `supabase db push`). Idempotent-ish:
 --  written to be run ONCE on a fresh project; see supabase/README.md.
 --
---  Design (see CLOUD_SYNC_PLAN.md in the repo root):
+--  Design (see docs/history/CLOUD_SYNC_PLAN.md):
 --  - Row ids are client-generated GUIDs (the local SyncId).
 --  - `updated_at` is SERVER-stamped by trigger and is only the pull cursor.
 --  - `client_updated_at` is the writer's clock and is the last-write-wins

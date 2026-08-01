@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Diagnostics;
 using System.Windows.Input;
@@ -377,7 +377,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     /// <summary>Join a shared pet by code. Deliberately NOT behind the paywall, unlike
     /// minting an invite: someone in the read-only state accepting an invitation is exactly
     /// the person we want in the app, and the owner's subscription may well be what covers
-    /// them once they are in. (Owner decision; see MONETIZATION_PLAN.md.)</summary>
+    /// them once they are in. (Owner decision; see docs/history/MONETIZATION_PLAN.md.)</summary>
     private async Task JoinAsync()
     {
         if (!CanJoin)
@@ -389,7 +389,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
             InfoText = Loc("Cloud_JoinSuccess");
             // The membership exists server-side; the sync's membership+pull
             // brings the pet's data down. Fire-and-forget — status shows in-sheet.
-            _ = _sync.SyncNowAsync();
+            _sync.SyncNowAsync().Forget();
         }
     }
 

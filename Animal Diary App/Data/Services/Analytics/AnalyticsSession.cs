@@ -10,7 +10,7 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 /// services, which constructs <c>App</c>) with no window and no user, so reboots were
 /// counted as launches. Too few: <c>StartAsync</c> runs once per process, so a user who
 /// foregrounds the app daily for a week without the process being killed produced a
-/// single event. Both directions corrupt the "did they come back" step of the funnel.
+/// single event. Both directions corrupt the "did they come back" step of the funnel.</para>
 ///
 /// <para>The fix is two gates. <i>Where</i> it fires moved to window/resume touchpoints
 /// (a real Activity exists by definition) — see <c>App.CreateWindow</c> /

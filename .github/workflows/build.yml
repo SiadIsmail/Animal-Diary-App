@@ -1,0 +1,72 @@
+name: build
+
+# Nothing used to run automatically on this repo, and the test project was not even in
+# the solution — so `dotnet test` at the solution level passed by running zero tests.
+# This is the floor: the app compiles, the tests pass, and the two conventions that are
+# enforced by discipline rather than by the type system get checked.
+
+on:
+  push:
+    branches: [main, cloud]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # The test project is plain net10.0 (no MAUI workload needed), so this stays fast
+      # and runs on every push.
+      - run: dotnet test "Animal Diary App.Tests/Animal Diary App.Tests.csproj" -c Release
+
+  conventions:
+    name: Conventions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Every user-facing string must exist in BOTH languages. This has never been
+      # broken, which is exactly why it is worth a check — it is invisible until a
+      # German user sees an English label.
+      - name: Localization key parity (EN vs DE)
+        run: |
+          keys() { sed -n 's/.*<data name="\([^"]*\)".*/\1/p' "$1" | sort -u; }
+          keys "Animal Diary App/Resources/Strings/AppStrings.resx" > /tmp/en.txt
+          keys "Animal Diary App/Resources/Strings/AppStrings.de.resx" > /tmp/de.txt
+          echo "EN: $(wc -l < /tmp/en.txt)   DE: $(wc -l < /tmp/de.txt)"
+          if ! diff -u /tmp/en.txt /tmp/de.txt; then
+            echo "::error::AppStrings.resx and AppStrings.de.resx have different keys."
+            exit 1
+          fi
+
+      # Fire-and-forget goes through .Forget() so the failure is observed and logged
+      # (AI/coding-standards.md). A bare discard swallows it silently.
+      - name: No bare task discards
+        run: |
+          if grep -rnE '^\s*_ = [A-Za-z_][A-Za-z0-9_.]*\(' \
+               --include='*.cs' "Animal Diary App" \
+               | grep -v '/obj/' | grep -v '/bin/' | grep -v 'TaskExtensions.cs'; then
+            echo "::error::Use .Forget() instead of discarding a task with _ =."
+            exit 1
+          fi
+          echo "none found"
+
+  android:
+    name: Android build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet workload install maui-android
+
+      # The shipping target. Warnings are errors (see the csproj), so this also
+      # guards the accepted-warning list from quietly growing.
+      - run: dotnet build "Animal Diary App/Animal Diary App.csproj" -f net10.0-android -c Debug

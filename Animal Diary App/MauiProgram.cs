@@ -1,9 +1,20 @@
-﻿using Microsoft.Extensions.Logging;
-using Animal_Diary_App.Data.ViewModels;
+using Microsoft.Extensions.Logging;
 using Animal_Diary_App.Data.Services;
-using Animal_Diary_App.Data.Services.Data.Device;
+using Animal_Diary_App.Data.Services.Analytics;
+using Animal_Diary_App.Data.Services.Billing;
+using Animal_Diary_App.Data.Services.Cloud;
+using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.Services.Notifications;
+using Animal_Diary_App.Data.Services.Reports;
+using Animal_Diary_App.Data.View;
+using Animal_Diary_App.Data.ViewModels;
 using Plugin.LocalNotification;
+
+// Plugin.LocalNotification also declares an INotificationService. Ours is the app's own
+// device boundary, so alias it rather than importing the folder and living with the
+// ambiguity — the plugin's type is never named here, only .UseLocalNotification().
+using INotificationService = Animal_Diary_App.Data.Services.Data.Device.INotificationService;
+
 namespace Animal_Diary_App;
 
 public static class MauiProgram
@@ -24,6 +35,9 @@ public static class MauiProgram
 				fonts.AddFont("Caveat.ttf", "Caveat");
 			});
 
+		// ── ViewModels ───────────────────────────────────────────────────────
+		// All singletons: MainViewModel composes them and every page binds to the
+		// same instance, so form drafts and loaded lists survive a tab switch.
 		builder.Services.AddSingleton<MainViewModel>();
 		builder.Services.AddSingleton<PetViewModel>();
 		builder.Services.AddSingleton<CalendarViewModel>();
@@ -32,42 +46,39 @@ public static class MauiProgram
 		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<MoodTimelineViewModel>();
 		builder.Services.AddSingleton<SettingsViewModel>();
-		builder.Services.AddSingleton<AppDatabase>();
-		builder.Services.AddSingleton<PetEntryService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.GlucoseEntryService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.AppetiteEntryService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.SeizureEntryService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.WaterEntryService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.TrackerService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.PetConditionService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.CarePlanService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Journal.PendingItemsService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Reports.VetReportDataBuilder>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Reports.ReportLibraryService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Reports.IVetReportService, Animal_Diary_App.Data.Services.Reports.VetReportService>();
-		builder.Services.AddSingleton<ExportSheetViewModel>();
-		builder.Services.AddSingleton<ReportPreviewViewModel>();
-		builder.Services.AddSingleton<DocumentsViewModel>();
+		builder.Services.AddSingleton<ManagePetViewModel>();
+		builder.Services.AddSingleton<JournalLogViewModel>();
+
+		// Journal input sheets (one VM per loggable type).
 		builder.Services.AddSingleton<GlucoseSheetViewModel>();
 		builder.Services.AddSingleton<MoodSheetViewModel>();
 		builder.Services.AddSingleton<WeightSheetViewModel>();
 		builder.Services.AddSingleton<AppetiteSheetViewModel>();
 		builder.Services.AddSingleton<SeizureSheetViewModel>();
 		builder.Services.AddSingleton<WaterSheetViewModel>();
+
+		// Condition-setup sheets, shared by onboarding and the Manage page.
 		builder.Services.AddSingleton<DiabetesSetupSheetViewModel>();
 		builder.Services.AddSingleton<CkdSetupSheetViewModel>();
 		builder.Services.AddSingleton<EpilepsySetupSheetViewModel>();
-		builder.Services.AddSingleton<ManagePetViewModel>();
-		builder.Services.AddSingleton<JournalLogViewModel>();
+
+		// Vet-report surfaces, cloud/billing sheets, and the hidden dev panel.
+		builder.Services.AddSingleton<ExportSheetViewModel>();
+		builder.Services.AddSingleton<ReportPreviewViewModel>();
+		builder.Services.AddSingleton<DocumentsViewModel>();
 		builder.Services.AddSingleton<CloudSheetViewModel>();
 		builder.Services.AddSingleton<SharingSheetViewModel>();
 		builder.Services.AddSingleton<SubscribeSheetViewModel>();
 		builder.Services.AddSingleton<TrialMessageViewModel>();
 		builder.Services.AddSingleton<FeedbackSheetViewModel>();
 		builder.Services.AddSingleton<DevSheetViewModel>();
+
+		// ── Data / SQLite ────────────────────────────────────────────────────
+		builder.Services.AddSingleton<AppDatabase>();
 		builder.Services.AddSingleton<PetService>();
+		builder.Services.AddSingleton<PetEntryService>();
 		builder.Services.AddSingleton<PetPauseService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.PetPhotoService>();
+		builder.Services.AddSingleton<PetPhotoService>();
 		builder.Services.AddSingleton<PetDeletionService>();
 		builder.Services.AddSingleton<MedicationService>();
 		builder.Services.AddSingleton<MedicationDoseLogService>();
@@ -75,79 +86,99 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ActivePetService>();
 		builder.Services.AddSingleton<SettingsService>();
 		builder.Services.AddSingleton<AppResetService>();
-		builder.Services.AddSingleton<App>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Data.Device.INotificationService, NotificationService>();
 
-		// Analytics boundary. One line decides the whole posture: a real PostHog sender
-		// when analytics is enabled AND a project key is configured, else a no-op that
-		// collects and sends nothing. Every consumer holds IAnalyticsService only.
-		if (Animal_Diary_App.Data.Services.Analytics.AnalyticsConfig.Enabled)
+		// ── Journal (care plan, pending engine inputs, typed entry stores) ───
+		builder.Services.AddSingleton<GlucoseEntryService>();
+		builder.Services.AddSingleton<AppetiteEntryService>();
+		builder.Services.AddSingleton<SeizureEntryService>();
+		builder.Services.AddSingleton<WaterEntryService>();
+		builder.Services.AddSingleton<TrackerService>();
+		builder.Services.AddSingleton<PetConditionService>();
+		builder.Services.AddSingleton<CarePlanService>();
+		builder.Services.AddSingleton<PendingItemsService>();
+
+		// ── Reports (vet PDF + the library around it) ────────────────────────
+		builder.Services.AddSingleton<VetReportDataBuilder>();
+		builder.Services.AddSingleton<ReportLibraryService>();
+		builder.Services.AddSingleton<IVetReportService, VetReportService>();
+
+		// ── Notifications ────────────────────────────────────────────────────
+		builder.Services.AddSingleton<INotificationService, Data.Services.Data.Device.NotificationService>();
+		builder.Services.AddSingleton<ReminderInstanceService>();
+		builder.Services.AddSingleton<MedicationDoseReconciler>();
+		builder.Services.AddSingleton<MedicationReminderScheduler>();
+		builder.Services.AddSingleton<DailyCareReminderScheduler>();
+
+		builder.Services.AddSingleton<App>();
+
+		// ── Analytics boundary ───────────────────────────────────────────────
+		// One line decides the whole posture: a real PostHog sender when analytics is
+		// enabled AND a project key is configured, else a no-op that collects and sends
+		// nothing. Every consumer holds IAnalyticsService only.
+		if (AnalyticsConfig.Enabled)
 		{
 			// Backing store for the offline retry queue. Registered only on this branch:
 			// with analytics off there is nothing to buffer, and the no-op sender must not
 			// so much as touch the file system.
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Analytics.IAnalyticsQueueStore, Animal_Diary_App.Data.Services.Analytics.FileAnalyticsQueueStore>();
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Analytics.IAnalyticsService, Animal_Diary_App.Data.Services.Analytics.PostHogAnalyticsService>();
+			builder.Services.AddSingleton<IAnalyticsQueueStore, FileAnalyticsQueueStore>();
+			builder.Services.AddSingleton<IAnalyticsService, PostHogAnalyticsService>();
 		}
 		else
 		{
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Analytics.IAnalyticsService, Animal_Diary_App.Data.Services.Analytics.NullAnalyticsService>();
+			builder.Services.AddSingleton<IAnalyticsService, NullAnalyticsService>();
 		}
 
-		builder.Services.AddSingleton<ReminderInstanceService>();
-		builder.Services.AddSingleton<MedicationDoseReconciler>();
-		builder.Services.AddSingleton<MedicationReminderScheduler>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Notifications.DailyCareReminderScheduler>();
-
-		// Cloud boundary (mirrors the analytics boundary): the real sync engine
-		// when cloud features are compiled in, else a no-op. Everything holds
-		// ICloudSyncService / ICloudAuthService only — no Supabase types escape
-		// Data/Services/Cloud/.
+		// ── Cloud boundary (mirrors the analytics boundary) ──────────────────
+		// The real sync engine when cloud features are compiled in, else a no-op.
+		// Everything holds ICloudSyncService / ICloudAuthService only — no Supabase
+		// types escape Data/Services/Cloud/.
+		//
 		// The trial clock is registered on EVERY platform, ahead of the cloud block: the
 		// sync engine reconciles this device's trial anchor with the account (so the server
 		// can tell a caregiver whether their pet's owner is still in trial), and cloud
 		// registration is not platform-gated. Harmless where billing is off — the Null
 		// entitlement service ignores it, so Windows/macOS dev still never locks.
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.ITrialStore>(sp => sp.GetRequiredService<SettingsService>());
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.TrialService>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.ITrialAnchor>(sp => sp.GetRequiredService<Animal_Diary_App.Data.Services.Billing.TrialService>());
+		builder.Services.AddSingleton<ITrialStore>(sp => sp.GetRequiredService<SettingsService>());
+		builder.Services.AddSingleton<TrialService>();
+		builder.Services.AddSingleton<ITrialAnchor>(sp => sp.GetRequiredService<TrialService>());
 
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.CloudHttp>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.SyncStateStore>();
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudAuthService, Animal_Diary_App.Data.Services.Cloud.CloudAuthService>();
-		if (Animal_Diary_App.Data.Services.Cloud.CloudConfig.Enabled)
+		builder.Services.AddSingleton<CloudHttp>();
+		builder.Services.AddSingleton<SyncStateStore>();
+		builder.Services.AddSingleton<ICloudAuthService, CloudAuthService>();
+		if (CloudConfig.Enabled)
 		{
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSyncService, Animal_Diary_App.Data.Services.Cloud.CloudSyncService>();
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSharingService, Animal_Diary_App.Data.Services.Cloud.CloudSharingService>();
+			builder.Services.AddSingleton<ICloudSyncService, CloudSyncService>();
+			builder.Services.AddSingleton<ICloudSharingService, CloudSharingService>();
 		}
 		else
 		{
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSyncService, Animal_Diary_App.Data.Services.Cloud.NullCloudSyncService>();
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Cloud.ICloudSharingService, Animal_Diary_App.Data.Services.Cloud.NullCloudSharingService>();
+			builder.Services.AddSingleton<ICloudSyncService, NullCloudSyncService>();
+			builder.Services.AddSingleton<ICloudSharingService, NullCloudSharingService>();
 		}
 
 		// Billing reads sponsorship through the cloud engine, but only ever as the pure
 		// IPetAccessSource — the Billing folder must not learn about Supabase. Both sync
 		// implementations provide it, so this resolves in either branch above.
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IPetAccessSource>(sp =>
-			(Animal_Diary_App.Data.Services.Billing.IPetAccessSource)sp.GetRequiredService<Animal_Diary_App.Data.Services.Cloud.ICloudSyncService>());
+		builder.Services.AddSingleton<IPetAccessSource>(sp =>
+			(IPetAccessSource)sp.GetRequiredService<ICloudSyncService>());
 
-		// Billing / monetization boundary (mirrors the cloud & analytics boundaries):
-		// the real trial + entitlement service only on a mobile store AND when a key +
-		// binding are wired (BillingConfig.Enabled); otherwise a no-op that grants full
-		// access. Windows/macOS dev always gets the no-op, so it can never lock.
+		// ── Billing / monetization boundary ──────────────────────────────────
+		// Mirrors the cloud & analytics boundaries: the real trial + entitlement service
+		// only on a mobile store AND when a key + binding are wired (BillingConfig.Enabled);
+		// otherwise a no-op that grants full access. Windows/macOS dev always gets the
+		// no-op, so it can never lock.
 #if ANDROID || IOS
-		if (Animal_Diary_App.Data.Services.Billing.BillingConfig.Enabled)
+		if (BillingConfig.Enabled)
 		{
 			// The RevenueCat binding's own DI (registers IRevenueCatBilling), then our
 			// seam over it and the composed entitlement gate.
 			Maui.RevenueCat.InAppBilling.RevenueCatBillingInstaller.AddRevenueCatBilling(builder.Services);
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IStoreBilling, Animal_Diary_App.Data.Services.Billing.RevenueCatStoreBilling>();
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.EntitlementService>();
+			builder.Services.AddSingleton<IStoreBilling, RevenueCatStoreBilling>();
+			builder.Services.AddSingleton<IEntitlementService, EntitlementService>();
 		}
 		else
 		{
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.NullEntitlementService>();
+			builder.Services.AddSingleton<IEntitlementService, NullEntitlementService>();
 		}
 #elif DEBUG
 		// Desktop normally gets the no-op so development can never be locked out. That also
@@ -155,27 +186,28 @@ public static class MauiProgram
 		// Subscribed for every account, so every gate check passes without exercising one.
 		// This opt-in runs the real gate over a no-op store — access from trial or
 		// sponsorship only, purchases unavailable.
-		if (Animal_Diary_App.Data.Services.Billing.BillingConfig.ForceGateOnDesktop)
+		if (BillingConfig.ForceGateOnDesktop)
 		{
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IStoreBilling, Animal_Diary_App.Data.Services.Billing.NullStoreBilling>();
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.EntitlementService>();
+			builder.Services.AddSingleton<IStoreBilling, NullStoreBilling>();
+			builder.Services.AddSingleton<IEntitlementService, EntitlementService>();
 		}
 		else
 		{
-			builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.NullEntitlementService>();
+			builder.Services.AddSingleton<IEntitlementService, NullEntitlementService>();
 		}
 #else
-		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Billing.IEntitlementService, Animal_Diary_App.Data.Services.Billing.NullEntitlementService>();
+		builder.Services.AddSingleton<IEntitlementService, NullEntitlementService>();
 #endif
 
-		// Shell + its three tab pages. Transient so a post-reset relaunch builds a
-		// fresh Shell (with fresh page instances); within one Shell each page is
-		// still constructed once and reused across tab switches.
-		builder.Services.AddTransient<Animal_Diary_App.Data.View.MainPage>();
-		builder.Services.AddTransient<Animal_Diary_App.Data.View.CalendarPage>();
-		builder.Services.AddTransient<Animal_Diary_App.Data.View.PetsPage>();
+		// ── Shell + its three tab pages ──────────────────────────────────────
+		// Transient so a post-reset relaunch builds a fresh Shell (with fresh page
+		// instances); within one Shell each page is still constructed once and reused
+		// across tab switches. Pushed and onboarding pages are NOT registered — they are
+		// constructed directly with the shared MainViewModel (see AI/architecture.md).
+		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddTransient<CalendarPage>();
+		builder.Services.AddTransient<PetsPage>();
 		builder.Services.AddTransient<AppShell>();
-
 
 #if DEBUG
 		builder.Logging.AddDebug();

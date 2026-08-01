@@ -1,0 +1,72 @@
+# Felova — editor + code-style baseline.
+#
+# The repo grew from the MAUI template, so a handful of the original files
+# (App.xaml.cs, MauiProgram.cs, the Platforms/ entry points, a few early pages)
+# are tab-indented while everything written since uses four spaces. This file
+# settles it: four spaces, file-scoped namespaces, usings outside and sorted.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{md,yml,yaml,json}]
+indent_size = 2
+trim_trailing_whitespace = false   # markdown uses two trailing spaces for a hard break
+
+[*.{xml,xaml,csproj,resx,props,targets}]
+indent_size = 2
+
+[*.sql]
+indent_size = 2
+
+[*.cs]
+# ── Language conventions ──────────────────────────────────────────────────────
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_using_directive_placement = outside_namespace:silent
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+csharp_prefer_braces = when_multiline:silent
+csharp_style_var_when_type_is_apparent = true:silent
+csharp_style_expression_bodied_methods = when_on_single_line:silent
+csharp_style_expression_bodied_properties = true:silent
+
+dotnet_style_qualification_for_field = false:silent
+dotnet_style_qualification_for_property = false:silent
+dotnet_style_qualification_for_method = false:silent
+dotnet_style_predefined_type_for_locals_parameters_members = true:silent
+
+# ── Naming ────────────────────────────────────────────────────────────────────
+dotnet_naming_rule.private_fields_underscore.severity = suggestion
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers =
+
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+dotnet_naming_style.underscore_camel.required_prefix = _
+
+# ── Analyzer severities worth having as errors ────────────────────────────────
+# An un-awaited Task is the bug TaskExtensions.Forget exists to prevent, and the
+# convention is documented in AI/coding-standards.md — make the compiler enforce it
+# rather than review. Route intentional fire-and-forget through .Forget().
+dotnet_diagnostic.CS4014.severity = error
+
+# Newline preferences
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# ── Generated / vendored ──────────────────────────────────────────────────────
+[Platforms/**/*.cs]
+# Platform entry points come from the MAUI template; leave their shape alone.
+csharp_style_namespace_declarations = file_scoped:silent

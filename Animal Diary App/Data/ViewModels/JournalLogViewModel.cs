@@ -377,7 +377,7 @@ public class JournalLogViewModel : BaseViewModel
         // day is handled, or arming). Fire-and-forget — it has its own gate and must
         // not slow the Journal reload. Only relevant for today's board.
         if (IsToday)
-            _ = _dailyReminders.RefreshAsync();
+            _dailyReminders.RefreshAsync().Forget();
     }
 
     private void BuildChips(IReadOnlyList<PendingItem> pending)
@@ -410,23 +410,36 @@ public class JournalLogViewModel : BaseViewModel
         };
     }
 
-    private static JournalChip TrackerChip(PendingItem item, double tilt) => item.TrackerId switch
+    // Icon + label come from the shared TrackerVisuals table; only the chip kind and
+    // the screen-reader phrasing are Journal-specific. Glucose is the one chip with a
+    // trailing "{done} of {target}" detail, so it doesn't go through Simple().
+    private static JournalChip TrackerChip(PendingItem item, double tilt)
     {
-        TrackerId.Glucose => new JournalChip
+        var v = TrackerVisuals.For(item.TrackerId);
+
+        if (item.TrackerId == TrackerId.Glucose)
         {
-            Kind = JournalChipKind.Glucose,
-            Icon = "🩸",
-            Label = Loc.GetString("Journal_GlucoseCheck"),
-            Detail = Loc.Format("Journal_CountOfN", item.Done, item.Target),
-            Tilt = tilt,
-            SemanticLabel = Loc.Format("Journal_A11yLogGlucose", item.Done, item.Target)
-        },
-        TrackerId.Appetite => Simple(JournalChipKind.Appetite, "🍽️", Loc.GetString("Journal_Appetite"), tilt, Loc.GetString("Journal_A11yLogAppetite")),
-        TrackerId.Weight => Simple(JournalChipKind.Weight, "⚖️", Loc.GetString("Journal_WeighIn"), tilt, Loc.GetString("Journal_A11yLogWeight")),
-        TrackerId.Mood => Simple(JournalChipKind.Mood, "🙂", Loc.GetString("Journal_MoodTitle"), tilt, Loc.GetString("Journal_A11yLogMood")),
-        TrackerId.Water => Simple(JournalChipKind.Water, "💧", Loc.GetString("Journal_Water"), tilt, Loc.GetString("Journal_A11yLogWater")),
-        _ => Simple(JournalChipKind.Mood, "🙂", Loc.GetString("Journal_MoodTitle"), tilt, Loc.GetString("Journal_A11yLogMood"))
-    };
+            return new JournalChip
+            {
+                Kind = JournalChipKind.Glucose,
+                Icon = v.Icon,
+                Label = Loc.GetString(v.LabelKey),
+                Detail = Loc.Format("Journal_CountOfN", item.Done, item.Target),
+                Tilt = tilt,
+                SemanticLabel = Loc.Format("Journal_A11yLogGlucose", item.Done, item.Target)
+            };
+        }
+
+        var (kind, a11yKey) = item.TrackerId switch
+        {
+            TrackerId.Appetite => (JournalChipKind.Appetite, "Journal_A11yLogAppetite"),
+            TrackerId.Weight => (JournalChipKind.Weight, "Journal_A11yLogWeight"),
+            TrackerId.Water => (JournalChipKind.Water, "Journal_A11yLogWater"),
+            _ => (JournalChipKind.Mood, "Journal_A11yLogMood"),
+        };
+
+        return Simple(kind, v.Icon, Loc.GetString(v.LabelKey), tilt, Loc.GetString(a11yKey));
+    }
 
     private static JournalChip Simple(JournalChipKind kind, string icon, string label, double tilt, string semantic) => new()
     {
@@ -450,8 +463,25 @@ public class JournalLogViewModel : BaseViewModel
         if (pet == null || pet.Id == 0)
             return items;
 
+        // Every store for the day, issued together rather than one awaited round trip
+        // after another. None of them depends on another's result, and this method runs
+        // on every Journal appearance, every date change, every save and every
+        // RemoteChangesApplied — nine sequential hops was most of the day view's latency.
+        // (Doses stay separate below: that call already batches its own joins.)
+        var entryTask = _petEntries.GetPetEntryByDateAndPetIdAsync(_date, pet.Id);
+        var planTask = _carePlan.GetPlanAsync(pet);
+        var glucoseTask = _glucose.GetForDateAsync(pet.Id, _date);
+        var appetiteTask = _appetite.GetForDateAsync(pet.Id, _date);
+        var appetiteAmountTask = _appetite.GetAmountsForDateAsync(pet.Id, _date);
+        var waterAmountTask = _water.GetAmountsForDateAsync(pet.Id, _date);
+        var waterLevelTask = _water.GetLevelsForDateAsync(pet.Id, _date);
+        var seizureTask = _seizures.GetForDateAsync(pet.Id, _date);
+
+        await Task.WhenAll(entryTask, planTask, glucoseTask, appetiteTask,
+            appetiteAmountTask, waterAmountTask, waterLevelTask, seizureTask);
+
         // Mood + Weight (both live on the day's PetEntry, each with its own time).
-        var entry = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, pet.Id);
+        var entry = entryTask.Result;
         if (entry != null)
         {
             if (entry.MoodLevel > 0)
@@ -467,7 +497,7 @@ public class JournalLogViewModel : BaseViewModel
                     CanDelete = true,
                     Time = TicksToTime(entry.MoodTimeTicks),
                     Icon = mood.GetEmoji(),
-                    Tint = Tint("TealTint"),
+                    Tint = TrackerTint(TrackerId.Mood),
                     Title = Loc.GetString("Journal_MoodTitle"),
                     Note = !string.IsNullOrWhiteSpace(entry.MoodNote)
                         ? entry.MoodNote
@@ -484,8 +514,8 @@ public class JournalLogViewModel : BaseViewModel
                     Kind = TimelineKind.Weight,
                     CanDelete = true,
                     Time = TicksToTime(entry.WeightTimeTicks),
-                    Icon = "⚖️",
-                    Tint = Tint("BlueTint"),
+                    Icon = TrackerVisuals.For(TrackerId.Weight).Icon,
+                    Tint = TrackerTint(TrackerId.Weight),
                     Title = Loc.GetString("Journal_WeighIn"),
                     Sub = $"{weight} · {Loc.GetString("Journal_WeightScales")}"
                 });
@@ -493,9 +523,9 @@ public class JournalLogViewModel : BaseViewModel
         }
 
         // Glucose (rose) — value is precise; range sentence only when a range exists.
-        var range = (await _carePlan.GetPlanAsync(pet))
+        var range = planTask.Result
             .FirstOrDefault(t => t.TrackerId == TrackerId.Glucose)?.TargetRange;
-        foreach (var g in await _glucose.GetForDateAsync(pet.Id, _date))
+        foreach (var g in glucoseTask.Result)
         {
             items.Add(new TimelineItem
             {
@@ -503,8 +533,8 @@ public class JournalLogViewModel : BaseViewModel
                 CanDelete = true,
                 EntryId = g.Id,
                 Time = g.Time,
-                Icon = "🩸",
-                Tint = Tint("RoseTint"),
+                Icon = TrackerVisuals.For(TrackerId.Glucose).Icon,
+                Tint = TrackerTint(TrackerId.Glucose),
                 Title = Loc.Format("Journal_GlucoseTimeline", g.Value.ToString("0.0", CultureInfo.CurrentCulture)),
                 Sub = GlucoseSub(g, range)
             });
@@ -513,7 +543,7 @@ public class JournalLogViewModel : BaseViewModel
         // Appetite (honey) — two kinds that can both appear: the day's qualitative
         // reading (Didn't eat … everything) and any exact grams events. Both may carry
         // a food label. Never judged.
-        foreach (var a in await _appetite.GetForDateAsync(pet.Id, _date))
+        foreach (var a in appetiteTask.Result)
         {
             var word = ((AppetiteLevel)a.Level).GetDisplayName().ToLowerInvariant();
             items.Add(new TimelineItem
@@ -522,13 +552,13 @@ public class JournalLogViewModel : BaseViewModel
                 CanDelete = true,
                 EntryId = a.Id,
                 Time = a.Time,
-                Icon = "🍽️",
-                Tint = Tint("HoneyWarmTint"),
+                Icon = TrackerVisuals.For(TrackerId.Appetite).Icon,
+                Tint = TrackerTint(TrackerId.Appetite),
                 Title = Loc.GetString("Journal_Appetite"),
                 Sub = WithFood(Loc.Format("Journal_AteWord", word), a.Food)
             });
         }
-        foreach (var a in await _appetite.GetAmountsForDateAsync(pet.Id, _date))
+        foreach (var a in appetiteAmountTask.Result)
         {
             items.Add(new TimelineItem
             {
@@ -536,8 +566,8 @@ public class JournalLogViewModel : BaseViewModel
                 CanDelete = true,
                 EntryId = a.Id,
                 Time = a.Time,
-                Icon = "🍽️",
-                Tint = Tint("HoneyWarmTint"),
+                Icon = TrackerVisuals.For(TrackerId.Appetite).Icon,
+                Tint = TrackerTint(TrackerId.Appetite),
                 Title = Loc.GetString("Journal_Appetite"),
                 Sub = WithFood(Loc.Format("Journal_AppetiteGrams", a.Grams.ToString("0.#", CultureInfo.CurrentCulture)), a.Food)
             });
@@ -547,7 +577,7 @@ public class JournalLogViewModel : BaseViewModel
         //   • exact ml readings, one card each (additive events), and
         //   • the day's single relative reading (Barely … a lot).
         // Never judged; the value is a plain fact.
-        foreach (var w in await _water.GetAmountsForDateAsync(pet.Id, _date))
+        foreach (var w in waterAmountTask.Result)
         {
             items.Add(new TimelineItem
             {
@@ -555,13 +585,13 @@ public class JournalLogViewModel : BaseViewModel
                 CanDelete = true,
                 EntryId = w.Id,
                 Time = w.Time,
-                Icon = "💧",
-                Tint = Tint("BlueTint"),
+                Icon = TrackerVisuals.For(TrackerId.Water).Icon,
+                Tint = TrackerTint(TrackerId.Water),
                 Title = Loc.GetString("Journal_Water"),
                 Sub = Loc.Format("Journal_WaterMl", w.AmountMl.ToString("0.#", CultureInfo.CurrentCulture))
             });
         }
-        foreach (var w in await _water.GetLevelsForDateAsync(pet.Id, _date))
+        foreach (var w in waterLevelTask.Result)
         {
             var word = ((WaterLevel)w.Level).GetDisplayName().ToLowerInvariant();
             items.Add(new TimelineItem
@@ -570,15 +600,15 @@ public class JournalLogViewModel : BaseViewModel
                 CanDelete = true,
                 EntryId = w.Id,
                 Time = w.Time,
-                Icon = "💧",
-                Tint = Tint("BlueTint"),
+                Icon = TrackerVisuals.For(TrackerId.Water).Icon,
+                Tint = TrackerTint(TrackerId.Water),
                 Title = Loc.GetString("Journal_Water"),
                 Sub = Loc.Format("Journal_DrankWord", word)
             });
         }
 
         // Seizures (violet) — logged as they happen; optional duration + note.
-        foreach (var s in await _seizures.GetForDateAsync(pet.Id, _date))
+        foreach (var s in seizureTask.Result)
         {
             items.Add(new TimelineItem
             {
@@ -586,8 +616,8 @@ public class JournalLogViewModel : BaseViewModel
                 CanDelete = true,
                 EntryId = s.Id,
                 Time = s.Time,
-                Icon = "⚡",
-                Tint = Tint("VioletTint"),
+                Icon = TrackerVisuals.For(TrackerId.Seizure).Icon,
+                Tint = TrackerTint(TrackerId.Seizure),
                 Title = Loc.GetString("Journal_Seizure"),
                 Sub = SeizureSub(s)
             });
@@ -920,10 +950,10 @@ public class JournalLogViewModel : BaseViewModel
         ticks.HasValue ? TimeSpan.FromTicks(ticks.Value) : null;
 
     /// <summary>Resolve a rockpool colour token to a <see cref="Color"/> for an icon tile.</summary>
-    private static Color Tint(string key) =>
-        Application.Current?.Resources.TryGetValue(key, out var v) == true && v is Color c
-            ? c
-            : Colors.Transparent;
+    private static Color Tint(string key) => AppColors.Resolve(key);
+
+    /// <summary>The icon-tile tint a tracker's timeline cards wear.</summary>
+    private static Color TrackerTint(TrackerId id) => Tint(TrackerVisuals.For(id).TintKey);
 
     // "{Before|After} food" — plus a gentle range sentence ONLY when a range exists.
     // The value itself is never coloured or altered by the range.
@@ -971,14 +1001,16 @@ public class JournalLogViewModel : BaseViewModel
     // unavailable when it was only unasked-for. The "still to do" CHIP row is
     // deliberately not changed — that one is a to-do list, and putting unopted-in
     // trackers there would nag about things nobody agreed to.
-    private static readonly (TrackerId Tracker, JournalChipKind Kind, string Icon, string LabelKey)[] LoggableTypes =
+    // Only the ordering and the tracker→chip-kind pairing live here; the icon and
+    // label come from TrackerVisuals, so a new tracker is one line there plus one here.
+    private static readonly (TrackerId Tracker, JournalChipKind Kind)[] LoggableTypes =
     {
-        (TrackerId.Glucose,  JournalChipKind.Glucose,  "🩸",  "Journal_GlucoseCheck"),
-        (TrackerId.Mood,     JournalChipKind.Mood,     "🙂",  "Journal_MoodTitle"),
-        (TrackerId.Appetite, JournalChipKind.Appetite, "🍽️", "Journal_Appetite"),
-        (TrackerId.Water,    JournalChipKind.Water,    "💧",  "Journal_Water"),
-        (TrackerId.Weight,   JournalChipKind.Weight,   "⚖️",  "Journal_WeighIn"),
-        (TrackerId.Seizure,  JournalChipKind.Seizure,  "⚡",  "Journal_Seizure"),
+        (TrackerId.Glucose,  JournalChipKind.Glucose),
+        (TrackerId.Mood,     JournalChipKind.Mood),
+        (TrackerId.Appetite, JournalChipKind.Appetite),
+        (TrackerId.Water,    JournalChipKind.Water),
+        (TrackerId.Weight,   JournalChipKind.Weight),
+        (TrackerId.Seizure,  JournalChipKind.Seizure),
     };
 
     private async Task BuildAddOptionsAsync()
@@ -998,9 +1030,10 @@ public class JournalLogViewModel : BaseViewModel
         // first group on their own merit; Has() decides for them like everything else.
         var inPlan = new List<AddOption>();
         var rest = new List<AddOption>();
-        foreach (var (tracker, kind, icon, labelKey) in LoggableTypes)
+        foreach (var (tracker, kind) in LoggableTypes)
         {
-            var option = new AddOption { Kind = kind, Icon = icon, Label = Loc.GetString(labelKey) };
+            var v = TrackerVisuals.For(tracker);
+            var option = new AddOption { Kind = kind, Icon = v.Icon, Label = Loc.GetString(v.LabelKey) };
             (Has(tracker) ? inPlan : rest).Add(option);
         }
 
