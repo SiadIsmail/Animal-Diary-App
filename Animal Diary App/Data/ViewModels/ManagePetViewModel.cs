@@ -47,13 +47,6 @@ public class CarePlanRow
     public bool HasFrom => !string.IsNullOrEmpty(FromLabel);
 }
 
-/// <summary>A chip in the "so {pet}'s Journal will ask for…" preview strip.</summary>
-public class PreviewChip
-{
-    public string Icon { get; init; } = string.Empty;
-    public string Text { get; init; } = string.Empty;
-}
-
 /// <summary>A medication row in the Manage page's Medications section.</summary>
 public class ManageMedRow
 {
@@ -218,7 +211,6 @@ public class ManagePetViewModel : BaseViewModel
     /// Add always sorts last and wraps like any other chip.</summary>
     public ObservableCollection<IConditionChipItem> ConditionItems { get; } = new();
     public ObservableCollection<CarePlanRow> CarePlanRows { get; } = new();
-    public ObservableCollection<PreviewChip> PreviewChips { get; } = new();
     public ObservableCollection<ManageMedRow> Medications { get; } = new();
 
     // These two live inside a FelovaBottomSheet and are populated on open, so they are
@@ -249,8 +241,6 @@ public class ManagePetViewModel : BaseViewModel
             : PetTypeNames.Localize(p.Type))
         : string.Empty;
     public string IdentityHint => Loc.GetString("Manage_IdentityHint");
-
-    public string PreviewLabel => Loc.Format("Manage_PreviewLabel", PetName);
 
     public bool HasCarePlan => CarePlanRows.Count > 0;
     public bool HasNoCarePlan => CarePlanRows.Count == 0;
@@ -335,7 +325,6 @@ public class ManagePetViewModel : BaseViewModel
         OnPropertyChanged(nameof(PetName));
         OnPropertyChanged(nameof(PetInitial));
         OnPropertyChanged(nameof(PetSubtitle));
-        OnPropertyChanged(nameof(PreviewLabel));
         OnPropertyChanged(nameof(IdentityHint));
         OnPropertyChanged(nameof(EmptyPlanText));
         OnPropertyChanged(nameof(RemovePetLabel));
@@ -374,8 +363,6 @@ public class ManagePetViewModel : BaseViewModel
 
         CanAddTracker = CarePlanRows.Count < System.Enum.GetValues<TrackerId>().Length;
 
-        BuildPreview(plan, meds.Count);
-
         Medications.Clear();
         foreach (var m in meds)
             Medications.Add(new ManageMedRow
@@ -394,7 +381,6 @@ public class ManagePetViewModel : BaseViewModel
         Conditions.Clear();
         RebuildConditionItems();
         CarePlanRows.Clear();
-        PreviewChips.Clear();
         Medications.Clear();
         OnPropertyChanged(nameof(HasCarePlan));
         OnPropertyChanged(nameof(HasNoCarePlan));
@@ -509,21 +495,6 @@ public class ManagePetViewModel : BaseViewModel
         }
 
         return freq;
-    }
-
-    private void BuildPreview(IReadOnlyList<Tracker> plan, int medCount)
-    {
-        PreviewChips.Clear();
-        foreach (var t in plan)
-        {
-            if (t.Kind is TrackerKind.Event or TrackerKind.AsNeeded)
-                continue;
-            var (icon, _, _) = Visual(t.TrackerId);
-            PreviewChips.Add(new PreviewChip { Icon = icon, Text = Loc.GetString(LabelKey(t.TrackerId)) });
-        }
-
-        if (medCount > 0)
-            PreviewChips.Add(new PreviewChip { Icon = "💊", Text = Loc.Format("Manage_MedsCount", medCount) });
     }
 
     // ── Care-plan row tap: condition-derived → its setup sheet; default → adjust ──
