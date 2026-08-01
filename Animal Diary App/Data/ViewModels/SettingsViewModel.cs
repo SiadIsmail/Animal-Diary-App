@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
@@ -190,7 +190,7 @@ public class SettingsViewModel : BaseViewModel
             DailyCareReminderSettings.Enabled = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(DailyReminderTimeVisible));
-            _ = EnableDailyReminderAsync(value);
+            EnableDailyReminderAsync(value).Forget();
         }
     }
 
@@ -227,7 +227,7 @@ public class SettingsViewModel : BaseViewModel
                 return;
             DailyCareReminderSettings.Time = value;
             OnPropertyChanged();
-            _ = _dailyReminders.RefreshAsync();
+            _dailyReminders.RefreshAsync().Forget();
         }
     }
 
@@ -263,7 +263,7 @@ public class SettingsViewModel : BaseViewModel
             // backup vanished — the two consequences must be picked explicitly):
             //   DeviceOnly  → wipe device, keep backup, sign out.
             //   Everything  → also tombstone owned pets cloud-wide + leave shared
-            //                 pets (the ownership rule, CLOUD_SYNC_PLAN.md §7).
+            //                 pets (the ownership rule, docs/history/CLOUD_SYNC_PLAN.md §7).
             var scope = ConfirmDeleteAllDataCloud != null
                 ? await ConfirmDeleteAllDataCloud()
                 : ResetScope.Everything;

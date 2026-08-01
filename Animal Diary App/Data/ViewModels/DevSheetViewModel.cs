@@ -32,8 +32,15 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
         RefreshCommand = new Command(RefreshState);
         CopyCommand = new Command(async () => await CopyAsync());
         ClearLogCommand = new Command(() => { CloudDiagnostics.Clear(); RefreshState(); });
-        SyncNowCommand = new Command(async () => { await _sync.SyncNowAsync(); RefreshState(); });
-        ForceRefreshCommand = new Command(async () => { await _auth.GetSessionAsync(forceRefresh: true); RefreshState(); });
+
+        // Both of these can throw (a rejected refresh raises CloudException), and a
+        // `new Command(async () => …)` lambda is async void — an escaping exception
+        // takes the process down. Guarded, and the failure lands in the very log this
+        // panel exists to show.
+        SyncNowCommand = new Command(async () => await RunDiagnosticAsync(
+            () => _sync.SyncNowAsync(), "sync now"));
+        ForceRefreshCommand = new Command(async () => await RunDiagnosticAsync(
+            () => _auth.GetSessionAsync(forceRefresh: true), "force refresh"));
     }
 
     private bool _isPresented;
@@ -108,6 +115,25 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
         sb.AppendLine($"Backup on : {_sync.IsBackupEnabled}");
         sb.AppendLine($"Last sync : {(_sync.LastSyncedUtc is DateTime ls ? ls.ToLocalTime().ToString("g") : "never")}");
         return sb.ToString().TrimEnd();
+    }
+
+    /// <summary>Run one manual diagnostic action and always re-render, whatever happens.
+    /// A failure is recorded rather than thrown: this panel's whole job is to make silent
+    /// cloud failures visible, so its own buttons must not become a new way to crash.</summary>
+    private async Task RunDiagnosticAsync(Func<Task> action, string what)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            CloudDiagnostics.Record($"[Dev] {what} failed: {ex.Message}");
+        }
+        finally
+        {
+            RefreshState();
+        }
     }
 
     private async Task CopyAsync()

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Cloud;
@@ -62,16 +62,16 @@ public partial class App : Application
 		// analytics; it carries no notification content, just the fact of a tap.
 		LocalNotificationCenter.Current.NotificationActionTapped += OnNotificationTapped;
 
-		_ = StartAsync();
+		StartAsync().Forget();
 	}
 
 	/// <summary>Sign-in/out: alias the store identity onto the account, or back off it.
 	/// Fire-and-forget — nothing about signing in should wait on the store.</summary>
-	private void OnCloudSessionChanged() => _ = Task.Run(async () =>
+	private void OnCloudSessionChanged() => Task.Run(async () =>
 	{
 		try { await _entitlements.IdentifyAsync(_cloudAuth.UserId); }
 		catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Billing] identify failed: {ex.Message}"); }
-	});
+	}).Forget();
 
 	/// <summary>A pet this user was caring for under someone else's subscription is no
 	/// longer covered. Tell them once, naming the real reason — they never had a trial of
@@ -293,12 +293,12 @@ public partial class App : Application
 
 		// Re-evaluate today's daily care reminder: the day may have rolled over, or
 		// items were logged in another session, so it may now need arming or cancelling.
-		_ = _dailyReminderScheduler.RefreshAsync();
+		_dailyReminderScheduler.RefreshAsync().Forget();
 
 		// A subscription may have been bought/renewed/cancelled elsewhere while we were
 		// backgrounded; re-check the entitlement. No-op under the Null boundary. Then, if
 		// the trial has quietly elapsed while away, show the one-time reassurance.
-		_ = Task.Run(async () =>
+		Task.Run(async () =>
 		{
 			// Re-assert the store identity before re-checking. IdentifyAsync only fires on
 			// SessionChanged, so if it failed (offline at sign-up, store unreachable) the
@@ -310,7 +310,7 @@ public partial class App : Application
 			await _entitlements.RefreshAsync();
 			await MaybeShowReadOnlyReassuranceAsync();
 			await MaybeShowPreEndNudgeAsync();
-		});
+		}).Forget();
 	}
 
 	/// <summary>Once, a few days before the trial ends, a gentle heads-up anchored to what
@@ -475,7 +475,7 @@ public partial class App : Application
 			// this pass still honours it if it happens to run first (starting the
 			// process after a reboot runs this path too).
 			// Runs off the UI path so startup isn't blocked.
-			_ = Task.Run(async () =>
+			Task.Run(async () =>
 			{
 				try
 				{
@@ -491,11 +491,11 @@ public partial class App : Application
 				{
 					System.Diagnostics.Debug.WriteLine(ex);
 				}
-			});
+			}).Forget();
 
 			// Cloud: load persisted state, then run the launch sync — both off the
 			// UI path, both quiet no-ops when signed out / backup disabled / offline.
-			_ = Task.Run(async () =>
+			Task.Run(async () =>
 			{
 				try
 				{
@@ -506,7 +506,7 @@ public partial class App : Application
 				{
 					System.Diagnostics.Debug.WriteLine($"[Cloud] launch sync failed: {ex.Message}");
 				}
-			});
+			}).Forget();
 
 			// Billing: initialize the entitlement boundary and, for an already-onboarded
 			// user landing on this build, start the trial clock if it hasn't begun — new
@@ -518,7 +518,7 @@ public partial class App : Application
 			// it lasts, and starting a trial for them here would burn it on a record they
 			// don't own and hand them a paywall the owner is already paying to avoid.
 			var petsAtLaunch = pets;
-			_ = Task.Run(async () =>
+			Task.Run(async () =>
 			{
 				try
 				{
@@ -540,7 +540,7 @@ public partial class App : Application
 				{
 					System.Diagnostics.Debug.WriteLine($"[Billing] launch init failed: {ex.Message}");
 				}
-			});
+			}).Forget();
 		}
 		catch (Exception ex)
 		{

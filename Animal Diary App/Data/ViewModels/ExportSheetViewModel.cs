@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -11,7 +11,7 @@ using Animal_Diary_App.Helpers;
 /// <summary>
 /// Backs the Pets page's "Export" sheet — pick a period (30/90/180 days),
 /// generate the vet PDF, then View / Share / Done, all inside the shared
-/// <see cref="Controls.FelovaBottomSheet"/> (never an alert). Not a Journal
+/// <c>FelovaBottomSheet</c> (never an alert). Not a Journal
 /// sheet, so there is no <c>Saved</c> event; instead <see cref="ViewRequested"/>
 /// lets the hosting page push the preview (navigation belongs to pages).
 ///

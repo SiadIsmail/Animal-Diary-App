@@ -198,18 +198,14 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Same icons + labels as the Journal's chips, so the card reads as the
-    // first chip of the day. Tapping a tracker card routes to the Journal, where
-    // every tracker (water included) now has its logging sheet.
-    private static (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc) => item.TrackerId switch
+    // Same icons + labels as the Journal's chips — literally the same table — so the
+    // card reads as the first chip of the day. Tapping a tracker card routes to the
+    // Journal, where every tracker (water included) now has its logging sheet.
+    private static (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc)
     {
-        TrackerId.Glucose => ("🩸", loc.GetString("Journal_GlucoseCheck")),
-        TrackerId.Appetite => ("🍽️", loc.GetString("Journal_Appetite")),
-        TrackerId.Weight => ("⚖️", loc.GetString("Journal_WeighIn")),
-        TrackerId.Seizure => ("⚡", loc.GetString("Journal_Seizure")),
-        TrackerId.Water => ("💧", loc.GetString("Journal_Water")),
-        _ => ("🙂", loc.GetString("Journal_MoodTitle")),
-    };
+        var v = TrackerVisuals.For(item.TrackerId);
+        return (v.Icon, loc.GetString(v.LabelKey));
+    }
 
     private async void OnNextUpAction(object? sender, EventArgs e)
     {

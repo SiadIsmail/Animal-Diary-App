@@ -26,15 +26,24 @@ public static class MoodLevelExtensions
         return LocalizationManager.Instance.GetString(key);
     }
 
-    public static Color GetColor(this MoodLevel mood) => mood switch
+    /// <summary>The mood's swatch from <c>Colors.xaml</c>. Resolved through
+    /// <see cref="AppColors"/>, which degrades to the fallback rather than throwing —
+    /// the raw <c>Resources[key]</c> indexer this used to call throws
+    /// <see cref="KeyNotFoundException"/> if a token is renamed, and it ran on the mood
+    /// timeline where a crash is the worst possible outcome.</summary>
+    public static Color GetColor(this MoodLevel mood)
     {
-        MoodLevel.Great => (Color)Application.Current!.Resources["MGreat"],
-        MoodLevel.Good => (Color)Application.Current!.Resources["MGood"],
-        MoodLevel.Okay => (Color)Application.Current!.Resources["MOkay"],
-        MoodLevel.Low => (Color)Application.Current!.Resources["MLow"],
-        MoodLevel.Unwell => (Color)Application.Current!.Resources["MUnwell"],
-        _ => Colors.White
-    };
+        var key = mood switch
+        {
+            MoodLevel.Great => "MGreat",
+            MoodLevel.Good => "MGood",
+            MoodLevel.Okay => "MOkay",
+            MoodLevel.Low => "MLow",
+            MoodLevel.Unwell => "MUnwell",
+            _ => null
+        };
+        return key is null ? Colors.White : AppColors.Resolve(key, Colors.White);
+    }
 
     public static string GetEmoji(this MoodLevel mood) => mood switch
     {

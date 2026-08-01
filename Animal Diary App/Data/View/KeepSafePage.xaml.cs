@@ -93,7 +93,7 @@ public partial class KeepSafePage : ContentPage
 		// Onboarding is done and the first pet exists — begin the free trial now. Quiet
 		// no-op under the Null boundary (dev / billing disabled). Fire-and-forget so the
 		// handoff into the app isn't blocked.
-		_ = StartTrialAsync();
+		StartTrialAsync().Forget();
 
 		(Application.Current as App)?.SwitchToMainApp();
 	}

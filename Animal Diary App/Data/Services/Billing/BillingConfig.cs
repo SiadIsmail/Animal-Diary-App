@@ -42,7 +42,7 @@ public static partial class BillingConfig
     /// with a desktop as the second device therefore passes every gate check without
     /// exercising a single one.</para>
     /// </summary>
-    public const bool ForceGateOnDesktop = true;
+    public const bool ForceGateOnDesktop = false;
 
     /// <summary>Show the pre-end nudge once when the trial has this many days left.</summary>
     public const int PreEndNudgeDaysBefore = 3;

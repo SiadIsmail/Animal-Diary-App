@@ -63,9 +63,7 @@
   <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
   <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
-  <data name="Common_Add" xml:space="preserve"><value>Add</value></data>
   <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
-  <data name="Common_EnterText" xml:space="preserve"><value>Enter text</value></data>
   <data name="Common_YearsSeparator" xml:space="preserve"><value> years · </value></data>
   <data name="Common_KgSuffix" xml:space="preserve"><value> kg</value></data>
   <data name="Common_AgeYearsShort" xml:space="preserve"><value>({0} yrs)</value></data>
@@ -110,7 +108,6 @@
   <data name="Settings_DailyReminderSubtitle" xml:space="preserve"><value>Once a day, at a time you pick, a quiet nudge to write something down. Only when something's still open.</value></data>
   <data name="Settings_DailyReminderTime" xml:space="preserve"><value>Reminder time</value></data>
   <data name="Settings_Language" xml:space="preserve"><value>Language</value></data>
-  <data name="Settings_LanguageSubtitle" xml:space="preserve"><value>Choose your language</value></data>
   <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Delete all data</value></data>
   <data name="Settings_DeleteConfirmMessage" xml:space="preserve"><value>This deletes every pet, entry, medication, and setting on this device. It can't be undone.</value></data>
   <data name="Settings_DeleteConfirmAccept" xml:space="preserve"><value>Delete</value></data>
@@ -129,7 +126,6 @@
   <data name="Main_GreetingEvening" xml:space="preserve"><value>Good evening</value></data>
   <data name="Main_Weight" xml:space="preserve"><value>Weight</value></data>
   <data name="Main_Mood" xml:space="preserve"><value>Mood</value></data>
-  <data name="Main_MoodLabel" xml:space="preserve"><value>Mood</value></data>
   <data name="Main_Last30Days" xml:space="preserve"><value>Last 30 days</value></data>
   <data name="Main_MoodEmptyState" xml:space="preserve"><value>You can note how your pet's feeling in the Journal</value></data>
   <data name="Main_Aside1" xml:space="preserve"><value>How {0} is doing today</value></data>
@@ -138,12 +134,10 @@
   <data name="Main_MoodMonthHeading" xml:space="preserve"><value>How the month has felt</value></data>
   <data name="Main_WeighInsHeading" xml:space="preserve"><value>The weigh-ins</value></data>
   <data name="Main_WeightStable" xml:space="preserve"><value>About the same as before</value></data>
-  <data name="Main_CareRingLabel" xml:space="preserve"><value>Today's care</value></data>
   <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Next up</value></data>
   <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>All caught up</value></data>
   <data name="Main_AllCaughtUpDetail" xml:space="preserve"><value>Nothing due right now.</value></data>
   <data name="Main_LogNow" xml:space="preserve"><value>Write it down</value></data>
-  <data name="Main_HealthyPlaceholder" xml:space="preserve"><value>No conditions</value></data>
   <data name="Main_MedsPlaceholder" xml:space="preserve"><value>Next dose 20:00</value></data>
   <data name="Main_WeightEmptyCard" xml:space="preserve"><value>No weigh-ins yet. Add one in the Journal.</value></data>
   <data name="Main_LoggedRelative" xml:space="preserve"><value>Recorded {0}</value></data>
@@ -153,7 +147,6 @@
   <!-- ── Journal (Calendar) header ── -->
   <data name="Journal_Eyebrow" xml:space="preserve"><value>Health journal</value></data>
   <data name="Journal_Title" xml:space="preserve"><value>Journal</value></data>
-  <data name="Journal_DayTimeline" xml:space="preserve"><value>Day timeline</value></data>
   <data name="Journal_EyebrowFmt" xml:space="preserve"><value>{0}'s health journal</value></data>
   <data name="Journal_RelToday" xml:space="preserve"><value>today</value></data>
   <data name="Journal_RelYesterday" xml:space="preserve"><value>yesterday</value></data>
@@ -166,7 +159,6 @@
   <data name="Journal_EmptySub" xml:space="preserve"><value>Quiet days are good days too.</value></data>
   <data name="Journal_Celebrate" xml:space="preserve"><value>Give {0} a scratch from us.</value></data>
   <data name="Journal_WeighIn" xml:space="preserve"><value>Weigh-in</value></data>
-  <data name="Journal_Meds" xml:space="preserve"><value>Meds</value></data>
   <data name="Journal_MoodTitle" xml:space="preserve"><value>Mood</value></data>
   <data name="Journal_WeightScales" xml:space="preserve"><value>on the scales</value></data>
   <data name="Journal_MarkGiven" xml:space="preserve"><value>Mark as given</value></data>
@@ -175,9 +167,7 @@
   <data name="Toast_MedGiven2" xml:space="preserve"><value>Given, and written down.</value></data>
   <data name="Toast_MedGiven3" xml:space="preserve"><value>One less thing to remember.</value></data>
   <data name="Toast_MoodSaved1" xml:space="preserve"><value>Saved. You know {0} best.</value></data>
-  <data name="Toast_MoodSaved2" xml:space="preserve"><value>Saved to {0}'s journal.</value></data>
   <data name="Toast_WeightSaved1" xml:space="preserve"><value>Weighed in and written down.</value></data>
-  <data name="Toast_WeightSaved2" xml:space="preserve"><value>Added to {0}'s journal.</value></data>
   <data name="Toast_BackToday" xml:space="preserve"><value>Back to today</value></data>
 
   <!-- ── Journal chip rework: "Still to do" chips + input sheets (§6) ── -->
@@ -380,28 +370,22 @@
   <data name="Care_YourPets" xml:space="preserve"><value>Your pets</value></data>
 
   <!-- ── Weight chart ── -->
-  <data name="Weight_TrendHeader" xml:space="preserve"><value>Weight trend</value></data>
   <data name="Weight_EmptyState" xml:space="preserve"><value>Add a few weigh-ins to see the trend</value></data>
 
   <!-- ── Pets page ── -->
-  <data name="Pets_Title" xml:space="preserve"><value>My pets</value></data>
   <data name="Pets_MedicationCountOne" xml:space="preserve"><value>{0} medication</value></data>
   <data name="Pets_MedicationCountMany" xml:space="preserve"><value>{0} medications</value></data>
-  <data name="Pets_OpenProfile" xml:space="preserve"><value>Open profile</value></data>
-  <data name="Pets_Edit" xml:space="preserve"><value>Edit</value></data>
   <data name="Pets_Manage" xml:space="preserve"><value>Manage</value></data>
   <data name="ConditionPicker_Title" xml:space="preserve"><value>Does {0} have any ongoing conditions?</value></data>
   <data name="ConditionPicker_Sub" xml:space="preserve"><value>Pick any that apply, and Felova will note the right things for {0}. You can change this later.</value></data>
   <data name="Pets_QuickManagement" xml:space="preserve"><value>Quick management</value></data>
   <data name="Pets_AddPet" xml:space="preserve"><value>Add pet</value></data>
-  <data name="Pets_AddPetSubtitle" xml:space="preserve"><value>Set up a new pet</value></data>
   <data name="Pets_Medication" xml:space="preserve"><value>Medication</value></data>
   <data name="Pets_MedicationSubtitle" xml:space="preserve"><value>Schedules and doses</value></data>
   <data name="Pets_Documents" xml:space="preserve"><value>Documents</value></data>
   <data name="Pets_DocumentsSubtitle" xml:space="preserve"><value>Reports, scans, and files</value></data>
   <data name="Pets_Export" xml:space="preserve"><value>Vet summary</value></data>
   <data name="Pets_ExportSubtitle" xml:space="preserve"><value>One page to print or share</value></data>
-  <data name="Export_SavedTitle" xml:space="preserve"><value>Summary saved</value></data>
   <data name="Export_SheetTitle" xml:space="preserve"><value>Vet summary</value></data>
   <data name="Export_SheetSubtitle" xml:space="preserve"><value>One page for {0}'s vet</value></data>
   <data name="Export_PeriodLabel" xml:space="preserve"><value>Period</value></data>
@@ -433,25 +417,9 @@
   <data name="Common_Undo" xml:space="preserve"><value>Undo</value></data>
   <data name="Export_NoData" xml:space="preserve"><value>Nothing written down in this period yet.</value></data>
   <data name="Export_Failed" xml:space="preserve"><value>Couldn't make the summary. Please try again.</value></data>
-  <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
   <data name="Pet_SubtitleFormat" xml:space="preserve"><value>{0} · {1} yrs</value></data>
 
   <!-- ── Calendar ── -->
-  <data name="Calendar_SelectedDate" xml:space="preserve"><value>Selected date: {0:d}</value></data>
-  <data name="Calendar_MoodAdd" xml:space="preserve"><value>Mood</value></data>
-  <data name="Calendar_WeightAdd" xml:space="preserve"><value>Weight</value></data>
-  <data name="Calendar_HowFeeling" xml:space="preserve"><value>How is your pet feeling today?</value></data>
-  <data name="Calendar_ConfirmMood" xml:space="preserve"><value>Save mood</value></data>
-  <data name="Calendar_WeightPlaceholder" xml:space="preserve"><value>Today's weight</value></data>
-  <data name="Calendar_TodaysOverview" xml:space="preserve"><value>Today's overview</value></data>
-  <data name="Calendar_NoMood" xml:space="preserve"><value>No mood written down yet</value></data>
-  <data name="Calendar_Weight" xml:space="preserve"><value>Weight</value></data>
-  <data name="Calendar_NoWeight" xml:space="preserve"><value>No weight written down yet</value></data>
-  <data name="Calendar_Medications" xml:space="preserve"><value>Medications</value></data>
-  <data name="Calendar_NoMedications" xml:space="preserve"><value>Nothing scheduled for this day</value></data>
-  <data name="Calendar_Skip" xml:space="preserve"><value>Skip</value></data>
-  <data name="Calendar_MakeWeightEntry" xml:space="preserve"><value>Add today's weight</value></data>
-  <data name="Calendar_MakeMoodEntry" xml:space="preserve"><value>Add today's mood</value></data>
 
   <!-- ── Medications list ── -->
   <data name="Med_Title" xml:space="preserve"><value>Medications</value></data>
@@ -520,8 +488,6 @@
   <data name="CreatePet_BirthMonthPlaceholder" xml:space="preserve"><value>MM</value></data>
   <data name="CreatePet_DayOfBirthLabel" xml:space="preserve"><value>Day · optional</value></data>
   <data name="CreatePet_BirthDayPlaceholder" xml:space="preserve"><value>DD</value></data>
-  <data name="CreatePet_ConditionsTitle" xml:space="preserve"><value>Conditions and diagnoses</value></data>
-  <data name="CreatePet_ConditionsSubtitle" xml:space="preserve"><value>You can add conditions from the pet's profile later</value></data>
   <data name="CreatePet_PreviewName" xml:space="preserve"><value>Your pet</value></data>
 
   <!-- ── Pet types ── -->
@@ -533,9 +499,6 @@
   <data name="PetType_Other" xml:space="preserve"><value>Other</value></data>
 
   <!-- ── PetType page (legacy) ── -->
-  <data name="PetTypePage_Hello" xml:space="preserve"><value>Hello</value></data>
-  <data name="PetTypePage_WhatType" xml:space="preserve"><value>What type of animal do you have?</value></data>
-  <data name="PetTypePage_HowOld" xml:space="preserve"><value>How old are they?</value></data>
 
   <!-- ── Mood levels ── -->
   <!-- Two sets, deliberately: the Excellent/Neutral/Bad/VeryBad words label the
@@ -563,7 +526,6 @@
   <data name="Day_Sun" xml:space="preserve"><value>Su</value></data>
 
   <!-- ── Dose status ── -->
-  <data name="Dose_TakenAt" xml:space="preserve"><value>Given · {0:HH:mm}</value></data>
   <data name="Dose_Taken" xml:space="preserve"><value>Given</value></data>
   <data name="Dose_Skipped" xml:space="preserve"><value>Skipped</value></data>
   <data name="Dose_Missed" xml:space="preserve"><value>Not recorded</value></data>
@@ -711,7 +673,6 @@
   <data name="Subscribe_ContinueLabel" xml:space="preserve"><value>Continue with Felova</value></data>
   <data name="Subscribe_PurchaseProblem" xml:space="preserve"><value>That didn't go through. You can try again.</value></data>
   <data name="Subscribe_PurchasePending" xml:space="preserve"><value>Your payment is processing. You'll have full access once it goes through.</value></data>
-  <data name="Subscribe_RestoreDone" xml:space="preserve"><value>Your subscription is back.</value></data>
   <data name="Subscribe_RestoreNone" xml:space="preserve"><value>No subscription found to restore.</value></data>
   <data name="Subscribe_AlreadySubscribed" xml:space="preserve"><value>You already have a Felova subscription on this store account, so there was nothing to buy. It is active here now.</value></data>
   <data name="Subscribe_OwnedByOtherAccount" xml:space="preserve"><value>This store account already has a Felova subscription, and it belongs to a different Felova account. Sign in with that account to use it here, or change it in your store subscriptions.</value></data>

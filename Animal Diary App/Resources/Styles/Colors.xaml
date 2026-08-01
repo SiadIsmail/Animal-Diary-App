@@ -48,9 +48,7 @@
 
     <!-- Surfaces -->
     <Color x:Key="Paper">#D9EFE9</Color>       <!-- rockpool page ground         -->
-    <Color x:Key="PaperDeep">#C8E4E0</Color>   <!-- recessed wells               -->
     <Color x:Key="Card">#99FFFFFF</Color>      <!-- primary card surface (60% white) -->
-    <Color x:Key="Cream">#FBF7EF</Color>       <!-- journal / note surface       -->
     <Color x:Key="Line">#B3FFFFFF</Color>      <!-- hairline borders (white stroke) -->
 
     <!-- Ink / text -->
@@ -59,20 +57,12 @@
     <Color x:Key="InkTertiary">#7CA2A1</Color> <!-- tertiary / metadata          -->
 
     <!-- Rockpool — brand accent (teal/blue-green) -->
-    <Color x:Key="Viola">#149081</Color>
-    <Color x:Key="ViolaDeep">#0C6A5D</Color>
-    <Color x:Key="ViolaTint">#DCEFEA</Color>
-    <Color x:Key="ViolaLine">#DCD2EE</Color>
 
     <!-- Honey — medication / attention -->
     <Color x:Key="Honey">#D99A3E</Color>
-    <Color x:Key="HoneyTint">#F9EEDB</Color>
     <Color x:Key="HoneyDeep">#8A5D14</Color>
 
     <!-- Sage — stable / given / good -->
-    <Color x:Key="Sage">#5F9E82</Color>
-    <Color x:Key="SageTint">#E5F0EA</Color>
-    <Color x:Key="SageDeep">#2E6B50</Color>
 
     <!-- Clay — alerts, used sparingly -->
     <Color x:Key="Clay">#C05F5F</Color>
@@ -81,16 +71,10 @@
 
     <!-- Brushes for the common surface / accent tokens -->
     <SolidColorBrush x:Key="PaperBrush" Color="{StaticResource Paper}"/>
-    <SolidColorBrush x:Key="PaperDeepBrush" Color="{StaticResource PaperDeep}"/>
     <SolidColorBrush x:Key="CardBrush" Color="{StaticResource Card}"/>
-    <SolidColorBrush x:Key="CreamBrush" Color="{StaticResource Cream}"/>
     <SolidColorBrush x:Key="LineBrush" Color="{StaticResource Line}"/>
     <SolidColorBrush x:Key="InkBrush" Color="{StaticResource Ink}"/>
-    <SolidColorBrush x:Key="ViolaBrush" Color="{StaticResource Viola}"/>
-    <SolidColorBrush x:Key="ViolaDeepBrush" Color="{StaticResource ViolaDeep}"/>
-    <SolidColorBrush x:Key="ViolaTintBrush" Color="{StaticResource ViolaTint}"/>
     <SolidColorBrush x:Key="HoneyBrush" Color="{StaticResource Honey}"/>
-    <SolidColorBrush x:Key="SageBrush" Color="{StaticResource Sage}"/>
     <SolidColorBrush x:Key="ClayBrush" Color="{StaticResource Clay}"/>
 
     <!-- =================================================================== -->
@@ -106,8 +90,6 @@
     <Color x:Key="SeaBlue">#B7DCEC</Color>     <!-- sea blue                  -->
     <Color x:Key="Sand">#EDDFC0</Color>        <!-- warm sand (bottom glow)   -->
     <Color x:Key="SeaGradTop">#DDF2EC</Color>  <!-- linear top                -->
-    <Color x:Key="SeaGradBottom">#B6DCD9</Color><!-- linear bottom            -->
-    <Color x:Key="SeaGradGlow">#A8D8CD</Color> <!-- bottom radial glow        -->
 
     <!-- Ink reuses the shared Ink / InkSecondary / InkTertiary (#0D3A3C /
          #3A6A6B / #7CA2A1) — identical values, no new keys needed. -->
@@ -137,7 +119,9 @@
     <!-- Violet — seizure accent (timeline icon tile) -->
     <Color x:Key="Violet">#584A8A</Color>
     <Color x:Key="VioletTint">#26584A8A</Color> <!-- 15% -->
-    <Color x:Key="VioletDeep">#453A6E</Color>
+    <Color x:Key="VioletSoftTint">#267B6BAE</Color> <!-- 15% of a lighter violet;
+         the Manage page's care-plan rows use this rather than VioletTint -->
+
 
     <!-- Warm paper (mood note card) + washi tape -->
     <Color x:Key="PaperWarm">#FFF9EC</Color>

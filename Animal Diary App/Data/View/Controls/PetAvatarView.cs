@@ -127,14 +127,6 @@ public sealed class PetAvatarView : ContentView
         _fallback.IsVisible = !hasPhoto;
     }
 
-    private static bool TryColor(string key, out Color color)
-    {
-        if (Application.Current?.Resources.TryGetValue(key, out var value) == true && value is Color c)
-        {
-            color = c;
-            return true;
-        }
-        color = Colors.Transparent;
-        return false;
-    }
+    private static bool TryColor(string key, out Color color) =>
+        Animal_Diary_App.Helpers.AppColors.TryResolve(key, out color);
 }

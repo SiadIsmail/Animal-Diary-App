@@ -221,7 +221,7 @@ public class SharingSheetViewModel : BaseViewModel
             IsPresented = false;
             LeftPet?.Invoke();
             // The next cycle's membership diff purges the pet from this device.
-            _ = _sync.SyncNowAsync();
+            _sync.SyncNowAsync().Forget();
         }
     }
 

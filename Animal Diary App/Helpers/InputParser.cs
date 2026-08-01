@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Helpers;
+﻿namespace Animal_Diary_App.Helpers;
 using System.Globalization;
 
 public static class InputParser

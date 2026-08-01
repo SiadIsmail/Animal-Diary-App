@@ -13,6 +13,13 @@ using System.Diagnostics;
 /// server message). It must never store credentials: access/refresh tokens live
 /// in headers and are never passed here, and bodies are trimmed. Cleared on
 /// data reset via <see cref="Clear"/>.
+///
+/// <para><b>Nor any personal detail.</b> The dev panel renders this buffer and offers
+/// a Copy button, so every line can end up pasted into a support thread — treat it as
+/// publishable. Email addresses, user ids and pet names do not belong here even though
+/// they are not secrets; the sign-in path used to record the account's email and no
+/// longer does. If you need to correlate a log with an account, log the fact and let
+/// the person tell you who they are.</para>
 /// </summary>
 public static class CloudDiagnostics
 {

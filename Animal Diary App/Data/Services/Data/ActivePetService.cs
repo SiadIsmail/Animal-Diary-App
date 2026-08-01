@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.Services;
 
 using Animal_Diary_App.Data.Models;
+using Animal_Diary_App.Helpers;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -19,7 +20,7 @@ public class ActivePetService : INotifyPropertyChanged
             {
                 activePet = value;
                 OnPropertyChanged();
-                _ = SaveActivePetIdAsync();
+                SaveActivePetIdAsync().Forget();
             }
         }
     }

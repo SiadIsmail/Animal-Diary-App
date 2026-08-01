@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.View.Controls;
+﻿namespace Animal_Diary_App.Data.View.Controls;
 
 using Microsoft.Maui.Controls.Shapes;
 using Animal_Diary_App.Helpers;
@@ -82,8 +82,8 @@ public partial class WaterBackground : ContentView
     {
         uint driftDelay = (uint)BubbleRandom.Next(0, (int)driftMs);
         uint breatheDelay = (uint)BubbleRandom.Next(0, (int)breatheMs);
-        _ = RunBubbleDriftAsync(bubble, yOffset, driftMs / 2, driftDelay);
-        _ = RunBubbleBreatheAsync(bubble, breatheMs / 2, breatheDelay);
+        RunBubbleDriftAsync(bubble, yOffset, driftMs / 2, driftDelay).Forget();
+        RunBubbleBreatheAsync(bubble, breatheMs / 2, breatheDelay).Forget();
     }
 
     /// <summary>Infinite auto-reversing float: drifts to (X drift, yOffset) at

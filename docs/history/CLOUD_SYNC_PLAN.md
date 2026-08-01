@@ -1,9 +1,24 @@
 # Cloud Backup & Multi-Caregiver Sync — Implementation Plan
 
-> Status: **proposal / plan** — nothing in this document is built yet.
-> Scope: optional cloud backup + multi-caregiver synchronization for Felova,
-> preserving the local-first architecture. Users who never enable cloud features
-> see zero change: no account, no network, SQLite only.
+> Status: **BUILT.** This is the original design document, kept as the record of
+> *why* the cloud layer has the shape it has. It is **not** a description of the
+> current implementation and must not be read as one — for that, see
+> [AI/architecture.md](../../AI/architecture.md) §5 (structure),
+> [AI/domain.md](../../AI/domain.md) (sync columns, sharing rules, invariants) and
+> `Data/Services/Cloud/` (the code).
+>
+> Phases 0–2 shipped: sync columns and soft deletes, accounts, backup, multi-device
+> sync, caregiver sharing, Google Sign-In, and sponsored caregivers. The schema is in
+> `supabase/migrations/` (0001–0011, applied). Where this document and the code
+> disagree, **the code is right** — several decisions changed during
+> implementation and are recorded in [AI/design-decisions.md](../../AI/design-decisions.md)
+> (notably: browser/PKCE Google sign-in rather than the native picker, and the
+> sign-out teardown that §-nothing here anticipated — see
+> [ACCOUNT_LIFECYCLE_PLAN.md](ACCOUNT_LIFECYCLE_PLAN.md)).
+>
+> Scope as originally written: optional cloud backup + multi-caregiver
+> synchronization for Felova, preserving the local-first architecture. Users who
+> never enable cloud features see zero change: no account, no network, SQLite only.
 
 ---
 

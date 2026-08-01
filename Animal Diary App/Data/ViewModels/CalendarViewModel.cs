@@ -7,13 +7,14 @@ using System.Windows.Input;
 using System.Collections.ObjectModel;
 
 /// <summary>
-/// The Journal's week strip, pet selector and derived day headings, plus the
-/// day's dose list and HasMood/HasWeight flags. The Today page no longer reads
-/// any of this — its care ring and next-up card now derive from the
-/// PendingEngine via MainPageViewModel — so the dose-checklist and mood/weight
-/// members here have no remaining consumer and are kept only pending a careful
-/// removal (see known-constraints.md). The logging surface lives in
-/// <see cref="JournalLogViewModel"/> and the sheet VMs.
+/// The Journal's week strip, pet selector and derived day headings.
+///
+/// <para>Deliberately narrow. The Today page's care ring and next-up card derive
+/// from the PendingEngine via <see cref="MainPageViewModel"/>, and the logging
+/// surface lives in <see cref="JournalLogViewModel"/> and the sheet VMs — so this
+/// VM owns the week strip, the pet chips and the derived day headings, and nothing
+/// else. A dose checklist and mood/weight flags used to live here for the old Today
+/// ring; they were removed in the 2026-07-31 audit once nothing read them.</para>
 /// </summary>
 public class CalendarViewModel : BaseViewModel
 {
@@ -34,8 +35,6 @@ public class CalendarViewModel : BaseViewModel
             currentSelectedDate = newDate;
             OnPropertyChanged();
             NotifyDerived();
-            LoadEntriesAsync().Forget();
-            LoadDosesAsync().Forget();
             if (weekChanged)
                 LoadWeekActivitiesAsync().Forget();
         }
@@ -48,33 +47,6 @@ public class CalendarViewModel : BaseViewModel
         int offset = ((int)d.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
         return d.AddDays(-offset);
     }
-
-    // The day's recorded mood/weight, kept only as the source of HasMood/HasWeight.
-    // (Legacy: the Today page's old care ring read these; nothing consumes them now.)
-    private string shownMood = string.Empty;
-    public string ShownMood
-    {
-        get => shownMood;
-        set
-        {
-            if (SetProperty(ref shownMood, value))
-                OnPropertyChanged(nameof(HasMood));
-        }
-    }
-
-    private string shownWeight = string.Empty;
-    public string ShownWeight
-    {
-        get => shownWeight;
-        set
-        {
-            if (SetProperty(ref shownWeight, value))
-                OnPropertyChanged(nameof(HasWeight));
-        }
-    }
-
-    public bool HasMood => !string.IsNullOrEmpty(ShownMood);
-    public bool HasWeight => !string.IsNullOrEmpty(ShownWeight);
 
     // ── Rockpool Journal display helpers (derived, read-only) ────────────
     // Refreshed together via NotifyDerived() whenever the selection, active
@@ -137,28 +109,21 @@ public class CalendarViewModel : BaseViewModel
     private readonly ActivePetService _activePetService;
     private readonly MedicationService _medicationService;
     private readonly MedicationDoseLogService _doseLogService;
-    private readonly DayDoseService _dayDoseService;
-    private readonly Animal_Diary_App.Data.Services.Notifications.MedicationReminderScheduler _reminderScheduler;
 
     public CalendarViewModel(
     PetEntryService petEntryService,
     PetService petService, ActivePetService activePetService,
-    MedicationService medicationService, MedicationDoseLogService doseLogService,
-    DayDoseService dayDoseService,
-    Animal_Diary_App.Data.Services.Notifications.MedicationReminderScheduler reminderScheduler)
+    MedicationService medicationService, MedicationDoseLogService doseLogService)
     {
         _petEntryService = petEntryService;
         _petService = petService;
         _activePetService = activePetService;
         _medicationService = medicationService;
         _doseLogService = doseLogService;
-        _dayDoseService = dayDoseService;
-        _reminderScheduler = reminderScheduler;
 
         // Commands are created once — an expression-bodied `=> new Command(...)`
         // property hands out a fresh instance per read.
         SelectPetCommand = new Command<Pet>(async pet => await SelectPetAsync(pet));
-        ToggleDoseTakenCommand = new Command<DoseItem>(async item => await ToggleDoseTakenAsync(item));
     }
 
     public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
@@ -208,86 +173,6 @@ public class CalendarViewModel : BaseViewModel
         ApplySelection(selected.Id);
     }
 
-    /// <summary>Load the selected day's mood/weight so HasMood/HasWeight reflect the
-    /// stored entry (and so NotifyDerived fires for the Journal's reload dedup).</summary>
-    public async Task LoadEntriesAsync()
-    {
-        var entry = await _petEntryService.GetPetEntryByDateAndPetIdAsync(CurrentSelectedDate, CurrentPetId);
-        if (entry == null)
-        {
-            ShownMood = string.Empty;
-            ShownWeight = string.Empty;
-            NotifyDerived();
-            return;
-        }
-        // Derive the displayed mood from the stored level so it always renders in
-        // the active language (the stored Mood string may be in another language).
-        ShownMood = entry.MoodLevel > 0 ? ((MoodLevel)entry.MoodLevel).GetDisplayName() : string.Empty;
-        ShownWeight = entry.Weight > 0 ? entry.Weight.ToString() : string.Empty;
-        NotifyDerived();
-    }
-
-    // ── Medication dose checklist (selected date) ────────────────────────
-    // Legacy: served the Today page's old ring + next-med card; no consumer now.
-    public RangeObservableCollection<DoseItem> DosesForSelectedDate { get; } = new();
-
-    /// <summary>
-    /// Build the list of scheduled doses for the active pet on the selected date
-    /// by filtering each medication's schedule rules to this weekday, then
-    /// attaching any recorded outcome from the dose log.
-    /// </summary>
-    public async Task LoadDosesAsync()
-    {
-        var petId = CurrentPetId;
-        var date = CurrentSelectedDate.Date;
-        var ordered = new List<DoseItem>();
-
-        if (petId != 0)
-        {
-            var now = DateTime.Now;
-
-            // The day's doses come from the shared DayDoseService (same meds →
-            // schedules → logs join the Journal timeline + pending engine use).
-            var items = new List<DoseItem>();
-            foreach (var d in await _dayDoseService.GetForDayAsync(petId, date))
-            {
-                var med = d.Medication;
-                items.Add(new DoseItem
-                {
-                    MedicationId = med.Id,
-                    PetId = petId,
-                    ScheduledDate = date,
-                    ScheduledTime = d.ScheduledTime,
-                    MedName = med.Name,
-                    DoseDisplay = $"{med.Dosage} {med.Unit}",
-                    CanToggle = date < now.Date || (date == now.Date && d.ScheduledTime <= now.TimeOfDay),
-                    Status = d.Log?.Status,
-                    ResolvedAt = d.Log?.ResolvedAt
-                });
-            }
-
-            // A "handmade" wobble: alternate the pill-icon tilt and cycle the
-            // card corners through three patterns as they go down the timeline.
-            int index = 0;
-            foreach (var item in items.OrderBy(i => i.ScheduledTime).ThenBy(i => i.MedName))
-            {
-                item.IconRotation = index % 2 == 0 ? -3 : 2.5;
-                item.CardCorner = (index % 3) switch
-                {
-                    0 => new CornerRadius(17, 14, 15, 18),
-                    1 => new CornerRadius(14, 18, 17, 15),
-                    _ => new CornerRadius(16, 15, 18, 14),
-                };
-                ordered.Add(item);
-                index++;
-            }
-        }
-
-        // One Reset notification for the whole checklist instead of Clear + N Adds.
-        DosesForSelectedDate.ReplaceAll(ordered);
-        NotifyDerived();
-    }
-
     // ── Week activity dots (visible week) ────────────────────────────────
     /// <summary>
     /// Flat, event-based list of indicators the calendar control renders as dots.
@@ -299,8 +184,8 @@ public class CalendarViewModel : BaseViewModel
     /// <summary>
     /// Build the visible week's activity indicators for the active pet:
     /// medication doses (scheduled → hollow, taken/skipped → filled) plus weight
-    /// and mood entries (filled). Mirrors <see cref="LoadDosesAsync"/>'s rule
-    /// expansion but across the seven days of the selected week.
+    /// and mood entries (filled). Expands each medication's schedule rules across
+    /// the seven days of the selected week.
     /// </summary>
     public async Task LoadWeekActivitiesAsync()
     {
@@ -368,52 +253,27 @@ public class CalendarViewModel : BaseViewModel
         WeekActivities.ReplaceAll(activities);
     }
 
-    /// <summary>One-tap confirmation: toggle a dose between Taken and not-recorded.
-    /// Legacy: the Today page's old next-med card was its only executor.</summary>
-    public ICommand ToggleDoseTakenCommand { get; }
-
-    private async Task ToggleDoseTakenAsync(DoseItem? item)
-    {
-        if (item == null || !item.CanToggle)
-            return;
-
-        if (item.Status == DoseStatus.Taken)
-        {
-            await _doseLogService.ClearStatusAsync(item.MedicationId, item.ScheduledDate, item.ScheduledTime);
-            item.ResolvedAt = null;
-            item.Status = null;
-            // Marking it taken cancelled the occurrence's reminder; un-marking must
-            // re-arm it or the dose would go silently unreminded. Idempotent sync.
-            await _reminderScheduler.SyncMedicationAsync(item.MedicationId);
-        }
-        else
-        {
-            await _doseLogService.SetStatusAsync(item.MedicationId, item.PetId, item.ScheduledDate, item.ScheduledTime, DoseStatus.Taken);
-            item.ResolvedAt = DateTime.Now;
-            item.Status = DoseStatus.Taken;
-            // Stop this occurrence's reminder from firing late or being re-sent.
-            await _reminderScheduler.MarkDoseHandledAsync(item.MedicationId, item.ScheduledDate, item.ScheduledTime);
-        }
-
-        // Reflect the new outcome in the month dots (hollow ↔ filled).
-        await LoadWeekActivitiesAsync();
-    }
-
     /// <summary>
-    /// Loads pets and entries. Call from Main while that page is visible so Calendar opens ready.
+    /// Loads pets and the visible week's dots. Call from Main while that page is
+    /// visible so Calendar opens ready.
     /// </summary>
     public async Task PrepareDataAsync()
     {
         await LoadPetsAsync();
-        await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
+        await LoadWeekActivitiesAsync();
+        NotifyDerived();
     }
 
     /// <summary>
-    /// Light refresh when returning to Calendar (entries only; pets already loaded).
+    /// Light refresh when returning to Calendar (week dots only; pets are already
+    /// loaded). It still raises the derived headings, and must keep doing so: that
+    /// notification is what <c>CalendarPage</c>'s reload marker keys off — see the
+    /// "Journal reloads are deduped by (pet, date)" decision.
     /// </summary>
     public async Task RefreshEntriesAsync()
     {
-        await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
+        await LoadWeekActivitiesAsync();
+        NotifyDerived();
     }
 
     public int CurrentPetId => _activePetService.ActivePet?.Id ?? 0;
@@ -427,7 +287,7 @@ public class CalendarViewModel : BaseViewModel
 
         _activePetService.ActivePet = pet;
         ApplySelection(pet.Id);
-        await Task.WhenAll(LoadEntriesAsync(), LoadDosesAsync(), LoadWeekActivitiesAsync());
+        await LoadWeekActivitiesAsync();
         NotifyDerived();
     }
 }

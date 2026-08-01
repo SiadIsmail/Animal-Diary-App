@@ -153,7 +153,12 @@ public class MedicationReminderScheduler
         }
     }
 
-    private async Task SyncMedicationCoreAsync(int medicationId, DateTime now)
+    /// <param name="pendingByMedication">Optional pre-counted pending instances per
+    /// medication, so a caller syncing every medication in a loop doesn't re-read the
+    /// whole instance table once per medication. Null = read it here (the single-med
+    /// path). See <see cref="CountPendingByMedicationAsync"/>.</param>
+    private async Task SyncMedicationCoreAsync(
+        int medicationId, DateTime now, IReadOnlyDictionary<int, int>? pendingByMedication = null)
     {
         var medication = await _medicationService.GetMedicationByIdAsync(medicationId);
         if (medication == null || medication.IsArchived)
@@ -200,8 +205,15 @@ public class MedicationReminderScheduler
 
         // Respect the OS alarm budget: this med may only take what's left after every
         // OTHER medication's pending occurrences. (Its own are about to be replaced.)
-        var pendingOthers = (await _instances.GetAllAsync())
-            .Count(i => i.Status == ReminderStatus.Pending && i.MedicationId != medicationId);
+        //
+        // The catch-up passes its own snapshot: it syncs every medication in a loop, and
+        // reading the whole instance table per medication made a launch/boot pass
+        // O(meds x instances) — up to 400 pending rows re-materialized once per
+        // medication, inside the job budget a reboot recovery has to fit in.
+        var pendingCounts = pendingByMedication ?? await CountPendingByMedicationAsync();
+        var pendingOthers = pendingCounts
+            .Where(kv => kv.Key != medicationId)
+            .Sum(kv => kv.Value);
         var budget = Math.Max(0, GlobalPendingBudget - pendingOthers);
 
         var ordered = occurrences
@@ -300,13 +312,32 @@ public class MedicationReminderScheduler
         try
         {
             var now = DateTime.Now;
+            var pending = await CountPendingByMedicationAsync();
             foreach (var med in await _medicationService.GetMedicationsByPetIdAsync(petId))
-                await SafeAsync(() => SyncMedicationCoreAsync(med.Id, now), $"sync med {med.Id}");
+                await SafeAsync(() => SyncMedicationCoreAsync(med.Id, now, pending), $"sync med {med.Id}");
         }
         finally
         {
             _gate.Release();
         }
+    }
+
+    /// <summary>Pending occurrences per medication, in one table read. The budget check
+    /// in <see cref="SyncMedicationCoreAsync"/> only needs the counts, and a loop over
+    /// medications should pay for this once.</summary>
+    private async Task<IReadOnlyDictionary<int, int>> CountPendingByMedicationAsync() =>
+        CountPending(await _instances.GetAllAsync());
+
+    private static IReadOnlyDictionary<int, int> CountPending(IEnumerable<ReminderInstance> all)
+    {
+        var counts = new Dictionary<int, int>();
+        foreach (var i in all)
+        {
+            if (i.Status != ReminderStatus.Pending)
+                continue;
+            counts[i.MedicationId] = counts.TryGetValue(i.MedicationId, out var n) ? n + 1 : 1;
+        }
+        return counts;
     }
 
     /// <summary>Cancel and forget every reminder for a medication (archive / delete).</summary>
@@ -448,13 +479,19 @@ public class MedicationReminderScheduler
         // Re-materialize + re-arm every medication; cancel archived ones.
         // (Core variants — the gate is already held.) One medication failing must not
         // leave every later medication un-armed.
+        //
+        // `all` was just read and its statuses resolved above, so it is the current
+        // picture: count the budget from it once rather than re-reading the whole
+        // instance table inside every iteration. This pass runs in the boot receiver's
+        // job budget, which is exactly where that mattered.
+        var pendingCounts = CountPending(all);
         var meds = await _medicationService.GetAllMedicationsAsync();
         foreach (var med in meds)
         {
             if (med.IsArchived)
                 await SafeAsync(() => CancelMedicationCoreAsync(med.Id), $"cancel med {med.Id}");
             else
-                await SafeAsync(() => SyncMedicationCoreAsync(med.Id, now), $"sync med {med.Id}");
+                await SafeAsync(() => SyncMedicationCoreAsync(med.Id, now, pendingCounts), $"sync med {med.Id}");
         }
 
         // Record durable "missed" adherence for past doses never logged.

@@ -34,8 +34,8 @@ zero automated tests around logic that is otherwise perfectly testable.
 ## Resolution log (2026-07-28)
 
 Owner asked to fix everything **except C1 and C2** (left as release-checklist items).
-Implemented and verified — app builds clean (Windows, 0 errors) and **17 billing unit
-tests pass** (`Animal Diary App.Tests`, `dotnet test`).
+Implemented and verified — app builds clean (Windows, 0 errors) and the billing unit
+tests pass (`Animal Diary App.Tests`, `dotnet test`).
 
 | Finding | Status | What changed |
 |---|---|---|

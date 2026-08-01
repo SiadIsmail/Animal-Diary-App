@@ -1,10 +1,9 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
-using Animal_Diary_App.Data.Helpers;
 using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
 
@@ -32,7 +31,7 @@ public class WaterOption : BaseViewModel
 }
 
 /// <summary>
-/// Backs the Journal's water sheet — the shared <see cref="Controls.FelovaBottomSheet"/>
+/// Backs the Journal's water sheet — the shared <c>FelovaBottomSheet</c>
 /// with TWO modes the owner flips between with an "Exact measurement" toggle at the top:
 /// <list type="bullet">
 /// <item><b>off (default)</b> — five relative word-tiles (Barely … A lot) with a

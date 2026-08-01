@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -142,7 +142,7 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         // Re-fetch on open: the initial load may still be in flight or have failed on a
         // flaky launch, which is exactly when the empty-offers dead-end appeared.
         if (ShowOffers)
-            _ = LoadOffersAsync();
+            LoadOffersAsync().Forget();
     }
 
     /// <summary>(Re)fetch the offerings with a visible loading state, then reflect the

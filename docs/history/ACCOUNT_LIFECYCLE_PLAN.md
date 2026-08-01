@@ -1,13 +1,13 @@
 # Account Lifecycle — sign-out, account switching, and what happens to the pets
 
-> Status: **built 2026-07-29** — Windows build clean, 76 unit tests pass. Slices A, B and C
+> Status: **built 2026-07-29** — Windows build clean, unit tests green. Slices A, B and C
 > are done; §7 was resolved as "warn and let them choose". §8 remains deferred. The device
 > tests in §6 are **not yet run** — that is the outstanding work.
 >
 > Written after a real data-loss incident during caregiver testing. Supersedes nothing; it
 > fills a gap `CLOUD_SYNC_PLAN.md` left open — that plan specifies what a *sync* does, never
-> what *signing out* does. Durable rules landed in [AI/domain.md](AI/domain.md) and
-> [AI/design-decisions.md](AI/design-decisions.md); this file keeps the incident narrative.
+> what *signing out* does. Durable rules landed in [AI/domain.md](../../AI/domain.md) and
+> [AI/design-decisions.md](../../AI/design-decisions.md); this file keeps the incident narrative.
 >
 > The sponsored-caregiver work (migration 0010, commit `c0b98ea`) is already shipped and is
 > **not** the cause of anything here. Verified: `git diff 3951cb8 c0b98ea` touches zero lines
@@ -62,7 +62,7 @@ would make enabling backup a genuine one-way door:
 | **Sign out** | "I am not this account on this device any more" | **goes** |
 
 **Sign-out is the moment the data leaves, not the next sync.** The app already commits to
-this rule for caregivers ([AI/domain.md](AI/domain.md)): *losing access purges the pet from
+this rule for caregivers ([AI/domain.md](../../AI/domain.md)): *losing access purges the pet from
 the device — medical data for a pet you no longer care for never stays behind.* Signing out
 of X is losing access to X's pets. Today they linger until some later sync notices; hand the
 phone to someone else in that window and the records are still sitting there.
@@ -162,7 +162,7 @@ Currently silent. That silence is what makes a reversible action feel like destr
   from this device. They stay in your account and come back when you sign in."*
   Native `DisplayAlert` — the sanctioned surface for a destructive confirm (the bottom-sheet
   rule governs *input*, not confirmation).
-- **Offer the vet export first**, exactly as pet deletion does. [AI/app-voice.md](AI/app-voice.md)
+- **Offer the vet export first**, exactly as pet deletion does. [AI/app-voice.md](../../AI/app-voice.md)
   §13 makes "always let people get their data out" a principle, and the export is free in
   every access state.
 - **Warn about unsynced work** when step A2.2 finds dirty rows.
@@ -172,14 +172,14 @@ Currently silent. That silence is what makes a reversible action feel like destr
 
 ## 6. Slice C — docs, invariant, tests
 
-**New invariant for [AI/domain.md](AI/domain.md):**
+**New invariant for [AI/domain.md](../../AI/domain.md):**
 
 > All account-scoped sync state is `cloud:`-prefixed in `SyncState` and is torn down by a
 > single `ClearPrefixAsync("cloud:")` on sign-out. A new account-scoped key must use that
 > prefix — never `AppSettings`, which is device-scoped and survives sign-out. Mirrors the
 > existing "every table in `InitAsync` must also be deleted in `AppResetService`" rule.
 
-Also: a [AI/design-decisions.md](AI/design-decisions.md) entry for the two exits (disable
+Also: a [AI/design-decisions.md](../../AI/design-decisions.md) entry for the two exits (disable
 backup keeps data, sign-out does not) and why the alternative — keeping local copies after
 sign-out — is worse: it re-opens cross-account absorption, leaves medical records with
 someone who lost access, and contradicts the caregiver revocation rule.
@@ -217,7 +217,7 @@ judge it.
 - **Ownership transfer.** The real answer to "my pet is tied to this account" — one owner is
   structural (`pet_members_one_owner`), `remove_pet_member` refuses to remove the owner, and
   losing access to the owning email means losing the cloud copy. Already a Phase 3 candidate
-  in [AI/current-roadmap.md](AI/current-roadmap.md); this plan makes the edge *visible* by
+  in [AI/current-roadmap.md](../../AI/current-roadmap.md); this plan makes the edge *visible* by
   removing the local copy that was papering over it, which strengthens the case.
 - **Disable backup → sign in elsewhere → enable = copies the pets.** `ResetSyncIdentityAsync`
   re-mints ids and pushes them as new. For one person migrating between their own accounts

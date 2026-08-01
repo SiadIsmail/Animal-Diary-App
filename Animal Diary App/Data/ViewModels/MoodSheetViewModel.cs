@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -8,7 +8,7 @@ using Animal_Diary_App.Helpers;
 
 /// <summary>
 /// Backs the Journal's mood sheet (the ported 5-emoji picker + optional note),
-/// rendered in the shared <see cref="Controls.FelovaBottomSheet"/>. Persists to the
+/// rendered in the shared <c>FelovaBottomSheet</c>. Persists to the
 /// day's <see cref="PetEntry"/> like the old inline editor did; Save raises
 /// <see cref="Saved"/> with an undo that restores the previous mood.
 /// </summary>

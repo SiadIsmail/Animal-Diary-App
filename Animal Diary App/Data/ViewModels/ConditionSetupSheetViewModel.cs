@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -7,7 +7,7 @@ using Animal_Diary_App.Data.Services.Journal;
 
 /// <summary>
 /// Shared base for the reusable condition-setup sheets (Diabetes, CKD, Epilepsy).
-/// Each is a <see cref="Controls.FelovaBottomSheet"/> body whose job is to answer
+/// Each is a <c>FelovaBottomSheet</c> body whose job is to answer
 /// "what will Felova add for this condition?" — configuration, not disease education.
 ///
 /// The SAME sheet instance is hosted by two doors: the onboarding condition picker
