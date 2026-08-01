@@ -73,26 +73,28 @@
 	-->
 	<PropertyGroup>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<NoWarn>
-			$(NoWarn);
-			<!-- CS0618: .NET 10 deprecated the non-Async animation + dialog helpers
-			     (FadeTo/TranslateTo/DisplayAlert/DisplayActionSheet) in favour of the
-			     *Async forms. ~85 call sites across the pages; the migration is real
-			     debt, tracked in AI/known-constraints.md, not something to fix under a
-			     build flag. -->
-			CS0618;
-			<!-- CS0162: AnalyticsConfig.Enabled / CloudConfig.Enabled / BillingConfig.Enabled
-			     are consts, so the null-service branch of each boundary is unreachable in
-			     any given build. That is the point of a compile-time feature switch — the
-			     dead branch is what makes flipping one line a complete change. -->
-			CS0162
-		</NoWarn>
-		<!-- NU1608 (Xamarin.AndroidX version constraint) and NU1903 (CVE-2025-6965 in
-		     every SQLitePCLRaw release to date — see the package comment below) are
-		     restore-time, so they need MSBuildWarningsNotAsErrors rather than NoWarn:
-		     they stay visible, they just don't fail the build. Re-check NU1903 whenever
-		     SQLitePCLRaw ships a build bundling SQLite >= 3.50.2. -->
-		<MSBuildWarningsNotAsErrors>$(MSBuildWarningsNotAsErrors);NU1608;NU1903</MSBuildWarningsNotAsErrors>
+
+		<!-- Suppressed, each permanently and for a stated reason:
+		       CS0618 — .NET 10 deprecated the non-Async animation + dialog helpers
+		                (FadeTo/TranslateTo/DisplayAlert/DisplayActionSheet) in favour of
+		                the *Async forms. ~85 call sites; the migration is real debt,
+		                tracked in AI/known-constraints.md, not something to fix under a
+		                build flag.
+		       CS0162 — AnalyticsConfig.Enabled / CloudConfig.Enabled / BillingConfig.Enabled
+		                are consts, so the null-service branch of each boundary is
+		                unreachable in any given build. That is the point of a
+		                compile-time feature switch.
+		     Keep this a single-line semicolon list (the documented NoWarn format);
+		     comments inside the element leak whitespace into the value. -->
+		<NoWarn>$(NoWarn);CS0618;CS0162</NoWarn>
+
+		<!-- Restore-time advisories that stay VISIBLE but must not fail the build:
+		       NU1608 — Xamarin.AndroidX transitive version constraint.
+		       NU1903 — CVE-2025-6965, present in every SQLitePCLRaw release to date
+		                (see the package comment below). Re-check whenever SQLitePCLRaw
+		                ships a build bundling SQLite >= 3.50.2.
+		     WarningsNotAsErrors is the property NuGet documents for this, used together
+		     with TreatWarningsAsErrors above. -->
 		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1608;NU1903</WarningsNotAsErrors>
 	</PropertyGroup>
 
@@ -134,10 +136,13 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-		<!-- Debug-only: MauiProgram registers the debug logger inside #if DEBUG, so
-		     shipping the package in Release was dead weight in the app bundle. -->
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0"
-		                  Condition="'$(Configuration)' == 'Debug'" />
+		<!-- Referenced unconditionally on purpose. MauiProgram only calls AddDebug()
+		     inside #if DEBUG, so it is dead weight in Release — but a PackageReference
+		     conditioned on $(Configuration) is worse: NuGet restores ONE configuration
+		     and writes a single project.assets.json, so a config-dependent package graph
+		     desyncs restore from build and surfaces as NETSDK1047 ("assets file has no
+		     target for …"). Not worth it for one small logging package. -->
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

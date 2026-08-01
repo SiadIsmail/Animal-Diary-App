@@ -9,11 +9,16 @@ root = true
 
 [*]
 charset = utf-8
-end_of_line = crlf
 insert_final_newline = true
 indent_style = space
 indent_size = 4
 trim_trailing_whitespace = true
+
+# end_of_line is deliberately NOT set. The working tree is currently mixed and
+# core.autocrlf handles the conversion; asserting one here would rewrite line
+# endings on the next touch of every file that disagrees, burying real diffs.
+# The proper fix is a .gitattributes with `* text=auto`, which is worth doing as
+# its own commit so the normalization churn is isolated.
 
 [*.{md,yml,yaml,json}]
 indent_size = 2
