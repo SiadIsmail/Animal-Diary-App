@@ -416,8 +416,8 @@
                 </Border>
 
                 <!-- Feedback / something broken — last thing on the page, understated on
-                     purpose. Opens a sheet with the only two doors we actually staff:
-                     the Discord community, or a direct email. -->
+                     purpose. The row asks for the thing, not the channel: Discord and
+                     the direct email are only named once the sheet is open. -->
                 <Border Style="{StaticResource CardSurface}"
                         Padding="14,15">
                     <Border.GestureRecognizers>

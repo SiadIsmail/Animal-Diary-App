@@ -329,8 +329,6 @@
   <data name="Manage_PausedExportBody" xml:space="preserve"><value>{0}s Einträge bleiben hier, so lange du möchtest.</value></data>
   <data name="Manage_PausedExportSave" xml:space="preserve"><value>Kopie sichern</value></data>
   <data name="Manage_EmptyPlan" xml:space="preserve"><value>Noch nichts eingerichtet. Und das ist auch in Ordnung.</value></data>
-  <data name="Manage_PreviewLabel" xml:space="preserve"><value>So wird {0}s Journal fragen nach…</value></data>
-  <data name="Manage_MedsCount" xml:space="preserve"><value>Medikamente ×{0}</value></data>
   <data name="Manage_FreqPerDay" xml:space="preserve"><value>{0}× täglich</value></data>
   <data name="Manage_Event" xml:space="preserve"><value>wird festgehalten, wenn es passiert · wartet unter +</value></data>
   <data name="Manage_GlucoseTarget" xml:space="preserve"><value>Ziel {0}–{1} mmol/L</value></data>
@@ -690,10 +688,10 @@
   <data name="Today_RemindersOffBody" xml:space="preserve"><value>Mitteilungen sind für Felova ausgeschaltet, deine Erinnerungen kommen deshalb nicht an. Alles, was du eingerichtet hast, ist weiterhin gespeichert.</value></data>
   <data name="Today_RemindersOffAction" xml:space="preserve"><value>Einstellungen öffnen</value></data>
   <!-- ── Feedback-Sheet (unten auf der Pflege-Seite) ── -->
-  <data name="Feedback_RowTitle" xml:space="preserve"><value>Feedback oder ein Problem</value></data>
-  <data name="Feedback_RowSubtitle" xml:space="preserve"><value>Discord oder direkt per E-Mail</value></data>
+  <data name="Feedback_RowTitle" xml:space="preserve"><value>Sag uns, was nicht funktioniert</value></data>
+  <data name="Feedback_RowSubtitle" xml:space="preserve"><value>Oder was du dir wünschst</value></data>
   <data name="Feedback_SheetTitle" xml:space="preserve"><value>Schreib uns</value></data>
-  <data name="Feedback_SheetBody" xml:space="preserve"><value>Sag uns, was kaputt ist, was fehlt oder was unklar ist. Beide Wege landen bei denselben zwei Leuten.</value></data>
+  <data name="Feedback_SheetBody" xml:space="preserve"><value>Zwei Wege. Beide landen bei denselben zwei Leuten.</value></data>
   <data name="Feedback_DiscordTitle" xml:space="preserve"><value>Auf Discord schreiben</value></data>
   <data name="Feedback_DiscordSubtitle" xml:space="preserve"><value>Dort lesen andere Halterinnen und Halter mit</value></data>
   <data name="Feedback_EmailTitle" xml:space="preserve"><value>E-Mail schreiben</value></data>

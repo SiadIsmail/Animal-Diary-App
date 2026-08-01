@@ -354,49 +354,6 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Journal preview -->
-                <Border BackgroundColor="{StaticResource Well}"
-                        Stroke="{StaticResource GlassLine}"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 16,18,15,17"
-                        Padding="15,13"
-                        Margin="0,4,0,0">
-                    <VerticalStackLayout Spacing="9">
-                        <Label Text="{Binding ManageVM.PreviewLabel}"
-                               FontFamily="{StaticResource FontHand}"
-                               FontSize="16"
-                               TextColor="{StaticResource TealDeep}"/>
-                        <FlexLayout Wrap="Wrap"
-                                    Direction="Row"
-                                    BindableLayout.ItemsSource="{Binding ManageVM.PreviewChips}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="vms:PreviewChip">
-                                    <Border BackgroundColor="{StaticResource GlassSoft}"
-                                            Stroke="{StaticResource TealLine}"
-                                            StrokeThickness="1.5"
-                                            StrokeDashArray="3,2"
-                                            StrokeShape="RoundRectangle 11,10,11,10"
-                                            Padding="10,6"
-                                            Margin="0,0,6,6">
-                                        <HorizontalStackLayout Spacing="5"
-                                                               VerticalOptions="Center">
-                                            <Label Text="{Binding Icon}"
-                                                   FontSize="12"
-                                                   VerticalOptions="Center"/>
-                                            <Label Text="{Binding Text}"
-                                                   FontFamily="{StaticResource FontSans}"
-                                                   FontSize="11"
-                                                   FontAttributes="Bold"
-                                                   TextColor="{StaticResource TealDeep}"
-                                                   VerticalOptions="Center"/>
-                                        </HorizontalStackLayout>
-                                    </Border>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </FlexLayout>
-                    </VerticalStackLayout>
-                </Border>
-
                 <!-- Medications -->
                 <Label Text="{loc:Translate Manage_MedicationsTitle}"
                        Style="{StaticResource SectionTitle}"
