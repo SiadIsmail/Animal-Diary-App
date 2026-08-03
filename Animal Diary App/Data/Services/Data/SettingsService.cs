@@ -138,6 +138,26 @@ public class SettingsService : Animal_Diary_App.Data.Services.Billing.ITrialStor
     public async Task SetFlagAsync(string flagKey, bool value)
         => await UpsertAsync(flagKey, value.ToString());
 
+    /// <summary>Read a free-form preference value, or null when it has never been set.
+    /// The same key/value store as language and the trial flags — device-scoped, wiped
+    /// by <c>AppResetService</c>, and deliberately never synced (a display preference is
+    /// not medical data, and the pet ids it can be keyed by are local).</summary>
+    public async Task<string?> GetValueAsync(string key)
+    {
+        try
+        {
+            var setting = await _db.FindAsync<AppSettings>(key);
+            return string.IsNullOrWhiteSpace(setting?.Value) ? null : setting!.Value;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error retrieving setting {key}: {ex.Message}");
+            return null;
+        }
+    }
+
+    public Task SetValueAsync(string key, string value) => UpsertAsync(key, value);
+
     /// <summary>Insert-or-update one key/value row. Shared by the setters above.</summary>
     private async Task UpsertAsync(string key, string value)
     {
@@ -171,4 +191,8 @@ public static class SettingsFlags
     public const string PreEndNudgeShown = "PreEndNudgeShown";
     /// <summary>The reassurance shown once when the app first enters the read-only state.</summary>
     public const string ReadOnlyReassuranceShown = "ReadOnlyReassuranceShown";
+    /// <summary>The owner has opened the Today stat-card picker at least once, so the
+    /// spelled-out "tap a card to change what it shows" hint retires and the small
+    /// pencil on each card carries the affordance from then on.</summary>
+    public const string TodayCardsDiscovered = "TodayCardsDiscovered";
 }

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    TodayStatCardView
+    ─────────────────────────────────────────────────────────
+    One of Today's two stat cards. It shows the pet's LAST record of whatever the
+    owner put here — the value and when it was written down, nothing else. No
+    streaks, no scores, no "N days since" (see Data/Models/TodayCards.cs).
+
+    THE WHOLE CARD IS THE BUTTON. The pencil in the corner is a cue, not the target:
+    a small icon nobody has to find is the difference between a card that feels
+    personal and a card that feels like a settings row.
+
+    BindingContext is one TodayCardItem, so the same view renders every card type and
+    a new record type needs no XAML at all.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:TodayCardItem"
+             x:Class="Animal_Diary_App.Data.View.Controls.TodayStatCardView">
+
+    <Border x:Name="CardBorder"
+            BackgroundColor="{StaticResource Glass}"
+            Stroke="{StaticResource GlassLine}"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 16,13,14,15"
+            Padding="16,14,14,14"
+            SemanticProperties.Description="{Binding AccessibilityDescription}">
+
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding TapCommand}"/>
+        </Border.GestureRecognizers>
+
+        <VerticalStackLayout Spacing="6">
+
+            <!-- Eyebrow: the record's own icon (same table as the Journal chips) and
+                 its name, plus the permanent, quiet customization cue. -->
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="6">
+                <HorizontalStackLayout Spacing="5"
+                                       VerticalOptions="Center">
+                    <Label Text="{Binding Icon}"
+                           FontSize="11"
+                           VerticalOptions="Center"/>
+                    <Label Text="{Binding Label}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="10.5"
+                           FontAttributes="Bold"
+                           CharacterSpacing="1.2"
+                           TextColor="{StaticResource InkTertiary}"
+                           LineBreakMode="TailTruncation"
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <Label Grid.Column="1"
+                       Text="✎"
+                       FontSize="12"
+                       Opacity="0.4"
+                       TextColor="{StaticResource InkTertiary}"
+                       VerticalOptions="Center"
+                       InputTransparent="True"/>
+            </Grid>
+
+            <!-- The reading. A measured value keeps its number and unit; an observation
+                 shows its word; mood adds the swatch that ties this card to the ribbon's
+                 colour legend further down the page. -->
+            <HorizontalStackLayout Spacing="7"
+                                   IsVisible="{Binding HasData}">
+                <Border WidthRequest="11"
+                        HeightRequest="11"
+                        BackgroundColor="{Binding MoodColor}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 6"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding ShowMood}"/>
+                <Label Text="{Binding MoodEmoji}"
+                       FontSize="17"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding ShowMood}"/>
+                <Label LineBreakMode="TailTruncation"
+                       VerticalOptions="Center">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="{Binding ValueText}"
+                                  FontFamily="{StaticResource FontSerif}"
+                                  FontSize="{Binding ValueFontSize}"
+                                  TextColor="{StaticResource Ink}"/>
+                            <Span Text="{Binding UnitText}"
+                                  FontFamily="{StaticResource FontSans}"
+                                  FontSize="14"
+                                  TextColor="{StaticResource InkSecondary}"/>
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </HorizontalStackLayout>
+
+            <!-- When it was recorded. States the date, never a judgement on the value —
+                 the app cannot know what a change means. -->
+            <Border BackgroundColor="{StaticResource TealTint}"
+                    Padding="9,4"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 999"
+                    HorizontalOptions="Start"
+                    IsVisible="{Binding HasData}">
+                <Label Text="{Binding RecordedLabel}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="11"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource TealDeep}"/>
+            </Border>
+
+            <!-- Nothing recorded for this pet yet. -->
+            <Label Text="{Binding EmptyText}"
+                   FontFamily="{StaticResource FontSans}"
+                   FontSize="12"
+                   LineHeight="1.35"
+                   TextColor="{StaticResource InkSecondary}"
+                   IsVisible="{Binding HasData, Converter={StaticResource InvertedBoolConverter}}"/>
+
+        </VerticalStackLayout>
+    </Border>
+
+</ContentView>

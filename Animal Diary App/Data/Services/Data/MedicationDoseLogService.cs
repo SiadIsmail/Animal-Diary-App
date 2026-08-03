@@ -59,6 +59,30 @@ public class MedicationDoseLogService
             .ToListAsync();
     }
 
+    /// <summary>The last dose this pet's owner actually recorded — Taken or Skipped,
+    /// newest first — or null if none. Feeds the Today "Last medication" card.
+    ///
+    /// <para><see cref="DoseStatus.Missed"/> is excluded on purpose: those rows are
+    /// written by the reconciler, not by a person, so surfacing one as "recorded" would
+    /// report the app's own bookkeeping back as the owner's act — and would put a card
+    /// that exists to say "this was taken care of" on a dose nobody touched.</para></summary>
+    public async Task<MedicationDoseLog?> GetMostRecentRecordedAsync(int petId)
+    {
+        // Narrow to the newest scheduled days in SQL, then sort those few rows by the
+        // moment the outcome was actually written (ResolvedAt), which is what "last
+        // recorded" means and what the Journal timeline already places doses by. A dose
+        // caught up on the next morning belongs to that morning, not to yesterday.
+        // The slice is generous enough to cover several days of a busy schedule.
+        var rows = await _db.Table<MedicationDoseLog>()
+            .Where(l => l.PetId == petId && l.IsDeleted == false && l.Status != DoseStatus.Missed)
+            .OrderByDescending(l => l.ScheduledDate)
+            .Take(24)
+            .ToListAsync();
+        return rows
+            .OrderByDescending(l => l.ResolvedAt ?? l.ScheduledDate + l.ScheduledTime)
+            .FirstOrDefault();
+    }
+
     /// <summary>The recorded outcome for a single dose, or null if none.</summary>
     public async Task<DoseStatus?> GetStatusAsync(int medicationId, DateTime date, TimeSpan time)
     {

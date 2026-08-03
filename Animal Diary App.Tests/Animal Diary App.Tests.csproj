@@ -84,4 +84,15 @@
     <Compile Include="..\Animal Diary App\Data\Models\ISyncable.cs" Link="Care\ISyncable.cs" />
   </ItemGroup>
 
+  <!-- Today's two stat cards: which pair a pet starts with, and the rule that the same
+       record can never sit on both. Pure table + value type. TrackerVisuals and
+       LocalizationManager come along because the card table resolves its icons and label
+       KEYS through them — both are plain strings and reflection-free resource lookup, no
+       MAUI. Nothing here reads a translated string, so no resx is needed at run time. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\TodayCards.cs" Link="Today\TodayCards.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\TrackerVisuals.cs" Link="Today\TrackerVisuals.cs" />
+    <Compile Include="..\Animal Diary App\Helpers\LocalizationManager.cs" Link="Today\LocalizationManager.cs" />
+  </ItemGroup>
+
 </Project>

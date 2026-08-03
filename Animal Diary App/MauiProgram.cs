@@ -57,6 +57,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<SeizureSheetViewModel>();
 		builder.Services.AddSingleton<WaterSheetViewModel>();
 
+		// Today's stat-card picker (which record each of the two cards shows).
+		builder.Services.AddSingleton<TodayCardSheetViewModel>();
+
 		// Condition-setup sheets, shared by onboarding and the Manage page.
 		builder.Services.AddSingleton<DiabetesSetupSheetViewModel>();
 		builder.Services.AddSingleton<CkdSetupSheetViewModel>();
@@ -96,6 +99,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PetConditionService>();
 		builder.Services.AddSingleton<CarePlanService>();
 		builder.Services.AddSingleton<PendingItemsService>();
+		builder.Services.AddSingleton<TodayCardService>();
 
 		// ── Reports (vet PDF + the library around it) ────────────────────────
 		builder.Services.AddSingleton<VetReportDataBuilder>();
