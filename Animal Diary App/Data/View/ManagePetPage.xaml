@@ -550,6 +550,9 @@
         <!-- Subscribe sheet: gated edit actions (edit pet / condition setup) route here. -->
         <views:SubscribeSheetView BindingContext="{Binding SubscribeVM}"/>
 
+        <!-- Confirm sheet last: the remove-pet flow asks over whatever is already open. -->
+        <views:ConfirmSheetView BindingContext="{Binding ConfirmVM}"/>
+
     </Grid>
 
 </ContentPage>

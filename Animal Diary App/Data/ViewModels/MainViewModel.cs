@@ -75,6 +75,10 @@ public class MainViewModel
     /// <summary>The Care page's "feedback or a problem" sheet (Discord / direct email).</summary>
     public FeedbackSheetViewModel FeedbackVM { get; }
 
+    /// <summary>The shared multi-choice confirmation sheet — anything with more than two
+    /// outcomes (reset scope, remove-pet, sign-out). Two-outcome confirms stay native.</summary>
+    public ConfirmSheetViewModel ConfirmVM { get; }
+
     /// <summary>The hidden developer diagnostics sheet (Settings → "Code").</summary>
     public DevSheetViewModel DevVM { get; }
 
@@ -115,6 +119,7 @@ public class MainViewModel
  SubscribeSheetViewModel subscribeVM,
  TrialMessageViewModel trialMessageVM,
  FeedbackSheetViewModel feedbackVM,
+ ConfirmSheetViewModel confirmVM,
  Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
  DevSheetViewModel devVM,
  Animal_Diary_App.Data.Services.Cloud.ICloudSyncService cloudSync,
@@ -147,6 +152,7 @@ public class MainViewModel
         SubscribeVM = subscribeVM;
         TrialMessageVM = trialMessageVM;
         FeedbackVM = feedbackVM;
+        ConfirmVM = confirmVM;
         Entitlements = entitlements;
         DevVM = devVM;
         CloudSync = cloudSync;

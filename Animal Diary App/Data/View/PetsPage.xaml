@@ -478,9 +478,15 @@
         <view:DevSheetView Grid.RowSpan="2"
                            BindingContext="{Binding DevVM}"/>
 
-        <!-- Settings panel overlay — last child renders on top of everything -->
+        <!-- Settings panel overlay -->
         <view:SettingsPanelView Grid.RowSpan="2"
                                 IsPanelOpen="{Binding SettingsVM.IsPanelOpen, Mode=TwoWay}"/>
+
+        <!-- Confirm sheet LAST, so it renders above the settings panel: "Delete all data"
+             and sign-out are both reached from inside that panel, which stays open behind
+             the question. Also makes it the top-most overlay for Android back. -->
+        <view:ConfirmSheetView Grid.RowSpan="2"
+                               BindingContext="{Binding ConfirmVM}"/>
 
     </Grid>
 
