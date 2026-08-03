@@ -7,13 +7,23 @@
              x:Class="Animal_Diary_App.Data.View.SettingsPanelView">
 
     <ContentView.Resources>
-        <!-- Reusable settings link card (Community & Support) -->
+        <!-- Reusable settings link card (Account rows, About and support) -->
         <Style x:Key="SettingsLinkCard" TargetType="Border">
             <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
             <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
             <Setter Property="StrokeThickness" Value="1.5"/>
             <Setter Property="StrokeShape" Value="RoundRectangle 16"/>
             <Setter Property="Padding" Value="16,14"/>
+        </Style>
+
+        <!-- Section heading above each group of rows -->
+        <Style x:Key="SettingsSectionHeader" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="CharacterSpacing" Value="1.3"/>
+            <Setter Property="TextColor" Value="{StaticResource InkTertiary}"/>
+            <Setter Property="Margin" Value="0,28,0,12"/>
         </Style>
     </ContentView.Resources>
 
@@ -42,6 +52,10 @@
                 TranslationX="300">
 
             <ScrollView VerticalScrollBarVisibility="Never">
+            <!-- Section order follows the usual settings convention: the account
+                 rows first (the only ones carrying live state), then how the app
+                 behaves, then the outbound links and legal text, then the
+                 destructive action last. -->
             <VerticalStackLayout Padding="24,52,24,36" Spacing="0">
 
                 <!-- Header -->
@@ -76,18 +90,147 @@
                          BackgroundColor="{StaticResource GlassLine}"
                          Margin="0,0,0,28"/>
 
-                <!-- ── LANGUAGE ── -->
-                <Label Text="{loc:Translate Settings_LanguageSection}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="11"
-                       FontAttributes="Bold"
-                       CharacterSpacing="1.3"
-                       TextColor="{StaticResource InkTertiary}"
+                <!-- ── ACCOUNT ── -->
+                <!-- Cloud and subscription share one section: both are account
+                     level, both show live state in their subtitle. -->
+                <Label Text="{loc:Translate Settings_AccountSection}"
+                       Style="{StaticResource SettingsSectionHeader}"
                        Margin="0,0,0,12"/>
 
+                <VerticalStackLayout Spacing="10">
+
+                    <!-- Cloud backup and sharing -->
+                    <Border Style="{StaticResource SettingsLinkCard}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.OpenCloudCommand}"/>
+                        </Border.GestureRecognizers>
+
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border WidthRequest="42"
+                                    HeightRequest="42"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    VerticalOptions="Center">
+                                <Label Text="☁️" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{loc:Translate Cloud_RowTitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Text="{Binding CloudVM.SettingsRowSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="11"
+                                       LineHeight="1.35"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   FontSize="22"
+                                   TextColor="{StaticResource InkTertiary}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Subscription -->
+                    <Border Style="{StaticResource SettingsLinkCard}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.OpenSubscribeCommand}"/>
+                        </Border.GestureRecognizers>
+
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border WidthRequest="42"
+                                    HeightRequest="42"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    VerticalOptions="Center">
+                                <Label Text="✨" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{loc:Translate Settings_SubscriptionRow}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Text="{Binding SettingsVM.SubscriptionRowSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="11"
+                                       LineHeight="1.35"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   FontSize="22"
+                                   TextColor="{StaticResource InkTertiary}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+
+                </VerticalStackLayout>
+
+                <!-- ── DAILY REMINDER ── -->
+                <Label Text="{loc:Translate Settings_RemindersSection}"
+                       Style="{StaticResource SettingsSectionHeader}"/>
+
+                <Border BackgroundColor="{StaticResource Glass}"
+                        Stroke="{StaticResource GlassLine}"
+                        StrokeThickness="1.5"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="16,14">
+                    <VerticalStackLayout Spacing="12">
+
+                        <!-- Toggle row: title + plain reason (§17) + Switch. -->
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{loc:Translate Settings_DailyReminderTitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Text="{loc:Translate Settings_DailyReminderSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    VerticalOptions="Center"
+                                    IsToggled="{Binding SettingsVM.DailyReminderEnabled}"
+                                    OnColor="{StaticResource Teal}"/>
+                        </Grid>
+
+                        <!-- Time row: only meaningful once the reminder is on. -->
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="14"
+                              IsVisible="{Binding SettingsVM.DailyReminderTimeVisible}">
+                            <Label Grid.Column="0"
+                                   Text="{loc:Translate Settings_DailyReminderTime}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="13"
+                                   TextColor="{StaticResource Ink}"
+                                   VerticalOptions="Center"/>
+                            <TimePicker Grid.Column="1"
+                                        Time="{Binding SettingsVM.DailyReminderTime}"
+                                        TextColor="{StaticResource Ink}"
+                                        FontFamily="{StaticResource FontSans}"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ── LANGUAGE ── -->
+                <!-- Below the reminder on purpose: set once at install, then never
+                     touched again, so it does not earn a slot near the top. -->
+                <Label Text="{loc:Translate Settings_LanguageSection}"
+                       Style="{StaticResource SettingsSectionHeader}"/>
+
                 <Grid ColumnDefinitions="*,*"
-                      ColumnSpacing="10"
-                      Margin="0,0,0,28">
+                      ColumnSpacing="10">
 
                     <Border Grid.Column="0"
                             BackgroundColor="{StaticResource Glass}"
@@ -136,68 +279,11 @@
                     </Border>
                 </Grid>
 
-                <!-- ── DAILY REMINDER ── -->
-                <Label Text="{loc:Translate Settings_RemindersSection}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="11"
-                       FontAttributes="Bold"
-                       CharacterSpacing="1.3"
-                       TextColor="{StaticResource InkTertiary}"
-                       Margin="0,0,0,12"/>
-
-                <Border BackgroundColor="{StaticResource Glass}"
-                        Stroke="{StaticResource GlassLine}"
-                        StrokeThickness="1.5"
-                        StrokeShape="RoundRectangle 16"
-                        Padding="16,14"
-                        Margin="0,0,0,28">
-                    <VerticalStackLayout Spacing="12">
-
-                        <!-- Toggle row: title + plain reason (§17) + Switch. -->
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
-                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
-                                <Label Text="{loc:Translate Settings_DailyReminderTitle}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}"/>
-                                <Label Text="{loc:Translate Settings_DailyReminderSubtitle}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="11"
-                                       TextColor="{StaticResource InkSecondary}"/>
-                            </VerticalStackLayout>
-                            <Switch Grid.Column="1"
-                                    VerticalOptions="Center"
-                                    IsToggled="{Binding SettingsVM.DailyReminderEnabled}"
-                                    OnColor="{StaticResource Teal}"/>
-                        </Grid>
-
-                        <!-- Time row: only meaningful once the reminder is on. -->
-                        <Grid ColumnDefinitions="*,Auto"
-                              ColumnSpacing="14"
-                              IsVisible="{Binding SettingsVM.DailyReminderTimeVisible}">
-                            <Label Grid.Column="0"
-                                   Text="{loc:Translate Settings_DailyReminderTime}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="13"
-                                   TextColor="{StaticResource Ink}"
-                                   VerticalOptions="Center"/>
-                            <TimePicker Grid.Column="1"
-                                        Time="{Binding SettingsVM.DailyReminderTime}"
-                                        TextColor="{StaticResource Ink}"
-                                        FontFamily="{StaticResource FontSans}"/>
-                        </Grid>
-                    </VerticalStackLayout>
-                </Border>
-
-                <!-- ── COMMUNITY & SUPPORT ── -->
-                <Label Text="{loc:Translate Settings_CommunitySection}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="11"
-                       FontAttributes="Bold"
-                       CharacterSpacing="1.3"
-                       TextColor="{StaticResource InkTertiary}"
-                       Margin="0,28,0,12"/>
+                <!-- ── ABOUT AND SUPPORT ── -->
+                <!-- Outbound links and the privacy policy, near the foot where
+                     read-once material belongs. -->
+                <Label Text="{loc:Translate Settings_AboutSection}"
+                       Style="{StaticResource SettingsSectionHeader}"/>
 
                 <VerticalStackLayout Spacing="10">
 
@@ -332,106 +418,11 @@
 
                 </VerticalStackLayout>
 
-                <!-- ── CLOUD ── -->
-                <Label Text="{loc:Translate Settings_CloudSection}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="11"
-                       FontAttributes="Bold"
-                       CharacterSpacing="1.3"
-                       TextColor="{StaticResource InkTertiary}"
-                       Margin="0,28,0,12"/>
-
-                <Border Style="{StaticResource SettingsLinkCard}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding SettingsVM.OpenCloudCommand}"/>
-                    </Border.GestureRecognizers>
-
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                        <Border WidthRequest="42"
-                                HeightRequest="42"
-                                BackgroundColor="{StaticResource TealTint}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 12"
-                                VerticalOptions="Center">
-                            <Label Text="☁️" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center"/>
-                        </Border>
-
-                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Label Text="{loc:Translate Cloud_RowTitle}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Ink}"/>
-                            <Label Text="{Binding CloudVM.SettingsRowSubtitle}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11"
-                                   LineHeight="1.35"
-                                   TextColor="{StaticResource InkSecondary}"/>
-                        </VerticalStackLayout>
-
-                        <Label Grid.Column="2"
-                               Text="›"
-                               FontSize="22"
-                               TextColor="{StaticResource InkTertiary}"
-                               VerticalOptions="Center"/>
-                    </Grid>
-                </Border>
-
-                <!-- ── SUBSCRIPTION ── -->
-                <Label Text="{loc:Translate Settings_SubscriptionSection}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="11"
-                       FontAttributes="Bold"
-                       CharacterSpacing="1.3"
-                       TextColor="{StaticResource InkTertiary}"
-                       Margin="0,28,0,12"/>
-
-                <Border Style="{StaticResource SettingsLinkCard}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding SettingsVM.OpenSubscribeCommand}"/>
-                    </Border.GestureRecognizers>
-
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                        <Border WidthRequest="42"
-                                HeightRequest="42"
-                                BackgroundColor="{StaticResource TealTint}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 12"
-                                VerticalOptions="Center">
-                            <Label Text="✨" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center"/>
-                        </Border>
-
-                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Label Text="{loc:Translate Settings_SubscriptionRow}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource Ink}"/>
-                            <Label Text="{Binding SettingsVM.SubscriptionRowSubtitle}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11"
-                                   LineHeight="1.35"
-                                   TextColor="{StaticResource InkSecondary}"/>
-                        </VerticalStackLayout>
-
-                        <Label Grid.Column="2"
-                               Text="›"
-                               FontSize="22"
-                               TextColor="{StaticResource InkTertiary}"
-                               VerticalOptions="Center"/>
-                    </Grid>
-                </Border>
-
                 <!-- ── DATA ── -->
                 <!-- Last section on purpose: the destructive action sits at the very
                      bottom, past everything routine. -->
                 <Label Text="{loc:Translate Settings_DataSection}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="11"
-                       FontAttributes="Bold"
-                       CharacterSpacing="1.3"
-                       TextColor="{StaticResource InkTertiary}"
-                       Margin="0,28,0,12"/>
+                       Style="{StaticResource SettingsSectionHeader}"/>
 
                 <Border BackgroundColor="{StaticResource ClayTint}"
                         StrokeThickness="1"

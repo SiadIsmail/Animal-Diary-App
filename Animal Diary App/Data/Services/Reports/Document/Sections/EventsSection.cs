@@ -21,7 +21,7 @@ public class EventsSection : IVetReportSection
 
         container.Column(col =>
         {
-            col.Item().Element(SectionChrome.Title("Events"));
+            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionEvents));
 
             col.Item().Table(table =>
             {
@@ -35,32 +35,32 @@ public class EventsSection : IVetReportSection
 
                 table.Header(header =>
                 {
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Date");
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Time");
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Event");
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Details (owner-reported)");
+                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColDate);
+                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColTime);
+                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColEvent);
+                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColDetails);
                 });
 
                 foreach (var e in shown)
                 {
                     table.Cell().Element(SectionChrome.BodyCell).Text(e.Date.ToString(VetReportStyles.DateFormat));
-                    table.Cell().Element(SectionChrome.BodyCell).Text(e.Time?.ToString(VetReportStyles.TimeFormat) ?? "—");
+                    table.Cell().Element(SectionChrome.BodyCell).Text(e.Time?.ToString(VetReportStyles.TimeFormat) ?? VetReportStrings.Empty);
                     table.Cell().Element(SectionChrome.BodyCell).Text(Label(e)).SemiBold();
                     table.Cell().Element(SectionChrome.BodyCell).Text(Details(e));
                 }
             });
 
             if (older > 0)
-                col.Item().PaddingTop(2).Text($"+ {older} earlier event(s) in the period not listed.")
+                col.Item().PaddingTop(2).Text(VetReportStrings.MoreEvents(older))
                     .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
         });
     }
 
     private static string Label(ReportEvent e) => e.Kind switch
     {
-        ReportEventKind.Seizure => "Seizure",
-        ReportEventKind.Vomiting => "Vomiting",
-        ReportEventKind.LowAppetite => "Low appetite",
+        ReportEventKind.Seizure => VetReportStrings.EventSeizure,
+        ReportEventKind.Vomiting => VetReportStrings.EventVomiting,
+        ReportEventKind.LowAppetite => VetReportStrings.EventLowAppetite,
         _ => e.Kind.ToString()
     };
 
@@ -68,11 +68,12 @@ public class EventsSection : IVetReportSection
     {
         var parts = new List<string>();
         if (e.DurationMinutes is int min)
-            parts.Add($"duration ≈ {min} min");
+            parts.Add(VetReportStrings.EventDuration(min));
         if (e.Kind == ReportEventKind.LowAppetite && e.Value is int level)
-            parts.Add($"owner logged appetite level {level} of 5");
+            parts.Add(VetReportStrings.EventAppetiteLevel(level));
+        // The owner's own words, printed verbatim — never translated.
         if (e.Note != null)
             parts.Add($"“{e.Note}”");
-        return parts.Count > 0 ? string.Join(" · ", parts) : "—";
+        return parts.Count > 0 ? string.Join(" · ", parts) : VetReportStrings.Empty;
     }
 }

@@ -54,10 +54,16 @@ public class VetReportService : IVetReportService
         return await _library.AddAsync(report);
     }
 
+    /// <summary>Which fake fixture <see cref="GenerateSampleAsync"/> renders: true for
+    /// the one-page <see cref="VetReportSampleData.CreateCompact"/> (store screenshots),
+    /// false for the full two-page <see cref="VetReportSampleData.Create"/> (layout work).
+    /// Only reachable when the caller has already opted into sample data.</summary>
+    private const bool UseCompactSample = false;
+
     // Sample documents are written to disk (so View/Share work while iterating on
     // the layout) but the row is never inserted — Id stays 0, Documents never lists it.
     public Task<VetReportFile> GenerateSampleAsync() =>
-        SaveAsync(VetReportSampleData.Create(), petId: 0);
+        SaveAsync(UseCompactSample ? VetReportSampleData.CreateCompact() : VetReportSampleData.Create(), petId: 0);
 
     private static async Task<VetReportFile> SaveAsync(VetReportData data, int petId)
     {

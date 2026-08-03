@@ -16,7 +16,7 @@ public class MedicationsSection : IVetReportSection
     {
         container.Column(col =>
         {
-            col.Item().Element(SectionChrome.Title("Medications"));
+            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionMedications));
 
             col.Item().Table(table =>
             {
@@ -30,10 +30,10 @@ public class MedicationsSection : IVetReportSection
 
                 table.Header(header =>
                 {
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Medication");
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Dose");
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Frequency");
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Adherence (this period)");
+                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColMedication);
+                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColDose);
+                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColFrequency);
+                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColAdherence);
                 });
 
                 foreach (var med in data.Medications)
@@ -51,12 +51,12 @@ public class MedicationsSection : IVetReportSection
     private static string Frequency(ReportMedication med)
     {
         if (med.TimesOfDay.Count == 0)
-            return "—";
+            return VetReportStrings.Empty;
 
         var times = string.Join(", ", med.TimesOfDay.Select(t => t.ToString(VetReportStyles.TimeFormat)));
         return med.DaysPerWeek >= 7
-            ? $"{med.TimesOfDay.Count}×/day ({times})"
-            : $"{med.DaysPerWeek} days/week, {times}";
+            ? VetReportStrings.FrequencyPerDay(med.TimesOfDay.Count, times)
+            : VetReportStrings.FrequencyDaysPerWeek(med.DaysPerWeek, times);
     }
 
     /// <summary>"given 174 of 180 scheduled doses (2 skipped, 4 missed)". States only
@@ -64,12 +64,12 @@ public class MedicationsSection : IVetReportSection
     private static string Adherence(ReportMedication med)
     {
         if (med.ScheduledCount == 0)
-            return $"given {med.TakenCount} doses (unscheduled)";
+            return VetReportStrings.AdherenceUnscheduled(med.TakenCount);
 
-        var text = $"given {med.TakenCount} of {med.ScheduledCount} scheduled doses";
+        var text = VetReportStrings.AdherenceGiven(med.TakenCount, med.ScheduledCount);
         var detail = new List<string>();
-        if (med.SkippedCount > 0) detail.Add($"{med.SkippedCount} skipped");
-        if (med.MissedCount > 0) detail.Add($"{med.MissedCount} missed");
+        if (med.SkippedCount > 0) detail.Add(VetReportStrings.AdherenceSkipped(med.SkippedCount));
+        if (med.MissedCount > 0) detail.Add(VetReportStrings.AdherenceMissed(med.MissedCount));
         return detail.Count > 0 ? $"{text} ({string.Join(", ", detail)})" : text;
     }
 }

@@ -1,28 +1,45 @@
 namespace Animal_Diary_App.Data.Services.Reports;
 
+using Animal_Diary_App.Data.Models;
+using Animal_Diary_App.Data.Services.Reports.Document;
+using Animal_Diary_App.Helpers;
+
 /// <summary>
-/// A fully populated fake <see cref="VetReportData"/> so the PDF layout can be
-/// iterated on WITHOUT real logged data on the device. Deterministic (seeded
-/// random) so two runs produce the same document — layout diffs stay meaningful.
+/// Fake <see cref="VetReportData"/> so the PDF can be generated WITHOUT real logged
+/// data on the device. Both fixtures are deterministic (seeded random) so two runs
+/// produce the same document — layout diffs stay meaningful.
+///
+/// Two fixtures, for two different jobs:
+/// <list type="bullet">
+/// <item><see cref="Create"/> — fully populated, 90 days, every section on. Runs to
+///   two pages on purpose: this is the one that exercises page breaks, the events
+///   cap and the continuation header. Use it when changing the document layer.</item>
+/// <item><see cref="CreateCompact"/> — trimmed to a single page for store
+///   screenshots. See its own note on what was left out and why.</item>
+/// </list>
 /// </summary>
 public static class VetReportSampleData
 {
+    /// <summary>The full fixture — 90 days, every section populated, two pages.
+    /// The layout-stress case; see the class note.</summary>
     public static VetReportData Create()
     {
         var to = DateTime.Today;
         var from = to.AddDays(-90);
         var rng = new Random(42);
 
-        // Weight: slow decline 31.2 → 29.8 kg, one reading roughly every 4 days.
+        // Weight: slow decline 5.9 → 5.2 kg, one reading roughly every 4 days. Cat-sized
+        // numbers, so the jitter is cat-sized too — ±60 g, not ±150 g.
         var weight = new List<ReportPoint>();
         for (var d = 0; d <= 90; d += 4)
-            weight.Add(new ReportPoint(from.AddDays(d), 31.2m - 1.4m * d / 90m + (decimal)(rng.NextDouble() * 0.3 - 0.15)));
+            weight.Add(new ReportPoint(from.AddDays(d), 5.9m - 0.7m * d / 90m + (decimal)(rng.NextDouble() * 0.12 - 0.06)));
 
-        // Glucose: 2 readings/day hovering around 9 mmol/L, only some days logged.
+        // Glucose: spot readings around 12 mmol/L, only some days logged — a cat on
+        // twice-daily insulin swings wider than the old dog sample did.
         var glucose = new List<ReportPoint>();
         for (var d = 0; d <= 90; d += 2)
             if (rng.NextDouble() > 0.25)
-                glucose.Add(new ReportPoint(from.AddDays(d), 9m + (decimal)(rng.NextDouble() * 5 - 2.5)));
+                glucose.Add(new ReportPoint(from.AddDays(d), 12m + (decimal)(rng.NextDouble() * 10 - 5)));
 
         // Water — two DISTINCT types (never merged): measured mL daily totals on some
         // days, and relative owner observations (1..5) on others. They overlap in time
@@ -30,7 +47,7 @@ public static class VetReportSampleData
         var waterMeasured = new List<ReportPoint>();
         for (var d = 0; d <= 90; d += 3)
             if (rng.NextDouble() > 0.35)
-                waterMeasured.Add(new ReportPoint(from.AddDays(d), 320m + (decimal)(rng.NextDouble() * 260)));
+                waterMeasured.Add(new ReportPoint(from.AddDays(d), 240m + (decimal)(rng.NextDouble() * 220)));
         var waterObservations = new List<ReportObservation>();
         for (var d = 1; d <= 90; d += 2)
             if (rng.NextDouble() > 0.4)
@@ -41,12 +58,12 @@ public static class VetReportSampleData
         var appetiteMeasured = new List<ReportPoint>();
         for (var d = 0; d <= 90; d += 3)
             if (rng.NextDouble() > 0.4)
-                appetiteMeasured.Add(new ReportPoint(from.AddDays(d), 180m + (decimal)(rng.NextDouble() * 220)));
+                appetiteMeasured.Add(new ReportPoint(from.AddDays(d), 120m + (decimal)(rng.NextDouble() * 110)));
         var appetiteObservations = new List<ReportObservation>();
         for (var d = 1; d <= 90; d += 2)
             if (rng.NextDouble() > 0.35)
                 appetiteObservations.Add(new ReportObservation(from.AddDays(d), rng.Next(1, 6)));
-        var appetiteFoods = new[] { "Chicken kibble", "Wet food (salmon)", "Boiled rice + turkey" };
+        var appetiteFoods = new[] { "Wet food (chicken pâté)", "Low-carb diabetic wet food", "Freeze-dried chicken treats" };
 
         // Mood — most days but not all, so the layout harness shows how the chart reads
         // with gaps in it (an unlogged day must not look like a bad one).
@@ -55,33 +72,37 @@ public static class VetReportSampleData
             if (rng.NextDouble() > 0.25)
                 moodObservations.Add(new ReportObservation(from.AddDays(d), rng.Next(1, 6)));
 
-        // Seizures: a handful across the period.
-        var seizureDays = new[] { 8, 9, 31, 55, 56, 80 };
+        // Events: what a diabetic cat's owner ends up reporting — a few vomits and the
+        // days appetite fell away. Two kinds on purpose, one timed and one not, so the
+        // table is exercised both with a time and with the "—" placeholder.
         var events = new List<ReportEvent>();
-        foreach (var d in seizureDays)
+        foreach (var d in new[] { 12, 41, 63 })
             events.Add(new ReportEvent
             {
-                Kind = ReportEventKind.Seizure,
+                Kind = ReportEventKind.Vomiting,
                 Date = from.AddDays(d),
                 Time = new TimeSpan(6 + rng.Next(14), rng.Next(60), 0),
-                DurationMinutes = rng.Next(1, 5),
-                Note = d == 31 ? "Disoriented for ~20 min afterwards, drank a lot" : null
+                Note = d == 41 ? "Brought her breakfast back up about an hour after the morning insulin" : null
             });
-        events.Add(new ReportEvent { Kind = ReportEventKind.Vomiting, Date = from.AddDays(40) });
+        foreach (var (d, level) in new[] { (40, 2), (62, 1), (78, 2) })
+            events.Add(new ReportEvent
+            {
+                Kind = ReportEventKind.LowAppetite,
+                Date = from.AddDays(d),
+                Value = level
+            });
         events = events.OrderByDescending(e => e.Date).ThenByDescending(e => e.Time).ToList();
-
-        // Seizures per week, derived the same way the real builder does it.
-        var seizuresPerWeek = BuildWeeklyCounts(
-            seizureDays.Select(d => from.AddDays(d)), from, to);
 
         return new VetReportData
         {
             Pet = new ReportPetInfo
             {
-                Name = "Charly",
-                Species = "Dog",
-                AgeYears = 5,
-                Conditions = new[] { "Diabetes", "Epilepsy / Seizures" },
+                Name = "Luna",
+                // Resolved through the same helpers the real builder uses, so a sample
+                // rendered in German says "Katze", not "Cat" — these reach the page.
+                Species = PetTypeNames.Localize("Cat"),
+                AgeYears = 9,
+                Conditions = new[] { ConditionCatalog.GetCondition("diabetes").Name },
                 CurrentWeightKg = weight[^1].Value,
                 WeightChangeKg = weight[^1].Value - weight[0].Value
             },
@@ -92,40 +113,39 @@ public static class VetReportSampleData
             {
                 new ReportMedication
                 {
-                    Name = "Caninsulin", Dose = 12, Unit = "IU",
+                    Name = "ProZinc (insulin)", Dose = 2, Unit = "IU",
                     DaysPerWeek = 7,
                     TimesOfDay = new[] { new TimeSpan(8, 0, 0), new TimeSpan(20, 0, 0) },
                     ScheduledCount = 180, TakenCount = 174, SkippedCount = 2, MissedCount = 4
                 },
                 new ReportMedication
                 {
-                    Name = "Phenobarbital", Dose = 60, Unit = "mg",
-                    DaysPerWeek = 7,
-                    TimesOfDay = new[] { new TimeSpan(8, 0, 0), new TimeSpan(20, 0, 0) },
-                    ScheduledCount = 180, TakenCount = 179, SkippedCount = 0, MissedCount = 1
+                    Name = "Mirtazapine", Dose = 1.88m, Unit = "mg",
+                    DaysPerWeek = 3,
+                    TimesOfDay = new[] { new TimeSpan(20, 0, 0) },
+                    ScheduledCount = 39, TakenCount = 31, SkippedCount = 5, MissedCount = 3
                 },
                 new ReportMedication
                 {
-                    Name = "Joint supplement", Dose = 1, Unit = "tab",
-                    DaysPerWeek = 3,
+                    Name = "Omega-3 supplement", Dose = 1, Unit = "cap",
+                    DaysPerWeek = 7,
                     TimesOfDay = new[] { new TimeSpan(8, 0, 0) },
-                    ScheduledCount = 39, TakenCount = 31, SkippedCount = 5, MissedCount = 3
+                    ScheduledCount = 90, TakenCount = 84, SkippedCount = 3, MissedCount = 3
                 }
             },
             Trends = new[]
             {
-                new ReportSeries { Label = "Weight", Unit = "kg", Points = weight },
-                new ReportSeries { Label = "Blood glucose", Unit = "mmol/L", Points = glucose },
-                new ReportSeries { Label = "Seizures per week", Points = seizuresPerWeek }
+                new ReportSeries { Label = VetReportStrings.SeriesWeight, Unit = "kg", Points = weight },
+                new ReportSeries { Label = VetReportStrings.SeriesGlucose, Unit = "mmol/L", Points = glucose }
             },
             Water = new ReportWater
             {
-                Measured = new ReportSeries { Label = "Measured", Unit = "mL", Points = waterMeasured },
+                Measured = new ReportSeries { Label = VetReportStrings.Measured, Unit = "mL", Points = waterMeasured },
                 Observations = waterObservations
             },
             Appetite = new ReportAppetite
             {
-                Measured = new ReportSeries { Label = "Measured", Unit = "g", Points = appetiteMeasured },
+                Measured = new ReportSeries { Label = VetReportStrings.Measured, Unit = "g", Points = appetiteMeasured },
                 Observations = appetiteObservations,
                 Foods = appetiteFoods
             },
@@ -133,15 +153,160 @@ public static class VetReportSampleData
             Events = events,
             Notes = new ReportNote[]
             {
-                new(from.AddDays(82), "Started limping slightly on the left hind leg after long walks."),
-                new(from.AddDays(60), "Is the panting at night normal with the new phenobarbital dose?"),
-                new(from.AddDays(12), "Ate grass twice this week, seemed fine afterwards.")
+                new(from.AddDays(82), "Litter tray is soaked most mornings — changing it twice a day now."),
+                new(from.AddDays(60), "Is it normal that she still asks for food an hour after her evening insulin?"),
+                new(from.AddDays(12), "Jumped onto the windowsill again for the first time in weeks.")
             }
         };
     }
 
+    /// <summary>
+    /// A deliberately SMALLER Luna, sized to land on exactly one page — the fixture for
+    /// app-store screenshots, where a screenshot of page 1 of 2 would be cut off mid-report.
+    ///
+    /// One page is bought by carrying LESS, never by shrinking type or charts: the
+    /// document's own styles are untouched, so what a store image shows is exactly what
+    /// an owner gets. Three levers, in the order they were pulled:
+    /// <list type="bullet">
+    /// <item><b>30 days instead of 90</b> — the charts are fixed-height either way, but a
+    ///   month of points reads as a legible line at screenshot size where a quarter reads
+    ///   as a scribble.</item>
+    /// <item><b>Appetite, events and mood left out</b> — the costliest blocks (~240 pt, a
+    ///   whole table, and ~130 pt). Every section omits itself when empty, so nothing
+    ///   looks missing.</item>
+    /// <item><b>Two medications, worded short</b> — a third row, or an adherence string long
+    ///   enough to wrap, is what pushes the table from tidy to tall.</item>
+    /// </list>
+    /// The mood chart's ~130 pt went to the notes list instead: a run of dots on a word
+    /// axis needs the reader to decode it, while six dated sentences in the owner's own
+    /// voice are legible at thumbnail size and say what the app is for. Mood is still in
+    /// the real report — this is a screenshot's priorities, not the product's.
+    /// </summary>
+    public static VetReportData CreateCompact()
+    {
+        var to = DateTime.Today;
+        var from = to.AddDays(-30);
+        var rng = new Random(7);
+
+        // Weight: 5.4 → 5.2 kg over the month, one weigh-in every 4 days. Few enough
+        // points to read as a line rather than a comb at screenshot size.
+        var weight = new List<ReportPoint>();
+        for (var d = 0; d <= 30; d += 4)
+            weight.Add(new ReportPoint(from.AddDays(d), 5.4m - 0.2m * d / 30m + (decimal)(rng.NextDouble() * 0.08 - 0.04)));
+
+        // Glucose: one reading most days, settling 13 → 10 mmol/L across the month with a
+        // small daily wobble. Calmer than the 90-day fixture on purpose — a screenshot has
+        // to be legible at thumbnail size, and 30 points is the most that stays readable.
+        var glucose = new List<ReportPoint>();
+        for (var d = 0; d <= 30; d++)
+            if (rng.NextDouble() > 0.15)
+                glucose.Add(new ReportPoint(from.AddDays(d), 13m - 3m * d / 30m + (decimal)(rng.NextDouble() * 2.4 - 1.2)));
+
+        // Water: measured millilitres only. Observations are dropped here purely for
+        // height — one chart instead of two — not because the pairing matters less.
+        var waterMeasured = new List<ReportPoint>();
+        for (var d = 0; d <= 30; d += 2)
+            waterMeasured.Add(new ReportPoint(from.AddDays(d), 260m + (decimal)(rng.NextDouble() * 120)));
+
+        return new VetReportData
+        {
+            Pet = new ReportPetInfo
+            {
+                Name = "Luna",
+                // Resolved through the same helpers the real builder uses, so a sample
+                // rendered in German says "Katze", not "Cat" — these reach the page.
+                Species = PetTypeNames.Localize("Cat"),
+                AgeYears = 9,
+                Conditions = new[] { ConditionCatalog.GetCondition("diabetes").Name },
+                CurrentWeightKg = weight[^1].Value,
+                WeightChangeKg = weight[^1].Value - weight[0].Value
+            },
+            From = from,
+            To = to,
+            GeneratedAt = DateTime.Now,
+            Medications = new[]
+            {
+                new ReportMedication
+                {
+                    Name = "ProZinc (insulin)", Dose = 2, Unit = "IU",
+                    DaysPerWeek = 7,
+                    TimesOfDay = new[] { new TimeSpan(8, 0, 0), new TimeSpan(20, 0, 0) },
+                    ScheduledCount = 60, TakenCount = 60
+                },
+                new ReportMedication
+                {
+                    Name = "Mirtazapine", Dose = 1.88m, Unit = "mg",
+                    DaysPerWeek = 3,
+                    TimesOfDay = new[] { new TimeSpan(20, 0, 0) },
+                    ScheduledCount = 13, TakenCount = 12, MissedCount = 1
+                }
+            },
+            Trends = new[]
+            {
+                new ReportSeries { Label = VetReportStrings.SeriesWeight, Unit = "kg", Points = weight },
+                new ReportSeries { Label = VetReportStrings.SeriesGlucose, Unit = "mmol/L", Points = glucose }
+            },
+            Water = new ReportWater
+            {
+                Measured = new ReportSeries { Label = "Measured", Unit = "mL", Points = waterMeasured }
+            },
+            // The section the mood chart made room for: ten notes, which is exactly
+            // VetReportStyles.MaxNotes, so the list is full without the "+N earlier"
+            // line. Each is kept short enough to stay on one line — a wrapped note
+            // costs a whole row and the German set runs longer than the English.
+            Notes = SampleNotes(from)
+        };
+    }
+
+    /// <summary>
+    /// The compact fixture's owner notes, in the app's current language.
+    ///
+    /// Real owner notes are stored text and are NEVER translated — the report prints
+    /// them exactly as they were typed, and that rule is not bent here. These are not
+    /// owner notes; they are fake copy standing in for them, and a German store
+    /// screenshot showing English sentences would misrepresent the product. Kept in
+    /// this file rather than AppStrings because it is fixture copy, not app copy.
+    /// </summary>
+    private static ReportNote[] SampleNotes(DateTime from)
+    {
+        var german = LocalizationManager.Instance.CurrentLanguage == "de";
+
+        var text = german
+            ? new[]
+            {
+                "Die Morgenwerte sind ruhiger, seit wir das Insulin eine halbe Stunde später geben.",
+                "Hat den Napf vor dem Frühstück wieder ganz leer getrunken.",
+                "Beim Tierarzt: Gewicht passt, Dosis bleibt wie sie ist.",
+                "Abends die Hälfte stehen gelassen, später doch noch aufgefressen.",
+                "Liegt nachmittags wieder auf der Fensterbank.",
+                "Hat durchgeschlafen, ohne nach Futter zu fragen.",
+                "Trinkt seit dem Wochenende sichtbar weniger.",
+                "Zweite Spritze pünktlich um 20:00 gegeben.",
+                "Fell sieht wieder glatter aus.",
+                "Spielt abends von selbst mit der Schnur."
+            }
+            : new[]
+            {
+                "Morning readings have settled since we moved her insulin half an hour later.",
+                "Drank the whole bowl before breakfast again.",
+                "Vet visit: happy with her weight, keep the dose as it is.",
+                "Left half her dinner, ate it later in the evening.",
+                "Back on the windowsill in the afternoons.",
+                "Slept through the night without asking to be fed.",
+                "Drinking noticeably less since the weekend.",
+                "Evening injection given on time at 20:00.",
+                "Her coat is looking smoother again.",
+                "Started playing with the string on her own in the evenings."
+            };
+
+        // Newest first, spread across the month — the order NotesSection expects.
+        var days = new[] { 28, 25, 22, 19, 16, 13, 10, 8, 5, 2 };
+        return text.Select((t, i) => new ReportNote(from.AddDays(days[i]), t)).ToArray();
+    }
+
     /// <summary>Occurrences bucketed into calendar weeks (points dated at each
-    /// week's start). Shared shape with the real builder's seizure series.</summary>
+    /// week's start). The sample pet has no seizures, but the real builder still
+    /// derives its seizures-per-week series with this.</summary>
     internal static IReadOnlyList<ReportPoint> BuildWeeklyCounts(
         IEnumerable<DateTime> occurrences, DateTime from, DateTime to)
     {
