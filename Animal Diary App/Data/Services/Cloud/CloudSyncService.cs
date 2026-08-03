@@ -692,6 +692,20 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         // (now-failing) logout round-trip.
         await _auth.SignOutAsync();
         await DisableBackupAsync();
+
+        // Start a fresh anonymous analytics identity, exactly as the data reset does
+        // (AppResetService). Not strictly required — events never carry an account,
+        // an email, or anything personal, so there is nothing here to erase — but
+        // without it this install's event stream runs unbroken across the deletion,
+        // visible as one device whose account_state was signed_in and then wasn't.
+        // Rotating makes "we keep nothing tied to you" true without qualification.
+        //
+        // Last, deliberately: SignOutAsync above flips AnalyticsContext to anonymous,
+        // so the new id is never stamped signed_in. Already-queued events keep the old
+        // id baked into their payloads and still send — they are anonymous and they
+        // genuinely happened, so dropping them would cost telemetry for no privacy gain.
+        try { Analytics.AnalyticsIdentity.Rotate(); }
+        catch (Exception ex) { Debug.WriteLine($"[Cloud] analytics id rotate failed: {ex.Message}"); }
     }
 
     /// <summary>
