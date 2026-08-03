@@ -20,10 +20,6 @@ using QuestPDF.Infrastructure;
 /// </summary>
 public class WaterSection : IVetReportSection
 {
-    // The observation chart's category rows, level 1 (bottom) → 5 (top). English, like
-    // every other structural label in the report (see the trend labels).
-    private static readonly string[] ObservationRows = { "Barely", "A little", "Normal", "More", "A lot" };
-
     public bool HasContent(VetReportData data) => data.Water.HasContent;
 
     public void Compose(IContainer container, VetReportData data)
@@ -32,22 +28,22 @@ public class WaterSection : IVetReportSection
 
         container.Column(col =>
         {
-            col.Item().Element(SectionChrome.Title("Water intake"));
+            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionWater));
             col.Spacing(VetReportStyles.ChartSpacing);
 
             // A neutral note that preserves the distinction — descriptive, not a verdict.
-            col.Item().Text(
-                    "Measured amounts and the owner's own observations are shown separately, as recorded.")
+            col.Item().Text(VetReportStrings.MeasuredAndObservedNote)
                 .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
 
-            // Objective measurements — quantitative chart.
+            // Objective measurements — quantitative chart. ShowEntire welds each label
+            // to its canvas so a page break can't strand the heading (see TrendsSection).
             if (water.Measured is { Points.Count: > 0 } measured)
             {
-                col.Item().Column(chart =>
+                col.Item().ShowEntire().Column(chart =>
                 {
                     chart.Item().Text(text =>
                     {
-                        text.Span("Measured").SemiBold().FontSize(VetReportStyles.SmallSize);
+                        text.Span(VetReportStrings.Measured).SemiBold().FontSize(VetReportStyles.SmallSize);
                         text.Span($"  ({measured.Unit})")
                             .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
                     });
@@ -60,18 +56,18 @@ public class WaterSection : IVetReportSection
             // Subjective observations — qualitative chart, kept entirely separate.
             if (water.Observations.Count > 0)
             {
-                col.Item().Column(chart =>
+                col.Item().ShowEntire().Column(chart =>
                 {
                     chart.Item().Text(text =>
                     {
-                        text.Span("Owner observations").SemiBold().FontSize(VetReportStyles.SmallSize);
-                        text.Span("  (subjective)")
+                        text.Span(VetReportStrings.OwnerObservations).SemiBold().FontSize(VetReportStyles.SmallSize);
+                        text.Span("  " + VetReportStrings.Subjective)
                             .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
                     });
                     chart.Item()
                         .Height(VetReportStyles.ChartHeight)
                         .Canvas((canvas, size) =>
-                            ObservationChartRenderer.Draw(canvas, size.Width, size.Height, water.Observations, ObservationRows));
+                            ObservationChartRenderer.Draw(canvas, size.Width, size.Height, water.Observations, VetReportStrings.WaterRows));
                 });
             }
         });

@@ -3,6 +3,7 @@ namespace Animal_Diary_App.Data.Services.Reports;
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Journal;
+using Animal_Diary_App.Data.Services.Reports.Document;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
@@ -213,8 +214,10 @@ public class VetReportDataBuilder
         // line says nothing — so TrendsSection prints it as a dated value instead. The
         // old >= 2 threshold dropped it entirely, which is how an owner with a single
         // weigh-in was told nothing had been written down.
+        // Series labels are printed on the page, so they are localized here — the same
+        // place Species and the condition names are already resolved to display words.
         if (weightPoints.Count >= 1)
-            trends.Add(new ReportSeries { Label = "Weight", Unit = "kg", Points = weightPoints });
+            trends.Add(new ReportSeries { Label = VetReportStrings.SeriesWeight, Unit = "kg", Points = weightPoints });
 
         if (glucoseEntries.Count >= 1)
         {
@@ -222,7 +225,7 @@ public class VetReportDataBuilder
             var tracker = await _trackers.GetByTrackerIdAsync(petId, TrackerId.Glucose);
             trends.Add(new ReportSeries
             {
-                Label = "Blood glucose",
+                Label = VetReportStrings.SeriesGlucose,
                 Unit = string.IsNullOrEmpty(tracker?.Unit) ? "mmol/L" : tracker!.Unit,
                 Points = glucoseEntries
                     .OrderBy(g => g.Date).ThenBy(g => g.Time)
@@ -235,7 +238,7 @@ public class VetReportDataBuilder
         if (seizureDates.Count > 0)
             trends.Add(new ReportSeries
             {
-                Label = "Seizures per week",
+                Label = VetReportStrings.SeriesSeizuresPerWeek,
                 Points = VetReportSampleData.BuildWeeklyCounts(seizureDates, from, to)
             });
 

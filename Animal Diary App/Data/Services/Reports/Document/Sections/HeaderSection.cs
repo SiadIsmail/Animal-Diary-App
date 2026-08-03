@@ -35,23 +35,24 @@ public class HeaderSection : IVetReportSection
                     if (data.Pet.Conditions.Count > 0)
                         col.Item().Text(t =>
                         {
-                            t.Span("Conditions: ").SemiBold();
+                            t.Span(VetReportStrings.Conditions + " ").SemiBold();
                             t.Span(string.Join(", ", data.Pet.Conditions));
                         });
 
                     if (data.Pet.CurrentWeightKg is decimal w)
                         col.Item().Text(t =>
                         {
-                            t.Span("Weight: ").SemiBold();
+                            t.Span(VetReportStrings.Weight + " ").SemiBold();
                             t.Span($"{w:0.0} kg");
                             if (data.Pet.WeightChangeKg is decimal change)
-                                t.Span($"  ({FormatChange(change)} kg over period)").FontColor(VetReportStyles.InkSecondary);
+                                t.Span("  " + VetReportStrings.WeightChange(FormatChange(change)))
+                                    .FontColor(VetReportStyles.InkSecondary);
                         });
 
                     if (data.Pet.OwnerName != null)
                         col.Item().Text(t =>
                         {
-                            t.Span("Owner: ").SemiBold();
+                            t.Span(VetReportStrings.Owner + " ").SemiBold();
                             t.Span(data.Pet.OwnerName);
                         });
                 });
@@ -60,19 +61,21 @@ public class HeaderSection : IVetReportSection
                 {
                     col.Item().AlignRight().Text(
                         $"{data.From.ToString(VetReportStyles.DateFormat)} – {data.To.ToString(VetReportStyles.DateFormat)}").SemiBold();
-                    col.Item().AlignRight().Text($"Generated {data.GeneratedAt.ToString(VetReportStyles.DateFormat)}")
+                    col.Item().AlignRight()
+                        .Text(VetReportStrings.Generated(data.GeneratedAt.ToString(VetReportStyles.DateFormat)))
                         .FontColor(VetReportStyles.InkSecondary);
                 });
             });
     }
 
-    /// <summary>"— Dog, 7 y" plus breed/sex when the app models them one day.</summary>
+    /// <summary>"— Dog, 7 y" plus breed/sex when the app models them one day. Species
+    /// arrives already localized from the builder (PetTypeNames.Localize).</summary>
     private static string Signalment(ReportPetInfo pet)
     {
         var parts = new List<string> { pet.Species };
         if (pet.Breed != null) parts.Add(pet.Breed);
         if (pet.Sex != null) parts.Add(pet.Sex);
-        if (pet.AgeYears is int age) parts.Add($"{age} y");
+        if (pet.AgeYears is int age) parts.Add(VetReportStrings.AgeYears(age));
         return "— " + string.Join(", ", parts);
     }
 

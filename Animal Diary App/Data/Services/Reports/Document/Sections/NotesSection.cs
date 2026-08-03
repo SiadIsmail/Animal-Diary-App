@@ -19,7 +19,7 @@ public class NotesSection : IVetReportSection
 
         container.Column(col =>
         {
-            col.Item().Element(SectionChrome.Title("Owner's notes"));
+            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionNotes));
             col.Spacing(2);
 
             foreach (var note in shown)
@@ -27,11 +27,12 @@ public class NotesSection : IVetReportSection
                 {
                     text.Span(note.Date.ToString(VetReportStyles.DateFormat) + "  ")
                         .SemiBold().FontColor(VetReportStyles.InkSecondary);
+                    // The owner's own words, printed verbatim — never translated.
                     text.Span($"“{note.Text}”");
                 });
 
             if (older > 0)
-                col.Item().PaddingTop(2).Text($"+ {older} earlier note(s) in the period not listed.")
+                col.Item().PaddingTop(2).Text(VetReportStrings.MoreNotes(older))
                     .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
         });
     }

@@ -8,7 +8,14 @@
        Sources are compile-LINKED from the app project rather than referenced, because the
        app only produces platform TFMs. Keep the link list to genuinely MAUI-free files;
        anything needing Preferences, FileSystem or HttpClient belongs on the other side of
-       an interface instead. Run with: dotnet test. -->
+       an interface instead.
+
+       Run with:  dotnet test "Animal Diary App.Tests/Animal Diary App.Tests.csproj"
+
+       NOT in Animal Diary App.sln, on purpose: `-f` on a solution is a global property
+       applied to every project, so a solution holding both this (net10.0) and the app
+       (net10.0-android/-ios/-maccatalyst/-windows) makes `dotnet build <sln> -f
+       net10.0-android` fail here with NETSDK1005. CI runs these by path instead. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>

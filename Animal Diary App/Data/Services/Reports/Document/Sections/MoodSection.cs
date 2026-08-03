@@ -15,38 +15,37 @@ using QuestPDF.Infrastructure;
 /// </summary>
 public class MoodSection : IVetReportSection
 {
-    // Row labels, level 1 (bottom) → 5 (top), matching MoodLevel. English like every
-    // other structural label in the report (see the trend labels).
-    private static readonly string[] ObservationRows = { "Unwell", "Low", "Okay", "Good", "Great" };
-
     public bool HasContent(VetReportData data) => data.Mood.HasContent;
 
     public void Compose(IContainer container, VetReportData data)
     {
         var mood = data.Mood;
 
-        container.Column(col =>
+        // One chart, ~130 pt with its heading — small enough to move to the next page
+        // whole rather than be split across one. ShowEntire on the section itself keeps
+        // the title, the note and the chart together.
+        container.ShowEntire().Column(col =>
         {
-            col.Item().Element(SectionChrome.Title("Mood"));
+            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionMood));
             col.Spacing(VetReportStyles.ChartSpacing);
 
             // States whose reading this is, without qualifying it. The owner's judgement
             // is the data here, so naming it as theirs is accuracy, not a disclaimer.
-            col.Item().Text("The owner's own reading of how their pet seemed, as recorded.")
+            col.Item().Text(VetReportStrings.MoodNote)
                 .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
 
             col.Item().Column(chart =>
             {
                 chart.Item().Text(text =>
                 {
-                    text.Span("Daily mood").SemiBold().FontSize(VetReportStyles.SmallSize);
-                    text.Span("  (subjective)")
+                    text.Span(VetReportStrings.MoodChartLabel).SemiBold().FontSize(VetReportStyles.SmallSize);
+                    text.Span("  " + VetReportStrings.Subjective)
                         .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
                 });
                 chart.Item()
                     .Height(VetReportStyles.ChartHeight)
                     .Canvas((canvas, size) =>
-                        ObservationChartRenderer.Draw(canvas, size.Width, size.Height, mood.Observations, ObservationRows));
+                        ObservationChartRenderer.Draw(canvas, size.Width, size.Height, mood.Observations, VetReportStrings.MoodRows));
             });
         });
     }

@@ -111,7 +111,10 @@
   <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Alle Daten löschen</value></data>
   <data name="Settings_DeleteConfirmMessage" xml:space="preserve"><value>Das löscht jedes Tier, jeden Eintrag, jedes Medikament und jede Einstellung auf diesem Gerät. Das lässt sich nicht rückgängig machen.</value></data>
   <data name="Settings_DeleteConfirmAccept" xml:space="preserve"><value>Löschen</value></data>
-  <data name="Settings_CommunitySection" xml:space="preserve"><value>Community und Support</value></data>
+  <!-- Cloud und Abo teilen sich einen Abschnitt "Konto"; die Links und die
+       Datenschutzerklärung teilen sich "Info und Support" am Fuß. -->
+  <data name="Settings_AccountSection" xml:space="preserve"><value>Konto</value></data>
+  <data name="Settings_AboutSection" xml:space="preserve"><value>Info und Support</value></data>
   <data name="Settings_DiscordTitle" xml:space="preserve"><value>Felova-Community</value></data>
   <data name="Settings_DiscordSubtitle" xml:space="preserve"><value>Feedback, Support und Austausch</value></data>
   <data name="Settings_WebsiteTitle" xml:space="preserve"><value>Felova-Website besuchen</value></data>
@@ -390,6 +393,70 @@
   <data name="Export_View" xml:space="preserve"><value>Ansehen</value></data>
   <data name="Export_Share" xml:space="preserve"><value>Teilen</value></data>
   <data name="Export_Done" xml:space="preserve"><value>Fertig</value></data>
+  <!-- ── Der Tierarztbericht selbst (Data/Services/Reports/Document) ──
+       Alle festen Beschriftungen im erzeugten PDF. VetReportStrings holt sie beim
+       Rendern, damit der Bericht in der eingestellten Sprache herauskommt.
+       Die fünfstufigen Skalen stehen bewusst nicht hier: sie nutzen die vorhandenen
+       Mood_* / Water_Level* / Appetite_Level*-Schlüssel des Journals, damit eine
+       Stufe in der App und auf dem Bericht gleich heißt. -->
+  <data name="Report_Footer" xml:space="preserve"><value>Erstellt mit Felova · Angaben der Besitzer:in · Kein medizinischer Befund.</value></data>
+  <data name="Report_RunningTitle" xml:space="preserve"><value>{0} — Felova Gesundheitsübersicht</value></data>
+  <data name="Report_Generated" xml:space="preserve"><value>Erstellt am {0}</value></data>
+  <data name="Report_Page" xml:space="preserve"><value>Seite</value></data>
+  <data name="Report_PageOf" xml:space="preserve"><value>von</value></data>
+  <data name="Report_Conditions" xml:space="preserve"><value>Erkrankungen:</value></data>
+  <data name="Report_Weight" xml:space="preserve"><value>Gewicht:</value></data>
+  <data name="Report_Owner" xml:space="preserve"><value>Besitzer:in:</value></data>
+  <data name="Report_AgeYears" xml:space="preserve"><value>{0} J.</value></data>
+  <data name="Report_WeightChange" xml:space="preserve"><value>({0} kg im Zeitraum)</value></data>
+  <data name="Report_SectionMedications" xml:space="preserve"><value>Medikamente</value></data>
+  <data name="Report_ColMedication" xml:space="preserve"><value>Medikament</value></data>
+  <data name="Report_ColDose" xml:space="preserve"><value>Dosis</value></data>
+  <data name="Report_ColFrequency" xml:space="preserve"><value>Häufigkeit</value></data>
+  <data name="Report_ColAdherence" xml:space="preserve"><value>Gaben (Zeitraum)</value></data>
+  <data name="Report_FreqPerDay" xml:space="preserve"><value>{0}×/Tag ({1})</value></data>
+  <data name="Report_FreqDaysPerWeek" xml:space="preserve"><value>{0} Tage/Woche, {1}</value></data>
+  <data name="Report_AdherenceGiven" xml:space="preserve"><value>{0} von {1} geplanten Gaben</value></data>
+  <data name="Report_AdherenceUnscheduled" xml:space="preserve"><value>{0} Gaben gegeben (ohne Plan)</value></data>
+  <data name="Report_AdherenceSkipped" xml:space="preserve"><value>{0} ausgelassen</value></data>
+  <data name="Report_AdherenceMissed" xml:space="preserve"><value>{0} verpasst</value></data>
+  <data name="Report_SectionTrends" xml:space="preserve"><value>Verläufe</value></data>
+  <data name="Report_SeriesWeight" xml:space="preserve"><value>Gewicht</value></data>
+  <data name="Report_SeriesGlucose" xml:space="preserve"><value>Blutzucker</value></data>
+  <data name="Report_SeriesSeizuresPerWeek" xml:space="preserve"><value>Anfälle pro Woche</value></data>
+  <data name="Report_OnDate" xml:space="preserve"><value>am {0}</value></data>
+  <data name="Report_SectionMood" xml:space="preserve"><value>Stimmung</value></data>
+  <!-- Einzige Skala, die der Bericht nicht aus dem Journal übernimmt: die Mood_*-Wörter
+       sind Adjektive für den Satzgebrauch ("Luna war heute gedämpft") und deshalb klein
+       geschrieben. Als Achsenbeschriftung stehen sie allein und werden groß geschrieben. -->
+  <data name="Report_MoodLevel1" xml:space="preserve"><value>Unwohl</value></data>
+  <data name="Report_MoodLevel2" xml:space="preserve"><value>Gedämpft</value></data>
+  <data name="Report_MoodLevel3" xml:space="preserve"><value>Okay</value></data>
+  <data name="Report_MoodLevel4" xml:space="preserve"><value>Gut</value></data>
+  <data name="Report_MoodLevel5" xml:space="preserve"><value>Super</value></data>
+  <data name="Report_MoodNote" xml:space="preserve"><value>Wie das Tier auf die Besitzer:in gewirkt hat, so wie es erfasst wurde.</value></data>
+  <data name="Report_MoodChartLabel" xml:space="preserve"><value>Stimmung täglich</value></data>
+  <data name="Report_SectionWater" xml:space="preserve"><value>Wasseraufnahme</value></data>
+  <data name="Report_SectionAppetite" xml:space="preserve"><value>Appetit</value></data>
+  <data name="Report_MeasuredAndObservedNote" xml:space="preserve"><value>Gemessene Mengen und eigene Beobachtungen stehen getrennt, so wie sie erfasst wurden.</value></data>
+  <data name="Report_Measured" xml:space="preserve"><value>Gemessen</value></data>
+  <data name="Report_OwnerObservations" xml:space="preserve"><value>Eigene Beobachtungen</value></data>
+  <data name="Report_Subjective" xml:space="preserve"><value>(subjektiv)</value></data>
+  <data name="Report_FoodsRecorded" xml:space="preserve"><value>Erfasstes Futter</value></data>
+  <data name="Report_SectionEvents" xml:space="preserve"><value>Ereignisse</value></data>
+  <data name="Report_ColDate" xml:space="preserve"><value>Datum</value></data>
+  <data name="Report_ColTime" xml:space="preserve"><value>Uhrzeit</value></data>
+  <data name="Report_ColEvent" xml:space="preserve"><value>Ereignis</value></data>
+  <data name="Report_ColDetails" xml:space="preserve"><value>Details (selbst berichtet)</value></data>
+  <data name="Report_EventSeizure" xml:space="preserve"><value>Anfall</value></data>
+  <data name="Report_EventVomiting" xml:space="preserve"><value>Erbrechen</value></data>
+  <data name="Report_EventLowAppetite" xml:space="preserve"><value>Wenig Appetit</value></data>
+  <data name="Report_EventDuration" xml:space="preserve"><value>Dauer ≈ {0} Min.</value></data>
+  <data name="Report_EventAppetiteLevel" xml:space="preserve"><value>Appetit mit Stufe {0} von 5 erfasst</value></data>
+  <data name="Report_MoreEvents" xml:space="preserve"><value>+ {0} weitere Ereignisse im Zeitraum, hier nicht aufgeführt.</value></data>
+  <data name="Report_SectionNotes" xml:space="preserve"><value>Eigene Notizen</value></data>
+  <data name="Report_MoreNotes" xml:space="preserve"><value>+ {0} weitere Notizen im Zeitraum, hier nicht aufgeführt.</value></data>
+
   <data name="Docs_Title" xml:space="preserve"><value>Dokumente</value></data>
   <data name="Docs_Subtitle" xml:space="preserve"><value>Tierarztberichte für {0}</value></data>
   <data name="Docs_Empty" xml:space="preserve"><value>Noch keine Berichte. Du kannst jederzeit einen erstellen.</value></data>
@@ -549,7 +616,6 @@
   <data name="Notif_WeightCheckInBody" xml:space="preserve"><value>Ein kurzes Wiegen für {0}, wann immer es dir passt.</value></data>
   <data name="Notif_AppointmentTitle" xml:space="preserve"><value>Bald für {0}</value></data>
   <data name="Notif_AppointmentBody" xml:space="preserve"><value>{0}s {1} steht an.</value></data>
-  <data name="Settings_CloudSection" xml:space="preserve"><value>Cloud</value></data>
   <data name="Settings_ResetDeviceOnly" xml:space="preserve"><value>Nur dieses Gerät. Backup behalten.</value></data>
   <data name="Settings_ResetEverything" xml:space="preserve"><value>Alles, auch mein Cloud-Backup</value></data>
   <data name="Cloud_RowTitle" xml:space="preserve"><value>Cloud-Funktionen</value></data>
@@ -668,7 +734,6 @@
   <data name="Subscribe_SponsorEndedBody" xml:space="preserve"><value>{0}s Besitzer hat kein Abo mehr, deshalb pausieren neue Einträge vorerst. Du kannst den gesamten Verlauf weiter lesen, und Dosen als gegeben zu markieren funktioniert weiterhin. Wenn du selbst weiter festhalten möchtest, kannst du mit Felova weitermachen.</value></data>
   <data name="Subscribe_SponsorEndedTitleGeneric" xml:space="preserve"><value>Du siehst weiterhin alles</value></data>
   <data name="Subscribe_SponsorEndedBodyGeneric" xml:space="preserve"><value>Der Besitzer eines Tieres, bei dem du mithilfst, hat kein Abo mehr, deshalb pausieren neue Einträge vorerst. Du kannst den gesamten Verlauf weiter lesen, und Dosen als gegeben zu markieren funktioniert weiterhin. Wenn du selbst weiter festhalten möchtest, kannst du mit Felova weitermachen.</value></data>
-  <data name="Settings_SubscriptionSection" xml:space="preserve"><value>Abo</value></data>
   <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Dein Abo</value></data>
   <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Kostenlose Testphase</value></data>
   <data name="Settings_SubscriptionTrialFormat" xml:space="preserve"><value>Kostenlose Testphase (noch {0})</value></data>

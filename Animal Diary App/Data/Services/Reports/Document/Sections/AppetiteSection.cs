@@ -21,10 +21,6 @@ using QuestPDF.Infrastructure;
 /// </summary>
 public class AppetiteSection : IVetReportSection
 {
-    // The observation chart's category rows, level 1 (bottom) → 5 (top). English, like
-    // every other structural label in the report.
-    private static readonly string[] ObservationRows = { "Nothing", "A little", "About half", "Most of it", "Everything" };
-
     public bool HasContent(VetReportData data) => data.Appetite.HasContent;
 
     public void Compose(IContainer container, VetReportData data)
@@ -33,21 +29,21 @@ public class AppetiteSection : IVetReportSection
 
         container.Column(col =>
         {
-            col.Item().Element(SectionChrome.Title("Appetite"));
+            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionAppetite));
             col.Spacing(VetReportStyles.ChartSpacing);
 
-            col.Item().Text(
-                    "Measured amounts and the owner's own observations are shown separately, as recorded.")
+            col.Item().Text(VetReportStrings.MeasuredAndObservedNote)
                 .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
 
-            // Objective measurements — quantitative chart.
+            // Objective measurements — quantitative chart. ShowEntire welds each label
+            // to its canvas so a page break can't strand the heading (see TrendsSection).
             if (appetite.Measured is { Points.Count: > 0 } measured)
             {
-                col.Item().Column(chart =>
+                col.Item().ShowEntire().Column(chart =>
                 {
                     chart.Item().Text(text =>
                     {
-                        text.Span("Measured").SemiBold().FontSize(VetReportStyles.SmallSize);
+                        text.Span(VetReportStrings.Measured).SemiBold().FontSize(VetReportStyles.SmallSize);
                         text.Span($"  ({measured.Unit})")
                             .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
                     });
@@ -60,18 +56,18 @@ public class AppetiteSection : IVetReportSection
             // Subjective observations — qualitative chart, kept entirely separate.
             if (appetite.Observations.Count > 0)
             {
-                col.Item().Column(chart =>
+                col.Item().ShowEntire().Column(chart =>
                 {
                     chart.Item().Text(text =>
                     {
-                        text.Span("Owner observations").SemiBold().FontSize(VetReportStyles.SmallSize);
-                        text.Span("  (subjective)")
+                        text.Span(VetReportStrings.OwnerObservations).SemiBold().FontSize(VetReportStyles.SmallSize);
+                        text.Span("  " + VetReportStrings.Subjective)
                             .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
                     });
                     chart.Item()
                         .Height(VetReportStyles.ChartHeight)
                         .Canvas((canvas, size) =>
-                            ObservationChartRenderer.Draw(canvas, size.Width, size.Height, appetite.Observations, ObservationRows));
+                            ObservationChartRenderer.Draw(canvas, size.Width, size.Height, appetite.Observations, VetReportStrings.AppetiteRows));
                 });
             }
 
@@ -79,9 +75,9 @@ public class AppetiteSection : IVetReportSection
             // no "changed to", no interpretation; the range is the context.
             if (appetite.Foods.Count > 0)
             {
-                col.Item().Column(diet =>
+                col.Item().ShowEntire().Column(diet =>
                 {
-                    diet.Item().Text("Foods recorded").SemiBold().FontSize(VetReportStyles.SmallSize);
+                    diet.Item().Text(VetReportStrings.FoodsRecorded).SemiBold().FontSize(VetReportStyles.SmallSize);
                     diet.Item().Text(string.Join(" · ", appetite.Foods))
                         .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
                 });

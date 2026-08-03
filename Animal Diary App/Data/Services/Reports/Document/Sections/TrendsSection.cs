@@ -16,12 +16,15 @@ public class TrendsSection : IVetReportSection
     {
         container.Column(col =>
         {
-            col.Item().Element(SectionChrome.Title("Trends"));
+            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionTrends));
             col.Spacing(VetReportStyles.ChartSpacing);
 
             foreach (var series in data.Trends)
             {
-                col.Item().Column(chart =>
+                // ShowEntire keeps a chart's label welded to its canvas: without it a
+                // page break can land between them and strand the heading at the foot
+                // of a page. A chart block is ~90 pt, so it always fits a fresh page.
+                col.Item().ShowEntire().Column(chart =>
                 {
                     chart.Item().Text(text =>
                     {
@@ -46,7 +49,7 @@ public class TrendsSection : IVetReportSection
                             text.Span($"{only.Value:0.##} ").SemiBold();
                             if (!string.IsNullOrEmpty(series.Unit))
                                 text.Span($"{series.Unit} ");
-                            text.Span($"on {only.Date.ToString(VetReportStyles.DateFormat)}")
+                            text.Span(VetReportStrings.OnDate(only.Date.ToString(VetReportStyles.DateFormat)))
                                 .FontColor(VetReportStyles.InkSecondary);
                         });
                         return;
