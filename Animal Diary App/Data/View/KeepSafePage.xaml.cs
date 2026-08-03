@@ -45,7 +45,7 @@ public partial class KeepSafePage : ContentPage
 				LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmAccept"),
 				LocalizationManager.Instance.GetString("Common_Cancel"));
 
-		vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null);
+		vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null, null);
 
 		// Turning backup on inside the sheet fulfils the offer — hand off to the app.
 		vm.CloudSync.StateChanged += OnCloudStateChanged;

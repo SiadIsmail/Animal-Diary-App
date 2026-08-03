@@ -151,21 +151,36 @@ public partial class ManagePetPage : ContentPage
             return left ? PetRemovalFlowResult.Proceed : PetRemovalFlowResult.Cancel;
         }
 
-        // Offer the export before deleting (people sometimes delete in grief).
-        var saveCopy = loc.GetString("Manage_RemovePetSaveCopy");
-        var remove = loc.Format("Manage_RemovePetContinue", name);
-        var choice = await DisplayActionSheet(
+        // Offer the export before deleting (people sometimes delete in grief). Three
+        // outcomes, so it uses the confirm sheet: the native action sheet rendered this
+        // offer as plain text under a styled "Remove", which is the wrong emphasis for
+        // the one option that protects the owner.
+        const string saveCopyId = "save-copy";
+        const string removeId = "remove";
+        var choice = await vm.ConfirmVM.AskAsync(
             loc.Format("Manage_RemovePetTitle", name),
-            cancel,
-            remove,          // destructive
-            saveCopy);       // regular option, offered first
+            body: null,
+            new[]
+            {
+                new ConfirmOption
+                {
+                    Id = saveCopyId,
+                    Label = loc.GetString("Manage_RemovePetSaveCopy"),
+                },
+                new ConfirmOption
+                {
+                    Id = removeId,
+                    Label = loc.Format("Manage_RemovePetContinue", name),
+                    IsDestructive = true,
+                },
+            });
 
-        if (choice == saveCopy)
+        if (choice == saveCopyId)
         {
             vm.ExportSheetVM.OpenCommand.Execute(null);
             return PetRemovalFlowResult.SavedCopy;
         }
-        if (choice != remove)
+        if (choice != removeId)
             return PetRemovalFlowResult.Cancel;
 
         // Name the consequence and confirm it's irreversible. A backed-up owner's

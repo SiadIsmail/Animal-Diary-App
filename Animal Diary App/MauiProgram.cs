@@ -74,6 +74,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<SubscribeSheetViewModel>();
 		builder.Services.AddSingleton<TrialMessageViewModel>();
 		builder.Services.AddSingleton<FeedbackSheetViewModel>();
+		builder.Services.AddSingleton<ConfirmSheetViewModel>();
 		builder.Services.AddSingleton<DevSheetViewModel>();
 
 		// ── Data / SQLite ────────────────────────────────────────────────────

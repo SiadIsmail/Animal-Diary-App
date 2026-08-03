@@ -36,20 +36,9 @@ public partial class MainPage : ContentPage
                 LocalizationManager.Instance.GetString("Settings_DeleteConfirmAccept"),
                 LocalizationManager.Instance.GetString("Common_Cancel"));
 
-        // Signed-in reset is a choice: keep the backup or destroy it too.
-        vm.SettingsVM.ConfirmDeleteAllDataCloud = async () =>
-        {
-            var deviceOnly = LocalizationManager.Instance.GetString("Settings_ResetDeviceOnly");
-            var everything = LocalizationManager.Instance.GetString("Settings_ResetEverything");
-            var choice = await DisplayActionSheet(
-                LocalizationManager.Instance.GetString("Settings_DeleteConfirmTitle"),
-                LocalizationManager.Instance.GetString("Common_Cancel"),
-                everything,
-                deviceOnly);
-            if (choice == deviceOnly) return Data.ViewModels.ResetScope.DeviceOnly;
-            if (choice == everything) return Data.ViewModels.ResetScope.Everything;
-            return null;
-        };
+        // Signed-in reset is a choice: keep the backup or destroy it too. Three outcomes,
+        // so it uses the confirm sheet rather than the native action sheet.
+        vm.SettingsVM.ConfirmDeleteAllDataCloud = () => ResetScopePrompt.AskAsync(vm.ConfirmVM);
 
         vm.CloudVM.ConfirmDeleteAccount = () =>
             DisplayAlert(
@@ -59,7 +48,7 @@ public partial class MainPage : ContentPage
                 LocalizationManager.Instance.GetString("Common_Cancel"));
 
         // No export sheet on this page, so no "save a copy" option here.
-        vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null);
+        vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null, null);
         vm.CloudVM.SignedOut += OnSignedOut;
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;

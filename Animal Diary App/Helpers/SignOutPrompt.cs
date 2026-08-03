@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Helpers;
 
 using Animal_Diary_App.Data.Services.Cloud;
+using Animal_Diary_App.Data.ViewModels;
 
 /// <summary>
 /// The one place the sign-out confirmation is composed, shared by every page that hosts the
@@ -13,35 +14,49 @@ public static class SignOutPrompt
     /// <summary>
     /// Ask whether to sign out, given what it costs. Returns true to proceed.
     /// </summary>
-    /// <param name="page">The hosting page — native confirm is the sanctioned surface for a
-    /// destructive confirm; the bottom-sheet rule governs input, not confirmation.</param>
+    /// <param name="page">The hosting page. A two-outcome confirm stays on the native
+    /// dialog — both choices render as buttons there, so nothing is ambiguous.</param>
     /// <param name="impact">What leaves the device.</param>
+    /// <param name="confirm">The shared confirm sheet, used when there are THREE outcomes.
+    /// The native action sheet renders its extra option as plain text, which buried the
+    /// "save a copy first" offer under the destructive button.</param>
     /// <param name="offerExport">Invoked if the user picks "save a copy first"; the sign-out
     /// is then abandoned (they can re-tap once the export is done). Pass null on pages that
     /// do not host the export sheet — the option is simply not offered there.</param>
-    public static async Task<bool> AskAsync(Page page, SignOutImpact impact, Action? offerExport)
+    public static async Task<bool> AskAsync(
+        Page page, SignOutImpact impact, ConfirmSheetViewModel? confirm, Action? offerExport)
     {
         var loc = LocalizationManager.Instance;
         var body = Describe(impact);
 
         // "Always let people get their data out" (app-voice §13) — the same offer the
         // pet-removal flow makes, on the same surface, for the same reason.
-        if (offerExport != null)
+        if (offerExport != null && confirm != null)
         {
-            var signOut = loc.GetString("Cloud_SignOutConfirm");
-            var saveCopy = loc.GetString("Cloud_SignOutSaveCopy");
-            var choice = await page.DisplayActionSheet(
-                loc.GetString("Cloud_SignOutTitle") + "\n\n" + body,
-                loc.GetString("Common_Cancel"),
-                signOut,        // destructive
-                saveCopy);      // regular option, offered first
+            var choice = await confirm.AskAsync(
+                loc.GetString("Cloud_SignOutTitle"),
+                body,
+                new[]
+                {
+                    new ConfirmOption
+                    {
+                        Id = SaveCopyId,
+                        Label = loc.GetString("Cloud_SignOutSaveCopy"),
+                    },
+                    new ConfirmOption
+                    {
+                        Id = SignOutId,
+                        Label = loc.GetString("Cloud_SignOutConfirm"),
+                        IsDestructive = true,
+                    },
+                });
 
-            if (choice == saveCopy)
+            if (choice == SaveCopyId)
             {
                 offerExport();
                 return false;
             }
-            return choice == signOut;
+            return choice == SignOutId;
         }
 
         return await page.DisplayAlert(
@@ -50,6 +65,11 @@ public static class SignOutPrompt
             loc.GetString("Cloud_SignOutConfirm"),
             loc.GetString("Common_Cancel"));
     }
+
+    // Compared against instead of the localized labels, so a copy change can't silently
+    // turn a chosen option into "cancelled".
+    private const string SaveCopyId = "save-copy";
+    private const string SignOutId = "sign-out";
 
     /// <summary>The message body: which pets leave, and the unrecoverable part if any.</summary>
     private static string Describe(SignOutImpact impact)
