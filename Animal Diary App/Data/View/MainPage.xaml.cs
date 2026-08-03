@@ -66,6 +66,9 @@ public partial class MainPage : ContentPage
         // Another caregiver's changes landing while this page is visible reload
         // it in place — no tab-switching needed to see them.
         vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
+        // The owner changed what a stat card shows: re-read both (a pick can swap
+        // the pair, so neither card can be refreshed on its own).
+        vm.TodayCardSheetVM.Changed += OnStatCardsChanged;
 
         await ReloadDataAsync();
     }
@@ -85,7 +88,9 @@ public partial class MainPage : ContentPage
             await Task.WhenAll(
                 vm.MainPageVM.LoadWeightChartAsync(),
                 vm.MainPageVM.LoadMoodTimelineAsync(),
-                vm.MainPageVM.LoadLatestMoodAsync(),
+                // Both customizable stat cards: which records they hold and the
+                // pet's latest value for each.
+                vm.MainPageVM.LoadStatCardsAsync(),
                 vm.MainPageVM.LoadTodayCareAsync(),
                 // Live check, on every appearance: notifications can be switched off
                 // in system settings at any time, and reminders then stop silently.
@@ -125,6 +130,19 @@ public partial class MainPage : ContentPage
     private void OnRemoteChangesApplied() =>
         MainThread.BeginInvokeOnMainThread(async () => await ReloadDataAsync());
 
+    private async void OnStatCardsChanged()
+    {
+        try
+        {
+            await vm.MainPageVM.LoadStatCardsAsync();
+        }
+        catch (Exception ex)
+        {
+            // async void — an escaping exception here kills the process.
+            System.Diagnostics.Debug.WriteLine($"[MainPage] stat card reload failed: {ex}");
+        }
+    }
+
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
@@ -135,6 +153,7 @@ public partial class MainPage : ContentPage
         vm.CloudVM.SignedOut -= OnSignedOut;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
+        vm.TodayCardSheetVM.Changed -= OnStatCardsChanged;
     }
 
     private void OnResetCompleted(object? sender, EventArgs e)

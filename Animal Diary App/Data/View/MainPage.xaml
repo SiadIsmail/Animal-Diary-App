@@ -44,20 +44,6 @@
                         Value="{StaticResource Ink}"/>
             </Style>
 
-            <!-- Small stat-card eyebrow -->
-            <Style x:Key="StatLabel"
-                   TargetType="Label">
-                <Setter Property="FontFamily"
-                        Value="{StaticResource FontSans}"/>
-                <Setter Property="FontSize"
-                        Value="10.5"/>
-                <Setter Property="FontAttributes"
-                        Value="Bold"/>
-                <Setter Property="CharacterSpacing"
-                        Value="1.2"/>
-                <Setter Property="TextColor"
-                        Value="{StaticResource InkTertiary}"/>
-            </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -298,110 +284,74 @@
                           Margin="10,-6,0,0"/>
                 </Grid>
 
-                <!-- 4 ── Quick stats: weight + mood ── -->
-                <Grid ColumnDefinitions="*,*"
-                      ColumnSpacing="12">
+                <!-- 4 ── The two stat cards the owner chooses ──
+                     Each holds one record — the pet's latest value for it and when it
+                     was written down. Tapping ANYWHERE on a card opens the picker; the
+                     pencil in its corner is only a cue. Defaults follow the pet's
+                     conditions (see Data/Models/TodayCards.cs). -->
+                <VerticalStackLayout Spacing="6">
 
-                    <!-- Weight (DATA — precise serif number) -->
-                    <Border Style="{StaticResource GlassCard}"
-                            StrokeShape="RoundRectangle 16,13,14,15"
-                            Padding="16,16,16,14">
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="{loc:Translate Main_Weight}"
-                                   Style="{StaticResource StatLabel}"/>
+                    <!-- First run only: the note that says the cards can be changed, in
+                         the page's own handwriting, with a small looping arrow either
+                         side dropping toward the cards, so there is no doubt what it
+                         points at. It sits ABOVE the pair (under them it read as a
+                         caption for the page) and stays centred as one compact note.
 
-                            <!-- The pet's most recent weigh-in and when it was taken.
-                                 The chip states the date, never a judgement on the
-                                 value — the app can't know what a change means. -->
-                            <Label IsVisible="{Binding MainPageVM.HasLoggedWeight}">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding MainPageVM.LatestWeight}"
-                                              FontFamily="{StaticResource FontSerif}"
-                                              FontSize="27"
-                                              TextColor="{StaticResource Ink}"/>
-                                        <Span Text=" kg"
-                                              FontFamily="{StaticResource FontSans}"
-                                              FontSize="14"
-                                              TextColor="{StaticResource InkSecondary}"/>
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Border BackgroundColor="{StaticResource TealTint}"
-                                    Padding="9,4"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 999"
-                                    HorizontalOptions="Start"
-                                    IsVisible="{Binding MainPageVM.HasLoggedWeight}">
-                                <Label Text="{Binding MainPageVM.LatestWeightLoggedLabel}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="11"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource TealDeep}"/>
-                            </Border>
+                         It retires the moment the owner opens the picker; after that the
+                         pencil on each card carries the affordance, because a permanent
+                         instruction would make Today read like a settings screen. -->
+                    <Grid ColumnDefinitions="Auto,Auto,Auto"
+                          ColumnSpacing="3"
+                          HorizontalOptions="Center"
+                          Margin="0,0,0,-8"
+                          IsVisible="{Binding MainPageVM.ShowCardHint}">
 
-                            <!-- Empty state: no weigh-in for this pet yet. -->
-                            <Label Text="{loc:Translate Main_WeightEmptyCard}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="12"
-                                   LineHeight="1.35"
-                                   TextColor="{StaticResource InkSecondary}"
-                                   IsVisible="{Binding MainPageVM.HasLoggedWeight, Converter={StaticResource InvertedBoolConverter}}"/>
-                        </VerticalStackLayout>
-                    </Border>
+                        <!-- Left arrow: leaves the note, loops once, and drops toward the
+                             left card. It hugs the text rather than reaching for the
+                             page edge — spread wide it stopped reading as one gesture.
+                             Drawn, not an icon: same pen as the aside under the greeting. -->
+                        <Path Grid.Column="0"
+                              Data="M 30 5 C 22 2, 13 3.5, 10 9.5 C 8 13.5, 13 17, 15 13 C 17 9, 11.5 7, 8 11 C 4 15.5, 5 20.5, 7 24 M 7 24 L 2 21 M 7 24 L 7 18.5"
+                              Stroke="{StaticResource TealDeep}"
+                              StrokeThickness="1.6"
+                              StrokeLineCap="Round"
+                              StrokeLineJoin="Round"
+                              WidthRequest="33"
+                              HeightRequest="27"
+                              VerticalOptions="End"/>
 
-                    <!-- Mood -->
-                    <Border Grid.Column="1"
-                            Style="{StaticResource GlassCard}"
-                            StrokeShape="RoundRectangle 13,16,15,14"
-                            Padding="16,16,16,14">
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="{loc:Translate Main_Mood}"
-                                   Style="{StaticResource StatLabel}"/>
+                        <Label Grid.Column="1"
+                               Text="{Binding MainPageVM.CardHintText}"
+                               FontFamily="{StaticResource FontHand}"
+                               FontSize="18.5"
+                               TextColor="{StaticResource TealDeep}"
+                               MaximumWidthRequest="215"
+                               LineBreakMode="WordWrap"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               HorizontalTextAlignment="Center"/>
 
-                            <!-- The pet's most recent mood — swatch, word and when it
-                                 was logged all come from the same entry. -->
-                            <HorizontalStackLayout Spacing="7"
-                                                   IsVisible="{Binding MainPageVM.HasLoggedMood}">
-                                <Border WidthRequest="11"
-                                        HeightRequest="11"
-                                        BackgroundColor="{Binding MainPageVM.LatestMoodColor}"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 6"
-                                        VerticalOptions="Center"/>
-                                <!-- The recorded mood's own face. The swatch stays: it
-                                     ties this card to the ribbon's colour legend below. -->
-                                <Label Text="{Binding MainPageVM.LatestMoodEmoji}"
-                                       FontSize="17"
-                                       VerticalOptions="Center"/>
-                                <Label Text="{Binding MainPageVM.LatestMoodLabel}"
-                                       FontFamily="{StaticResource FontSerif}"
-                                       FontSize="20"
-                                       TextColor="{StaticResource Ink}"/>
-                            </HorizontalStackLayout>
-                            <Border BackgroundColor="{StaticResource TealTint}"
-                                    Padding="9,4"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 999"
-                                    HorizontalOptions="Start"
-                                    IsVisible="{Binding MainPageVM.HasLoggedMood}">
-                                <Label Text="{Binding MainPageVM.LatestMoodLoggedLabel}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="11"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource TealDeep}"/>
-                            </Border>
+                        <!-- Same doodle mirrored, so the pair reads as one hand's work. -->
+                        <Path Grid.Column="2"
+                              Data="M 30 5 C 22 2, 13 3.5, 10 9.5 C 8 13.5, 13 17, 15 13 C 17 9, 11.5 7, 8 11 C 4 15.5, 5 20.5, 7 24 M 7 24 L 2 21 M 7 24 L 7 18.5"
+                              Stroke="{StaticResource TealDeep}"
+                              StrokeThickness="1.6"
+                              StrokeLineCap="Round"
+                              StrokeLineJoin="Round"
+                              ScaleX="-1"
+                              WidthRequest="33"
+                              HeightRequest="27"
+                              VerticalOptions="End"/>
+                    </Grid>
 
-                            <!-- Empty state: nothing logged for this pet yet. -->
-                            <Label Text="{loc:Translate Main_MoodEmptyCard}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="12"
-                                   LineHeight="1.35"
-                                   TextColor="{StaticResource InkSecondary}"
-                                   IsVisible="{Binding MainPageVM.HasLoggedMood, Converter={StaticResource InvertedBoolConverter}}"/>
-                        </VerticalStackLayout>
-                    </Border>
-                </Grid>
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <controls:TodayStatCardView BindingContext="{Binding MainPageVM.PrimaryCard}"/>
+                        <controls:TodayStatCardView Grid.Column="1"
+                                                    Mirrored="True"
+                                                    BindingContext="{Binding MainPageVM.SecondaryCard}"/>
+                    </Grid>
+                </VerticalStackLayout>
 
                 <!-- 5 ── Mood ribbon (DATA — accurate heights) ── -->
                 <VerticalStackLayout Spacing="12"
@@ -589,6 +539,10 @@
                        VerticalOptions="Center"/>
             </HorizontalStackLayout>
         </Border>
+
+        <!-- Today stat-card picker ("what matters most today?") -->
+        <view:TodayCardSheetView Grid.RowSpan="2"
+                                 BindingContext="{Binding TodayCardSheetVM}"/>
 
         <!-- Cloud Features sheet (FelovaBottomSheet; click-through while closed) -->
         <view:CloudSheetView Grid.RowSpan="2"

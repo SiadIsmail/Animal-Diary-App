@@ -119,6 +119,40 @@ public class WaterEntryService
             .ToListAsync();
     }
 
+    // ── Latest reading across both stores (the Today card) ──────────────────────
+    //
+    // Measured and observed are never merged (AI/design-decisions.md): these return
+    // the newest row of EACH store separately and the caller shows whichever was
+    // written last, as it was written. Nothing is converted, averaged or combined.
+
+    /// <summary>The most recent measured amount, or null if none.</summary>
+    public async Task<WaterAmountEntry?> GetMostRecentAmountAsync(int petId)
+    {
+        var rows = await _db.Table<WaterAmountEntry>()
+            .Where(w => w.PetId == petId && w.IsDeleted == false)
+            .OrderByDescending(w => w.Date)
+            .Take(12)
+            .ToListAsync();
+        return rows
+            .OrderByDescending(w => w.Date)
+            .ThenByDescending(w => w.Time)
+            .FirstOrDefault();
+    }
+
+    /// <summary>The most recent relative reading, or null if none.</summary>
+    public async Task<WaterLevelEntry?> GetMostRecentLevelAsync(int petId)
+    {
+        var rows = await _db.Table<WaterLevelEntry>()
+            .Where(w => w.PetId == petId && w.IsDeleted == false)
+            .OrderByDescending(w => w.Date)
+            .Take(4)
+            .ToListAsync();
+        return rows
+            .OrderByDescending(w => w.Date)
+            .ThenByDescending(w => w.Time)
+            .FirstOrDefault();
+    }
+
     /// <summary>Whether the pet has ever logged any water (either store) — cheap gate
     /// for the export sheet's water toggles (only shown when there's water to include).</summary>
     public async Task<bool> HasAnyAsync(int petId)

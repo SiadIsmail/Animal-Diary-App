@@ -42,6 +42,24 @@ public class SeizureEntryService
         return rows.OrderBy(s => s.Time).ToList();
     }
 
+    /// <summary>The most recent seizure for a pet (any day), or null if none has ever
+    /// been written down. Feeds the Today card, which states when the last one happened
+    /// — a history entry, never a count of days since (see AI/domain.md → Today cards).
+    /// Same shape as <see cref="GlucoseEntryService.GetMostRecentAsync"/>: the ordering
+    /// runs in SQL and only the newest day's few rows are tie-broken in memory.</summary>
+    public async Task<SeizureEntry?> GetMostRecentAsync(int petId)
+    {
+        var rows = await _db.Table<SeizureEntry>()
+            .Where(s => s.PetId == petId && s.IsDeleted == false)
+            .OrderByDescending(s => s.Date)
+            .Take(12)
+            .ToListAsync();
+        return rows
+            .OrderByDescending(s => s.Date)
+            .ThenByDescending(s => s.Time)
+            .FirstOrDefault();
+    }
+
     /// <summary>All seizures for a pet within an inclusive date range (for the vet
     /// report's event list and per-week counts). Mirrors the other entry services.</summary>
     public async Task<List<SeizureEntry>> GetForRangeAsync(int petId, DateTime startDate, DateTime endDate)

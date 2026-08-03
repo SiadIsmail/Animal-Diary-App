@@ -29,6 +29,10 @@ public class MainViewModel
     public SeizureSheetViewModel SeizureSheetVM { get; }
     public WaterSheetViewModel WaterSheetVM { get; }
 
+    /// <summary>Today's stat-card picker — "what matters most today?" (see
+    /// Data/Models/TodayCards.cs).</summary>
+    public TodayCardSheetViewModel TodayCardSheetVM { get; }
+
     // ── Reusable condition-setup sheets ("one menu, two doors": onboarding + Manage) ──
     public DiabetesSetupSheetViewModel DiabetesSetupVM { get; }
     public CkdSetupSheetViewModel CkdSetupVM { get; }
@@ -98,6 +102,7 @@ public class MainViewModel
  AppetiteSheetViewModel appetiteSheetVM,
  SeizureSheetViewModel seizureSheetVM,
  WaterSheetViewModel waterSheetVM,
+ TodayCardSheetViewModel todayCardSheetVM,
  DiabetesSetupSheetViewModel diabetesSetupVM,
  CkdSetupSheetViewModel ckdSetupVM,
  EpilepsySetupSheetViewModel epilepsySetupVM,
@@ -129,6 +134,7 @@ public class MainViewModel
         AppetiteSheetVM = appetiteSheetVM;
         SeizureSheetVM = seizureSheetVM;
         WaterSheetVM = waterSheetVM;
+        TodayCardSheetVM = todayCardSheetVM;
         DiabetesSetupVM = diabetesSetupVM;
         CkdSetupVM = ckdSetupVM;
         EpilepsySetupVM = epilepsySetupVM;

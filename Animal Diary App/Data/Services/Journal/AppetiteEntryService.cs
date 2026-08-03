@@ -118,6 +118,41 @@ public class AppetiteEntryService
             .ToListAsync();
     }
 
+    // ── Latest reading across both stores (the Today card) ──────────────────────
+    //
+    // Measured and observed are never merged (AI/design-decisions.md): each store's
+    // newest row is returned separately and the caller shows whichever was written
+    // last, as it was written. Grams are never turned into a word, or a word into a
+    // number. Mirrors WaterEntryService.
+
+    /// <summary>The most recent measured amount, or null if none.</summary>
+    public async Task<AppetiteAmountEntry?> GetMostRecentAmountAsync(int petId)
+    {
+        var rows = await _db.Table<AppetiteAmountEntry>()
+            .Where(a => a.PetId == petId && a.IsDeleted == false)
+            .OrderByDescending(a => a.Date)
+            .Take(12)
+            .ToListAsync();
+        return rows
+            .OrderByDescending(a => a.Date)
+            .ThenByDescending(a => a.Time)
+            .FirstOrDefault();
+    }
+
+    /// <summary>The most recent qualitative reading, or null if none.</summary>
+    public async Task<AppetiteEntry?> GetMostRecentAsync(int petId)
+    {
+        var rows = await _db.Table<AppetiteEntry>()
+            .Where(a => a.PetId == petId && a.IsDeleted == false)
+            .OrderByDescending(a => a.Date)
+            .Take(4)
+            .ToListAsync();
+        return rows
+            .OrderByDescending(a => a.Date)
+            .ThenByDescending(a => a.Time)
+            .FirstOrDefault();
+    }
+
     // ── Food context helpers ─────────────────────────────────────────────────────
 
     /// <summary>The pet's most recently logged non-empty food label (across both

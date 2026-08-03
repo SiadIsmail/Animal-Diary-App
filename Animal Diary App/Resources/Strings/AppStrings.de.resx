@@ -127,8 +127,6 @@
   <data name="Main_GreetingMorning" xml:space="preserve"><value>Guten Morgen</value></data>
   <data name="Main_GreetingAfternoon" xml:space="preserve"><value>Guten Tag</value></data>
   <data name="Main_GreetingEvening" xml:space="preserve"><value>Guten Abend</value></data>
-  <data name="Main_Weight" xml:space="preserve"><value>Gewicht</value></data>
-  <data name="Main_Mood" xml:space="preserve"><value>Stimmung</value></data>
   <data name="Main_Last30Days" xml:space="preserve"><value>Letzte 30 Tage</value></data>
   <data name="Main_MoodEmptyState" xml:space="preserve"><value>Im Journal kannst du festhalten, wie es deinem Tier geht</value></data>
   <data name="Main_Aside1" xml:space="preserve"><value>Wie es {0} heute geht</value></data>
@@ -752,6 +750,28 @@
   <data name="Today_RemindersOffTitle" xml:space="preserve"><value>Erinnerungen sind ausgeschaltet</value></data>
   <data name="Today_RemindersOffBody" xml:space="preserve"><value>Mitteilungen sind für Felova ausgeschaltet, deine Erinnerungen kommen deshalb nicht an. Alles, was du eingerichtet hast, ist weiterhin gespeichert.</value></data>
   <data name="Today_RemindersOffAction" xml:space="preserve"><value>Einstellungen öffnen</value></data>
+  <!-- ── Die zwei frei wählbaren Karten auf „Heute" ──
+       Jede Karte benennt einen EINTRAG, nie eine Serie: „Letzter Anfall", niemals
+       „seit 12 Tagen anfallsfrei". Eine Serie kann man brechen, indem man die
+       Wahrheit aufschreibt — diesen Grund zum Zögern gibt Felova niemandem. -->
+  <data name="Today_CardWeight" xml:space="preserve"><value>Letztes Wiegen</value></data>
+  <data name="Today_CardMood" xml:space="preserve"><value>Letzte Stimmung</value></data>
+  <data name="Today_CardGlucose" xml:space="preserve"><value>Letzter Blutzucker</value></data>
+  <data name="Today_CardAppetite" xml:space="preserve"><value>Letzter Appetit</value></data>
+  <data name="Today_CardWater" xml:space="preserve"><value>Zuletzt getrunken</value></data>
+  <data name="Today_CardSeizure" xml:space="preserve"><value>Letzter Anfall</value></data>
+  <data name="Today_CardMedication" xml:space="preserve"><value>Letztes Medikament</value></data>
+  <data name="Today_EmptyGlucose" xml:space="preserve"><value>Noch keine Werte. Trag einen im Tagebuch ein.</value></data>
+  <data name="Today_EmptyAppetite" xml:space="preserve"><value>Noch nichts notiert. Trag es im Tagebuch ein.</value></data>
+  <data name="Today_EmptyWater" xml:space="preserve"><value>Noch nichts notiert. Trag es im Tagebuch ein.</value></data>
+  <data name="Today_EmptySeizure" xml:space="preserve"><value>Noch nichts aufgeschrieben. Du kannst es im Tagebuch eintragen.</value></data>
+  <data name="Today_EmptyMedication" xml:space="preserve"><value>Noch keine Gaben aufgeschrieben. Du kannst sie im Tagebuch notieren.</value></data>
+  <data name="Today_CardHint" xml:space="preserve"><value>Tipp auf eine Karte, um zu ändern, was hier steht</value></data>
+  <data name="Today_CardChangeHint" xml:space="preserve"><value>Tippen, um zu ändern, was diese Karte zeigt</value></data>
+  <data name="Today_PickerTitle" xml:space="preserve"><value>Was ist dir heute am wichtigsten?</value></data>
+  <data name="Today_PickerSub" xml:space="preserve"><value>Wähle, was diese Karte über {0} zeigt.</value></data>
+  <data name="Today_PickerOnOtherCard" xml:space="preserve"><value>Steht auf der anderen Karte — die beiden tauschen dann</value></data>
+  <data name="Common_MmolSuffix" xml:space="preserve"><value>mmol/l</value></data>
   <!-- ── Feedback-Sheet (unten auf der Pflege-Seite) ── -->
   <data name="Feedback_RowTitle" xml:space="preserve"><value>Sag uns, was nicht funktioniert</value></data>
   <data name="Feedback_RowSubtitle" xml:space="preserve"><value>Oder was du dir wünschst</value></data>

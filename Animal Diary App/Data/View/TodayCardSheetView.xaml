@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    TodayCardSheetView
+    ─────────────────────────────────────────────────────────
+    "What matters most today?" — tap a Today card, pick the record it should show.
+
+    A question, not a settings screen: one screenful of records, no cadences, no
+    switches, no ordering. Choosing here changes only what Today displays; what the
+    Journal asks for is the care plan's business, on the Manage page.
+
+    BindingContext is the TodayCardSheetViewModel (set by MainPage).
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:TodayCardSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.TodayCardSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <!-- BindableLayout, not CollectionView: seven fixed rows with no scrolling
+                 (see AddTrackerSheetView for why a RecyclerView misbehaves in an
+                 auto-sized sheet). -->
+            <VerticalStackLayout Spacing="9"
+                                 Padding="0,2,0,0"
+                                 BindableLayout.ItemsSource="{Binding Options}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vms:TodayCardOption">
+                        <Border BackgroundColor="{StaticResource GlassSoft}"
+                                Stroke="{StaticResource GlassLine}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 15,13,14,15"
+                                Padding="14,12">
+                            <Border.Triggers>
+                                <!-- What this card shows right now. -->
+                                <DataTrigger TargetType="Border"
+                                             Binding="{Binding IsSelected}"
+                                             Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={x:Reference Root}, Path=BindingContext.PickCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  ColumnSpacing="13">
+                                <Label Grid.Column="0"
+                                       Text="{Binding Icon}"
+                                       FontSize="21"
+                                       VerticalOptions="Center"/>
+
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="1"
+                                                     VerticalOptions="Center">
+                                    <Label Text="{Binding Name}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="14.5"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource Ink}"/>
+                                    <!-- Only on the record the other card holds: picking
+                                         it swaps the two, so say so before it happens. -->
+                                    <Label Text="{Binding OtherCardNote}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="11.5"
+                                           TextColor="{StaticResource InkTertiary}"
+                                           IsVisible="{Binding IsOnOtherCard}"/>
+                                </VerticalStackLayout>
+
+                                <Label Grid.Column="2"
+                                       Text="✓"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="15"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding IsSelected}"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>

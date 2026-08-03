@@ -127,8 +127,6 @@
   <data name="Main_GreetingMorning" xml:space="preserve"><value>Good morning</value></data>
   <data name="Main_GreetingAfternoon" xml:space="preserve"><value>Good afternoon</value></data>
   <data name="Main_GreetingEvening" xml:space="preserve"><value>Good evening</value></data>
-  <data name="Main_Weight" xml:space="preserve"><value>Weight</value></data>
-  <data name="Main_Mood" xml:space="preserve"><value>Mood</value></data>
   <data name="Main_Last30Days" xml:space="preserve"><value>Last 30 days</value></data>
   <data name="Main_MoodEmptyState" xml:space="preserve"><value>You can note how your pet's feeling in the Journal</value></data>
   <data name="Main_Aside1" xml:space="preserve"><value>How {0} is doing today</value></data>
@@ -772,6 +770,28 @@
   <data name="Today_RemindersOffTitle" xml:space="preserve"><value>Reminders are switched off</value></data>
   <data name="Today_RemindersOffBody" xml:space="preserve"><value>Notifications are turned off for Felova, so your reminders won't arrive. Everything you've set up is still saved.</value></data>
   <data name="Today_RemindersOffAction" xml:space="preserve"><value>Open settings</value></data>
+  <!-- ── Today's two customizable stat cards ──
+       Every card names a RECORD, never a run of days: "Last seizure", not "seizure
+       free for 12 days". A streak is something the owner can break by writing down
+       the truth, and this app never gives them a reason to hesitate. -->
+  <data name="Today_CardWeight" xml:space="preserve"><value>Last weigh-in</value></data>
+  <data name="Today_CardMood" xml:space="preserve"><value>Last mood</value></data>
+  <data name="Today_CardGlucose" xml:space="preserve"><value>Last glucose</value></data>
+  <data name="Today_CardAppetite" xml:space="preserve"><value>Last appetite</value></data>
+  <data name="Today_CardWater" xml:space="preserve"><value>Last water</value></data>
+  <data name="Today_CardSeizure" xml:space="preserve"><value>Last seizure</value></data>
+  <data name="Today_CardMedication" xml:space="preserve"><value>Last medication</value></data>
+  <data name="Today_EmptyGlucose" xml:space="preserve"><value>No readings yet. Add one in the Journal.</value></data>
+  <data name="Today_EmptyAppetite" xml:space="preserve"><value>Nothing noted yet. Add it in the Journal.</value></data>
+  <data name="Today_EmptyWater" xml:space="preserve"><value>Nothing noted yet. Add it in the Journal.</value></data>
+  <data name="Today_EmptySeizure" xml:space="preserve"><value>Nothing written down yet. You can add one in the Journal.</value></data>
+  <data name="Today_EmptyMedication" xml:space="preserve"><value>No doses written down yet. You can note one in the Journal.</value></data>
+  <data name="Today_CardHint" xml:space="preserve"><value>Tap a card to change what appears here</value></data>
+  <data name="Today_CardChangeHint" xml:space="preserve"><value>Tap to change what this card shows</value></data>
+  <data name="Today_PickerTitle" xml:space="preserve"><value>What matters most today?</value></data>
+  <data name="Today_PickerSub" xml:space="preserve"><value>Pick what this card shows about {0}.</value></data>
+  <data name="Today_PickerOnOtherCard" xml:space="preserve"><value>On the other card — picking it swaps them</value></data>
+  <data name="Common_MmolSuffix" xml:space="preserve"><value>mmol/L</value></data>
   <!-- ── Feedback sheet (bottom of the Care page) ── -->
   <data name="Feedback_RowTitle" xml:space="preserve"><value>Tell us what's not working</value></data>
   <data name="Feedback_RowSubtitle" xml:space="preserve"><value>Or what you wish it did</value></data>

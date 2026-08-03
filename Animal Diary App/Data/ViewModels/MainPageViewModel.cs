@@ -19,6 +19,8 @@ public class MainPageViewModel : BaseViewModel
     private readonly MedicationService _medicationService;
     private readonly MedicationDoseLogService _doseLogService;
     private readonly MedicationReminderScheduler _reminderScheduler;
+    private readonly TodayCardService _todayCards;
+    private readonly TodayCardSheetViewModel _cardPicker;
 
     public MoodTimelineViewModel MoodTimeline { get; }
 
@@ -29,7 +31,8 @@ public class MainPageViewModel : BaseViewModel
     }
 
     public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService, MoodTimelineViewModel moodTimeline,
-        PendingItemsService pendingItems, MedicationService medicationService, MedicationDoseLogService doseLogService, MedicationReminderScheduler reminderScheduler)
+        PendingItemsService pendingItems, MedicationService medicationService, MedicationDoseLogService doseLogService, MedicationReminderScheduler reminderScheduler,
+        TodayCardService todayCards, TodayCardSheetViewModel cardPicker)
     {
         _petEntryService = petEntryService;
         _petService = petService;
@@ -39,7 +42,14 @@ public class MainPageViewModel : BaseViewModel
         _medicationService = medicationService;
         _doseLogService = doseLogService;
         _reminderScheduler = reminderScheduler;
+        _todayCards = todayCards;
+        _cardPicker = cardPicker;
         MoodTimeline = moodTimeline;
+
+        // The two stat cards are stable instances refreshed in place — see TodayCardItem
+        // for why they are not rebuilt per load.
+        PrimaryCard = new TodayCardItem(TodayCardSlot.Primary, OnCardTapped);
+        SecondaryCard = new TodayCardItem(TodayCardSlot.Secondary, OnCardTapped);
 
         // Commands are created once — an expression-bodied `=> new Command(...)`
         // property hands out a fresh instance per read, which allocates on every
@@ -70,9 +80,10 @@ public class MainPageViewModel : BaseViewModel
         {
             OnPropertyChanged(nameof(Greeting));
             OnPropertyChanged(nameof(WeightTrendLabel));
-            OnPropertyChanged(nameof(LatestMoodLabel));
-            OnPropertyChanged(nameof(LatestMoodLoggedLabel));
-            OnPropertyChanged(nameof(LatestWeightLoggedLabel));
+            OnPropertyChanged(nameof(CardHintText));
+            // The cards resolve every string per read; they just need to be told.
+            PrimaryCard.RefreshLocalized();
+            SecondaryCard.RefreshLocalized();
         };
     }
 
@@ -164,15 +175,6 @@ public class MainPageViewModel : BaseViewModel
     }
 
     private PetEntry? EntryToday;
-    private DateTime? latestWeightDate;
-
-    /// <summary>False until the pet has at least one weigh-in; drives the card's swap
-    /// between the reading and its empty state.</summary>
-    public bool HasLoggedWeight => latestWeightDate is not null;
-
-    /// <summary>"Logged today" / "Logged yesterday" / "Logged 5 days ago" for the most
-    /// recent weigh-in — when it was taken, not a verdict on what it says.</summary>
-    public string LatestWeightLoggedLabel => RelativeLoggedLabel(latestWeightDate);
 
     public async Task LoadLatestWeightAsync()
     {
@@ -181,28 +183,6 @@ public class MainPageViewModel : BaseViewModel
         EntryToday = await _petEntryService.GetLatestWeightEntryAsync(ActivePet.Id);
         // Clear on a pet with no weigh-ins too, or the previous pet's value lingers.
         LatestWeight = EntryToday?.Weight ?? 0;
-        latestWeightDate = EntryToday?.Date;
-
-        OnPropertyChanged(nameof(HasLoggedWeight));
-        OnPropertyChanged(nameof(LatestWeightLoggedLabel));
-    }
-
-    /// <summary>Shared by both stat cards: "Logged {today|yesterday|N days ago}",
-    /// reusing the Journal's relative-date vocabulary. Empty when never logged.</summary>
-    private static string RelativeLoggedLabel(DateTime? date)
-    {
-        if (date is null)
-            return string.Empty;
-
-        var loc = LocalizationManager.Instance;
-        int diff = (DateTime.Now.Date - date.Value.Date).Days;
-        var relative = diff switch
-        {
-            <= 0 => loc.GetString("Journal_RelToday"),
-            1 => loc.GetString("Journal_RelYesterday"),
-            _ => loc.Format("Journal_RelDaysAgo", diff),
-        };
-        return loc.Format("Main_LoggedRelative", relative);
     }
 
     public async Task LoadWeightChartAsync()
@@ -264,47 +244,79 @@ public class MainPageViewModel : BaseViewModel
         WeightChartUpdated?.Invoke();
     }
 
-    // ── Mood stat card: the pet's most recent mood, however old ─────────
-    // Same rule as the weight card beside it — state the latest reading and when
-    // it was taken. No cutoff, no interpretation.
+    // ── The two customizable stat cards ──────────────────────────────────────
+    //
+    // Today shows exactly two records and the owner picks which. Each card states the
+    // pet's LAST value for its record and when it was written down — no streaks, no
+    // scores, no "N days since" (see Data/Models/TodayCards.cs and AI/domain.md).
+    //
+    // The pair defaults from the pet's conditions and is remembered per pet the moment
+    // the owner chooses; TodayCardService owns both halves.
 
-    private MoodLevel latestMood = MoodLevel.None;
-    private DateTime? latestMoodDate;
+    /// <summary>Which stat-card load is the current one — the pair is keyed to the
+    /// active pet, so a slow load for the previous pet must not paint over this one.</summary>
+    private int _cardGeneration;
 
-    /// <summary>False until the pet has at least one mood logged; drives the card's
-    /// swap between the reading and its empty state.</summary>
-    public bool HasLoggedMood => latestMoodDate is not null;
+    public TodayCardItem PrimaryCard { get; }
+    public TodayCardItem SecondaryCard { get; }
 
-    /// <summary>Localized word for the latest mood ("Great"), empty when none.</summary>
-    public string LatestMoodLabel => HasLoggedMood ? latestMood.GetDisplayName() : string.Empty;
+    private bool _showCardHint;
 
-    /// <summary>Swatch colour for the latest mood. A VM-held presentation hint, the
-    /// same accepted convention TimelineItem uses.</summary>
-    public Color LatestMoodColor => latestMood.GetColor();
+    /// <summary>Set the moment a card is tapped, before the flag reaches the database.
+    /// A reload whose flag read overlapped that tap would otherwise bring the retired
+    /// hint back for the rest of the session.</summary>
+    private bool _cardsDiscovered;
 
-    /// <summary>Face for the latest mood, empty when none has been recorded. Shown only
-    /// where a real reading exists — the "still to do" card keeps a neutral icon, since
-    /// nothing has been chosen there yet.</summary>
-    public string LatestMoodEmoji => HasLoggedMood ? latestMood.GetEmoji() : string.Empty;
-
-    /// <summary>"Logged today" / "Logged yesterday" / "Logged 5 days ago" for the most
-    /// recent mood.</summary>
-    public string LatestMoodLoggedLabel => RelativeLoggedLabel(latestMoodDate);
-
-    public async Task LoadLatestMoodAsync()
+    /// <summary>True until the owner has opened the picker once. The spelled-out hint is
+    /// how the cards announce they can be changed; after that the small pencil on each
+    /// card is enough, and a permanent instruction would only make Today look like a
+    /// settings screen.</summary>
+    public bool ShowCardHint
     {
-        if (ActivePet == null)
+        get => _showCardHint;
+        private set => SetProperty(ref _showCardHint, value);
+    }
+
+    /// <summary>"Tap a card to change what appears here." Resolved per read (singleton VM).</summary>
+    public string CardHintText => LocalizationManager.Instance.GetString("Today_CardHint");
+
+    /// <summary>Load both cards: which records they hold, and what those records say.</summary>
+    public async Task LoadStatCardsAsync()
+    {
+        var pet = ActivePet;
+        var generation = ++_cardGeneration;
+
+        var config = await _todayCards.GetConfigAsync(pet);
+        var primary = await _todayCards.GetReadingAsync(pet, config.Primary);
+        var secondary = await _todayCards.GetReadingAsync(pet, config.Secondary);
+        var discovered = await _SettingsService.GetFlagAsync(SettingsFlags.TodayCardsDiscovered);
+
+        // A newer load owns the cards now (a pet switch, or a second appearance).
+        if (generation != _cardGeneration)
             return;
 
-        var entry = await _petEntryService.GetLatestMoodEntryAsync(ActivePet.Id);
-        latestMood = entry is null ? MoodLevel.None : (MoodLevel)entry.MoodLevel;
-        latestMoodDate = entry?.Date;
+        PrimaryCard.Apply(config.Primary, primary);
+        SecondaryCard.Apply(config.Secondary, secondary);
+        ShowCardHint = !discovered && !_cardsDiscovered;
+    }
 
-        OnPropertyChanged(nameof(HasLoggedMood));
-        OnPropertyChanged(nameof(LatestMoodLabel));
-        OnPropertyChanged(nameof(LatestMoodColor));
-        OnPropertyChanged(nameof(LatestMoodEmoji));
-        OnPropertyChanged(nameof(LatestMoodLoggedLabel));
+    /// <summary>A card was tapped — anywhere on it. Opens the picker for that slot and
+    /// retires the first-run hint: finding the picker once is what it was there for,
+    /// whether or not the owner ends up changing anything.</summary>
+    private void OnCardTapped(TodayCardItem card)
+    {
+        MarkCardsDiscoveredAsync().Forget();
+        _cardPicker.OpenAsync(ActivePet, card.Slot).Forget();
+    }
+
+    private async Task MarkCardsDiscoveredAsync()
+    {
+        if (_cardsDiscovered)
+            return;
+
+        _cardsDiscovered = true;
+        ShowCardHint = false;
+        await _SettingsService.SetFlagAsync(SettingsFlags.TodayCardsDiscovered, true);
     }
 
     public async Task LoadMoodTimelineAsync()
