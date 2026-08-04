@@ -1,7 +1,7 @@
 namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
 
-using QuestPDF.Fluent;
-using QuestPDF.Infrastructure;
+using MigraDoc.DocumentObjectModel;
+using MigraDoc.DocumentObjectModel.Tables;
 
 /// <summary>
 /// The highest-value block for the vet: what is prescribed, how often, and how
@@ -12,39 +12,51 @@ public class MedicationsSection : IVetReportSection
 {
     public bool HasContent(VetReportData data) => data.Medications.Count > 0;
 
-    public void Compose(IContainer container, VetReportData data)
+    public void Compose(Section section, VetReportData data, ReportContext ctx)
     {
-        container.Column(col =>
+        SectionChrome.AddTitle(section, VetReportStrings.SectionMedications);
+
+        var table = section.AddTable();
+        table.Borders.Width = 0;
+
+        // name 3 · dose 2 · frequency 3 · adherence 4  (of 12)
+        var content = ctx.ContentWidthPt;
+        foreach (var ratio in new[] { 3d, 2d, 3d, 4d })
+            table.AddColumn(Unit.FromPoint(content * ratio / 12d));
+
+        var head = table.AddRow();
+        head.HeadingFormat = true;   // repeat the header on page breaks
+        HeaderCell(head, 0, VetReportStrings.ColMedication);
+        HeaderCell(head, 1, VetReportStrings.ColDose);
+        HeaderCell(head, 2, VetReportStrings.ColFrequency);
+        HeaderCell(head, 3, VetReportStrings.ColAdherence);
+
+        foreach (var med in data.Medications)
         {
-            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionMedications));
+            var row = table.AddRow();
+            BodyCellBold(row, 0, med.Name);
+            BodyCell(row, 1, $"{med.Dose:0.##} {med.Unit}".Trim());
+            BodyCell(row, 2, Frequency(med));
+            BodyCell(row, 3, Adherence(med));
+        }
+    }
 
-            col.Item().Table(table =>
-            {
-                table.ColumnsDefinition(columns =>
-                {
-                    columns.RelativeColumn(3);   // name
-                    columns.RelativeColumn(2);   // dose
-                    columns.RelativeColumn(3);   // frequency
-                    columns.RelativeColumn(4);   // adherence
-                });
+    private static void HeaderCell(Row row, int i, string text)
+    {
+        SectionChrome.ConfigureHeaderCell(row.Cells[i]);
+        row.Cells[i].AddParagraph(text);
+    }
 
-                table.Header(header =>
-                {
-                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColMedication);
-                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColDose);
-                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColFrequency);
-                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColAdherence);
-                });
+    private static void BodyCell(Row row, int i, string text)
+    {
+        SectionChrome.ConfigureBodyCell(row.Cells[i]);
+        row.Cells[i].AddParagraph(text);
+    }
 
-                foreach (var med in data.Medications)
-                {
-                    table.Cell().Element(SectionChrome.BodyCell).Text(med.Name).SemiBold();
-                    table.Cell().Element(SectionChrome.BodyCell).Text($"{med.Dose:0.##} {med.Unit}".Trim());
-                    table.Cell().Element(SectionChrome.BodyCell).Text(Frequency(med));
-                    table.Cell().Element(SectionChrome.BodyCell).Text(Adherence(med));
-                }
-            });
-        });
+    private static void BodyCellBold(Row row, int i, string text)
+    {
+        SectionChrome.ConfigureBodyCell(row.Cells[i]);
+        row.Cells[i].AddParagraph().AddFormattedText(text, TextFormat.Bold);
     }
 
     /// <summary>"2×/day (08:00, 20:00)" for everyday meds, "3 days/week, 08:00" otherwise.</summary>

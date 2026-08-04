@@ -1,16 +1,18 @@
 namespace Animal_Diary_App.Data.Services.Reports.Document;
 
 using Animal_Diary_App.Data.Services.Reports.Document.Sections;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
+using MigraDoc.DocumentObjectModel;
 
 /// <summary>
-/// The whole document = the DTO + an ordered list of sections. To reorder,
-/// remove or add a section, edit <see cref="Sections"/> — nothing else. Sections
-/// with no content for this pet/range omit themselves via HasContent.
+/// Builds the whole report as a MigraDoc <see cref="MigraDoc.DocumentObjectModel.Document"/>:
+/// the DTO plus an ordered list of sections. To reorder, remove or add a section, edit
+/// <see cref="Sections"/> — nothing else. Sections with no content for this pet/range omit
+/// themselves via <see cref="IVetReportSection.HasContent"/>.
+///
+/// The caller owns the <see cref="ReportContext"/> (its temp chart files must survive until
+/// the PDF is rendered) — see <c>VetReportService</c>.
 /// </summary>
-public class VetReportDocument : IDocument
+public sealed class VetReportDocument
 {
     /// <summary>Document order, top to bottom — decreasing decision-value.</summary>
     private static readonly IVetReportSection[] Sections =
@@ -25,72 +27,82 @@ public class VetReportDocument : IDocument
         new NotesSection(),
     };
 
+    // A4 is 21.0 cm wide (72 pt/inch, 2.54 cm/inch → 595.276 pt); usable width is that
+    // minus the two side margins. Sections size charts and columns against this.
+    private const double A4WidthPt = 595.276;
+    public const double ContentWidthPt = A4WidthPt - 2 * VetReportStyles.PageMargin;
+
     private readonly VetReportData _data;
 
     public VetReportDocument(VetReportData data) => _data = data;
 
-    public DocumentMetadata GetMetadata() => new()
+    public Document Build(ReportContext ctx)
     {
-        Title = $"{_data.Pet.Name} — Felova health summary",
-        Author = "Felova",
-        CreationDate = _data.GeneratedAt,
-    };
+        var doc = new Document();
+        doc.Info.Title = $"{_data.Pet.Name} — Felova health summary";
+        doc.Info.Author = "Felova";
 
-    public void Compose(IDocumentContainer container)
+        var normal = doc.Styles["Normal"]!;
+        normal.Font.Name = ReportFontResolver.FamilyName;
+        normal.Font.Size = VetReportStyles.BodySize;
+        normal.Font.Color = SectionChrome.Hex(VetReportStyles.Ink);
+
+        var section = doc.AddSection();
+        var page = section.PageSetup;
+        page.PageFormat = PageFormat.A4;
+        var margin = Unit.FromPoint(VetReportStyles.PageMargin);
+        page.TopMargin = page.BottomMargin = page.LeftMargin = page.RightMargin = margin;
+        // Page 1 carries the full HeaderSection, so its running header is suppressed; the
+        // footer (disclaimer + page numbers) appears on every page.
+        page.DifferentFirstPageHeaderFooter = true;
+
+        BuildContinuationHeader(section);
+        BuildFooter(section.Footers.Primary);
+        BuildFooter(section.Footers.FirstPage);
+
+        foreach (var s in Sections)
+            if (s.HasContent(_data))
+                s.Compose(section, _data, ctx);
+
+        return doc;
+    }
+
+    // Pages 2+ only. Printed vet paperwork gets separated and refiled, so every sheet has
+    // to say whose it is and what period it covers; without this a detached page 2 is
+    // anonymous. (Page 1's FirstPage header is deliberately left empty.)
+    private void BuildContinuationHeader(Section section)
     {
-        container.Page(page =>
-        {
-            page.Size(PageSizes.A4);
-            page.Margin(VetReportStyles.PageMargin);
-            page.DefaultTextStyle(style => style
-                .FontFamily(VetReportStyles.FontFamily)
-                .FontSize(VetReportStyles.BodySize)
-                .FontColor(VetReportStyles.Ink)
-                .LineHeight(VetReportStyles.LineHeight));
+        var p = section.Headers.Primary.AddParagraph();
+        p.Format.Font.Size = VetReportStyles.SmallSize;
+        p.Format.Font.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
+        p.Format.SpaceAfter = 6;
+        p.Format.Borders.Bottom.Width = 0.5;
+        p.Format.Borders.Bottom.Color = SectionChrome.Hex(VetReportStyles.RuleLine);
+        p.Format.AddTabStop(Unit.FromPoint(ContentWidthPt), TabAlignment.Right);
 
-            // Continuation header — pages 2+ only (SkipOnce), because page 1 already
-            // carries the full HeaderSection. Printed vet paperwork gets separated and
-            // refiled, so every sheet has to say whose it is and what period it covers;
-            // without this a detached page 2 is anonymous.
-            page.Header().SkipOnce()
-                .PaddingBottom(6)
-                .BorderBottom(0.5f).BorderColor(VetReportStyles.RuleLine)
-                .Row(row =>
-                {
-                    row.RelativeItem().Text(VetReportStrings.RunningTitle(_data.Pet.Name))
-                        .FontSize(VetReportStyles.SmallSize).SemiBold().FontColor(VetReportStyles.InkSecondary);
-                    row.ConstantItem(160).AlignRight().Text(
-                            $"{_data.From.ToString(VetReportStyles.DateFormat)} – {_data.To.ToString(VetReportStyles.DateFormat)}")
-                        .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
-                });
+        var title = p.AddFormattedText(VetReportStrings.RunningTitle(_data.Pet.Name), TextFormat.Bold);
+        title.Size = VetReportStyles.SmallSize;
+        p.AddTab();
+        p.AddText($"{_data.From.ToString(VetReportStyles.DateFormat)} – {_data.To.ToString(VetReportStyles.DateFormat)}");
+    }
 
-            page.Content().Column(col =>
-            {
-                col.Spacing(VetReportStyles.SectionSpacing);
-                foreach (var section in Sections)
-                    if (section.HasContent(_data))
-                        col.Item().Element(c => section.Compose(c, _data));
-            });
+    // The footer is the report's one HARD RULE made visible: everything above is
+    // owner-reported observation, not a medical record. Never remove it.
+    private void BuildFooter(HeaderFooter footer)
+    {
+        var p = footer.AddParagraph();
+        p.Format.Font.Size = VetReportStyles.SmallSize;
+        p.Format.Font.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
+        p.Format.SpaceBefore = 3;
+        p.Format.Borders.Top.Width = 0.5;
+        p.Format.Borders.Top.Color = SectionChrome.Hex(VetReportStyles.RuleLine);
+        p.Format.AddTabStop(Unit.FromPoint(ContentWidthPt), TabAlignment.Right);
 
-            // The footer is the report's one HARD RULE made visible: everything above
-            // is owner-reported observation, not a medical record. Never remove it.
-            page.Footer()
-                .BorderTop(0.5f).BorderColor(VetReportStyles.RuleLine)
-                .PaddingTop(3)
-                .Row(row =>
-                {
-                    row.RelativeItem()
-                        .Text(VetReportStrings.Footer)
-                        .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
-                    row.ConstantItem(70).AlignRight().Text(text =>
-                    {
-                        text.DefaultTextStyle(t => t.FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary));
-                        text.Span(VetReportStrings.Page + " ");
-                        text.CurrentPageNumber();
-                        text.Span(" " + VetReportStrings.PageOf + " ");
-                        text.TotalPages();
-                    });
-                });
-        });
+        p.AddText(VetReportStrings.Footer);
+        p.AddTab();
+        p.AddText(VetReportStrings.Page + " ");
+        p.AddPageField();
+        p.AddText(" " + VetReportStrings.PageOf + " ");
+        p.AddNumPagesField();
     }
 }

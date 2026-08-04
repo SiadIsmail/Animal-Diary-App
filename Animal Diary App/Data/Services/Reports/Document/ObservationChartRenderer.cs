@@ -47,30 +47,26 @@ public static class ObservationChartRenderer
             return Top + (1 - frac) * plotH;
         }
 
-        // ── Paints ──────────────────────────────────────────────────────────
+        // ── Paints / font (SkiaSharp 3.x: text on SKFont, stroke/fill on Style) ──
         using var gridPaint = new SKPaint { Color = SKColor.Parse(VetReportStyles.ChartGrid), StrokeWidth = 0.5f, IsAntialias = true };
-        using var markerFill = new SKPaint { Color = SKColors.Black, IsAntialias = true };
-        using var labelPaint = new SKPaint { Color = SKColor.Parse(VetReportStyles.InkTertiary), TextSize = VetReportStyles.ChartLabelSize, IsAntialias = true };
-        using var labelRight = new SKPaint { Color = SKColor.Parse(VetReportStyles.InkTertiary), TextSize = VetReportStyles.ChartLabelSize, IsAntialias = true, TextAlign = SKTextAlign.Right };
+        using var markerFill = new SKPaint { Color = SKColors.Black, Style = SKPaintStyle.Fill, IsAntialias = true };
+        using var labelPaint = new SKPaint { Color = SKColor.Parse(VetReportStyles.InkTertiary), IsAntialias = true };
+        using var labelFont = new SKFont(SKTypeface.Default, VetReportStyles.ChartLabelSize) { Edging = SKFontEdging.Antialias };
 
         // ── Category rows: a gridline + its word label ──────────────────────
         for (var level = 1; level <= rows; level++)
         {
             var y = RowY(level);
             canvas.DrawLine(Left, y, width - Right, y, gridPaint);
-            canvas.DrawText(rowLabels[level - 1], Left - 3, y + VetReportStyles.ChartLabelSize / 2 - 1, labelRight);
+            canvas.DrawText(rowLabels[level - 1], Left - 3, y + VetReportStyles.ChartLabelSize / 2 - 1, SKTextAlign.Right, labelFont, labelPaint);
         }
 
         // ── Date labels: first / middle / last ──────────────────────────────
         var midDate = minDate.AddDays(dateSpan / 2);
         var labelY = height - 2;
-        canvas.DrawText(minDate.ToString(VetReportStyles.ShortDateFormat), Left, labelY, labelPaint);
-        using (var centered = labelPaint.Clone())
-        {
-            centered.TextAlign = SKTextAlign.Center;
-            canvas.DrawText(midDate.ToString(VetReportStyles.ShortDateFormat), Left + plotW / 2, labelY, centered);
-        }
-        canvas.DrawText(maxDate.ToString(VetReportStyles.ShortDateFormat), width - Right, labelY, labelRight);
+        canvas.DrawText(minDate.ToString(VetReportStyles.ShortDateFormat), Left, labelY, SKTextAlign.Left, labelFont, labelPaint);
+        canvas.DrawText(midDate.ToString(VetReportStyles.ShortDateFormat), Left + plotW / 2, labelY, SKTextAlign.Center, labelFont, labelPaint);
+        canvas.DrawText(maxDate.ToString(VetReportStyles.ShortDateFormat), width - Right, labelY, SKTextAlign.Right, labelFont, labelPaint);
 
         // ── The observations: one dot each, never joined ───────────────────
         foreach (var o in ordered)

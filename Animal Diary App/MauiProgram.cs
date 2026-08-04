@@ -106,6 +106,15 @@ public static class MauiProgram
 		builder.Services.AddSingleton<VetReportDataBuilder>();
 		builder.Services.AddSingleton<ReportLibraryService>();
 		builder.Services.AddSingleton<IVetReportService, VetReportService>();
+		// Preview rasterizer: each platform uses its OS PDF renderer (no native library).
+		// iOS/macOS fall back to the no-op — the PDF still generates, just without previews.
+#if ANDROID
+		builder.Services.AddSingleton<IPdfPageRasterizer, AndroidPdfPageRasterizer>();
+#elif WINDOWS
+		builder.Services.AddSingleton<IPdfPageRasterizer, WindowsPdfPageRasterizer>();
+#else
+		builder.Services.AddSingleton<IPdfPageRasterizer, NoOpPdfPageRasterizer>();
+#endif
 
 		// ── Notifications ────────────────────────────────────────────────────
 		builder.Services.AddSingleton<INotificationService, Data.Services.Data.Device.NotificationService>();
