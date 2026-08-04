@@ -147,30 +147,32 @@
 
 	<ItemGroup>
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
-		<!-- Pinned to 2023.12.x on purpose: it is the LAST QuestPDF version that runs
-		     on Android (2024.3+ replaced SkiaSharp with a custom native Skia layer that
-		     ships no Android/iOS binaries). Community license: free while annual gross
-		     revenue is under $1M USD — see VetReportService where it is declared. -->
-		<PackageReference Include="QuestPDF" Version="2023.12.6" />
 		<PackageReference Include="Plugin.LocalNotification" Version="12.0.2" />
 
-		<!-- 16 KB page-size alignment (Google Play requirement for API 36 updates).
-		     These native .so libraries arrive TRANSITIVELY — SkiaSharp/HarfBuzzSharp via
-		     QuestPDF, e_sqlite3 via sqlite-net-pcl — and the versions those packages pull
-		     (SkiaSharp 2.88.7, HarfBuzzSharp 7.3.0.1, SQLitePCLRaw 2.1.2) were built with
-		     an old NDK that aligns to 4 KB, which crashes on 16 KB-page devices. These
-		     explicit references override the transitive ones with NDK-r28 / 16 KB-aligned
-		     builds. SkiaSharp stays on the 2.88.x line so QuestPDF 2023.12.6 (pinned above)
-		     is unaffected.
-		     bundle_green 2.1.11 is the newest SQLitePCLRaw (16 KB-aligned since 2.1.10).
+		<!-- Vet-report PDF export. PDFsharp + MigraDoc are pure-managed (MIT) — no native
+		     libraries, so nothing here contributes to the 16 KB page-alignment problem.
+		     They REPLACED QuestPDF, which was pinned to 2023.12.6 (its last Android-capable
+		     release) and in turn pinned SkiaSharp to the 2.88.x line whose libSkiaSharp.so /
+		     libHarfBuzzSharp.so ship 4 KB-aligned and crash on 16 KB-page devices. See
+		     Data/Services/Reports for the MigraDoc document builder. -->
+		<PackageReference Include="PDFsharp-MigraDoc" Version="6.2.0" />
+
+		<!-- SkiaSharp is kept ONLY for the report's chart rasters (see ChartRenderer /
+		     ObservationChartRenderer): the charts render to an offscreen SKSurface → PNG
+		     that MigraDoc embeds. 3.116.1+ is the first line with 16 KB-aligned native
+		     binaries (2.88.x never was); 3.119.2 is the current stable 3.x. MIT-licensed,
+		     no revenue threshold. HarfBuzzSharp is gone with QuestPDF — the chart labels
+		     need no text shaping, so libHarfBuzzSharp.so no longer ships. -->
+		<PackageReference Include="SkiaSharp" Version="3.119.2" />
+
+		<!-- e_sqlite3 16 KB alignment: bundle_green 2.1.11 is the newest SQLitePCLRaw
+		     (16 KB-aligned since 2.1.10), overriding the 4 KB 2.1.2 that sqlite-net-pcl
+		     pulls transitively.
 		     NOTE: restore reports NU1903 (CVE-2025-6965, SQLite < 3.50.2 aggregate memory
-		     corruption) against e_sqlite3. It affects EVERY SQLitePCLRaw release up to and
-		     including 2.1.11 — there is no patched version yet, and the old 2.1.2 we shipped
-		     before was equally affected — so 2.1.11 is simply the least-old option. Exposure
-		     here is low: all SQL is app-authored against a local DB (no untrusted SQL path).
+		     corruption). It affects EVERY SQLitePCLRaw release to date (incl. 2.1.11) — no
+		     patched version exists yet, and the old 2.1.2 was equally affected. Exposure is
+		     low: all SQL is app-authored against a local DB (no untrusted SQL path).
 		     Revisit when SQLitePCLRaw ships a build bundling SQLite >= 3.50.2. -->
-		<PackageReference Include="SkiaSharp" Version="2.88.9" />
-		<PackageReference Include="HarfBuzzSharp" Version="7.3.0.3" />
 		<PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
 	</ItemGroup>
 

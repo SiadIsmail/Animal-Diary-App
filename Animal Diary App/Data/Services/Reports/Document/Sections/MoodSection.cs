@@ -1,7 +1,6 @@
 namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
 
-using QuestPDF.Fluent;
-using QuestPDF.Infrastructure;
+using MigraDoc.DocumentObjectModel;
 
 /// <summary>
 /// How the pet seemed, day by day, as the owner read it. Drawn on the same
@@ -17,36 +16,20 @@ public class MoodSection : IVetReportSection
 {
     public bool HasContent(VetReportData data) => data.Mood.HasContent;
 
-    public void Compose(IContainer container, VetReportData data)
+    public void Compose(Section section, VetReportData data, ReportContext ctx)
     {
-        var mood = data.Mood;
+        SectionChrome.AddTitle(section, VetReportStrings.SectionMood);
 
-        // One chart, ~130 pt with its heading — small enough to move to the next page
-        // whole rather than be split across one. ShowEntire on the section itself keeps
-        // the title, the note and the chart together.
-        container.ShowEntire().Column(col =>
-        {
-            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionMood));
-            col.Spacing(VetReportStyles.ChartSpacing);
+        // States whose reading this is, without qualifying it. The owner's judgement
+        // is the data here, so naming it as theirs is accuracy, not a disclaimer.
+        var note = section.AddParagraph(VetReportStrings.MoodNote);
+        note.Format.Font.Size = VetReportStyles.SmallSize;
+        note.Format.Font.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
+        note.Format.KeepWithNext = true;
 
-            // States whose reading this is, without qualifying it. The owner's judgement
-            // is the data here, so naming it as theirs is accuracy, not a disclaimer.
-            col.Item().Text(VetReportStrings.MoodNote)
-                .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
-
-            col.Item().Column(chart =>
-            {
-                chart.Item().Text(text =>
-                {
-                    text.Span(VetReportStrings.MoodChartLabel).SemiBold().FontSize(VetReportStyles.SmallSize);
-                    text.Span("  " + VetReportStrings.Subjective)
-                        .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
-                });
-                chart.Item()
-                    .Height(VetReportStyles.ChartHeight)
-                    .Canvas((canvas, size) =>
-                        ObservationChartRenderer.Draw(canvas, size.Width, size.Height, mood.Observations, VetReportStrings.MoodRows));
-            });
-        });
+        var png = ChartImageRenderer.Observation(
+            ctx.ContentWidthPt, VetReportStyles.ChartHeight, data.Mood.Observations, VetReportStrings.MoodRows);
+        SectionChrome.AddChartBlock(section, ctx, png, VetReportStyles.ChartHeight,
+            label => SectionChrome.CaptionLabel(label, VetReportStrings.MoodChartLabel, "  " + VetReportStrings.Subjective));
     }
 }

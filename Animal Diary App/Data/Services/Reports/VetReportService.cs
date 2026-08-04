@@ -2,35 +2,30 @@ namespace Animal_Diary_App.Data.Services.Reports;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services.Reports.Document;
-using QuestPDF.Fluent;
-using QuestPDF.Infrastructure;
+using MigraDoc.Rendering;
 
 /// <summary>
-/// Orchestrates the three report layers: DATA (builder) → DOCUMENT (sections) →
-/// files on disk, registered in the <see cref="ReportLibraryService"/>. Entirely
+/// Orchestrates the three report layers: DATA (builder) → DOCUMENT (MigraDoc sections)
+/// → files on disk, registered in the <see cref="ReportLibraryService"/>. Entirely
 /// local/offline; nothing leaves the device.
 ///
-/// Each export produces the PDF plus one PNG per page ("{name}.p{n}.png"): the
-/// in-app preview shows those images because Android WebView can't render PDFs
-/// and QuestPDF can't re-read a saved one — rendering at generation time is the
-/// only moment the document object exists.
+/// The document is built with PDFsharp/MigraDoc (pure managed, no native libraries — it
+/// replaced QuestPDF, whose SkiaSharp pin broke 16 KB-page-size compliance). Each export
+/// also writes one PNG per page ("{name}.p{n}.png") via the platform
+/// <see cref="IPdfPageRasterizer"/>: the in-app preview shows those images because Android
+/// WebView can't render PDFs and MigraDoc/PDFsharp can't rasterize one.
 /// </summary>
 public class VetReportService : IVetReportService
 {
-    static VetReportService()
-    {
-        // QuestPDF Community license: free while annual gross revenue is under
-        // $1M USD (https://www.questpdf.com/license/). Declared once, here.
-        QuestPDF.Settings.License = LicenseType.Community;
-    }
-
     private readonly VetReportDataBuilder _builder;
     private readonly ReportLibraryService _library;
+    private readonly IPdfPageRasterizer _rasterizer;
 
-    public VetReportService(VetReportDataBuilder builder, ReportLibraryService library)
+    public VetReportService(VetReportDataBuilder builder, ReportLibraryService library, IPdfPageRasterizer rasterizer)
     {
         _builder = builder;
         _library = library;
+        _rasterizer = rasterizer;
     }
 
     public async Task<VetReportFile?> GenerateAsync(
@@ -65,7 +60,7 @@ public class VetReportService : IVetReportService
     public Task<VetReportFile> GenerateSampleAsync() =>
         SaveAsync(UseCompactSample ? VetReportSampleData.CreateCompact() : VetReportSampleData.Create(), petId: 0);
 
-    private static async Task<VetReportFile> SaveAsync(VetReportData data, int petId)
+    private async Task<VetReportFile> SaveAsync(VetReportData data, int petId)
     {
         var fileName = UniqueFileName(data.Pet.Name, data.GeneratedAt);
         var report = new VetReportFile
@@ -79,20 +74,34 @@ public class VetReportService : IVetReportService
 
         var pdfPath = ReportLibraryService.PdfPathFor(report);
 
-        // PDF + preview rasterization are pure CPU work; keep them off the UI thread.
-        await Task.Run(() =>
-        {
-            var document = new VetReportDocument(data);
-            document.GeneratePdf(pdfPath);
+        // PDFsharp's font resolver is synchronous during rendering, so the bundled TTFs
+        // must be loaded and installed first.
+        await ReportFontResolver.EnsureRegisteredAsync();
 
-            // One PNG per page next to the PDF. The delegate's index is 0-based;
-            // preview files are 1-based (".p1.png" is the thumbnail).
-            var pages = 0;
-            document.GenerateImages(
-                index => { pages = index + 1; return ReportLibraryService.PreviewPathFor(report, index + 1); },
-                new ImageGenerationSettings { RasterDpi = VetReportStyles.PreviewRasterDpi });
-            report.PageCount = pages;
+        // ctx owns the temporary chart PNGs; it must stay alive until the PDF is rendered
+        // (MigraDoc reads embedded images from disk at render time).
+        using var ctx = new ReportContext(VetReportDocument.ContentWidthPt);
+
+        // Layout + render is pure CPU work; keep it off the UI thread.
+        var pageCount = await Task.Run(() =>
+        {
+            var document = new VetReportDocument(data).Build(ctx);
+            var renderer = new PdfDocumentRenderer { Document = document };
+            renderer.RenderDocument();
+            // Read the page count BEFORE saving: PdfDocument.Save() is terminal — it
+            // finalizes the in-memory document, after which PageCount (and any other
+            // access) throws "document was already saved and cannot be modified".
+            var pageCount = renderer.PdfDocument.PageCount;
+            renderer.PdfDocument.Save(pdfPath);
+            return pageCount;
         });
+        report.PageCount = pageCount;
+
+        // One PNG per page next to the PDF, for the in-app preview.
+        await _rasterizer.RasterizeAsync(
+            pdfPath, pageCount,
+            page => ReportLibraryService.PreviewPathFor(report, page),
+            VetReportStyles.PreviewRasterDpi);
 
         report.SizeBytes = new FileInfo(pdfPath).Length;
 

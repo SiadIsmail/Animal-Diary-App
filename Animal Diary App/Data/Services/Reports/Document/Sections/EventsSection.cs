@@ -1,7 +1,7 @@
 namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
 
-using QuestPDF.Fluent;
-using QuestPDF.Infrastructure;
+using MigraDoc.DocumentObjectModel;
+using MigraDoc.DocumentObjectModel.Tables;
 
 /// <summary>
 /// Terse dated table of notable occurrences, newest first. The wording per
@@ -14,46 +14,65 @@ public class EventsSection : IVetReportSection
 {
     public bool HasContent(VetReportData data) => data.Events.Count > 0;
 
-    public void Compose(IContainer container, VetReportData data)
+    public void Compose(Section section, VetReportData data, ReportContext ctx)
     {
         var shown = data.Events.Take(VetReportStyles.MaxEventRows).ToList();
         var older = data.Events.Count - shown.Count;
 
-        container.Column(col =>
+        SectionChrome.AddTitle(section, VetReportStrings.SectionEvents);
+
+        var table = section.AddTable();
+        table.Borders.Width = 0;
+
+        // date 64 · time 36 (fixed) · event 2 · details 5 (of the remaining width)
+        const double dateW = 64, timeW = 36;
+        var rest = ctx.ContentWidthPt - dateW - timeW;
+        table.AddColumn(Unit.FromPoint(dateW));
+        table.AddColumn(Unit.FromPoint(timeW));
+        table.AddColumn(Unit.FromPoint(rest * 2 / 7));
+        table.AddColumn(Unit.FromPoint(rest * 5 / 7));
+
+        var head = table.AddRow();
+        head.HeadingFormat = true;
+        HeaderCell(head, 0, VetReportStrings.ColDate);
+        HeaderCell(head, 1, VetReportStrings.ColTime);
+        HeaderCell(head, 2, VetReportStrings.ColEvent);
+        HeaderCell(head, 3, VetReportStrings.ColDetails);
+
+        foreach (var e in shown)
         {
-            col.Item().Element(SectionChrome.Title(VetReportStrings.SectionEvents));
+            var row = table.AddRow();
+            BodyCell(row, 0, e.Date.ToString(VetReportStyles.DateFormat));
+            BodyCell(row, 1, e.Time?.ToString(VetReportStyles.TimeFormat) ?? VetReportStrings.Empty);
+            BodyCellBold(row, 2, Label(e));
+            BodyCell(row, 3, Details(e));
+        }
 
-            col.Item().Table(table =>
-            {
-                table.ColumnsDefinition(columns =>
-                {
-                    columns.ConstantColumn(64);  // date
-                    columns.ConstantColumn(36);  // time
-                    columns.RelativeColumn(2);   // event
-                    columns.RelativeColumn(5);   // details
-                });
+        if (older > 0)
+        {
+            var p = section.AddParagraph(VetReportStrings.MoreEvents(older));
+            p.Format.SpaceBefore = 2;
+            p.Format.Font.Size = VetReportStyles.SmallSize;
+            p.Format.Font.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
+        }
+    }
 
-                table.Header(header =>
-                {
-                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColDate);
-                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColTime);
-                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColEvent);
-                    header.Cell().Element(SectionChrome.HeaderCell).Text(VetReportStrings.ColDetails);
-                });
+    private static void HeaderCell(Row row, int i, string text)
+    {
+        SectionChrome.ConfigureHeaderCell(row.Cells[i]);
+        row.Cells[i].AddParagraph(text);
+    }
 
-                foreach (var e in shown)
-                {
-                    table.Cell().Element(SectionChrome.BodyCell).Text(e.Date.ToString(VetReportStyles.DateFormat));
-                    table.Cell().Element(SectionChrome.BodyCell).Text(e.Time?.ToString(VetReportStyles.TimeFormat) ?? VetReportStrings.Empty);
-                    table.Cell().Element(SectionChrome.BodyCell).Text(Label(e)).SemiBold();
-                    table.Cell().Element(SectionChrome.BodyCell).Text(Details(e));
-                }
-            });
+    private static void BodyCell(Row row, int i, string text)
+    {
+        SectionChrome.ConfigureBodyCell(row.Cells[i]);
+        row.Cells[i].AddParagraph(text);
+    }
 
-            if (older > 0)
-                col.Item().PaddingTop(2).Text(VetReportStrings.MoreEvents(older))
-                    .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
-        });
+    private static void BodyCellBold(Row row, int i, string text)
+    {
+        SectionChrome.ConfigureBodyCell(row.Cells[i]);
+        row.Cells[i].AddParagraph().AddFormattedText(text, TextFormat.Bold);
     }
 
     private static string Label(ReportEvent e) => e.Kind switch
