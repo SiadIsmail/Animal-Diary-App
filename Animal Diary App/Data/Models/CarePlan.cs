@@ -113,3 +113,54 @@ public class Tracker : ISyncable
             ? new TargetRange(TargetLo.Value, TargetHi.Value)
             : null;
 }
+
+/// <summary>
+/// One line of a pet's care plan, whatever produced it — a shipped <see cref="Tracker"/>
+/// row or a tracker the owner made up themselves.
+///
+/// <para><b>Why this exists rather than everything being a <see cref="Tracker"/>:</b> a
+/// custom tracker already needs a row of its own (its name, icon and shape), and giving
+/// it a second row in <c>Tracker</c> to carry its cadence would mean two rows, two
+/// tombstones and two chances to orphan one half. So the cadence lives on the
+/// definition, and this is the shape both sources project into. The plan stays one
+/// list, read through one seam (<c>CarePlanService.GetPlanAsync</c>), exactly as before.</para>
+///
+/// <para>It is a read-model: nothing persists a <c>CarePlanItem</c>. Write through
+/// whichever store owns the row.</para>
+/// </summary>
+public sealed record CarePlanItem
+{
+    /// <summary>Which tracker this line is for — the identity every other subsystem
+    /// keys on.</summary>
+    public required TrackerKey Key { get; init; }
+
+    /// <summary>The cadence, driving the pending engine's "is this due today?".</summary>
+    public required TrackerKind Kind { get; init; }
+
+    /// <summary>Checks expected per day when <see cref="Kind"/> is
+    /// <see cref="TrackerKind.PerDay"/>; 0 otherwise.</summary>
+    public int PerDayCount { get; init; }
+
+    /// <summary>The glucose target band, or null. Only ever set for glucose — a custom
+    /// tracker never carries one, because a range is a clinical judgement the app has no
+    /// business inventing for a value the owner defined.</summary>
+    public TargetRange? TargetRange { get; init; }
+
+    /// <summary>Unit the value is recorded in, or empty.</summary>
+    public string Unit { get; init; } = string.Empty;
+
+    /// <summary>Id of the condition that introduced this line, or null. Always null for
+    /// a custom tracker: no condition may ever claim one.</summary>
+    public string? FromCondition { get; init; }
+
+    /// <summary>Project a persisted built-in tracker row.</summary>
+    public static CarePlanItem FromTracker(Tracker t) => new()
+    {
+        Key = t.TrackerId,
+        Kind = t.Kind,
+        PerDayCount = t.PerDayCount,
+        TargetRange = t.TargetRange,
+        Unit = t.Unit,
+        FromCondition = t.FromCondition,
+    };
+}

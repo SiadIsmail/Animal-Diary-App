@@ -32,6 +32,60 @@ public enum TodayCardId
     Medication
 }
 
+/// <summary>
+/// <b>Which record a card holds</b>, when "which" outgrew the enum: one of the shipped
+/// <see cref="TodayCardId"/> values, or a tracker the owner defined.
+///
+/// <para>The same tagged union <see cref="TrackerKey"/> is for the care plan, and for the
+/// same reason — a single <c>TodayCardId.Custom</c> member would make every owner-defined
+/// tracker the same card, so picking "Walk" for the left card would light up "Vomiting"
+/// as already chosen and the swap rule would fire between two unrelated records.</para>
+///
+/// <para>The implicit conversion keeps every existing call site reading as it did.</para>
+/// </summary>
+/// <param name="BuiltIn">The shipped record this names, or null for a custom tracker.</param>
+/// <param name="CustomId">The <c>CustomTracker</c> row id when <paramref name="BuiltIn"/>
+/// is null; 0 otherwise.</param>
+public readonly record struct TodayCardKey(TodayCardId? BuiltIn, int CustomId)
+{
+    public bool IsCustom => BuiltIn is null;
+
+    public static implicit operator TodayCardKey(TodayCardId id) => new(id, 0);
+
+    public static TodayCardKey Custom(int customTrackerId) => new(null, customTrackerId);
+
+    public bool Is(TodayCardId id) => BuiltIn == id;
+
+    /// <summary>The stored form: the enum's name, or <c>custom:7</c>. Round-trips through
+    /// <see cref="TryParse"/>, and an old preference written before custom cards existed
+    /// still parses as the built-in it always was.</summary>
+    public override string ToString() => IsCustom ? $"custom:{CustomId}" : BuiltIn!.ToString()!;
+
+    /// <summary>Parse a stored key. Anything unrecognised fails rather than guessing —
+    /// the caller falls back to the pet's defaults, which is what a card removed in a
+    /// later version should do.</summary>
+    public static bool TryParse(string? stored, out TodayCardKey key)
+    {
+        key = default;
+        if (string.IsNullOrWhiteSpace(stored))
+            return false;
+
+        const string customPrefix = "custom:";
+        if (stored.StartsWith(customPrefix, StringComparison.Ordinal))
+        {
+            if (!int.TryParse(stored[customPrefix.Length..], out var id) || id <= 0)
+                return false;
+            key = Custom(id);
+            return true;
+        }
+
+        if (!Enum.TryParse<TodayCardId>(stored, out var builtIn))
+            return false;
+        key = builtIn;
+        return true;
+    }
+}
+
 /// <summary>Which of the two cards is being talked about. Left and right, nothing more —
 /// there is deliberately no third slot and no ordering to manage.</summary>
 public enum TodayCardSlot
@@ -43,9 +97,9 @@ public enum TodayCardSlot
 /// <summary>What the two Today cards currently show for one pet. A value type: the
 /// owner's choice is two enum values, so it persists as two words and can never hold
 /// a half-configured state.</summary>
-public readonly record struct TodayCardConfig(TodayCardId Primary, TodayCardId Secondary)
+public readonly record struct TodayCardConfig(TodayCardKey Primary, TodayCardKey Secondary)
 {
-    public TodayCardId For(TodayCardSlot slot) =>
+    public TodayCardKey For(TodayCardSlot slot) =>
         slot == TodayCardSlot.Primary ? Primary : Secondary;
 
     /// <summary>Put <paramref name="card"/> in <paramref name="slot"/>.
@@ -53,7 +107,7 @@ public readonly record struct TodayCardConfig(TodayCardId Primary, TodayCardId S
     /// <para>If the other slot already holds it the two <b>swap</b> rather than
     /// duplicate — the same record must never occupy both cards, and refusing the pick
     /// instead would leave an owner unable to reorder the pair at all.</para></summary>
-    public TodayCardConfig With(TodayCardSlot slot, TodayCardId card)
+    public TodayCardConfig With(TodayCardSlot slot, TodayCardKey card)
     {
         var other = For(slot == TodayCardSlot.Primary ? TodayCardSlot.Secondary : TodayCardSlot.Primary);
         var displaced = other == card ? For(slot) : other;
@@ -104,9 +158,12 @@ public static class TodayCardCatalog
     private static readonly TrackerVisual MedicationVisual =
         new("💊", "Today_CardMedication", "HoneyWarmTint", "HoneyWarmTint", "HoneyDeep");
 
-    /// <summary>The card's "nothing recorded yet" line, resolved now, never cached.</summary>
-    public static string EmptyText(TodayCardId card) =>
-        Helpers.LocalizationManager.Instance.GetString(Meta(card).EmptyKey);
+    /// <summary>The card's "nothing recorded yet" line, resolved now, never cached. A
+    /// custom tracker has no catalog row, so it gets the one generic line — its NAME
+    /// carries the identity, and that is owner text the catalog must never hold.</summary>
+    public static string EmptyText(TodayCardKey card) =>
+        Helpers.LocalizationManager.Instance.GetString(
+            card.IsCustom ? "Today_EmptyCustom" : Meta(card.BuiltIn!.Value).EmptyKey);
 
     /// <summary>A card's row. An id with no row falls back to the first card rather
     /// than throwing — the same posture as <see cref="TrackerVisuals.Fallback"/>.</summary>

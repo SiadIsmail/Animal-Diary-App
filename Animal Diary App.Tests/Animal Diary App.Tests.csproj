@@ -81,6 +81,7 @@
     <Compile Include="..\Animal Diary App\Data\Services\Journal\PendingEngine.cs" Link="Care\PendingEngine.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Journal\PendingItem.cs" Link="Care\PendingItem.cs" />
     <Compile Include="..\Animal Diary App\Data\Models\CarePlan.cs" Link="Care\CarePlan.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\TrackerKey.cs" Link="Care\TrackerKey.cs" />
     <Compile Include="..\Animal Diary App\Data\Models\ISyncable.cs" Link="Care\ISyncable.cs" />
   </ItemGroup>
 

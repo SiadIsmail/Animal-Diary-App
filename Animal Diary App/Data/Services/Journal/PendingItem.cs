@@ -32,8 +32,9 @@ public sealed record PendingItem
     public TimeSpan? DoseTime { get; init; }
 
     // ── Trackers ──────────────────────────────────────────────────────────────
-    /// <summary>Which tracker (null for medication items).</summary>
-    public TrackerId? TrackerId { get; init; }
+    /// <summary>Which tracker (null for medication items) — a shipped one or one the
+    /// owner made up. See <see cref="Models.TrackerKey"/>.</summary>
+    public TrackerKey? Tracker { get; init; }
 
     /// <summary>For PerDay trackers (glucose): how many of the day's checks are done
     /// and how many are wanted — the chip shows "{Done} of {Target}". Both 0 for
@@ -50,10 +51,10 @@ public sealed record PendingItem
         DoseTime = time
     };
 
-    internal static PendingItem ForTracker(TrackerId id, int done = 0, int target = 0) => new()
+    internal static PendingItem ForTracker(TrackerKey key, int done = 0, int target = 0) => new()
     {
         Kind = PendingKind.Tracker,
-        TrackerId = id,
+        Tracker = key,
         Done = done,
         Target = target
     };

@@ -542,6 +542,8 @@
         <views:AddTrackerSheetView BindingContext="{Binding ManageVM}"/>
         <views:RemoveConditionSheetView BindingContext="{Binding ManageVM}"/>
         <views:AdjustTrackerSheetView BindingContext="{Binding ManageVM}"/>
+        <!-- The one sheet behind every owner-defined tracker (create and edit). -->
+        <views:CustomTrackerSheetView BindingContext="{Binding CustomTrackerVM}"/>
         <views:SharingSheetView BindingContext="{Binding SharingVM}"/>
 
         <!-- Export sheet: opened by the "save a copy first" offer before a delete. -->

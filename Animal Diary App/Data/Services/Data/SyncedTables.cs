@@ -171,6 +171,9 @@ public static class SyncedTables
         new SyncedTable<SeizureEntry>(PetScope.ByPetId),
         new SyncedTable<WaterAmountEntry>(PetScope.ByPetId),
         new SyncedTable<WaterLevelEntry>(PetScope.ByPetId),
+        // The definition before its entries — see the ordering note above.
+        new SyncedTable<CustomTracker>(PetScope.ByPetId),
+        new SyncedTable<CustomEntry>(PetScope.ByPetId),
     };
 
     /// <summary>Children before parents — the order any delete cascade must use.</summary>

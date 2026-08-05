@@ -20,7 +20,7 @@ using Animal_Diary_App.Helpers;
 //  knows trackers and med doses.
 // ─────────────────────────────────────────────────────────────────────────────
 
-public enum JournalChipKind { Medication, Glucose, Mood, Appetite, Weight, Seizure, Water, Add }
+public enum JournalChipKind { Medication, Glucose, Mood, Appetite, Weight, Seizure, Water, Custom, Add }
 
 /// <summary>One "Still to do" chip.</summary>
 public class JournalChip
@@ -46,12 +46,17 @@ public class JournalChip
     public int MedicationId { get; init; }
     public int PetId { get; init; }
     public TimeSpan DoseTime { get; init; }
+
+    /// <summary>Which tracker this chip logs. Load-bearing for CUSTOM chips only: every
+    /// one of them carries <see cref="JournalChipKind.Custom"/>, so the kind alone can't
+    /// say which of the owner's trackers was tapped.</summary>
+    public TrackerKey Tracker { get; init; }
 }
 
 /// <summary>Which kind of entry a <see cref="TimelineItem"/> represents. Drives only
 /// the template pick (Mood gets the washi-note card, everything else the standard
 /// card) — never the ordering, which is purely by time.</summary>
-public enum TimelineKind { Mood, Weight, Glucose, Appetite, AppetiteAmount, Seizure, WaterAmount, WaterLevel, Dose }
+public enum TimelineKind { Mood, Weight, Glucose, Appetite, AppetiteAmount, Seizure, WaterAmount, WaterLevel, Custom, Dose }
 
 /// <summary>One entry on the Journal's single chronological timeline, whatever its
 /// kind. Everything logged for the day — mood, weight, glucose, appetite, seizures
@@ -129,6 +134,9 @@ public class AddOption
     public JournalChipKind Kind { get; init; }
     public string Icon { get; init; } = string.Empty;
     public string Label { get; init; } = string.Empty;
+
+    /// <summary>Which tracker this option logs — see <see cref="JournalChip.Tracker"/>.</summary>
+    public TrackerKey Tracker { get; init; }
 }
 
 public class JournalLogViewModel : BaseViewModel
@@ -145,9 +153,20 @@ public class JournalLogViewModel : BaseViewModel
     private readonly AppetiteEntryService _appetite;
     private readonly SeizureEntryService _seizures;
     private readonly WaterEntryService _water;
+    private readonly CustomTrackerService _custom;
     private readonly IAnalyticsService _analytics;
 
     private DateTime _date = DateTime.Now.Date;
+
+    /// <summary>The pet's own tracker definitions by row id, published by the atomic fill
+    /// of whichever reload finished last — read only by the chip builders, which run inside
+    /// that same fill.
+    ///
+    /// <para>ARCHIVED ones are included, deliberately: an entry outlives the retirement of
+    /// the tracker that collected it, and a timeline card still needs its name, emoji and
+    /// colour to render. Reading only the live ones would blank out history the moment
+    /// someone tidied their care plan.</para></summary>
+    private Dictionary<int, CustomTracker> _customById = new();
 
     public JournalLogViewModel(
         PendingItemsService pending,
@@ -162,6 +181,7 @@ public class JournalLogViewModel : BaseViewModel
         AppetiteEntryService appetite,
         SeizureEntryService seizures,
         WaterEntryService water,
+        CustomTrackerService custom,
         IAnalyticsService analytics)
     {
         _pending = pending;
@@ -176,6 +196,7 @@ public class JournalLogViewModel : BaseViewModel
         _appetite = appetite;
         _seizures = seizures;
         _water = water;
+        _custom = custom;
         _analytics = analytics;
 
         OpenAddSheetCommand = new Command(async () => await OpenAddSheetAsync());
@@ -190,8 +211,12 @@ public class JournalLogViewModel : BaseViewModel
     private static LocalizationManager Loc => LocalizationManager.Instance;
 
     /// <summary>Raised when the person picks a log type (from a chip or the "+"
-    /// sheet). The page opens the matching sheet — it owns the sheet VMs + animations.</summary>
-    public event Action<JournalChipKind>? RequestOpenSheet;
+    /// sheet). The page opens the matching sheet — it owns the sheet VMs + animations.
+    ///
+    /// <para>The <see cref="TrackerKey"/> rides along because every owner-defined tracker
+    /// shares one <see cref="JournalChipKind.Custom"/>; for the shipped kinds it is simply
+    /// unused.</para></summary>
+    public event Action<JournalChipKind, TrackerKey>? RequestOpenSheet;
 
     /// <summary>Raised after a timeline entry is deleted, carrying the confirmation
     /// line + an undo that restores it — the page shows the standard undo-toast and
@@ -314,7 +339,7 @@ public class JournalLogViewModel : BaseViewModel
         if (option == null)
             return;
         IsAddSheetVisible = false;
-        RequestOpenSheet?.Invoke(option.Kind);
+        RequestOpenSheet?.Invoke(option.Kind, option.Tracker);
     }
 
     private async Task OpenAddSheetAsync()
@@ -334,18 +359,28 @@ public class JournalLogViewModel : BaseViewModel
         PetName = pet?.Name ?? string.Empty;
         IsToday = _date == DateTime.Now.Date;
 
+        // The owner's own tracker definitions, as a LOCAL snapshot that travels with this
+        // run. Two reloads are routinely in flight (see below), and a shared field written
+        // before the awaits would let one run's timeline render against another's
+        // definitions — every lookup a miss, so every custom card blank. The field is
+        // assigned in the atomic fill instead, where the chips read it in the same breath.
+        var customById = _hasPet
+            ? (await _custom.GetAllForPetAsync(pet!.Id)).ToDictionary(c => c.Id)
+            : new Dictionary<int, CustomTracker>();
+
         // Gather everything (the awaits) BEFORE touching the observable collections.
         // Several reloads fire on startup (OnAppearing + the date/pet PropertyChanged
         // handlers); if we cleared before awaiting, their clear+add would interleave
         // and duplicate the rows. The fill below is await-free, so each reload rebuilds
         // atomically on the UI thread.
-        var timeline = await GatherTimelineAsync(pet);
+        var timeline = await GatherTimelineAsync(pet, customById);
 
         IReadOnlyList<PendingItem> pending = System.Array.Empty<PendingItem>();
         if (_hasPet && IsToday)
             pending = await _pending.GetAsync(pet!, _date);
 
         // ── atomic fill: no awaits from here on ──
+        _customById = customById;
         TimelineItems.Clear();
         foreach (var t in timeline) TimelineItems.Add(t);
         RaiseTimelineFlags();
@@ -413,11 +448,29 @@ public class JournalLogViewModel : BaseViewModel
     // Icon + label come from the shared TrackerVisuals table; only the chip kind and
     // the screen-reader phrasing are Journal-specific. Glucose is the one chip with a
     // trailing "{done} of {target}" detail, so it doesn't go through Simple().
-    private static JournalChip TrackerChip(PendingItem item, double tilt)
+    private JournalChip TrackerChip(PendingItem item, double tilt)
     {
-        var v = TrackerVisuals.For(item.TrackerId);
+        // An owner-defined tracker: its name, emoji and colour are its own row's, and the
+        // chip's Kind can't identify it, so the key rides along for the page to route on.
+        if (item.Tracker is { IsCustom: true } key)
+        {
+            var def = _customById.GetValueOrDefault(key.CustomId);
+            var visual = CustomTrackerVisuals.For(def);
+            var label = def?.Name ?? string.Empty;
+            return new JournalChip
+            {
+                Kind = JournalChipKind.Custom,
+                Icon = visual.Icon,
+                Label = label,
+                Tilt = tilt,
+                Tracker = key,
+                SemanticLabel = Loc.Format("Journal_A11yLogCustom", label),
+            };
+        }
 
-        if (item.TrackerId == TrackerId.Glucose)
+        var v = TrackerVisuals.For(item.Tracker);
+
+        if (item.Tracker?.Is(TrackerId.Glucose) == true)
         {
             return new JournalChip
             {
@@ -430,7 +483,7 @@ public class JournalLogViewModel : BaseViewModel
             };
         }
 
-        var (kind, a11yKey) = item.TrackerId switch
+        var (kind, a11yKey) = item.Tracker?.BuiltIn switch
         {
             TrackerId.Appetite => (JournalChipKind.Appetite, "Journal_A11yLogAppetite"),
             TrackerId.Weight => (JournalChipKind.Weight, "Journal_A11yLogWeight"),
@@ -456,7 +509,8 @@ public class JournalLogViewModel : BaseViewModel
     // Gather everything logged for the day as one list, then sort purely by time —
     // a single chronological ordering across every kind (§3). Legacy mood/weight rows
     // with no stored time sort at the start of the day.
-    private async Task<List<TimelineItem>> GatherTimelineAsync(Pet? pet)
+    private async Task<List<TimelineItem>> GatherTimelineAsync(
+        Pet? pet, IReadOnlyDictionary<int, CustomTracker> customById)
     {
         var items = new List<TimelineItem>();
 
@@ -476,9 +530,12 @@ public class JournalLogViewModel : BaseViewModel
         var waterAmountTask = _water.GetAmountsForDateAsync(pet.Id, _date);
         var waterLevelTask = _water.GetLevelsForDateAsync(pet.Id, _date);
         var seizureTask = _seizures.GetForDateAsync(pet.Id, _date);
+        // ONE query covering every custom tracker the pet has, however many that is —
+        // grouped below. This is what keeps "as many as you like" free here.
+        var customTask = _custom.GetForDateAsync(pet.Id, _date);
 
         await Task.WhenAll(entryTask, planTask, glucoseTask, appetiteTask,
-            appetiteAmountTask, waterAmountTask, waterLevelTask, seizureTask);
+            appetiteAmountTask, waterAmountTask, waterLevelTask, seizureTask, customTask);
 
         // Mood + Weight (both live on the day's PetEntry, each with its own time).
         var entry = entryTask.Result;
@@ -524,7 +581,7 @@ public class JournalLogViewModel : BaseViewModel
 
         // Glucose (rose) — value is precise; range sentence only when a range exists.
         var range = planTask.Result
-            .FirstOrDefault(t => t.TrackerId == TrackerId.Glucose)?.TargetRange;
+            .FirstOrDefault(t => t.Key.Is(TrackerId.Glucose))?.TargetRange;
         foreach (var g in glucoseTask.Result)
         {
             items.Add(new TimelineItem
@@ -623,6 +680,26 @@ public class JournalLogViewModel : BaseViewModel
             });
         }
 
+        // The owner's own trackers. One card per entry (they are events), wearing the
+        // name, emoji and colour from the definition — including a RETIRED one, so
+        // tidying the care plan never erases what was already written down.
+        foreach (var c in customTask.Result)
+        {
+            var def = customById.GetValueOrDefault(c.CustomTrackerId);
+            var visual = CustomTrackerVisuals.For(def);
+            items.Add(new TimelineItem
+            {
+                Kind = TimelineKind.Custom,
+                CanDelete = true,
+                EntryId = c.Id,
+                Time = c.Time,
+                Icon = visual.Icon,
+                Tint = Tint(visual.TintKey),
+                Title = def?.Name ?? string.Empty,
+                Sub = CustomEntrySheetViewModel.Describe(c, def),
+            });
+        }
+
         // Medication doses — placed at the moment they were tapped as taken/skipped
         // (their resolved time), falling back to the scheduled time when not yet acted on.
         items.AddRange(await GatherDoseItemsAsync(pet.Id, _date));
@@ -718,6 +795,18 @@ public class JournalLogViewModel : BaseViewModel
                 undo = () => _water.InsertLevelAsync(new WaterLevelEntry
                 {
                     PetId = row.PetId, Date = row.Date, Time = row.Time, Level = row.Level
+                });
+                break;
+            }
+            case TimelineKind.Custom:
+            {
+                var row = (await _custom.GetForDateAsync(petId, _date)).FirstOrDefault(r => r.Id == item.EntryId);
+                if (row == null) return;
+                await _custom.DeleteEntryAsync(row.Id);
+                undo = () => _custom.InsertAsync(new CustomEntry
+                {
+                    PetId = row.PetId, CustomTrackerId = row.CustomTrackerId, Date = row.Date,
+                    Time = row.Time, Amount = row.Amount, Note = row.Note
                 });
                 break;
             }
@@ -1024,7 +1113,7 @@ public class JournalLogViewModel : BaseViewModel
         }
 
         var plan = await _carePlan.GetPlanAsync(pet);
-        bool Has(TrackerId id) => plan.Any(t => t.TrackerId == id);
+        bool Has(TrackerId id) => plan.Any(t => t.Key.Is(id));
 
         // Mood and weight are in every pet's default plan, so they normally land in the
         // first group on their own merit; Has() decides for them like everything else.
@@ -1035,6 +1124,22 @@ public class JournalLogViewModel : BaseViewModel
             var v = TrackerVisuals.For(tracker);
             var option = new AddOption { Kind = kind, Icon = v.Icon, Label = Loc.GetString(v.LabelKey) };
             (Has(tracker) ? inPlan : rest).Add(option);
+        }
+
+        // The owner's own trackers, always in the FIRST group: unlike a shipped type,
+        // one exists only because they deliberately made it, so it is never "something
+        // else the app can also record". Retired ones are absent — they were retired to
+        // stop being offered — which is why this reads the live list, not _customById.
+        foreach (var c in await _custom.GetForPetAsync(pet.Id))
+        {
+            var visual = CustomTrackerVisuals.For(c);
+            inPlan.Add(new AddOption
+            {
+                Kind = JournalChipKind.Custom,
+                Icon = visual.Icon,
+                Label = c.Name,
+                Tracker = c.Key,
+            });
         }
 
         // Build fresh lists and assign them (see AddOptions' note above).

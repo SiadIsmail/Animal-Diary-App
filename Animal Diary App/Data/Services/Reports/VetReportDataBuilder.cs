@@ -23,6 +23,7 @@ public class VetReportDataBuilder
     private readonly SeizureEntryService _seizures;
     private readonly WaterEntryService _water;
     private readonly TrackerService _trackers;
+    private readonly CustomTrackerService _custom;
 
     public VetReportDataBuilder(
         PetService pets,
@@ -34,7 +35,8 @@ public class VetReportDataBuilder
         AppetiteEntryService appetite,
         SeizureEntryService seizures,
         WaterEntryService water,
-        TrackerService trackers)
+        TrackerService trackers,
+        CustomTrackerService custom)
     {
         _pets = pets;
         _conditions = conditions;
@@ -46,6 +48,7 @@ public class VetReportDataBuilder
         _seizures = seizures;
         _water = water;
         _trackers = trackers;
+        _custom = custom;
     }
 
     /// <summary>Snapshot everything the report might show for the pet in
@@ -57,7 +60,8 @@ public class VetReportDataBuilder
         bool includeWaterObservations = true,
         bool includeAppetiteMeasured = true,
         bool includeAppetiteObservations = true,
-        bool includeMood = true)
+        bool includeMood = true,
+        bool includeCustom = true)
     {
         from = from.Date;
         to = to.Date;
@@ -90,6 +94,7 @@ public class VetReportDataBuilder
             Water = await BuildWaterAsync(petId, from, to, includeWaterMeasured, includeWaterObservations),
             Appetite = await BuildAppetiteAsync(petId, appetiteEntries, from, to, includeAppetiteMeasured, includeAppetiteObservations),
             Mood = includeMood ? BuildMood(petEntries) : new ReportMood(),
+            Custom = includeCustom ? await BuildCustomAsync(petId, from, to) : new ReportCustom(),
             Events = events,
             // Only notes the owner explicitly opted into appear here; every other
             // note stays stored but private. Legacy entries default to false.
@@ -361,5 +366,59 @@ public class VetReportDataBuilder
             .OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.Time ?? TimeSpan.Zero)
             .ToList();
+    }
+
+    // ── Owner-defined trackers ──────────────────────────────────────────────────
+    //
+    // Only trackers whose IncludeInReport switch is on, because only the owner can know
+    // whether a thing is clinical: a walk is noise for one household and the whole point
+    // for another whose dog has a limp. Filtering HERE means nothing downstream has to
+    // remember to — a tracker that is off simply never reaches VetReportData.
+    //
+    // ARCHIVED trackers are included. Retiring one means "stop asking me", not "pretend
+    // the last three months didn't happen", and an owner who stopped recording something
+    // in April still needs April in front of their vet.
+    //
+    // Everything here is a fact: entries as they were written, and a count of them. No
+    // totals across the range, no rate, no trend, no verdict.
+    private async Task<ReportCustom> BuildCustomAsync(int petId, DateTime from, DateTime to)
+    {
+        var definitions = (await _custom.GetAllForPetAsync(petId))
+            .Where(c => c.IncludeInReport)
+            .ToDictionary(c => c.Id);
+        if (definitions.Count == 0)
+            return new ReportCustom();
+
+        var rows = (await _custom.GetForRangeAsync(petId, from, to))
+            .Where(e => definitions.ContainsKey(e.CustomTrackerId))
+            .ToList();
+        if (rows.Count == 0)
+            return new ReportCustom();
+
+        var entries = rows
+            .OrderByDescending(e => e.Date)
+            .ThenByDescending(e => e.Time)
+            .Select(e =>
+            {
+                var def = definitions[e.CustomTrackerId];
+                return new ReportCustomEntry(
+                    def.Name,
+                    def.Unit,
+                    e.Date,
+                    e.Time,
+                    e.Amount,
+                    string.IsNullOrWhiteSpace(e.Note) ? null : e.Note.Trim());
+            })
+            .ToList();
+
+        // One summary line per tracker that actually has entries, in care-plan order.
+        var counts = rows.GroupBy(e => e.CustomTrackerId).ToDictionary(g => g.Key, g => g.Count());
+        var trackers = definitions.Values
+            .Where(d => counts.ContainsKey(d.Id))
+            .OrderBy(d => d.Id)
+            .Select(d => new ReportCustomTracker(d.Name, d.Unit, counts[d.Id]))
+            .ToList();
+
+        return new ReportCustom { Trackers = trackers, Entries = entries };
     }
 }

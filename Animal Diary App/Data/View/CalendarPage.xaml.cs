@@ -1,6 +1,7 @@
 ﻿namespace Animal_Diary_App.Data.View;
 
 using System.ComponentModel;
+using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
@@ -98,6 +99,7 @@ public partial class CalendarPage : ContentPage
 		vm.AppetiteSheetVM.Saved += OnSheetSaved;
 		vm.SeizureSheetVM.Saved += OnSheetSaved;
 		vm.WaterSheetVM.Saved += OnSheetSaved;
+		vm.CustomEntrySheetVM.Saved += OnSheetSaved;
 
 		// Another caregiver's changes landing while the Journal is visible reload
 		// it in place — same stale-context path an appearance uses.
@@ -159,6 +161,7 @@ public partial class CalendarPage : ContentPage
 		vm.AppetiteSheetVM.Saved -= OnSheetSaved;
 		vm.SeizureSheetVM.Saved -= OnSheetSaved;
 		vm.WaterSheetVM.Saved -= OnSheetSaved;
+		vm.CustomEntrySheetVM.Saved -= OnSheetSaved;
 	}
 
 	/// <summary>Jump-to-today: snap the selection back to the current date.</summary>
@@ -190,7 +193,7 @@ public partial class CalendarPage : ContentPage
 					await LogDoseFlowAsync(chip, v);
 					break;
 				default:
-					await OpenSheetForKindAsync(chip.Kind);
+					await OpenSheetForKindAsync(chip.Kind, chip.Tracker);
 					break;
 			}
 		}
@@ -223,6 +226,7 @@ public partial class CalendarPage : ContentPage
 			JournalChipKind.Appetite => AnalyticsEvents.EntryTypeAppetite,
 			JournalChipKind.Seizure => AnalyticsEvents.EntryTypeSeizure,
 			JournalChipKind.Water => AnalyticsEvents.EntryTypeWater,
+			JournalChipKind.Custom => AnalyticsEvents.EntryTypeCustom,
 			_ => null,
 		};
 		if (entryType is null)
@@ -234,16 +238,19 @@ public partial class CalendarPage : ContentPage
 		});
 	}
 
-	private void OnRequestOpenSheet(JournalChipKind kind) => OpenAfterAddSheetAsync(kind).Forget();
+	private void OnRequestOpenSheet(JournalChipKind kind, TrackerKey tracker) =>
+		OpenAfterAddSheetAsync(kind, tracker).Forget();
 
 	// Let the "+" sheet finish sliding out before the chosen sheet slides in.
-	private async Task OpenAfterAddSheetAsync(JournalChipKind kind)
+	private async Task OpenAfterAddSheetAsync(JournalChipKind kind, TrackerKey tracker)
 	{
 		await Task.Delay(ReducedMotion.IsEnabled ? 60 : 220);
-		await OpenSheetForKindAsync(kind);
+		await OpenSheetForKindAsync(kind, tracker);
 	}
 
-	private async Task OpenSheetForKindAsync(JournalChipKind kind)
+	// `tracker` identifies WHICH tracker for the custom kind, where the kind alone can't
+	// (every owner-defined tracker shares JournalChipKind.Custom). Unused otherwise.
+	private async Task OpenSheetForKindAsync(JournalChipKind kind, TrackerKey tracker)
 	{
 		// The single funnel for opening a NON-medication input sheet (tracker chip or
 		// the add-anything selection) — the one place to gate new journal/symptom logging.
@@ -265,6 +272,10 @@ public partial class CalendarPage : ContentPage
 			case JournalChipKind.Appetite: await vm.AppetiteSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Seizure: await vm.SeizureSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Water: await vm.WaterSheetVM.OpenAsync(petId, name, date); break;
+			// One sheet for every owner-defined tracker; the key says which.
+			case JournalChipKind.Custom:
+				await vm.CustomEntrySheetVM.OpenAsync(petId, date, tracker.CustomId);
+				break;
 		}
 	}
 

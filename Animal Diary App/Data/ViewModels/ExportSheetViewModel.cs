@@ -27,6 +27,7 @@ public class ExportSheetViewModel : BaseViewModel
     private readonly WaterEntryService _water;
     private readonly AppetiteEntryService _appetite;
     private readonly PetEntryService _petEntries;
+    private readonly CustomTrackerService _custom;
     private readonly IAnalyticsService _analytics;
 
     /// <summary>Flip to true to generate from <see cref="VetReportSampleData"/>'s
@@ -39,13 +40,14 @@ public class ExportSheetViewModel : BaseViewModel
 
     public ExportSheetViewModel(IVetReportService reports, ActivePetService activePetService,
         WaterEntryService water, AppetiteEntryService appetite, PetEntryService petEntries,
-        IAnalyticsService analytics)
+        CustomTrackerService custom, IAnalyticsService analytics)
     {
         _reports = reports;
         _activePetService = activePetService;
         _water = water;
         _appetite = appetite;
         _petEntries = petEntries;
+        _custom = custom;
         _analytics = analytics;
 
         OpenCommand = new Command(async () => await OpenAsync());
@@ -57,6 +59,7 @@ public class ExportSheetViewModel : BaseViewModel
         ToggleIncludeAppetiteMeasuredCommand = new Command(() => IncludeAppetiteMeasured = !IncludeAppetiteMeasured);
         ToggleIncludeAppetiteObservationsCommand = new Command(() => IncludeAppetiteObservations = !IncludeAppetiteObservations);
         ToggleIncludeMoodCommand = new Command(() => IncludeMood = !IncludeMood);
+        ToggleIncludeCustomCommand = new Command(() => IncludeCustom = !IncludeCustom);
         GenerateCommand = new Command(async () => await GenerateAsync());
         ViewCommand = new Command(() =>
         {
@@ -128,6 +131,21 @@ public class ExportSheetViewModel : BaseViewModel
     private bool _includeMood = true;
     public bool IncludeMood { get => _includeMood; set => SetProperty(ref _includeMood, value); }
 
+    /// <summary>Whether the pet has any owner-defined tracker that BOTH opted into the
+    /// report and has been logged — the gate on showing this toggle at all.</summary>
+    private bool _hasCustom;
+    public bool HasCustom { get => _hasCustom; private set => SetProperty(ref _hasCustom, value); }
+
+    /// <summary>ONE toggle for the whole owner-defined section, not one per tracker.
+    ///
+    /// <para>Whether a walk belongs in front of a vet is a property of the tracker, and
+    /// it is answered once on the tracker itself. Re-asking here would put the same
+    /// question on a screen people reach while worried, and would grow this sheet by a
+    /// row for every tracker they ever made. This is only the usual per-export escape
+    /// hatch, like every other toggle here.</para></summary>
+    private bool _includeCustom = true;
+    public bool IncludeCustom { get => _includeCustom; set => SetProperty(ref _includeCustom, value); }
+
     private bool _isGenerating;
     public bool IsGenerating { get => _isGenerating; set => SetProperty(ref _isGenerating, value); }
 
@@ -150,6 +168,7 @@ public class ExportSheetViewModel : BaseViewModel
     public ICommand ToggleIncludeAppetiteMeasuredCommand { get; }
     public ICommand ToggleIncludeAppetiteObservationsCommand { get; }
     public ICommand ToggleIncludeMoodCommand { get; }
+    public ICommand ToggleIncludeCustomCommand { get; }
     public ICommand GenerateCommand { get; }
     public ICommand ViewCommand { get; }
     public ICommand ShareCommand { get; }
@@ -186,6 +205,12 @@ public class ExportSheetViewModel : BaseViewModel
         IncludeMood = true;
         HasMood = _pet.Id != 0 && await _petEntries.GetLatestMoodEntryAsync(_pet.Id) is not null;
 
+        // Same "on by default, hidden when there is nothing to include" rule. Gated on a
+        // tracker that opted in AND has entries — a pet with only a Walk tracker (switched
+        // off on the tracker) sees no toggle, because there would be nothing behind it.
+        IncludeCustom = true;
+        HasCustom = _pet.Id != 0 && await _custom.HasReportableEntriesAsync(_pet.Id);
+
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
         IsPresented = true;
@@ -219,7 +244,8 @@ public class ExportSheetViewModel : BaseViewModel
                     : await _reports.GenerateAsync(
                         _pet.Id, DateTime.Today.AddDays(-SelectedDays), DateTime.Today,
                         IncludePhoto, IncludeWaterMeasured, IncludeWaterObservations,
-                        IncludeAppetiteMeasured, IncludeAppetiteObservations, IncludeMood);
+                        IncludeAppetiteMeasured, IncludeAppetiteObservations, IncludeMood,
+                        IncludeCustom);
 #pragma warning restore CS0162
 
             if (_result == null)

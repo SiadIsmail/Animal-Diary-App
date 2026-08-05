@@ -30,7 +30,7 @@ strictly opt-in: nothing leaves the device until the owner creates an account
 | UI | .NET MAUI 10 (XAML), MVVM, Microsoft DI |
 | Local data | SQLite (`sqlite-net-pcl`) — the on-device source of truth |
 | Reminders | `Plugin.LocalNotification`, bounded materialized occurrences |
-| PDF | QuestPDF **pinned to 2023.12.6** (last Android-compatible release — do not upgrade) |
+| PDF | PDFsharp/MigraDoc (pure managed) + SkiaSharp for chart rasters — **no native libraries** |
 | Cloud (optional) | Supabase (PostgreSQL, GoTrue auth, RLS) over hand-built HTTP — no SDK |
 | Analytics | Privacy-first, anonymous PostHog capture built by hand — no SDK |
 

@@ -20,7 +20,12 @@ public interface IVetReportService
     /// subjective observations — which the report always keeps separate and never
     /// interprets. Today: water (mL) and appetite (grams).
     /// <paramref name="includeMood"/> (default ON) covers the daily mood readings, which
-    /// are observations only — there is no measured counterpart to pair it with.</summary>
+    /// are observations only — there is no measured counterpart to pair it with.
+    /// <paramref name="includeCustom"/> (default ON) is the whole owner-defined section.
+    /// It is deliberately ONE toggle rather than one per tracker: whether a walk belongs
+    /// in front of a vet is a property of the tracker, answered once on the tracker itself
+    /// (<c>CustomTracker.IncludeInReport</c>), so trackers switched off there never reach
+    /// the builder at all. This flag is only the usual per-export escape hatch.</summary>
     Task<VetReportFile?> GenerateAsync(
         int petId, DateTime from, DateTime to,
         bool includePhoto = false,
@@ -28,7 +33,8 @@ public interface IVetReportService
         bool includeWaterObservations = true,
         bool includeAppetiteMeasured = true,
         bool includeAppetiteObservations = true,
-        bool includeMood = true);
+        bool includeMood = true,
+        bool includeCustom = true);
 
     /// <summary>Generate a PDF from the fake <see cref="VetReportSampleData"/> — for
     /// iterating on the layout without real logged data. The files land in the

@@ -584,6 +584,8 @@
         <views:AppetiteSheetView Grid.RowSpan="2" BindingContext="{Binding AppetiteSheetVM}"/>
         <views:SeizureSheetView Grid.RowSpan="2" BindingContext="{Binding SeizureSheetVM}"/>
         <views:WaterSheetView Grid.RowSpan="2" BindingContext="{Binding WaterSheetVM}"/>
+        <!-- One sheet for every tracker the owner defined; its title is their own name for it. -->
+        <views:CustomEntrySheetView Grid.RowSpan="2" BindingContext="{Binding CustomEntrySheetVM}"/>
         <views:AddAnythingSheetView Grid.RowSpan="2" BindingContext="{Binding JournalVM}"/>
 
         <!-- Monetization sheets: the subscribe ask + the reassuring trial messages. -->

@@ -38,6 +38,12 @@ public class MainViewModel
     public CkdSetupSheetViewModel CkdSetupVM { get; }
     public EpilepsySetupSheetViewModel EpilepsySetupVM { get; }
 
+    /// <summary>The one create/edit sheet behind every tracker the owner defines.</summary>
+    public CustomTrackerSheetViewModel CustomTrackerVM { get; }
+
+    /// <summary>The Journal's logging sheet for an owner-defined tracker.</summary>
+    public CustomEntrySheetViewModel CustomEntrySheetVM { get; }
+
     /// <summary>The Manage Pet page (identity, conditions, care plan, medications).</summary>
     public ManagePetViewModel ManageVM { get; }
 
@@ -114,6 +120,8 @@ public class MainViewModel
  DiabetesSetupSheetViewModel diabetesSetupVM,
  CkdSetupSheetViewModel ckdSetupVM,
  EpilepsySetupSheetViewModel epilepsySetupVM,
+        CustomTrackerSheetViewModel customTrackerVM,
+        CustomEntrySheetViewModel customEntrySheetVM,
  ManagePetViewModel manageVM,
  ExportSheetViewModel exportSheetVM,
  ReportPreviewViewModel reportPreviewVM,
@@ -148,6 +156,8 @@ public class MainViewModel
         DiabetesSetupVM = diabetesSetupVM;
         CkdSetupVM = ckdSetupVM;
         EpilepsySetupVM = epilepsySetupVM;
+        CustomTrackerVM = customTrackerVM;
+        CustomEntrySheetVM = customEntrySheetVM;
         ManageVM = manageVM;
         ExportSheetVM = exportSheetVM;
         ReportPreviewVM = reportPreviewVM;

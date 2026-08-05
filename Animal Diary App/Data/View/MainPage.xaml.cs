@@ -209,9 +209,15 @@ public partial class MainPage : ContentPage
     // Same icons + labels as the Journal's chips — literally the same table — so the
     // card reads as the first chip of the day. Tapping a tracker card routes to the
     // Journal, where every tracker (water included) now has its logging sheet.
-    private static (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc)
+    private (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc)
     {
-        var v = TrackerVisuals.For(item.TrackerId);
+        // An owner-defined tracker's name and emoji are its own row's, resolved by the VM
+        // (this page reads no store). Falling through to TrackerVisuals here would show a
+        // walk as "Mood", since that is the fallback's label key.
+        if (item.Tracker is { IsCustom: true } && vm.MainPageVM.NextUpCustom is { } own)
+            return (CustomTrackerVisuals.For(own).Icon, own.Name);
+
+        var v = TrackerVisuals.For(item.Tracker);
         return (v.Icon, loc.GetString(v.LabelKey));
     }
 

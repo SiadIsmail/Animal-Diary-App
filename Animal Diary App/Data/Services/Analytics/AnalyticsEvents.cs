@@ -228,6 +228,12 @@ public static class AnalyticsEvents
     public const string EntryTypeAppetite = "appetite";
     public const string EntryTypeSeizure = "seizure";
     public const string EntryTypeWater = "water";
+
+    /// <summary>An entry against a tracker the owner defined. Deliberately ONE
+    /// bucket for all of them: the tracker's name is free text the owner typed, and
+    /// sending it would say what their animal is being treated for. Same rule that
+    /// buckets a custom pet type to "other" (see AI/analytics.md).</summary>
+    public const string EntryTypeCustom = "custom";
     public const string SpeciesOther = "other";
 
     // Dose outcomes the owner can record. A skip is a first-class fact here exactly as it

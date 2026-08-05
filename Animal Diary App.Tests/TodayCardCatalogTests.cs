@@ -82,6 +82,61 @@ public class TodayCardCatalogTests
         }
     }
 
+    // ── Owner-defined trackers as cards ──────────────────────────────────────
+
+    [Fact]
+    public void TwoCustomTrackers_AreDifferentCards()
+    {
+        // The reason TodayCardKey exists. With a single TodayCardId.Custom these two
+        // would compare equal, so putting "Walk" on the left card would light "Vomiting"
+        // up as already-chosen and the swap rule would fire between unrelated records.
+        var walk = TodayCardKey.Custom(1);
+        var vomiting = TodayCardKey.Custom(2);
+
+        var config = new TodayCardConfig(walk, vomiting).With(TodayCardSlot.Primary, TodayCardId.Mood);
+
+        Assert.Equal<TodayCardKey>(TodayCardId.Mood, config.Primary);
+        Assert.Equal(vomiting, config.Secondary);   // untouched, not swapped away
+        Assert.NotEqual(walk, vomiting);
+    }
+
+    [Fact]
+    public void ACustomCardSwapsWithABuiltInOne_LikeAnyOtherPair()
+    {
+        var walk = TodayCardKey.Custom(7);
+        var config = new TodayCardConfig(TodayCardId.Weight, walk)
+            .With(TodayCardSlot.Primary, walk);
+
+        Assert.Equal(walk, config.Primary);
+        Assert.Equal<TodayCardKey>(TodayCardId.Weight, config.Secondary);
+    }
+
+    [Theory]
+    [InlineData("Weight")]
+    [InlineData("Medication")]
+    [InlineData("custom:1")]
+    [InlineData("custom:4096")]
+    public void AStoredKeyRoundTrips(string stored)
+    {
+        // Built-in forms are unchanged from before custom cards existed, so a preference
+        // written by an older build still parses instead of silently resetting the pair.
+        Assert.True(TodayCardKey.TryParse(stored, out var key));
+        Assert.Equal(stored, key.ToString());
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData("Nonsense")]        // a card removed in a later version
+    [InlineData("custom:")]         // truncated write
+    [InlineData("custom:0")]        // no row can have id 0
+    [InlineData("custom:-3")]
+    [InlineData("custom:abc")]
+    public void AnUnparseableKeyFails_SoTheCallerCanFallBackToDefaults(string? stored)
+    {
+        Assert.False(TodayCardKey.TryParse(stored, out _));
+    }
+
     // ── Choosing a card ──────────────────────────────────────────────────────
 
     [Fact]

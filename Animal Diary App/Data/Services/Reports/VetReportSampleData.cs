@@ -151,6 +151,30 @@ public static class VetReportSampleData
             },
             Mood = new ReportMood { Observations = moodObservations },
             Events = events,
+            // An owner-defined pair, so the layout can be checked with the two shapes it
+            // has to render: a Tick (vomiting — a bare occurrence with the owner's note)
+            // and an Amount with their own unit (walks). "Walk" is here on purpose even
+            // though it is the archetypal NON-clinical tracker: the fixture's job is to
+            // exercise the layout, and a household that walks a limping dog would turn it
+            // on. Only trackers whose switch is on ever reach this object.
+            Custom = new ReportCustom
+            {
+                Trackers = new ReportCustomTracker[]
+                {
+                    new("Vomiting", string.Empty, 3),
+                    new("Walk", "min", 4),
+                },
+                Entries = new ReportCustomEntry[]
+                {
+                    new("Walk", "min", from.AddDays(84), new TimeSpan(17, 40, 0), 25, "Slower than usual, wanted to turn back"),
+                    new("Vomiting", string.Empty, from.AddDays(83), new TimeSpan(6, 15, 0), null, "Undigested food, about an hour after breakfast"),
+                    new("Walk", "min", from.AddDays(83), new TimeSpan(8, 5, 0), 40, null),
+                    new("Vomiting", string.Empty, from.AddDays(70), new TimeSpan(22, 30, 0), null, null),
+                    new("Walk", "min", from.AddDays(70), new TimeSpan(18, 0, 0), 35, null),
+                    new("Vomiting", string.Empty, from.AddDays(41), new TimeSpan(9, 0, 0), null, "Bile only"),
+                    new("Walk", "min", from.AddDays(41), new TimeSpan(7, 50, 0), 30, null),
+                },
+            },
             Notes = new ReportNote[]
             {
                 new(from.AddDays(82), "Litter tray is soaked most mornings — changing it twice a day now."),

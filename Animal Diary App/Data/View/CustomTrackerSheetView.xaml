@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    CustomTrackerSheetView
+    ─────────────────────────────────────────────────────────
+    The ONE sheet behind every tracker an owner defines: name it, pick an emoji and a
+    colour, say whether it records a number, and choose how often the Journal asks.
+    Its shipped counterparts are the condition setup sheets, which configure the six
+    trackers the app knows by name. BindingContext is a CustomTrackerSheetViewModel.
+
+    Note the icon/colour/cadence rows are all the same shape — a wrapping FlexLayout of
+    tappable chips over a BindableLayout, exactly as AdjustTrackerSheetView does it.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:CustomTrackerSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.CustomTrackerSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="CharacterSpacing" Value="1"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 14"/>
+            <Setter Property="Padding" Value="12,2"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+
+                <!-- Starting points · creating only. Tapping one fills the form in; every
+                     field stays the owner's to change afterwards. -->
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding ShowPresets}">
+                    <Label Text="{loc:Translate Custom_PresetsLabel}" Style="{StaticResource FieldLabel}"/>
+                    <FlexLayout Wrap="Wrap" Direction="Row"
+                                BindableLayout.ItemsSource="{Binding Presets}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:PresetChoice">
+                                <Border BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource GlassLine}"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 12"
+                                        Padding="12,9"
+                                        Margin="0,0,7,7">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference Root}, Path=BindingContext.PickPresetCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="7">
+                                        <Label Grid.Column="0" Text="{Binding Icon}" FontSize="15" VerticalOptions="Center"/>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Name}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="12.5"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource InkSecondary}"
+                                               VerticalOptions="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </VerticalStackLayout>
+
+                <!-- Name -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Custom_NameLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Border Style="{StaticResource FieldBox}">
+                        <Entry Text="{Binding Name}"
+                               Placeholder="{loc:Translate Custom_NamePlaceholder}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="16"
+                               TextColor="{StaticResource Ink}"
+                               PlaceholderColor="{StaticResource InkTertiary}"/>
+                    </Border>
+                    <Label Text="{Binding NameError}"
+                           IsVisible="{Binding NameError, Converter={StaticResource StringToBoolConverter}}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12"
+                           TextColor="{StaticResource RoseDeep}"/>
+                </VerticalStackLayout>
+
+                <!-- Icon -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Custom_IconLabel}" Style="{StaticResource FieldLabel}"/>
+                    <FlexLayout Wrap="Wrap" Direction="Row"
+                                BindableLayout.ItemsSource="{Binding Icons}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:IconChoice">
+                                <Border BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource GlassLine}"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 12"
+                                        WidthRequest="44"
+                                        HeightRequest="44"
+                                        Margin="0,0,7,7">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference Root}, Path=BindingContext.PickIconCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding Icon}"
+                                           FontSize="20"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </VerticalStackLayout>
+
+                <!-- Colour -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Custom_ColorLabel}" Style="{StaticResource FieldLabel}"/>
+                    <FlexLayout Wrap="Wrap" Direction="Row"
+                                BindableLayout.ItemsSource="{Binding Colors}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:ColorChoice">
+                                <Border BackgroundColor="{Binding Fill}"
+                                        Stroke="{StaticResource GlassLine}"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 12"
+                                        WidthRequest="44"
+                                        HeightRequest="44"
+                                        Margin="0,0,9,7">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="StrokeThickness" Value="2.5"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference Root}, Path=BindingContext.PickColorCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <!-- A dot in the row's own ink, so the swatch shows both
+                                         colours it will actually wear — and so the selected
+                                         state is never carried by hue alone (§21). -->
+                                    <Label Text="●"
+                                           FontSize="13"
+                                           TextColor="{Binding Ink}"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </VerticalStackLayout>
+
+                <!-- What it records -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Custom_ShapeLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="9">
+                        <Border BackgroundColor="{StaticResource GlassSoft}"
+                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 12" Padding="12,11">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsTick}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetTickCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Custom_ShapeTick}"
+                                   FontFamily="{StaticResource FontSans}" FontSize="12.5"
+                                   FontAttributes="Bold" TextColor="{StaticResource InkSecondary}"
+                                   HorizontalTextAlignment="Center"/>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                BackgroundColor="{StaticResource GlassSoft}"
+                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 12" Padding="12,11">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsAmount}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                    <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SetAmountCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Custom_ShapeAmount}"
+                                   FontFamily="{StaticResource FontSans}" FontSize="12.5"
+                                   FontAttributes="Bold" TextColor="{StaticResource InkSecondary}"
+                                   HorizontalTextAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- Unit · Amount only -->
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding ShowUnit}">
+                    <Label Text="{loc:Translate Custom_UnitLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Border Style="{StaticResource FieldBox}">
+                        <Entry Text="{Binding Unit}"
+                               Placeholder="{loc:Translate Custom_UnitPlaceholder}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="16"
+                               TextColor="{StaticResource Ink}"
+                               PlaceholderColor="{StaticResource InkTertiary}"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- How often -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Custom_CadenceLabel}" Style="{StaticResource FieldLabel}"/>
+                    <FlexLayout Wrap="Wrap" Direction="Row"
+                                BindableLayout.ItemsSource="{Binding Cadences}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:AdjustOption">
+                                <Border BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource GlassLine}"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 12"
+                                        Padding="14,10"
+                                        Margin="0,0,7,7">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference Root}, Path=BindingContext.PickCadenceCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding Label}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="12.5"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource InkSecondary}"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </VerticalStackLayout>
+
+                <!-- In the vet summary. Asked here, once, because only the owner can
+                     know whether a thing is clinical — and asked with a concrete hint,
+                     because "does this belong in front of a vet" is a genuinely hard
+                     question about your own animal. -->
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="3" VerticalOptions="Center">
+                        <Label Text="{loc:Translate Custom_InReportLabel}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Ink}"/>
+                        <Label Text="{loc:Translate Custom_InReportHint}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="12"
+                               TextColor="{StaticResource InkTertiary}"/>
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding InReport}"
+                            OnColor="{StaticResource Teal}"
+                            ThumbColor="{StaticResource White}"
+                            VerticalOptions="Center"/>
+                </Grid>
+
+                <!-- Retire · editing only. Stops the asking; keeps every entry. -->
+                <Label Text="{loc:Translate Custom_Retire}"
+                       IsVisible="{Binding IsEditing}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="13"
+                       TextColor="{StaticResource InkTertiary}"
+                       HorizontalTextAlignment="Center"
+                       Padding="0,14">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding RetireCommand}"/>
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <!-- Actions -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,2,0,0">
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_Cancel}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13,16,15,14"
+                            Opacity="{Binding CanSave, Converter={StaticResource BoolToOpacityConverter}}">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_Save}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+
+</ContentView>

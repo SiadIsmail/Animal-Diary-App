@@ -21,6 +21,7 @@ public class MainPageViewModel : BaseViewModel
     private readonly MedicationReminderScheduler _reminderScheduler;
     private readonly TodayCardService _todayCards;
     private readonly TodayCardSheetViewModel _cardPicker;
+    private readonly CustomTrackerService _customTrackers;
 
     public MoodTimelineViewModel MoodTimeline { get; }
 
@@ -32,7 +33,8 @@ public class MainPageViewModel : BaseViewModel
 
     public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService, MoodTimelineViewModel moodTimeline,
         PendingItemsService pendingItems, MedicationService medicationService, MedicationDoseLogService doseLogService, MedicationReminderScheduler reminderScheduler,
-        TodayCardService todayCards, TodayCardSheetViewModel cardPicker)
+        TodayCardService todayCards, TodayCardSheetViewModel cardPicker,
+        CustomTrackerService customTrackers)
     {
         _petEntryService = petEntryService;
         _petService = petService;
@@ -44,6 +46,7 @@ public class MainPageViewModel : BaseViewModel
         _reminderScheduler = reminderScheduler;
         _todayCards = todayCards;
         _cardPicker = cardPicker;
+        _customTrackers = customTrackers;
         MoodTimeline = moodTimeline;
 
         // The two stat cards are stable instances refreshed in place — see TodayCardItem
@@ -349,6 +352,14 @@ public class MainPageViewModel : BaseViewModel
     /// <summary>Dosage line for a medication next-up ("2 mg"); empty for trackers.</summary>
     public string NextUpDetail { get; private set; } = string.Empty;
 
+    /// <summary>The owner's own tracker behind <see cref="NextUpItem"/>, when that is a
+    /// custom one; null otherwise.
+    ///
+    /// <para>Resolved HERE because the card's name and emoji live on a database row, and
+    /// the page reads no store. Without it the card falls to TrackerVisuals.Fallback,
+    /// whose label key is the mood one — a walk would show up on Today as "Mood".</para></summary>
+    public CustomTracker? NextUpCustom { get; private set; }
+
     public async Task LoadTodayCareAsync()
     {
         // Cheap, and this runs on every appearance — so a page left open across
@@ -370,11 +381,16 @@ public class MainPageViewModel : BaseViewModel
         // The pending item carries only the med's identity; the card also shows
         // the dosage, which lives on the medication row.
         NextUpDetail = string.Empty;
+        NextUpCustom = null;
         if (NextUpItem is { Kind: PendingKind.Medication } dose)
         {
             var med = await _medicationService.GetMedicationByIdAsync(dose.MedicationId);
             if (med != null)
                 NextUpDetail = $"{med.Dosage} {med.Unit}";
+        }
+        else if (NextUpItem?.Tracker is { IsCustom: true } key)
+        {
+            NextUpCustom = await _customTrackers.GetByIdAsync(key.CustomId);
         }
     }
 

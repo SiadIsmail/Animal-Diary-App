@@ -58,10 +58,35 @@ internal sealed class SyncRunContext
         return v;
     }
 
+    private readonly Dictionary<int, string?> _customUuid = new();
+    private readonly Dictionary<string, int?> _customLocal = new();
+
+    public async Task<string?> CustomTrackerUuidAsync(int localId)
+    {
+        if (!_customUuid.TryGetValue(localId, out var v))
+            _customUuid[localId] = v = (await Db.QueryAsync<CustomTracker>(
+                "select * from \"CustomTracker\" where Id = ? limit 1", localId)).FirstOrDefault()?.SyncId;
+        return string.IsNullOrEmpty(v) ? null : v;
+    }
+
+    public async Task<int?> CustomTrackerLocalIdAsync(string uuid)
+    {
+        if (!_customLocal.TryGetValue(uuid, out var v))
+            _customLocal[uuid] = v = (await Db.QueryAsync<CustomTracker>(
+                "select * from \"CustomTracker\" where SyncId = ? limit 1", uuid)).FirstOrDefault()?.Id;
+        return v;
+    }
+
     /// <summary>A pet applied in this run may be looked up by children later in the
     /// same run — prime the cache instead of re-querying.</summary>
     public void NotePet(int localId, string uuid) { _petLocal[uuid] = localId; _petUuid[localId] = uuid; }
     public void NoteMedication(int localId, string uuid) { _medLocal[uuid] = localId; _medUuid[localId] = uuid; }
+
+    /// <summary>Same, for a custom tracker: its entries arrive later in the same pull and
+    /// resolve their parent by uuid. Without this priming a first-ever sync applies the
+    /// definition and then drops every entry pointing at it, because the local row it
+    /// needs was written after the cache said "not here".</summary>
+    public void NoteCustomTracker(int localId, string uuid) { _customLocal[uuid] = localId; _customUuid[localId] = uuid; }
 }
 
 /// <summary>One row queued for upload; <c>ClearDirtyAsync</c> runs only after the
@@ -790,5 +815,116 @@ internal static class SyncTableMaps
                 "select * from \"MedicationDoseLog\" where MedicationId = ? and ScheduledDate = ? and ScheduledTime = ? order by IsDeleted asc limit 1",
                 inc.MedicationId, inc.ScheduledDate, inc.ScheduledTime)).FirstOrDefault(),
             onApplied: (ctx, l) => ctx.AffectedMedications.Add(l.MedicationId)),
+
+        // ── custom trackers (the owner's own definitions) ────────────────────
+        // No natural key on purpose. "Walk" on two devices is two DIFFERENT trackers
+        // until one syncs to the other — they were typed independently and may hold
+        // different cadences, units and icons. Converging them on the name would
+        // silently merge one person's history into another's, and there is no rule
+        // that says two things called Walk are the same thing. SyncId decides
+        // identity, as it does for medications (where "Insulin" has the same shape).
+        //
+        // MUST stay ahead of custom_entries in this list: entries resolve their
+        // parent through the cache NoteCustomTracker primes below.
+        new TableSync<CustomTracker>("custom_trackers",
+            toCloud: async (c, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(c.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = c.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["name"] = c.Name,
+                    ["icon"] = c.Icon,
+                    ["color_key"] = c.ColorKey,
+                    ["shape"] = c.Shape.ToString(),
+                    ["unit"] = c.Unit,
+                    ["kind"] = c.Kind.ToString(),
+                    ["per_day_count"] = c.PerDayCount,
+                    ["include_in_report"] = c.IncludeInReport,
+                    ["is_archived"] = c.IsArchived,
+                    ["client_updated_at"] = CloudJson.ToIso(c.UpdatedAtUtc),
+                    ["deleted_at"] = c.IsDeleted ? CloudJson.ToIso(c.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new CustomTracker
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Name = CloudJson.GetString(el, "name"),
+                    Icon = CloudJson.GetString(el, "icon"),
+                    ColorKey = CloudJson.GetString(el, "color_key"),
+                    Shape = Enum.Parse<CustomShape>(CloudJson.GetString(el, "shape")),
+                    Unit = CloudJson.GetString(el, "unit"),
+                    Kind = Enum.Parse<TrackerKind>(CloudJson.GetString(el, "kind")),
+                    PerDayCount = CloudJson.GetInt(el, "per_day_count"),
+                    IncludeInReport = CloudJson.GetBool(el, "include_in_report"),
+                    IsArchived = CloudJson.GetBool(el, "is_archived"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Name = inc.Name; local.Icon = inc.Icon;
+                local.ColorKey = inc.ColorKey; local.Shape = inc.Shape; local.Unit = inc.Unit;
+                local.Kind = inc.Kind; local.PerDayCount = inc.PerDayCount;
+                local.IncludeInReport = inc.IncludeInReport; local.IsArchived = inc.IsArchived;
+            },
+            onApplied: (ctx, c) => ctx.NoteCustomTracker(c.Id, c.SyncId)),
+
+        // ── custom entries (append-only events; keyed by id) ─────────────────
+        // Carries BOTH ids: pet_id is what RLS and the purge select on, custom_tracker_id
+        // is what the entry means. An entry whose tracker hasn't arrived yet resolves to
+        // null and is skipped — the next pull picks it up once the parent exists.
+        new TableSync<CustomEntry>("custom_entries",
+            toCloud: async (e, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(e.PetId);
+                var trackerUuid = await ctx.CustomTrackerUuidAsync(e.CustomTrackerId);
+                if (petUuid == null || trackerUuid == null) return null;
+                return new()
+                {
+                    ["id"] = e.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["custom_tracker_id"] = trackerUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(e.Date),
+                    ["time_ticks"] = e.Time.Ticks,
+                    ["amount"] = e.Amount,
+                    ["note"] = e.Note,
+                    ["client_updated_at"] = CloudJson.ToIso(e.UpdatedAtUtc),
+                    ["deleted_at"] = e.IsDeleted ? CloudJson.ToIso(e.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                var trackerId = await ctx.CustomTrackerLocalIdAsync(
+                    CloudJson.GetString(el, "custom_tracker_id"));
+                if (petId == null || trackerId == null) return null;
+                return new CustomEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    CustomTrackerId = trackerId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    Amount = CloudJson.GetDecimalOrNull(el, "amount"),
+                    Note = CloudJson.GetString(el, "note"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.CustomTrackerId = inc.CustomTrackerId;
+                local.Date = inc.Date; local.Time = inc.Time;
+                local.Amount = inc.Amount; local.Note = inc.Note;
+            }),
     };
 }
