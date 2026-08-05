@@ -79,6 +79,10 @@ public class MainViewModel
     /// outcomes (reset scope, remove-pet, sign-out). Two-outcome confirms stay native.</summary>
     public ConfirmSheetViewModel ConfirmVM { get; }
 
+    /// <summary>The crop-and-rotate sheet a photo passes through on its way to becoming a
+    /// pet's avatar — hosted by the create/edit pet page, which owns the media picker.</summary>
+    public PhotoEditorSheetViewModel PhotoEditorVM { get; }
+
     /// <summary>The hidden developer diagnostics sheet (Settings → "Code").</summary>
     public DevSheetViewModel DevVM { get; }
 
@@ -120,6 +124,7 @@ public class MainViewModel
  TrialMessageViewModel trialMessageVM,
  FeedbackSheetViewModel feedbackVM,
  ConfirmSheetViewModel confirmVM,
+ PhotoEditorSheetViewModel photoEditorVM,
  Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
  DevSheetViewModel devVM,
  Animal_Diary_App.Data.Services.Cloud.ICloudSyncService cloudSync,
@@ -153,6 +158,7 @@ public class MainViewModel
         TrialMessageVM = trialMessageVM;
         FeedbackVM = feedbackVM;
         ConfirmVM = confirmVM;
+        PhotoEditorVM = photoEditorVM;
         Entitlements = entitlements;
         DevVM = devVM;
         CloudSync = cloudSync;

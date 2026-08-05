@@ -540,10 +540,18 @@
   <data name="CreatePet_PhotoSheetTitle" xml:space="preserve"><value>Profile photo</value></data>
   <data name="CreatePet_PhotoTake" xml:space="preserve"><value>Take a photo</value></data>
   <data name="CreatePet_PhotoChoose" xml:space="preserve"><value>Choose from library</value></data>
+  <data name="CreatePet_PhotoAdjust" xml:space="preserve"><value>Crop and rotate</value></data>
   <data name="CreatePet_PhotoRemove" xml:space="preserve"><value>Remove photo</value></data>
   <data name="CreatePet_PhotoError" xml:space="preserve"><value>Couldn't add that photo. Please try another.</value></data>
   <data name="CreatePet_PhotoPermissionDenied" xml:space="preserve"><value>Photo access was denied. You can allow it in Settings.</value></data>
   <data name="CreatePet_PhotoCaptureUnsupported" xml:space="preserve"><value>This device can't take photos.</value></data>
+
+  <!-- ── Photo editor (crop + rotate, before the photo becomes the avatar) ── -->
+  <data name="PhotoEdit_Title" xml:space="preserve"><value>Adjust the photo</value></data>
+  <data name="PhotoEdit_Hint" xml:space="preserve"><value>Drag to move, pinch to zoom.</value></data>
+  <data name="PhotoEdit_TurnLeft" xml:space="preserve"><value>Turn left</value></data>
+  <data name="PhotoEdit_TurnRight" xml:space="preserve"><value>Turn right</value></data>
+  <data name="PhotoEdit_Use" xml:space="preserve"><value>Use this photo</value></data>
   <data name="CreatePet_BirthdayLabel" xml:space="preserve"><value>Birthday</value></data>
   <data name="CreatePet_BirthdayHint" xml:space="preserve"><value>Only the year is required. Add the month and day if you know them.</value></data>
   <data name="CreatePet_BirthYearLabel" xml:space="preserve"><value>Year</value></data>

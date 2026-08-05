@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- PhotoEditorSheetView — crop and rotate a photo before it becomes a pet's avatar.
+     BindingContext is a PhotoEditorSheetViewModel.
+
+     Three controls and no more: turn left, turn right, and a drag/pinch stage. No
+     filters, no aspect choices, no adjustments — this exists so a photo that arrived
+     sideways can be put right, and so the owner can choose which part of it the circle
+     holds.
+
+     The stage is a GraphicsView (PhotoCropDrawable), which is why this feature needs no
+     new package: a cropper binding would ship native .so files, and this app has already
+     paid for that twice (Syncfusion, then QuestPDF's SkiaSharp pin). -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:PhotoEditorSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.PhotoEditorSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{loc:Translate PhotoEdit_Title}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+            <VerticalStackLayout Spacing="14" Padding="0,2,0,0">
+
+                <!-- The stage. Gestures live on the Grid, not the GraphicsView: the
+                     GraphicsView is InputTransparent so it can never swallow a drag, and
+                     the Grid's own background makes it hit-testable. -->
+                <Border StrokeThickness="0"
+                        StrokeShape="RoundRectangle 18">
+                    <Grid HeightRequest="280"
+                          BackgroundColor="{StaticResource Ink}">
+                        <Grid.GestureRecognizers>
+                            <PanGestureRecognizer PanUpdated="OnPanUpdated"/>
+                            <PinchGestureRecognizer PinchUpdated="OnPinchUpdated"/>
+                        </Grid.GestureRecognizers>
+                        <GraphicsView x:Name="Surface" InputTransparent="True"/>
+                    </Grid>
+                </Border>
+
+                <Label Text="{loc:Translate PhotoEdit_Hint}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="12.5"
+                       TextColor="{StaticResource InkSecondary}"
+                       HorizontalTextAlignment="Center"/>
+
+                <!-- Turn left / turn right. Glyph-only, with the words carried by
+                     SemanticProperties so a screen reader still announces them. -->
+                <HorizontalStackLayout Spacing="14" HorizontalOptions="Center">
+
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 24"
+                            WidthRequest="88"
+                            SemanticProperties.Description="{loc:Translate PhotoEdit_TurnLeft}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding TurnLeftCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="↺"
+                               FontSize="22"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,10"/>
+                    </Border>
+
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 24"
+                            WidthRequest="88"
+                            SemanticProperties.Description="{loc:Translate PhotoEdit_TurnRight}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding TurnRightCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="↻"
+                               FontSize="22"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,10"/>
+                    </Border>
+
+                </HorizontalStackLayout>
+
+                <Border BackgroundColor="{StaticResource Teal}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 13">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding DoneCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate PhotoEdit_Use}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource White}"
+                           HorizontalTextAlignment="Center"
+                           Padding="0,14"/>
+                </Border>
+
+                <!-- Cancel: the same quiet text link every other sheet closes with.
+                     Backing out costs nothing here — the photo is untouched. -->
+                <Label Text="{loc:Translate Common_Cancel}"
+                       Padding="0,4"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="12.5"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource TealDeep}"
+                       HorizontalTextAlignment="Center">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                    </Label.GestureRecognizers>
+                </Label>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>
