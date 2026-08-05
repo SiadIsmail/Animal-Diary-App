@@ -181,6 +181,16 @@
 	     alone. The Windows/macOS dev build never sees it (and registers the no-op
 	     NullEntitlementService instead). v7.1.0 bundles native Android 10.1.2, which
 	     supports the Test Store (test_) API key. -->
+	<!-- AndroidX ExifInterface, for reading a captured photo's orientation tag
+	     (PetPhotoService). Google's maintained reader, and the one their own docs point
+	     at: the framework's android.media.ExifInterface is deprecated and handles fewer
+	     format quirks, which matters because the tag is the only thing standing between
+	     a camera shot and an avatar that arrives a quarter-turn wrong. Android-only —
+	     iOS applies orientation on UIImage and needs none of this. -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.4.2.3" />
+	</ItemGroup>
+
 	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' OR $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
 		<PackageReference Include="Kebechet.Maui.RevenueCat.InAppBilling" Version="7.1.0" />
 	</ItemGroup>
