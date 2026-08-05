@@ -43,7 +43,13 @@
                                 DismissCommand="{Binding DismissCommand}">
         <controls:FelovaBottomSheet.SheetContent>
 
-            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+            <!-- Long form: the body scrolls and the actions stay pinned below it, the
+                 shape AddEditMedicationsView established. The sheet itself never scrolls
+                 its own content — see the note in FelovaBottomSheet.xaml. -->
+            <Grid RowDefinitions="*,Auto" RowSpacing="14">
+
+            <ScrollView Grid.Row="0" VerticalScrollBarVisibility="Never">
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,4">
 
                 <!-- Starting points · creating only. Tapping one fills the form in; every
                      field stays the owner's to change afterwards. -->
@@ -299,8 +305,11 @@
                     </Label.GestureRecognizers>
                 </Label>
 
-                <!-- Actions -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,2,0,0">
+            </VerticalStackLayout>
+            </ScrollView>
+
+                <!-- Actions · pinned, so Save is reachable however long the form gets -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
                     <Border BackgroundColor="{StaticResource TealTint}"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 15,13,13,16">
@@ -337,7 +346,7 @@
                     </Border>
                 </Grid>
 
-            </VerticalStackLayout>
+            </Grid>
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>
 

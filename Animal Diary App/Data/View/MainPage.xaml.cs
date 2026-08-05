@@ -212,10 +212,15 @@ public partial class MainPage : ContentPage
     private (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc)
     {
         // An owner-defined tracker's name and emoji are its own row's, resolved by the VM
-        // (this page reads no store). Falling through to TrackerVisuals here would show a
-        // walk as "Mood", since that is the fallback's label key.
-        if (item.Tracker is { IsCustom: true } && vm.MainPageVM.NextUpCustom is { } own)
-            return (CustomTrackerVisuals.For(own).Icon, own.Name);
+        // (this page reads no store). The whole branch is handled here, including the
+        // unresolved case: falling THROUGH to TrackerVisuals would show a walk as "Mood",
+        // because the shared fallback's label key is the mood one.
+        if (item.Tracker is { IsCustom: true })
+        {
+            return vm.MainPageVM.NextUpCustom is { } own
+                ? (CustomTrackerVisuals.For(own).Icon, own.Name)
+                : (CustomTrackerVisuals.DefaultIcon, loc.GetString("Today_CardCustom"));
+        }
 
         var v = TrackerVisuals.For(item.Tracker);
         return (v.Icon, loc.GetString(v.LabelKey));

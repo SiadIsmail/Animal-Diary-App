@@ -22,10 +22,20 @@
     keeps the body realised and laid out — content populated on-open (item lists
     especially) stayed empty on first show when the view had never been laid out.
 
-    Height: the sheet grows with its body up to 90% of the screen (OnSizeAllocated),
-    past which the body SCROLLS. Callers therefore never need their own ScrollView, and
-    must not add a vertically-scrolling one — nesting two scrollers on Android gives the
-    inner one an unbounded height and the outer one nothing to scroll.
+    Height: the sheet grows with its body, capped at 90% of the screen
+    (OnSizeAllocated). A body that can outgrow that owns its OWN scroller — see
+    AddEditMedicationsView, the pattern to copy:
+
+        <Grid RowDefinitions="*,Auto" RowSpacing="16">
+            <ScrollView Grid.Row="0" VerticalScrollBarVisibility="Never"> …fields… </ScrollView>
+            <Grid Grid.Row="1"> …actions, pinned… </Grid>
+        </Grid>
+
+    Do NOT put a ScrollView here around BodyHost "so callers don't have to". That was
+    tried: on Android a ScrollView in this star row measures to FILL, so every short
+    sheet — mood, weight, the pickers — stretched to the full 90% instead of hugging its
+    content, and the medication form ended up with two nested scrollers. Pinning the
+    actions in the caller is also the better shape: Save stays put while the body moves.
 -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -95,20 +105,8 @@
                            Margin="0,2,0,0"/>
                 </VerticalStackLayout>
 
-                <!-- Arbitrary body supplied by the caller, inside the scroller that
-                     OnSizeAllocated's height cap has always assumed was here.
-
-                     The cap (90% of the screen) shipped without it, so a body taller
-                     than that was simply CLIPPED — silently, from the bottom, which is
-                     where every sheet keeps its Save button. Short bodies are unaffected:
-                     a ScrollView measures to its content, so the sheet still hugs it and
-                     only scrolls once the cap actually bites. -->
-                <!-- Default, not Never: when the body IS long enough to scroll, the
-                     transient bar is the only thing telling someone there is more below.
-                     It costs nothing on the short sheets, which never scroll at all. -->
-                <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
-                    <ContentView x:Name="BodyHost"/>
-                </ScrollView>
+                <!-- Arbitrary body supplied by the caller -->
+                <ContentView x:Name="BodyHost" Grid.Row="1"/>
             </Grid>
         </Border>
     </Grid>
