@@ -17,25 +17,25 @@ public class PendingEngineTests
 {
     private static readonly DateTime Today = new(2026, 7, 15);
 
-    private static Tracker Track(TrackerId id, TrackerKind kind, int perDay = 0) =>
-        new() { TrackerId = id, Kind = kind, PerDayCount = perDay };
+    private static CarePlanItem Track(TrackerKey key, TrackerKind kind, int perDay = 0) =>
+        new() { Key = key, Kind = kind, PerDayCount = perDay };
 
     private static ScheduledDose Dose(string name, int hour, bool given) =>
         new(MedicationId: name.GetHashCode(), PetId: 1, MedicationName: name,
             Time: TimeSpan.FromHours(hour), Given: given);
 
-    private static Dictionary<TrackerId, IReadOnlyList<DateTime>> Entries(
-        params (TrackerId Id, DateTime[] Dates)[] rows) =>
-        rows.ToDictionary(r => r.Id, r => (IReadOnlyList<DateTime>)r.Dates);
+    private static Dictionary<TrackerKey, IReadOnlyList<DateTime>> Entries(
+        params (TrackerKey Key, DateTime[] Dates)[] rows) =>
+        rows.ToDictionary(r => r.Key, r => (IReadOnlyList<DateTime>)r.Dates);
 
     private static IReadOnlyList<PendingItem> Compute(
-        IReadOnlyList<Tracker>? plan = null,
+        IReadOnlyList<CarePlanItem>? plan = null,
         IReadOnlyList<ScheduledDose>? doses = null,
-        Dictionary<TrackerId, IReadOnlyList<DateTime>>? entries = null) =>
+        Dictionary<TrackerKey, IReadOnlyList<DateTime>>? entries = null) =>
         PendingEngine.Compute(
-            plan ?? Array.Empty<Tracker>(),
+            plan ?? Array.Empty<CarePlanItem>(),
             doses ?? Array.Empty<ScheduledDose>(),
-            entries ?? new Dictionary<TrackerId, IReadOnlyList<DateTime>>(),
+            entries ?? new Dictionary<TrackerKey, IReadOnlyList<DateTime>>(),
             Today);
 
     // ── Medication doses ─────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ public class PendingEngineTests
         var result = Compute(plan, entries: entries);
 
         var item = Assert.Single(result);
-        Assert.Equal(TrackerId.Glucose, item.TrackerId);
+        Assert.Equal(TrackerId.Glucose, item.Tracker?.BuiltIn);
         Assert.Equal(2, item.Done);
         Assert.Equal(3, item.Target);
     }
@@ -161,6 +161,39 @@ public class PendingEngineTests
         Assert.Single(Compute(plan));
     }
 
+    // ── Owner-created trackers ───────────────────────────────────────────────────
+
+    [Fact]
+    public void TwoCustomTrackers_AreCountedSeparately_NotAsOne()
+    {
+        // The whole reason TrackerKey exists. Were "custom" a single TrackerId member,
+        // both of these would read the same dictionary entry, and writing down the walk
+        // would quietly tick the groom off the day as well.
+        var walk = TrackerKey.Custom(1);
+        var groom = TrackerKey.Custom(2);
+        var plan = new[] { Track(walk, TrackerKind.Daily), Track(groom, TrackerKind.Daily) };
+
+        var result = Compute(plan, entries: Entries((walk, new[] { Today })));
+
+        var item = Assert.Single(result);
+        Assert.Equal(groom, item.Tracker);
+    }
+
+    [Fact]
+    public void ACustomTrackerNeverSharesAKeyWithAShippedOne()
+    {
+        var plan = new[]
+        {
+            Track(TrackerId.Mood, TrackerKind.Daily),
+            Track(TrackerKey.Custom(1), TrackerKind.Daily),
+        };
+
+        var result = Compute(plan, entries: Entries((TrackerId.Mood, new[] { Today })));
+
+        var item = Assert.Single(result);
+        Assert.True(item.Tracker?.IsCustom);
+    }
+
     [Fact]
     public void Ordering_IsDosesThenPerDayThenTheRestInCarePlanOrder()
     {
@@ -174,9 +207,9 @@ public class PendingEngineTests
         var result = Compute(plan, doses: new[] { Dose("Insulin", 8, given: false) });
 
         Assert.Equal(PendingKind.Medication, result[0].Kind);
-        Assert.Equal(TrackerId.Glucose, result[1].TrackerId);   // PerDay is promoted
-        Assert.Equal(TrackerId.Weight, result[2].TrackerId);    // then care-plan order
-        Assert.Equal(TrackerId.Mood, result[3].TrackerId);
+        Assert.Equal(TrackerId.Glucose, result[1].Tracker?.BuiltIn);   // PerDay is promoted
+        Assert.Equal(TrackerId.Weight, result[2].Tracker?.BuiltIn);    // then care-plan order
+        Assert.Equal(TrackerId.Mood, result[3].Tracker?.BuiltIn);
     }
 
     // ── The ring and the chips must never disagree ───────────────────────────────
@@ -235,7 +268,7 @@ public class PendingEngineTests
 
         var progress = PendingEngine.ComputeProgress(
             plan, Array.Empty<ScheduledDose>(),
-            new Dictionary<TrackerId, IReadOnlyList<DateTime>>(), Today);
+            new Dictionary<TrackerKey, IReadOnlyList<DateTime>>(), Today);
 
         Assert.Equal(0, progress.Total);
         Assert.Equal(0, progress.Done);
@@ -245,8 +278,8 @@ public class PendingEngineTests
     public void EmptyPlanAndNoDoses_IsCompleteNotEmptyOfMeaning()
     {
         var progress = PendingEngine.ComputeProgress(
-            Array.Empty<Tracker>(), Array.Empty<ScheduledDose>(),
-            new Dictionary<TrackerId, IReadOnlyList<DateTime>>(), Today);
+            Array.Empty<CarePlanItem>(), Array.Empty<ScheduledDose>(),
+            new Dictionary<TrackerKey, IReadOnlyList<DateTime>>(), Today);
 
         Assert.Equal(0, progress.Total);
         Assert.Empty(Compute());

@@ -810,4 +810,51 @@
   <data name="Feedback_EmailTitle" xml:space="preserve"><value>Send an email</value></data>
   <data name="Feedback_EmailSubject" xml:space="preserve"><value>Felova feedback</value></data>
   <data name="Feedback_Footer" xml:space="preserve"><value>Built by two people and a dog.</value></data>
+  <!-- Trackers the owner defines themselves (Manage → "Something else"). The
+       tracker's NAME is user data: shown verbatim, never translated. -->
+  <data name="Custom_AddOwn" xml:space="preserve"><value>Something else</value></data>
+  <data name="Custom_AddTitle" xml:space="preserve"><value>Something else you write down</value></data>
+  <data name="Custom_AddSub" xml:space="preserve"><value>Name it, and the Journal will ask for it</value></data>
+  <data name="Custom_EditTitle" xml:space="preserve"><value>Your own tracker</value></data>
+  <data name="Custom_EditSub" xml:space="preserve"><value>Change anything. Everything you wrote down stays</value></data>
+  <data name="Custom_PresetsLabel" xml:space="preserve"><value>Start from</value></data>
+  <data name="Custom_NameLabel" xml:space="preserve"><value>Name</value></data>
+  <data name="Custom_NamePlaceholder" xml:space="preserve"><value>Walk, brushing, ear drops</value></data>
+  <data name="Custom_NameRequired" xml:space="preserve"><value>Give it a name first</value></data>
+  <data name="Custom_NameTooLong" xml:space="preserve"><value>A bit shorter, please. Up to {0} characters</value></data>
+  <data name="Custom_TooMany" xml:space="preserve"><value>That is {0} of your own already. Retire one to add another</value></data>
+  <data name="Custom_IconLabel" xml:space="preserve"><value>Icon</value></data>
+  <data name="Custom_ColorLabel" xml:space="preserve"><value>Colour</value></data>
+  <data name="Custom_ShapeLabel" xml:space="preserve"><value>What you write down</value></data>
+  <data name="Custom_ShapeTick" xml:space="preserve"><value>That it happened</value></data>
+  <data name="Custom_ShapeAmount" xml:space="preserve"><value>A number</value></data>
+  <data name="Custom_UnitLabel" xml:space="preserve"><value>Unit</value></data>
+  <data name="Custom_UnitPlaceholder" xml:space="preserve"><value>min, km, bowls</value></data>
+  <data name="Custom_CadenceLabel" xml:space="preserve"><value>How often</value></data>
+  <data name="Custom_Retire" xml:space="preserve"><value>Stop asking me about this</value></data>
+  <data name="CustomPreset_Walk" xml:space="preserve"><value>Walk</value></data>
+  <data name="CustomPreset_WalkUnit" xml:space="preserve"><value>min</value></data>
+  <data name="CustomPreset_Poop" xml:space="preserve"><value>Poop</value></data>
+  <data name="CustomPreset_Groom" xml:space="preserve"><value>Grooming</value></data>
+  <data name="CustomPreset_Sick" xml:space="preserve"><value>Was sick</value></data>
+  <data name="CustomPreset_Play" xml:space="preserve"><value>Play</value></data>
+  <data name="CustomPreset_PlayUnit" xml:space="preserve"><value>min</value></data>
+  <data name="Custom_RetireConfirmTitle" xml:space="preserve"><value>Stop asking about this?</value></data>
+  <data name="Custom_RetireConfirmBody" xml:space="preserve"><value>It leaves the Journal and the care plan. Everything you already wrote down stays exactly where it is, and it still reaches the vet summary.</value></data>
+  <!-- Journal surfaces for owner-defined trackers. {0} is the owner's own name for
+       the tracker: user data, dropped into a template rather than concatenated. -->
+  <data name="Journal_CustomSub" xml:space="preserve"><value>{0:ddd, d MMM}</value></data>
+  <data name="Journal_CustomAmountLabel" xml:space="preserve"><value>How much · optional</value></data>
+  <data name="Journal_CustomAmountPlaceholder" xml:space="preserve"><value>A number</value></data>
+  <data name="Journal_CustomNotePlaceholder" xml:space="preserve"><value>Anything worth remembering</value></data>
+  <data name="Journal_ToastCustom" xml:space="preserve"><value>{0} written down.</value></data>
+  <data name="Journal_A11yLogCustom" xml:space="preserve"><value>Write down {0}</value></data>
+  <data name="Custom_InReportLabel" xml:space="preserve"><value>In the vet summary</value></data>
+  <data name="Custom_InReportHint" xml:space="preserve"><value>Walks usually aren't. Vomiting usually is.</value></data>
+  <data name="Export_IncludeCustom" xml:space="preserve"><value>Things you write down yourself</value></data>
+  <data name="Report_CustomSection" xml:space="preserve"><value>Other things recorded</value></data>
+  <data name="Report_CustomTimes" xml:space="preserve"><value>{0}×</value></data>
+  <data name="Export_CustomLabel" xml:space="preserve"><value>Your own trackers</value></data>
+  <data name="Today_EmptyCustom" xml:space="preserve"><value>Nothing written down yet. Add it in the Journal.</value></data>
+  <data name="Today_CardCustom" xml:space="preserve"><value>Your own tracker</value></data>
 </root>

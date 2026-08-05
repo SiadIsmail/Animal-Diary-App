@@ -18,19 +18,27 @@ using Animal_Diary_App.Helpers;
 /// <param name="Level">A stored 1–5 relative reading — appetite/water observations.
 /// Shown as its word, never as a number.</param>
 /// <param name="Text">Verbatim user data (the medication's name); never translated.</param>
+/// <param name="Label">An owner-defined tracker's own name; empty for the shipped cards,
+/// whose label is a localization key in <see cref="TodayCardCatalog"/>. Verbatim user
+/// data, in the same category as <paramref name="Text"/> — never translated.</param>
+/// <param name="Icon">That tracker's emoji; empty for the shipped cards.</param>
+/// <param name="Unit">That tracker's own unit ("min", "bowls"); empty otherwise.</param>
 public sealed record TodayCardReading(
-    TodayCardId Card,
+    TodayCardKey Card,
     DateTime? On = null,
     TimeSpan? At = null,
     decimal? Number = null,
     MoodLevel Mood = MoodLevel.None,
     int Level = 0,
-    string Text = "")
+    string Text = "",
+    string Label = "",
+    string Icon = "",
+    string Unit = "")
 {
     public bool HasData => On is not null;
 
     /// <summary>Nothing written down for this card yet.</summary>
-    public static TodayCardReading Empty(TodayCardId card) => new(card);
+    public static TodayCardReading Empty(TodayCardKey card) => new(card);
 }
 
 /// <summary>
@@ -60,6 +68,7 @@ public class TodayCardService
     private readonly SeizureEntryService _seizures;
     private readonly MedicationDoseLogService _doseLogs;
     private readonly MedicationService _medications;
+    private readonly CustomTrackerService _custom;
 
     public TodayCardService(
         SettingsService settings,
@@ -70,7 +79,8 @@ public class TodayCardService
         WaterEntryService water,
         SeizureEntryService seizures,
         MedicationDoseLogService doseLogs,
-        MedicationService medications)
+        MedicationService medications,
+        CustomTrackerService custom)
     {
         _settings = settings;
         _conditions = conditions;
@@ -81,6 +91,7 @@ public class TodayCardService
         _seizures = seizures;
         _doseLogs = doseLogs;
         _medications = medications;
+        _custom = custom;
     }
 
     // ── The owner's choice ────────────────────────────────────────────────────
@@ -112,7 +123,7 @@ public class TodayCardService
 
     /// <summary>Put a card in a slot and remember it. Returns the resulting pair, which
     /// may have swapped the two cards — see <see cref="TodayCardConfig.With"/>.</summary>
-    public async Task<TodayCardConfig> SetCardAsync(Pet? pet, TodayCardSlot slot, TodayCardId card)
+    public async Task<TodayCardConfig> SetCardAsync(Pet? pet, TodayCardSlot slot, TodayCardKey card)
     {
         var current = await GetConfigAsync(pet);
         var next = current.With(slot, card);
@@ -123,9 +134,10 @@ public class TodayCardService
         return next;
     }
 
-    /// <summary>"Weight|Mood" → the pair. Anything unparseable (a card removed in a
-    /// later version, a truncated write) falls back to the condition defaults rather
-    /// than showing a broken card.</summary>
+    /// <summary>"Weight|Mood" or "custom:7|Mood" → the pair. Anything unparseable (a card
+    /// removed in a later version, a truncated write) falls back to the condition defaults
+    /// rather than showing a broken card. Preferences written before custom cards existed
+    /// still parse, since a built-in key's stored form is unchanged.</summary>
     private static bool TryParse(string? stored, out TodayCardConfig config)
     {
         config = default;
@@ -134,8 +146,8 @@ public class TodayCardService
 
         var parts = stored.Split('|');
         if (parts.Length != 2
-            || !Enum.TryParse<TodayCardId>(parts[0], out var primary)
-            || !Enum.TryParse<TodayCardId>(parts[1], out var secondary)
+            || !TodayCardKey.TryParse(parts[0], out var primary)
+            || !TodayCardKey.TryParse(parts[1], out var secondary)
             || primary == secondary)
             return false;
 
@@ -149,14 +161,17 @@ public class TodayCardService
     /// <see cref="TodayCardReading.Empty"/> when there is none. Never throws: a card
     /// that can't read its store shows its empty state, the same as a card whose store
     /// is genuinely empty.</summary>
-    public async Task<TodayCardReading> GetReadingAsync(Pet? pet, TodayCardId card)
+    public async Task<TodayCardReading> GetReadingAsync(Pet? pet, TodayCardKey card)
     {
         if (pet is null || pet.Id == 0)
             return TodayCardReading.Empty(card);
 
         try
         {
-            return card switch
+            if (card.IsCustom)
+                return await CustomAsync(pet.Id, card);
+
+            return card.BuiltIn switch
             {
                 TodayCardId.Weight => await WeightAsync(pet.Id),
                 TodayCardId.Mood => await MoodAsync(pet.Id),
@@ -254,6 +269,35 @@ public class TodayCardService
         // caught up the next morning reads as recorded that morning.
         var recorded = log.ResolvedAt ?? log.ScheduledDate + log.ScheduledTime;
         return new TodayCardReading(TodayCardId.Medication, recorded.Date, recorded.TimeOfDay, Text: med.Name);
+    }
+
+    // An owner-defined tracker. The definition is read from the ARCHIVED-inclusive list:
+    // a card pointing at a tracker the owner has since retired must still name it and show
+    // its last reading rather than going blank — retiring means "stop asking", not "forget".
+    //
+    // A definition that cannot be found at all (its row hard-purged with revoked cloud
+    // access) yields an empty card with no name, which the card renders as its neutral
+    // fallback. That is the honest outcome: there is nothing left to name.
+    private async Task<TodayCardReading> CustomAsync(int petId, TodayCardKey card)
+    {
+        var definition = (await _custom.GetAllForPetAsync(petId))
+            .FirstOrDefault(c => c.Id == card.CustomId);
+        if (definition is null)
+            return TodayCardReading.Empty(card);
+
+        var icon = CustomTrackerVisuals.For(definition).Icon;
+        var entry = await _custom.GetMostRecentAsync(definition.Id);
+        if (entry is null)
+            return new TodayCardReading(card, Label: definition.Name, Icon: icon, Unit: definition.Unit);
+
+        // A Tick tracker has no number, so the card states WHEN it happened, exactly as
+        // the seizure card does. An Amount tracker shows the value in the owner's unit.
+        return new TodayCardReading(
+            card, entry.Date, entry.Time,
+            Number: entry.Amount,
+            Label: definition.Name,
+            Icon: icon,
+            Unit: definition.Unit);
     }
 
     /// <summary>True when the first (date, time) is the later of the two; a missing

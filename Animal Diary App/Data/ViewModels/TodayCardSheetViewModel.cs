@@ -11,18 +11,27 @@ using Animal_Diary_App.Helpers;
 /// sheet like everything else.</summary>
 public class TodayCardOption : BaseViewModel
 {
-    public TodayCardOption(TodayCardId card, bool isSelected, bool isOnOtherCard)
+    private readonly string _customName;
+    private readonly string _customIcon;
+
+    public TodayCardOption(TodayCardKey card, bool isSelected, bool isOnOtherCard,
+        string customName = "", string customIcon = "")
     {
         Card = card;
         IsSelected = isSelected;
         IsOnOtherCard = isOnOtherCard;
+        _customName = customName;
+        _customIcon = customIcon;
     }
 
-    public TodayCardId Card { get; }
+    public TodayCardKey Card { get; }
 
-    public string Icon => TodayCardCatalog.Visual(Card).Icon;
+    public string Icon => Card.IsCustom ? _customIcon : TodayCardCatalog.Visual(Card.BuiltIn!.Value).Icon;
 
-    public string Name => TodayCardCatalog.Label(Card);
+    /// <summary>An owner-defined tracker's row is labelled with its own NAME, held as a
+    /// field rather than resolved per read: it is user text, so there is no language for
+    /// it to switch into (see AI/coding-standards.md).</summary>
+    public string Name => Card.IsCustom ? _customName : TodayCardCatalog.Label(Card.BuiltIn!.Value);
 
     /// <summary>This is what the tapped card already shows.</summary>
     public bool IsSelected { get; }
@@ -51,13 +60,15 @@ public class TodayCardOption : BaseViewModel
 public class TodayCardSheetViewModel : BaseViewModel
 {
     private readonly TodayCardService _cards;
+    private readonly CustomTrackerService _custom;
 
     private Pet? _pet;
     private TodayCardSlot _slot;
 
-    public TodayCardSheetViewModel(TodayCardService cards)
+    public TodayCardSheetViewModel(TodayCardService cards, CustomTrackerService custom)
     {
         _cards = cards;
+        _custom = custom;
 
         PickCommand = new Command<TodayCardOption>(async option => await PickAsync(option));
         DismissCommand = new Command(() => IsPresented = false);
@@ -94,8 +105,23 @@ public class TodayCardSheetViewModel : BaseViewModel
         // above is exactly the window a second open could clear inside (see
         // AI/coding-standards.md, "Rebuilding an ObservableCollection").
         var rows = TodayCardCatalog.Cards
-            .Select(meta => new TodayCardOption(meta.Id, meta.Id == mine, meta.Id == theirs))
+            .Select(meta => new TodayCardOption(meta.Id, ((TodayCardKey)meta.Id) == mine, ((TodayCardKey)meta.Id) == theirs))
             .ToList();
+
+        // The owner's own trackers, after the shipped records. The LIVE list, not the
+        // archived-inclusive one: a retired tracker is not something to newly put on
+        // Today, even though a card already pointing at one keeps working.
+        if (pet is not null && pet.Id != 0)
+        {
+            foreach (var c in await _custom.GetForPetAsync(pet.Id))
+            {
+                var key = TodayCardKey.Custom(c.Id);
+                rows.Add(new TodayCardOption(
+                    key, key == mine, key == theirs,
+                    customName: c.Name,
+                    customIcon: CustomTrackerVisuals.For(c).Icon));
+            }
+        }
 
         Options.Clear();
         foreach (var row in rows)

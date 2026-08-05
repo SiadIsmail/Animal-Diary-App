@@ -22,6 +22,7 @@ public class PendingItemsService
     private readonly GlucoseEntryService _glucose;
     private readonly AppetiteEntryService _appetite;
     private readonly WaterEntryService _water;
+    private readonly CustomTrackerService _custom;
 
     public PendingItemsService(
         CarePlanService carePlan,
@@ -29,7 +30,8 @@ public class PendingItemsService
         PetEntryService petEntries,
         GlucoseEntryService glucose,
         AppetiteEntryService appetite,
-        WaterEntryService water)
+        WaterEntryService water,
+        CustomTrackerService custom)
     {
         _carePlan = carePlan;
         _dayDoses = dayDoses;
@@ -37,6 +39,7 @@ public class PendingItemsService
         _glucose = glucose;
         _appetite = appetite;
         _water = water;
+        _custom = custom;
     }
 
     /// <summary>What's still to do for this pet, today.</summary>
@@ -87,7 +90,7 @@ public class PendingItemsService
     // Each tracker's recent entry dates (rolling 7 days, enough for the weekly
     // window). Mood + weight live on PetEntry; glucose, appetite + water in their
     // own tables. Trackers without a store here simply contribute no dates.
-    private async Task<IReadOnlyDictionary<TrackerId, IReadOnlyList<DateTime>>> GatherEntryDatesAsync(int petId, DateTime day)
+    private async Task<IReadOnlyDictionary<TrackerKey, IReadOnlyList<DateTime>>> GatherEntryDatesAsync(int petId, DateTime day)
     {
         var from = day.AddDays(-6);
 
@@ -97,8 +100,11 @@ public class PendingItemsService
         var appetiteAmounts = await _appetite.GetAmountsForRangeAsync(petId, from, day);
         var waterAmounts = await _water.GetAmountsForRangeAsync(petId, from, day);
         var waterLevels = await _water.GetLevelsForRangeAsync(petId, from, day);
+        // Every custom tracker's window in ONE query, grouped below — which is why a pet
+        // with ten of them costs the same here as a pet with one.
+        var customEntries = await _custom.GetForRangeAsync(petId, from, day);
 
-        return new Dictionary<TrackerId, IReadOnlyList<DateTime>>
+        var dates = new Dictionary<TrackerKey, IReadOnlyList<DateTime>>
         {
             [TrackerId.Mood] = petEntries.Where(e => e.MoodLevel > 0).Select(e => e.Date.Date).ToList(),
             [TrackerId.Weight] = petEntries.Where(e => e.Weight > 0).Select(e => e.Date.Date).ToList(),
@@ -112,5 +118,13 @@ public class PendingItemsService
             [TrackerId.Water] = waterAmounts.Select(w => w.Date.Date)
                 .Concat(waterLevels.Select(w => w.Date.Date)).ToList(),
         };
+
+        // One key per custom tracker the pet actually logged in the window. Trackers with
+        // nothing logged contribute no key at all, which the engine already reads as
+        // "nothing written down" rather than as an error.
+        foreach (var group in customEntries.GroupBy(e => e.CustomTrackerId))
+            dates[TrackerKey.Custom(group.Key)] = group.Select(e => e.Date.Date).ToList();
+
+        return dates;
     }
 }

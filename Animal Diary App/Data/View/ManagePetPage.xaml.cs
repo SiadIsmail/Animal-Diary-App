@@ -42,6 +42,7 @@ public partial class ManagePetPage : ContentPage
 
         vm.ManageVM.RequestConditionSetup += OnRequestConditionSetup;
         vm.ManageVM.RequestTrackerSetup += OnRequestTrackerSetup;
+        vm.ManageVM.RequestCustomTracker += OnRequestCustomTracker;
         vm.ManageVM.RequestEditPet += OnRequestEditPet;
         vm.ManageVM.RequestAddMedication += OnRequestAddMedication;
         vm.ManageVM.RequestOpenMedication += OnRequestOpenMedication;
@@ -73,6 +74,15 @@ public partial class ManagePetPage : ContentPage
         vm.DiabetesSetupVM.Saved += OnSheetSaved;
         vm.CkdSetupVM.Saved += OnSheetSaved;
         vm.EpilepsySetupVM.Saved += OnSheetSaved;
+        vm.CustomTrackerVM.Changed += OnSheetSaved;
+        // Retiring an owner-defined tracker has no undo, so it asks first. The
+        // message leads with what is KEPT — nothing written down is affected.
+        vm.CustomTrackerVM.ConfirmRetire = () =>
+            DisplayAlert(
+                LocalizationManager.Instance.GetString("Custom_RetireConfirmTitle"),
+                LocalizationManager.Instance.GetString("Custom_RetireConfirmBody"),
+                LocalizationManager.Instance.GetString("Custom_Retire"),
+                LocalizationManager.Instance.GetString("Common_Cancel"));
 
         try
         {
@@ -91,6 +101,7 @@ public partial class ManagePetPage : ContentPage
 
         vm.ManageVM.RequestConditionSetup -= OnRequestConditionSetup;
         vm.ManageVM.RequestTrackerSetup -= OnRequestTrackerSetup;
+        vm.ManageVM.RequestCustomTracker -= OnRequestCustomTracker;
         vm.ManageVM.RequestEditPet -= OnRequestEditPet;
         vm.ManageVM.RequestAddMedication -= OnRequestAddMedication;
         vm.ManageVM.RequestOpenMedication -= OnRequestOpenMedication;
@@ -98,6 +109,8 @@ public partial class ManagePetPage : ContentPage
         vm.DiabetesSetupVM.Saved -= OnSheetSaved;
         vm.CkdSetupVM.Saved -= OnSheetSaved;
         vm.EpilepsySetupVM.Saved -= OnSheetSaved;
+        vm.CustomTrackerVM.Changed -= OnSheetSaved;
+        vm.CustomTrackerVM.ConfirmRetire = null;
 
         vm.SharingVM.ConfirmLeave = null;
         vm.SharingVM.LeftPet -= OnLeftPet;
@@ -272,6 +285,19 @@ public partial class ManagePetPage : ContentPage
             case Data.Models.TrackerId.Glucose: await vm.DiabetesSetupVM.OpenAsync(linkCondition: false); break;
             case Data.Models.TrackerId.Seizure: await vm.EpilepsySetupVM.OpenAsync(linkCondition: false); break;
         }
+    }
+
+    // The owner's own trackers: one sheet, opened empty to create or on a row to edit.
+    // Gated like every other add/edit action on this page — defining what the app asks
+    // for is editing the care plan, so a read-only state must not reach it.
+    private void OnRequestCustomTracker(Data.Models.CustomTracker? tracker)
+    {
+        if (PaywallBlocks())
+            return;
+        if (tracker is null)
+            vm.CustomTrackerVM.OpenNew();
+        else
+            vm.CustomTrackerVM.OpenEdit(tracker);
     }
 
     /// <summary>Read-only gate for the Manage page's add/edit actions → the subscribe

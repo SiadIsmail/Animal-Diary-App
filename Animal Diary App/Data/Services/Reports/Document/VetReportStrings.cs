@@ -92,6 +92,11 @@ public static class VetReportStrings
 
     // ── Events ────────────────────────────────────────────────────────────────
     public static string SectionEvents => L.GetString("Report_SectionEvents");
+    public static string SectionCustom => L.GetString("Report_CustomSection");
+
+    /// <summary>"4×" — a count of rows, which is a fact. Localized because the
+    /// multiplication sign and its spacing are not universal.</summary>
+    public static string CustomTimes(int count) => L.Format("Report_CustomTimes", count);
     public static string ColDate => L.GetString("Report_ColDate");
     public static string ColTime => L.GetString("Report_ColTime");
     public static string ColEvent => L.GetString("Report_ColEvent");

@@ -35,13 +35,14 @@ public class VetReportService : IVetReportService
         bool includeWaterObservations = true,
         bool includeAppetiteMeasured = true,
         bool includeAppetiteObservations = true,
-        bool includeMood = true)
+        bool includeMood = true,
+        bool includeCustom = true)
     {
         var data = await _builder.BuildAsync(
             petId, from, to, includePhoto,
             includeWaterMeasured, includeWaterObservations,
             includeAppetiteMeasured, includeAppetiteObservations,
-            includeMood);
+            includeMood, includeCustom);
         if (!data.HasAnyData)
             return null;
 

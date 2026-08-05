@@ -24,6 +24,7 @@ public sealed class VetReportDocument
         new WaterSection(),
         new AppetiteSection(),
         new EventsSection(),
+        new CustomSection(),
         new NotesSection(),
     };
 

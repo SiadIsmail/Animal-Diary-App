@@ -56,6 +56,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AppetiteSheetViewModel>();
 		builder.Services.AddSingleton<SeizureSheetViewModel>();
 		builder.Services.AddSingleton<WaterSheetViewModel>();
+		builder.Services.AddSingleton<CustomEntrySheetViewModel>();
 
 		// Today's stat-card picker (which record each of the two cards shows).
 		builder.Services.AddSingleton<TodayCardSheetViewModel>();
@@ -64,6 +65,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<DiabetesSetupSheetViewModel>();
 		builder.Services.AddSingleton<CkdSetupSheetViewModel>();
 		builder.Services.AddSingleton<EpilepsySetupSheetViewModel>();
+		builder.Services.AddSingleton<CustomTrackerSheetViewModel>();
 
 		// Vet-report surfaces, cloud/billing sheets, and the hidden dev panel.
 		builder.Services.AddSingleton<ExportSheetViewModel>();
@@ -98,6 +100,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AppetiteEntryService>();
 		builder.Services.AddSingleton<SeizureEntryService>();
 		builder.Services.AddSingleton<WaterEntryService>();
+		builder.Services.AddSingleton<CustomTrackerService>();
 		builder.Services.AddSingleton<TrackerService>();
 		builder.Services.AddSingleton<PetConditionService>();
 		builder.Services.AddSingleton<CarePlanService>();

@@ -47,6 +47,11 @@ public sealed class VetReportData
     /// newest first.</summary>
     public IReadOnlyList<ReportEvent> Events { get; init; } = Array.Empty<ReportEvent>();
 
+    /// <summary>Whatever the owner tracks themselves and chose to show a vet. Empty
+    /// unless they turned the switch on for at least one tracker — see
+    /// <see cref="ReportCustom"/>.</summary>
+    public ReportCustom Custom { get; init; } = new();
+
     /// <summary>Free-text notes the owner wrote in the period, newest first.
     /// (There is no separate "questions for the vet" concept yet — when one is
     /// added, give it its own list here and its own section.)</summary>
@@ -56,7 +61,7 @@ public sealed class VetReportData
     /// master data. Used to refuse generating an empty document.</summary>
     public bool HasAnyData =>
         Medications.Count > 0 || Trends.Count > 0 || Water.HasContent || Appetite.HasContent
-        || Mood.HasContent || Events.Count > 0 || Notes.Count > 0;
+        || Mood.HasContent || Events.Count > 0 || Notes.Count > 0 || Custom.HasContent;
 }
 
 /// <summary>
@@ -221,3 +226,42 @@ public sealed class ReportEvent
 
 /// <summary>One free-text note the owner wrote (currently the journal's mood note).</summary>
 public sealed record ReportNote(DateTime Date, string Text);
+
+/// <summary>
+/// The trackers the owner defined AND chose to show a vet, with what they recorded in
+/// the range.
+///
+/// <para>Deliberately NOT folded into <see cref="ReportEvent"/>: that is a closed
+/// <see cref="ReportEventKind"/> the document knows how to word, and these are named by
+/// the owner. A custom tracker carries its own label, printed verbatim like a pet or
+/// medication name — the document translates nothing here.</para>
+///
+/// <para>Trackers whose switch is off never reach this object at all, so nothing
+/// downstream has to remember to filter. See <see cref="Models.CustomTracker.IncludeInReport"/>.</para>
+/// </summary>
+public sealed class ReportCustom
+{
+    public IReadOnlyList<ReportCustomTracker> Trackers { get; init; } = Array.Empty<ReportCustomTracker>();
+
+    /// <summary>Every entry across those trackers, newest first — the section prints one
+    /// dated table rather than a block per tracker, so a vet reads them in the order they
+    /// happened.</summary>
+    public IReadOnlyList<ReportCustomEntry> Entries { get; init; } = Array.Empty<ReportCustomEntry>();
+
+    public bool HasContent => Entries.Count > 0;
+}
+
+/// <summary>One owner-defined tracker that reached the report, with how many times it
+/// was recorded in the range. The count is a fact (rows counted), which is the only kind
+/// of arithmetic this section does.</summary>
+public sealed record ReportCustomTracker(string Name, string Unit, int Count);
+
+/// <summary>One dated occurrence of an owner-defined tracker. <paramref name="Name"/> and
+/// <paramref name="Unit"/> are the owner's own words and are printed verbatim.</summary>
+public sealed record ReportCustomEntry(
+    string Name,
+    string Unit,
+    DateTime Date,
+    TimeSpan? Time,
+    decimal? Amount,
+    string? Note);

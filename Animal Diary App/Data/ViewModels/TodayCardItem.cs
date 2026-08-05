@@ -39,15 +39,15 @@ public class TodayCardItem : BaseViewModel
     /// <summary>Which of the two cards this is — the slot the picker writes back to.</summary>
     public TodayCardSlot Slot { get; }
 
-    /// <summary>Which record the card currently holds.</summary>
-    public TodayCardId Card { get; private set; } = TodayCardId.Weight;
+    /// <summary>Which record the card currently holds — shipped or owner-defined.</summary>
+    public TodayCardKey Card { get; private set; } = TodayCardId.Weight;
 
     /// <summary>The whole card is the target: tapping anywhere on it opens the picker.
     /// The pencil in the corner is a cue, never the only way in.</summary>
     public ICommand TapCommand { get; }
 
     /// <summary>Point the card at a record and give it that record's latest value.</summary>
-    public void Apply(TodayCardId card, TodayCardReading reading)
+    public void Apply(TodayCardKey card, TodayCardReading reading)
     {
         Card = card;
         _reading = reading;
@@ -79,11 +79,18 @@ public class TodayCardItem : BaseViewModel
     /// <summary>"Last weigh-in", "Last seizure" — every card names a record, never a
     /// running total. The wording rule that keeps a seizure card from ever reading as a
     /// streak lives in the catalog's strings, so no surface can reintroduce one.</summary>
-    public string Label => TodayCardCatalog.Label(Card);
+    /// <para>An owner-defined tracker's label is its own NAME, carried on the reading as
+    /// verbatim user text — never a localization key. The fallback covers a tracker whose
+    /// row has vanished (a hard purge), where there is genuinely nothing left to name.</para>
+    public string Label => Card.IsCustom
+        ? (_reading.Label.Length > 0 ? _reading.Label : LocalizationManager.Instance.GetString("Today_CardCustom"))
+        : TodayCardCatalog.Label(Card.BuiltIn!.Value);
 
     /// <summary>The same emoji the Journal's chip and timeline tile use for this record
     /// (<see cref="TrackerVisuals"/>), so a customized card is recognizable at a glance.</summary>
-    public string Icon => TodayCardCatalog.Visual(Card).Icon;
+    public string Icon => Card.IsCustom
+        ? (_reading.Icon.Length > 0 ? _reading.Icon : CustomTrackerVisuals.DefaultIcon)
+        : TodayCardCatalog.Visual(Card.BuiltIn!.Value).Icon;
 
     public bool HasData => _reading.HasData;
 
@@ -97,7 +104,12 @@ public class TodayCardItem : BaseViewModel
             if (!HasData)
                 return string.Empty;
 
-            return Card switch
+            // A custom tracker either recorded a number or only that it happened; the
+            // second states WHEN, exactly as the seizure card does.
+            if (Card.IsCustom)
+                return _reading.Number is decimal own ? own.ToString("0.#") : Stamp();
+
+            return Card.BuiltIn switch
             {
                 TodayCardId.Mood => _reading.Mood.GetDisplayName(),
                 TodayCardId.Medication => _reading.Text,
@@ -123,7 +135,11 @@ public class TodayCardItem : BaseViewModel
             if (!HasData || _reading.Number is null)
                 return string.Empty;
 
-            var key = Card switch
+            // The owner's own unit, in their own words — printed, never looked up.
+            if (Card.IsCustom)
+                return _reading.Unit.Trim().Length > 0 ? " " + _reading.Unit.Trim() : string.Empty;
+
+            var key = Card.BuiltIn switch
             {
                 TodayCardId.Weight => "Common_KgSuffix",
                 TodayCardId.Glucose => "Common_MmolSuffix",
@@ -143,7 +159,9 @@ public class TodayCardItem : BaseViewModel
     /// <summary>A number gets the big serif treatment; a word or a name gets the smaller
     /// one so a long mood or medication still fits a half-width card. A presentation
     /// hint held on the VM — the same accepted convention as <c>TimelineItem</c>'s tint.</summary>
-    public double ValueFontSize => Card switch
+    public double ValueFontSize => Card.IsCustom
+        ? (_reading.Number is null ? 18 : 27)
+        : Card.BuiltIn switch
     {
         TodayCardId.Seizure => 18,
         TodayCardId.Mood or TodayCardId.Medication => 20,
@@ -153,7 +171,7 @@ public class TodayCardItem : BaseViewModel
 
     /// <summary>The mood card alone carries a colour swatch + face; it ties the card to
     /// the mood ribbon's legend further down the page.</summary>
-    public bool ShowMood => HasData && Card == TodayCardId.Mood;
+    public bool ShowMood => HasData && Card.Is(TodayCardId.Mood);
 
     public string MoodEmoji => ShowMood ? _reading.Mood.GetEmoji() : string.Empty;
 

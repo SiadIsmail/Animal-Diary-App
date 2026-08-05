@@ -36,7 +36,8 @@ public class AddConditionChipItem : IConditionChipItem
 /// breadcrumb of the condition that introduced it.</summary>
 public class CarePlanRow
 {
-    public TrackerId TrackerId { get; init; }
+    /// <summary>Which tracker this row edits — a shipped one or one the owner made up.</summary>
+    public TrackerKey Key { get; init; }
     public string? FromCondition { get; init; }
     public string Icon { get; init; } = string.Empty;
     public Color IconBackground { get; init; } = Colors.Transparent;
@@ -60,9 +61,14 @@ public class ManageMedRow
 /// "Add a tracker" sheet.</summary>
 public class AddTrackerOption
 {
-    public TrackerId TrackerId { get; init; }
+    /// <summary>Which shipped tracker this offers, or null for the "add your own" row —
+    /// the one option that opens the custom sheet instead of adding a tracker outright.</summary>
+    public TrackerId? TrackerId { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Icon { get; init; } = string.Empty;
+
+    /// <summary>The last row: "something else", which starts the owner's own tracker.</summary>
+    public bool IsCustom => TrackerId is null;
 }
 
 public class AddConditionOption
@@ -119,6 +125,7 @@ public class ManagePetViewModel : BaseViewModel
     private readonly PetConditionService _conditions;
     private readonly TrackerService _trackers;
     private readonly CarePlanService _carePlan;
+    private readonly CustomTrackerService _custom;
     private readonly MedicationService _medications;
     private readonly PetDeletionService _deletion;
     private readonly PetPauseService _pause;
@@ -130,6 +137,7 @@ public class ManagePetViewModel : BaseViewModel
         PetConditionService conditions,
         TrackerService trackers,
         CarePlanService carePlan,
+        CustomTrackerService custom,
         MedicationService medications,
         PetDeletionService deletion,
         PetPauseService pause,
@@ -140,6 +148,7 @@ public class ManagePetViewModel : BaseViewModel
         _conditions = conditions;
         _trackers = trackers;
         _carePlan = carePlan;
+        _custom = custom;
         _medications = medications;
         _deletion = deletion;
         _pause = pause;
@@ -181,6 +190,11 @@ public class ManagePetViewModel : BaseViewModel
     /// <see cref="RequestConditionSetup"/> because it reuses the same sheets WITHOUT
     /// linking their condition — editing a target range must not record a diagnosis.</summary>
     public event Action<TrackerId>? RequestTrackerSetup;
+
+    /// <summary>Open the owner's own tracker sheet: the row to edit, or null to create
+    /// one. The single door to every custom tracker — there is no per-tracker editor.</summary>
+    public event Action<CustomTracker?>? RequestCustomTracker;
+
     /// <summary>Open the edit-pet door (prefilled CreatePetPage).</summary>
     public event Action? RequestEditPet;
     /// <summary>Open the medication add flow.</summary>
@@ -345,6 +359,9 @@ public class ManagePetViewModel : BaseViewModel
         // Gather everything before touching the observable collections.
         var conditionIds = await _conditions.GetConditionIdsAsync(pet);
         var plan = (await _carePlan.GetPlanAsync(pet)).ToList();
+        // The owner's own definitions, so a custom row can render its name, emoji and
+        // colour. The plan carries only cadence — the identity lives on the row.
+        _customById = (await _custom.GetForPetAsync(pet.Id)).ToDictionary(c => c.Id);
         var meds = (await _medications.GetMedicationsByPetIdAsync(pet.Id))
             .Where(m => !m.IsArchived).ToList();
 
@@ -361,7 +378,11 @@ public class ManagePetViewModel : BaseViewModel
         foreach (var t in plan)
             CarePlanRows.Add(BuildRow(t));
 
-        CanAddTracker = CarePlanRows.Count < System.Enum.GetValues<TrackerId>().Length;
+        // The row stays while there is anything left to add — a shipped tracker not yet
+        // in the plan, OR room for one more of the owner's own. Counting only the shipped
+        // ones would hide "add your own" the moment a pet used all six.
+        CanAddTracker = CarePlanRows.Count(r => !r.Key.IsCustom) < System.Enum.GetValues<TrackerId>().Length
+            || _customById.Count < CustomTrackerService.MaxPerPet;
 
         Medications.Clear();
         foreach (var m in meds)
@@ -456,24 +477,46 @@ public class ManagePetViewModel : BaseViewModel
     }
 
     // ── Care-plan row build ──────────────────────────────────────────────────────
-    private CarePlanRow BuildRow(Tracker t)
+    /// <summary>The pet's own tracker definitions by row id, for rendering custom
+    /// care-plan rows. Refilled by every <see cref="LoadAsync"/>.</summary>
+    private Dictionary<int, CustomTracker> _customById = new();
+
+    private CarePlanRow BuildRow(CarePlanItem t)
     {
-        var (icon, bg, fg) = Visual(t.TrackerId);
+        // A custom line takes its name, emoji and colour from the owner's own row; a
+        // shipped one from the static table. The name is USER TEXT — shown verbatim,
+        // never passed through the localizer.
+        if (t.Key.IsCustom)
+        {
+            var def = _customById.GetValueOrDefault(t.Key.CustomId);
+            var v = CustomTrackerVisuals.For(def);
+            return new CarePlanRow
+            {
+                Key = t.Key,
+                Icon = v.Icon,
+                IconBackground = AppColors.Resolve(v.RowTintKey),
+                IconForeground = AppColors.Resolve(v.RowInkKey),
+                Title = def?.Name ?? string.Empty,
+                Description = Describe(t),
+            };
+        }
+
+        var (icon, bg, fg) = Visual(t.Key.BuiltIn);
         var from = t.FromCondition;
         return new CarePlanRow
         {
-            TrackerId = t.TrackerId,
+            Key = t.Key,
             FromCondition = from,
             Icon = icon,
             IconBackground = bg,
             IconForeground = fg,
-            Title = Loc.GetString(LabelKey(t.TrackerId)),
+            Title = Loc.GetString(LabelKey(t.Key.BuiltIn)),
             Description = Describe(t),
             FromLabel = string.IsNullOrEmpty(from) ? string.Empty : ConditionCatalog.GetCondition(from).Name
         };
     }
 
-    private static string Describe(Tracker t)
+    private static string Describe(CarePlanItem t)
     {
         string freq = t.Kind switch
         {
@@ -486,7 +529,12 @@ public class ManagePetViewModel : BaseViewModel
             _ => string.Empty
         };
 
-        if (t.TrackerId == TrackerId.Glucose && t.Kind != TrackerKind.Event)
+        // A custom tracker's unit is the only thing its row adds beyond the cadence, and
+        // only when it records a number: "Once a day · min".
+        if (t.Key.IsCustom)
+            return string.IsNullOrWhiteSpace(t.Unit) ? freq : $"{freq} · {t.Unit}";
+
+        if (t.Key.Is(TrackerId.Glucose) && t.Kind != TrackerKind.Event)
         {
             string target = t.TargetRange is { } r
                 ? Loc.Format("Manage_GlucoseTarget", r.Lo.ToString("0.0", Ci), r.Hi.ToString("0.0", Ci))
@@ -510,9 +558,22 @@ public class ManagePetViewModel : BaseViewModel
         // hand-added Glucose can no longer land in a picker that offers neither its
         // per-day frequency nor its range, and silently overwrite both on save.
         // The sheets are opened WITHOUT linking their condition: see LinkCondition.
-        if (row.TrackerId is TrackerId.Glucose or TrackerId.Seizure)
+        // A custom tracker has no shipped editor and no condition behind it — the one
+        // custom sheet owns its name, look, shape and cadence together, so it is checked
+        // before everything else.
+        if (row.Key.IsCustom)
         {
-            RequestTrackerSetup?.Invoke(row.TrackerId);
+            if (_customById.TryGetValue(row.Key.CustomId, out var def))
+                RequestCustomTracker?.Invoke(def);
+            return;
+        }
+
+        if (row.Key.BuiltIn is not TrackerId builtIn)
+            return;
+
+        if (builtIn is TrackerId.Glucose or TrackerId.Seizure)
+        {
+            RequestTrackerSetup?.Invoke(builtIn);
             return;
         }
 
@@ -522,7 +583,7 @@ public class ManagePetViewModel : BaseViewModel
             return;
         }
 
-        await OpenAdjustSheetAsync(row.TrackerId);
+        await OpenAdjustSheetAsync(builtIn);
     }
 
     private void OnOpenCondition(ManageConditionChip? chip)
@@ -596,8 +657,8 @@ public class ManagePetViewModel : BaseViewModel
     // wanting to note water shouldn't require claiming a kidney diagnosis.
     private void OpenAddTrackerSheet()
     {
-        var already = CarePlanRows.Select(r => r.TrackerId).ToHashSet();
-        AddTrackerOptions = System.Enum.GetValues<TrackerId>()
+        var already = CarePlanRows.Select(r => r.Key.BuiltIn).ToHashSet();
+        var options = System.Enum.GetValues<TrackerId>()
             .Where(id => !already.Contains(id))
             .Select(id =>
             {
@@ -605,6 +666,19 @@ public class ManagePetViewModel : BaseViewModel
                 return new AddTrackerOption { TrackerId = id, Name = Loc.GetString(LabelKey(id)), Icon = icon };
             })
             .ToList();
+
+        // "Something else" sits LAST and always, unless the pet is already at the cap.
+        // Last because the shipped six answer most of what people want and need no
+        // setup; always because the whole point is that the list is not the limit.
+        if (_customById.Count < CustomTrackerService.MaxPerPet)
+            options.Add(new AddTrackerOption
+            {
+                TrackerId = null,
+                Name = Loc.GetString("Custom_AddOwn"),
+                Icon = "✎",
+            });
+
+        AddTrackerOptions = options;
         IsAddTrackerSheetVisible = true;
     }
 
@@ -615,6 +689,14 @@ public class ManagePetViewModel : BaseViewModel
 
         IsAddTrackerSheetVisible = false;
 
+        // "Something else" hands straight over to the custom sheet — nothing is created
+        // until the owner has named it, so backing out of that sheet leaves no trace.
+        if (option.TrackerId is not TrackerId trackerId)
+        {
+            RequestCustomTracker?.Invoke(null);
+            return;
+        }
+
         var pet = _activePet.ActivePet;
         if (pet == null || pet.Id == 0)
             return;
@@ -622,8 +704,8 @@ public class ManagePetViewModel : BaseViewModel
         // Same cadence a condition would have given it, so a hand-added tracker and a
         // seeded one are indistinguishable once they exist. FromCondition stays null:
         // this is the owner's own choice, and removing a condition must never take it.
-        var seed = CarePlanCatalog.DefaultFor(option.TrackerId);
-        await _trackers.UpsertAsync(pet.Id, option.TrackerId, (t, _) =>
+        var seed = CarePlanCatalog.DefaultFor(trackerId);
+        await _trackers.UpsertAsync(pet.Id, trackerId, (t, _) =>
         {
             t.Kind = seed.Kind;
             t.PerDayCount = seed.PerDayCount;
@@ -891,11 +973,14 @@ public class ManagePetViewModel : BaseViewModel
                 _ => "Manage_Event"
             });
 
-    private static string LabelKey(TrackerId id) => TrackerVisuals.For(id).LabelKey;
+    // Nullable, because a care-plan line may be a custom tracker, which has no entry in
+    // the shipped table — those fall to TrackerVisuals.Fallback until Phase 2 builds a
+    // visual from the owner's own row.
+    private static string LabelKey(TrackerId? id) => TrackerVisuals.For(id).LabelKey;
 
     // Rockpool icon + row tint/ink per tracker, from the shared TrackerVisuals table
     // and resolved against Colors.xaml — never hex literals, which no theme can reach.
-    private static (string icon, Color bg, Color fg) Visual(TrackerId id)
+    private static (string icon, Color bg, Color fg) Visual(TrackerId? id)
     {
         var v = TrackerVisuals.For(id);
         return (v.Icon, AppColors.Resolve(v.RowTintKey), AppColors.Resolve(v.RowInkKey));

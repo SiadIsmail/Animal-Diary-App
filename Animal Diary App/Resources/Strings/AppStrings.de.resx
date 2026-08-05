@@ -790,4 +790,51 @@
   <data name="Feedback_EmailTitle" xml:space="preserve"><value>E-Mail schreiben</value></data>
   <data name="Feedback_EmailSubject" xml:space="preserve"><value>Felova Feedback</value></data>
   <data name="Feedback_Footer" xml:space="preserve"><value>Gebaut von zwei Menschen und einem Hund.</value></data>
+  <!-- Eigene Tracker (Verwalten → „Etwas anderes"). Der NAME ist Nutzertext:
+       wird wortwörtlich gezeigt und nie übersetzt. -->
+  <data name="Custom_AddOwn" xml:space="preserve"><value>Etwas anderes</value></data>
+  <data name="Custom_AddTitle" xml:space="preserve"><value>Etwas anderes festhalten</value></data>
+  <data name="Custom_AddSub" xml:space="preserve"><value>Gib ihm einen Namen, dann fragt das Journal danach</value></data>
+  <data name="Custom_EditTitle" xml:space="preserve"><value>Dein eigener Tracker</value></data>
+  <data name="Custom_EditSub" xml:space="preserve"><value>Ändere, was du willst. Alles Festgehaltene bleibt</value></data>
+  <data name="Custom_PresetsLabel" xml:space="preserve"><value>Vorlage</value></data>
+  <data name="Custom_NameLabel" xml:space="preserve"><value>Name</value></data>
+  <data name="Custom_NamePlaceholder" xml:space="preserve"><value>Gassi, Bürsten, Ohrentropfen</value></data>
+  <data name="Custom_NameRequired" xml:space="preserve"><value>Gib ihm zuerst einen Namen</value></data>
+  <data name="Custom_NameTooLong" xml:space="preserve"><value>Etwas kürzer bitte. Höchstens {0} Zeichen</value></data>
+  <data name="Custom_TooMany" xml:space="preserve"><value>Das sind schon {0} eigene. Lege einen still, um Platz zu machen</value></data>
+  <data name="Custom_IconLabel" xml:space="preserve"><value>Symbol</value></data>
+  <data name="Custom_ColorLabel" xml:space="preserve"><value>Farbe</value></data>
+  <data name="Custom_ShapeLabel" xml:space="preserve"><value>Was du festhältst</value></data>
+  <data name="Custom_ShapeTick" xml:space="preserve"><value>Dass es passiert ist</value></data>
+  <data name="Custom_ShapeAmount" xml:space="preserve"><value>Eine Zahl</value></data>
+  <data name="Custom_UnitLabel" xml:space="preserve"><value>Einheit</value></data>
+  <data name="Custom_UnitPlaceholder" xml:space="preserve"><value>Min., km, Näpfe</value></data>
+  <data name="Custom_CadenceLabel" xml:space="preserve"><value>Wie oft</value></data>
+  <data name="Custom_Retire" xml:space="preserve"><value>Nicht mehr danach fragen</value></data>
+  <data name="CustomPreset_Walk" xml:space="preserve"><value>Gassi</value></data>
+  <data name="CustomPreset_WalkUnit" xml:space="preserve"><value>Min.</value></data>
+  <data name="CustomPreset_Poop" xml:space="preserve"><value>Häufchen</value></data>
+  <data name="CustomPreset_Groom" xml:space="preserve"><value>Fellpflege</value></data>
+  <data name="CustomPreset_Sick" xml:space="preserve"><value>Erbrochen</value></data>
+  <data name="CustomPreset_Play" xml:space="preserve"><value>Spielen</value></data>
+  <data name="CustomPreset_PlayUnit" xml:space="preserve"><value>Min.</value></data>
+  <data name="Custom_RetireConfirmTitle" xml:space="preserve"><value>Nicht mehr danach fragen?</value></data>
+  <data name="Custom_RetireConfirmBody" xml:space="preserve"><value>Er verschwindet aus dem Journal und aus dem Plan. Alles, was du schon festgehalten hast, bleibt genau da, wo es ist, und steht weiter in der Zusammenfassung für die Praxis.</value></data>
+  <!-- Journal-Oberflächen für eigene Tracker. {0} ist der selbst vergebene Name:
+       Nutzertext, der in eine Vorlage eingesetzt und nie zusammengebaut wird. -->
+  <data name="Journal_CustomSub" xml:space="preserve"><value>{0:ddd, d. MMM}</value></data>
+  <data name="Journal_CustomAmountLabel" xml:space="preserve"><value>Wie viel · optional</value></data>
+  <data name="Journal_CustomAmountPlaceholder" xml:space="preserve"><value>Eine Zahl</value></data>
+  <data name="Journal_CustomNotePlaceholder" xml:space="preserve"><value>Was du dir merken willst</value></data>
+  <data name="Journal_ToastCustom" xml:space="preserve"><value>{0} festgehalten.</value></data>
+  <data name="Journal_A11yLogCustom" xml:space="preserve"><value>{0} festhalten</value></data>
+  <data name="Custom_InReportLabel" xml:space="preserve"><value>In der Zusammenfassung</value></data>
+  <data name="Custom_InReportHint" xml:space="preserve"><value>Gassi meistens nicht. Erbrechen meistens schon.</value></data>
+  <data name="Export_IncludeCustom" xml:space="preserve"><value>Was du selbst festhältst</value></data>
+  <data name="Report_CustomSection" xml:space="preserve"><value>Weiteres Festgehaltenes</value></data>
+  <data name="Report_CustomTimes" xml:space="preserve"><value>{0}×</value></data>
+  <data name="Export_CustomLabel" xml:space="preserve"><value>Deine eigenen Tracker</value></data>
+  <data name="Today_EmptyCustom" xml:space="preserve"><value>Noch nichts festgehalten. Trag es im Journal ein.</value></data>
+  <data name="Today_CardCustom" xml:space="preserve"><value>Dein eigener Tracker</value></data>
 </root>

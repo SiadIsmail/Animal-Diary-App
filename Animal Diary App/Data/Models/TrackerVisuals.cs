@@ -65,6 +65,16 @@ public static class TrackerVisuals
     public static TrackerVisual For(TrackerId? id) =>
         id is TrackerId t && Map.TryGetValue(t, out var v) ? v : Fallback;
 
+    /// <summary>
+    /// The visual for any tracker key. A CUSTOM tracker is not in this table and never
+    /// will be — its icon and colour are owner data, held on its own row — so this
+    /// answers <see cref="Fallback"/> for one. Callers holding the definition build the
+    /// visual from it instead (see <c>CustomTrackerVisuals</c>); callers that don't get
+    /// the plainly-unfinished dot rather than a borrowed identity.
+    /// </summary>
+    public static TrackerVisual For(TrackerKey? key) =>
+        key is { IsCustom: false } k ? For(k.BuiltIn) : Fallback;
+
     /// <summary>The tracker's localized name, resolved now (never cached).</summary>
     public static string Label(TrackerId? id) =>
         Helpers.LocalizationManager.Instance.GetString(For(id).LabelKey);
