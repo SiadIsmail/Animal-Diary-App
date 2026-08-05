@@ -111,13 +111,25 @@ public class PetPhotoService
         using var decoded = Android.Graphics.BitmapFactory.DecodeByteArray(bytes, 0, bytes.Length, options)
             ?? throw new InvalidOperationException("BitmapFactory returned no bitmap.");
 
+        // Paired with the tag log above. A quarter-turn tag (90/270) on a bitmap that is
+        // ALREADY taller than wide means the camera app rotated the pixels itself and
+        // left the tag behind — rotating again is what puts the photo back on its side.
+        // A phone sensor frame is always landscape before rotation, so this is decidable.
+        Debug.WriteLine(
+            $"[PetPhoto] decoded {decoded.Width}x{decoded.Height}, applying {degrees}° mirror={mirrored}");
+
         // Orientation and the final downscale ride one matrix, so the pixels are only
         // copied once however much has to happen to them.
+        //
+        // ROTATE THEN MIRROR, in that order. The two don't commute for the quarter-turn
+        // orientations (5 transpose, 7 transverse), and doing it the other way around
+        // reflects those across the wrong axis. It makes no difference to 2 and 4, whose
+        // rotation is 0° or 180° — those do commute with a horizontal flip.
         var matrix = new Android.Graphics.Matrix();
-        if (mirrored)
-            matrix.PostScale(-1, 1);
         if (degrees != 0)
             matrix.PostRotate(degrees);
+        if (mirrored)
+            matrix.PostScale(-1, 1);
 
         var longestEdge = Math.Max(decoded.Width, decoded.Height);
         if (longestEdge > MaxEdgePixels)
@@ -150,13 +162,25 @@ public class PetPhotoService
 
     /// <summary>The EXIF orientation tag as a rotation plus a mirror flag. Values are
     /// the standard EXIF constants (1 = as-shot) rather than the platform enum, so the
-    /// mapping reads the same as the spec.</summary>
+    /// mapping reads the same as the spec.
+    ///
+    /// Uses AndroidX's reader, not the framework's: <c>android.media.ExifInterface</c> is
+    /// deprecated and covers fewer format quirks, and a tag it fails to read is a photo
+    /// that silently arrives sideways.</summary>
     private static (int Degrees, bool Mirrored) ReadExifOrientation(Stream stream)
     {
         try
         {
-            using var exif = new Android.Media.ExifInterface(stream);
-            return exif.GetAttributeInt(Android.Media.ExifInterface.TagOrientation, 1) switch
+            using var exif = new AndroidX.ExifInterface.Media.ExifInterface(stream);
+            var tag = exif.GetAttributeInt(
+                AndroidX.ExifInterface.Media.ExifInterface.TagOrientation, 1);
+
+            // Deliberately noisy while the "photos still rotate randomly" report is open:
+            // this line plus the decoded dimensions below distinguishes "no tag was
+            // present" from "the tag was read and the pixels were already upright".
+            Debug.WriteLine($"[PetPhoto] EXIF orientation tag = {tag}");
+
+            return tag switch
             {
                 2 => (0, true),     // flip horizontal
                 3 => (180, false),
