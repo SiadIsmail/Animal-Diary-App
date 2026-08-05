@@ -402,6 +402,9 @@ public class ManagePetViewModel : BaseViewModel
         Conditions.Clear();
         RebuildConditionItems();
         CarePlanRows.Clear();
+        // The definitions belong to the pet that just went away — keeping them would let
+        // the "add your own" cap be judged against another pet's trackers.
+        _customById = new Dictionary<int, CustomTracker>();
         Medications.Clear();
         OnPropertyChanged(nameof(HasCarePlan));
         OnPropertyChanged(nameof(HasNoCarePlan));

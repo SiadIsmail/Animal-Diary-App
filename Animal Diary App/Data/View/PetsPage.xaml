@@ -182,11 +182,23 @@
                                      medication count. Empty when it has neither. -->
                                 <FlexLayout Wrap="Wrap"
                                             Direction="Row"
+                                            AlignItems="Start"
                                             Margin="0,8,0,0"
                                             BindableLayout.ItemsSource="{Binding PetVM.ActivePetTags}">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="vms:PetProfileTag">
-                                            <Border BackgroundColor="{StaticResource Well}"
+                                            <!-- Shrink="0": a chip is sized by its text and must never be
+                                                 compressed below it. FlexLayout defaults Shrink="1", so an
+                                                 overflowing row squeezes its items — and because this chip's
+                                                 content is a bare Label (every other chip row in the app puts
+                                                 a HorizontalStackLayout in between), the Label absorbed the
+                                                 squeeze by word-wrapping to a second line that the one-line
+                                                 pill then clipped. That is why "Epilepsie / Anfälle" rendered
+                                                 as "Epilepsie /" with no ellipsis. Wrap="Wrap" already gives
+                                                 an oversized chip its own row, which is the behaviour we want
+                                                 instead of compression. -->
+                                            <Border FlexLayout.Shrink="0"
+                                                    BackgroundColor="{StaticResource Well}"
                                                     StrokeThickness="0"
                                                     StrokeShape="RoundRectangle 999"
                                                     Padding="10,4"
@@ -196,7 +208,14 @@
                                                         <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
                                                     </DataTrigger>
                                                 </Border.Triggers>
+                                                <!-- NoWrap over the Label default of WordWrap: a pill is a
+                                                     one-line shape, so there is no second line for the Border
+                                                     to clip. It also makes the Label report the full string
+                                                     width when measured, so the chip asks for the room the
+                                                     German copy actually needs rather than settling for
+                                                     whatever the star column offered. -->
                                                 <Label Text="{Binding Label}"
+                                                       LineBreakMode="NoWrap"
                                                        FontFamily="{StaticResource FontSans}"
                                                        FontSize="11"
                                                        FontAttributes="Bold"
