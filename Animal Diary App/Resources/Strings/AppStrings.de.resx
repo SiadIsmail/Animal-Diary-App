@@ -524,10 +524,18 @@
   <data name="CreatePet_PhotoSheetTitle" xml:space="preserve"><value>Profilbild</value></data>
   <data name="CreatePet_PhotoTake" xml:space="preserve"><value>Foto aufnehmen</value></data>
   <data name="CreatePet_PhotoChoose" xml:space="preserve"><value>Aus Galerie wählen</value></data>
+  <data name="CreatePet_PhotoAdjust" xml:space="preserve"><value>Zuschneiden und drehen</value></data>
   <data name="CreatePet_PhotoRemove" xml:space="preserve"><value>Foto entfernen</value></data>
   <data name="CreatePet_PhotoError" xml:space="preserve"><value>Dieses Foto konnte nicht hinzugefügt werden. Bitte versuche ein anderes.</value></data>
   <data name="CreatePet_PhotoPermissionDenied" xml:space="preserve"><value>Der Fotozugriff wurde verweigert. Du kannst ihn in den Einstellungen erlauben.</value></data>
   <data name="CreatePet_PhotoCaptureUnsupported" xml:space="preserve"><value>Dieses Gerät kann keine Fotos aufnehmen.</value></data>
+
+  <!-- ── Fotoeditor (zuschneiden + drehen, bevor das Foto zum Profilbild wird) ── -->
+  <data name="PhotoEdit_Title" xml:space="preserve"><value>Foto anpassen</value></data>
+  <data name="PhotoEdit_Hint" xml:space="preserve"><value>Zum Verschieben ziehen, zum Zoomen zwei Finger.</value></data>
+  <data name="PhotoEdit_TurnLeft" xml:space="preserve"><value>Nach links drehen</value></data>
+  <data name="PhotoEdit_TurnRight" xml:space="preserve"><value>Nach rechts drehen</value></data>
+  <data name="PhotoEdit_Use" xml:space="preserve"><value>Dieses Foto verwenden</value></data>
   <data name="CreatePet_BirthdayLabel" xml:space="preserve"><value>Geburtstag</value></data>
   <data name="CreatePet_BirthdayHint" xml:space="preserve"><value>Nur das Jahr ist erforderlich. Monat und Tag kannst du ergänzen, wenn du sie kennst.</value></data>
   <data name="CreatePet_BirthYearLabel" xml:space="preserve"><value>Jahr</value></data>

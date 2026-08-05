@@ -75,6 +75,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<TrialMessageViewModel>();
 		builder.Services.AddSingleton<FeedbackSheetViewModel>();
 		builder.Services.AddSingleton<ConfirmSheetViewModel>();
+		// Crop + rotate, between picking a photo and it becoming a pet's avatar.
+		builder.Services.AddSingleton<PhotoEditorSheetViewModel>();
 		builder.Services.AddSingleton<DevSheetViewModel>();
 
 		// ── Data / SQLite ────────────────────────────────────────────────────

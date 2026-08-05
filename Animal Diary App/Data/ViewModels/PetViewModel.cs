@@ -228,6 +228,38 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         DraftPhotoFileName = newName;
     }
 
+    /// <summary>Stage a newly picked/captured photo for the crop-and-rotate editor. Does
+    /// NOT touch the draft: nothing about the pet's photo changes until the owner is happy
+    /// with what they see, so backing out of the editor leaves the previous photo (or no
+    /// photo) exactly as it was.</summary>
+    public Task<PhotoEditSource> PrepareDraftPhotoAsync(Stream source) =>
+        _photos.PrepareForEditAsync(source);
+
+    /// <summary>The current draft photo as an editor source, so a photo that arrived
+    /// crooked can be fixed without picking it again. Null when there is no photo to
+    /// edit.</summary>
+    public PhotoEditSource? DescribeDraftPhoto() =>
+        DraftPhotoPath is { } path && File.Exists(path) ? _photos.Describe(path) : null;
+
+    /// <summary>Write the edited photo and make it the draft. Same bookkeeping as
+    /// <see cref="SetDraftPhotoAsync"/> — the previous file goes only if it was a
+    /// throwaway, never if it is the photo the pet is currently saved with — plus dropping
+    /// the staged copy the editor was working from.</summary>
+    public async Task ApplyDraftPhotoAsync(PhotoEditSource source, PhotoTransform transform)
+    {
+        var newName = await _photos.ApplyAsync(source, transform);
+        DeleteThrowawayDraft();
+        DraftPhotoFileName = newName;
+
+        // Both deletes happen after the write, never before it: re-cropping an existing
+        // draft reads the very file this bookkeeping is about to remove.
+        _photos.DiscardEditSource(source);
+    }
+
+    /// <summary>Throw away a staged edit the owner backed out of. A no-op for a pet's real
+    /// photo — cancelling a re-crop must leave the avatar untouched.</summary>
+    public void DiscardPhotoEdit(PhotoEditSource? source) => _photos.DiscardEditSource(source);
+
     /// <summary>Clear the draft photo (the "Remove photo" action). Deletes a throwaway
     /// draft file; if the draft is the pet's committed photo, only the reference is
     /// cleared here — the file itself is removed on save.</summary>

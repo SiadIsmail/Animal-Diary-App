@@ -15,6 +15,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
              xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
              x:DataType="vms:MainViewModel"
              x:Class="Animal_Diary_App.Data.View.CreatePetPage"
@@ -214,6 +215,25 @@
                                Padding="0,14"/>
                     </Border>
 
+                    <!-- Crop and rotate the photo that is already there — the door back
+                         into the editor for a photo that arrived crooked, so fixing it
+                         never means taking it again. -->
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13"
+                            IsVisible="{Binding PetVM.HasDraftPhoto}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnAdjustPhoto"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CreatePet_PhotoAdjust}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
                     <!-- Remove — only when a photo is set -->
                     <Border BackgroundColor="{StaticResource Glass}"
                             Stroke="{StaticResource GlassLine}"
@@ -242,6 +262,13 @@
                 </VerticalStackLayout>
             </controls:FelovaBottomSheet.SheetContent>
         </controls:FelovaBottomSheet>
+
+        <!-- ══════════ PHOTO EDITOR (crop + rotate) ══════════ -->
+        <!-- Declared AFTER the chooser so it renders on top: the chooser is what opens
+             it, and last-declared wins for both z-order and Android back (BackDismiss
+             closes the last open overlay). -->
+        <views:PhotoEditorSheetView Grid.RowSpan="2"
+                                    BindingContext="{Binding PhotoEditorVM}"/>
 
     </Grid>
 
