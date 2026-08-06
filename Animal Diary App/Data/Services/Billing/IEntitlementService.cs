@@ -49,6 +49,16 @@ public interface IEntitlementService
     /// <see cref="HasFullAccess"/> is the gate.</summary>
     AccessState State { get; }
 
+    /// <summary>When a redeemed access code's grant ends, or null when none is running.
+    /// Copy only. See <see cref="IGrantSource"/> for what a grant is and is not.</summary>
+    DateTime? GrantedUntilUtc { get; }
+
+    /// <summary>Whether this account has ever held a grant, including an expired one.
+    /// Copy must check it before saying "your trial has ended": a lapsed year-long grant
+    /// is not a lapsed 14-day trial, and <see cref="TrialEverStarted"/> does not
+    /// distinguish them (most granted owners did start a trial once).</summary>
+    bool EverGranted { get; }
+
     /// <summary>Whether a trial was ever started at all. False for someone who only ever
     /// cared for another person's pet — the trial begins with your FIRST OWN pet. Copy
     /// must check this before saying "your trial has ended", which would otherwise be
@@ -118,6 +128,10 @@ public enum AccessState
     Unknown,
     /// <summary>Inside the free trial window.</summary>
     Trial,
+    /// <summary>Full access from a redeemed access code, running until
+    /// <see cref="IEntitlementService.GrantedUntilUtc"/>. Never call this "subscribed" in
+    /// copy: nothing was charged, nothing renews, and there is nothing to cancel.</summary>
+    Granted,
     /// <summary>Trial elapsed (or a subscription lapsed) and not currently subscribed
     /// — the care-only read state.</summary>
     TrialExpired,

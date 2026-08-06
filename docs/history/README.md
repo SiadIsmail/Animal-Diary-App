@@ -17,6 +17,7 @@ conventions) and the code itself.
 | [ACCOUNT_LIFECYCLE_PLAN.md](ACCOUNT_LIFECYCLE_PLAN.md) | Incident narrative + fix plan after a caregiver-testing data-loss. Built. | Cloud |
 | [MONETIZATION_PLAN.md](MONETIZATION_PLAN.md) | Design plan, written before the work. Built. | Billing |
 | [BILLING_AUDIT.md](BILLING_AUDIT.md) | Review of the billing stack against RevenueCat / Play Billing docs, with a remediation log. | Billing |
+| [ACCESS_CODES_PLAN.md](ACCESS_CODES_PLAN.md) | Design plan, written before the work. Built; migration still needs running. | Billing |
 | [NOTIFICATION_AUDIT.md](NOTIFICATION_AUDIT.md) | Review of the whole local-notification subsystem, with a remediation log. | Notifications |
 
 ## Reading an audit

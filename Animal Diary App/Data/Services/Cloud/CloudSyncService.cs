@@ -162,6 +162,10 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     private readonly ActivePetService _activePet;
     private readonly IAnalyticsService _analytics;
     private readonly Billing.ITrialAnchor _trialAnchor;
+    // Read for one thing only: whether signing out costs a redeemed access code. The grant
+    // itself is fetched and cached by CloudAccessCodeService, deliberately outside this
+    // cycle (a grant must reach someone who never turned backup on).
+    private readonly Billing.IGrantSource _grants;
     private readonly IReadOnlyList<ITableSync> _tables = SyncTableMaps.Build();
 
     // One run at a time; a request during a run coalesces into one follow-up run.
@@ -199,7 +203,8 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         MedicationReminderScheduler reminders,
         ActivePetService activePet,
         IAnalyticsService analytics,
-        Billing.ITrialAnchor trialAnchor)
+        Billing.ITrialAnchor trialAnchor,
+        Billing.IGrantSource grants)
     {
         _db = db;
         _http = http;
@@ -209,6 +214,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         _activePet = activePet;
         _analytics = analytics;
         _trialAnchor = trialAnchor;
+        _grants = grants;
 
         // Every repository write funnels through SyncStamp — that one hook is the
         // whole "detect local changes" mechanism (see coding-standards.md).
@@ -779,7 +785,11 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
                 names.Add(pet.Name);
         }
 
-        return new SignOutImpact(names, unsynced);
+        // A redeemed access code is held by the ACCOUNT, and its cache is cloud:-prefixed, so
+        // the teardown below wipes it with everything else. Reversible on the next sign-in,
+        // like the pets, but it has to be said or someone signing out for an unrelated reason
+        // quietly loses a year they were given.
+        return new SignOutImpact(names, unsynced, _grants.IsGranted);
     }
 
     public async Task<int> SignOutTeardownAsync()

@@ -12,6 +12,8 @@ public sealed class NullEntitlementService : IEntitlementService
     public bool HasFullAccess => true;
     public bool CanEditPet(string? petSyncId) => true;
     public AccessState State => AccessState.Subscribed;
+    public DateTime? GrantedUntilUtc => null;
+    public bool EverGranted => false;
     public bool TrialEverStarted => false;
     public int TrialDaysLeft => 0;
     public TimeSpan TrialTimeRemaining => TimeSpan.Zero;

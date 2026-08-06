@@ -55,13 +55,36 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
     /// Settings, or landing here right after buying, never re-pitches the sale).</summary>
     public bool IsSubscribed => _entitlements.State == AccessState.Subscribed;
 
+    /// <summary>Full access from a redeemed access code. Shares the quiet "you're covered"
+    /// face with <see cref="IsSubscribed"/> for the same reason — re-pitching a sale to
+    /// someone who already has access is the thing that face exists to prevent — but says
+    /// something different on it: they did not buy anything, so the copy names the end date
+    /// and never thanks them for subscribing.</summary>
+    public bool IsGranted => _entitlements.State == AccessState.Granted;
+
     /// <summary>Which face of the sheet shows.</summary>
-    public bool ShowSubscribed => IsSubscribed;
-    public bool ShowOffers => !IsSubscribed;
+    public bool ShowSubscribed => IsSubscribed || IsGranted;
+    public bool ShowOffers => !ShowSubscribed;
 
     /// <summary>Sheet header, mode-aware.</summary>
-    public string SheetTitle => Loc(IsSubscribed ? "Subscribe_SubscribedTitle" : "Subscribe_Title");
-    public string SheetSubtitle => IsSubscribed ? string.Empty : Loc("Subscribe_Subtitle");
+    public string SheetTitle => Loc(
+        IsGranted ? "Subscribe_GrantedTitle"
+        : IsSubscribed ? "Subscribe_SubscribedTitle"
+        : "Subscribe_Title");
+
+    public string SheetSubtitle =>
+        IsGranted ? LocalizationManager.Instance.Format(
+            "Subscribe_GrantedSubtitleFormat", FormatGrantEnd(_entitlements.GrantedUntilUtc))
+        : IsSubscribed ? string.Empty
+        : Loc("Subscribe_Subtitle");
+
+    /// <summary>"Manage subscription" is a store link, and a grant has no store record
+    /// behind it. Showing it to a granted user sends them to a Play page about a
+    /// subscription they never bought.</summary>
+    public bool ShowManage => IsSubscribed;
+
+    private static string FormatGrantEnd(DateTime? untilUtc)
+        => untilUtc is DateTime u ? u.ToLocalTime().ToString("d") : string.Empty;
 
     /// <summary>The offers, yearly first, each with a store-localized price. Empty until
     /// the store loads / under the Null boundary.</summary>
@@ -185,8 +208,10 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(ShowOffersProblem));
         OnPropertyChanged(nameof(OffersProblemMessage));
         OnPropertyChanged(nameof(IsSubscribed));
+        OnPropertyChanged(nameof(IsGranted));
         OnPropertyChanged(nameof(ShowSubscribed));
         OnPropertyChanged(nameof(ShowOffers));
+        OnPropertyChanged(nameof(ShowManage));
         OnPropertyChanged(nameof(SheetTitle));
         OnPropertyChanged(nameof(SheetSubtitle));
     }
