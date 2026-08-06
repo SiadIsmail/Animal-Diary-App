@@ -40,7 +40,9 @@ public sealed class VetReportDocument
     public Document Build(ReportContext ctx)
     {
         var doc = new Document();
-        doc.Info.Title = $"{_data.Pet.Name} — Felova health summary";
+        // The same string the continuation header prints, so the PDF's metadata title
+        // matches the page and follows the app's language instead of being English-only.
+        doc.Info.Title = VetReportStrings.RunningTitle(_data.Pet.Name);
         doc.Info.Author = "Felova";
 
         var normal = doc.Styles["Normal"]!;
