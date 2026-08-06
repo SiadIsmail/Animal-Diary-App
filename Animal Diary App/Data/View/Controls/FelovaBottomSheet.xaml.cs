@@ -33,6 +33,15 @@ public partial class FelovaBottomSheet : ContentView
     // extra so its upward shadow can't peek above the edge either.
     private const double HiddenShadowBuffer = 40;
 
+    // How much of the screen the sheet may occupy before its body has to scroll.
+    private const double MaxHeightFraction = 0.9;
+    // Everything inside that cap which is NOT body: the header (handle, title,
+    // subtitle), the row spacing under it, and the container's bottom padding.
+    private const double ChromeHeight = 130;
+    // Below this a "scrollable" body is more cramped than useful, so let the sheet
+    // overflow the cap instead — only reachable on a very short screen.
+    private const double MinBodyHeight = 220;
+
     private bool isAnimating;
 
     public FelovaBottomSheet()
@@ -193,8 +202,24 @@ public partial class FelovaBottomSheet : ContentView
         // Cap the sheet to most of the screen so a tall body scrolls its content
         // instead of pushing actions off-screen.
         if (height > 0)
-            SheetContainer.MaximumHeightRequest = height * 0.9;
+            SheetContainer.MaximumHeightRequest = height * MaxHeightFraction;
     }
+
+    /// <summary>
+    /// The tallest a body may be inside this sheet on a screen of <paramref name="screenHeight"/>,
+    /// i.e. the cap above minus the sheet's own chrome.
+    /// </summary>
+    /// <remarks>
+    /// For the bodies that are a plain list rather than a form with pinned actions —
+    /// the Journal's "+" sheet, Manage's "add a tracker" — whose length the owner
+    /// controls and so can outgrow the cap. Those set it as the MaximumHeightRequest
+    /// of a <c>VerticalOptions="Start"</c> ScrollView: hugging when the list is short,
+    /// scrolling once it isn't. They can't just let the ScrollView fill, which is the
+    /// stretch the XAML header warns about, and the cap alone only clips. Lives here so
+    /// the fraction stays defined once, beside the cap it has to agree with.
+    /// </remarks>
+    public static double MaxBodyHeight(double screenHeight) =>
+        Math.Max(MinBodyHeight, screenHeight * MaxHeightFraction - ChromeHeight);
 
     // Both halves are plain animations now: the overlap guard, the loop that reacts to
     // a flag flipped mid-slide, and the final pinning all live in RunToTargetAsync.

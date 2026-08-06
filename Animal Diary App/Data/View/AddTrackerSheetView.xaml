@@ -19,11 +19,20 @@
                                 DismissCommand="{Binding CloseAddTrackerCommand}">
         <controls:FelovaBottomSheet.SheetContent>
 
-            <!-- BindableLayout, not CollectionView: a handful of fixed rows with no
-                 scrolling is BindableLayout's documented use case, and CollectionView's
-                 RecyclerView wouldn't render inside this auto-sized sheet until scrolled.
-                 Safe here because FelovaBottomSheet keeps its body realised while hidden
-                 (translated off-screen, never IsVisible=false). -->
+            <!-- Scrolls under its own ceiling, the same shape as the Journal's "+" sheet
+                 and for the same reason: the catalog this offers is not fixed, so the
+                 rows can outgrow the sheet's cap — which clips rather than scrolls.
+                 VerticalOptions="Start" + MaximumHeightRequest (set in the code-behind)
+                 keeps a short list hugging; a filling ScrollView would stretch it to full
+                 height on Android, the regression FelovaBottomSheet.xaml describes.
+
+                 BindableLayout, not CollectionView: CollectionView's RecyclerView wouldn't
+                 render inside this auto-sized sheet until scrolled, and would nest a second
+                 scroller inside this one. Safe because FelovaBottomSheet keeps its body
+                 realised while hidden (translated off-screen, never IsVisible=false). -->
+            <ScrollView x:Name="Body"
+                        VerticalOptions="Start"
+                        VerticalScrollBarVisibility="Never">
             <VerticalStackLayout Spacing="10" Padding="0,2,0,0"
                                  BindableLayout.ItemsSource="{Binding AddTrackerOptions}">
                 <BindableLayout.ItemTemplate>
@@ -52,6 +61,7 @@
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
+            </ScrollView>
 
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>
