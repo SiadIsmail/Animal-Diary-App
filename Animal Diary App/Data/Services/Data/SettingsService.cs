@@ -191,6 +191,10 @@ public static class SettingsFlags
     public const string PreEndNudgeShown = "PreEndNudgeShown";
     /// <summary>The reassurance shown once when the app first enters the read-only state.</summary>
     public const string ReadOnlyReassuranceShown = "ReadOnlyReassuranceShown";
+    /// <summary>The single heads-up before a redeemed access code's grant runs out. Its own
+    /// flag rather than a reuse of <see cref="PreEndNudgeShown"/>: someone can have a trial
+    /// AND, a year later, a grant, and each deserves its one warning.</summary>
+    public const string GrantEndingNudgeShown = "GrantEndingNudgeShown";
     /// <summary>The owner has opened the Today stat-card picker at least once, so the
     /// spelled-out "tap a card to change what it shows" hint retires and the small
     /// pencil on each card carries the affordance from then on.</summary>

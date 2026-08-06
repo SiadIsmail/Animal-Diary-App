@@ -78,6 +78,9 @@ public class MainViewModel
     /// <summary>The reusable trial-message sheet (explainer / pre-end nudge / read-only).</summary>
     public TrialMessageViewModel TrialMessageVM { get; }
 
+    /// <summary>The access-code sheet, opened from Settings only.</summary>
+    public RedeemCodeSheetViewModel RedeemVM { get; }
+
     /// <summary>The Care page's "feedback or a problem" sheet (Discord / direct email).</summary>
     public FeedbackSheetViewModel FeedbackVM { get; }
 
@@ -130,6 +133,7 @@ public class MainViewModel
  SharingSheetViewModel sharingVM,
  SubscribeSheetViewModel subscribeVM,
  TrialMessageViewModel trialMessageVM,
+ RedeemCodeSheetViewModel redeemVM,
  FeedbackSheetViewModel feedbackVM,
  ConfirmSheetViewModel confirmVM,
  PhotoEditorSheetViewModel photoEditorVM,
@@ -166,6 +170,7 @@ public class MainViewModel
         SharingVM = sharingVM;
         SubscribeVM = subscribeVM;
         TrialMessageVM = trialMessageVM;
+        RedeemVM = redeemVM;
         FeedbackVM = feedbackVM;
         ConfirmVM = confirmVM;
         PhotoEditorVM = photoEditorVM;
@@ -173,7 +178,7 @@ public class MainViewModel
         DevVM = devVM;
         CloudSync = cloudSync;
 
-        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM, SubscribeVM, DevVM };
+        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM, SubscribeVM, RedeemVM, DevVM };
     }
 
     /// <summary>

@@ -115,7 +115,82 @@ as that account, or manage it in the store).
 The trial half needs no configuration: the app claims its own anchor through
 `claim_trial_anchor` on the first sync after signing in.
 
-## 6. Keys
+## 6. Access codes (giveaways and comps)
+
+Migration `0015_access_codes.sql` adds one-time codes that grant a year of full access.
+A code is **given away, never sold** — selling access outside the store breaks App Store
+3.1.1 and Play's Payments policy, and this path bypasses IAP by construction.
+
+Codes are minted and read here, from the SQL editor. There is no admin screen in the app,
+on purpose: minting is rare and every code should be a decision.
+
+### Minting
+
+```sql
+-- Before the post goes up: 50 codes for Reddit, 50 for X, tagged separately.
+-- Returns the codes. COPY THEM OUT of the results pane: this is the only time they are
+-- handed back as a list (recovering a batch later means querying by campaign, below).
+select * from public.mint_access_codes('reddit-2026-08', 50);
+select * from public.mint_access_codes('x-2026-08',      50);
+
+-- A shorter comp for testers. Same call, different length.
+select * from public.mint_access_codes('beta-testers', 10, interval '3 months');
+
+-- Codes that stop being redeemable after a while (a launch-week promo). The two durations
+-- are independent: the 14 days is how long the CODE stays claimable, the year is what
+-- claiming it buys, counted from the day it is claimed.
+select * from public.mint_access_codes('launch-week', 200, interval '1 year',
+                                       now() + interval '14 days');
+```
+
+Codes look like `FELOVA-K7M2-9XQP`, in migration 0010's alphabet (no `I`, `O`, `0`, `1`)
+because they get read off a screenshot and typed by hand. They are compared upper-cased
+and trimmed, so a lowercase paste works.
+
+**Name campaigns with a date** — `reddit-2026-08`, not `reddit`. Reusing a name merges two
+giveaways permanently in the stats below, and there is no way to unpick it afterwards.
+
+### Reading the result
+
+```sql
+-- Which channel converted. codes / capacity / redeemed / redeemed_pct / first / last.
+select * from public.access_code_stats order by redeemed desc;
+
+-- The unclaimed codes of one campaign, to reissue or retire.
+select code from public.access_codes where campaign = 'reddit-2026-08' and use_count = 0;
+
+-- Support: "my code didn't work".
+select r.campaign, r.code, r.redeemed_at, r.granted_until
+  from public.access_code_redemptions r
+  join auth.users u on u.id = r.user_id
+ where u.email = 'someone@example.com'
+ order by r.redeemed_at desc;
+
+-- Retire a campaign's leftovers. This also removes the denominator, so that campaign's
+-- redemption rate jumps to 100% — read the rate you care about first.
+delete from public.access_codes where campaign = 'reddit-2026-08' and use_count = 0;
+```
+
+A **used** code cannot be deleted (the redemption's foreign key is `restrict`). That is
+deliberate: deleting it would erase the record of who redeemed it, which is the number this
+whole feature exists to produce.
+
+### What a code is, and is not
+
+- It sets `profiles.granted_until`, a column separate from `entitlement_active` — which
+  stays writable only by the RevenueCat webhook (§5). A grant is **not** a purchase and
+  must never be counted as revenue.
+- Redeeming a second code **renews from that moment** rather than queueing: six months in,
+  a second one-year code ends the grant a year from that day. It can never shorten a
+  running grant.
+- A granted owner **sponsors their caregivers** exactly like a subscriber does.
+- The grant belongs to the account, so signing out gives it up on that device until the
+  next sign-in. The app says so in the sign-out confirmation.
+- Revoking (zeroing `granted_until`, or deleting an unused code) takes effect the next time
+  that device reaches the server. An offline device keeps its cached grant until its own
+  expiry date.
+
+## 7. Keys
 
 The app embeds the project URL + publishable key (`CloudConfig` in
 `Data/Services/Cloud/`). The **service-role key is never used by the app and

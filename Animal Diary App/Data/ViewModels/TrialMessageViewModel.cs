@@ -119,6 +119,43 @@ public sealed class TrialMessageViewModel : BaseViewModel
         _analytics.Track(AnalyticsEvents.SponsorshipEnded);
     }
 
+    /// <summary>
+    /// A redeemed access code's year is nearly up. The grant sibling of
+    /// <see cref="ShowNudge"/>, and separate for the same reason
+    /// <see cref="ShowSponsorshipEnded"/> is separate: the trial copy names a free trial
+    /// and a trial length, neither of which is true here.
+    /// </summary>
+    /// <param name="endsOn">Local end date, already formatted by the caller.</param>
+    public void ShowGrantEnding(string petName, string endsOn)
+    {
+        _subscribeSource = AnalyticsEvents.SubscribeSourceNudge;
+        Title = Fmt("Subscribe_GrantEndingTitle", petName);
+        Body = LocalizationManager.Instance.Format("Subscribe_GrantEndingBody", petName, endsOn);
+        Footnote = string.Empty;
+        ShowContinue = true;
+        DismissLabel = Loc("Common_NotNow");
+        Present();
+        _analytics.Track(AnalyticsEvents.GrantEndingShown);
+    }
+
+    /// <summary>
+    /// The care-only state begins after a GRANT ran out, not a trial. Same reassurance,
+    /// different truth: this person redeemed a code rather than starting a 14-day trial,
+    /// so <see cref="ShowReadOnly"/>'s wording would date their access wrongly by a year.
+    /// </summary>
+    public void ShowGrantEnded(string petName, bool hasCaregivers = false)
+    {
+        _subscribeSource = AnalyticsEvents.SubscribeSourceReadOnly;
+        Title = Fmt("Subscribe_GrantEndedTitle", petName);
+        Body = Fmt("Subscribe_GrantEndedBody", petName)
+             + (hasCaregivers ? " " + Fmt("Subscribe_ReadOnlyCarersClause", petName) : string.Empty);
+        Footnote = string.Empty;
+        ShowContinue = true;
+        DismissLabel = Loc("Common_NotNow");
+        Present();
+        _analytics.Track(AnalyticsEvents.GrantEnded);
+    }
+
     /// <summary>The care-only state begins: reassure first, then offer to continue.</summary>
     /// <param name="hasCaregivers">Whether this owner shares any pet. When they do, the
     /// copy adds that their carers can now only view too — they are the only person who can

@@ -310,6 +310,7 @@ public partial class App : Application
 			await _entitlements.RefreshAsync();
 			await MaybeShowReadOnlyReassuranceAsync();
 			await MaybeShowPreEndNudgeAsync();
+			await MaybeShowGrantEndingNudgeAsync();
 		}).Forget();
 	}
 
@@ -346,6 +347,39 @@ public partial class App : Application
 		}
 	}
 
+	/// <summary>The grant sibling of <see cref="MaybeShowPreEndNudgeAsync"/>: once, a few days
+	/// before a redeemed access code's year runs out. Mutually exclusive with it by state
+	/// (that one is Trial, this one is Granted), and it reuses the same
+	/// <see cref="BillingConfig.PreEndNudgeDaysBefore"/> window with its own one-shot flag and
+	/// its own copy — a year of granted access is not a free trial and must not be described
+	/// as one. No-op under the Null boundary.</summary>
+	private async Task MaybeShowGrantEndingNudgeAsync()
+	{
+		try
+		{
+			if (_entitlements.State != Animal_Diary_App.Data.Services.Billing.AccessState.Granted)
+				return;
+			if (_entitlements.GrantedUntilUtc is not DateTime until)
+				return;
+
+			var daysLeft = (until - DateTime.UtcNow).TotalDays;
+			if (daysLeft > Animal_Diary_App.Data.Services.Billing.BillingConfig.PreEndNudgeDaysBefore)
+				return;
+			if (await _settingsService.GetFlagAsync(SettingsFlags.GrantEndingNudgeShown))
+				return;
+			await _settingsService.SetFlagAsync(SettingsFlags.GrantEndingNudgeShown, true);
+
+			var petName = _vm.PetVM.ActivePet?.Name ?? string.Empty;
+			var endsOn = until.ToLocalTime().ToString("d");
+
+			MainThread.BeginInvokeOnMainThread(() => _vm.TrialMessageVM.ShowGrantEnding(petName, endsOn));
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[Billing] grant-ending nudge failed: {ex.Message}");
+		}
+	}
+
 	/// <summary>Once, when the app first finds itself in the care-only read state (trial
 	/// elapsed, no subscription), reassure the owner their data is safe. Reassures first;
 	/// the continue-to-subscribe ask lives inside that sheet. No-op under the Null boundary
@@ -356,10 +390,15 @@ public partial class App : Application
 		{
 			if (_entitlements.State != Animal_Diary_App.Data.Services.Billing.AccessState.TrialExpired)
 				return;
-			// This copy says the trial has ended, so it is only ever true for someone who
-			// had one. A caregiver who only tends another person's pet never started a
-			// trial; when their cover ends they get the sponsorship message instead.
-			if (!_entitlements.TrialEverStarted)
+			// Two different things end in this state, and they need different sentences.
+			// A lapsed GRANT is checked first: someone who redeemed a code almost certainly
+			// started a trial once too, so TrialEverStarted does not tell them apart, and the
+			// trial copy would date their access wrongly by a year.
+			var grantEnded = _entitlements.EverGranted;
+			// The trial copy is only ever true for someone who had one. A caregiver who only
+			// tends another person's pet never started a trial; when their cover ends they get
+			// the sponsorship message instead.
+			if (!grantEnded && !_entitlements.TrialEverStarted)
 				return;
 			if (await _settingsService.GetFlagAsync(SettingsFlags.ReadOnlyReassuranceShown))
 				return;
@@ -373,8 +412,13 @@ public partial class App : Application
 			// when someone else can't log a dose.
 			var hasCaregivers = _cloudSync.OwnsASharedPet;
 
-			MainThread.BeginInvokeOnMainThread(
-				() => _vm.TrialMessageVM.ShowReadOnly(petName, trialDay, hasCaregivers));
+			MainThread.BeginInvokeOnMainThread(() =>
+			{
+				if (grantEnded)
+					_vm.TrialMessageVM.ShowGrantEnded(petName, hasCaregivers);
+				else
+					_vm.TrialMessageVM.ShowReadOnly(petName, trialDay, hasCaregivers);
+			});
 		}
 		catch (Exception ex)
 		{

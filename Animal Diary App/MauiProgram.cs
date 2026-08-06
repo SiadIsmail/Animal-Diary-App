@@ -75,6 +75,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<SharingSheetViewModel>();
 		builder.Services.AddSingleton<SubscribeSheetViewModel>();
 		builder.Services.AddSingleton<TrialMessageViewModel>();
+		builder.Services.AddSingleton<RedeemCodeSheetViewModel>();
 		builder.Services.AddSingleton<FeedbackSheetViewModel>();
 		builder.Services.AddSingleton<ConfirmSheetViewModel>();
 		// Crop + rotate, between picking a photo and it becoming a pet's avatar.
@@ -168,11 +169,15 @@ public static class MauiProgram
 		{
 			builder.Services.AddSingleton<ICloudSyncService, CloudSyncService>();
 			builder.Services.AddSingleton<ICloudSharingService, CloudSharingService>();
+			builder.Services.AddSingleton<CloudAccessCodeService>();
+			builder.Services.AddSingleton<ICloudAccessCodeService>(sp => sp.GetRequiredService<CloudAccessCodeService>());
 		}
 		else
 		{
 			builder.Services.AddSingleton<ICloudSyncService, NullCloudSyncService>();
 			builder.Services.AddSingleton<ICloudSharingService, NullCloudSharingService>();
+			builder.Services.AddSingleton<NullCloudAccessCodeService>();
+			builder.Services.AddSingleton<ICloudAccessCodeService>(sp => sp.GetRequiredService<NullCloudAccessCodeService>());
 		}
 
 		// Billing reads sponsorship through the cloud engine, but only ever as the pure
@@ -180,6 +185,12 @@ public static class MauiProgram
 		// implementations provide it, so this resolves in either branch above.
 		builder.Services.AddSingleton<IPetAccessSource>(sp =>
 			(IPetAccessSource)sp.GetRequiredService<ICloudSyncService>());
+
+		// Same shape for redeemed access codes: Billing declares IGrantSource, Cloud
+		// implements it. Registered against the concrete type rather than ICloudAccessCodeService
+		// so both faces of the one singleton share a cache.
+		builder.Services.AddSingleton<IGrantSource>(sp =>
+			(IGrantSource)sp.GetRequiredService<ICloudAccessCodeService>());
 
 		// ── Billing / monetization boundary ──────────────────────────────────
 		// Mirrors the cloud & analytics boundaries: the real trial + entitlement service

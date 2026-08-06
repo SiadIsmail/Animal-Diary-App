@@ -80,6 +80,12 @@ public static class SignOutPrompt
         if (impact.PetNames.Count > 0)
             parts.Add(loc.Format("Cloud_SignOutBody", NameList(impact.PetNames)));
 
+        // Reversible, like the pets, so it sits with them rather than with the unsynced
+        // warning below. Said out loud because the alternative is someone signing out for an
+        // unrelated reason and quietly losing a year they were given.
+        if (impact.LosesGrant)
+            parts.Add(loc.GetString("Cloud_SignOutGrant"));
+
         // Stated separately and last: everything above comes back on the next sign-in, this
         // does not. Singular has its own string rather than reading "1 changes".
         if (impact.UnsyncedChanges == 1)

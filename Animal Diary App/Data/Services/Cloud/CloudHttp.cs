@@ -19,6 +19,8 @@ public enum CloudErrorKind
     InviteInvalid,      // unknown, expired, or used-up invite code
     InviteAlreadyMember,// redeeming a code for a pet you already have
     CarerLimitReached,  // the pet's (or the owner's) caregiver cap is full
+    AccessCodeInvalid,  // unknown, expired, or used-up ACCESS code (not an invite)
+    AccessCodeUsed,     // an access code already redeemed by this account
     Other
 }
 
@@ -155,6 +157,15 @@ public sealed class CloudHttp
         // "slow down". Matches the shared wording of all three cap errors in migration 0010.
         if (lower.Contains("maximum number of carers"))
             kind = CloudErrorKind.CarerLimitReached;
+        // Access codes are checked BEFORE the invite phrases and before the rate limit, and
+        // migration 0015 deliberately does not reuse redeem_invite's "invalid or expired
+        // code" wording. Both codes are typed into a box that looks the same, so a bad
+        // access code falling through to InviteInvalid would tell someone their pet INVITE
+        // was invalid. Keep these two arms above the invite ones.
+        else if (lower.Contains("unknown or used access code"))
+            kind = CloudErrorKind.AccessCodeInvalid;
+        else if (lower.Contains("access code is already on your account"))
+            kind = CloudErrorKind.AccessCodeUsed;
         else if (status == (int)HttpStatusCode.TooManyRequests || lower.Contains("rate limit") || lower.Contains("too many"))
             kind = CloudErrorKind.RateLimited;
         else if (lower.Contains("invalid or expired code"))

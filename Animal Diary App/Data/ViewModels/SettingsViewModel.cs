@@ -55,6 +55,7 @@ public class SettingsViewModel : BaseViewModel
     public ICommand OpenLinkCommand { get; }
     public ICommand OpenCloudCommand { get; }
     public ICommand OpenSubscribeCommand { get; }
+    public ICommand OpenRedeemCommand { get; }
     public ICommand OpenDevCommand { get; }
 
     private readonly AppResetService _appResetService;
@@ -64,6 +65,7 @@ public class SettingsViewModel : BaseViewModel
     private readonly ICloudSyncService _cloudSync;
     private readonly CloudSheetViewModel _cloudVM;
     private readonly SubscribeSheetViewModel _subscribeVM;
+    private readonly RedeemCodeSheetViewModel _redeemVM;
     private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
     private readonly DevSheetViewModel _devVM;
 
@@ -71,16 +73,40 @@ public class SettingsViewModel : BaseViewModel
     /// user's words (never "read-only" or "expired"). In the trial it carries the time
     /// left, e.g. "Free trial (3 days left)" or, near the end, "Free trial (12 minutes
     /// left)". Re-read when the panel opens and when the entitlement changes — not a
-    /// ticking clock (a live countdown would push urgency this brand avoids).</summary>
+    /// ticking clock (a live countdown would push urgency this brand avoids).
+    ///
+    /// <para><b>Granted is listed explicitly, and the fallback arm is the reason.</b> It
+    /// ends in the trial format, so any state that is not named here is described as a free
+    /// trial with whatever time the (long-elapsed) trial clock has left. Adding a state to
+    /// <c>AccessState</c> without a case here tells a granted user they are on a "Free trial
+    /// (0 minutes left)". Name every state.</para></summary>
     public string SubscriptionRowSubtitle => _entitlements.State switch
     {
         Animal_Diary_App.Data.Services.Billing.AccessState.Subscribed
             => LocalizationManager.Instance.GetString("Settings_SubscriptionActive"),
+        Animal_Diary_App.Data.Services.Billing.AccessState.Granted
+            => LocalizationManager.Instance.Format(
+                "Settings_SubscriptionGrantedFormat", FormatGrantEnd(_entitlements.GrantedUntilUtc)),
         Animal_Diary_App.Data.Services.Billing.AccessState.TrialExpired
-            => LocalizationManager.Instance.GetString("Settings_SubscriptionEnded"),
+            => LocalizationManager.Instance.GetString(
+                // A lapsed year-long grant is not a lapsed 14-day trial, and TrialEverStarted
+                // does not tell them apart (most granted owners did start a trial once).
+                _entitlements.EverGranted ? "Settings_SubscriptionGrantEnded" : "Settings_SubscriptionEnded"),
         _ => LocalizationManager.Instance.Format(
             "Settings_SubscriptionTrialFormat", FormatTimeLeft(_entitlements.TrialTimeRemaining)),
     };
+
+    /// <summary>Subtitle for the Settings → Redeem row. Names the end date once a code is
+    /// running, and otherwise stays a plain invitation. Never a countdown.</summary>
+    public string RedeemRowSubtitle =>
+        _entitlements.GrantedUntilUtc is DateTime until && until > DateTime.UtcNow
+            ? LocalizationManager.Instance.Format("Settings_RedeemActiveFormat", FormatGrantEnd(until))
+            : LocalizationManager.Instance.GetString("Settings_RedeemSubtitle");
+
+    /// <summary>A grant's end as a plain local date. A grant runs for months, so the time of
+    /// day is noise; the date is the whole answer.</summary>
+    private static string FormatGrantEnd(DateTime? untilUtc)
+        => untilUtc is DateTime u ? u.ToLocalTime().ToString("d") : string.Empty;
 
     /// <summary>Human phrase for the time left: the largest sensible unit, pluralized.
     /// "3 days" / "1 day" / "5 hours" / "12 minutes".</summary>
@@ -113,7 +139,8 @@ public class SettingsViewModel : BaseViewModel
         IAnalyticsService analytics, ICloudAuthService cloudAuth, ICloudSyncService cloudSync,
         CloudSheetViewModel cloudVM, DevSheetViewModel devVM, DailyCareReminderScheduler dailyReminders,
         MedicationReminderScheduler reminders,
-        SubscribeSheetViewModel subscribeVM, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements)
+        SubscribeSheetViewModel subscribeVM, RedeemCodeSheetViewModel redeemVM,
+        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements)
     {
         _appResetService = appResetService;
         _settingsService = settingsService;
@@ -125,9 +152,14 @@ public class SettingsViewModel : BaseViewModel
         _dailyReminders = dailyReminders;
         _reminders = reminders;
         _subscribeVM = subscribeVM;
+        _redeemVM = redeemVM;
         _entitlements = entitlements;
-        // Keep the row subtitle fresh when the entitlement changes (purchase/expiry).
-        _entitlements.StateChanged += () => OnPropertyChanged(nameof(SubscriptionRowSubtitle));
+        // Keep both rows fresh when the entitlement changes (purchase, expiry, redemption).
+        _entitlements.StateChanged += () =>
+        {
+            OnPropertyChanged(nameof(SubscriptionRowSubtitle));
+            OnPropertyChanged(nameof(RedeemRowSubtitle));
+        };
         // The panel renders above the sheet, so opening the sheet closes the panel.
         OpenCloudCommand = new Command(() =>
         {
@@ -140,6 +172,12 @@ public class SettingsViewModel : BaseViewModel
             IsPanelOpen = false;
             _subscribeVM.Open(AnalyticsEvents.SubscribeSourceSettings);
         });
+        // Redeem row → the access-code sheet. Settings is its only entry point.
+        OpenRedeemCommand = new Command(() =>
+        {
+            IsPanelOpen = false;
+            _redeemVM.Open();
+        });
         // Hidden developer panel (gated by a code inside the sheet).
         OpenDevCommand = new Command(() =>
         {
@@ -149,8 +187,9 @@ public class SettingsViewModel : BaseViewModel
         OpenSettingsCommand = new Command(() =>
         {
             IsPanelOpen = true;
-            // The trial time left moves on; recompute the row subtitle for this opening.
+            // The trial time left moves on; recompute the row subtitles for this opening.
             OnPropertyChanged(nameof(SubscriptionRowSubtitle));
+            OnPropertyChanged(nameof(RedeemRowSubtitle));
             _analytics.Track(AnalyticsEvents.SettingsOpened);
         });
         CloseSettingsCommand = new Command(() => IsPanelOpen = false);

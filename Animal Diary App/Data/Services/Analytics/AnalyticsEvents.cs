@@ -161,6 +161,25 @@ public static class AnalyticsEvents
     /// <see cref="PropReason"/> (offline vs empty) — surfaces store/config/connectivity
     /// friction that would otherwise be invisible.</summary>
     public const string OffersLoadFailed = "offers_load_failed";
+    /// <summary>An access code was typed in and submitted. Property:
+    /// <see cref="PropOutcome"/> — redeemed / invalid / already_used / rate_limited /
+    /// offline / failed.
+    ///
+    /// <para><b>Never carries the code, the campaign, the grant length, or the resulting
+    /// expiry.</b> Campaign attribution ("how many came from Reddit") is answered in
+    /// Postgres by <c>access_code_stats</c>, where it is exact; these events are anonymous
+    /// and cannot be joined to an account, so a campaign property here would be a worse
+    /// number bought with a weaker posture. This event measures friction only: are people
+    /// mistyping codes, hitting the attempt cap, or bouncing off the account requirement.</para></summary>
+    public const string AccessCodeRedeemed = "access_code_redeemed";
+    /// <summary>The one heads-up before a redeemed access code's grant ends. The grant
+    /// sibling of <see cref="PreEndNudgeShown"/>; no properties (its "day" would be the
+    /// grant length, which identifies the campaign).</summary>
+    public const string GrantEndingShown = "grant_ending_shown";
+    /// <summary>The care-only read state began because a GRANT ran out rather than a trial.
+    /// Separate from <see cref="ReadOnlyEntered"/> so the two are not silently pooled: they
+    /// describe different people reaching the same screen.</summary>
+    public const string GrantEnded = "grant_ended";
 
     // ── Property keys ─────────────────────────────────────────────────────────
     /// <summary>App display version, e.g. "1.3.1". Non-identifying.</summary>
@@ -220,6 +239,10 @@ public static class AnalyticsEvents
     /// <see cref="ReasonUnavailable"/> / <see cref="ReasonOffline"/> / <see cref="ReasonEmpty"/>.
     /// Never a raw store message.</summary>
     public const string PropReason = "reason";
+    /// <summary>How an attempt ended, success included — distinct from
+    /// <see cref="PropReason"/>, which only ever describes a failure. Used by
+    /// <see cref="AccessCodeRedeemed"/>. Coarse buckets only; never server text.</summary>
+    public const string PropOutcome = "outcome";
 
     // ── Property values (kept as constants so producers agree on spelling) ──────
     public const string EntryTypeMood = "mood";

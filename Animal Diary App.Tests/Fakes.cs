@@ -91,3 +91,38 @@ internal sealed class FakePetAccess : IPetAccessSource
         return this;
     }
 }
+
+/// <summary>Scriptable access-code grant — stands in for CloudAccessCodeService.</summary>
+internal sealed class FakeGrants : IGrantSource
+{
+    public bool GrantKnown { get; set; } = true;
+    public DateTime? GrantedUntilUtc { get; set; }
+    public bool EverGranted { get; set; }
+
+    private readonly Func<DateTime> _now;
+
+    /// <param name="now">The same fixed clock the service under test uses, so "still
+    /// running" means the same thing on both sides of the seam.</param>
+    public FakeGrants(Func<DateTime>? now = null) => _now = now ?? (() => DateTime.UtcNow);
+
+    public bool IsGranted => GrantedUntilUtc is DateTime u && _now() < u;
+
+    public Task RefreshAsync() => Task.CompletedTask;
+
+    /// <summary>A grant running until <paramref name="until"/>.</summary>
+    public FakeGrants Until(DateTime until)
+    {
+        GrantedUntilUtc = until;
+        EverGranted = true;
+        return this;
+    }
+
+    /// <summary>A grant that has already run out. EverGranted stays true, which is what the
+    /// "your year is up" copy keys off.</summary>
+    public FakeGrants Expired(DateTime endedAt)
+    {
+        GrantedUntilUtc = endedAt;
+        EverGranted = true;
+        return this;
+    }
+}

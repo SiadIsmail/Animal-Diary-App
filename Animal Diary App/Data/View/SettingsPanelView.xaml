@@ -173,6 +173,48 @@
                         </Grid>
                     </Border>
 
+                    <!-- Redeem a code. The ONLY entry point for access codes: nothing about
+                         them appears on the subscribe sheet, where a "have a code?" line
+                         under a price would advertise a discount that is not for sale and
+                         tell a paying customer someone else paid less. Always visible, even
+                         signed out, because a giveaway winner with no account yet is exactly
+                         the person hunting for this row. -->
+                    <Border Style="{StaticResource SettingsLinkCard}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SettingsVM.OpenRedeemCommand}"/>
+                        </Border.GestureRecognizers>
+
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                            <Border WidthRequest="42"
+                                    HeightRequest="42"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    VerticalOptions="Center">
+                                <Label Text="🎟" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{loc:Translate Settings_RedeemRow}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Text="{Binding SettingsVM.RedeemRowSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="11"
+                                       LineHeight="1.35"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   FontSize="22"
+                                   TextColor="{StaticResource InkTertiary}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+
                 </VerticalStackLayout>
 
                 <!-- ── DAILY REMINDER ── -->

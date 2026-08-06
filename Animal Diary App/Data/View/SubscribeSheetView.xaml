@@ -83,15 +83,22 @@
                     </Label>
                 </VerticalStackLayout>
 
-                <!-- ── SUBSCRIBED face (thank-you + manage + done) ── -->
+                <!-- ── COVERED face (subscribed OR granted: thank-you + manage + done) ── -->
                 <VerticalStackLayout Spacing="16" IsVisible="{Binding ShowSubscribed}">
 
                     <Label Text="{loc:Translate Subscribe_ThanksBody}" FontFamily="{StaticResource FontSans}"
-                           FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"/>
+                           FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"
+                           IsVisible="{Binding IsSubscribed}"/>
 
-                    <!-- Change or cancel → the store's subscription page -->
+                    <Label Text="{loc:Translate Subscribe_GrantedBody}" FontFamily="{StaticResource FontSans}"
+                           FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"
+                           IsVisible="{Binding IsGranted}"/>
+
+                    <!-- Change or cancel → the store's subscription page. Hidden for a grant:
+                         there is no store record behind it to manage. -->
                     <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
-                            StrokeShape="RoundRectangle 15,13,13,16">
+                            StrokeShape="RoundRectangle 15,13,13,16"
+                            IsVisible="{Binding ShowManage}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding ManageCommand}"/>
                         </Border.GestureRecognizers>

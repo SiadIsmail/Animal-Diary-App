@@ -23,7 +23,7 @@ public class SponsoredAccessTests
     {
         store = new FakeStore { HasActiveEntitlement = false, EntitlementKnown = true };
         var trial = new TrialService(new FakeTrialStore(), () => Now);   // never started
-        return new EntitlementService(trial, store, access, () => Now);
+        return new EntitlementService(trial, store, access, new NullGrantSource(), () => Now);
     }
 
     // ── the rule ────────────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ public class SponsoredAccessTests
         // the cloud in any way for them.
         var store = new FakeStore { HasActiveEntitlement = true, EntitlementKnown = true };
         var trial = new TrialService(new FakeTrialStore(), () => Now);
-        var gate = new EntitlementService(trial, store, new NullPetAccessSource(), () => Now);
+        var gate = new EntitlementService(trial, store, new NullPetAccessSource(), new NullGrantSource(), () => Now);
 
         Assert.True(gate.CanEditPet(MyPet));
         Assert.True(gate.CanEditPet(null));
@@ -119,7 +119,7 @@ public class SponsoredAccessTests
         var offline = new EntitlementService(
             new TrialService(new FakeTrialStore(), () => Now),
             new FakeStore { HasActiveEntitlement = false, EntitlementKnown = true },
-            new NullPetAccessSource(), () => Now);
+            new NullPetAccessSource(), new NullGrantSource(), () => Now);
 
         Assert.False(gate.CanEditPet(MyPet));
         Assert.False(offline.CanEditPet(MyPet));
@@ -162,7 +162,7 @@ public class SponsoredAccessTests
     {
         var store = new FakeStore { EntitlementKnown = true };
         var trial = new TrialService(new FakeTrialStore(), () => Now);
-        var gate = new EntitlementService(trial, store, new NullPetAccessSource(), () => Now);
+        var gate = new EntitlementService(trial, store, new NullPetAccessSource(), new NullGrantSource(), () => Now);
 
         Assert.False(gate.TrialEverStarted);
         Assert.True(await gate.EnsureTrialStartedAsync());
@@ -177,7 +177,7 @@ public class SponsoredAccessTests
     {
         var store = new FakeStore();
         var gate = new EntitlementService(
-            new TrialService(new FakeTrialStore(), () => Now), store, new NullPetAccessSource(), () => Now);
+            new TrialService(new FakeTrialStore(), () => Now), store, new NullPetAccessSource(), new NullGrantSource(), () => Now);
 
         await gate.IdentifyAsync("user-123");
         Assert.Equal("user-123", store.IdentifiedAs);
