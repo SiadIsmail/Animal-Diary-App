@@ -10,7 +10,7 @@ public interface ICloudAccessCodeService
 {
     /// <summary>Redeem a code and return when the resulting grant ends. Throws
     /// <see cref="CloudException"/> with an <c>AccessCode*</c> kind the sheet localizes;
-    /// raw server text only ever reaches <see cref="Debug.WriteLine"/>.</summary>
+    /// raw server text only ever reaches <see cref="Debug.WriteLine(string)"/>.</summary>
     Task<DateTime> RedeemAsync(string code);
 }
 

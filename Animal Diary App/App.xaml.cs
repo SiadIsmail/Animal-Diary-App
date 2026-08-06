@@ -350,9 +350,9 @@ public partial class App : Application
 	/// <summary>The grant sibling of <see cref="MaybeShowPreEndNudgeAsync"/>: once, a few days
 	/// before a redeemed access code's year runs out. Mutually exclusive with it by state
 	/// (that one is Trial, this one is Granted), and it reuses the same
-	/// <see cref="BillingConfig.PreEndNudgeDaysBefore"/> window with its own one-shot flag and
-	/// its own copy — a year of granted access is not a free trial and must not be described
-	/// as one. No-op under the Null boundary.</summary>
+	/// <see cref="Data.Services.Billing.BillingConfig.PreEndNudgeDaysBefore"/> window with its
+	/// own one-shot flag and its own copy — a year of granted access is not a free trial and
+	/// must not be described as one. No-op under the Null boundary.</summary>
 	private async Task MaybeShowGrantEndingNudgeAsync()
 	{
 		try
