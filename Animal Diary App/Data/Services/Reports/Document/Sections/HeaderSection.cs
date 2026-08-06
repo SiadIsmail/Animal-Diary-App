@@ -88,15 +88,17 @@ public class HeaderSection : IVetReportSection
         gen.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
     }
 
-    /// <summary>"— Dog, 7 y" plus breed/sex when the app models them one day. Species
-    /// arrives already localized from the builder (PetTypeNames.Localize).</summary>
+    /// <summary>"· Dog, 7 y" plus breed/sex when the app models them one day. Species
+    /// arrives already localized from the builder (PetTypeNames.Localize). The separator
+    /// is the middot the rest of the report uses, not a dash: AI/app-voice.md §5.1 bans
+    /// the em dash everywhere a person reads, and this line sits under the vet's eye.</summary>
     private static string Signalment(ReportPetInfo pet)
     {
         var parts = new List<string> { pet.Species };
         if (pet.Breed != null) parts.Add(pet.Breed);
         if (pet.Sex != null) parts.Add(pet.Sex);
         if (pet.AgeYears is int age) parts.Add(VetReportStrings.AgeYears(age));
-        return "— " + string.Join(", ", parts);
+        return "· " + string.Join(", ", parts);
     }
 
     /// <summary>Explicit sign so gain and loss read unambiguously: "+0.4" / "−1.4".</summary>

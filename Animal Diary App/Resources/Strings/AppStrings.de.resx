@@ -198,7 +198,7 @@
   <data name="Journal_ToastSeizure" xml:space="preserve"><value>Anfall festgehalten.</value></data>
   <data name="Journal_ToastDeleted" xml:space="preserve"><value>Aus der Zeitleiste entfernt.</value></data>
   <data name="Journal_ToastMedSkipped" xml:space="preserve"><value>{0} als ausgelassen markiert.</value></data>
-  <data name="Journal_ToastDoseCleared" xml:space="preserve"><value>Dosis zurückgesetzt — wieder offen.</value></data>
+  <data name="Journal_ToastDoseCleared" xml:space="preserve"><value>Dosis zurückgesetzt. Sie ist wieder offen.</value></data>
   <data name="Journal_MarkSkipped" xml:space="preserve"><value>Als ausgelassen markieren</value></data>
   <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}s Zucker-Check</value></data>
   <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d. MMM}. Eine Zahl, und fertig.</value></data>
@@ -398,7 +398,7 @@
        Mood_* / Water_Level* / Appetite_Level*-Schlüssel des Journals, damit eine
        Stufe in der App und auf dem Bericht gleich heißt. -->
   <data name="Report_Footer" xml:space="preserve"><value>Erstellt mit Felova · Angaben der Besitzer:in · Kein medizinischer Befund.</value></data>
-  <data name="Report_RunningTitle" xml:space="preserve"><value>{0} — Felova Gesundheitsübersicht</value></data>
+  <data name="Report_RunningTitle" xml:space="preserve"><value>{0} · Felova Gesundheitsübersicht</value></data>
   <data name="Report_Generated" xml:space="preserve"><value>Erstellt am {0}</value></data>
   <data name="Report_Page" xml:space="preserve"><value>Seite</value></data>
   <data name="Report_PageOf" xml:space="preserve"><value>von</value></data>
@@ -805,7 +805,7 @@
   <data name="Today_CardChangeHint" xml:space="preserve"><value>Tippen, um zu ändern, was diese Karte zeigt</value></data>
   <data name="Today_PickerTitle" xml:space="preserve"><value>Was ist dir heute am wichtigsten?</value></data>
   <data name="Today_PickerSub" xml:space="preserve"><value>Wähle, was diese Karte über {0} zeigt.</value></data>
-  <data name="Today_PickerOnOtherCard" xml:space="preserve"><value>Steht auf der anderen Karte — die beiden tauschen dann</value></data>
+  <data name="Today_PickerOnOtherCard" xml:space="preserve"><value>Steht auf der anderen Karte. Die beiden tauschen dann</value></data>
   <data name="Common_MmolSuffix" xml:space="preserve"><value>mmol/l</value></data>
   <!-- ── Feedback-Sheet (unten auf der Pflege-Seite) ── -->
   <data name="Feedback_RowTitle" xml:space="preserve"><value>Sag uns, was nicht funktioniert</value></data>
