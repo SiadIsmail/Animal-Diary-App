@@ -31,6 +31,12 @@
             <Grid Grid.Row="1"> …actions, pinned… </Grid>
         </Grid>
 
+    A body that is a plain list rather than a form — the Journal's "+" sheet, Manage's
+    "add a tracker" — has no actions to pin and must still hug a short list, so it uses
+    the other shape: one ScrollView, VerticalOptions="Start", its MaximumHeightRequest
+    set from MaxBodyHeight(screen height) in the code-behind. Both halves are load-
+    bearing — Start alone overflows the cap, the ceiling alone stretches to fill.
+
     Do NOT put a ScrollView here around BodyHost "so callers don't have to". That was
     tried: on Android a ScrollView in this star row measures to FILL, so every short
     sheet — mood, weight, the pickers — stretched to the full 90% instead of hugging its

@@ -17,11 +17,22 @@
                                 Subtitle="{Binding AddSheetSubtitle}"
                                 DismissCommand="{Binding CloseAddSheetCommand}">
         <controls:FelovaBottomSheet.SheetContent>
-            <!-- BindableLayout, not CollectionView: a handful of fixed rows with no
-                 scrolling is BindableLayout's documented use case, and CollectionView's
-                 RecyclerView wouldn't render inside this auto-sized sheet until scrolled.
-                 Safe here because FelovaBottomSheet keeps its body realised while hidden
-                 (translated off-screen, never IsVisible=false). -->
+            <!-- The body owns its scroller, as FelovaBottomSheet requires: this list is
+                 unbounded — every custom tracker the owner defines adds a row — so past
+                 a certain count it outgrows the sheet's 90%-of-screen cap, and the cap
+                 only clips. Sized by MaximumHeightRequest from the code-behind rather
+                 than left to fill: VerticalOptions="Start" plus a ceiling makes the sheet
+                 hug three rows and scroll at fifteen. A plain filling ScrollView is the
+                 regression FelovaBottomSheet.xaml warns about — on Android it measures to
+                 FILL in this star row and stretches even a short sheet to full height.
+
+                 BindableLayout, not CollectionView: CollectionView's RecyclerView wouldn't
+                 render inside this auto-sized sheet until scrolled, and would nest a second
+                 scroller inside this one. Safe because FelovaBottomSheet keeps its body
+                 realised while hidden (translated off-screen, never IsVisible=false). -->
+            <ScrollView x:Name="Body"
+                        VerticalOptions="Start"
+                        VerticalScrollBarVisibility="Never">
             <VerticalStackLayout Spacing="9" Padding="0,2,0,2">
 
                 <!-- In this pet's care plan. -->
@@ -109,6 +120,7 @@
                 </VerticalStackLayout>
 
             </VerticalStackLayout>
+            </ScrollView>
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>
 </ContentView>
