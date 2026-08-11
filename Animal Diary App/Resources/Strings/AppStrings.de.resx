@@ -764,7 +764,8 @@
   <data name="Redeem_Placeholder" xml:space="preserve"><value>FELOVA-XXXX-XXXX</value></data>
   <data name="Redeem_Action" xml:space="preserve"><value>Einlösen</value></data>
   <data name="Redeem_Success" xml:space="preserve"><value>Alles klar bis {0}. Du kannst wieder alles eintragen.</value></data>
-  <data name="Redeem_NeedsAccount" xml:space="preserve"><value>Ein Code gehört zu einem Konto, damit er dir beim Handywechsel erhalten bleibt. Melde dich an oder leg ein Konto an und gib ihn dann hier ein.</value></data>
+  <data name="Redeem_CreatorThanks" xml:space="preserve"><value>Danke. Wir wissen jetzt, dass du über {0} hergefunden hast.</value></data>
+  <data name="Redeem_NeedsAccount" xml:space="preserve"><value>So ein Code gehört zu einem Konto, damit er dir beim Handywechsel erhalten bleibt. Melde dich an oder leg ein Konto an und gib ihn dann hier ein.</value></data>
   <data name="Redeem_SignInAction" xml:space="preserve"><value>Anmelden oder Konto anlegen</value></data>
   <data name="Redeem_ErrInvalid" xml:space="preserve"><value>Dieser Code passt nicht. Schau ihn dir noch mal an und versuch es erneut.</value></data>
   <data name="Redeem_ErrAlreadyUsed" xml:space="preserve"><value>Dieser Code liegt schon auf deinem Konto.</value></data>

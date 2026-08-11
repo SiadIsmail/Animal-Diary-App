@@ -171,6 +171,7 @@ public static class MauiProgram
 			builder.Services.AddSingleton<ICloudSharingService, CloudSharingService>();
 			builder.Services.AddSingleton<CloudAccessCodeService>();
 			builder.Services.AddSingleton<ICloudAccessCodeService>(sp => sp.GetRequiredService<CloudAccessCodeService>());
+			builder.Services.AddSingleton<ICloudReferralService, CloudReferralService>();
 		}
 		else
 		{
@@ -178,6 +179,7 @@ public static class MauiProgram
 			builder.Services.AddSingleton<ICloudSharingService, NullCloudSharingService>();
 			builder.Services.AddSingleton<NullCloudAccessCodeService>();
 			builder.Services.AddSingleton<ICloudAccessCodeService>(sp => sp.GetRequiredService<NullCloudAccessCodeService>());
+			builder.Services.AddSingleton<ICloudReferralService, NullCloudReferralService>();
 		}
 
 		// Billing reads sponsorship through the cloud engine, but only ever as the pure

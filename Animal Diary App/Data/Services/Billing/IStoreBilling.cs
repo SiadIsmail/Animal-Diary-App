@@ -58,6 +58,22 @@ public interface IStoreBilling
     /// adds continuity for people who do sign in, including someone who paid first and
     /// created an account months later.</para></summary>
     Task IdentifyAsync(string? accountId);
+
+    /// <summary>Tag the store identity with the creator code this person entered, so a
+    /// purchase they make later carries it.
+    ///
+    /// <para><b>This is the half of attribution that works without an account.</b> The
+    /// server-side record (migration 0016) can only see people who signed in, because the
+    /// webhook's app_user_id is a Supabase user id only after sign-in. The store identity
+    /// exists either way — anonymous or identified — so tagging it here is what covers
+    /// someone who installs, types a creator's code, and buys without ever making an
+    /// account. Neither half is complete alone; both are cheap.</para>
+    ///
+    /// <para>Attribution only. Never put anything here that a gate reads: this value is
+    /// set by the user typing into a box, it is stored by a third party, and it grants
+    /// nothing. Non-throwing.</para></summary>
+    /// <param name="creatorCode">The normalized (upper-case) code, or null to clear it.</param>
+    Task SetAttributionAsync(string? creatorCode);
 }
 
 /// <summary>
@@ -82,4 +98,5 @@ public sealed class NullStoreBilling : IStoreBilling
     public Task<PurchaseOutcome> RestoreAsync() => Task.FromResult(PurchaseOutcome.Unavailable);
     public Task<string?> GetManagementUrlAsync() => Task.FromResult<string?>(null);
     public Task IdentifyAsync(string? accountId) => Task.CompletedTask;
+    public Task SetAttributionAsync(string? creatorCode) => Task.CompletedTask;
 }

@@ -58,6 +58,15 @@ internal sealed class FakeStore : IStoreBilling
         IdentifiedAs = accountId;
         return Task.CompletedTask;
     }
+
+    /// <summary>The creator code last written onto the store identity. Attribution only —
+    /// nothing in the gate reads it, and the tests assert exactly that.</summary>
+    public string? AttributedTo { get; private set; }
+    public Task SetAttributionAsync(string? creatorCode)
+    {
+        AttributedTo = creatorCode;
+        return Task.CompletedTask;
+    }
 }
 
 /// <summary>Scriptable sponsorship cache — stands in for the cloud sync engine.</summary>

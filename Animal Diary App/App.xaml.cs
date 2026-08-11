@@ -25,10 +25,11 @@ public partial class App : Application
 	private readonly ICloudSyncService _cloudSync;
 	private readonly ICloudAuthService _cloudAuth;
 	private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
+	private readonly ICloudReferralService _referrals;
 	private readonly MedicationDoseLogService _doseLogs;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, ICloudAuthService cloudAuth, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, MedicationDoseLogService doseLogs, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, ICloudAuthService cloudAuth, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, ICloudReferralService referrals, MedicationDoseLogService doseLogs, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -43,6 +44,7 @@ public partial class App : Application
 		_cloudSync = cloudSync;
 		_cloudAuth = cloudAuth;
 		_entitlements = entitlements;
+		_referrals = referrals;
 		_doseLogs = doseLogs;
 		_services = services;
 
@@ -579,6 +581,11 @@ public partial class App : Application
 						_analytics.Track(AnalyticsEvents.TrialStarted);
 					await MaybeShowReadOnlyReassuranceAsync();
 					await MaybeShowPreEndNudgeAsync();
+					await MaybeShowGrantEndingNudgeAsync();
+					// A creator code typed before there was an account. The service also
+					// claims on SessionChanged; this covers the launch where sign-in already
+					// happened but the claim never landed (offline at the time).
+					await _referrals.ClaimPendingAsync();
 				}
 				catch (Exception ex)
 				{

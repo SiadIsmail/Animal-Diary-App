@@ -190,7 +190,83 @@ whole feature exists to produce.
   that device reaches the server. An offline device keeps its cached grant until its own
   expiry date.
 
-## 7. Keys
+## 7. Creator codes (influencer attribution)
+
+Migration `0016_creator_codes.sql`. A creator code is the opposite of an access code in
+every respect, which is why they live in separate tables:
+
+| | Access code (0015) | Creator code (0016) |
+|---|---|---|
+| Shape | `FELOVA-K7M2-9XQP` | `THETO` |
+| Unique per person | Yes | No, everyone types the same one |
+| Uses | One | Unlimited |
+| Grants | A year of access | **Nothing** |
+| Needs an account | Yes | No |
+
+**Adding a creator** is one insert. The code is stored and compared upper-cased, so the
+user can type `theto`, `Theto` or `THETO`.
+
+```sql
+insert into public.creator_codes (code, creator, note)
+values ('THETO', 'Theto', 'YouTube, deal signed 2026-08');
+```
+
+`creator` is shown back to the user ("Thanks. We'll know you came from Theto."), so write
+it the way they spell their own name.
+
+**Reading the result:**
+
+```sql
+-- One row per creator: how many accounts entered the code, how many purchases followed.
+select * from public.creator_code_stats order by purchases desc;
+
+-- The individual credited purchases.
+select creator, code, purchased_at, referred_at, product_id, store
+  from public.creator_attributions
+ order by purchased_at desc;
+
+-- How long people took to convert, per creator.
+select creator,
+       count(*)                                              as purchases,
+       avg(purchased_at - referred_at)                       as avg_time_to_buy
+  from public.creator_attributions
+ where referred_at is not null
+ group by creator;
+
+-- Retire a code without losing its history (never delete it: attributions reference it).
+update public.creator_codes set active = false where code = 'THETO';
+```
+
+**Applying an attribution window later.** Every entry is a row and `referred_at` travels
+onto the attribution, so a rule like "only count purchases within 30 days of entering the
+code" is a `where` clause you can decide on after seeing real data, not a decision you had
+to make up front:
+
+```sql
+select creator, count(*) from public.creator_attributions
+ where purchased_at - referred_at < interval '30 days'
+ group by creator;
+```
+
+### Coverage, honestly
+
+Two halves, and neither is complete alone:
+
+- **This table** only sees people with an account, because the webhook's `app_user_id` is
+  a Supabase user id only after sign-in (`$RCAnonymousID` is skipped by design).
+- **RevenueCat** carries the same code as subscriber attributes (`creator_code` and
+  `$campaign`), set on the device when the code is entered, which covers anonymous buyers
+  and shows up in RevenueCat's own charts. It dies with a reinstall.
+
+Report **"attributed purchases"** to creators, never "your purchases". Some conversions
+will always slip through: a code entered on a reinstalled app, a purchase made before
+signing in, someone who found you through a creator and never typed anything.
+
+Only the **first** purchase is credited (`INITIAL_PURCHASE` / `NON_RENEWING_PURCHASE`).
+Renewals are the same sale continuing, and crediting them monthly would turn one
+conversion into a recurring one.
+
+## 8. Keys
 
 The app embeds the project URL + publishable key (`CloudConfig` in
 `Data/Services/Cloud/`). The **service-role key is never used by the app and

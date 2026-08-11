@@ -134,6 +134,14 @@ public sealed class EntitlementService : IEntitlementService
         StateChanged?.Invoke();
     }
 
+    public async Task SetAttributionAsync(string? creatorCode)
+    {
+        // No StateChanged: attribution changes nothing about access, and raising it would
+        // make every bound surface re-read the gate for a marketing tag.
+        try { await _store.SetAttributionAsync(creatorCode); }
+        catch (Exception ex) { Debug.WriteLine($"[Billing] attribution failed: {ex.Message}"); }
+    }
+
     public async Task RefreshOffersAsync()
     {
         try { await _store.RefreshOffersAsync(); }

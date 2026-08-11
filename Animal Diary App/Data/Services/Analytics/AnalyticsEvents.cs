@@ -172,6 +172,13 @@ public static class AnalyticsEvents
     /// number bought with a weaker posture. This event measures friction only: are people
     /// mistyping codes, hitting the attempt cap, or bouncing off the account requirement.</para></summary>
     public const string AccessCodeRedeemed = "access_code_redeemed";
+    /// <summary>A creator's code was entered (migration 0016). <b>No properties, ever</b> —
+    /// not even the creator. Which creator someone came through is answered by
+    /// <c>creator_code_stats</c> in Postgres, where it is exact and joined to real purchases;
+    /// putting it on an anonymous event would be a worse number bought with a weaker posture,
+    /// and at influencer-campaign volumes a creator tag edges toward identifying. This event
+    /// exists only to show that the box is being used at all.</summary>
+    public const string CreatorCodeEntered = "creator_code_entered";
     /// <summary>The one heads-up before a redeemed access code's grant ends. The grant
     /// sibling of <see cref="PreEndNudgeShown"/>; no properties (its "day" would be the
     /// grant length, which identifies the campaign).</summary>
