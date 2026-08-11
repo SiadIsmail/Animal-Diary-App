@@ -108,6 +108,12 @@ public interface IEntitlementService
     /// sheet opens, so a slow/failed initial load recovers). Non-throwing.</summary>
     Task RefreshOffersAsync();
 
+    /// <summary>Tag the store identity with a creator code, so a purchase made later carries
+    /// it (see <see cref="IStoreBilling.SetAttributionAsync"/>). Routed through this boundary
+    /// only because the store seam lives behind it — attribution grants nothing and no gate
+    /// reads it. Non-throwing.</summary>
+    Task SetAttributionAsync(string? creatorCode);
+
     /// <summary>Buy one of the <see cref="Offers"/>. Routes through native store
     /// billing; returns an outcome rather than throwing.</summary>
     Task<PurchaseOutcome> PurchaseAsync(SubscriptionPlan plan);

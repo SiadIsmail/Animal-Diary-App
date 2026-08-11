@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- RedeemCodeSheetView — entering an access code, on the shared FelovaBottomSheet. Two
-     faces: the FORM (signed in: one field, one button) and the SIGN-IN PROMPT (signed out:
-     a code lives on an account, so hand off to the account door rather than failing a
-     redemption they cannot fix). Reached from Settings only, never from the subscribe
-     sheet. BindingContext is a RedeemCodeSheetViewModel. -->
+<!-- RedeemCodeSheetView — entering a code, on the shared FelovaBottomSheet. ONE box for both
+     kinds: a creator code (public, grants nothing, works signed out) and an access code
+     (unique, grants a year, needs an account). The server decides which was typed; the user
+     is never asked. The sign-in hand-off is a RESULT state, shown only when a submitted code
+     turned out not to be a creator code while signed out — gating the box on sign-in would
+     block creator codes, whose whole audience has no account yet. Reached from Settings
+     only, never from the subscribe sheet. BindingContext is a RedeemCodeSheetViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
@@ -21,9 +23,8 @@
         <controls:FelovaBottomSheet.SheetContent>
             <VerticalStackLayout Spacing="12" Padding="0,2,0,0">
 
-                <!-- ── FORM face (signed in) ── -->
-                <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowForm}"
-                                     IsEnabled="{Binding CanInteract}">
+                <!-- ── The box. Always shown, signed in or not. ── -->
+                <VerticalStackLayout Spacing="12" IsEnabled="{Binding CanInteract}">
 
                     <Border BackgroundColor="{StaticResource Glass}"
                             Stroke="{StaticResource GlassLine}"
@@ -69,8 +70,9 @@
                     </Border>
                 </VerticalStackLayout>
 
-                <!-- ── SIGN-IN face (signed out) ── -->
-                <VerticalStackLayout Spacing="14" IsVisible="{Binding ShowSignInPrompt}">
+                <!-- ── SIGN-IN hand-off. A result, not a mode: only after a submitted code
+                     turned out to need an account. ── -->
+                <VerticalStackLayout Spacing="14" IsVisible="{Binding NeedsAccount}">
 
                     <Label Text="{loc:Translate Redeem_NeedsAccount}"
                            FontFamily="{StaticResource FontSans}" FontSize="14" LineHeight="1.45"

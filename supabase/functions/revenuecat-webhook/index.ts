@@ -56,6 +56,11 @@ const GRANTING = new Set([
 // early would be both wrong and unkind — expiry handles it when the period actually ends.
 const REVOKING = new Set(["EXPIRATION", "SUBSCRIPTION_PAUSED", "REFUND"]);
 
+// Events that count as "they bought" for creator attribution (migration 0016). Only the
+// FIRST purchase: a renewal is the same sale continuing, and crediting a creator again
+// every month would turn one conversion into a recurring one.
+const ATTRIBUTING = new Set(["INITIAL_PURCHASE", "NON_RENEWING_PURCHASE"]);
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /// Constant-time comparison over fixed-length digests, so neither the value nor its
@@ -147,6 +152,56 @@ Deno.serve(async (req) => {
     return { error, written: data?.length ?? 0, skipped: false };
   }
 
+  /// Credit a creator for a first purchase, if this account entered a code (migration 0016).
+  ///
+  /// BEST EFFORT, ALWAYS. Attribution is a marketing number; the entitlement is what decides
+  /// whether a caregiver can log an insulin dose. This runs after the entitlement write and
+  /// can never change the response, or a broken reporting table would start bouncing
+  /// RevenueCat's retries and taking sponsorship down with it.
+  ///
+  /// Idempotent by construction: event_id is the primary key, so a retry of the same event
+  /// collides and is ignored rather than double-crediting.
+  async function recordAttribution(userId: string) {
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("referred_code, referred_creator, referred_at")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (!profile?.referred_code) return;   // no code entered: nothing to credit
+
+      const eventId = String(event.id ?? "");
+      if (!eventId) {
+        console.warn("revenuecat-webhook: purchase event carried no id — attribution skipped");
+        return;
+      }
+
+      const { error } = await supabase.from("creator_attributions").insert({
+        event_id: eventId,
+        user_id: userId,
+        code: profile.referred_code,
+        creator: profile.referred_creator,
+        event_type: type,
+        product_id: String(event.product_id ?? "") || null,
+        store: String(event.store ?? "") || null,
+        environment: environment || null,
+        referred_at: profile.referred_at,
+        purchased_at: eventAt,
+      });
+
+      // 23505 = unique_violation: this event was already credited. Expected under retries.
+      if (error && error.code !== "23505") {
+        console.error(`revenuecat-webhook: attribution insert failed: ${error.message}`);
+        return;
+      }
+      if (!error)
+        console.log(`revenuecat-webhook: attributed ${type} to ${profile.referred_creator}`);
+    } catch (e) {
+      console.error(`revenuecat-webhook: attribution threw: ${e}`);
+    }
+  }
+
   // ── TRANSFER: a purchase moved between app user ids ───────────────────────
   // Revoke first: if the grant then fails and RevenueCat retries, over-revoking is
   // recoverable (they restore) while over-granting silently hands out free access.
@@ -224,6 +279,13 @@ Deno.serve(async (req) => {
         `by a newer event). event_at=${eventAt}`,
     );
   }
+
+  // After the entitlement, never before, and never able to affect the response above.
+  // Anonymous ids are skipped for the same reason setEntitlement skips them: without an
+  // account there is no profile to have entered a code. Those buyers are covered instead by
+  // the RevenueCat subscriber attribute the client sets (see AI/design-decisions.md).
+  if (ATTRIBUTING.has(type) && appUserId && !appUserId.startsWith("$RCAnonymousID") && UUID.test(appUserId))
+    await recordAttribution(appUserId);
 
   console.log(`revenuecat-webhook: ${type} active=${active} written=${written} (${environment})`);
   return json({ ok: true, type, active, written });

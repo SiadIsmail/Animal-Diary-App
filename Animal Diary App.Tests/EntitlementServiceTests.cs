@@ -126,6 +126,23 @@ public class EntitlementServiceTests
     }
 
     [Fact]
+    public async Task Attribution_ReachesTheStore_ButChangesNoAccess()
+    {
+        // A creator code is a marketing tag routed through this boundary only because the
+        // store seam lives behind it. If it ever starts moving the gate, that is a bug: the
+        // value is typed into a box by the user and grants nothing.
+        var (ent, store) = await BuildAsync(trialActive: false);
+        var before = ent.HasFullAccess;
+        var stateBefore = ent.State;
+
+        await ent.SetAttributionAsync("THETO");
+
+        Assert.Equal("THETO", store.AttributedTo);
+        Assert.Equal(before, ent.HasFullAccess);
+        Assert.Equal(stateBefore, ent.State);
+    }
+
+    [Fact]
     public async Task NoGrant_FallsThroughToTheOtherSources()
     {
         var (trialing, _) = await BuildAsync(trialActive: true, grants: new FakeGrants(() => T0));

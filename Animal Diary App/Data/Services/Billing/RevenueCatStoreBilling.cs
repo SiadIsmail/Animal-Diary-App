@@ -350,6 +350,45 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         }
     }
 
+    /// <summary>
+    /// Write the creator code onto the RevenueCat identity as subscriber attributes, so it
+    /// rides along on every purchase event this install later produces — anonymous installs
+    /// included, which is the entire reason this path exists alongside the server-side
+    /// record.
+    ///
+    /// <para>Two keys are set together: <c>$campaign</c>, RevenueCat's reserved attribution
+    /// attribute (so their own charts segment by it without any work on our side), and a
+    /// plain <c>creator_code</c>, which is a custom key and therefore always accepted. If a
+    /// future SDK ever rejects the reserved key, the custom one still carries the value and
+    /// the server-side record in migration 0016 is unaffected either way.</para>
+    ///
+    /// <para>Best effort by contract. This is a marketing number; nothing reads it as a
+    /// gate, so a failure is logged and dropped rather than surfaced.</para>
+    /// </summary>
+    public async Task SetAttributionAsync(string? creatorCode)
+    {
+        if (!_configured)
+        {
+            try { await InitializeAsync(); }
+            catch (Exception ex) { Debug.WriteLine($"[Billing] attribution: init failed: {ex.Message}"); return; }
+        }
+
+        try
+        {
+            var value = creatorCode ?? string.Empty;   // empty clears the attribute
+            _rc.SetAttributes(new Dictionary<string, string>
+            {
+                ["creator_code"] = value,
+                ["$campaign"] = value,
+            });
+            Debug.WriteLine($"[Billing] attribution set: '{value}'");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Billing] attribution failed: {ex.Message}");
+        }
+    }
+
     private async Task RefreshEntitlementAsync()
     {
         var info = await WithTimeout(_rc.GetCustomerInfo(), StoreCallTimeoutSeconds, (CustomerInfoDto?)null);
