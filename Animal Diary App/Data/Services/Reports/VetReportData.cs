@@ -217,6 +217,11 @@ public sealed class ReportEvent
     /// <summary>Seizure duration when the owner timed it.</summary>
     public int? DurationMinutes { get; init; }
 
+    /// <summary>What kind of seizure the owner said it was, or null when they didn't say.
+    /// Carried through verbatim — the report states the owner's own answer and never
+    /// derives one from the duration or the note.</summary>
+    public Models.SeizureType? SeizureType { get; init; }
+
     /// <summary>Owner's own words (e.g. post-seizure note). Rendered verbatim.</summary>
     public string? Note { get; init; }
 

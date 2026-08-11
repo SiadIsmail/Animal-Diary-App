@@ -221,6 +221,13 @@
   <data name="Journal_SeizureTitle" xml:space="preserve"><value>{0}s Anfallsprotokoll</value></data>
   <data name="Journal_SeizureSub" xml:space="preserve"><value>{0:ddd, d. MMM}</value></data>
   <data name="Journal_SeizureTimeLabel" xml:space="preserve"><value>Uhrzeit</value></data>
+  <!-- Anfallsart-Kacheln. Die Begriffe der Tierärztin, sonst nichts: wer sie nicht kennt,
+       wählt nichts aus. Dieselben drei Wörter nutzen Eingabe, Journal-Verlauf und der
+       Tierarztbericht. Die Schlüssel-Endungen sind die SeizureType-Membernamen. -->
+  <data name="Journal_SeizureTypeLabel" xml:space="preserve"><value>Art · optional</value></data>
+  <data name="Journal_SeizureTypeGeneralized" xml:space="preserve"><value>Generalisiert</value></data>
+  <data name="Journal_SeizureTypeFocal" xml:space="preserve"><value>Fokal</value></data>
+  <data name="Journal_SeizureTypeFocalToGeneralized" xml:space="preserve"><value>Fokal → generalisiert</value></data>
   <data name="Journal_SeizureDurationLabel" xml:space="preserve"><value>Dauer · optional</value></data>
   <data name="Journal_SeizureDurationPlaceholder" xml:space="preserve"><value>Minuten</value></data>
   <data name="Journal_SeizureNoteLabel" xml:space="preserve"><value>Notizen · optional</value></data>

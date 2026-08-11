@@ -97,4 +97,13 @@
     <Compile Include="..\Animal Diary App\Helpers\LocalizationManager.cs" Link="Today\LocalizationManager.cs" />
   </ItemGroup>
 
+  <!-- The Journal's typed entries, linked for one reason: SeizureType's stored numbers and
+       its member names are BOTH persistence formats (int locally, text in the cloud) that
+       nothing else can catch — no compiler error, no failing sync, just a type that quietly
+       reads back as the wrong one or as nothing. Plain attributes and enums; the only
+       dependency is LocalizationManager, already linked above. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\JournalEntries.cs" Link="Journal\JournalEntries.cs" />
+  </ItemGroup>
+
 </Project>

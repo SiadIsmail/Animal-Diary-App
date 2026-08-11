@@ -91,6 +91,23 @@ public static class VetReportSampleData
                 Date = from.AddDays(d),
                 Value = level
             });
+        // Seizures, including one the owner did not name a type for — the details column
+        // has to read properly both ways, since not knowing is a normal answer.
+        foreach (var (d, type, minutes) in new (int, Models.SeizureType?, int?)[]
+                 {
+                     (23, Models.SeizureType.Generalized, 2),
+                     (55, Models.SeizureType.FocalToGeneralized, 4),
+                     (71, null, null)
+                 })
+            events.Add(new ReportEvent
+            {
+                Kind = ReportEventKind.Seizure,
+                Date = from.AddDays(d),
+                Time = new TimeSpan(1 + rng.Next(6), rng.Next(60), 0),
+                SeizureType = type,
+                DurationMinutes = minutes,
+                Note = d == 55 ? "Started in her back left leg, then went to the whole body" : null
+            });
         events = events.OrderByDescending(e => e.Date).ThenByDescending(e => e.Time).ToList();
 
         return new VetReportData

@@ -86,6 +86,10 @@ public class EventsSection : IVetReportSection
     private static string Details(ReportEvent e)
     {
         var parts = new List<string>();
+        // First: it is the most clinically legible thing in the row, and it is the
+        // owner's own answer — absent when they didn't give one.
+        if (e.SeizureType is not null)
+            parts.Add(VetReportStrings.SeizureType(e.SeizureType));
         if (e.DurationMinutes is int min)
             parts.Add(VetReportStrings.EventDuration(min));
         if (e.Kind == ReportEventKind.LowAppetite && e.Value is int level)

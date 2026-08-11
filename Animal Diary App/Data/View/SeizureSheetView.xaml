@@ -52,6 +52,49 @@
                     </Border>
                 </VerticalStackLayout>
 
+                <!-- Type · optional. Three tiles in one row, carrying the vet's own terms
+                     and nothing else: an owner who doesn't know one picks nothing, which
+                     is a normal answer and the resting state (no tile starts selected, and
+                     tapping the chosen one clears it). The app never suggests a type. -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Journal_SeizureTypeLabel}" Style="{StaticResource FieldLabel}"/>
+                    <FlexLayout BindableLayout.ItemsSource="{Binding TypeOptions}"
+                                Wrap="NoWrap"
+                                AlignItems="Stretch"
+                                JustifyContent="SpaceBetween">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:SeizureTypeOption">
+                                <Border FlexLayout.Basis="32%"
+                                        BackgroundColor="{StaticResource Glass}"
+                                        Stroke="{StaticResource GlassLine}"
+                                        StrokeThickness="1.5"
+                                        StrokeShape="RoundRectangle 14,11,13,12"
+                                        Padding="6,11">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                                            <Setter Property="BackgroundColor" Value="{StaticResource VioletTint}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference Root}, Path=BindingContext.SelectTypeCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding Word}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="11"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource InkSecondary}"
+                                           HorizontalTextAlignment="Center"
+                                           VerticalOptions="Center"
+                                           LineBreakMode="WordWrap"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </VerticalStackLayout>
+
                 <!-- Duration · optional -->
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{loc:Translate Journal_SeizureDurationLabel}" Style="{StaticResource FieldLabel}"/>

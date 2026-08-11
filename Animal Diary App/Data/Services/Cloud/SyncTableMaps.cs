@@ -703,6 +703,10 @@ internal static class SyncTableMaps
                     ["pet_id"] = petUuid,
                     ["entry_date"] = CloudJson.ToDateOnly(s.Date),
                     ["time_ticks"] = s.Time.Ticks,
+                    // Text on the wire (the member name), unlike the local int column —
+                    // matches how Tracker.Kind and CustomTracker.Shape already travel, and
+                    // keeps the cloud row readable. Null when the owner didn't say.
+                    ["seizure_type"] = s.Type?.ToString(),
                     ["duration_minutes"] = s.DurationMinutes,
                     ["note"] = s.Note,
                     ["client_updated_at"] = CloudJson.ToIso(s.UpdatedAtUtc),
@@ -719,6 +723,12 @@ internal static class SyncTableMaps
                     PetId = petId.Value,
                     Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
                     Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    // TryParse, not Parse: an unrecognised value (a newer client's fourth
+                    // type, a hand-edited row) becomes "not said" rather than throwing and
+                    // aborting the whole pull for everything else in the batch.
+                    Type = Enum.TryParse<SeizureType>(CloudJson.GetStringOrNull(el, "seizure_type"), out var st)
+                        ? st
+                        : null,
                     DurationMinutes = CloudJson.GetIntOrNull(el, "duration_minutes"),
                     Note = CloudJson.GetString(el, "note"),
                     UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
@@ -728,6 +738,7 @@ internal static class SyncTableMaps
             copyPayload: (local, inc) =>
             {
                 local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.Type = inc.Type;
                 local.DurationMinutes = inc.DurationMinutes; local.Note = inc.Note;
             }),
 
