@@ -105,6 +105,12 @@ public static class VetReportStrings
     public static string EventVomiting => L.GetString("Report_EventVomiting");
     public static string EventLowAppetite => L.GetString("Report_EventLowAppetite");
     public static string EventDuration(int minutes) => L.Format("Report_EventDuration", minutes);
+
+    /// <summary>The seizure type the owner chose. Same keys the seizure sheet uses (like
+    /// <see cref="AppetiteRows"/> above): the vet must read the same word the owner tapped,
+    /// so there is one set of terms, not a report-flavoured second set.</summary>
+    public static string SeizureType(Models.SeizureType? type) =>
+        Models.SeizureTypeExtensions.GetDisplayName(type);
     public static string EventAppetiteLevel(int level) => L.Format("Report_EventAppetiteLevel", level);
     public static string MoreEvents(int count) => L.Format("Report_MoreEvents", count);
 

@@ -231,6 +231,14 @@
   <data name="Journal_SeizureTitle" xml:space="preserve"><value>{0}'s seizure log</value></data>
   <data name="Journal_SeizureSub" xml:space="preserve"><value>{0:ddd, d MMM}</value></data>
   <data name="Journal_SeizureTimeLabel" xml:space="preserve"><value>Time</value></data>
+  <!-- Seizure type tiles. The vet's own terms, and nothing else: an owner who doesn't
+       know one picks nothing. The same three words are used by the sheet, the Journal
+       timeline and the vet report — the owner and the vet must never be shown different
+       names for the same answer. Key suffixes are the SeizureType member names. -->
+  <data name="Journal_SeizureTypeLabel" xml:space="preserve"><value>Type · optional</value></data>
+  <data name="Journal_SeizureTypeGeneralized" xml:space="preserve"><value>Generalized</value></data>
+  <data name="Journal_SeizureTypeFocal" xml:space="preserve"><value>Focal</value></data>
+  <data name="Journal_SeizureTypeFocalToGeneralized" xml:space="preserve"><value>Focal → generalized</value></data>
   <data name="Journal_SeizureDurationLabel" xml:space="preserve"><value>Duration · optional</value></data>
   <data name="Journal_SeizureDurationPlaceholder" xml:space="preserve"><value>Minutes</value></data>
   <data name="Journal_SeizureNoteLabel" xml:space="preserve"><value>Notes · optional</value></data>

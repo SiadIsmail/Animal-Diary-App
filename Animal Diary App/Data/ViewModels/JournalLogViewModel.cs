@@ -1025,13 +1025,19 @@ public class JournalLogViewModel : BaseViewModel
     }
 
     // Duration and note are both optional; join whichever are present.
+    // Type · duration · note, in that order, with whichever parts were answered. All three
+    // are optional, so a seizure logged with only a time has an empty sub line.
     private static string SeizureSub(SeizureEntry s)
     {
-        var duration = s.DurationMinutes is int m ? Loc.Format("Journal_SeizureDuration", m) : string.Empty;
+        var parts = new List<string>(3);
+        if (s.Type is SeizureType t)
+            parts.Add(t.GetDisplayName());
+        if (s.DurationMinutes is int m)
+            parts.Add(Loc.Format("Journal_SeizureDuration", m));
         var note = s.Note?.Trim() ?? string.Empty;
-        if (duration.Length > 0 && note.Length > 0)
-            return $"{duration} · {note}";
-        return duration.Length > 0 ? duration : note;
+        if (note.Length > 0)
+            parts.Add(note);
+        return string.Join(" · ", parts);
     }
 
     /// <summary>Ticks → time of day, or null when the entry has no stored time.</summary>

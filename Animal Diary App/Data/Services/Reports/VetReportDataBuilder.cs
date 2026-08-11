@@ -349,6 +349,7 @@ public class VetReportDataBuilder
             Date = s.Date,
             Time = s.Time,
             DurationMinutes = s.DurationMinutes,
+            SeizureType = s.Type,
             Note = string.IsNullOrWhiteSpace(s.Note) ? null : s.Note.Trim()
         }));
 

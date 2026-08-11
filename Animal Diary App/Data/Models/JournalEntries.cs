@@ -163,7 +163,51 @@ public class SeizureEntry : ISyncable
     /// <summary>How long it lasted, in minutes. Null when the owner didn't time it.</summary>
     public int? DurationMinutes { get; set; }
 
+    /// <summary>What kind it was, or NULL when the owner didn't say — which is the
+    /// resting state and a normal answer, not a skipped field. There is deliberately no
+    /// "Unknown" member: an owner who doesn't know picks nothing, and the app never
+    /// infers a type from the duration, the note, or anything else.</summary>
+    public SeizureType? Type { get; set; }
+
     public string Note { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// How a seizure presented — the vet's own vocabulary, because this exists to be read
+/// at an appointment. The app only ever records the owner's answer; nothing suggests,
+/// derives or second-guesses it (AI/app-voice.md §16).
+///
+/// <b>Values are pinned and must never be reordered.</b> These are stored as the INT,
+/// not as text, and not by choice: sqlite-net reads <c>[StoreAsText]</c> off the
+/// property's declared type, so on a nullable enum (<c>SeizureType?</c> is
+/// <c>Nullable&lt;SeizureType&gt;</c>) the attribute is never found and the column
+/// silently becomes an integer anyway. Pinning the numbers makes that storage safe
+/// instead of a trap. The CLOUD column is text (see SyncTableMaps) — the member names
+/// are the wire format there, so renaming one orphans every synced row.
+/// </summary>
+public enum SeizureType
+{
+    /// <summary>Whole body.</summary>
+    Generalized = 1,
+
+    /// <summary>Stayed in one part of the body.</summary>
+    Focal = 2,
+
+    /// <summary>Started in one part, then became generalized.</summary>
+    FocalToGeneralized = 3
+}
+
+public static class SeizureTypeExtensions
+{
+    /// <summary>The localized term for a stored type (EN + DE via AppStrings). One set of
+    /// words for the sheet, the timeline and the vet report — the owner and the vet must
+    /// never be shown different names for the same answer.</summary>
+    public static string GetDisplayName(this SeizureType type) =>
+        Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString($"Journal_SeizureType{type}");
+
+    /// <summary>Same, for the nullable field: empty when the owner didn't say.</summary>
+    public static string GetDisplayName(this SeizureType? type) =>
+        type is SeizureType t ? t.GetDisplayName() : string.Empty;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
