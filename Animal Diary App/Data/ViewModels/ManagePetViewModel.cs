@@ -295,14 +295,28 @@ public class ManagePetViewModel : BaseViewModel
     /// Felova" for everyone — telling a caregiver they were about to delete someone else's
     /// animal, which is both false and frightening.
     /// </summary>
-    public string RemovePetLabel
+    public string RemovePetLabel => IsCaregiverRemoval
+        ? Loc.Format("Manage_LeavePetRow", PetName)
+        : Loc.Format("Manage_RemovePetRow", PetName);
+
+    /// <summary>
+    /// The row's second line: what removal actually costs this viewer. It branches on the
+    /// same role as the label, because the two answers are not softenings of each other —
+    /// an owner loses the record, a caregiver only loses their view of it. Saying "can't be
+    /// undone" to someone who is merely stepping away would be a lie in the frightening
+    /// direction (§14: no hierarchy theatre, so neither line names a role).
+    /// </summary>
+    public string RemovePetSubtitle => IsCaregiverRemoval
+        ? Loc.Format("Manage_LeavePetSubtitle", PetName)
+        : Loc.GetString("Manage_RemovePetSubtitle");
+
+    /// <summary>True when this viewer would only *leave* the pet rather than delete it.</summary>
+    private bool IsCaregiverRemoval
     {
         get
         {
             var pet = _activePet.ActivePet;
-            if (pet != null && pet.Id != 0 && _deletion.DetermineKind(pet) == PetRemovalKind.Caregiver)
-                return Loc.Format("Manage_LeavePetRow", PetName);
-            return Loc.Format("Manage_RemovePetRow", PetName);
+            return pet != null && pet.Id != 0 && _deletion.DetermineKind(pet) == PetRemovalKind.Caregiver;
         }
     }
 
@@ -317,20 +331,26 @@ public class ManagePetViewModel : BaseViewModel
         private set
         {
             if (SetProperty(ref _isPaused, value))
-            {
-                OnPropertyChanged(nameof(PauseRowLabel));
-                OnPropertyChanged(nameof(PausedNotice));
-            }
+                OnPropertyChanged(nameof(PauseRowSubtitle));
         }
     }
 
-    /// <summary>Row label: "Pause everything for Charly" ⇄ "Resume everything for Charly".</summary>
-    public string PauseRowLabel => IsPaused
-        ? Loc.Format("Manage_ResumeRow", PetName)
-        : Loc.Format("Manage_PauseRow", PetName);
+    /// <summary>
+    /// Row label, fixed: "Pause everything for Charly". It does NOT flip to "Resume…" —
+    /// the row carries a Switch bound to <see cref="IsPaused"/>, and a switch labelled with
+    /// the opposite of its own state is unreadable ("Resume everything", on). The label names
+    /// the thing being switched; the switch says whether it's on.
+    /// </summary>
+    public string PauseRowLabel => Loc.Format("Manage_PauseRow", PetName);
 
-    /// <summary>Short status line shown only while paused (§15: plain, no euphemism).</summary>
-    public string PausedNotice => IsPaused ? Loc.Format("Manage_PausedNotice", PetName) : string.Empty;
+    /// <summary>
+    /// The row's second line, which is where the state is spelled out in words (§15: plain,
+    /// no euphemism). Paused, it is the status line; unpaused, it is what the switch would do.
+    /// This replaced a free-floating notice label that only existed while paused.
+    /// </summary>
+    public string PauseRowSubtitle => IsPaused
+        ? Loc.Format("Manage_PausedNotice", PetName)
+        : Loc.GetString("Manage_PauseSubtitle");
 
     // ── Load ─────────────────────────────────────────────────────────────────────
     public async Task LoadAsync()
@@ -342,13 +362,16 @@ public class ManagePetViewModel : BaseViewModel
         OnPropertyChanged(nameof(IdentityHint));
         OnPropertyChanged(nameof(EmptyPlanText));
         OnPropertyChanged(nameof(RemovePetLabel));
+        OnPropertyChanged(nameof(RemovePetSubtitle));
 
         var pet = _activePet.ActivePet;
 
-        // Reflect this device's pause state for the active pet (raises the row label
-        // and the paused notice through the IsPaused setter).
+        // Reflect this device's pause state for the active pet. The setter only fires when
+        // the state actually changed, so the label and subtitle are raised unconditionally
+        // below — both carry the pet's name, which changes when the active pet does.
         IsPaused = pet != null && pet.Id != 0 && _pause.IsPaused(pet.Id);
         OnPropertyChanged(nameof(PauseRowLabel));
+        OnPropertyChanged(nameof(PauseRowSubtitle));
 
         if (pet == null || pet.Id == 0)
         {

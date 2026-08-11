@@ -309,9 +309,16 @@
   <data name="Manage_AddCondition" xml:space="preserve"><value>Erkrankung hinzufügen</value></data>
   <data name="Manage_MedicationsTitle" xml:space="preserve"><value>Medikamente</value></data>
   <data name="Manage_AddMedication" xml:space="preserve"><value>Medikament hinzufügen</value></data>
-  <!-- Tier entfernen. {0} ist der Tiername. Zeile am Fuß der Verwalten-Seite. -->
+  <!-- Überschrift der beiden Zeilen am Fuß der Verwalten-Seite. Bewusst nüchtern:
+       §15 verbietet Beschönigung, also werden beide Aktionen benannt. -->
+  <data name="Manage_WindDownTitle" xml:space="preserve"><value>Pausieren und entfernen</value></data>
+  <!-- Tier entfernen. {0} ist der Tiername. Zeile am Fuß der Verwalten-Seite. Die
+       Unterzeilen verzweigen wie die Titel: wer das Tier besitzt, verliert die Einträge,
+       wer es nur mitbetreut, verliert nur den Zugang. Keine Rollennamen (§14). -->
   <data name="Manage_RemovePetRow" xml:space="preserve"><value>{0} aus Felova entfernen</value></data>
+  <data name="Manage_RemovePetSubtitle" xml:space="preserve"><value>Löscht die Medikamente, den Verlauf und jede Notiz. Das lässt sich nicht rückgängig machen.</value></data>
   <data name="Manage_LeavePetRow" xml:space="preserve"><value>Die Betreuung von {0} beenden</value></data>
+  <data name="Manage_LeavePetSubtitle" xml:space="preserve"><value>{0} verschwindet aus deiner App. Die Einträge bleiben bei der Person, die {0} mit dir teilt.</value></data>
   <!-- Action-Sheet, das vor dem Löschen die Kopie anbietet. {0} ist der Tiername. -->
   <data name="Manage_RemovePetTitle" xml:space="preserve"><value>{0} aus Felova entfernen?</value></data>
   <data name="Manage_RemovePetSaveCopy" xml:space="preserve"><value>Erst eine Kopie sichern</value></data>
@@ -322,9 +329,11 @@
   <!-- Wenn das Tier gesichert ist und dir gehört. {0} ist der Tiername. -->
   <data name="Manage_RemovePetConfirmBodyBackup" xml:space="preserve"><value>Das löscht die Medikamente, den Verlauf und alle Notizen, aus deinem Backup und bei allen, die die Betreuung teilen. Das lässt sich nicht rückgängig machen.</value></data>
   <data name="Manage_RemovePetConfirmAccept" xml:space="preserve"><value>{0} entfernen</value></data>
-  <!-- Alles pausieren (§15). Gerätelokal, umkehrbar. {0} ist der Name des Tiers. -->
+  <!-- Alles pausieren (§15). Gerätelokal, umkehrbar. {0} ist der Name des Tiers.
+       Der Zeilentitel ist FEST (nie "fortsetzen"): er beschriftet einen Schalter, der
+       Zustand steht auf dem Schalter und in der Unterzeile. -->
   <data name="Manage_PauseRow" xml:space="preserve"><value>Alles für {0} pausieren</value></data>
-  <data name="Manage_ResumeRow" xml:space="preserve"><value>Alles für {0} fortsetzen</value></data>
+  <data name="Manage_PauseSubtitle" xml:space="preserve"><value>Stoppt alle Erinnerungen auf diesem Gerät. Es wird nichts gelöscht.</value></data>
   <data name="Manage_PausedNotice" xml:space="preserve"><value>Erinnerungen für {0} sind auf diesem Gerät pausiert. Die Einträge bleiben.</value></data>
   <data name="Manage_PausedExportTitle" xml:space="preserve"><value>Alles für {0} ist pausiert.</value></data>
   <data name="Manage_PausedExportBody" xml:space="preserve"><value>{0}s Einträge bleiben hier, so lange du möchtest.</value></data>
