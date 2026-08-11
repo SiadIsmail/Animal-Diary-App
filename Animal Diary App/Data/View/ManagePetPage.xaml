@@ -487,46 +487,110 @@
                     </Border>
                 </VerticalStackLayout>
 
+                <!-- ── Pausing and removing ──────────────────────────────────────────
+                     Both of these used to be centred grey Labels with a tap recogniser:
+                     the only two actions on the page that didn't look like the card rows
+                     around them, and the two that matter most. §15.1 requires the pause be
+                     "clear, findable, one-tap" — grey text under the fold is none of those.
+                     They now use the two idioms this app already has, and the difference in
+                     weight IS the design: the reversible one reads as an ordinary setting,
+                     the irreversible one wears the Clay destructive card (the same one
+                     Settings' delete-all-data uses). -->
+                <Label Text="{loc:Translate Manage_WindDownTitle}"
+                       Style="{StaticResource SectionTitle}"
+                       Margin="2,26,2,2"/>
+
                 <!-- Pause everything (AI/app-voice.md §15): a one-tap, reversible way to
                      stop every reminder for this pet on this device, keeping the record.
-                     Per-device, so it never touches the other carer's reminders. -->
-                <VerticalStackLayout Spacing="4" Margin="0,28,0,0">
-                    <Label Text="{Binding ManageVM.PauseRowLabel}"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="13.5"
-                           TextColor="{StaticResource InkSecondary}"
-                           HorizontalOptions="Center"
-                           HorizontalTextAlignment="Center"
-                           Padding="18,12">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ManageVM.TogglePauseCommand}"/>
-                        </Label.GestureRecognizers>
-                    </Label>
-                    <!-- Plain status line, shown only while paused (no euphemism, §15). -->
-                    <Label Text="{Binding ManageVM.PausedNotice}"
-                           IsVisible="{Binding ManageVM.IsPaused}"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="12"
-                           TextColor="{StaticResource InkTertiary}"
-                           HorizontalOptions="Center"
-                           HorizontalTextAlignment="Center"
-                           Padding="24,0"/>
-                </VerticalStackLayout>
+                     Per-device, so it never touches the other carer's reminders.
+                     The Switch is state, not input: the card owns the tap so there is one
+                     code path, and a two-way binding would be driving async work (cancel
+                     every reminder, re-arm them) from a property setter. InputTransparent
+                     lets a tap on the switch itself fall through to the card. -->
+                <Border Style="{StaticResource CardSurface}"
+                        Padding="12,14">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ManageVM.TogglePauseCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*,Auto"
+                          ColumnSpacing="13">
+                        <Border Grid.Column="0"
+                                WidthRequest="38"
+                                HeightRequest="38"
+                                BackgroundColor="{StaticResource Well}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                VerticalOptions="Center">
+                            <Label Text="⏸"
+                                   FontSize="16"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="2"
+                                             VerticalOptions="Center">
+                            <Label Text="{Binding ManageVM.PauseRowLabel}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"/>
+                            <!-- Carries the state in words, paused or not (§15: plain). -->
+                            <Label Text="{Binding ManageVM.PauseRowSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   LineHeight="1.35"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="2"
+                                IsToggled="{Binding ManageVM.IsPaused, Mode=OneWay}"
+                                InputTransparent="True"
+                                OnColor="{StaticResource Teal}"
+                                VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
 
-                <!-- Remove pet: the owner deletes, a caregiver leaves. Understated on
-                     purpose (deletion is never casual, never punishing). -->
-                <Label Text="{Binding ManageVM.RemovePetLabel}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="13.5"
-                       TextColor="{StaticResource InkTertiary}"
-                       HorizontalOptions="Center"
-                       HorizontalTextAlignment="Center"
-                       Padding="18,12"
-                       Margin="0,28,0,0">
-                    <Label.GestureRecognizers>
+                <!-- Remove pet: the owner deletes, a caregiver leaves. The Clay card is
+                     louder than the old grey text but still not a red button — deletion is
+                     never casual, never punishing. Both lines branch on the viewer's role. -->
+                <Border BackgroundColor="{StaticResource ClayTint}"
+                        Stroke="#EFD3CE"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="12,14"
+                        Margin="0,10,0,0">
+                    <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding ManageVM.RemovePetCommand}"/>
-                    </Label.GestureRecognizers>
-                </Label>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="13">
+                        <Border Grid.Column="0"
+                                WidthRequest="38"
+                                HeightRequest="38"
+                                BackgroundColor="#F2DAD6"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                VerticalOptions="Center">
+                            <Label Text="🗑️"
+                                   FontSize="17"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="2"
+                                             VerticalOptions="Center">
+                            <Label Text="{Binding ManageVM.RemovePetLabel}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Clay}"/>
+                            <Label Text="{Binding ManageVM.RemovePetSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   LineHeight="1.35"
+                                   TextColor="#B07B76"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
 
             </VerticalStackLayout>
         </ScrollView>

@@ -322,9 +322,16 @@
   <data name="Manage_AddCondition" xml:space="preserve"><value>Add condition</value></data>
   <data name="Manage_MedicationsTitle" xml:space="preserve"><value>Medications</value></data>
   <data name="Manage_AddMedication" xml:space="preserve"><value>Add medication</value></data>
-  <!-- Remove pet. {0} is the pet's name. Row sits at the foot of the Manage page. -->
+  <!-- Section header for the two rows at the foot of the Manage page. Deliberately flat:
+       §15 bans euphemism, so it names both actions rather than softening them. -->
+  <data name="Manage_WindDownTitle" xml:space="preserve"><value>Pausing and removing</value></data>
+  <!-- Remove pet. {0} is the pet's name. Row sits at the foot of the Manage page. The
+       subtitles branch on the same role as the labels: an owner loses the record, a
+       caregiver only loses their view of it. Neither line names a role (§14). -->
   <data name="Manage_RemovePetRow" xml:space="preserve"><value>Remove {0} from Felova</value></data>
+  <data name="Manage_RemovePetSubtitle" xml:space="preserve"><value>Deletes their medications, their timeline and every note. This can't be undone.</value></data>
   <data name="Manage_LeavePetRow" xml:space="preserve"><value>Stop caring for {0}</value></data>
+  <data name="Manage_LeavePetSubtitle" xml:space="preserve"><value>{0} disappears from your app. Their record stays with the person sharing it with you.</value></data>
   <!-- Action-sheet offering the export before deleting. {0} is the pet's name. -->
   <data name="Manage_RemovePetTitle" xml:space="preserve"><value>Remove {0} from Felova?</value></data>
   <data name="Manage_RemovePetSaveCopy" xml:space="preserve"><value>Save a copy first</value></data>
@@ -337,8 +344,11 @@
   <data name="Manage_RemovePetConfirmAccept" xml:space="preserve"><value>Remove {0}</value></data>
   <!-- Pause everything (§15). Per-device, reversible. {0} is the pet's name. Row sits
        above the Remove row on the Manage page. -->
+  <!-- The row label is FIXED (never flips to "Resume…"): it labels a Switch, and the state
+       lives on the switch and in the subtitle below it. PauseSubtitle is what the switch
+       would do; PausedNotice is what it did, and replaces it once paused. -->
   <data name="Manage_PauseRow" xml:space="preserve"><value>Pause everything for {0}</value></data>
-  <data name="Manage_ResumeRow" xml:space="preserve"><value>Resume everything for {0}</value></data>
+  <data name="Manage_PauseSubtitle" xml:space="preserve"><value>Stops every reminder on this device. Nothing is deleted.</value></data>
   <data name="Manage_PausedNotice" xml:space="preserve"><value>Reminders for {0} are paused on this device. Their record stays.</value></data>
   <!-- Quiet export offer shown once, right after pausing. {0} is the pet's name. -->
   <data name="Manage_PausedExportTitle" xml:space="preserve"><value>Everything for {0} is paused.</value></data>
