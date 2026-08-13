@@ -134,6 +134,48 @@
     <Color x:Key="GlassLine">#D9FFFFFF</Color>  <!-- 85% -->
     <Color x:Key="Well">#57FFFFFF</Color>       <!-- 34% recessed well -->
 
+    <!-- ══════════════ NIGHT (the Constellation, and only the Constellation) ══════════════
+         The one dark surface in the app. It is NOT a dark theme and must not become the
+         seed of one: these are the rockpool tokens after sundown, mixed to sit under the
+         same ink (#0D3A3C is the daylight text colour and the night ground's own hue).
+
+         The Star* set is the daylight tracker accents lifted to read on that ground — a
+         weigh-in is blue in both places, a seizure violet in both. They are LIGHTER than
+         their daytime siblings for contrast, never a different hue, so nothing changes
+         identity between the Journal and the sky. None of them encodes a value; a colour
+         here says what kind of thing was recorded, exactly as the symbol does. -->
+    <!-- The ground is the rockpool wash after dark: the same top→mid→bottom vertical
+         gradient WaterBackground paints in daylight, walked down in value and kept
+         green-teal rather than navy. A blue-black sky read as a different app. -->
+    <Color x:Key="NightTop">#123C3E</Color>     <!-- sky ground, top    -->
+    <Color x:Key="NightMid">#0B2A31</Color>     <!-- sky ground, middle -->
+    <Color x:Key="NightBottom">#08191F</Color>  <!-- sky ground, bottom -->
+
+    <!-- The two ambient glows WaterBackground already uses, at night strength: a mint
+         one up top and the warm SAND one rising off the bottom edge. The sand is the
+         signature — it is what makes this the WARM rockpool rather than a cold one. -->
+    <Color x:Key="NightGlowMint">#8FE3D2</Color>
+    <Color x:Key="NightGlowSand">#EDDFC0</Color>
+
+    <Color x:Key="StarDust">#C4E6E3</Color>     <!-- distant, data-free specks -->
+    <Color x:Key="SkyPath">#7FD4C4</Color>      <!-- the timeline's thin glow  -->
+
+    <Color x:Key="SkyText">#EAF6F2</Color>      <!-- primary text on night     -->
+    <Color x:Key="SkyInk">#9FC4C0</Color>       <!-- secondary text            -->
+    <Color x:Key="SkyInkSoft">#6E918F</Color>   <!-- hints / metadata          -->
+    <Color x:Key="SkyGlass">#1FFFFFFF</Color>   <!-- 12% frosted surface       -->
+    <Color x:Key="SkyWell">#14FFFFFF</Color>    <!-- 8% recessed well          -->
+    <Color x:Key="SkyLine">#33FFFFFF</Color>    <!-- 20% hairline              -->
+
+    <Color x:Key="StarMood">#5FD3C0</Color>       <!-- teal   -->
+    <Color x:Key="StarWeight">#7FC4E4</Color>     <!-- blue   -->
+    <Color x:Key="StarGlucose">#EC8FA5</Color>    <!-- rose   -->
+    <Color x:Key="StarAppetite">#F0BE72</Color>   <!-- honey  -->
+    <Color x:Key="StarWater">#8FD8F0</Color>      <!-- water blue, lighter than weight -->
+    <Color x:Key="StarSeizure">#AC9DE8</Color>    <!-- violet -->
+    <Color x:Key="StarMedication">#FFE1A8</Color> <!-- warm cream — doses are the app's own ask -->
+    <Color x:Key="StarCustom">#CFE9DF</Color>     <!-- pale mint — the owner's own trackers -->
+
     <!-- Mood scale (warm variant — matches HTML m-great..m-unwell) -->
     <Color x:Key="MGreat">#FF2BBC89</Color>
     <Color x:Key="MGood">#FF89E166</Color>

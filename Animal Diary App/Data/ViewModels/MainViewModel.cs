@@ -29,6 +29,10 @@ public class MainViewModel
     public SeizureSheetViewModel SeizureSheetVM { get; }
     public WaterSheetViewModel WaterSheetVM { get; }
 
+    /// <summary>The Constellation — the pet's history as a night sky (read-only;
+    /// see Data/Models/CelestialEvent.cs for the one rule it obeys).</summary>
+    public ConstellationViewModel ConstellationVM { get; }
+
     /// <summary>Today's stat-card picker — "what matters most today?" (see
     /// Data/Models/TodayCards.cs).</summary>
     public TodayCardSheetViewModel TodayCardSheetVM { get; }
@@ -113,6 +117,7 @@ public class MainViewModel
  SettingsViewModel settingsVM,
  ConditionPickerViewModel conditionVM,
  JournalLogViewModel journalVM,
+ ConstellationViewModel constellationVM,
  GlucoseSheetViewModel glucoseSheetVM,
  MoodSheetViewModel moodSheetVM,
  WeightSheetViewModel weightSheetVM,
@@ -150,6 +155,7 @@ public class MainViewModel
         SettingsVM = settingsVM;
         ConditionVM = conditionVM;
         JournalVM = journalVM;
+        ConstellationVM = constellationVM;
         GlucoseSheetVM = glucoseSheetVM;
         MoodSheetVM = moodSheetVM;
         WeightSheetVM = weightSheetVM;

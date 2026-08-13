@@ -221,4 +221,11 @@ public partial class PetsPage : ContentPage
     {
         await Navigation.PushAsync(new DocumentsPage(vm));
     }
+
+    // The Constellation reads what is already there and writes nothing, so it is not
+    // gated by the entitlement — the read-only state keeps records readable.
+    async void OnConstellationClicked(object? sender, EventArgs args)
+    {
+        await Navigation.PushAsync(new ConstellationPage(vm));
+    }
 }
