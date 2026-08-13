@@ -21,8 +21,9 @@ public partial class ConstellationPage : ContentPage
     private readonly MainViewModel vm;
     private readonly ConstellationDrawable _drawable = new();
 
-    /// <summary>1 = the whole chosen stretch fits the canvas. Zooming in reveals more
-    /// individual stars rather than magnifying a summary — there is no summary.</summary>
+    /// <summary>1 = the whole chosen stretch fits the canvas. A camera over a fixed
+    /// layout, not a re-layout: see the note on <c>ConstellationDrawable</c>'s camera
+    /// for why the difference is the whole feature.</summary>
     private double _zoom = 1;
     private double _scrollX;
 
@@ -126,9 +127,13 @@ public partial class ConstellationPage : ContentPage
 
     // ── Placement ────────────────────────────────────────────────────────────────
 
-    /// <summary>Re-place every star and repaint. Runs on layout, on a new range and on
-    /// every zoom step — placement depends on the content width, and the content width
-    /// depends on the zoom, so it cannot be cached across one.</summary>
+    /// <summary>
+    /// Place every star, once, in world units — the canvas's own width at zoom 1.
+    /// Runs on layout and on a new range, and <b>never on a zoom step</b>: the whole
+    /// point of the camera is that the constellation keeps its shape while it is
+    /// magnified. Re-placing here would put the stars back where the old version had
+    /// them, jumping between ring positions on the way in.
+    /// </summary>
     private void Rebuild()
     {
         var width = SkyHost.Width;
@@ -137,27 +142,44 @@ public partial class ConstellationPage : ContentPage
             return;
 
         var sky = vm.ConstellationVM;
-        var contentWidth = width * _zoom;
 
         _drawable.Events = sky.Events;
-        _drawable.ContentWidth = contentWidth;
-        _drawable.Stars = ConstellationLayout.Place(sky.Events, sky.From, sky.To, contentWidth, height);
-        _drawable.Ticks = ConstellationTicks.Build(sky.From, sky.To, contentWidth);
+        _drawable.WorldWidth = width;
+        _drawable.Stars = ConstellationLayout.Place(sky.Events, sky.From, sky.To, width, height);
         _drawable.SelectedIndex = sky.SelectedIndex;
 
-        _scrollX = ClampScroll(_scrollX, contentWidth, width);
+        ApplyCamera();
+    }
+
+    /// <summary>Push the zoom and the scroll to the canvas and repaint. This is all a
+    /// zoom step does — no query, no re-place, no re-sort.</summary>
+    private void ApplyCamera()
+    {
+        var width = SkyHost.Width;
+        if (width <= 0)
+            return;
+
+        var sky = vm.ConstellationVM;
+
+        _scrollX = ClampScroll(_scrollX, width);
+        _drawable.Zoom = _zoom;
         _drawable.ScrollX = _scrollX;
+        // Only the tick STEP depends on the zoom (month names become days as you go
+        // in); the positions stay in world units.
+        _drawable.Ticks = ConstellationTicks.Build(sky.From, sky.To, width, _zoom);
 
         Sky.Invalidate();
     }
 
-    private static double ClampScroll(double scrollX, double contentWidth, double viewportWidth) =>
-        Math.Clamp(scrollX, 0, Math.Max(0, contentWidth - viewportWidth));
+    /// <summary>The sky can be dragged from its first moment to its last, and no
+    /// further — there is nothing either side of the range that was asked for.</summary>
+    private double ClampScroll(double scrollX, double viewportWidth) =>
+        Math.Clamp(scrollX, 0, Math.Max(0, viewportWidth * _zoom - viewportWidth));
 
-    /// <summary>The furthest in the sky may be zoomed. Tied to the stretch on screen so
-    /// a week and a year both bottom out at roughly the same handful of hours across
-    /// the canvas — otherwise a week zooms to a single minute of empty space.</summary>
-    private double MaxZoom() => Math.Clamp(vm.ConstellationVM.RangeDays * 3.0, 4.0, 120.0);
+    /// <summary>The furthest in the sky may be zoomed. Tied to the stretch being looked
+    /// at, so a week and a year both bottom out with roughly a day across the canvas —
+    /// past that there is nothing left to separate, only empty sky to pan through.</summary>
+    private double MaxZoom() => Math.Clamp(vm.ConstellationVM.RangeDays / 1.5, 4.0, 240.0);
 
     // ── Gestures ─────────────────────────────────────────────────────────────────
 
@@ -176,9 +198,8 @@ public partial class ConstellationPage : ContentPage
             case GestureStatus.Running:
                 // Dragging right moves the sky right, so time runs backwards under the
                 // finger — the direction people expect from every map they have used.
-                _scrollX = ClampScroll(_panStartScroll - e.TotalX, width * _zoom, width);
-                _drawable.ScrollX = _scrollX;
-                Sky.Invalidate();
+                _scrollX = _panStartScroll - e.TotalX;
+                ApplyCamera();
                 break;
         }
     }
@@ -198,17 +219,17 @@ public partial class ConstellationPage : ContentPage
         if (Math.Abs(zoom - _zoom) < 0.0001)
             return;
 
-        // Keep whatever moment sits under the pinch where it is. Content x scales with
-        // the zoom, so the fraction of the whole stretch under the fingers is the thing
-        // that has to survive — pin that and the sky grows around it instead of
-        // sliding out from under them.
+        // Keep the moment under the fingers exactly where it is: find the world x
+        // beneath the pinch, change the magnification, then put that same world x back
+        // under the same point on screen. Without this the sky slides out from under
+        // the hand that is holding it.
         var anchor = e.ScaleOrigin.X * width;
-        var fraction = (_scrollX + anchor) / (width * _zoom);
+        var worldAtAnchor = (_scrollX + anchor) / _zoom;
 
         _zoom = zoom;
-        _scrollX = ClampScroll(fraction * width * _zoom - anchor, width * _zoom, width);
+        _scrollX = worldAtAnchor * _zoom - anchor;
 
-        Rebuild();
+        ApplyCamera();
     }
 
     private void OnSkyTapped(object? sender, TappedEventArgs e)
@@ -217,11 +238,12 @@ public partial class ConstellationPage : ContentPage
         if (position is not Point point)
             return;
 
-        // The canvas and the content share one unit, so the only difference between
-        // where the finger is and where the star is, is how far the sky has been
-        // dragged.
+        // Back through the camera: the finger is on the screen, the stars live in the
+        // world. The zoom rides along so "near enough to count" stays the same
+        // distance under the fingertip however far in it is.
+        var worldX = (point.X + _scrollX) / _zoom;
         var index = ConstellationLayout.HitTest(
-            _drawable.Stars, point.X + _scrollX, point.Y, TapReach);
+            _drawable.Stars, worldX, point.Y, TapReach, _zoom);
 
         // Empty sky clears the selection rather than being ignored: tapping away is
         // how people close things they opened by tapping.

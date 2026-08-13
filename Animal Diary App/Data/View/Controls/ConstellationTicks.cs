@@ -27,14 +27,20 @@ public static class ConstellationTicks
     /// on "every 43 days".</summary>
     private static readonly int[] Steps = { 1, 2, 7, 14, 30, 91, 182, 365 };
 
-    public static List<SkyTick> Build(DateTime from, DateTime to, double contentWidth)
+    /// <param name="worldWidth">The stretch's width at zoom 1. Positions come back in
+    /// these units — the camera is applied when they are drawn.</param>
+    /// <param name="zoom">Only chooses how MANY dates fit: the step is picked against
+    /// the zoomed width, so zooming in turns month names into weeks and then into
+    /// individual days. The positions themselves must stay in world units, or the
+    /// dates would drift against the stars they label.</param>
+    public static List<SkyTick> Build(DateTime from, DateTime to, double worldWidth, double zoom = 1)
     {
         var ticks = new List<SkyTick>();
         var totalDays = (to - from).TotalDays;
-        if (contentWidth <= 0 || totalDays <= 0)
+        if (worldWidth <= 0 || totalDays <= 0)
             return ticks;
 
-        var pixelsPerDay = contentWidth / totalDays;
+        var pixelsPerDay = worldWidth * (zoom <= 0 ? 1 : zoom) / totalDays;
 
         var step = Steps[^1];
         foreach (var candidate in Steps)
@@ -62,7 +68,7 @@ public static class ConstellationTicks
 
             for (; cursor < to; cursor = cursor.AddMonths(months))
                 ticks.Add(new SkyTick(
-                    ConstellationLayout.XFor(cursor, from, to, contentWidth),
+                    ConstellationLayout.XFor(cursor, from, to, worldWidth),
                     cursor.ToString(format, culture)));
 
             return ticks;
@@ -70,7 +76,7 @@ public static class ConstellationTicks
 
         for (var cursor = from.Date; cursor < to; cursor = cursor.AddDays(step))
             ticks.Add(new SkyTick(
-                ConstellationLayout.XFor(cursor, from, to, contentWidth),
+                ConstellationLayout.XFor(cursor, from, to, worldWidth),
                 cursor.ToString(format, culture)));
 
         return ticks;

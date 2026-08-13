@@ -41,13 +41,30 @@ public sealed class ConstellationDrawable : IDrawable
     public IReadOnlyList<SkyStar> Stars { get; set; } = Array.Empty<SkyStar>();
     public IReadOnlyList<SkyTick> Ticks { get; set; } = Array.Empty<SkyTick>();
 
-    /// <summary>How far the sky has been dragged, in canvas units. Content and canvas
-    /// share one unit, so a star's screen x is simply <c>Star.X - ScrollX</c>.</summary>
+    // ── The camera ───────────────────────────────────────────────────────────────
+    // Stars are placed ONCE, in world units, and this is the lens they are looked at
+    // through:  screenX = worldX × Zoom − ScrollX.
+    //
+    // That the layout does not move is the whole of what makes this a zoom rather
+    // than a re-draw. The first version re-placed everything at each zoom step, so
+    // the wave reshaped and crowded stars jumped to different rings on the way in —
+    // the picture kept becoming a DIFFERENT picture, which is why it read as
+    // confusing rather than as magnification. A constellation has to keep its shape.
+    //
+    // Only time zooms. Y is untouched, because time is the only axis that means
+    // anything: pulling two entries apart along it is exactly what "reveal more
+    // individual events" is, and stretching the sky vertically would only push the
+    // constellation off its own canvas.
+
+    /// <summary>How far the sky has been dragged, in SCREEN units.</summary>
     public double ScrollX { get; set; }
 
-    /// <summary>The whole stretch's width in canvas units — viewport × zoom. The star
-    /// size is read from it, so it has to be set alongside <see cref="Stars"/>.</summary>
-    public double ContentWidth { get; set; }
+    /// <summary>Magnification along time. 1 = the whole chosen stretch fits.</summary>
+    public double Zoom { get; set; } = 1;
+
+    /// <summary>The stretch's width in WORLD units (the viewport width at zoom 1).
+    /// Star size is read from it, so it has to be set alongside <see cref="Stars"/>.</summary>
+    public double WorldWidth { get; set; }
 
     /// <summary>The tapped star, or -1. The only thing on this canvas that is
     /// emphasised, and it is emphasised because a finger chose it — never because of
@@ -61,7 +78,10 @@ public sealed class ConstellationDrawable : IDrawable
     private readonly Color _glowMint = AppColors.Resolve("NightGlowMint", Color.FromArgb("#8FE3D2"));
     private readonly Color _glowSand = AppColors.Resolve("NightGlowSand", Color.FromArgb("#EDDFC0"));
     private readonly Color _bubbleGlass = AppColors.Resolve("White", Colors.White);
-    private readonly Color _bubbleTint = AppColors.Resolve("Teal", Color.FromArgb("#149081"));
+    // WaterBackground's tinted bubbles are Teal (#149081) because they sit on a pale
+    // mint page. That colour is DARKER than this ground, so it would be a hole rather
+    // than a bubble — the night sibling of the same accent is the one to use.
+    private readonly Color _bubbleTint = AppColors.Resolve("SkyPath", Color.FromArgb("#7FD4C4"));
     private readonly Color _dust = AppColors.Resolve("StarDust", Color.FromArgb("#C4E6E3"));
     private readonly Color _pathColor = AppColors.Resolve("SkyPath", Color.FromArgb("#7FD4C4"));
     private readonly Color _tickColor = AppColors.Resolve("SkyInk", Color.FromArgb("#9FC4C0"));
@@ -74,6 +94,14 @@ public sealed class ConstellationDrawable : IDrawable
     /// three fills and roughly three times the symbol's width, so in a crowded sky it
     /// is both the slow part AND the part that welds neighbours into one blob.</summary>
     private const float GlowRadiusFloor = 3.8f;
+
+    /// <summary>World x → screen x. The one place the camera is applied; everything
+    /// that draws goes through it so nothing can drift out of step.</summary>
+    private float ScreenX(double worldX) => (float)(worldX * Zoom - ScrollX);
+
+    /// <summary>Screen x → world x, for the layers that are generated from the
+    /// position they sit at rather than stored.</summary>
+    private double WorldX(double screenX) => (screenX + ScrollX) / (Zoom <= 0 ? 1 : Zoom);
 
     public void Draw(ICanvas canvas, RectF rect)
     {
@@ -93,6 +121,16 @@ public sealed class ConstellationDrawable : IDrawable
     private void DrawAtmosphere(ICanvas canvas, RectF rect)
     {
         // The same three-stop vertical wash WaterBackground paints, after dark.
+        //
+        // EVERY gradient on this canvas is fenced inside Save/RestoreState. A paint set
+        // with SetFillPaint is canvas state, and on Android it survives a later
+        // `FillColor =` assignment — so one un-fenced gradient here left every FILLED
+        // symbol being painted with a radial gradient centred somewhere off in the
+        // atmosphere, which at the symbol's position had faded to fully transparent.
+        // The result: every star vanished except the medication ring, the one symbol
+        // drawn with a STROKE. The legend was unaffected because it paints no
+        // gradients. Do not unwrap these.
+        canvas.SaveState();
         canvas.SetFillPaint(new LinearGradientPaint
         {
             GradientStops = new[]
@@ -105,16 +143,17 @@ public sealed class ConstellationDrawable : IDrawable
             EndPoint = new Point(0, 1)
         }, rect);
         canvas.FillRectangle(rect);
+        canvas.RestoreState();
 
         // Mint glow off the top-left corner, and warm sand rising off the bottom edge —
         // the two glows that make the app's background warm rather than clinical. They
         // are anchored to the CANVAS, not to time: an atmosphere that scrolled would
         // start to look like it meant something.
-        Glow(canvas, _glowMint, 0.20f,
+        Glow(canvas, _glowMint, 0.22f,
             new PointF(rect.X + rect.Width * 0.16f, rect.Y + rect.Height * 0.08f),
             rect.Width * 0.62f);
 
-        Glow(canvas, _glowSand, 0.13f,
+        Glow(canvas, _glowSand, 0.15f,
             new PointF(rect.X + rect.Width * 0.62f, rect.Bottom + rect.Height * 0.12f),
             rect.Width * 0.75f);
     }
@@ -122,6 +161,8 @@ public sealed class ConstellationDrawable : IDrawable
     private static void Glow(ICanvas canvas, Color color, float strength, PointF centre, float radius)
     {
         var bounds = new RectF(centre.X - radius, centre.Y - radius, radius * 2, radius * 2);
+
+        canvas.SaveState();
         canvas.SetFillPaint(new RadialGradientPaint
         {
             StartColor = color.WithAlpha(strength),
@@ -130,6 +171,7 @@ public sealed class ConstellationDrawable : IDrawable
             Radius = 0.5
         }, bounds);
         canvas.FillRectangle(bounds);
+        canvas.RestoreState();
     }
 
     /// <summary>
@@ -165,26 +207,24 @@ public sealed class ConstellationDrawable : IDrawable
             if (x + radius < rect.X || x - radius > rect.Right)
                 continue;
 
+            // Flat fills, no gradients: partly for the paint-state reason above, and
+            // partly because a radial fade at 7% white on a dark ground was
+            // arithmetically invisible — the first attempt at these drew nothing at
+            // all. On this background a bubble has to be carried by its RING.
             switch ((h >> 21) % 3)
             {
-                case 0: // glass — a soft fill inside its ring
-                    canvas.SetFillPaint(new RadialGradientPaint
-                    {
-                        StartColor = _bubbleGlass.WithAlpha(0.07f),
-                        EndColor = _bubbleGlass.WithAlpha(0f),
-                        Center = new Point(0.5, 0.5),
-                        Radius = 0.5
-                    }, new RectF(x - radius, y - radius, radius * 2, radius * 2));
+                case 0: // glass — a faint wash inside its ring
+                    canvas.FillColor = _bubbleGlass.WithAlpha(0.035f);
                     canvas.FillCircle(x, y, radius);
-                    canvas.StrokeColor = _bubbleGlass.WithAlpha(0.09f);
+                    canvas.StrokeColor = _bubbleGlass.WithAlpha(0.16f);
                     break;
 
                 case 1: // outline
-                    canvas.StrokeColor = _bubbleGlass.WithAlpha(0.07f);
+                    canvas.StrokeColor = _bubbleGlass.WithAlpha(0.12f);
                     break;
 
                 default: // tint
-                    canvas.StrokeColor = _bubbleTint.WithAlpha(0.3f);
+                    canvas.StrokeColor = _bubbleTint.WithAlpha(0.22f);
                     break;
             }
 
@@ -234,7 +274,10 @@ public sealed class ConstellationDrawable : IDrawable
 
         for (float sx = -step; sx <= rect.Width + step; sx += step)
         {
-            var y = (float)ConstellationLayout.PathY(sx + ScrollX, rect.Height);
+            // Sampled in WORLD x, so the wave is the same wave at every zoom — it just
+            // stretches. This is what keeps a star on the line it was placed against
+            // instead of the line drifting out from under it as you zoom.
+            var y = (float)ConstellationLayout.PathY(WorldX(sx), rect.Height);
             if (sx <= -step)
                 path.MoveTo(rect.X + sx, rect.Y + y);
             else
@@ -267,7 +310,7 @@ public sealed class ConstellationDrawable : IDrawable
 
         foreach (var tick in Ticks)
         {
-            var x = (float)(tick.X - ScrollX) + rect.X;
+            var x = ScreenX(tick.X) + rect.X;
             if (x < rect.X - 40 || x > rect.Right + 40)
                 continue;
 
@@ -282,10 +325,12 @@ public sealed class ConstellationDrawable : IDrawable
         if (Stars.Count == 0)
             return;
 
-        // Size comes from how much room each star has, not from how many there are —
-        // see ConstellationLayout.StarRadius. It is what makes zooming a reveal.
-        var radius = (float)ConstellationLayout.StarRadius(
-            ContentWidth > 0 ? ContentWidth : rect.Width, Events.Count);
+        // Size comes from how much room each star has ON SCREEN — the world's width
+        // times the magnification. So zooming in genuinely grows the symbols back to
+        // full size as the crowd around them thins out: the reveal is one rule, not a
+        // second code path (see ConstellationLayout.StarRadius).
+        var screenWidth = (WorldWidth > 0 ? WorldWidth : rect.Width) * (Zoom <= 0 ? 1 : Zoom);
+        var radius = (float)ConstellationLayout.StarRadius(screenWidth, Events.Count);
 
         var glow = radius >= GlowRadiusFloor;
         var margin = radius * 4f + 8f;
@@ -296,7 +341,7 @@ public sealed class ConstellationDrawable : IDrawable
         for (int i = 0; i < Stars.Count; i++)
         {
             var star = Stars[i];
-            var x = (float)(star.X - ScrollX);
+            var x = ScreenX(star.X);
             if (x < -margin || x > rect.Width + margin)
                 continue;
 
@@ -309,7 +354,7 @@ public sealed class ConstellationDrawable : IDrawable
         for (int i = 0; i < Stars.Count; i++)
         {
             var star = Stars[i];
-            var x = (float)(star.X - ScrollX);
+            var x = ScreenX(star.X);
             if (x < -margin || x > rect.Width + margin)
                 continue;
 
