@@ -106,4 +106,13 @@
     <Compile Include="..\Animal Diary App\Data\Models\JournalEntries.cs" Link="Journal\JournalEntries.cs" />
   </ItemGroup>
 
+  <!-- The Constellation's geometry. This is the surface's whole meaning ("position is
+       when it happened, and nothing else is encoded"), so it was deliberately kept out
+       of the drawable: the only MAUI thing about placing a star is the canvas it lands
+       on, and that belongs to the page. Plain doubles, no Microsoft.Maui.Graphics. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\CelestialEvent.cs" Link="Sky\CelestialEvent.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\ConstellationLayout.cs" Link="Sky\ConstellationLayout.cs" />
+  </ItemGroup>
+
 </Project>

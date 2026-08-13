@@ -48,6 +48,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<SettingsViewModel>();
 		builder.Services.AddSingleton<ManagePetViewModel>();
 		builder.Services.AddSingleton<JournalLogViewModel>();
+		builder.Services.AddSingleton<ConstellationViewModel>();
 
 		// Journal input sheets (one VM per loggable type).
 		builder.Services.AddSingleton<GlucoseSheetViewModel>();
@@ -107,6 +108,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<CarePlanService>();
 		builder.Services.AddSingleton<PendingItemsService>();
 		builder.Services.AddSingleton<TodayCardService>();
+		builder.Services.AddSingleton<ConstellationService>();
 
 		// ── Reports (vet PDF + the library around it) ────────────────────────
 		builder.Services.AddSingleton<VetReportDataBuilder>();

@@ -881,4 +881,28 @@
   <data name="Export_CustomLabel" xml:space="preserve"><value>Deine eigenen Tracker</value></data>
   <data name="Today_EmptyCustom" xml:space="preserve"><value>Noch nichts festgehalten. Trag es im Journal ein.</value></data>
   <data name="Today_CardCustom" xml:space="preserve"><value>Dein eigener Tracker</value></data>
+  <!-- ══════════════ Das Sternbild ══════════════
+       Die Geschichte eines Tieres als Nachthimmel, erreichbar über die Schnellverwaltung.
+       Nur zum Anschauen: hier wird nichts abgefragt und deshalb auch zu nichts gedrängt.
+       Sky_TickDay / Sky_TickMonth / Sky_WhenFormat sind .NET-Datumsmuster, keine Sätze —
+       Reihenfolge und Satzzeichen anpassen, die Buchstaben (d, M, y, H, m) nie. -->
+  <data name="Sky_Title" xml:space="preserve"><value>Sternbild</value></data>
+  <data name="Sky_CountOne" xml:space="preserve"><value>1 Eintrag festgehalten</value></data>
+  <data name="Sky_CountMany" xml:space="preserve"><value>{0} Einträge festgehalten</value></data>
+  <data name="Sky_Empty" xml:space="preserve"><value>In diesem Zeitraum wurde nichts festgehalten.</value></data>
+  <data name="Sky_Hint" xml:space="preserve"><value>Zum Heranzoomen aufziehen · Symbol antippen zeigt, was es war</value></data>
+  <data name="Sky_Close" xml:space="preserve"><value>Schließen</value></data>
+  <data name="Sky_Range7" xml:space="preserve"><value>1W</value></data>
+  <data name="Sky_Range30" xml:space="preserve"><value>1M</value></data>
+  <data name="Sky_Range90" xml:space="preserve"><value>3M</value></data>
+  <data name="Sky_Range365" xml:space="preserve"><value>1J</value></data>
+  <data name="Sky_Medication" xml:space="preserve"><value>Medikament</value></data>
+  <data name="Sky_YourOwn" xml:space="preserve"><value>Eigene</value></data>
+  <data name="Sky_DoseGiven" xml:space="preserve"><value>Gegeben</value></data>
+  <data name="Sky_DoseSkipped" xml:space="preserve"><value>Ausgelassen</value></data>
+  <data name="Sky_WhenFormat" xml:space="preserve"><value>ddd d. MMM · HH:mm</value></data>
+  <data name="Sky_TickDay" xml:space="preserve"><value>d. MMM</value></data>
+  <data name="Sky_TickMonth" xml:space="preserve"><value>MMM yyyy</value></data>
+  <data name="Pets_Constellation" xml:space="preserve"><value>Sternbild</value></data>
+  <data name="Pets_ConstellationSubtitle" xml:space="preserve"><value>Alles Festgehaltene, über die Zeit</value></data>
 </root>

@@ -117,6 +117,12 @@ public static class AnalyticsEvents
     /// <see cref="PropRangeDays"/>.</summary>
     public const string ReportExported = "report_exported";
 
+    /// <summary>The Constellation (the pet's history as a night sky) was opened.
+    /// Property: <see cref="PropRangeDays"/> — which stretch of time was being looked
+    /// at, never how much is in it. Feature-discovery signal for a surface reachable
+    /// only from Quick management.</summary>
+    public const string ConstellationOpened = "constellation_opened";
+
     /// <summary>The owner enabled cloud backup (account + opt-in). No properties —
     /// never the email or any account identifier.</summary>
     public const string CloudEnabled = "cloud_enabled";
