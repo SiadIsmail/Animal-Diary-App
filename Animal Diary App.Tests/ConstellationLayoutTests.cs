@@ -257,7 +257,7 @@ public class ConstellationLayoutTests
     {
         var stars = ConstellationLayout.Place(new[] { At(From.AddDays(2)) }, From, To, Width, Height);
 
-        Assert.Equal(-1, ConstellationLayout.HitTest(stars, 800, 20, 22));
+        Assert.Equal(-1, ConstellationLayout.HitTest(stars, 800, 20, 22, zoom: 1));
     }
 
     [Fact]
@@ -273,6 +273,28 @@ public class ConstellationLayoutTests
         var stars = ConstellationLayout.Place(events, From, To, Width, Height);
         var target = stars[1];
 
-        Assert.Equal(1, ConstellationLayout.HitTest(stars, target.X + 1, target.Y + 1, 22));
+        Assert.Equal(1, ConstellationLayout.HitTest(stars, target.X + 1, target.Y + 1, 22, zoom: 1));
+    }
+
+    [Fact]
+    public void HitTest_ZoomedIn_StopsSweepingUpTheNeighbours()
+    {
+        // Two entries a day apart. Zoomed out they are a few units apart in world
+        // space and both fall inside the reach; zoomed right in they are far apart on
+        // screen, and only the one actually under the fingertip may answer.
+        var events = new[]
+        {
+            At(new DateTime(2026, 1, 10, 0, 0, 0)),
+            At(new DateTime(2026, 1, 11, 0, 0, 0)),
+        };
+
+        var stars = ConstellationLayout.Place(events, From, To, Width, Height);
+        var between = (stars[0].X + stars[1].X) / 2;
+
+        // Halfway between them at 40×, each is ~600 screen units away: neither counts.
+        Assert.Equal(-1, ConstellationLayout.HitTest(stars, between, stars[0].Y, 22, zoom: 40));
+
+        // On top of the first one, it still answers however far in you are.
+        Assert.Equal(0, ConstellationLayout.HitTest(stars, stars[0].X, stars[0].Y, 22, zoom: 40));
     }
 }

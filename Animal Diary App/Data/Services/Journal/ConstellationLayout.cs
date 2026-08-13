@@ -62,10 +62,13 @@ public static class ConstellationLayout
     private const double JitterAmplitude = 3.5;
 
     // ── Star size ─────────────────────────────────────────────────────────────
-    // Below MinRadius a symbol stops being a symbol; above MaxRadius a quiet week
-    // looks like clip art.
-    private const double MinRadius = 2.0;
-    private const double MaxRadius = 5.4;
+    // Below MinRadius a symbol stops being a symbol — an eight-point burst three
+    // pixels across is a dot, and the whole point is that the SHAPE says what
+    // happened. The floor is deliberately high enough that a crowded sky overlaps
+    // rather than dissolving; zooming is what separates it. Above MaxRadius a quiet
+    // week looks like clip art.
+    private const double MinRadius = 3.1;
+    private const double MaxRadius = 5.6;
 
     /// <summary>Below this, a star reads as sitting ON the line and needs no guide.</summary>
     public const double GuideThreshold = 7.0;
@@ -187,18 +190,28 @@ public static class ConstellationLayout
         return sign * gap + jitter;
     }
 
-    /// <summary>The star nearest a content-space point, or -1 when the tap landed on
-    /// empty sky. Nearest rather than first-hit so overlapping stars in a dense patch
-    /// resolve to the one actually under the fingertip.</summary>
-    public static int HitTest(IReadOnlyList<SkyStar> stars, double x, double y, double radius)
+    /// <summary>
+    /// The star nearest a point, or -1 when the tap landed on empty sky. Nearest
+    /// rather than first-hit so overlapping stars in a dense patch resolve to the one
+    /// actually under the fingertip.
+    /// </summary>
+    /// <param name="worldX">Tap position along the world's x, i.e. before the zoom.</param>
+    /// <param name="y">Tap position down the canvas. Never scaled — only time zooms.</param>
+    /// <param name="reach">How near counts as a hit, in SCREEN units.</param>
+    /// <param name="zoom">The camera's magnification, so the reach means the same
+    /// distance on screen at every zoom. Without it a zoomed-in tap would have to land
+    /// within a fraction of a world unit, and a zoomed-out one would sweep up half a
+    /// week.</param>
+    public static int HitTest(IReadOnlyList<SkyStar> stars, double worldX, double y, double reach, double zoom)
     {
         var best = -1;
-        var bestSquared = radius * radius;
+        var bestSquared = reach * reach;
+        var scale = zoom <= 0 ? 1 : zoom;
 
         for (int i = 0; i < stars.Count; i++)
         {
-            var dx = stars[i].X - x;
-            if (dx > radius || dx < -radius)
+            var dx = (stars[i].X - worldX) * scale;
+            if (dx > reach || dx < -reach)
                 continue;
 
             var dy = stars[i].Y - y;
