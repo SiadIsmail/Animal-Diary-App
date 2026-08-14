@@ -123,6 +123,11 @@ public static class AnalyticsEvents
     /// only from Quick management.</summary>
     public const string ConstellationOpened = "constellation_opened";
 
+    /// <summary>A picture of the Constellation reached the OS share sheet. Property:
+    /// <see cref="PropRangeDays"/>. Never the pet, the name, or anything in the
+    /// picture — this counts that a share happened, nothing about what was shared.</summary>
+    public const string ConstellationShared = "constellation_shared";
+
     /// <summary>The owner enabled cloud backup (account + opt-in). No properties —
     /// never the email or any account identifier.</summary>
     public const string CloudEnabled = "cloud_enabled";

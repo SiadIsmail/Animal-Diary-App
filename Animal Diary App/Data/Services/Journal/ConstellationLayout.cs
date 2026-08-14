@@ -18,7 +18,13 @@ using Animal_Diary_App.Data.Models;
 /// <summary>One placed star. <see cref="PathY"/> rides along because the guide line
 /// that ties a star to the timeline is drawn between the two, and re-deriving the
 /// path's y in the drawable would be the same formula written twice.</summary>
-public readonly record struct SkyStar(double X, double Y, double PathY)
+/// <param name="LinkTo">The star just before this one in the same cluster, or -1.
+/// Purely so the drawing can join things that happened at the SAME MOMENT with a
+/// faint line — which is what turns a scatter into a constellation. It encodes
+/// nothing new: two entries a minute apart are already drawn a minute apart, and the
+/// line only says so out loud. It is never drawn between separate moments, and never
+/// implies an order or a direction.</param>
+public readonly record struct SkyStar(double X, double Y, double PathY, int LinkTo = -1)
 {
     /// <summary>How far off the timeline this star sits. Positive is below.</summary>
     public double Offset => Y - PathY;
@@ -33,15 +39,13 @@ public static class ConstellationLayout
     // about the pet. Deriving it from anything recorded would turn a rising line
     // into "getting better", which is precisely the claim this app never makes.
     //
-    // These are the DIVISORS of x, so a true wavelength is 2π× the number: the long
-    // sweep is ~330 canvas units and the ripple ~107. That works out at two full
-    // turns across a phone's width, using most of the canvas's height — the first
-    // version used a tenth of the amplitude and a sweep five times longer, which
-    // pinned every star into one flat band across the middle no matter how much room
-    // was going spare above and below it.
-    private const double LongWavelength = 52.0;
-    private const double ShortWavelength = 17.0;
-    private const double AmplitudeFraction = 0.28;
+    // Its numbers — phase, the two wavelengths, the mix and the amplitude — come from
+    // the pet's SkySignature, inside bands narrow enough that no pet can draw a bad
+    // sky, only a different one. The middle of every band is the hand-tuned original
+    // (SkySignature.Default): a long sweep of ~330 canvas units and a ripple of ~107,
+    // which is two full turns across a phone's width using most of the canvas height.
+    // The version before that used a tenth of the amplitude and a sweep five times
+    // longer, and pinned every star into one flat band across the middle.
 
     // ── The fan ───────────────────────────────────────────────────────────────
     // Stars that land within ClusterWindow of one another step outward from the path
@@ -76,14 +80,15 @@ public static class ConstellationLayout
     /// <summary>Kept clear at the top and bottom so a star never touches the frame.</summary>
     public const double VerticalPadding = 12.0;
 
-    /// <summary>The timeline's height at a content x. Depends on x and the canvas
-    /// height only — see the note above on why it may never depend on data.</summary>
-    public static double PathY(double x, double contentHeight)
+    /// <summary>The timeline's height at a content x. Depends on x, the canvas height
+    /// and the pet's signature only — see the note above on why it may never depend on
+    /// data.</summary>
+    public static double PathY(double x, double contentHeight, in SkySignature signature)
     {
         var mid = contentHeight / 2.0;
-        var amplitude = contentHeight * AmplitudeFraction;
-        var wave = 0.8 * Math.Sin(x / LongWavelength)
-                 + 0.2 * Math.Sin(x / ShortWavelength + 1.7);
+        var amplitude = contentHeight * signature.Amplitude;
+        var wave = signature.LongWeight * Math.Sin(x / signature.LongWavelength + signature.PhaseLong)
+                 + signature.ShortWeight * Math.Sin(x / signature.ShortWavelength + signature.PhaseShort);
         return mid + amplitude * wave;
     }
 
@@ -131,7 +136,8 @@ public static class ConstellationLayout
         DateTime from,
         DateTime to,
         double contentWidth,
-        double contentHeight)
+        double contentHeight,
+        in SkySignature signature)
     {
         if (events.Count == 0 || contentWidth <= 0 || contentHeight <= 0)
             return Array.Empty<SkyStar>();
@@ -161,7 +167,7 @@ public static class ConstellationLayout
                 lo++;
 
             var crowd = rank - lo;
-            var pathY = PathY(x, contentHeight);
+            var pathY = PathY(x, contentHeight, signature);
             var offset = OffsetFor(crowd, events[i].When.Ticks, contentHeight);
 
             var y = Math.Clamp(
@@ -169,7 +175,12 @@ public static class ConstellationLayout
                 VerticalPadding,
                 contentHeight - VerticalPadding);
 
-            stars[i] = new SkyStar(x, y, pathY);
+            // Chain each star to the one before it, but only inside a cluster — the
+            // link is "these happened together", so the first star of a moment starts
+            // a new constellation rather than reaching back to the last one.
+            var link = crowd > 0 ? order[rank - 1] : -1;
+
+            stars[i] = new SkyStar(x, y, pathY, link);
         }
 
         return stars;

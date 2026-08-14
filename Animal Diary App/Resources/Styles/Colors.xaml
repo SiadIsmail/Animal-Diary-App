@@ -158,14 +158,38 @@
     <Color x:Key="NightGlowSand">#EDDFC0</Color>
 
     <Color x:Key="StarDust">#C4E6E3</Color>     <!-- distant, data-free specks -->
+    <!-- The pet's own figure. A shade brighter than the dust so it reads as drawn
+         rather than scattered, and still well below every event symbol — it must never
+         compete with something that actually happened. -->
+    <Color x:Key="NightAsterism">#D8EFE6</Color>
     <Color x:Key="SkyPath">#7FD4C4</Color>      <!-- the timeline's thin glow  -->
 
-    <Color x:Key="SkyText">#EAF6F2</Color>      <!-- primary text on night     -->
-    <Color x:Key="SkyInk">#9FC4C0</Color>       <!-- secondary text            -->
-    <Color x:Key="SkyInkSoft">#6E918F</Color>   <!-- hints / metadata          -->
-    <Color x:Key="SkyGlass">#1FFFFFFF</Color>   <!-- 12% frosted surface       -->
-    <Color x:Key="SkyWell">#14FFFFFF</Color>    <!-- 8% recessed well          -->
-    <Color x:Key="SkyLine">#33FFFFFF</Color>    <!-- 20% hairline              -->
+    <!-- The five hues one pet's atmosphere may lean towards (SkySignature.Accents) —
+         the app's own five accents, one step further muted for a night ground.
+
+         DELIBERATELY NOT the Star* set below. Those say which KIND of thing was
+         recorded; if a whole sky could glow in one of them, an owner whose ambient hue
+         happened to be rose would have a rose wash behind their rose glucose readings
+         and the legend would stop meaning anything. These are greyer and dimmer than
+         any category can be, so they only ever read as weather. -->
+    <Color x:Key="SkyAccentTeal">#6FBFB2</Color>
+    <Color x:Key="SkyAccentBlue">#6FA8C6</Color>
+    <Color x:Key="SkyAccentHoney">#C9A76B</Color>
+    <Color x:Key="SkyAccentRose">#C08494</Color>
+    <Color x:Key="SkyAccentViolet">#8E86BE</Color>
+
+    <!-- A scrap of night, tile-sized: the legend's symbols sit on these out on the
+         daylight page, so a star drawn for a dark ground still reads. Same shape and
+         size as the Journal timeline's tinted icon tiles. -->
+    <Color x:Key="NightTile">#14343B</Color>
+
+    <!-- The only text that sits ON the night: the empty-state line and the dates under
+         the sky. Everything else on the page — the heading, the range tabs, the legend,
+         the hint — is ordinary daylight Ink, because the page is a daylight page. The
+         chrome tokens this section used to carry (SkyGlass/SkyWell/SkyLine/SkyText) are
+         gone with the all-dark version that needed them; don't reintroduce them without
+         reintroducing the mistake. -->
+    <Color x:Key="SkyInk">#9FC4C0</Color>
 
     <Color x:Key="StarMood">#5FD3C0</Color>       <!-- teal   -->
     <Color x:Key="StarWeight">#7FC4E4</Color>     <!-- blue   -->

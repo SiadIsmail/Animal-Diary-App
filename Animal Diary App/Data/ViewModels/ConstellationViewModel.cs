@@ -31,6 +31,10 @@ public class CelestialLegendItem
     /// <summary>The very same drawing routine the sky uses, at legend size — a legend
     /// that could drift from the thing it explains would be worse than none.</summary>
     public IDrawable Symbol { get; init; } = new View.Controls.CelestialSymbolDrawable();
+
+    /// <summary>The alternating degree-or-two tilt every icon tile in this app wears
+    /// (see <c>TimelineItem.IconRotation</c>) — imperfection on the frame.</summary>
+    public double Tilt { get; init; }
 }
 
 public class ConstellationViewModel : BaseViewModel
@@ -96,6 +100,33 @@ public class ConstellationViewModel : BaseViewModel
 
     public string PetName => _activePet.ActivePet?.Name ?? string.Empty;
 
+    /// <summary>Everything decorative that belongs to this pet — the wave's shape, the
+    /// starfield's seed, the atmosphere's colour. Rebuilt on load because the active
+    /// pet can change under the page.</summary>
+    public SkySignature Signature { get; private set; } = SkySignature.Default;
+
+    /// <summary>This pet's own figure of stars, drawn from their name. Decoration, and
+    /// nothing but — see <see cref="ConstellationAsterism"/> for the line it must not
+    /// cross.</summary>
+    public Asterism Asterism { get; private set; } = Asterism.Empty;
+
+    /// <summary>"Charly's constellation" — the figure's name, shown quietly in the
+    /// corner of the sky. It is what makes a screenshot of this mean something to
+    /// someone who wasn't told what they are looking at.</summary>
+    public string AsterismName => Asterism.HasShape
+        ? Loc.Format("Sky_AsterismName", PetName)
+        : string.Empty;
+
+    public bool HasAsterism => Asterism.HasShape;
+
+    /// <summary>The title on a shared picture: the figure's name, or the pet's own if
+    /// they have no figure yet.</summary>
+    public string ShareTitle => Asterism.HasShape ? AsterismName : PetName;
+
+    /// <summary>The line under it — the stretch, and how much is in it. Both facts
+    /// about the records; nothing about the animal.</summary>
+    public string ShareSubtitle => $"{Loc.Format("Sky_ShareRange", RangeDays)} · {CountLine}";
+
     /// <summary>How much is in the sky. A count of records is a fact about the diary,
     /// not a reading of the animal — the same footing the vet report's counts stand on
     /// (AI/domain.md).</summary>
@@ -126,6 +157,7 @@ public class ConstellationViewModel : BaseViewModel
             OnPropertyChanged(nameof(HasSelectedDetail));
             OnPropertyChanged(nameof(SelectedWhen));
             OnPropertyChanged(nameof(SelectedCategoryLabel));
+            OnPropertyChanged(nameof(SelectedSymbol));
         }
     }
 
@@ -151,6 +183,16 @@ public class ConstellationViewModel : BaseViewModel
     public string SelectedCategoryLabel => Selected is CelestialEvent e
         ? CelestialVisuals.Label(e.Category)
         : string.Empty;
+
+    /// <summary>The tapped star, redrawn at tile size on the sheet — so the thing being
+    /// described is recognisably the thing that was touched.</summary>
+    public IDrawable? SelectedSymbol => Selected is CelestialEvent e ? SymbolFor(e.Category) : null;
+
+    private static View.Controls.CelestialSymbolDrawable SymbolFor(CelestialCategory category) => new()
+    {
+        Category = category,
+        Color = AppColors.Resolve(CelestialVisuals.For(category).ColorKey, Colors.White),
+    };
 
     // ── Loading ──────────────────────────────────────────────────────────────────
 
@@ -189,6 +231,14 @@ public class ConstellationViewModel : BaseViewModel
             Events = events;
             SelectedIndex = -1;
 
+            // Derived from who the pet IS, never from what is in the sky — so it is
+            // identical whether this is their first day or their fifth year.
+            Signature = SkySignature.For(pet?.Name, pet?.BirthYear ?? 0);
+            // The name overload, not the signature one: a pet with no name yet gets the
+            // default sky but NO figure, because a figure is the name made visible and
+            // there is nothing to make visible.
+            Asterism = ConstellationAsterism.For(pet?.Name, pet?.BirthYear ?? 0);
+
             BuildLegend();
         }
         finally
@@ -200,6 +250,10 @@ public class ConstellationViewModel : BaseViewModel
         OnPropertyChanged(nameof(PetName));
         OnPropertyChanged(nameof(CountLine));
         OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(AsterismName));
+        OnPropertyChanged(nameof(HasAsterism));
+        OnPropertyChanged(nameof(ShareTitle));
+        OnPropertyChanged(nameof(ShareSubtitle));
         SkyChanged?.Invoke();
     }
 
@@ -222,11 +276,8 @@ public class ConstellationViewModel : BaseViewModel
             {
                 Category = category,
                 Label = CelestialVisuals.Label(category),
-                Symbol = new View.Controls.CelestialSymbolDrawable
-                {
-                    Category = category,
-                    Color = AppColors.Resolve(CelestialVisuals.For(category).ColorKey, Colors.White),
-                },
+                Symbol = SymbolFor(category),
+                Tilt = items.Count % 2 == 0 ? -3 : 2.5,
             });
         }
 
@@ -250,6 +301,15 @@ public class ConstellationViewModel : BaseViewModel
     /// was being looked at, never what is in it (AI/analytics.md).</summary>
     public void TrackOpened() =>
         _analytics.Track(AnalyticsEvents.ConstellationOpened, new Dictionary<string, object?>
+        {
+            [AnalyticsEvents.PropRangeDays] = RangeDays,
+        });
+
+    /// <summary>A picture of the sky reached the share sheet. The one signal that says
+    /// whether this surface does the job it was built for — never the pet, the name, or
+    /// what is in the picture.</summary>
+    public void TrackShared() =>
+        _analytics.Track(AnalyticsEvents.ConstellationShared, new Dictionary<string, object?>
         {
             [AnalyticsEvents.PropRangeDays] = RangeDays,
         });

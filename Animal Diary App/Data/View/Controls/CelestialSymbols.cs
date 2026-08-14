@@ -25,10 +25,18 @@ public static class CelestialSymbols
     /// <param name="radius">Half the symbol's nominal size, in canvas units.</param>
     /// <param name="glow">Whether to lay a soft halo behind it. Off in a dense sky —
     /// three fills per star is what turns five thousand entries into a slideshow.</param>
-    public static void Draw(ICanvas canvas, CelestialCategory category, float cx, float cy, float radius, Color color, bool glow)
+    /// <param name="tilt">A small rotation, in radians. The app tilts its icon tiles a
+    /// degree or two either way on every list it has ("imperfection on the frame,
+    /// never on the readout"), and a sky of perfectly upright triangles was the one
+    /// place that read as machine-drawn. Free here: the shapes are already built
+    /// around an angle.</param>
+    public static void Draw(
+        ICanvas canvas, CelestialCategory category, float cx, float cy, float radius, Color color, bool glow, float tilt = 0f)
     {
         if (radius <= 0)
             return;
+
+        var up = -MathF.PI / 2f + tilt;
 
         if (glow)
         {
@@ -50,15 +58,15 @@ public static class CelestialSymbols
                 break;
 
             case CelestialCategory.Weight:
-                canvas.FillPath(Polygon(cx, cy, radius, 4, -MathF.PI / 2f));
+                canvas.FillPath(Polygon(cx, cy, radius, 4, up));
                 break;
 
             case CelestialCategory.Glucose:
-                canvas.FillPath(Star(cx, cy, radius * 1.15f, radius * 0.3f, 4, -MathF.PI / 2f));
+                canvas.FillPath(Star(cx, cy, radius * 1.15f, radius * 0.3f, 4, up));
                 break;
 
             case CelestialCategory.Appetite:
-                canvas.FillPath(Polygon(cx, cy, radius, 3, -MathF.PI / 2f));
+                canvas.FillPath(Polygon(cx, cy, radius, 3, up));
                 break;
 
             case CelestialCategory.Water:
@@ -66,7 +74,7 @@ public static class CelestialSymbols
                 break;
 
             case CelestialCategory.Seizure:
-                canvas.FillPath(Star(cx, cy, radius * 1.2f, radius * 0.44f, 8, -MathF.PI / 2f));
+                canvas.FillPath(Star(cx, cy, radius * 1.2f, radius * 0.44f, 8, up));
                 break;
 
             // A ring, not a disc: a dose is the one thing here the app asked for and
@@ -77,7 +85,7 @@ public static class CelestialSymbols
                 break;
 
             case CelestialCategory.Custom:
-                canvas.FillPath(Polygon(cx, cy, radius * 0.95f, 6, -MathF.PI / 2f));
+                canvas.FillPath(Polygon(cx, cy, radius * 0.95f, 6, up));
                 break;
         }
     }

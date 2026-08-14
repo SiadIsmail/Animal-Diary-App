@@ -113,6 +113,8 @@
   <ItemGroup>
     <Compile Include="..\Animal Diary App\Data\Models\CelestialEvent.cs" Link="Sky\CelestialEvent.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Journal\ConstellationLayout.cs" Link="Sky\ConstellationLayout.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\ConstellationAsterism.cs" Link="Sky\ConstellationAsterism.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\SkySignature.cs" Link="Sky\SkySignature.cs" />
   </ItemGroup>
 
 </Project>
