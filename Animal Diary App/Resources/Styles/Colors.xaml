@@ -190,6 +190,8 @@
          gone with the all-dark version that needed them; don't reintroduce them without
          reintroducing the mistake. -->
     <Color x:Key="SkyInk">#9FC4C0</Color>
+    <!-- Hairline for the one control that sits ON the night: the fold dial. -->
+    <Color x:Key="SkyLineSoft">#33FFFFFF</Color>
 
     <Color x:Key="StarMood">#5FD3C0</Color>       <!-- teal   -->
     <Color x:Key="StarWeight">#7FC4E4</Color>     <!-- blue   -->

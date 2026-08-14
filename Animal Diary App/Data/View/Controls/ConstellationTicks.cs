@@ -123,6 +123,52 @@ public static class ConstellationTicks
     }
 
     /// <summary>
+    /// The wall's two sets of labels: the hours pinned across the top, and a date every
+    /// so often down the left, riding with its row.
+    ///
+    /// <para>The dates are spaced so they never crowd, which on a year of eight-pixel
+    /// rows means one a fortnight. They exist so a row can be named out loud — "it was
+    /// the Tuesday" — not so the wall can be measured off.</para>
+    /// </summary>
+    public static List<SkyTick> Wall(DateTime from, int dayCount, double rowHeight, double width, double height)
+    {
+        var ticks = new List<SkyTick>();
+        if (width <= 0 || height <= 0 || rowHeight <= 0 || dayCount <= 0)
+            return ticks;
+
+        var inset = ConstellationLayout.WallInset;
+        var plotWidth = width - inset - 8;
+        if (plotWidth <= 0)
+            return ticks;
+
+        // Hours across the top, pinned to the card so they stay readable while the
+        // nights scroll under them.
+        foreach (var hour in DialHours)
+        {
+            ticks.Add(new SkyTick(
+                inset + hour / 24.0 * plotWidth,
+                11,
+                LocalizationManager.Instance.Format("Sky_DialHour", hour),
+                Pinned: true));
+        }
+
+        // One date per N rows — whatever N keeps them from touching.
+        var every = Math.Max(1, (int)Math.Ceiling(18 / rowHeight));
+        var format = LocalizationManager.Instance.GetString("Sky_TickDay");
+        var culture = CultureInfo.CurrentCulture;
+
+        for (int row = 0; row < dayCount; row += every)
+        {
+            ticks.Add(new SkyTick(
+                inset / 2,
+                (row + 0.5) * rowHeight + 3,
+                from.Date.AddDays(row).ToString(format, culture)));
+        }
+
+        return ticks;
+    }
+
+    /// <summary>
     /// Where you are inside one turn of the fold — day 1, and three markers after it.
     ///
     /// <para>Numbered from 1 because that is how a person counts days, and kept to four

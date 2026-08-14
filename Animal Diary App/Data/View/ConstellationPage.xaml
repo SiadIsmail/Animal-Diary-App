@@ -202,13 +202,13 @@
              Timeline answers "when did this happen", which a list can also do; the
              other two answer "when in the DAY" and "does it come round again", which
              nothing else in the app can. Same pill row as the range, one row up. -->
-        <Grid Grid.Row="2" Margin="22,0,22,10" RowDefinitions="Auto,Auto" RowSpacing="8">
+        <Grid Grid.Row="2" Margin="22,0,22,10">
 
             <Border BackgroundColor="{StaticResource Well}"
                     StrokeThickness="0"
                     StrokeShape="RoundRectangle 999"
                     Padding="3">
-                <Grid ColumnDefinitions="*,*,*">
+                <Grid ColumnDefinitions="*,*,*,*">
 
                     <Border Grid.Column="0" BackgroundColor="Transparent"
                             StrokeThickness="0" StrokeShape="RoundRectangle 999">
@@ -266,31 +266,28 @@
                             </Label.Triggers>
                         </Label>
                     </Border>
+
+                    <Border Grid.Column="3" BackgroundColor="Transparent"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsNights}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="Nights"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Sky_LensNights}" Style="{StaticResource SkyRangeTab}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsNights}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
                 </Grid>
             </Border>
 
-            <!-- The fold dial. Only the owner ever moves it — Felova offers the
-                 instrument and says nothing at all about what lines up on it. -->
-            <Grid Grid.Row="1"
-                  ColumnDefinitions="Auto,*"
-                  ColumnSpacing="12"
-                  IsVisible="{Binding ConstellationVM.IsRhythm}">
-                <Label Grid.Column="0"
-                       Text="{Binding ConstellationVM.PeriodLabel}"
-                       FontFamily="{StaticResource FontSans}"
-                       FontSize="12"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource InkSecondary}"
-                       VerticalOptions="Center"
-                       WidthRequest="106"/>
-                <Slider Grid.Column="1"
-                        Minimum="2" Maximum="60"
-                        Value="{Binding ConstellationVM.PeriodDays}"
-                        MinimumTrackColor="{StaticResource Teal}"
-                        MaximumTrackColor="{StaticResource GlassLine}"
-                        ThumbColor="{StaticResource TealDeep}"
-                        VerticalOptions="Center"/>
-            </Grid>
         </Grid>
 
         <!-- ── The night card ──
@@ -311,7 +308,7 @@
                 </Border.Shadow>
                 <Grid x:Name="SkyHost"
                       BackgroundColor="{StaticResource NightBottom}"
-                      SemanticProperties.Description="{Binding ConstellationVM.CountLine}">
+                      SemanticProperties.Description="{Binding ConstellationVM.LensDescription}">
                     <Grid.GestureRecognizers>
                         <PanGestureRecognizer PanUpdated="OnPanUpdated"/>
                         <PinchGestureRecognizer PinchUpdated="OnPinchUpdated"/>
@@ -331,6 +328,39 @@
                            HorizontalTextAlignment="Center"
                            VerticalOptions="Center"
                            Margin="34,0"/>
+
+
+                    <!-- The fold dial, floated ON the card rather than above it: this
+                         is the lens with the most to look at, and a control row that
+                         pushed the sky down would be taking space from the thing it
+                         exists to reveal. -->
+                    <Border IsVisible="{Binding ConstellationVM.IsRhythm}"
+                            BackgroundColor="{StaticResource NightTile}"
+                            Stroke="{StaticResource SkyLineSoft}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 999"
+                            Padding="14,6"
+                            Margin="14,0,14,12"
+                            VerticalOptions="End">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Grid.Column="0"
+                                   Text="{Binding ConstellationVM.PeriodLabel}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource SkyInk}"
+                                   VerticalOptions="Center"
+                                   WidthRequest="92"/>
+                            <Slider Grid.Column="1"
+                                    Minimum="2"
+                                    Maximum="{Binding ConstellationVM.MaxPeriodDays}"
+                                    Value="{Binding ConstellationVM.PeriodDays}"
+                                    MinimumTrackColor="{StaticResource SkyPath}"
+                                    MaximumTrackColor="{StaticResource SkyLineSoft}"
+                                    ThumbColor="{StaticResource SkyPath}"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
 
                     <!-- The figure's name, quietly in the corner. In the app's own
                          handwriting, because this is the one sentence on the page that
@@ -401,7 +431,8 @@
                         <Border Padding="4,3,9,3"
                                 Margin="0,0,8,6"
                                 BackgroundColor="Transparent"
-                                StrokeThickness="0"
+                                Stroke="{StaticResource GlassLine}"
+                                StrokeThickness="1"
                                 StrokeShape="RoundRectangle 999">
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding IsFocused}" Value="True">
@@ -445,6 +476,17 @@
             <!-- The app's handwriting, for the one aside on the page. It changes with
                  the lens — the fold dial in particular explains nothing about itself. -->
             <Label Text="{Binding ConstellationVM.Hint}"
+                   IsVisible="{Binding ConstellationVM.ShowHints}"
+                   FontFamily="{StaticResource FontHand}"
+                   FontSize="16"
+                   TextColor="{StaticResource InkSecondary}"
+                   HorizontalTextAlignment="Center"/>
+
+            <!-- Said once. After that the outline on each key is the whole cue —
+                 a spelled-out hint that retires plus a permanent quiet one, exactly
+                 as Today's stat cards do it. -->
+            <Label Text="{loc:Translate Sky_HintFocus}"
+                   IsVisible="{Binding ConstellationVM.ShowFocusHint}"
                    FontFamily="{StaticResource FontHand}"
                    FontSize="16"
                    TextColor="{StaticResource InkSecondary}"

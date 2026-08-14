@@ -158,6 +158,96 @@ public class ConstellationLensTests
         Assert.Empty(ConstellationLayout.PlaceFolded(new[] { At(From) }, From, -3, Width, Height, Sky));
     }
 
+    // ── The wall of nights ───────────────────────────────────────────────────
+
+    [Fact]
+    public void Wall_OneRowPerDay_OldestAtTheTop()
+    {
+        var stars = ConstellationLayout.PlaceOnWall(
+            new[] { At(From.AddHours(9)), At(From.AddDays(5).AddHours(9)) },
+            From, Width, rowHeight: 20);
+
+        Assert.True(stars[0].Y < stars[1].Y, "time did not read downward");
+
+        // Five days apart is five rows apart, give or take each star's wobble inside
+        // its own row.
+        Assert.InRange(stars[1].Y - stars[0].Y, 5 * 20 - 7, 5 * 20 + 7);
+    }
+
+    [Fact]
+    public void Wall_TheSameHourLandsInTheSameColumn()
+    {
+        // The vertical band that says "these keep happening at three in the morning".
+        var events = Enumerable.Range(0, 10)
+            .Select(i => At(From.AddDays(i).AddHours(3)))
+            .ToArray();
+
+        var stars = ConstellationLayout.PlaceOnWall(events, From, Width, rowHeight: 20);
+
+        foreach (var star in stars)
+            Assert.Equal(stars[0].X, star.X, 6);
+    }
+
+    [Fact]
+    public void Wall_TheDayRunsLeftToRight()
+    {
+        var stars = ConstellationLayout.PlaceOnWall(
+            new[] { At(From.AddHours(1)), At(From.AddHours(23)) },
+            From, Width, rowHeight: 20);
+
+        Assert.True(stars[0].X < stars[1].X);
+        Assert.True(stars[0].X >= ConstellationLayout.WallInset, "a star overlapped the dates");
+        Assert.True(stars[1].X <= Width);
+    }
+
+    [Fact]
+    public void Wall_ClusteredEntriesShareARowWithoutLeavingIt()
+    {
+        // Three seizures inside one day is a crowded ROW — the shape a lot of dogs'
+        // emergency plans hang on. They must stay inside their own night, or the
+        // picture says they happened on different days.
+        const double rowHeight = 20;
+        var day = From.AddDays(3);
+        var events = new[] { At(day.AddHours(2)), At(day.AddHours(2.5)), At(day.AddHours(3)) };
+
+        var stars = ConstellationLayout.PlaceOnWall(events, From, Width, rowHeight);
+
+        var top = 3 * rowHeight;
+        foreach (var star in stars)
+            Assert.InRange(star.Y, top, top + rowHeight);
+    }
+
+    [Fact]
+    public void Wall_RowsFillAShortRangeAndStopShrinkingOnALongOne()
+    {
+        // A week of rows should use the whole card. A year of them cannot — below a
+        // point a row stops being a row, so the wall grows past the card and is
+        // scrolled instead of squeezed.
+        Assert.Equal(500.0 / 7, ConstellationLayout.RowHeight(7, 500), 6);
+        Assert.Equal(ConstellationLayout.MinRowHeight, ConstellationLayout.RowHeight(365, 500), 6);
+    }
+
+    [Fact]
+    public void Wall_CountsBothEndsOfTheRange()
+    {
+        Assert.Equal(1, ConstellationLayout.DayCount(From, From));
+        Assert.Equal(7, ConstellationLayout.DayCount(From, From.AddDays(6)));
+    }
+
+    [Fact]
+    public void Fold_CannotBeSetLongerThanHalfTheStretch()
+    {
+        // You cannot see a repeat in a window that does not hold two of them. The
+        // bound is what the picture is CAPABLE of showing — never what the answer is.
+        Assert.Equal(3, MaxFold(7));
+        Assert.Equal(15, MaxFold(30));
+        Assert.Equal(45, MaxFold(90));
+        Assert.Equal(60, MaxFold(365));   // and never past the dial's own ceiling
+        Assert.Equal(2, MaxFold(1));      // always at least a two-day fold to offer
+
+        static double MaxFold(int rangeDays) => Math.Max(2, Math.Min(60, rangeDays / 2));
+    }
+
     // ── Neither lens touches the records ─────────────────────────────────────
 
     [Fact]
@@ -175,5 +265,7 @@ public class ConstellationLensTests
             ConstellationLayout.PlaceOnDial(events, From, To, Width, Height).Length);
         Assert.Equal(events.Length,
             ConstellationLayout.PlaceFolded(events, From, 14, Width, Height, Sky).Length);
+        Assert.Equal(events.Length,
+            ConstellationLayout.PlaceOnWall(events, From, Width, 20).Length);
     }
 }
