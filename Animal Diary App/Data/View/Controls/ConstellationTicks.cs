@@ -5,41 +5,48 @@ using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
-/// The handful of dates floated under the sky.
+/// The handful of labels floated on the sky — dates along the timeline, hours around
+/// the dial, days across a fold.
 ///
 /// <para>Time is the only axis that means anything here, so it is the only one that
-/// gets labelled — and even it gets no rule, no ticks and no grid. The spacing is
-/// chosen so the labels never crowd: as the owner zooms in, a year of month names
-/// becomes weeks and then individual days, which is the same progressive reveal the
-/// stars themselves do.</para>
+/// gets labelled — and even it gets no rule, no ticks and no grid. On the Timeline the
+/// spacing adapts to the zoom: a year of month names becomes weeks and then individual
+/// days, which is the same progressive reveal the stars themselves do.</para>
 ///
 /// <para>Lives beside the drawable rather than in the ViewModel because it is
-/// lettering on a canvas, and it needs the canvas's width to decide how much of it
-/// fits.</para>
+/// lettering on a canvas, and it needs the canvas's size to decide how much fits.</para>
 /// </summary>
 public static class ConstellationTicks
 {
     /// <summary>Roughly the width of "24 Sept" plus air. Below this, labels touch.</summary>
     private const double MinimumSpacing = 82.0;
 
+    /// <summary>How far above the foot of the card the timeline's dates sit.</summary>
+    private const float FootOffset = 7f;
+
     /// <summary>Steps in days, coarsest last. A step is chosen, never computed, so the
     /// dates land on units a person recognises — a week, a month, a year — instead of
     /// on "every 43 days".</summary>
     private static readonly int[] Steps = { 1, 2, 7, 14, 30, 91, 182, 365 };
 
+    /// <summary>The four quarters of the dial, midnight at the top and clockwise.</summary>
+    private static readonly int[] DialHours = { 0, 6, 12, 18 };
+
     /// <param name="worldWidth">The stretch's width at zoom 1. Positions come back in
     /// these units — the camera is applied when they are drawn.</param>
+    /// <param name="height">Canvas height; the dates sit at its foot.</param>
     /// <param name="zoom">Only chooses how MANY dates fit: the step is picked against
     /// the zoomed width, so zooming in turns month names into weeks and then into
     /// individual days. The positions themselves must stay in world units, or the
     /// dates would drift against the stars they label.</param>
-    public static List<SkyTick> Build(DateTime from, DateTime to, double worldWidth, double zoom = 1)
+    public static List<SkyTick> Build(DateTime from, DateTime to, double worldWidth, double height, double zoom = 1)
     {
         var ticks = new List<SkyTick>();
         var totalDays = (to - from).TotalDays;
         if (worldWidth <= 0 || totalDays <= 0)
             return ticks;
 
+        var y = height - FootOffset;
         var pixelsPerDay = worldWidth * (zoom <= 0 ? 1 : zoom) / totalDays;
 
         var step = Steps[^1];
@@ -69,6 +76,7 @@ public static class ConstellationTicks
             for (; cursor < to; cursor = cursor.AddMonths(months))
                 ticks.Add(new SkyTick(
                     ConstellationLayout.XFor(cursor, from, to, worldWidth),
+                    y,
                     cursor.ToString(format, culture)));
 
             return ticks;
@@ -77,7 +85,66 @@ public static class ConstellationTicks
         for (var cursor = from.Date; cursor < to; cursor = cursor.AddDays(step))
             ticks.Add(new SkyTick(
                 ConstellationLayout.XFor(cursor, from, to, worldWidth),
+                y,
                 cursor.ToString(format, culture)));
+
+        return ticks;
+    }
+
+    /// <summary>
+    /// The dial's four hours, laid around the outside of the face.
+    ///
+    /// <para>Four and no more. A ring of twenty-four numbers is a clock <i>face</i>,
+    /// and this is a sky — the quarters are enough to read a wedge by, and anything
+    /// finer turns the atmosphere into instrumentation.</para>
+    /// </summary>
+    public static List<SkyTick> Dial(double width, double height)
+    {
+        var ticks = new List<SkyTick>();
+        if (width <= 0 || height <= 0)
+            return ticks;
+
+        var centreX = width / 2;
+        var centreY = height / 2;
+        var radius = Math.Min(width, height) / 2 - 10;
+        if (radius <= 0)
+            return ticks;
+
+        foreach (var hour in DialHours)
+        {
+            var angle = hour / 24.0 * Math.Tau - Math.PI / 2;
+            ticks.Add(new SkyTick(
+                centreX + Math.Cos(angle) * radius,
+                centreY + Math.Sin(angle) * radius + 4,
+                LocalizationManager.Instance.Format("Sky_DialHour", hour)));
+        }
+
+        return ticks;
+    }
+
+    /// <summary>
+    /// Where you are inside one turn of the fold — day 1, and three markers after it.
+    ///
+    /// <para>Numbered from 1 because that is how a person counts days, and kept to four
+    /// because the point of this lens is the ALIGNMENT, not the reading off. The labels
+    /// exist so an alignment can be described out loud to a vet, not so it can be
+    /// measured.</para>
+    /// </summary>
+    public static List<SkyTick> Fold(double periodDays, double width, double height)
+    {
+        var ticks = new List<SkyTick>();
+        if (width <= 0 || height <= 0 || periodDays <= 0)
+            return ticks;
+
+        var y = height - FootOffset;
+        for (int q = 0; q < 4; q++)
+        {
+            var day = (int)Math.Round(periodDays * q / 4) + 1;
+            ticks.Add(new SkyTick(
+                width * q / 4.0 + width / 8.0,
+                y,
+                LocalizationManager.Instance.Format("Sky_FoldDay", day)));
+        }
 
         return ticks;
     }

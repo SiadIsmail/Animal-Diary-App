@@ -30,9 +30,16 @@ using Microsoft.Maui.Graphics;
 //  product wearing Felova's data.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// <summary>A date worth naming, at a content x. Built by the ViewModel so the
-/// formatting stays localized and this class stays a painter.</summary>
-public readonly record struct SkyTick(double X, string Label);
+/// <summary>
+/// A label worth drawing, and where. Built outside this class so the formatting stays
+/// localized and this one stays a painter.
+/// </summary>
+/// <param name="X">On the Timeline lens this is a WORLD x and the camera applies to
+/// it. On the Clock and Rhythm lenses it is a canvas position, because neither of
+/// those pans.</param>
+/// <param name="Y">Canvas y. The timeline's dates all sit at the foot of the card;
+/// the dial's hours sit around it.</param>
+public readonly record struct SkyTick(double X, double Y, string Label);
 
 public sealed class ConstellationDrawable : IDrawable
 {
@@ -93,6 +100,22 @@ public sealed class ConstellationDrawable : IDrawable
     /// emphasised, and it is emphasised because a finger chose it — never because of
     /// what it holds.</summary>
     public int SelectedIndex { get; set; } = -1;
+
+    /// <summary>Which way the sky is folded. The Timeline hangs its stars off a
+    /// horizon and moves under the camera; the Clock is a dial and does neither.</summary>
+    public SkyLens Lens { get; set; } = SkyLens.Timeline;
+
+    /// <summary>
+    /// One kind brought forward, everything else dropped back to context — or null for
+    /// all eight at once.
+    ///
+    /// <para>Eight categories overlaid is busy by construction, and no amount of layout
+    /// tuning fixes a legibility problem caused by showing everything. "Seizures, with
+    /// the rest of life behind them" is a different picture, and it is the one someone
+    /// actually came here to look at. Nothing is computed and nothing is hidden — the
+    /// rest of the sky is still there, just quieter.</para>
+    /// </summary>
+    public CelestialCategory? Focus { get; set; }
 
     // ── Palette (resolved through AppColors, never hex literals) ─────────────────
     private readonly Color _skyTop = AppColors.Resolve("NightTop", Color.FromArgb("#123C3E"));
@@ -157,13 +180,21 @@ public sealed class ConstellationDrawable : IDrawable
     /// is both the slow part AND the part that welds neighbours into one blob.</summary>
     private const float GlowRadiusFloor = 3.8f;
 
-    /// <summary>World x → screen x. The one place the camera is applied; everything
-    /// that draws goes through it so nothing can drift out of step.</summary>
-    private float ScreenX(double worldX) => (float)(worldX * Zoom - ScrollX);
+    /// <summary>
+    /// World x → screen x. The one place the camera is applied; everything that draws
+    /// goes through it so nothing can drift out of step.
+    ///
+    /// <para><b>Only the Timeline has a camera.</b> A clock is not panned and a fold is
+    /// one turn wide by definition — on those lenses a star's x is already a canvas
+    /// position, and this is the identity.</para>
+    /// </summary>
+    private float ScreenX(double worldX) =>
+        Lens == SkyLens.Timeline ? (float)(worldX * Zoom - ScrollX) : (float)worldX;
 
     /// <summary>Screen x → world x, for the layers that are generated from the
     /// position they sit at rather than stored.</summary>
-    private double WorldX(double screenX) => (screenX + ScrollX) / (Zoom <= 0 ? 1 : Zoom);
+    private double WorldX(double screenX) =>
+        Lens == SkyLens.Timeline ? (screenX + ScrollX) / (Zoom <= 0 ? 1 : Zoom) : screenX;
 
     /// <summary>Where a star is actually drawn: its moment, plus the sideways nudge
     /// that breaks a knot of entries into a cluster and fades away as the zoom starts
@@ -180,7 +211,12 @@ public sealed class ConstellationDrawable : IDrawable
         DrawBubbles(canvas, rect);
         DrawDust(canvas, rect);
         DrawAsterism(canvas, rect);
-        DrawPath(canvas, rect);
+
+        if (Lens == SkyLens.Clock)
+            DrawDial(canvas, rect);
+        else
+            DrawPath(canvas, rect);
+
         DrawTicks(canvas, rect);
         DrawStars(canvas, rect);
         DrawVignette(canvas, rect);
@@ -432,6 +468,46 @@ public sealed class ConstellationDrawable : IDrawable
         canvas.DrawPath(path);
     }
 
+    /// <summary>
+    /// The Clock's face: one thin ring, four quarter marks, and nothing else.
+    ///
+    /// <para>No hour hand, no numbers around the inside, no spokes. The dial's whole
+    /// job is to say "this is a day, midnight is up" and then get out of the way — the
+    /// wedge of stars is the thing being looked at, and every extra line drawn here is
+    /// something competing with it.</para>
+    /// </summary>
+    private void DrawDial(ICanvas canvas, RectF rect)
+    {
+        var centreX = rect.X + rect.Width / 2;
+        var centreY = rect.Y + rect.Height / 2;
+        var outer = MathF.Min(rect.Width, rect.Height) / 2 - 26f;
+        if (outer <= 0)
+            return;
+
+        canvas.StrokeLineCap = LineCap.Round;
+
+        canvas.StrokeColor = _pathColor.WithAlpha(0.10f);
+        canvas.StrokeSize = 5f;
+        canvas.DrawCircle(centreX, centreY, outer);
+
+        canvas.StrokeColor = _pathColor.WithAlpha(0.4f);
+        canvas.StrokeSize = 1f;
+        canvas.DrawCircle(centreX, centreY, outer);
+
+        // Midnight, six, noon, six — just enough to know which way round the day runs.
+        canvas.StrokeColor = _pathColor.WithAlpha(0.3f);
+        canvas.StrokeSize = 1.2f;
+        for (int q = 0; q < 4; q++)
+        {
+            var angle = q / 4f * MathF.Tau - MathF.PI / 2f;
+            var cos = MathF.Cos(angle);
+            var sin = MathF.Sin(angle);
+            canvas.DrawLine(
+                centreX + cos * (outer - 6f), centreY + sin * (outer - 6f),
+                centreX + cos * (outer + 6f), centreY + sin * (outer + 6f));
+        }
+    }
+
     /// <summary>Dates, floated at the foot of the sky with no rule under them. The one
     /// axis that means anything is time, so it is the one that gets labels — and even
     /// it gets no line.</summary>
@@ -446,11 +522,13 @@ public sealed class ConstellationDrawable : IDrawable
 
         foreach (var tick in Ticks)
         {
-            var x = ScreenX(tick.X) + rect.X;
+            // Only the Timeline has a camera; the dial and the fold are pinned to the
+            // canvas, so their labels are already where they belong.
+            var x = rect.X + (Lens == SkyLens.Timeline ? ScreenX(tick.X) : (float)tick.X);
             if (x < rect.X - 40 || x > rect.Right + 40)
                 continue;
 
-            canvas.DrawString(tick.Label, x, rect.Bottom - 7f, HorizontalAlignment.Center);
+            canvas.DrawString(tick.Label, x, rect.Y + (float)tick.Y, HorizontalAlignment.Center);
         }
     }
 
@@ -477,8 +555,14 @@ public sealed class ConstellationDrawable : IDrawable
 
         var margin = radius * 4f + 8f;
 
-        DrawLinks(canvas, rect, margin);
+        if (Focus is null)
+            DrawLinks(canvas, rect, margin);
 
+        // Two passes when one kind is in focus, so the quiet ones are laid down first
+        // and the focused kind sits on top of them rather than being buried by whatever
+        // happened to be logged later.
+        var passes = Focus is null ? 1 : 2;
+        for (int pass = 0; pass < passes; pass++)
         for (int i = 0; i < Stars.Count; i++)
         {
             var star = Stars[i];
@@ -486,20 +570,34 @@ public sealed class ConstellationDrawable : IDrawable
             if (x < -margin || x > rect.Width + margin)
                 continue;
 
+            if (Focus is CelestialCategory focused && i < Events.Count)
+            {
+                var inFocus = Events[i].Category == focused;
+                if (inFocus != (pass == 1))
+                    continue;
+            }
+
             var selected = i == SelectedIndex;
             // Stars and events are placed one-for-one and in the same order; the guard
             // is for the frame between a new load and its re-place, not a real state.
             var category = i < Events.Count ? Events[i].Category : CelestialCategory.Custom;
             var color = ColorFor(category);
 
+            // Out of focus: still there, still in its own colour and its own shape,
+            // just quieter. Dropped rather than hidden, because the whole value of the
+            // focused kind is seeing it against everything else that was going on.
+            var dimmed = Focus is CelestialCategory kind && kind != category;
+            if (dimmed)
+                color = color.WithAlpha(0.3f);
+
             CelestialSymbols.Draw(
                 canvas,
                 category,
                 rect.X + x,
                 rect.Y + (float)star.Y,
-                selected ? MathF.Max(radius * 1.6f, 6f) : radius,
+                selected ? MathF.Max(radius * 1.6f, 6f) : (dimmed ? radius * 0.72f : radius),
                 color,
-                glow || selected,
+                (glow || selected) && !dimmed,
                 // The alternating hand-made tilt every icon tile in this app wears
                 // (TimelineItem.IconRotation), in radians.
                 tilt: i % 2 == 0 ? -0.11f : 0.09f);

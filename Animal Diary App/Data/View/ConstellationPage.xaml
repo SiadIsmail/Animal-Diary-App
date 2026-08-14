@@ -54,10 +54,10 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
 
         <!-- The app's own page ground, unchanged from every other page. -->
-        <controls:WaterBackground Grid.RowSpan="4"/>
+        <controls:WaterBackground Grid.RowSpan="5"/>
 
         <!-- ── Header: back + who this is ── -->
         <Grid Grid.Row="0"
@@ -197,6 +197,102 @@
             </Grid>
         </Border>
 
+        <!-- ── Lenses ──
+             Three seats in the same room, looking at exactly the same entries. The
+             Timeline answers "when did this happen", which a list can also do; the
+             other two answer "when in the DAY" and "does it come round again", which
+             nothing else in the app can. Same pill row as the range, one row up. -->
+        <Grid Grid.Row="2" Margin="22,0,22,10" RowDefinitions="Auto,Auto" RowSpacing="8">
+
+            <Border BackgroundColor="{StaticResource Well}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 999"
+                    Padding="3">
+                <Grid ColumnDefinitions="*,*,*">
+
+                    <Border Grid.Column="0" BackgroundColor="Transparent"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsTimeline}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="Timeline"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Sky_LensTimeline}" Style="{StaticResource SkyRangeTab}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsTimeline}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                    <Border Grid.Column="1" BackgroundColor="Transparent"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsClock}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="Clock"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Sky_LensClock}" Style="{StaticResource SkyRangeTab}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsClock}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                    <Border Grid.Column="2" BackgroundColor="Transparent"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsRhythm}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="Rhythm"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Sky_LensRhythm}" Style="{StaticResource SkyRangeTab}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsRhythm}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- The fold dial. Only the owner ever moves it — Felova offers the
+                 instrument and says nothing at all about what lines up on it. -->
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="Auto,*"
+                  ColumnSpacing="12"
+                  IsVisible="{Binding ConstellationVM.IsRhythm}">
+                <Label Grid.Column="0"
+                       Text="{Binding ConstellationVM.PeriodLabel}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource InkSecondary}"
+                       VerticalOptions="Center"
+                       WidthRequest="106"/>
+                <Slider Grid.Column="1"
+                        Minimum="2" Maximum="60"
+                        Value="{Binding ConstellationVM.PeriodDays}"
+                        MinimumTrackColor="{StaticResource Teal}"
+                        MaximumTrackColor="{StaticResource GlassLine}"
+                        ThumbColor="{StaticResource TealDeep}"
+                        VerticalOptions="Center"/>
+            </Grid>
+        </Grid>
+
         <!-- ── The night card ──
              Taped to the page, like the Journal's warm-paper mood note: the same
              asymmetric radius, the same soft ink shadow, the same washi strip at a
@@ -207,7 +303,7 @@
              is InputTransparent so it can never swallow a drag, and the Grid's own
              background is what makes it hit-testable (the photo cropper's stage does
              the same). -->
-        <Grid Grid.Row="2" Margin="18,4,18,0">
+        <Grid Grid.Row="3" Margin="18,4,18,0">
             <Border StrokeThickness="0"
                     StrokeShape="RoundRectangle 26,20,22,28">
                 <Border.Shadow>
@@ -293,37 +389,62 @@
              for a dark sky read out here on the daylight page. Only the kinds actually
              present are listed (the ViewModel filters), so a pet that has never had a
              seizure is never shown a seizure symbol. -->
-        <VerticalStackLayout Grid.Row="3" Padding="16,16,16,16" Spacing="8">
+        <VerticalStackLayout Grid.Row="4" Padding="16,14,16,14" Spacing="8">
 
             <FlexLayout Wrap="Wrap"
                         JustifyContent="Center"
                         BindableLayout.ItemsSource="{Binding ConstellationVM.Legend}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vms:CelestialLegendItem">
-                        <HorizontalStackLayout Spacing="6"
-                                               Margin="0,0,12,7"
-                                               VerticalOptions="Center">
-                            <Border WidthRequest="27" HeightRequest="27"
-                                    BackgroundColor="{StaticResource NightTile}"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 14,13,14,13"
-                                    Rotation="{Binding Tilt}"
-                                    VerticalOptions="Center">
-                                <GraphicsView Drawable="{Binding Symbol}"
-                                              InputTransparent="True"/>
-                            </Border>
-                            <Label Text="{Binding Label}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11.5"
-                                   TextColor="{StaticResource InkSecondary}"
-                                   VerticalOptions="Center"/>
-                        </HorizontalStackLayout>
+                        <!-- The key is also the control: tap one to bring that kind
+                             forward and drop the rest to context. -->
+                        <Border Padding="4,3,9,3"
+                                Margin="0,0,8,6"
+                                BackgroundColor="Transparent"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 999">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsFocused}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vms:MainViewModel}}, Path=ConstellationVM.ToggleFocusCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+
+                            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                <Border WidthRequest="27" HeightRequest="27"
+                                        BackgroundColor="{StaticResource NightTile}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 14,13,14,13"
+                                        Rotation="{Binding Tilt}"
+                                        VerticalOptions="Center">
+                                    <GraphicsView Drawable="{Binding Symbol}"
+                                                  InputTransparent="True"/>
+                                </Border>
+                                <Label Text="{Binding Label}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="11.5"
+                                       TextColor="{StaticResource InkSecondary}"
+                                       VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsFocused}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                            <Setter Property="FontAttributes" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </HorizontalStackLayout>
+                        </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </FlexLayout>
 
-            <!-- The app's handwriting, for the one aside on the page. -->
-            <Label Text="{loc:Translate Sky_Hint}"
+            <!-- The app's handwriting, for the one aside on the page. It changes with
+                 the lens — the fold dial in particular explains nothing about itself. -->
+            <Label Text="{Binding ConstellationVM.Hint}"
                    FontFamily="{StaticResource FontHand}"
                    FontSize="16"
                    TextColor="{StaticResource InkSecondary}"
@@ -337,7 +458,7 @@
              rather than on the canvas, where it would become a second thing the picture
              encodes. IsPresented is OneWay: the selection is the ViewModel's, and the
              scrim's dismiss goes back through the command. -->
-        <controls:FelovaBottomSheet Grid.RowSpan="4"
+        <controls:FelovaBottomSheet Grid.RowSpan="5"
                                     IsPresented="{Binding ConstellationVM.HasSelection, Mode=OneWay}"
                                     Title="{Binding ConstellationVM.SelectedTitle}"
                                     DismissCommand="{Binding ConstellationVM.ClearSelectionCommand}">
@@ -379,6 +500,17 @@
                                        FontFamily="{StaticResource FontSans}"
                                        FontSize="13"
                                        TextColor="{StaticResource InkSecondary}"/>
+
+                                <!-- Where this sits relative to the last one of its
+                                     kind. Every kind gets it, which is what keeps it a
+                                     fact about the diary rather than a counter aimed
+                                     at seizures. -->
+                                <Label Text="{Binding ConstellationVM.SelectedGap}"
+                                       IsVisible="{Binding ConstellationVM.HasSelectedGap}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource InkTertiary}"
+                                       Margin="0,3,0,0"/>
                             </VerticalStackLayout>
                         </Border>
                     </Grid>
