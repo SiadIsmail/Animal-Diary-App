@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.View.Controls;
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Helpers;
 
 /// <summary>
 /// The Constellation's view half: it owns the canvas, the two numbers that describe
@@ -33,6 +34,7 @@ public partial class ConstellationPage : ContentPage
     private double _panStartScroll;
 
     private bool _tracked;
+    private bool _sharing;
 
     /// <summary>How near a tap has to land, in canvas units. Generous on purpose: the
     /// symbols are a few pixels across in a busy sky, and the nearest one wins, so a
@@ -144,8 +146,11 @@ public partial class ConstellationPage : ContentPage
         var sky = vm.ConstellationVM;
 
         _drawable.Events = sky.Events;
+        _drawable.Asterism = sky.Asterism;
+        // Before Place: the signature shapes the wave the stars are placed against.
+        _drawable.Signature = sky.Signature;
         _drawable.WorldWidth = width;
-        _drawable.Stars = ConstellationLayout.Place(sky.Events, sky.From, sky.To, width, height);
+        _drawable.Stars = ConstellationLayout.Place(sky.Events, sky.From, sky.To, width, height, sky.Signature);
         _drawable.SelectedIndex = sky.SelectedIndex;
 
         ApplyCamera();
@@ -248,6 +253,65 @@ public partial class ConstellationPage : ContentPage
         // Empty sky clears the selection rather than being ignored: tapping away is
         // how people close things they opened by tapping.
         vm.ConstellationVM.SelectedIndex = index;
+    }
+
+    /// <summary>
+    /// Share the sky as a picture: capture the night card, frame it on a Felova page,
+    /// hand it to the OS.
+    ///
+    /// <para>The card is captured rather than redrawn offscreen, so what gets shared is
+    /// pixel-for-pixel what was on screen — including wherever it happens to be zoomed
+    /// and panned to, which is what the owner chose to look at. Only the CARD is in
+    /// frame; the legend, which names conditions out loud, deliberately is not (see
+    /// <c>ConstellationShare</c>).</para>
+    /// </summary>
+    private async void OnShareClicked(object? sender, EventArgs e)
+    {
+        // The share sheet can take a moment to appear; a second tap in that window
+        // would capture and compose the whole thing again for nothing.
+        if (_sharing)
+            return;
+
+        _sharing = true;
+        ShareButton.Opacity = 0.45;
+
+        try
+        {
+            var capture = await SkyHost.CaptureAsync();
+            if (capture is null)
+                throw new NotSupportedException("this platform captured nothing");
+
+            byte[] sky;
+            using (var stream = await capture.OpenReadAsync(ScreenshotFormat.Png))
+            using (var buffer = new MemoryStream())
+            {
+                await stream.CopyToAsync(buffer);
+                sky = buffer.ToArray();
+            }
+
+            var vmSky = vm.ConstellationVM;
+            var path = await ConstellationShare.CreateAsync(
+                sky, vmSky.ShareTitle, vmSky.ShareSubtitle, vmSky.PetName);
+
+            if (path is null)
+                throw new InvalidOperationException("the picture could not be composed");
+
+            await ConstellationShare.ShareAsync(path, vmSky.ShareTitle);
+            vmSky.TrackShared();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Constellation] share failed: {ex}");
+            await DisplayAlert(
+                LocalizationManager.Instance.GetString("Sky_ShareFailedTitle"),
+                LocalizationManager.Instance.GetString("Sky_ShareFailedBody"),
+                LocalizationManager.Instance.GetString("Common_Okay"));
+        }
+        finally
+        {
+            _sharing = false;
+            ShareButton.Opacity = 1;
+        }
     }
 
     private async void OnBackClicked(object? sender, EventArgs e)

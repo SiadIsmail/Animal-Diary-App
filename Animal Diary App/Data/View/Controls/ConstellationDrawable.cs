@@ -41,6 +41,29 @@ public sealed class ConstellationDrawable : IDrawable
     public IReadOnlyList<SkyStar> Stars { get; set; } = Array.Empty<SkyStar>();
     public IReadOnlyList<SkyTick> Ticks { get; set; } = Array.Empty<SkyTick>();
 
+    /// <summary>The pet's own figure, behind everything. Fixed to the CANVAS, not to
+    /// time — it does not scroll and it does not zoom, because it is whose sky this is
+    /// rather than something that happened in it.</summary>
+    public Asterism Asterism { get; set; } = Asterism.Empty;
+
+    /// <summary>
+    /// Everything decorative that belongs to this pet: the wave's shape, the seed the
+    /// starfield generates itself from, and the one colour the atmosphere leans
+    /// towards. Setting it re-mixes the palette, which is why it is a property with a
+    /// body rather than a field.
+    /// </summary>
+    public SkySignature Signature
+    {
+        get => _signature;
+        set
+        {
+            _signature = value;
+            MixPalette();
+        }
+    }
+
+    private SkySignature _signature = SkySignature.Default;
+
     // ── The camera ───────────────────────────────────────────────────────────────
     // Stars are placed ONCE, in world units, and this is the lens they are looked at
     // through:  screenX = worldX × Zoom − ScrollX.
@@ -82,13 +105,52 @@ public sealed class ConstellationDrawable : IDrawable
     // mint page. That colour is DARKER than this ground, so it would be a hole rather
     // than a bubble — the night sibling of the same accent is the one to use.
     private readonly Color _bubbleTint = AppColors.Resolve("SkyPath", Color.FromArgb("#7FD4C4"));
-    private readonly Color _dust = AppColors.Resolve("StarDust", Color.FromArgb("#C4E6E3"));
-    private readonly Color _pathColor = AppColors.Resolve("SkyPath", Color.FromArgb("#7FD4C4"));
+    private readonly Color _dustBase = AppColors.Resolve("StarDust", Color.FromArgb("#C4E6E3"));
+    private readonly Color _asterismBase = AppColors.Resolve("NightAsterism", Color.FromArgb("#D8EFE6"));
+    private readonly Color _pathBase = AppColors.Resolve("SkyPath", Color.FromArgb("#7FD4C4"));
     private readonly Color _tickColor = AppColors.Resolve("SkyInk", Color.FromArgb("#9FC4C0"));
 
     private readonly Color[] _starColors = CelestialVisuals.All
         .Select(c => AppColors.Resolve(CelestialVisuals.For(c).ColorKey, Colors.White))
         .ToArray();
+
+    // ── The pet's weather ────────────────────────────────────────────────────────
+    // Mixed towards the signature's accent, never replaced by it: the mint timeline
+    // and the pale dust belong to the app and only LEAN towards the pet's colour. A
+    // full swap would give one owner a rose page and another a violet one, and this
+    // would stop being one product. The eight Star* category colours are untouched by
+    // any of it — a weigh-in is the same blue in everybody's sky, or the legend stops
+    // being a promise.
+    private Color _accent = AppColors.Resolve("SkyAccentTeal", Color.FromArgb("#6FBFB2"));
+    private Color _glowTop;
+    private Color _dust;
+    private Color _asterism;
+    private Color _pathColor;
+
+    public ConstellationDrawable() => MixPalette();
+
+    // The attribute is what tells the compiler the constructor's one call fills all
+    // four; without it every mixed colour would have to carry a misleading initializer.
+    [System.Diagnostics.CodeAnalysis.MemberNotNull(
+        nameof(_glowTop), nameof(_dust), nameof(_asterism), nameof(_pathColor))]
+    private void MixPalette()
+    {
+        _accent = AppColors.Resolve(_signature.AccentKey, Color.FromArgb("#6FBFB2"));
+
+        // The glow up top is mostly the pet's — it is the layer with no job other than
+        // atmosphere, so it can carry the most of them. The WARM SAND glow at the
+        // bottom is never tinted: it is the app's own signature and the thing that
+        // makes this a rockpool at night rather than a generic dark screen.
+        _glowTop = Blend(_glowMint, _accent, 0.72f);
+        _dust = Blend(_dustBase, _accent, 0.4f);
+        _asterism = Blend(_asterismBase, _accent, 0.32f);
+        _pathColor = Blend(_pathBase, _accent, 0.22f);
+    }
+
+    private static Color Blend(Color from, Color to, float amount) => new(
+        from.Red + (to.Red - from.Red) * amount,
+        from.Green + (to.Green - from.Green) * amount,
+        from.Blue + (to.Blue - from.Blue) * amount);
 
     /// <summary>Below this radius a star's halo is dropped. Not a count: a halo is
     /// three fills and roughly three times the symbol's width, so in a crowded sky it
@@ -111,9 +173,32 @@ public sealed class ConstellationDrawable : IDrawable
         DrawAtmosphere(canvas, rect);
         DrawBubbles(canvas, rect);
         DrawDust(canvas, rect);
+        DrawAsterism(canvas, rect);
         DrawPath(canvas, rect);
         DrawTicks(canvas, rect);
         DrawStars(canvas, rect);
+        DrawVignette(canvas, rect);
+    }
+
+    /// <summary>A soft darkening at the corners. It is what makes the card read as a
+    /// window onto a night rather than a rectangle painted dark — and it settles the
+    /// edges, where the rounded corner would otherwise cut a bright star in half.</summary>
+    private void DrawVignette(ICanvas canvas, RectF rect)
+    {
+        var radius = MathF.Max(rect.Width, rect.Height) * 0.78f;
+        var bounds = new RectF(
+            rect.Center.X - radius, rect.Center.Y - radius, radius * 2, radius * 2);
+
+        canvas.SaveState();
+        canvas.SetFillPaint(new RadialGradientPaint
+        {
+            StartColor = _skyBottom.WithAlpha(0f),
+            EndColor = _skyBottom.WithAlpha(0.55f),
+            Center = new Point(0.5, 0.5),
+            Radius = 0.5
+        }, bounds);
+        canvas.FillRectangle(rect);
+        canvas.RestoreState();
     }
 
     // ── Atmosphere: pure decoration, and deliberately so ─────────────────────────
@@ -149,7 +234,7 @@ public sealed class ConstellationDrawable : IDrawable
         // the two glows that make the app's background warm rather than clinical. They
         // are anchored to the CANVAS, not to time: an atmosphere that scrolled would
         // start to look like it meant something.
-        Glow(canvas, _glowMint, 0.22f,
+        Glow(canvas, _glowTop, 0.22f,
             new PointF(rect.X + rect.Width * 0.16f, rect.Y + rect.Height * 0.08f),
             rect.Width * 0.62f);
 
@@ -198,7 +283,7 @@ public sealed class ConstellationDrawable : IDrawable
 
         for (int c = firstCell; c <= lastCell; c++)
         {
-            var h = Hash((uint)c * 2654435761u);
+            var h = Hash((uint)c * 2654435761u ^ (uint)_signature.Seed);
 
             var radius = 16f + (h & 0x3F) / 63f * 74f;
             var x = rect.X + c * cell + ((h >> 6) & 0x7F) / 127f * cell - start;
@@ -247,7 +332,7 @@ public sealed class ConstellationDrawable : IDrawable
         {
             for (int n = 0; n < 2; n++)
             {
-                var h = Hash((uint)(c * 2 + n));
+                var h = Hash((uint)(c * 2 + n) ^ (uint)(_signature.Seed >> 32));
                 var x = rect.X + c * cell + (h & 0x3F) / 63f * cell - start;
                 if (x < rect.X - 2 || x > rect.Right + 2)
                     continue;
@@ -259,6 +344,49 @@ public sealed class ConstellationDrawable : IDrawable
                 canvas.FillColor = _dust.WithAlpha(alpha);
                 canvas.FillCircle(x, y, radius);
             }
+        }
+    }
+
+    /// <summary>
+    /// The pet's figure. Drawn between the ambient layers and the timeline, so it sits
+    /// behind everything that was recorded.
+    ///
+    /// <para>Two rules hold it on the right side of the line between decoration and
+    /// data: its stars are plain round points (never one of the eight symbols, which
+    /// each mean something), and they are dimmer than any event. Someone glancing at
+    /// this must never wonder whether the figure is telling them something.</para>
+    /// </summary>
+    private void DrawAsterism(ICanvas canvas, RectF rect)
+    {
+        if (!Asterism.HasShape)
+            return;
+
+        var stars = Asterism.Stars;
+
+        float X(int i) => rect.X + (float)stars[i].X * rect.Width;
+        float Y(int i) => rect.Y + (float)stars[i].Y * rect.Height;
+
+        canvas.StrokeSize = 1f;
+        canvas.StrokeColor = _asterism.WithAlpha(0.16f);
+        canvas.StrokeLineCap = LineCap.Round;
+
+        foreach (var line in Asterism.Lines)
+        {
+            if (line.From < 0 || line.To < 0 || line.From >= stars.Count || line.To >= stars.Count)
+                continue;
+
+            canvas.DrawLine(X(line.From), Y(line.From), X(line.To), Y(line.To));
+        }
+
+        for (int i = 0; i < stars.Count; i++)
+        {
+            var brightness = (float)stars[i].Brightness;
+            var radius = 1.5f + brightness * 1.9f;
+
+            canvas.FillColor = _asterism.WithAlpha(0.10f * brightness);
+            canvas.FillCircle(X(i), Y(i), radius * 2.8f);
+            canvas.FillColor = _asterism.WithAlpha(0.34f + 0.3f * brightness);
+            canvas.FillCircle(X(i), Y(i), radius);
         }
     }
 
@@ -277,7 +405,7 @@ public sealed class ConstellationDrawable : IDrawable
             // Sampled in WORLD x, so the wave is the same wave at every zoom — it just
             // stretches. This is what keeps a star on the line it was placed against
             // instead of the line drifting out from under it as you zoom.
-            var y = (float)ConstellationLayout.PathY(WorldX(sx), rect.Height);
+            var y = (float)ConstellationLayout.PathY(WorldX(sx), rect.Height, _signature);
             if (sx <= -step)
                 path.MoveTo(rect.X + sx, rect.Y + y);
             else
@@ -351,6 +479,8 @@ public sealed class ConstellationDrawable : IDrawable
             canvas.DrawLine(rect.X + x, rect.Y + (float)star.PathY, rect.X + x, rect.Y + (float)star.Y);
         }
 
+        DrawLinks(canvas, rect, margin);
+
         for (int i = 0; i < Stars.Count; i++)
         {
             var star = Stars[i];
@@ -371,7 +501,10 @@ public sealed class ConstellationDrawable : IDrawable
                 rect.Y + (float)star.Y,
                 selected ? MathF.Max(radius * 1.6f, 6f) : radius,
                 color,
-                glow || selected);
+                glow || selected,
+                // The alternating hand-made tilt every icon tile in this app wears
+                // (TimelineItem.IconRotation), in radians.
+                tilt: i % 2 == 0 ? -0.11f : 0.09f);
 
             if (selected)
             {
@@ -379,6 +512,50 @@ public sealed class ConstellationDrawable : IDrawable
                 canvas.StrokeSize = 1.2f;
                 canvas.DrawCircle(rect.X + x, rect.Y + (float)star.Y, MathF.Max(radius * 3.4f, 15f));
             }
+        }
+    }
+
+    /// <summary>
+    /// The hairlines that make this a constellation rather than a scatter: each star
+    /// joined to the one beside it in the SAME MOMENT (see <c>SkyStar.LinkTo</c>).
+    ///
+    /// <para>Drawn only when the two are between <c>LinkMinimum</c> and
+    /// <c>LinkMaximum</c> apart on screen — which is what makes them a reward
+    /// for zooming in. Too close together and the line is a smudge inside a blob; too
+    /// far apart and a year's worth of them becomes a scribble across the sky. In
+    /// between, a morning's glucose curve draws itself.</para>
+    /// </summary>
+    private void DrawLinks(ICanvas canvas, RectF rect, float margin)
+    {
+        const float LinkMinimum = 5f;
+        const float LinkMaximum = 78f;
+
+        canvas.StrokeSize = 0.9f;
+        canvas.StrokeColor = _dust.WithAlpha(0.16f);
+
+        for (int i = 0; i < Stars.Count; i++)
+        {
+            var star = Stars[i];
+            var link = star.LinkTo;
+            if (link < 0 || link >= Stars.Count)
+                continue;
+
+            var x = ScreenX(star.X);
+            if (x < -margin || x > rect.Width + margin)
+                continue;
+
+            var other = Stars[link];
+            var ox = ScreenX(other.X);
+
+            var dx = x - ox;
+            var dy = (float)(star.Y - other.Y);
+            var distance = MathF.Sqrt(dx * dx + dy * dy);
+            if (distance < LinkMinimum || distance > LinkMaximum)
+                continue;
+
+            canvas.DrawLine(
+                rect.X + ox, rect.Y + (float)other.Y,
+                rect.X + x, rect.Y + (float)star.Y);
         }
     }
 

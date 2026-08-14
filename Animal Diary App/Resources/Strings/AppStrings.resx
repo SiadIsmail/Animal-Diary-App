@@ -913,7 +913,7 @@
   <data name="Sky_CountOne" xml:space="preserve"><value>1 thing written down</value></data>
   <data name="Sky_CountMany" xml:space="preserve"><value>{0} things written down</value></data>
   <data name="Sky_Empty" xml:space="preserve"><value>Nothing was written down in this stretch of time.</value></data>
-  <data name="Sky_Hint" xml:space="preserve"><value>Pinch to look closer · tap a symbol to see what it was</value></data>
+  <data name="Sky_Hint" xml:space="preserve"><value>Pinch to look closer. Tap a star.</value></data>
   <data name="Sky_Close" xml:space="preserve"><value>Close</value></data>
   <data name="Sky_Range7" xml:space="preserve"><value>1W</value></data>
   <data name="Sky_Range30" xml:space="preserve"><value>1M</value></data>
@@ -928,4 +928,9 @@
   <data name="Sky_TickMonth" xml:space="preserve"><value>MMM yyyy</value></data>
   <data name="Pets_Constellation" xml:space="preserve"><value>Constellation</value></data>
   <data name="Pets_ConstellationSubtitle" xml:space="preserve"><value>Everything written down, over time</value></data>
+  <data name="Sky_AsterismName" xml:space="preserve"><value>{0}'s constellation</value></data>
+  <data name="Sky_Share" xml:space="preserve"><value>Share this sky</value></data>
+  <data name="Sky_ShareRange" xml:space="preserve"><value>Last {0} days</value></data>
+  <data name="Sky_ShareFailedTitle" xml:space="preserve"><value>Couldn't make the picture</value></data>
+  <data name="Sky_ShareFailedBody" xml:space="preserve"><value>Something went wrong putting the image together. Try again in a moment.</value></data>
 </root>

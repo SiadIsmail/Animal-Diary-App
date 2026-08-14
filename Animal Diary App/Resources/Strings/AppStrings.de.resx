@@ -890,7 +890,7 @@
   <data name="Sky_CountOne" xml:space="preserve"><value>1 Eintrag festgehalten</value></data>
   <data name="Sky_CountMany" xml:space="preserve"><value>{0} Einträge festgehalten</value></data>
   <data name="Sky_Empty" xml:space="preserve"><value>In diesem Zeitraum wurde nichts festgehalten.</value></data>
-  <data name="Sky_Hint" xml:space="preserve"><value>Zum Heranzoomen aufziehen · Symbol antippen zeigt, was es war</value></data>
+  <data name="Sky_Hint" xml:space="preserve"><value>Zum Heranzoomen aufziehen. Tippe einen Stern an.</value></data>
   <data name="Sky_Close" xml:space="preserve"><value>Schließen</value></data>
   <data name="Sky_Range7" xml:space="preserve"><value>1W</value></data>
   <data name="Sky_Range30" xml:space="preserve"><value>1M</value></data>
@@ -905,4 +905,9 @@
   <data name="Sky_TickMonth" xml:space="preserve"><value>MMM yyyy</value></data>
   <data name="Pets_Constellation" xml:space="preserve"><value>Sternbild</value></data>
   <data name="Pets_ConstellationSubtitle" xml:space="preserve"><value>Alles Festgehaltene, über die Zeit</value></data>
+  <data name="Sky_AsterismName" xml:space="preserve"><value>Sternbild von {0}</value></data>
+  <data name="Sky_Share" xml:space="preserve"><value>Diesen Himmel teilen</value></data>
+  <data name="Sky_ShareRange" xml:space="preserve"><value>Letzte {0} Tage</value></data>
+  <data name="Sky_ShareFailedTitle" xml:space="preserve"><value>Bild nicht erstellt</value></data>
+  <data name="Sky_ShareFailedBody" xml:space="preserve"><value>Beim Zusammensetzen des Bildes ist etwas schiefgelaufen. Versuch es gleich noch einmal.</value></data>
 </root>

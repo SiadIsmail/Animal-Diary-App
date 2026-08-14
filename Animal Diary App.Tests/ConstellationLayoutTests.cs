@@ -20,6 +20,10 @@ public class ConstellationLayoutTests
     private static readonly DateTime From = new(2026, 1, 1);
     private static readonly DateTime To = new(2026, 1, 31);
 
+    /// <summary>The hand-tuned middle of every band — the sky a pet with no name
+    /// gets, and the one these tests measure against.</summary>
+    private static readonly SkySignature Sky = SkySignature.Default;
+
     private const double Width = 900;
     private const double Height = 300;
 
@@ -58,13 +62,13 @@ public class ConstellationLayoutTests
         // Deliberately pinned: the moment the line's height could be derived from
         // anything recorded, a rising path would read as "getting better".
         Assert.Equal(
-            ConstellationLayout.PathY(412, Height),
-            ConstellationLayout.PathY(412, Height),
+            ConstellationLayout.PathY(412, Height, Sky),
+            ConstellationLayout.PathY(412, Height, Sky),
             9);
 
         Assert.NotEqual(
-            ConstellationLayout.PathY(0, Height),
-            ConstellationLayout.PathY(140, Height),
+            ConstellationLayout.PathY(0, Height, Sky),
+            ConstellationLayout.PathY(140, Height, Sky),
             9);
     }
 
@@ -73,7 +77,7 @@ public class ConstellationLayoutTests
     {
         for (double x = 0; x < 4000; x += 7)
         {
-            var y = ConstellationLayout.PathY(x, Height);
+            var y = ConstellationLayout.PathY(x, Height, Sky);
             Assert.InRange(y, 0, Height);
         }
     }
@@ -124,7 +128,7 @@ public class ConstellationLayoutTests
             At(new DateTime(2026, 1, 9, 8, 0, 0)),
         };
 
-        var stars = ConstellationLayout.Place(events, From, To, Width, Height);
+        var stars = ConstellationLayout.Place(events, From, To, Width, Height, Sky);
 
         Assert.Equal(3, stars.Length);
         Assert.True(stars[0].X < stars[2].X);
@@ -134,16 +138,16 @@ public class ConstellationLayoutTests
     [Fact]
     public void Place_EmptyOrUnsizedCanvas_PlacesNothing()
     {
-        Assert.Empty(ConstellationLayout.Place(Array.Empty<CelestialEvent>(), From, To, Width, Height));
-        Assert.Empty(ConstellationLayout.Place(new[] { At(From) }, From, To, 0, Height));
-        Assert.Empty(ConstellationLayout.Place(new[] { At(From) }, From, To, Width, 0));
+        Assert.Empty(ConstellationLayout.Place(Array.Empty<CelestialEvent>(), From, To, Width, Height, Sky));
+        Assert.Empty(ConstellationLayout.Place(new[] { At(From) }, From, To, 0, Height, Sky));
+        Assert.Empty(ConstellationLayout.Place(new[] { At(From) }, From, To, Width, 0, Sky));
     }
 
     [Fact]
     public void Place_StarsSitNearTheirOwnTime()
     {
         var when = new DateTime(2026, 1, 15, 12, 0, 0);
-        var stars = ConstellationLayout.Place(new[] { At(when) }, From, To, Width, Height);
+        var stars = ConstellationLayout.Place(new[] { At(when) }, From, To, Width, Height, Sky);
 
         Assert.Equal(ConstellationLayout.XFor(when, From, To, Width), stars[0].X, 3);
     }
@@ -152,7 +156,7 @@ public class ConstellationLayoutTests
     public void Place_LoneStarSitsOnTheLine()
     {
         var stars = ConstellationLayout.Place(
-            new[] { At(new DateTime(2026, 1, 15, 12, 0, 0)) }, From, To, Width, Height);
+            new[] { At(new DateTime(2026, 1, 15, 12, 0, 0)) }, From, To, Width, Height, Sky);
 
         // Close enough that no guide line is drawn: with nothing to be crowded by,
         // a star is on the timeline rather than floating above it.
@@ -171,7 +175,7 @@ public class ConstellationLayoutTests
             .Select(i => At(when.AddMinutes(i)))
             .ToArray();
 
-        var stars = ConstellationLayout.Place(events, From, To, Width, Height);
+        var stars = ConstellationLayout.Place(events, From, To, Width, Height, Sky);
 
         Assert.Contains(stars, s => s.Offset < -ConstellationLayout.GuideThreshold);
         Assert.Contains(stars, s => s.Offset > ConstellationLayout.GuideThreshold);
@@ -187,11 +191,11 @@ public class ConstellationLayoutTests
 
         var few = ConstellationLayout.Place(
             Enumerable.Range(0, 12).Select(i => At(when.AddSeconds(i))).ToArray(),
-            From, To, Width, Height);
+            From, To, Width, Height, Sky);
 
         var many = ConstellationLayout.Place(
             Enumerable.Range(0, 500).Select(i => At(when.AddSeconds(i))).ToArray(),
-            From, To, Width, Height);
+            From, To, Width, Height, Sky);
 
         var fewReach = few.Max(s => Math.Abs(s.Offset));
         var manyReach = many.Max(s => Math.Abs(s.Offset));
@@ -216,9 +220,9 @@ public class ConstellationLayoutTests
         var when = new DateTime(2026, 1, 15, 12, 0, 0);
         var events = Enumerable.Range(0, 24).Select(i => At(when.AddSeconds(i * 30))).ToArray();
 
-        var shortReach = ConstellationLayout.Place(events, From, To, Width, 300)
+        var shortReach = ConstellationLayout.Place(events, From, To, Width, 300, Sky)
             .Max(s => Math.Abs(s.Offset));
-        var tallReach = ConstellationLayout.Place(events, From, To, Width, 900)
+        var tallReach = ConstellationLayout.Place(events, From, To, Width, 900, Sky)
             .Max(s => Math.Abs(s.Offset));
 
         Assert.True(tallReach > shortReach * 2,
@@ -231,7 +235,7 @@ public class ConstellationLayoutTests
         var when = new DateTime(2026, 1, 15, 12, 0, 0);
         var events = Enumerable.Range(0, 400).Select(i => At(when.AddSeconds(i))).ToArray();
 
-        foreach (var star in ConstellationLayout.Place(events, From, To, Width, Height))
+        foreach (var star in ConstellationLayout.Place(events, From, To, Width, Height, Sky))
             Assert.InRange(star.Y, 0, Height);
     }
 
@@ -244,8 +248,8 @@ public class ConstellationLayoutTests
             .Select(i => At(From.AddHours(i * 7)))
             .ToArray();
 
-        var first = ConstellationLayout.Place(events, From, To, Width, Height);
-        var second = ConstellationLayout.Place(events, From, To, Width, Height);
+        var first = ConstellationLayout.Place(events, From, To, Width, Height, Sky);
+        var second = ConstellationLayout.Place(events, From, To, Width, Height, Sky);
 
         Assert.Equal(first, second);
     }
@@ -255,7 +259,7 @@ public class ConstellationLayoutTests
     [Fact]
     public void HitTest_EmptySky_SelectsNothing()
     {
-        var stars = ConstellationLayout.Place(new[] { At(From.AddDays(2)) }, From, To, Width, Height);
+        var stars = ConstellationLayout.Place(new[] { At(From.AddDays(2)) }, From, To, Width, Height, Sky);
 
         Assert.Equal(-1, ConstellationLayout.HitTest(stars, 800, 20, 22, zoom: 1));
     }
@@ -270,7 +274,7 @@ public class ConstellationLayoutTests
             At(new DateTime(2026, 1, 25, 0, 0, 0)),
         };
 
-        var stars = ConstellationLayout.Place(events, From, To, Width, Height);
+        var stars = ConstellationLayout.Place(events, From, To, Width, Height, Sky);
         var target = stars[1];
 
         Assert.Equal(1, ConstellationLayout.HitTest(stars, target.X + 1, target.Y + 1, 22, zoom: 1));
@@ -288,7 +292,7 @@ public class ConstellationLayoutTests
             At(new DateTime(2026, 1, 11, 0, 0, 0)),
         };
 
-        var stars = ConstellationLayout.Place(events, From, To, Width, Height);
+        var stars = ConstellationLayout.Place(events, From, To, Width, Height, Sky);
         var between = (stars[0].X + stars[1].X) / 2;
 
         // Halfway between them at 40×, each is ~600 screen units away: neither counts.

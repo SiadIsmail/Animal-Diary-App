@@ -14,9 +14,15 @@
     counterpart to the vet report: the same owner-logged facts, arranged so a year
     can be taken in at a glance without any of it being interpreted.
 
-    The page is dark where the rest of the app is a rockpool morning, and that is the
-    one deliberate departure: everything else here — the glass chrome, the pill range
-    selector, the warm sheet a tapped star opens — is the app's own furniture.
+    THE PAGE IS NOT DARK — the sky is.
+
+    That is the whole of how this belongs to Felova. The first version painted the
+    entire screen black and, however much of the app's furniture was added to it, it
+    read as a different product wearing Felova's data. So the page is an ordinary
+    rockpool morning like every other page here: the same water background, the same
+    glass back button, the same serif heading, the same pill range selector, the same
+    warm sheet when a star is tapped. The night is CONTAINED — one card, taped to the
+    page like the mood note on the Journal, that you look through into the dark.
 
     Geometry lives in the code-behind (only the page knows how big the canvas is);
     the ViewModel owns the range, the events and the selection.
@@ -31,17 +37,17 @@
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
              Shell.TabBarIsVisible="False"
-             BackgroundColor="{StaticResource NightBottom}">
+             BackgroundColor="#C4E6E3">
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <!-- One range button. Selected state is set per-instance by a DataTrigger,
-                 the same shape the weight chart's range selector uses. -->
+            <!-- One range button — the same Well/Glass pill row the weight chart uses,
+                 so the two range selectors in this app are one control in two places. -->
             <Style x:Key="SkyRangeTab" TargetType="Label">
                 <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
                 <Setter Property="FontSize" Value="11.5"/>
                 <Setter Property="FontAttributes" Value="Bold"/>
-                <Setter Property="TextColor" Value="{StaticResource SkyInk}"/>
+                <Setter Property="TextColor" Value="{StaticResource InkTertiary}"/>
                 <Setter Property="HorizontalTextAlignment" Value="Center"/>
                 <Setter Property="Padding" Value="0,6"/>
             </Style>
@@ -50,6 +56,9 @@
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
 
+        <!-- The app's own page ground, unchanged from every other page. -->
+        <controls:WaterBackground Grid.RowSpan="4"/>
+
         <!-- ── Header: back + who this is ── -->
         <Grid Grid.Row="0"
               ColumnDefinitions="40,*,40"
@@ -57,15 +66,15 @@
               Padding="22,20,22,12">
             <Border Grid.Column="0"
                     WidthRequest="40" HeightRequest="40"
-                    BackgroundColor="{StaticResource SkyGlass}"
-                    Stroke="{StaticResource SkyLine}"
+                    BackgroundColor="{StaticResource Glass}"
+                    Stroke="{StaticResource GlassLine}"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 20">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnBackClicked"/>
                 </Border.GestureRecognizers>
                 <Label Text="‹" FontSize="26"
-                       TextColor="{StaticResource SkyInk}"
+                       TextColor="{StaticResource InkSecondary}"
                        HorizontalOptions="Center" VerticalOptions="Center"/>
             </Border>
 
@@ -73,20 +82,38 @@
                 <Label Text="{loc:Translate Sky_Title}"
                        FontFamily="{StaticResource FontSerif}"
                        FontSize="21"
-                       TextColor="{StaticResource SkyText}"
+                       TextColor="{StaticResource Ink}"
                        HorizontalTextAlignment="Center"/>
                 <Label Text="{Binding ConstellationVM.CountLine}"
                        FontFamily="{StaticResource FontSans}"
                        FontSize="11"
-                       TextColor="{StaticResource SkyInk}"
+                       TextColor="{StaticResource InkTertiary}"
                        HorizontalTextAlignment="Center"/>
             </VerticalStackLayout>
+
+            <!-- Share: the sky, framed on a Felova page, to the OS share sheet.
+                 Mirrors the back button so the header stays balanced. -->
+            <Border x:Name="ShareButton"
+                    Grid.Column="2"
+                    WidthRequest="40" HeightRequest="40"
+                    BackgroundColor="{StaticResource Glass}"
+                    Stroke="{StaticResource GlassLine}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 20"
+                    SemanticProperties.Description="{loc:Translate Sky_Share}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnShareClicked"/>
+                </Border.GestureRecognizers>
+                <Label Text="↗" FontSize="19"
+                       TextColor="{StaticResource InkSecondary}"
+                       HorizontalOptions="Center" VerticalOptions="Center"/>
+            </Border>
         </Grid>
 
         <!-- ── Range: presets only, like the vet report's look-backs ── -->
         <Border Grid.Row="1"
-                Margin="22,0,22,10"
-                BackgroundColor="{StaticResource SkyWell}"
+                Margin="22,0,22,12"
+                BackgroundColor="{StaticResource Well}"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 999"
                 Padding="3">
@@ -96,7 +123,7 @@
                         StrokeThickness="0" StrokeShape="RoundRectangle 999">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.RangeDays}" Value="7">
-                            <Setter Property="BackgroundColor" Value="{StaticResource SkyGlass}"/>
+                            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                         </DataTrigger>
                     </Border.Triggers>
                     <Border.GestureRecognizers>
@@ -105,7 +132,7 @@
                     <Label Text="{loc:Translate Sky_Range7}" Style="{StaticResource SkyRangeTab}">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.RangeDays}" Value="7">
-                                <Setter Property="TextColor" Value="{StaticResource SkyText}"/>
+                                <Setter Property="TextColor" Value="{StaticResource Ink}"/>
                             </DataTrigger>
                         </Label.Triggers>
                     </Label>
@@ -115,7 +142,7 @@
                         StrokeThickness="0" StrokeShape="RoundRectangle 999">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.RangeDays}" Value="30">
-                            <Setter Property="BackgroundColor" Value="{StaticResource SkyGlass}"/>
+                            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                         </DataTrigger>
                     </Border.Triggers>
                     <Border.GestureRecognizers>
@@ -124,7 +151,7 @@
                     <Label Text="{loc:Translate Sky_Range30}" Style="{StaticResource SkyRangeTab}">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.RangeDays}" Value="30">
-                                <Setter Property="TextColor" Value="{StaticResource SkyText}"/>
+                                <Setter Property="TextColor" Value="{StaticResource Ink}"/>
                             </DataTrigger>
                         </Label.Triggers>
                     </Label>
@@ -134,7 +161,7 @@
                         StrokeThickness="0" StrokeShape="RoundRectangle 999">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.RangeDays}" Value="90">
-                            <Setter Property="BackgroundColor" Value="{StaticResource SkyGlass}"/>
+                            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                         </DataTrigger>
                     </Border.Triggers>
                     <Border.GestureRecognizers>
@@ -143,7 +170,7 @@
                     <Label Text="{loc:Translate Sky_Range90}" Style="{StaticResource SkyRangeTab}">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.RangeDays}" Value="90">
-                                <Setter Property="TextColor" Value="{StaticResource SkyText}"/>
+                                <Setter Property="TextColor" Value="{StaticResource Ink}"/>
                             </DataTrigger>
                         </Label.Triggers>
                     </Label>
@@ -153,7 +180,7 @@
                         StrokeThickness="0" StrokeShape="RoundRectangle 999">
                     <Border.Triggers>
                         <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.RangeDays}" Value="365">
-                            <Setter Property="BackgroundColor" Value="{StaticResource SkyGlass}"/>
+                            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                         </DataTrigger>
                     </Border.Triggers>
                     <Border.GestureRecognizers>
@@ -162,7 +189,7 @@
                     <Label Text="{loc:Translate Sky_Range365}" Style="{StaticResource SkyRangeTab}">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.RangeDays}" Value="365">
-                                <Setter Property="TextColor" Value="{StaticResource SkyText}"/>
+                                <Setter Property="TextColor" Value="{StaticResource Ink}"/>
                             </DataTrigger>
                         </Label.Triggers>
                     </Label>
@@ -170,96 +197,136 @@
             </Grid>
         </Border>
 
-        <!-- ── The sky ──
-             Gestures live on the host Grid, not on the GraphicsView: the GraphicsView is
-             InputTransparent so it can never swallow a drag, and the Grid's own
-             background is what makes it hit-testable (same arrangement as the photo
-             cropper's stage). -->
-        <Border Grid.Row="2"
-                Margin="14,0,14,0"
-                Stroke="{StaticResource SkyLine}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 24,20,21,25">
-            <Grid x:Name="SkyHost"
-                  BackgroundColor="{StaticResource NightBottom}"
-                  SemanticProperties.Description="{Binding ConstellationVM.CountLine}">
-                <Grid.GestureRecognizers>
-                    <PanGestureRecognizer PanUpdated="OnPanUpdated"/>
-                    <PinchGestureRecognizer PinchUpdated="OnPinchUpdated"/>
-                    <TapGestureRecognizer Tapped="OnSkyTapped"/>
-                </Grid.GestureRecognizers>
+        <!-- ── The night card ──
+             Taped to the page, like the Journal's warm-paper mood note: the same
+             asymmetric radius, the same soft ink shadow, the same washi strip at a
+             few degrees off square. The scrapbook is the app's whole visual idea, and
+             this is the one thing in it you look INTO rather than at.
 
-                <GraphicsView x:Name="Sky" InputTransparent="True"/>
+             Gestures live on the host Grid, not on the GraphicsView: the GraphicsView
+             is InputTransparent so it can never swallow a drag, and the Grid's own
+             background is what makes it hit-testable (the photo cropper's stage does
+             the same). -->
+        <Grid Grid.Row="2" Margin="18,4,18,0">
+            <Border StrokeThickness="0"
+                    StrokeShape="RoundRectangle 26,20,22,28">
+                <Border.Shadow>
+                    <Shadow Brush="#0D3A3C" Offset="0,4" Radius="14" Opacity="0.22"/>
+                </Border.Shadow>
+                <Grid x:Name="SkyHost"
+                      BackgroundColor="{StaticResource NightBottom}"
+                      SemanticProperties.Description="{Binding ConstellationVM.CountLine}">
+                    <Grid.GestureRecognizers>
+                        <PanGestureRecognizer PanUpdated="OnPanUpdated"/>
+                        <PinchGestureRecognizer PinchUpdated="OnPinchUpdated"/>
+                        <TapGestureRecognizer Tapped="OnSkyTapped"/>
+                    </Grid.GestureRecognizers>
 
-                <!-- The development switch is on and this sky is invented. Unlocalized
-                     on purpose, like the hidden dev sheet: it is not a product string,
-                     and it must read the same however the phone is set. -->
-                <Border IsVisible="{Binding ConstellationVM.IsSampleSky}"
-                        BackgroundColor="{StaticResource Clay}"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 999"
-                        Padding="12,5"
-                        Margin="0,10,0,0"
-                        HorizontalOptions="Center"
-                        VerticalOptions="Start"
-                        InputTransparent="True">
-                    <Label Text="SAMPLE DATA — not this pet's records"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="10.5"
-                           FontAttributes="Bold"
-                           TextColor="{StaticResource White}"/>
-                </Border>
+                    <GraphicsView x:Name="Sky" InputTransparent="True"/>
 
-                <!-- Nothing recorded in this stretch. Stated plainly and left at that:
-                     an empty sky here means nothing was written down, which is not a
-                     failure to be nudged about. -->
-                <VerticalStackLayout IsVisible="{Binding ConstellationVM.IsEmpty}"
-                                     VerticalOptions="Center"
-                                     Padding="34,0"
-                                     Spacing="6">
+                    <!-- Nothing recorded in this stretch. Stated plainly and left at
+                         that: an empty sky here means nothing was written down, which
+                         is not a failure to be nudged about. -->
                     <Label Text="{loc:Translate Sky_Empty}"
+                           IsVisible="{Binding ConstellationVM.IsEmpty}"
                            FontFamily="{StaticResource FontSans}"
                            FontSize="13"
                            TextColor="{StaticResource SkyInk}"
-                           HorizontalTextAlignment="Center"/>
-                </VerticalStackLayout>
-            </Grid>
-        </Border>
+                           HorizontalTextAlignment="Center"
+                           VerticalOptions="Center"
+                           Margin="34,0"/>
+
+                    <!-- The figure's name, quietly in the corner. In the app's own
+                         handwriting, because this is the one sentence on the page that
+                         is about the animal rather than about the records. -->
+                    <Label Text="{Binding ConstellationVM.AsterismName}"
+                           IsVisible="{Binding ConstellationVM.HasAsterism}"
+                           FontFamily="{StaticResource FontHand}"
+                           FontSize="16"
+                           TextColor="{StaticResource SkyInk}"
+                           Opacity="0.75"
+                           HorizontalOptions="Start"
+                           VerticalOptions="End"
+                           Margin="16,0,0,10"
+                           InputTransparent="True"/>
+
+                    <!-- The development switch is on and this sky is invented.
+                         Unlocalized on purpose, like the hidden dev sheet: it is not a
+                         product string, and it must read the same however the phone is
+                         set. -->
+                    <Border IsVisible="{Binding ConstellationVM.IsSampleSky}"
+                            BackgroundColor="{StaticResource Clay}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 999"
+                            Padding="12,5"
+                            Margin="0,10,0,0"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Start"
+                            InputTransparent="True">
+                        <Label Text="SAMPLE DATA — not this pet's records"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="10.5"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Washi tape, holding the night to the page. -->
+            <BoxView WidthRequest="62" HeightRequest="17"
+                     Color="{StaticResource Washi}"
+                     Rotation="-4"
+                     HorizontalOptions="Start" VerticalOptions="Start"
+                     Margin="26,-8,0,0"
+                     InputTransparent="True"/>
+            <BoxView WidthRequest="46" HeightRequest="15"
+                     Color="{StaticResource Washi}"
+                     Rotation="3.5"
+                     HorizontalOptions="End" VerticalOptions="End"
+                     Margin="0,0,30,-7"
+                     InputTransparent="True"/>
+        </Grid>
 
         <!-- ── Legend + how to read it ──
-             Only the kinds actually present are listed (the ViewModel filters), so a pet
-             that has never had a seizure is never shown a seizure symbol. -->
-        <VerticalStackLayout Grid.Row="3" Padding="18,12,18,18" Spacing="10">
+             Each key is a scrap of night at icon-tile size, tilted a degree or two
+             like every other tile in the app — which is also what lets a symbol drawn
+             for a dark sky read out here on the daylight page. Only the kinds actually
+             present are listed (the ViewModel filters), so a pet that has never had a
+             seizure is never shown a seizure symbol. -->
+        <VerticalStackLayout Grid.Row="3" Padding="16,16,16,16" Spacing="8">
 
-            <!-- Wraps rather than scrolls: eight keys don't fit one phone-width line,
-                 and a key you have to go looking for is not a key. -->
             <FlexLayout Wrap="Wrap"
                         JustifyContent="Center"
                         BindableLayout.ItemsSource="{Binding ConstellationVM.Legend}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vms:CelestialLegendItem">
-                        <HorizontalStackLayout Spacing="5"
-                                               Margin="0,0,14,6"
+                        <HorizontalStackLayout Spacing="6"
+                                               Margin="0,0,12,7"
                                                VerticalOptions="Center">
-                            <GraphicsView Drawable="{Binding Symbol}"
-                                          WidthRequest="20"
-                                          HeightRequest="20"
-                                          InputTransparent="True"
-                                          VerticalOptions="Center"/>
+                            <Border WidthRequest="27" HeightRequest="27"
+                                    BackgroundColor="{StaticResource NightTile}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 14,13,14,13"
+                                    Rotation="{Binding Tilt}"
+                                    VerticalOptions="Center">
+                                <GraphicsView Drawable="{Binding Symbol}"
+                                              InputTransparent="True"/>
+                            </Border>
                             <Label Text="{Binding Label}"
                                    FontFamily="{StaticResource FontSans}"
                                    FontSize="11.5"
-                                   TextColor="{StaticResource SkyInk}"
+                                   TextColor="{StaticResource InkSecondary}"
                                    VerticalOptions="Center"/>
                         </HorizontalStackLayout>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </FlexLayout>
 
+            <!-- The app's handwriting, for the one aside on the page. -->
             <Label Text="{loc:Translate Sky_Hint}"
-                   FontFamily="{StaticResource FontSans}"
-                   FontSize="11"
-                   TextColor="{StaticResource SkyInkSoft}"
+                   FontFamily="{StaticResource FontHand}"
+                   FontSize="16"
+                   TextColor="{StaticResource InkSecondary}"
                    HorizontalTextAlignment="Center"/>
         </VerticalStackLayout>
 
@@ -277,28 +344,44 @@
             <controls:FelovaBottomSheet.SheetContent>
                 <VerticalStackLayout Spacing="12" Padding="0,2,0,4">
 
-                    <Border BackgroundColor="{StaticResource Well}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 14"
-                            Padding="14,12">
-                        <VerticalStackLayout Spacing="4">
-                            <Label Text="{Binding ConstellationVM.SelectedCategoryLabel}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   CharacterSpacing="1.3"
-                                   TextColor="{StaticResource InkTertiary}"/>
-                            <Label Text="{Binding ConstellationVM.SelectedWhen}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14"
-                                   TextColor="{StaticResource Ink}"/>
-                            <Label Text="{Binding ConstellationVM.SelectedDetail}"
-                                   IsVisible="{Binding ConstellationVM.HasSelectedDetail}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="13"
-                                   TextColor="{StaticResource InkSecondary}"/>
-                        </VerticalStackLayout>
-                    </Border>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <!-- The same scrap of night the legend wears, so the star you
+                             tapped is recognisably the one now being described. -->
+                        <Border Grid.Column="0"
+                                WidthRequest="40" HeightRequest="40"
+                                BackgroundColor="{StaticResource NightTile}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 20,19,20,19"
+                                Rotation="-3"
+                                VerticalOptions="Center">
+                            <GraphicsView Drawable="{Binding ConstellationVM.SelectedSymbol}"
+                                          InputTransparent="True"/>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                BackgroundColor="{StaticResource Well}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 14"
+                                Padding="14,12">
+                            <VerticalStackLayout Spacing="3">
+                                <Label Text="{Binding ConstellationVM.SelectedCategoryLabel}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="10.5"
+                                       FontAttributes="Bold"
+                                       CharacterSpacing="1.3"
+                                       TextColor="{StaticResource InkTertiary}"/>
+                                <Label Text="{Binding ConstellationVM.SelectedWhen}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Text="{Binding ConstellationVM.SelectedDetail}"
+                                       IsVisible="{Binding ConstellationVM.HasSelectedDetail}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="13"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
 
                     <Label Text="{loc:Translate Sky_Close}"
                            Padding="0,4"
