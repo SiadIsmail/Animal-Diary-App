@@ -24,7 +24,16 @@ using Animal_Diary_App.Data.Models;
 /// nothing new: two entries a minute apart are already drawn a minute apart, and the
 /// line only says so out loud. It is never drawn between separate moments, and never
 /// implies an order or a direction.</param>
-public readonly record struct SkyStar(double X, double Y, double PathY, int LinkTo = -1)
+/// <param name="NudgeX">A few SCREEN pixels sideways, so a knot of entries reads as a
+/// cluster of stars rather than a stack.
+///
+/// <para>It is kept out of <see cref="X"/>, and that separation is load-bearing: X is
+/// WHEN, and it is multiplied by the zoom. A world-space sideways offset would grow
+/// with the magnification until it dwarfed the real gaps between entries and started
+/// reordering them. This one is applied at draw time and <b>fades out as you zoom
+/// in</b> — it exists only while the picture genuinely cannot separate the moments,
+/// and by the time it can, it is gone.</para></param>
+public readonly record struct SkyStar(double X, double Y, double PathY, int LinkTo = -1, double NudgeX = 0)
 {
     /// <summary>How far off the timeline this star sits. Positive is below.</summary>
     public double Offset => Y - PathY;
@@ -47,23 +56,37 @@ public static class ConstellationLayout
     // The version before that used a tenth of the amplitude and a sweep five times
     // longer, and pinned every star into one flat band across the middle.
 
-    // ── The fan ───────────────────────────────────────────────────────────────
-    // Stars that land within ClusterWindow of one another step outward from the path
-    // in alternating rings instead of stacking into a column. A column would read as
-    // a bar — a height, a peak, a "bad day" — which is the one thing the whole
-    // surface is built to avoid. Wrapping at RingCount keeps a busy afternoon a
-    // DENSE PATCH rather than an ever-taller spike: more recorded looks like more
-    // sky used, never like something worse happening.
+    // ── The scatter ───────────────────────────────────────────────────────────
+    // Stars that land within ClusterWindow of one another are arranged around their
+    // moment on a SUNFLOWER spiral: each one turned by the golden angle from the last
+    // and set at sqrt(k) × the spacing, which is how nature packs a disc evenly.
     //
-    // The gaps are FRACTIONS OF THE CANVAS, not pixels. Fixed pixels meant a crowd
-    // fanned the same 57 units whether it had 40 units of sky or 700, so a month of
-    // real logging turned into a smear along the line while most of the screen sat
-    // empty.
+    // It replaced a fan of alternating rings, which stepped straight up and down and
+    // so drew a knot of entries as a COLUMN — a bar in all but name, and the one
+    // reading this surface exists to avoid. A spiral fills a disc instead: more
+    // recorded is a wider patch of sky, never a taller spike.
+    //
+    // Wrapping at Capacity is what holds that promise exactly: the twelfth star of a
+    // cluster is as far out as the five hundredth, so a frantic afternoon and a busy
+    // one are the same size on the page.
+    //
+    // The spacing is a FRACTION OF THE CANVAS, not a pixel count. Fixed pixels meant
+    // a crowd spread the same 57 units whether it had 40 units of sky or 700, so a
+    // month of real logging smeared along the line while the screen sat empty.
     private const double ClusterWindow = 14.0;
-    private const double BaseGapFraction = 0.035;
-    private const double RingStepFraction = 0.028;
-    private const int RingCount = 6;
-    private const double JitterAmplitude = 3.5;
+    private const double SpiralStepFraction = 0.075;
+    private const int Capacity = 12;
+    private const double GoldenAngle = 2.399963229728653;
+
+    /// <summary>How much of the spiral is allowed to act sideways. Tiny, because
+    /// sideways is TIME — see <see cref="SkyStar.NudgeX"/>. It is enough to break a
+    /// stack into a cluster and never enough to move an entry past its neighbour.
+    /// </summary>
+    private const double SidewaysSquash = 0.055;
+
+    /// <summary>The stable wobble on a star that has no crowd to be arranged in. Also
+    /// the most a lone star can sit off the line.</summary>
+    public const double JitterAmplitude = 3.5;
 
     // ── Star size ─────────────────────────────────────────────────────────────
     // Below MinRadius a symbol stops being a symbol — an eight-point burst three
@@ -73,9 +96,6 @@ public static class ConstellationLayout
     // week looks like clip art.
     private const double MinRadius = 3.1;
     private const double MaxRadius = 5.6;
-
-    /// <summary>Below this, a star reads as sitting ON the line and needs no guide.</summary>
-    public const double GuideThreshold = 7.0;
 
     /// <summary>Kept clear at the top and bottom so a star never touches the frame.</summary>
     public const double VerticalPadding = 12.0;
@@ -168,7 +188,7 @@ public static class ConstellationLayout
 
             var crowd = rank - lo;
             var pathY = PathY(x, contentHeight, signature);
-            var offset = OffsetFor(crowd, events[i].When.Ticks, contentHeight);
+            var (nudgeX, offset) = Arrange(crowd, events[i].When.Ticks, contentHeight);
 
             var y = Math.Clamp(
                 pathY + offset,
@@ -180,26 +200,42 @@ public static class ConstellationLayout
             // a new constellation rather than reaching back to the last one.
             var link = crowd > 0 ? order[rank - 1] : -1;
 
-            stars[i] = new SkyStar(x, y, pathY, link);
+            stars[i] = new SkyStar(x, y, pathY, link, nudgeX);
         }
 
         return stars;
     }
 
-    /// <summary>How far from the line the n-th star of a cluster sits. Exposed for the
-    /// tests that pin the fan's shape: alternating sides, bounded height.</summary>
-    public static double OffsetFor(int crowd, long seed, double contentHeight)
+    /// <summary>
+    /// Where the n-th star of a cluster sits relative to its moment: a point on the
+    /// sunflower spiral, squashed hard sideways because sideways is time.
+    /// </summary>
+    /// <returns>A screen-space sideways nudge (see <see cref="SkyStar.NudgeX"/>) and a
+    /// vertical offset from the timeline.</returns>
+    public static (double NudgeX, double OffsetY) Arrange(int crowd, long seed, double contentHeight)
     {
         var jitter = Jitter(seed, JitterAmplitude);
         if (crowd <= 0)
-            return jitter;
+            return (0, jitter);
 
-        // 1,2 → first ring above/below; 3,4 → second; and so on, wrapping at RingCount.
-        var ring = ((crowd + 1) / 2 - 1) % RingCount;
-        var sign = crowd % 2 == 1 ? -1.0 : 1.0;
-        var gap = contentHeight * (BaseGapFraction + ring * RingStepFraction);
-        return sign * gap + jitter;
+        // sqrt(k) × spacing at the golden angle — an even disc. k wraps at Capacity so
+        // the disc stops growing; the ANGLE keeps counting, so a wrapped star lands
+        // between the earlier ones rather than on top of one.
+        var k = crowd % Capacity;
+        var radius = contentHeight * SpiralStepFraction * Math.Sqrt(k);
+        var angle = crowd * GoldenAngle;
+
+        return (Math.Cos(angle) * radius * SidewaysSquash,
+                Math.Sin(angle) * radius + jitter);
     }
+
+    /// <summary>
+    /// How much of <see cref="SkyStar.NudgeX"/> still applies at this magnification.
+    /// Full at rest, gone by the time the zoom has genuinely pulled a cluster apart —
+    /// the nudge is a way of drawing moments the picture cannot separate, so once it
+    /// can, the honest positions take over.
+    /// </summary>
+    public static double NudgeFade(double zoom) => Math.Clamp(1 - (zoom - 1) / 3.0, 0, 1);
 
     /// <summary>
     /// The star nearest a point, or -1 when the tap landed on empty sky. Nearest
@@ -212,16 +248,18 @@ public static class ConstellationLayout
     /// <param name="zoom">The camera's magnification, so the reach means the same
     /// distance on screen at every zoom. Without it a zoomed-in tap would have to land
     /// within a fraction of a world unit, and a zoomed-out one would sweep up half a
-    /// week.</param>
+    /// week. It also decides how much of each star's sideways nudge still applies —
+    /// the test has to hunt where the star was DRAWN, not where its moment is.</param>
     public static int HitTest(IReadOnlyList<SkyStar> stars, double worldX, double y, double reach, double zoom)
     {
         var best = -1;
         var bestSquared = reach * reach;
         var scale = zoom <= 0 ? 1 : zoom;
+        var fade = NudgeFade(scale);
 
         for (int i = 0; i < stars.Count; i++)
         {
-            var dx = (stars[i].X - worldX) * scale;
+            var dx = (stars[i].X - worldX) * scale + stars[i].NudgeX * fade;
             if (dx > reach || dx < -reach)
                 continue;
 

@@ -116,6 +116,45 @@ public partial class ConstellationPage : ContentPage
         _zoom = MinZoom;
         _scrollX = 0;
         Rebuild();
+        FitToData();
+    }
+
+    /// <summary>
+    /// Open on where the entries actually are.
+    ///
+    /// <para>Sixty entries over ninety days, the first six weeks of it empty, gave a
+    /// card that was half dead space — honest, and a poor thing to look at or to
+    /// share. This moves the CAMERA rather than the range: nothing is hidden, the
+    /// chosen stretch is still the chosen stretch, and pinching out reaches the empty
+    /// weeks like any other part of the sky.</para>
+    /// </summary>
+    private void FitToData()
+    {
+        var width = SkyHost.Width;
+        var stars = _drawable.Stars;
+        if (width <= 0 || stars.Count < 2)
+            return;
+
+        double first = double.MaxValue, last = double.MinValue;
+        foreach (var star in stars)
+        {
+            first = Math.Min(first, star.X);
+            last = Math.Max(last, star.X);
+        }
+
+        var span = last - first;
+        if (span <= 0)
+            return;
+
+        // A margin either side, so the outermost entries are inside the frame rather
+        // than clipped to it.
+        var padded = span * 1.12;
+        if (padded >= width)
+            return;
+
+        _zoom = Math.Clamp(width / padded, MinZoom, MaxZoom());
+        _scrollX = (first + last) / 2 * _zoom - width / 2;
+        ApplyCamera();
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

@@ -158,9 +158,10 @@ public class ConstellationLayoutTests
         var stars = ConstellationLayout.Place(
             new[] { At(new DateTime(2026, 1, 15, 12, 0, 0)) }, From, To, Width, Height, Sky);
 
-        // Close enough that no guide line is drawn: with nothing to be crowded by,
-        // a star is on the timeline rather than floating above it.
-        Assert.True(Math.Abs(stars[0].Offset) <= ConstellationLayout.GuideThreshold);
+        // With nothing to be crowded by, a star sits ON the timeline — only its own
+        // stable wobble separates it.
+        Assert.True(Math.Abs(stars[0].Offset) <= ConstellationLayout.JitterAmplitude);
+        Assert.Equal(0, stars[0].NudgeX);
     }
 
     // ── Density is a patch, never a peak ─────────────────────────────────────
@@ -177,8 +178,8 @@ public class ConstellationLayoutTests
 
         var stars = ConstellationLayout.Place(events, From, To, Width, Height, Sky);
 
-        Assert.Contains(stars, s => s.Offset < -ConstellationLayout.GuideThreshold);
-        Assert.Contains(stars, s => s.Offset > ConstellationLayout.GuideThreshold);
+        Assert.Contains(stars, s => s.Offset < -ConstellationLayout.JitterAmplitude * 2);
+        Assert.Contains(stars, s => s.Offset > ConstellationLayout.JitterAmplitude * 2);
     }
 
     [Fact]
@@ -227,6 +228,40 @@ public class ConstellationLayoutTests
 
         Assert.True(tallReach > shortReach * 2,
             $"a canvas three times taller only reached {tallReach:0.0} against {shortReach:0.0}");
+    }
+
+    [Fact]
+    public void Place_ACrowdSpreadsSidewaysToo()
+    {
+        // The spiral is what makes a knot of entries read as a cluster of stars rather
+        // than a stack. Both signs, so it opens around the moment rather than leaning.
+        var when = new DateTime(2026, 1, 15, 12, 0, 0);
+        var events = Enumerable.Range(0, 12).Select(i => At(when.AddSeconds(i * 20))).ToArray();
+
+        var stars = ConstellationLayout.Place(events, From, To, Width, Height, Sky);
+
+        Assert.Contains(stars, s => s.NudgeX < -1);
+        Assert.Contains(stars, s => s.NudgeX > 1);
+    }
+
+    [Fact]
+    public void TheSidewaysNudgeIsTinyAndTemporary()
+    {
+        // Sideways is TIME, so this is the one offset that could tell a lie. It stays
+        // smaller than a symbol, and it is gone by the time the zoom can separate the
+        // moments for real.
+        var when = new DateTime(2026, 1, 15, 12, 0, 0);
+        var events = Enumerable.Range(0, 40).Select(i => At(when.AddSeconds(i * 20))).ToArray();
+
+        var stars = ConstellationLayout.Place(events, From, To, Width, Height, Sky);
+
+        foreach (var star in stars)
+            Assert.True(Math.Abs(star.NudgeX) < 12,
+                $"a star was nudged {star.NudgeX:0.0} sideways, which is far enough to misplace a moment");
+
+        Assert.Equal(1, ConstellationLayout.NudgeFade(1), 9);
+        Assert.Equal(0, ConstellationLayout.NudgeFade(4), 9);
+        Assert.Equal(0, ConstellationLayout.NudgeFade(40), 9);
     }
 
     [Fact]

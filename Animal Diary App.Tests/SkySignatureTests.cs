@@ -68,10 +68,14 @@ public class SkySignatureTests
 
         Assert.InRange(sky.PhaseLong, 0, Math.Tau);
         Assert.InRange(sky.PhaseShort, 0, Math.Tau);
-        Assert.InRange(sky.LongWavelength, 43, 64);
-        Assert.InRange(sky.ShortWavelength, 13, 22);
-        Assert.InRange(sky.LongWeight, 0.72, 0.88);
-        Assert.InRange(sky.Amplitude, 0.24, 0.32);
+        Assert.InRange(sky.LongWavelength, 68, 104);
+        Assert.InRange(sky.ShortWavelength, 22, 34);
+        Assert.InRange(sky.LongWeight, 0.84, 0.93);
+
+        // A HORIZON, not a curve. The ceiling is the load-bearing half: a large
+        // amplitude puts every event on a sweeping S, and a sweeping S through data is
+        // a trend line whatever the comments say it is.
+        Assert.InRange(sky.Amplitude, 0.07, 0.12);
         Assert.Contains(sky.AccentKey, SkySignature.Accents);
 
         // The two weights are one mix, so they always sum to a whole wave.

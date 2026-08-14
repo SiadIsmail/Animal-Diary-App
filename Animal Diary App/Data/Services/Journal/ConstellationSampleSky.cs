@@ -31,7 +31,7 @@ public static class ConstellationConfig
     /// suppressed in the csproj for exactly these), and a runtime toggle would be one
     /// more thing that could end up on in someone's hands.</para>
     /// </summary>
-    public const bool UseSampleSky = false;
+    public const bool UseSampleSky = true;
 }
 
 /// <summary>
