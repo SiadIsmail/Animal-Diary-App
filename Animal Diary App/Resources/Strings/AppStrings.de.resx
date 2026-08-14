@@ -890,7 +890,26 @@
   <data name="Sky_CountOne" xml:space="preserve"><value>1 Eintrag festgehalten</value></data>
   <data name="Sky_CountMany" xml:space="preserve"><value>{0} Einträge festgehalten</value></data>
   <data name="Sky_Empty" xml:space="preserve"><value>In diesem Zeitraum wurde nichts festgehalten.</value></data>
-  <data name="Sky_Hint" xml:space="preserve"><value>Zum Heranzoomen aufziehen. Tippe einen Stern an.</value></data>
+  <!-- Die drei Ansichten: wann es passiert ist, wann am TAG es passiert ist, und ob
+       es wiederkehrt. -->
+  <data name="Sky_LensTimeline" xml:space="preserve"><value>Verlauf</value></data>
+  <data name="Sky_LensClock" xml:space="preserve"><value>Uhr</value></data>
+  <data name="Sky_LensRhythm" xml:space="preserve"><value>Rhythmus</value></data>
+  <data name="Sky_HintTimeline" xml:space="preserve"><value>Zum Heranzoomen aufziehen. Tippe einen Stern an.</value></data>
+  <data name="Sky_HintClock" xml:space="preserve"><value>Wann am Tag etwas passiert ist.</value></data>
+  <data name="Sky_HintRhythm" xml:space="preserve"><value>Dreh am Regler. Was sich wiederholt, reiht sich auf.</value></data>
+  <data name="Sky_FoldEvery" xml:space="preserve"><value>Alle {0} Tage</value></data>
+  <data name="Sky_FoldDay" xml:space="preserve"><value>Tag {0}</value></data>
+  <data name="Sky_DialHour" xml:space="preserve"><value>{0}:00</value></data>
+  <!-- Wie lange nach dem vorherigen Eintrag DERSELBEN ART. Jede Art bekommt diese
+       Zeile — das macht sie zu einer Angabe über das Tagebuch und nicht zu einem
+       Zähler, der auf Anfälle zielt. -->
+  <data name="Sky_GapMinuteOne" xml:space="preserve"><value>1 Minute nach dem letzten</value></data>
+  <data name="Sky_GapMinutes" xml:space="preserve"><value>{0} Minuten nach dem letzten</value></data>
+  <data name="Sky_GapHourOne" xml:space="preserve"><value>1 Stunde nach dem letzten</value></data>
+  <data name="Sky_GapHours" xml:space="preserve"><value>{0} Stunden nach dem letzten</value></data>
+  <data name="Sky_GapDayOne" xml:space="preserve"><value>1 Tag nach dem letzten</value></data>
+  <data name="Sky_GapDays" xml:space="preserve"><value>{0} Tage nach dem letzten</value></data>
   <data name="Sky_Close" xml:space="preserve"><value>Schließen</value></data>
   <data name="Sky_Range7" xml:space="preserve"><value>1W</value></data>
   <data name="Sky_Range30" xml:space="preserve"><value>1M</value></data>

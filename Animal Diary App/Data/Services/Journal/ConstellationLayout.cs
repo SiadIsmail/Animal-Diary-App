@@ -15,6 +15,29 @@ using Animal_Diary_App.Data.Models;
 //  sky moves under it.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// <summary>
+/// Which way the sky is folded. Three seats in the same room, looking at exactly the
+/// same entries — the arrangement changes, the records never do.
+///
+/// <para>Time is still the only thing any of them encodes. What differs is <b>which
+/// question the axis answers</b>: when did this happen, when in the DAY did it happen,
+/// and does it come round again. A list and a calendar can both answer the first;
+/// neither can answer the other two, which is the entire reason these exist.</para>
+/// </summary>
+public enum SkyLens
+{
+    /// <summary>Straight time, left to right. The home view, and the one that is shared.</summary>
+    Timeline,
+
+    /// <summary>A 24-hour dial. Angle is the time of day; distance from the centre is
+    /// how far through the stretch the day was.</summary>
+    Clock,
+
+    /// <summary>Time folded at a period the owner chooses, so the history lies over
+    /// itself and a repeat shows as an alignment.</summary>
+    Rhythm
+}
+
 /// <summary>One placed star. <see cref="PathY"/> rides along because the guide line
 /// that ties a star to the timeline is drawn between the two, and re-deriving the
 /// path's y in the drawable would be the same formula written twice.</summary>
@@ -97,6 +120,14 @@ public static class ConstellationLayout
     private const double MinRadius = 3.1;
     private const double MaxRadius = 5.6;
 
+    // ── The dial (the Clock lens) ─────────────────────────────────────────────
+    /// <summary>Kept clear around the dial so no star is cut by the card's corner.</summary>
+    private const double DialPadding = 26.0;
+
+    /// <summary>The hole in the middle of the dial. Without it every entry from the
+    /// first day of the range would land on one point.</summary>
+    private const double DialInnerFraction = 0.22;
+
     /// <summary>Kept clear at the top and bottom so a star never touches the frame.</summary>
     public const double VerticalPadding = 12.0;
 
@@ -162,10 +193,125 @@ public static class ConstellationLayout
         if (events.Count == 0 || contentWidth <= 0 || contentHeight <= 0)
             return Array.Empty<SkyStar>();
 
-        var count = events.Count;
-        var xs = new double[count];
-        for (int i = 0; i < count; i++)
+        var xs = new double[events.Count];
+        for (int i = 0; i < events.Count; i++)
             xs[i] = XFor(events[i].When, from, to, contentWidth);
+
+        return AlongAxis(events, xs, contentHeight, signature);
+    }
+
+    /// <summary>
+    /// <b>The Rhythm lens.</b> The same horizon, with time FOLDED: every moment is
+    /// placed by how far it sits into a repeating period rather than by its date, so
+    /// the whole history is laid over itself.
+    ///
+    /// <para>This is the one arrangement that can answer "does it come round again?".
+    /// On a straight axis a twelve-day rhythm is a row of dots somewhat evenly spaced,
+    /// which no eye can read; folded at twelve days it is a <b>vertical alignment</b>,
+    /// and folded at anything else it stays a smear. The owner turns the dial and the
+    /// pattern either crystallises or it does not.</para>
+    ///
+    /// <para><b>The app never chooses the period.</b> It draws whatever fold it is
+    /// handed and says nothing about the result — no "cycle detected", no highlight, no
+    /// number. An alignment is something the person looking sees, not something Felova
+    /// claims. That distinction is the whole reason this is allowed to exist.</para>
+    /// </summary>
+    /// <param name="periodDays">The fold, in days.</param>
+    public static SkyStar[] PlaceFolded(
+        IReadOnlyList<CelestialEvent> events,
+        DateTime from,
+        double periodDays,
+        double contentWidth,
+        double contentHeight,
+        in SkySignature signature)
+    {
+        if (events.Count == 0 || contentWidth <= 0 || contentHeight <= 0 || periodDays <= 0)
+            return Array.Empty<SkyStar>();
+
+        var xs = new double[events.Count];
+        for (int i = 0; i < events.Count; i++)
+        {
+            var elapsed = (events[i].When - from).TotalDays;
+            var phase = elapsed / periodDays;
+            phase -= Math.Floor(phase);          // 0..1 through the period
+            xs[i] = phase * contentWidth;
+        }
+
+        return AlongAxis(events, xs, contentHeight, signature);
+    }
+
+    /// <summary>
+    /// <b>The Clock lens.</b> A dial: the angle is the TIME OF DAY, the distance from
+    /// the centre is how far through the chosen stretch the day was.
+    ///
+    /// <para>Both are still only time, which is what keeps the rule intact — but
+    /// arranged this way, "almost all of these happen between two and five in the
+    /// morning" is a wedge you see at a glance instead of a fact buried in a list.
+    /// Same time of day on different dates lines up as a SPOKE.</para>
+    ///
+    /// <para>Fixed to the canvas: a clock is not panned or zoomed, so the camera does
+    /// not apply here and <see cref="SkyStar.X"/> is a canvas position rather than a
+    /// moment.</para>
+    /// </summary>
+    public static SkyStar[] PlaceOnDial(
+        IReadOnlyList<CelestialEvent> events,
+        DateTime from,
+        DateTime to,
+        double width,
+        double height)
+    {
+        if (events.Count == 0 || width <= 0 || height <= 0)
+            return Array.Empty<SkyStar>();
+
+        var centreX = width / 2;
+        var centreY = height / 2;
+        var outer = Math.Min(width, height) / 2 - DialPadding;
+        if (outer <= 0)
+            return Array.Empty<SkyStar>();
+
+        // The middle is left empty on purpose. Everything from the first day of the
+        // range would otherwise pile onto one point, and the oldest entries would be
+        // the least legible — the opposite of useful.
+        var inner = outer * DialInnerFraction;
+        var span = (to - from).Ticks;
+
+        var stars = new SkyStar[events.Count];
+        for (int i = 0; i < events.Count; i++)
+        {
+            var when = events[i].When;
+
+            // Midnight at the top, running clockwise, like every clock face.
+            var dayFraction = when.TimeOfDay.Ticks / (double)TimeSpan.TicksPerDay;
+            var angle = dayFraction * Math.Tau - Math.PI / 2;
+
+            var through = span <= 0 ? 1 : Math.Clamp((when - from).Ticks / (double)span, 0, 1);
+            var radius = inner + through * (outer - inner);
+
+            // A whisper of jitter so two entries at the same minute of the same day are
+            // two stars rather than one. Small enough that a tight wedge stays tight.
+            var wobble = Jitter(when.Ticks, 1.0);
+            angle += wobble * 0.012;
+            radius += wobble * 1.6;
+
+            var x = centreX + Math.Cos(angle) * radius;
+            var y = centreY + Math.Sin(angle) * radius;
+
+            stars[i] = new SkyStar(x, y, y);
+        }
+
+        return stars;
+    }
+
+    /// <summary>The shared placer: given where each event sits along the horizontal
+    /// axis, hang it off the horizon and spiral its crowd. Both the Timeline and the
+    /// Rhythm lens are this — they differ only in what the axis MEANS.</summary>
+    private static SkyStar[] AlongAxis(
+        IReadOnlyList<CelestialEvent> events,
+        double[] xs,
+        double contentHeight,
+        in SkySignature signature)
+    {
+        var count = events.Count;
 
         // Walk left to right so "how many are already crowded around this x" is just a
         // sliding window, rather than a pairwise comparison — which is what keeps a

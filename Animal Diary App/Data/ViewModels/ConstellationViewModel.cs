@@ -22,11 +22,23 @@ using Animal_Diary_App.Helpers;
 //  rather than a claim about the animal.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// <summary>One row of the legend: a symbol, its colour, its name.</summary>
-public class CelestialLegendItem
+/// <summary>One row of the legend: a symbol, its colour, its name — and, since the
+/// legend is also how a kind is brought into focus, whether it is the chosen one.</summary>
+public class CelestialLegendItem : BaseViewModel
 {
+    private bool _isFocused;
+
     public CelestialCategory Category { get; init; }
     public string Label { get; init; } = string.Empty;
+
+    /// <summary>This kind is the one in focus. The legend stops being a key and starts
+    /// being a control the moment you can tap it, which is the cheapest large
+    /// improvement available to a sky with eight kinds in it.</summary>
+    public bool IsFocused
+    {
+        get => _isFocused;
+        set => SetProperty(ref _isFocused, value);
+    }
 
     /// <summary>The very same drawing routine the sky uses, at legend size — a legend
     /// that could drift from the thing it explains would be worse than none.</summary>
@@ -51,6 +63,9 @@ public class ConstellationViewModel : BaseViewModel
     private bool _isLoading;
     private int _selectedIndex = -1;
     private int _loadGeneration;
+    private SkyLens _lens = SkyLens.Timeline;
+    private CelestialCategory? _focus;
+    private double _periodDays = 7;
 
     public ConstellationViewModel(
         ConstellationService constellation,
@@ -63,6 +78,8 @@ public class ConstellationViewModel : BaseViewModel
 
         SetRangeCommand = new Command<string>(async days => await SetRangeAsync(days));
         ClearSelectionCommand = new Command(() => SelectedIndex = -1);
+        SetLensCommand = new Command<string>(SetLens);
+        ToggleFocusCommand = new Command<CelestialLegendItem>(ToggleFocus);
     }
 
     private static LocalizationManager Loc => LocalizationManager.Instance;
@@ -74,6 +91,99 @@ public class ConstellationViewModel : BaseViewModel
 
     public ICommand SetRangeCommand { get; }
     public ICommand ClearSelectionCommand { get; }
+    public ICommand SetLensCommand { get; }
+    public ICommand ToggleFocusCommand { get; }
+
+    /// <summary>Raised when the arrangement changed but the DATA did not — a lens, a
+    /// fold, a focus. The page re-places and repaints without going near the database.</summary>
+    public event Action? ViewChanged;
+
+    // ── The lenses ───────────────────────────────────────────────────────────────
+
+    public SkyLens Lens
+    {
+        get => _lens;
+        private set
+        {
+            if (!SetProperty(ref _lens, value))
+                return;
+
+            OnPropertyChanged(nameof(IsTimeline));
+            OnPropertyChanged(nameof(IsClock));
+            OnPropertyChanged(nameof(IsRhythm));
+            OnPropertyChanged(nameof(Hint));
+            SelectedIndex = -1;
+            ViewChanged?.Invoke();
+        }
+    }
+
+    public bool IsTimeline => Lens == SkyLens.Timeline;
+    public bool IsClock => Lens == SkyLens.Clock;
+    public bool IsRhythm => Lens == SkyLens.Rhythm;
+
+    /// <summary>How far the Rhythm lens folds time, in days. <b>The owner sets this and
+    /// the app never does</b> — Felova offers a dial and says nothing whatsoever about
+    /// what lines up on it. Suggesting a period would be the app claiming a pattern,
+    /// which is exactly the claim it cannot support.</summary>
+    public double PeriodDays
+    {
+        get => _periodDays;
+        set
+        {
+            var rounded = Math.Round(Math.Clamp(value, 2, 60));
+            if (!SetProperty(ref _periodDays, rounded))
+                return;
+
+            OnPropertyChanged(nameof(PeriodLabel));
+            if (IsRhythm)
+                ViewChanged?.Invoke();
+        }
+    }
+
+    public string PeriodLabel => Loc.Format("Sky_FoldEvery", (int)PeriodDays);
+
+    /// <summary>What this lens is for, said in one line. The Rhythm lens in particular
+    /// is useless without it — a fold dial explains nothing about itself.</summary>
+    public string Hint => Loc.GetString(Lens switch
+    {
+        SkyLens.Clock => "Sky_HintClock",
+        SkyLens.Rhythm => "Sky_HintRhythm",
+        _ => "Sky_HintTimeline",
+    });
+
+    // ── Focus ────────────────────────────────────────────────────────────────────
+
+    /// <summary>The one kind brought forward, or null for all of them.</summary>
+    public CelestialCategory? Focus
+    {
+        get => _focus;
+        private set
+        {
+            if (!SetProperty(ref _focus, value))
+                return;
+
+            foreach (var item in Legend)
+                item.IsFocused = value == item.Category;
+
+            ViewChanged?.Invoke();
+        }
+    }
+
+    /// <summary>Tap a legend key to bring that kind forward; tap it again to let the
+    /// whole sky back in.</summary>
+    private void ToggleFocus(CelestialLegendItem? item)
+    {
+        if (item is null)
+            return;
+
+        Focus = Focus == item.Category ? null : item.Category;
+    }
+
+    private void SetLens(string? lens)
+    {
+        if (Enum.TryParse<SkyLens>(lens, out var value))
+            Lens = value;
+    }
 
     /// <summary>Everything recorded in the range, ascending by time. Replaced whole on
     /// every load; never mutated in place.</summary>
@@ -158,6 +268,8 @@ public class ConstellationViewModel : BaseViewModel
             OnPropertyChanged(nameof(SelectedWhen));
             OnPropertyChanged(nameof(SelectedCategoryLabel));
             OnPropertyChanged(nameof(SelectedSymbol));
+            OnPropertyChanged(nameof(SelectedGap));
+            OnPropertyChanged(nameof(HasSelectedGap));
         }
     }
 
@@ -183,6 +295,69 @@ public class ConstellationViewModel : BaseViewModel
     public string SelectedCategoryLabel => Selected is CelestialEvent e
         ? CelestialVisuals.Label(e.Category)
         : string.Empty;
+
+    /// <summary>
+    /// How long after the previous entry <b>of the same kind</b> this one was written
+    /// down — "18 days after the last one".
+    ///
+    /// <para>It is the answer to "does this come round?" delivered with no chart at
+    /// all, and it is the one number on this surface that could have been a streak. It
+    /// is not, and the reason is that it applies to <b>every kind equally</b>: a mood, a
+    /// weigh-in and a seizure all get the same sentence. A counter that appeared only
+    /// on seizures would be "days since", which is a thing the owner can break by
+    /// writing down the truth — the exact reason streaks are banned from Today's cards
+    /// (AI/domain.md). A gap between two entries that both already happened is a fact
+    /// about the diary, and it reads as one because nothing about it is special.</para>
+    ///
+    /// <para>Empty for the first of its kind in the range: the previous one may well
+    /// exist just outside the stretch being looked at, and the app does not guess.</para>
+    /// </summary>
+    public string SelectedGap
+    {
+        get
+        {
+            if (_selectedIndex <= 0 || _selectedIndex >= Events.Count)
+                return string.Empty;
+
+            var current = Events[_selectedIndex];
+            for (int i = _selectedIndex - 1; i >= 0; i--)
+            {
+                if (Events[i].Category != current.Category)
+                    continue;
+
+                return DescribeGap(current.When - Events[i].When);
+            }
+
+            return string.Empty;
+        }
+    }
+
+    public bool HasSelectedGap => !string.IsNullOrEmpty(SelectedGap);
+
+    /// <summary>Minutes, hours or days — whichever a person would actually say. Two
+    /// seizures twenty minutes apart is a very different sentence from two eighteen
+    /// days apart, and rounding the first to "0 days" would throw away the thing worth
+    /// noticing.</summary>
+    private static string DescribeGap(TimeSpan gap)
+    {
+        if (gap <= TimeSpan.Zero)
+            return string.Empty;
+
+        if (gap.TotalMinutes < 90)
+        {
+            var minutes = Math.Max(1, (int)Math.Round(gap.TotalMinutes));
+            return Loc.Format(minutes == 1 ? "Sky_GapMinuteOne" : "Sky_GapMinutes", minutes);
+        }
+
+        if (gap.TotalHours < 36)
+        {
+            var hours = (int)Math.Round(gap.TotalHours);
+            return Loc.Format(hours == 1 ? "Sky_GapHourOne" : "Sky_GapHours", hours);
+        }
+
+        var days = (int)Math.Round(gap.TotalDays);
+        return Loc.Format(days == 1 ? "Sky_GapDayOne" : "Sky_GapDays", days);
+    }
 
     /// <summary>The tapped star, redrawn at tile size on the sheet — so the thing being
     /// described is recognisably the thing that was touched.</summary>
@@ -278,8 +453,14 @@ public class ConstellationViewModel : BaseViewModel
                 Label = CelestialVisuals.Label(category),
                 Symbol = SymbolFor(category),
                 Tilt = items.Count % 2 == 0 ? -3 : 2.5,
+                IsFocused = _focus == category,
             });
         }
+
+        // A kind that is no longer in the sky cannot stay in focus — changing the range
+        // would otherwise leave the whole page dimmed for something with nothing in it.
+        if (_focus is CelestialCategory kind && !present.Contains(kind))
+            _focus = null;
 
         // Built first, then swapped in one synchronous block — never cleared across an
         // await (AI/coding-standards.md).

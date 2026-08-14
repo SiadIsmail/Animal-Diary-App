@@ -913,7 +913,26 @@
   <data name="Sky_CountOne" xml:space="preserve"><value>1 thing written down</value></data>
   <data name="Sky_CountMany" xml:space="preserve"><value>{0} things written down</value></data>
   <data name="Sky_Empty" xml:space="preserve"><value>Nothing was written down in this stretch of time.</value></data>
-  <data name="Sky_Hint" xml:space="preserve"><value>Pinch to look closer. Tap a star.</value></data>
+  <!-- The three lenses. Same entries, three arrangements: when it happened, when in
+       the DAY it happened, and whether it comes round again. -->
+  <data name="Sky_LensTimeline" xml:space="preserve"><value>Timeline</value></data>
+  <data name="Sky_LensClock" xml:space="preserve"><value>Clock</value></data>
+  <data name="Sky_LensRhythm" xml:space="preserve"><value>Rhythm</value></data>
+  <data name="Sky_HintTimeline" xml:space="preserve"><value>Pinch to look closer. Tap a star.</value></data>
+  <data name="Sky_HintClock" xml:space="preserve"><value>Where in the day things happened.</value></data>
+  <data name="Sky_HintRhythm" xml:space="preserve"><value>Turn the dial. If something repeats, it lines up.</value></data>
+  <data name="Sky_FoldEvery" xml:space="preserve"><value>Every {0} days</value></data>
+  <data name="Sky_FoldDay" xml:space="preserve"><value>Day {0}</value></data>
+  <data name="Sky_DialHour" xml:space="preserve"><value>{0}:00</value></data>
+  <!-- How long after the previous entry OF THE SAME KIND. Every kind gets this line,
+       which is what keeps it a fact about the diary and not a counter aimed at
+       seizures — see ConstellationViewModel.SelectedGap. -->
+  <data name="Sky_GapMinuteOne" xml:space="preserve"><value>1 minute after the last one</value></data>
+  <data name="Sky_GapMinutes" xml:space="preserve"><value>{0} minutes after the last one</value></data>
+  <data name="Sky_GapHourOne" xml:space="preserve"><value>1 hour after the last one</value></data>
+  <data name="Sky_GapHours" xml:space="preserve"><value>{0} hours after the last one</value></data>
+  <data name="Sky_GapDayOne" xml:space="preserve"><value>1 day after the last one</value></data>
+  <data name="Sky_GapDays" xml:space="preserve"><value>{0} days after the last one</value></data>
   <data name="Sky_Close" xml:space="preserve"><value>Close</value></data>
   <data name="Sky_Range7" xml:space="preserve"><value>1W</value></data>
   <data name="Sky_Range30" xml:space="preserve"><value>1M</value></data>

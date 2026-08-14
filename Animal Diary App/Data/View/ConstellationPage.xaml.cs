@@ -64,6 +64,7 @@ public partial class ConstellationPage : ContentPage
         base.OnAppearing();
 
         vm.ConstellationVM.SkyChanged += OnSkyChanged;
+        vm.ConstellationVM.ViewChanged += OnViewChanged;
         vm.ConstellationVM.PropertyChanged += OnViewModelPropertyChanged;
         // Another caregiver's entries landing while this is open belong in the sky.
         vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
@@ -91,6 +92,7 @@ public partial class ConstellationPage : ContentPage
     {
         base.OnDisappearing();
         vm.ConstellationVM.SkyChanged -= OnSkyChanged;
+        vm.ConstellationVM.ViewChanged -= OnViewChanged;
         vm.ConstellationVM.PropertyChanged -= OnViewModelPropertyChanged;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
     }
@@ -132,7 +134,7 @@ public partial class ConstellationPage : ContentPage
     {
         var width = SkyHost.Width;
         var stars = _drawable.Stars;
-        if (width <= 0 || stars.Count < 2)
+        if (width <= 0 || stars.Count < 2 || vm.ConstellationVM.Lens != SkyLens.Timeline)
             return;
 
         double first = double.MaxValue, last = double.MinValue;
@@ -155,6 +157,14 @@ public partial class ConstellationPage : ContentPage
         _zoom = Math.Clamp(width / padded, MinZoom, MaxZoom());
         _scrollX = (first + last) / 2 * _zoom - width / 2;
         ApplyCamera();
+    }
+
+    /// <summary>A lens, a fold or a focus changed. Nothing was re-read; the same
+    /// entries are simply arranged another way.</summary>
+    private void OnViewChanged()
+    {
+        Rebuild();
+        FitToData();
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -188,9 +198,26 @@ public partial class ConstellationPage : ContentPage
         _drawable.Asterism = sky.Asterism;
         // Before Place: the signature shapes the wave the stars are placed against.
         _drawable.Signature = sky.Signature;
+        _drawable.Lens = sky.Lens;
+        _drawable.Focus = sky.Focus;
         _drawable.WorldWidth = width;
-        _drawable.Stars = ConstellationLayout.Place(sky.Events, sky.From, sky.To, width, height, sky.Signature);
         _drawable.SelectedIndex = sky.SelectedIndex;
+
+        // The lens decides what the axis means. Only the Timeline keeps a camera —
+        // a clock is not panned, and a fold is exactly one turn wide.
+        _drawable.Stars = sky.Lens switch
+        {
+            SkyLens.Clock => ConstellationLayout.PlaceOnDial(sky.Events, sky.From, sky.To, width, height),
+            SkyLens.Rhythm => ConstellationLayout.PlaceFolded(
+                sky.Events, sky.From, sky.PeriodDays, width, height, sky.Signature),
+            _ => ConstellationLayout.Place(sky.Events, sky.From, sky.To, width, height, sky.Signature),
+        };
+
+        if (sky.Lens != SkyLens.Timeline)
+        {
+            _zoom = MinZoom;
+            _scrollX = 0;
+        }
 
         ApplyCamera();
     }
@@ -204,13 +231,20 @@ public partial class ConstellationPage : ContentPage
             return;
 
         var sky = vm.ConstellationVM;
+        var height = SkyHost.Height;
 
         _scrollX = ClampScroll(_scrollX, width);
         _drawable.Zoom = _zoom;
         _drawable.ScrollX = _scrollX;
-        // Only the tick STEP depends on the zoom (month names become days as you go
-        // in); the positions stay in world units.
-        _drawable.Ticks = ConstellationTicks.Build(sky.From, sky.To, width, _zoom);
+
+        _drawable.Ticks = sky.Lens switch
+        {
+            SkyLens.Clock => ConstellationTicks.Dial(width, height),
+            SkyLens.Rhythm => ConstellationTicks.Fold(sky.PeriodDays, width, height),
+            // Only the tick STEP depends on the zoom (month names become days as you go
+            // in); the positions stay in world units.
+            _ => ConstellationTicks.Build(sky.From, sky.To, width, height, _zoom),
+        };
 
         Sky.Invalidate();
     }
@@ -230,7 +264,8 @@ public partial class ConstellationPage : ContentPage
     private void OnPanUpdated(object? sender, PanUpdatedEventArgs e)
     {
         var width = SkyHost.Width;
-        if (width <= 0)
+        // A clock is not panned, and a fold is one turn wide — there is nowhere to go.
+        if (width <= 0 || vm.ConstellationVM.Lens != SkyLens.Timeline)
             return;
 
         switch (e.StatusType)
@@ -254,7 +289,7 @@ public partial class ConstellationPage : ContentPage
             return;
 
         var width = SkyHost.Width;
-        if (width <= 0)
+        if (width <= 0 || vm.ConstellationVM.Lens != SkyLens.Timeline)
             return;
 
         // Scale is the factor SINCE THE LAST EVENT, so multiplying in is the whole of
