@@ -72,9 +72,16 @@ public static class ConstellationAsterism
     private const double MinStep = 0.10;
     private const double MaxStep = 0.21;
 
-    /// <summary>How much of the sky a figure should span, and the most it may be grown
-    /// to get there. See <see cref="Fill"/>.</summary>
-    private const double TargetExtent = 0.7;
+    /// <summary>
+    /// How much of the sky a figure should span, and the most it may be grown to get
+    /// there. See <see cref="Fill"/>.
+    ///
+    /// <para>Deliberately under half. Spread across the whole card, the figure's joins
+    /// became long lines wandering behind everything and its stars read as loose
+    /// debris among the events rather than as one shape — the eye found the wreckage
+    /// before it found the figure. A constellation is something you notice second.</para>
+    /// </summary>
+    private const double TargetExtent = 0.42;
     private const double MaxGrowth = 1.6;
 
     /// <summary>
@@ -155,6 +162,7 @@ public static class ConstellationAsterism
         }
 
         Fill(stars);
+        Settle(stars, ref rng);
 
         var lines = new List<AsterismLine>(count);
         for (int i = 1; i < count; i++)
@@ -214,6 +222,58 @@ public static class ConstellationAsterism
             stars[i] = new AsterismStar(
                 Math.Clamp(cx + (star.X - cx) * scale + shiftX, Margin, 1 - Margin),
                 Push(Math.Clamp(cy + (star.Y - cy) * scale + shiftY, Margin, 1 - Margin)),
+                star.Brightness);
+        }
+    }
+
+    /// <summary>
+    /// Move the finished figure into ONE quarter of the sky, above the timeline or
+    /// below it.
+    ///
+    /// <para>A small figure left wherever the walk happened to wander was as likely to
+    /// sit across the middle as anywhere, tangled in the events. Choosing a corner for
+    /// it — from the same seed, so it is still this pet's — puts it somewhere the eye
+    /// can take it in as a shape, and leaves the timeline's own band clear.</para>
+    /// </summary>
+    private static void Settle(List<AsterismStar> stars, ref SkySignature.SeedWalk rng)
+    {
+        if (stars.Count == 0)
+            return;
+
+        double minX = 1, maxX = 0, minY = 1, maxY = 0;
+        foreach (var star in stars)
+        {
+            minX = Math.Min(minX, star.X);
+            maxX = Math.Max(maxX, star.X);
+            minY = Math.Min(minY, star.Y);
+            maxY = Math.Max(maxY, star.Y);
+        }
+
+        var width = maxX - minX;
+        var height = maxY - minY;
+
+        // Somewhere in the chosen half, with enough room left for the figure itself.
+        var left = rng.Next(2) == 0;
+        var above = rng.Next(2) == 0;
+
+        var targetX = left
+            ? Margin + rng.NextDouble() * Math.Max(0, 0.46 - width - Margin)
+            : 1 - Margin - width - rng.NextDouble() * Math.Max(0, 0.46 - width - Margin);
+
+        var bandDepth = Math.Max(0, 0.5 - Corridor - Margin - height);
+        var targetY = above
+            ? Margin + rng.NextDouble() * bandDepth
+            : 1 - Margin - height - rng.NextDouble() * bandDepth;
+
+        var shiftX = targetX - minX;
+        var shiftY = targetY - minY;
+
+        for (int i = 0; i < stars.Count; i++)
+        {
+            var star = stars[i];
+            stars[i] = new AsterismStar(
+                Math.Clamp(star.X + shiftX, Margin, 1 - Margin),
+                Push(Math.Clamp(star.Y + shiftY, Margin, 1 - Margin)),
                 star.Brightness);
         }
     }

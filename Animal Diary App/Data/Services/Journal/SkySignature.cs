@@ -79,14 +79,24 @@ public readonly record struct SkySignature
     // ── The bands ────────────────────────────────────────────────────────────────
     // Centred on the values the sky was tuned to by hand; the widths are what a sky
     // can vary by while still being one of the good ones.
-    private const double MinLongWavelength = 43;
-    private const double MaxLongWavelength = 64;
-    private const double MinShortWavelength = 13;
-    private const double MaxShortWavelength = 22;
-    private const double MinLongWeight = 0.72;
-    private const double MaxLongWeight = 0.88;
-    private const double MinAmplitude = 0.24;
-    private const double MaxAmplitude = 0.32;
+    //
+    // THE LINE IS A HORIZON, NOT A CURVE. It was briefly given a large amplitude and a
+    // short sweep, to push events apart vertically — and it worked, at the cost of the
+    // only thing that actually mattered: with every event sitting on it, a big S-curve
+    // through the data reads as a FITTED CURVE, and a rising one reads as "the animal
+    // is getting better". That is the one claim this app may never make, and no amount
+    // of "but it's only decoration" survives someone glancing at it.
+    //
+    // So the wave is calm and long, and the SCATTER does the spreading (see
+    // ConstellationLayout's spiral). A quiet horizon has no direction to read into it.
+    private const double MinLongWavelength = 68;
+    private const double MaxLongWavelength = 104;
+    private const double MinShortWavelength = 22;
+    private const double MaxShortWavelength = 34;
+    private const double MinLongWeight = 0.84;
+    private const double MaxLongWeight = 0.93;
+    private const double MinAmplitude = 0.07;
+    private const double MaxAmplitude = 0.12;
 
     /// <summary>
     /// The five hues an atmosphere may lean towards — the app's own five accents, one
@@ -115,10 +125,10 @@ public readonly record struct SkySignature
         seed: 1,
         phaseLong: 0,
         phaseShort: 1.7,
-        longWavelength: 52,
-        shortWavelength: 17,
-        longWeight: 0.8,
-        amplitude: 0.28,
+        longWavelength: 86,
+        shortWavelength: 28,
+        longWeight: 0.89,
+        amplitude: 0.095,
         accentKey: "SkyAccentTeal");
 
     /// <summary>

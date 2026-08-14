@@ -165,6 +165,12 @@ public sealed class ConstellationDrawable : IDrawable
     /// position they sit at rather than stored.</summary>
     private double WorldX(double screenX) => (screenX + ScrollX) / (Zoom <= 0 ? 1 : Zoom);
 
+    /// <summary>Where a star is actually drawn: its moment, plus the sideways nudge
+    /// that breaks a knot of entries into a cluster and fades away as the zoom starts
+    /// separating them for real.</summary>
+    private float StarX(in SkyStar star) =>
+        ScreenX(star.X) + (float)(star.NudgeX * ConstellationLayout.NudgeFade(Zoom));
+
     public void Draw(ICanvas canvas, RectF rect)
     {
         if (rect.Width <= 0 || rect.Height <= 0)
@@ -366,8 +372,10 @@ public sealed class ConstellationDrawable : IDrawable
         float X(int i) => rect.X + (float)stars[i].X * rect.Width;
         float Y(int i) => rect.Y + (float)stars[i].Y * rect.Height;
 
+        // Dim. The figure is the room, not the record — if it can compete with an event
+        // for attention, it is drawn wrong.
         canvas.StrokeSize = 1f;
-        canvas.StrokeColor = _asterism.WithAlpha(0.16f);
+        canvas.StrokeColor = _asterism.WithAlpha(0.10f);
         canvas.StrokeLineCap = LineCap.Round;
 
         foreach (var line in Asterism.Lines)
@@ -383,9 +391,9 @@ public sealed class ConstellationDrawable : IDrawable
             var brightness = (float)stars[i].Brightness;
             var radius = 1.5f + brightness * 1.9f;
 
-            canvas.FillColor = _asterism.WithAlpha(0.10f * brightness);
+            canvas.FillColor = _asterism.WithAlpha(0.07f * brightness);
             canvas.FillCircle(X(i), Y(i), radius * 2.8f);
-            canvas.FillColor = _asterism.WithAlpha(0.34f + 0.3f * brightness);
+            canvas.FillColor = _asterism.WithAlpha(0.22f + 0.2f * brightness);
             canvas.FillCircle(X(i), Y(i), radius);
         }
     }
@@ -460,31 +468,21 @@ public sealed class ConstellationDrawable : IDrawable
         var screenWidth = (WorldWidth > 0 ? WorldWidth : rect.Width) * (Zoom <= 0 ? 1 : Zoom);
         var radius = (float)ConstellationLayout.StarRadius(screenWidth, Events.Count);
 
-        var glow = radius >= GlowRadiusFloor;
+        // Glow needs ROOM, not just size. A halo is wider than its symbol, so on a run
+        // of daily entries — one mood a day, ten pixels apart — every halo touched its
+        // neighbours' and fifteen stars welded into one fuzzy caterpillar with no
+        // symbol left in it. Where the sky is that busy, the stars go bare.
+        var spacing = Events.Count > 0 ? screenWidth / Events.Count : double.MaxValue;
+        var glow = radius >= GlowRadiusFloor && spacing > radius * 3.0;
+
         var margin = radius * 4f + 8f;
-
-        // Guides first, so every symbol sits on top of every thread.
-        canvas.StrokeSize = 1f;
-        canvas.StrokeColor = _pathColor.WithAlpha(0.18f);
-        for (int i = 0; i < Stars.Count; i++)
-        {
-            var star = Stars[i];
-            var x = ScreenX(star.X);
-            if (x < -margin || x > rect.Width + margin)
-                continue;
-
-            if (Math.Abs(star.Offset) <= ConstellationLayout.GuideThreshold)
-                continue;
-
-            canvas.DrawLine(rect.X + x, rect.Y + (float)star.PathY, rect.X + x, rect.Y + (float)star.Y);
-        }
 
         DrawLinks(canvas, rect, margin);
 
         for (int i = 0; i < Stars.Count; i++)
         {
             var star = Stars[i];
-            var x = ScreenX(star.X);
+            var x = StarX(star);
             if (x < -margin || x > rect.Width + margin)
                 continue;
 
@@ -540,12 +538,12 @@ public sealed class ConstellationDrawable : IDrawable
             if (link < 0 || link >= Stars.Count)
                 continue;
 
-            var x = ScreenX(star.X);
+            var x = StarX(star);
             if (x < -margin || x > rect.Width + margin)
                 continue;
 
             var other = Stars[link];
-            var ox = ScreenX(other.X);
+            var ox = StarX(other);
 
             var dx = x - ox;
             var dy = (float)(star.Y - other.Y);
