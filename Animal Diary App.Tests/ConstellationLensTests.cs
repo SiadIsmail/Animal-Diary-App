@@ -33,12 +33,12 @@ public class ConstellationLensTests
     {
         // Midnight up, noon down, six in the morning to the right: a clock face, or
         // nobody can read a wedge off it without being taught the picture first.
-        var midnight = ConstellationLayout.PlaceOnDial(
-            new[] { At(To.AddDays(-1)) }, From, To, Width, Height)[0];
-        var sixAm = ConstellationLayout.PlaceOnDial(
-            new[] { At(To.AddDays(-1).AddHours(6)) }, From, To, Width, Height)[0];
-        var noon = ConstellationLayout.PlaceOnDial(
-            new[] { At(To.AddDays(-1).AddHours(12)) }, From, To, Width, Height)[0];
+        var midnight = ConstellationLayout.PlaceOnRing(
+            new[] { At(To.AddDays(-1)) }, From, To, 1, Width, Height)[0];
+        var sixAm = ConstellationLayout.PlaceOnRing(
+            new[] { At(To.AddDays(-1).AddHours(6)) }, From, To, 1, Width, Height)[0];
+        var noon = ConstellationLayout.PlaceOnRing(
+            new[] { At(To.AddDays(-1).AddHours(12)) }, From, To, 1, Width, Height)[0];
 
         Assert.True(midnight.Y < Height / 2, "midnight was not at the top");
         Assert.True(sixAm.X > Width / 2, "06:00 was not on the right");
@@ -54,7 +54,7 @@ public class ConstellationLensTests
             .Select(i => At(From.AddDays(i * 14).AddHours(3)))
             .ToArray();
 
-        var stars = ConstellationLayout.PlaceOnDial(events, From, To, Width, Height);
+        var stars = ConstellationLayout.PlaceOnRing(events, From, To, 1, Width, Height);
 
         var bearings = stars
             .Select(s => Math.Atan2(s.Y - Height / 2, s.X - Width / 2))
@@ -67,9 +67,9 @@ public class ConstellationLensTests
     [Fact]
     public void Dial_OlderSitsInnerAndNewerSitsOuter()
     {
-        var stars = ConstellationLayout.PlaceOnDial(
+        var stars = ConstellationLayout.PlaceOnRing(
             new[] { At(From.AddHours(9)), At(To.AddDays(-1).AddHours(9)) },
-            From, To, Width, Height);
+            From, To, 1, Width, Height);
 
         var centre = new { X = Width / 2, Y = Height / 2 };
         double Radius(SkyStar s) =>
@@ -84,7 +84,7 @@ public class ConstellationLensTests
         // Everything from the first day would otherwise pile onto one point, making the
         // oldest entries the least legible.
         var events = Enumerable.Range(0, 24).Select(i => At(From.AddHours(i))).ToArray();
-        var stars = ConstellationLayout.PlaceOnDial(events, From, To, Width, Height);
+        var stars = ConstellationLayout.PlaceOnRing(events, From, To, 1, Width, Height);
 
         foreach (var star in stars)
         {
@@ -100,7 +100,7 @@ public class ConstellationLensTests
         var events = Enumerable.Range(0, 200)
             .Select(i => At(From.AddHours(i * 7))).ToArray();
 
-        foreach (var star in ConstellationLayout.PlaceOnDial(events, From, To, Width, Height))
+        foreach (var star in ConstellationLayout.PlaceOnRing(events, From, To, 1, Width, Height))
         {
             Assert.InRange(star.X, 0, Width);
             Assert.InRange(star.Y, 0, Height);
@@ -118,10 +118,12 @@ public class ConstellationLensTests
             .Select(i => At(From.AddDays(i * 12).AddHours(4)))
             .ToArray();
 
-        var stars = ConstellationLayout.PlaceFolded(events, From, 12, Width, Height, Sky);
+        var stars = ConstellationLayout.PlaceOnRing(events, From, To, 12, Width, Height);
 
-        foreach (var star in stars)
-            Assert.Equal(stars[0].X, star.X, 6);
+        // Same bearing from the centre — one spoke.
+        var bearings = stars.Select(s => Math.Atan2(s.Y - Height / 2, s.X - Width / 2)).ToArray();
+        foreach (var bearing in bearings)
+            Assert.Equal(bearings[0], bearing, 1);
     }
 
     [Fact]
@@ -134,11 +136,12 @@ public class ConstellationLensTests
             .Select(i => At(From.AddDays(i * 12).AddHours(4)))
             .ToArray();
 
-        var stars = ConstellationLayout.PlaceFolded(events, From, 7, Width, Height, Sky);
+        var stars = ConstellationLayout.PlaceOnRing(events, From, To, 7, Width, Height);
 
-        var spread = stars.Max(s => s.X) - stars.Min(s => s.X);
-        Assert.True(spread > Width * 0.4,
-            $"a mismatched fold still huddled inside {spread:0} of {Width:0}");
+        var bearings = stars.Select(s => Math.Atan2(s.Y - Height / 2, s.X - Width / 2)).ToArray();
+        var spread = bearings.Max() - bearings.Min();
+        Assert.True(spread > 1.5,
+            $"a mismatched fold still huddled inside {spread:0.0} radians");
     }
 
     [Fact]
@@ -147,15 +150,46 @@ public class ConstellationLensTests
         var events = Enumerable.Range(0, 300)
             .Select(i => At(From.AddHours(i * 5))).ToArray();
 
-        foreach (var star in ConstellationLayout.PlaceFolded(events, From, 9, Width, Height, Sky))
+        foreach (var star in ConstellationLayout.PlaceOnRing(events, From, To, 9, Width, Height))
+        {
             Assert.InRange(star.X, 0, Width);
+            Assert.InRange(star.Y, 0, Height);
+        }
+    }
+
+    [Fact]
+    public void Fold_HasNoSeam()
+    {
+        // The reason the fold is a RING and not a line.
+        //
+        // Two entries either side of the fold boundary — phase 0.99 and phase 0.01 —
+        // are minutes apart in cycle terms. Folded onto a line they land at opposite
+        // EDGES of the card and read as two unrelated clumps, so a genuine rhythm could
+        // be hidden purely by where the range happened to start. On a ring they are
+        // neighbours, because a circle has no edges.
+        const double period = 10;
+        var justBefore = At(From.AddDays(period).AddMinutes(-6));
+        var justAfter = At(From.AddDays(period).AddMinutes(6));
+
+        var stars = ConstellationLayout.PlaceOnRing(
+            new[] { justBefore, justAfter }, From, To, period, Width, Height);
+
+        var a = Math.Atan2(stars[0].Y - Height / 2, stars[0].X - Width / 2);
+        var b = Math.Atan2(stars[1].Y - Height / 2, stars[1].X - Width / 2);
+
+        // Shortest way round the circle, which is the only distance that means
+        // anything here.
+        var apart = Math.Abs(Math.Atan2(Math.Sin(a - b), Math.Cos(a - b)));
+
+        Assert.True(apart < 0.1,
+            $"two entries twelve minutes apart landed {apart:0.00} radians apart on the ring");
     }
 
     [Fact]
     public void Fold_IgnoresANonsensePeriodRatherThanDividingByZero()
     {
-        Assert.Empty(ConstellationLayout.PlaceFolded(new[] { At(From) }, From, 0, Width, Height, Sky));
-        Assert.Empty(ConstellationLayout.PlaceFolded(new[] { At(From) }, From, -3, Width, Height, Sky));
+        Assert.Empty(ConstellationLayout.PlaceOnRing(new[] { At(From) }, From, To, 0, Width, Height));
+        Assert.Empty(ConstellationLayout.PlaceOnRing(new[] { At(From) }, From, To, -3, Width, Height));
     }
 
     // ── The wall of nights ───────────────────────────────────────────────────
@@ -262,9 +296,9 @@ public class ConstellationLensTests
         Assert.Equal(events.Length,
             ConstellationLayout.Place(events, From, To, Width, Height, Sky).Length);
         Assert.Equal(events.Length,
-            ConstellationLayout.PlaceOnDial(events, From, To, Width, Height).Length);
+            ConstellationLayout.PlaceOnRing(events, From, To, 1, Width, Height).Length);
         Assert.Equal(events.Length,
-            ConstellationLayout.PlaceFolded(events, From, 14, Width, Height, Sky).Length);
+            ConstellationLayout.PlaceOnRing(events, From, To, 14, Width, Height).Length);
         Assert.Equal(events.Length,
             ConstellationLayout.PlaceOnWall(events, From, Width, 20).Length);
     }

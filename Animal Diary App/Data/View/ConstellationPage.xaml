@@ -208,7 +208,7 @@
                     StrokeThickness="0"
                     StrokeShape="RoundRectangle 999"
                     Padding="3">
-                <Grid ColumnDefinitions="*,*,*,*">
+                <Grid ColumnDefinitions="*,*,*">
 
                     <Border Grid.Column="0" BackgroundColor="Transparent"
                             StrokeThickness="0" StrokeShape="RoundRectangle 999">
@@ -232,16 +232,16 @@
                     <Border Grid.Column="1" BackgroundColor="Transparent"
                             StrokeThickness="0" StrokeShape="RoundRectangle 999">
                         <Border.Triggers>
-                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsClock}" Value="True">
+                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsCycle}" Value="True">
                                 <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                             </DataTrigger>
                         </Border.Triggers>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="Clock"/>
+                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="Cycle"/>
                         </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Sky_LensClock}" Style="{StaticResource SkyRangeTab}">
+                        <Label Text="{loc:Translate Sky_LensCycle}" Style="{StaticResource SkyRangeTab}">
                             <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsClock}" Value="True">
+                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsCycle}" Value="True">
                                     <Setter Property="TextColor" Value="{StaticResource Ink}"/>
                                 </DataTrigger>
                             </Label.Triggers>
@@ -249,25 +249,6 @@
                     </Border>
 
                     <Border Grid.Column="2" BackgroundColor="Transparent"
-                            StrokeThickness="0" StrokeShape="RoundRectangle 999">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsRhythm}" Value="True">
-                                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="Rhythm"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Sky_LensRhythm}" Style="{StaticResource SkyRangeTab}">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsRhythm}" Value="True">
-                                    <Setter Property="TextColor" Value="{StaticResource Ink}"/>
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                    </Border>
-
-                    <Border Grid.Column="3" BackgroundColor="Transparent"
                             StrokeThickness="0" StrokeShape="RoundRectangle 999">
                         <Border.Triggers>
                             <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsNights}" Value="True">
@@ -334,7 +315,7 @@
                          is the lens with the most to look at, and a control row that
                          pushed the sky down would be taking space from the thing it
                          exists to reveal. -->
-                    <Border IsVisible="{Binding ConstellationVM.IsRhythm}"
+                    <Border IsVisible="{Binding ConstellationVM.IsCycle}"
                             BackgroundColor="{StaticResource NightTile}"
                             Stroke="{StaticResource SkyLineSoft}"
                             StrokeThickness="1"
@@ -350,9 +331,9 @@
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource SkyInk}"
                                    VerticalOptions="Center"
-                                   WidthRequest="92"/>
+                                   WidthRequest="104"/>
                             <Slider Grid.Column="1"
-                                    Minimum="2"
+                                    Minimum="1"
                                     Maximum="{Binding ConstellationVM.MaxPeriodDays}"
                                     Value="{Binding ConstellationVM.PeriodDays}"
                                     MinimumTrackColor="{StaticResource SkyPath}"
@@ -556,6 +537,39 @@
                             </VerticalStackLayout>
                         </Border>
                     </Grid>
+
+                    <!-- What else was written down that day. Recall and nothing else:
+                         the day's other entries at their own times, in order, with no
+                         window, no overlay and no suggestion that any of it is
+                         connected. Felova turns the page; the owner reads it. -->
+                    <VerticalStackLayout IsVisible="{Binding ConstellationVM.HasSameDay}"
+                                         Spacing="4"
+                                         Padding="2,0">
+                        <Label Text="{loc:Translate Sky_AlsoThatDay}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="10.5"
+                               FontAttributes="Bold"
+                               CharacterSpacing="1.3"
+                               TextColor="{StaticResource InkTertiary}"/>
+
+                        <VerticalStackLayout Spacing="2"
+                                             BindableLayout.ItemsSource="{Binding ConstellationVM.SameDay}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Label Text="{Binding .}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="12.5"
+                                           TextColor="{StaticResource InkSecondary}"/>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <Label Text="{Binding ConstellationVM.SameDayMore}"
+                               IsVisible="{Binding ConstellationVM.HasSameDayMore}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="11.5"
+                               TextColor="{StaticResource InkTertiary}"/>
+                    </VerticalStackLayout>
 
                     <Label Text="{loc:Translate Sky_Close}"
                            Padding="0,4"

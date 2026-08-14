@@ -20,22 +20,34 @@ using Animal_Diary_App.Data.Models;
 /// same entries — the arrangement changes, the records never do.
 ///
 /// <para>Time is still the only thing any of them encodes. What differs is <b>which
-/// question the axis answers</b>: when did this happen, when in the DAY did it happen,
-/// and does it come round again. A list and a calendar can both answer the first;
-/// neither can answer the other two, which is the entire reason these exist.</para>
+/// question the axis answers</b>: when did this happen, where in a repeating period did
+/// it happen, and what did one night look like beside the next. A list and a calendar
+/// can both answer the first; neither can answer the other two, which is the entire
+/// reason these exist.</para>
 /// </summary>
 public enum SkyLens
 {
     /// <summary>Straight time, left to right. The home view, and the one that is shared.</summary>
     Timeline,
 
-    /// <summary>A 24-hour dial. Angle is the time of day; distance from the centre is
-    /// how far through the stretch the day was.</summary>
-    Clock,
-
-    /// <summary>Time folded at a period the owner chooses, so the history lies over
-    /// itself and a repeat shows as an alignment.</summary>
-    Rhythm,
+    /// <summary>
+    /// A ring: time folded at a period the owner chooses, so the history lies over
+    /// itself. Angle is where in the period; distance from the centre is how far
+    /// through the stretch.
+    ///
+    /// <para>One lens because it was always one operation. A fold at a day is a clock
+    /// face — "almost all of these are between two and five in the morning". A fold at a
+    /// week is a weekday ring, which is the pattern an owner can actually act on,
+    /// because it usually means a household routine. A fold at twelve days answers "does
+    /// it come round again".</para>
+    ///
+    /// <para><b>A ring rather than a line, and that is the point of the merge.</b>
+    /// Folded onto a line, phase 0.98 and phase 0.02 land at opposite edges of the card
+    /// — minutes apart in cycle terms, and drawn as two unrelated clumps. So the one
+    /// arrangement built to reveal repeats could hide one, purely because of where the
+    /// range happened to start. A circle has no edges and no seam.</para>
+    /// </summary>
+    Cycle,
 
     /// <summary>One night per row, stacked. Hour of day across, days down.</summary>
     Nights
@@ -204,66 +216,33 @@ public static class ConstellationLayout
     }
 
     /// <summary>
-    /// <b>The Rhythm lens.</b> The same horizon, with time FOLDED: every moment is
-    /// placed by how far it sits into a repeating period rather than by its date, so
-    /// the whole history is laid over itself.
+    /// <b>The Cycle lens.</b> Time folded at <paramref name="periodDays"/> and laid on
+    /// a ring: the angle is where in the period a thing happened, the distance from the
+    /// centre is how far through the chosen stretch it was.
     ///
-    /// <para>This is the one arrangement that can answer "does it come round again?".
-    /// On a straight axis a twelve-day rhythm is a row of dots somewhat evenly spaced,
-    /// which no eye can read; folded at twelve days it is a <b>vertical alignment</b>,
-    /// and folded at anything else it stays a smear. The owner turns the dial and the
-    /// pattern either crystallises or it does not.</para>
+    /// <para>Both are still only time, which is what keeps the rule intact. Arranged
+    /// this way, "almost all of these happen between two and five in the morning" is a
+    /// wedge you see at a glance instead of a fact buried in a list, and the same
+    /// position on different turns lines up as a SPOKE.</para>
     ///
     /// <para><b>The app never chooses the period.</b> It draws whatever fold it is
     /// handed and says nothing about the result — no "cycle detected", no highlight, no
     /// number. An alignment is something the person looking sees, not something Felova
-    /// claims. That distinction is the whole reason this is allowed to exist.</para>
-    /// </summary>
-    /// <param name="periodDays">The fold, in days.</param>
-    public static SkyStar[] PlaceFolded(
-        IReadOnlyList<CelestialEvent> events,
-        DateTime from,
-        double periodDays,
-        double contentWidth,
-        double contentHeight,
-        in SkySignature signature)
-    {
-        if (events.Count == 0 || contentWidth <= 0 || contentHeight <= 0 || periodDays <= 0)
-            return Array.Empty<SkyStar>();
-
-        var xs = new double[events.Count];
-        for (int i = 0; i < events.Count; i++)
-        {
-            var elapsed = (events[i].When - from).TotalDays;
-            var phase = elapsed / periodDays;
-            phase -= Math.Floor(phase);          // 0..1 through the period
-            xs[i] = phase * contentWidth;
-        }
-
-        return AlongAxis(events, xs, contentHeight, signature);
-    }
-
-    /// <summary>
-    /// <b>The Clock lens.</b> A dial: the angle is the TIME OF DAY, the distance from
-    /// the centre is how far through the chosen stretch the day was.
+    /// claims, and that distinction is the whole reason this is allowed to exist.</para>
     ///
-    /// <para>Both are still only time, which is what keeps the rule intact — but
-    /// arranged this way, "almost all of these happen between two and five in the
-    /// morning" is a wedge you see at a glance instead of a fact buried in a list.
-    /// Same time of day on different dates lines up as a SPOKE.</para>
-    ///
-    /// <para>Fixed to the canvas: a clock is not panned or zoomed, so the camera does
-    /// not apply here and <see cref="SkyStar.X"/> is a canvas position rather than a
-    /// moment.</para>
+    /// <para>Fixed to the canvas: a ring is not panned or zoomed, so the camera does not
+    /// apply and <see cref="SkyStar.X"/> is a canvas position rather than a moment.</para>
     /// </summary>
-    public static SkyStar[] PlaceOnDial(
+    /// <param name="periodDays">The fold. 1 is a day (a clock face), 7 a week.</param>
+    public static SkyStar[] PlaceOnRing(
         IReadOnlyList<CelestialEvent> events,
         DateTime from,
         DateTime to,
+        double periodDays,
         double width,
         double height)
     {
-        if (events.Count == 0 || width <= 0 || height <= 0)
+        if (events.Count == 0 || width <= 0 || height <= 0 || periodDays <= 0)
             return Array.Empty<SkyStar>();
 
         var centreX = width / 2;
@@ -283,9 +262,10 @@ public static class ConstellationLayout
         {
             var when = events[i].When;
 
-            // Midnight at the top, running clockwise, like every clock face.
-            var dayFraction = when.TimeOfDay.Ticks / (double)TimeSpan.TicksPerDay;
-            var angle = dayFraction * Math.Tau - Math.PI / 2;
+            // Start of the period at the top, running clockwise, like every clock face.
+            var phase = (when - from).TotalDays / periodDays;
+            phase -= Math.Floor(phase);
+            var angle = phase * Math.Tau - Math.PI / 2;
 
             var through = span <= 0 ? 1 : Math.Clamp((when - from).Ticks / (double)span, 0, 1);
             var radius = inner + through * (outer - inner);

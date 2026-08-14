@@ -35,10 +35,10 @@ using Microsoft.Maui.Graphics;
 /// localized and this one stays a painter.
 /// </summary>
 /// <param name="X">On the Timeline lens this is a WORLD x and the camera applies to
-/// it. On the Clock and Rhythm lenses it is a canvas position, because neither of
-/// those pans.</param>
-/// <param name="Y">Canvas y. The timeline's dates all sit at the foot of the card;
-/// the dial's hours sit around it.</param>
+/// it. On the Cycle and Nights lenses it is a canvas position — a ring is not panned,
+/// and the wall moves vertically instead.</param>
+/// <param name="Y">Canvas y. The timeline's dates sit at the foot of the card, the
+/// ring's quarters around it, and the wall's dates ride with their rows.</param>
 /// <param name="Pinned">Stays put while the content scrolls under it. The wall of
 /// nights scrolls vertically, and its hours belong to the card while its dates belong
 /// to the rows — so the two have to behave differently.</param>
@@ -105,7 +105,8 @@ public sealed class ConstellationDrawable : IDrawable
     public int SelectedIndex { get; set; } = -1;
 
     /// <summary>Which way the sky is folded. The Timeline hangs its stars off a
-    /// horizon and moves under the camera; the Clock is a dial and does neither.</summary>
+    /// horizon and moves under the camera; the Cycle is a ring and does neither; the
+    /// Nights wall scrolls the other way.</summary>
     public SkyLens Lens { get; set; } = SkyLens.Timeline;
 
     /// <summary>How far the wall of nights has been dragged, in canvas units. The
@@ -123,7 +124,7 @@ public sealed class ConstellationDrawable : IDrawable
     // Switching lens used to be a cut: four screens with a hard edge between them.
     // Flown instead, the transformation TEACHES ITSELF — three months of entries
     // visibly collapse into a wedge at three in the morning, and nobody has to read a
-    // sentence to understand what the Clock is. It is the difference between four
+    // sentence to understand what the Cycle ring is. It is the difference between three
     // views and one instrument.
     //
     // The tween runs in SCREEN space, deliberately. Each lens has its own camera (the
@@ -151,16 +152,24 @@ public sealed class ConstellationDrawable : IDrawable
     private bool InFlight => Transition < 1 && TweenFrom.Count > 0 && TweenFrom.Count == TweenTo.Count;
 
     /// <summary>
-    /// One kind brought forward, everything else dropped back to context — or null for
-    /// all eight at once.
+    /// The kinds brought forward, everything else dropped back to context — or empty
+    /// for all eight at once.
     ///
     /// <para>Eight categories overlaid is busy by construction, and no amount of layout
     /// tuning fixes a legibility problem caused by showing everything. "Seizures, with
     /// the rest of life behind them" is a different picture, and it is the one someone
-    /// actually came here to look at. Nothing is computed and nothing is hidden — the
-    /// rest of the sky is still there, just quieter.</para>
+    /// actually came here to look at.</para>
+    ///
+    /// <para><b>More than one at a time, deliberately.</b> Seizures beside medication on
+    /// the wall of nights is the question an owner actually has, and showing two kinds
+    /// at their real times lets them draw their own conclusion — which is exactly what
+    /// they would do turning the pages of a paper diary. Nothing is computed, nothing is
+    /// overlaid, nothing is hidden: the rest of the sky is still there, just quieter.</para>
     /// </summary>
-    public CelestialCategory? Focus { get; set; }
+    public IReadOnlyCollection<CelestialCategory> Focus { get; set; } = Array.Empty<CelestialCategory>();
+
+    private bool OutOfFocus(int index) =>
+        Focus.Count > 0 && index < Events.Count && !Focus.Contains(Events[index].Category);
 
     // ── Palette (resolved through AppColors, never hex literals) ─────────────────
     private readonly Color _skyTop = AppColors.Resolve("NightTop", Color.FromArgb("#123C3E"));
@@ -293,7 +302,7 @@ public sealed class ConstellationDrawable : IDrawable
     {
         switch (lens)
         {
-            case SkyLens.Clock: DrawDial(canvas, rect, alpha); break;
+            case SkyLens.Cycle: DrawRing(canvas, rect, alpha); break;
             case SkyLens.Nights: DrawWall(canvas, rect, alpha); break;
             default: DrawPath(canvas, rect, alpha); break;
         }
@@ -548,14 +557,15 @@ public sealed class ConstellationDrawable : IDrawable
     }
 
     /// <summary>
-    /// The Clock's face: one thin ring, four quarter marks, and nothing else.
+    /// The Cycle's face: one thin ring, four quarter marks, and nothing else.
     ///
     /// <para>No hour hand, no numbers around the inside, no spokes. The dial's whole
-    /// job is to say "this is a day, midnight is up" and then get out of the way — the
+    /// job is to say "this is one turn of the period, and it starts at the top" and then
+    /// get out of the way — the
     /// wedge of stars is the thing being looked at, and every extra line drawn here is
     /// something competing with it.</para>
     /// </summary>
-    private void DrawDial(ICanvas canvas, RectF rect, float alpha)
+    private void DrawRing(ICanvas canvas, RectF rect, float alpha)
     {
         var centreX = rect.X + rect.Width / 2;
         var centreY = rect.Y + rect.Height / 2;
@@ -573,7 +583,7 @@ public sealed class ConstellationDrawable : IDrawable
         canvas.StrokeSize = 1f;
         canvas.DrawCircle(centreX, centreY, outer);
 
-        // Midnight, six, noon, six — just enough to know which way round the day runs.
+        // Quarters — just enough to know which way round a turn runs.
         canvas.StrokeColor = _pathColor.WithAlpha(0.3f * alpha);
         canvas.StrokeSize = 1.2f;
         for (int q = 0; q < 4; q++)
@@ -710,13 +720,13 @@ public sealed class ConstellationDrawable : IDrawable
 
         var margin = radius * 4f + 8f;
 
-        if (Focus is null)
+        if (Focus.Count == 0)
             DrawLinks(canvas, rect, margin);
 
-        // Two passes when one kind is in focus, so the quiet ones are laid down first
-        // and the focused kind sits on top of them rather than being buried by whatever
+        // Two passes when anything is in focus, so the quiet ones are laid down first
+        // and the focused kinds sit on top of them rather than being buried by whatever
         // happened to be logged later.
-        var passes = Focus is null ? 1 : 2;
+        var passes = Focus.Count == 0 ? 1 : 2;
         for (int pass = 0; pass < passes; pass++)
         for (int i = 0; i < Stars.Count; i++)
         {
@@ -725,12 +735,8 @@ public sealed class ConstellationDrawable : IDrawable
             if (x < -margin || x > rect.Width + margin)
                 continue;
 
-            if (Focus is CelestialCategory focused && i < Events.Count)
-            {
-                var inFocus = Events[i].Category == focused;
-                if (inFocus != (pass == 1))
-                    continue;
-            }
+            if (Focus.Count > 0 && OutOfFocus(i) == (pass == 1))
+                continue;
 
             var selected = i == SelectedIndex;
             // Stars and events are placed one-for-one and in the same order; the guard
@@ -741,7 +747,7 @@ public sealed class ConstellationDrawable : IDrawable
             // Out of focus: still there, still in its own colour and its own shape,
             // just quieter. Dropped rather than hidden, because the whole value of the
             // focused kind is seeing it against everything else that was going on.
-            var dimmed = Focus is CelestialCategory kind && kind != category;
+            var dimmed = OutOfFocus(i);
             if (dimmed)
                 color = color.WithAlpha(0.3f);
 
@@ -793,7 +799,7 @@ public sealed class ConstellationDrawable : IDrawable
 
             var category = Events[i].Category;
             var color = ColorFor(category);
-            if (Focus is CelestialCategory kind && kind != category)
+            if (OutOfFocus(i))
                 color = color.WithAlpha(0.3f);
 
             CelestialSymbols.Draw(canvas, category, x, y, radius, color, glow: false,
