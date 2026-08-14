@@ -893,19 +893,20 @@
   <!-- Die drei Ansichten: wann es passiert ist, wann am TAG es passiert ist, und ob
        es wiederkehrt. -->
   <data name="Sky_LensTimeline" xml:space="preserve"><value>Verlauf</value></data>
-  <data name="Sky_LensClock" xml:space="preserve"><value>Uhr</value></data>
-  <data name="Sky_LensRhythm" xml:space="preserve"><value>Rhythmus</value></data>
+  <data name="Sky_LensCycle" xml:space="preserve"><value>Zyklus</value></data>
   <data name="Sky_HintFocus" xml:space="preserve"><value>Tippe ein Symbol an, um nur dem zu folgen.</value></data>
   <data name="Sky_A11yTimeline" xml:space="preserve"><value>Verlauf. {0} Einträge, von alt nach neu.</value></data>
-  <data name="Sky_A11yClock" xml:space="preserve"><value>Uhr. {0} Einträge, nach der Tageszeit angeordnet.</value></data>
-  <data name="Sky_A11yRhythm" xml:space="preserve"><value>Rhythmus. {0} Einträge, die Zeit gefaltet, damit sich Wiederholungen aufreihen.</value></data>
+  <data name="Sky_A11yCycle" xml:space="preserve"><value>Zyklus. {0} Einträge, auf einen Ring gefaltet, damit sich Wiederholungen aufreihen.</value></data>
   <data name="Sky_A11yNights" xml:space="preserve"><value>Nächte. {0} Einträge, eine Zeile pro Tag, die Stunden von links nach rechts.</value></data>
   <data name="Sky_LensNights" xml:space="preserve"><value>Nächte</value></data>
   <data name="Sky_HintTimeline" xml:space="preserve"><value>Zum Heranzoomen aufziehen. Tippe einen Stern an.</value></data>
-  <data name="Sky_HintClock" xml:space="preserve"><value>Wann am Tag etwas passiert ist.</value></data>
-  <data name="Sky_HintRhythm" xml:space="preserve"><value>Dreh am Regler. Was sich wiederholt, reiht sich auf.</value></data>
+  <data name="Sky_HintCycle" xml:space="preserve"><value>Zieh am Himmel, um die Faltung zu drehen. Was sich wiederholt, reiht sich auf.</value></data>
   <data name="Sky_HintNights" xml:space="preserve"><value>Eine Nacht pro Zeile. Zieh nach oben und unten durch die Tage.</value></data>
   <data name="Sky_FoldEvery" xml:space="preserve"><value>Alle {0} Tage</value></data>
+  <data name="Sky_FoldDayLabel" xml:space="preserve"><value>Über einen Tag</value></data>
+  <data name="Sky_FoldWeekLabel" xml:space="preserve"><value>Über eine Woche</value></data>
+  <data name="Sky_AlsoThatDay" xml:space="preserve"><value>Auch an dem Tag</value></data>
+  <data name="Sky_AlsoMore" xml:space="preserve"><value>und {0} weitere</value></data>
   <data name="Sky_FoldDay" xml:space="preserve"><value>Tag {0}</value></data>
   <data name="Sky_DialHour" xml:space="preserve"><value>{0}:00</value></data>
   <!-- Wie lange nach dem vorherigen Eintrag DERSELBEN ART. Jede Art bekommt diese

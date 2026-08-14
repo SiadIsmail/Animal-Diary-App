@@ -92,16 +92,17 @@ public static class ConstellationTicks
     }
 
     /// <summary>
-    /// The dial's four hours, laid around the outside of the face.
+    /// The ring's four quarter marks.
     ///
-    /// <para>Four and no more. A ring of twenty-four numbers is a clock <i>face</i>,
-    /// and this is a sky — the quarters are enough to read a wedge by, and anything
-    /// finer turns the atmosphere into instrumentation.</para>
+    /// <para>At a one-day fold they are hours and the thing is a clock face; beyond
+    /// that they are day numbers. Four and no more either way: a ring of twenty-four
+    /// numbers is instrumentation, and this is a sky — the quarters are enough to read
+    /// a wedge by, and enough to describe one out loud to a vet.</para>
     /// </summary>
-    public static List<SkyTick> Dial(double width, double height)
+    public static List<SkyTick> Ring(double periodDays, double width, double height)
     {
         var ticks = new List<SkyTick>();
-        if (width <= 0 || height <= 0)
+        if (width <= 0 || height <= 0 || periodDays <= 0)
             return ticks;
 
         var centreX = width / 2;
@@ -110,13 +111,20 @@ public static class ConstellationTicks
         if (radius <= 0)
             return ticks;
 
-        foreach (var hour in DialHours)
+        var loc = LocalizationManager.Instance;
+        var wholeDay = periodDays <= 1.0001;
+
+        for (int q = 0; q < 4; q++)
         {
-            var angle = hour / 24.0 * Math.Tau - Math.PI / 2;
+            var angle = q / 4.0 * Math.Tau - Math.PI / 2;
+            var label = wholeDay
+                ? loc.Format("Sky_DialHour", q * 6)
+                : loc.Format("Sky_FoldDay", (int)Math.Round(periodDays * q / 4) + 1);
+
             ticks.Add(new SkyTick(
                 centreX + Math.Cos(angle) * radius,
                 centreY + Math.Sin(angle) * radius + 4,
-                LocalizationManager.Instance.Format("Sky_DialHour", hour)));
+                label));
         }
 
         return ticks;
@@ -168,30 +176,4 @@ public static class ConstellationTicks
         return ticks;
     }
 
-    /// <summary>
-    /// Where you are inside one turn of the fold — day 1, and three markers after it.
-    ///
-    /// <para>Numbered from 1 because that is how a person counts days, and kept to four
-    /// because the point of this lens is the ALIGNMENT, not the reading off. The labels
-    /// exist so an alignment can be described out loud to a vet, not so it can be
-    /// measured.</para>
-    /// </summary>
-    public static List<SkyTick> Fold(double periodDays, double width, double height)
-    {
-        var ticks = new List<SkyTick>();
-        if (width <= 0 || height <= 0 || periodDays <= 0)
-            return ticks;
-
-        var y = height - FootOffset;
-        for (int q = 0; q < 4; q++)
-        {
-            var day = (int)Math.Round(periodDays * q / 4) + 1;
-            ticks.Add(new SkyTick(
-                width * q / 4.0 + width / 8.0,
-                y,
-                LocalizationManager.Instance.Format("Sky_FoldDay", day)));
-        }
-
-        return ticks;
-    }
 }

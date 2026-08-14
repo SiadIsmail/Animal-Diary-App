@@ -69,8 +69,12 @@ public class ConstellationViewModel : BaseViewModel
     private int _selectedIndex = -1;
     private int _loadGeneration;
     private SkyLens _lens = SkyLens.Timeline;
-    private CelestialCategory? _focus;
-    private double _periodDays = 7;
+    private readonly List<CelestialCategory> _focus = new();
+
+    /// <summary>Past three, "focused" stops meaning anything — it is just the sky
+    /// again with two kinds missing.</summary>
+    private const int MaxFocus = 3;
+    private double _periodDays = 1;
     private bool _hintsRetired;
 
     public ConstellationViewModel(
@@ -125,8 +129,7 @@ public class ConstellationViewModel : BaseViewModel
                 return;
 
             OnPropertyChanged(nameof(IsTimeline));
-            OnPropertyChanged(nameof(IsClock));
-            OnPropertyChanged(nameof(IsRhythm));
+            OnPropertyChanged(nameof(IsCycle));
             OnPropertyChanged(nameof(IsNights));
             OnPropertyChanged(nameof(Hint));
             OnPropertyChanged(nameof(LensDescription));
@@ -137,8 +140,7 @@ public class ConstellationViewModel : BaseViewModel
     }
 
     public bool IsTimeline => Lens == SkyLens.Timeline;
-    public bool IsClock => Lens == SkyLens.Clock;
-    public bool IsRhythm => Lens == SkyLens.Rhythm;
+    public bool IsCycle => Lens == SkyLens.Cycle;
     public bool IsNights => Lens == SkyLens.Nights;
 
     /// <summary>How far the Rhythm lens folds time, in days. <b>The owner sets this and
@@ -150,12 +152,12 @@ public class ConstellationViewModel : BaseViewModel
         get => _periodDays;
         set
         {
-            var rounded = Math.Round(Math.Clamp(value, 2, MaxPeriodDays));
+            var rounded = Math.Round(Math.Clamp(value, 1, MaxPeriodDays));
             if (!SetProperty(ref _periodDays, rounded))
                 return;
 
             OnPropertyChanged(nameof(PeriodLabel));
-            if (IsRhythm)
+            if (IsCycle)
                 ViewChanged?.Invoke();
         }
     }
@@ -171,13 +173,20 @@ public class ConstellationViewModel : BaseViewModel
     /// </summary>
     public double MaxPeriodDays => Math.Max(2, Math.Min(60, RangeDays / 2));
 
-    public string PeriodLabel => Loc.Format("Sky_FoldEvery", (int)PeriodDays);
+    /// <summary>What the fold is, said the way a person would say it. "Every 1 days" is
+    /// nobody's sentence — a one-day fold is a clock face and a seven-day fold is a
+    /// week, and both deserve their own words.</summary>
+    public string PeriodLabel => (int)PeriodDays switch
+    {
+        1 => Loc.GetString("Sky_FoldDayLabel"),
+        7 => Loc.GetString("Sky_FoldWeekLabel"),
+        _ => Loc.Format("Sky_FoldEvery", (int)PeriodDays),
+    };
 
     /// <summary>What this lens is for, said in one line.</summary>
     public string Hint => Loc.GetString(Lens switch
     {
-        SkyLens.Clock => "Sky_HintClock",
-        SkyLens.Rhythm => "Sky_HintRhythm",
+        SkyLens.Cycle => "Sky_HintCycle",
         SkyLens.Nights => "Sky_HintNights",
         _ => "Sky_HintTimeline",
     });
@@ -191,11 +200,11 @@ public class ConstellationViewModel : BaseViewModel
     /// cue is the outline every legend key wears, which is what keeps focus findable
     /// after the sentence has gone.</para>
     ///
-    /// <para>The <b>Rhythm</b> hint is the exception and never retires. A fold dial
+    /// <para>The <b>Cycle</b> hint is the exception and never retires. A fold dial
     /// explains nothing about itself, and someone arriving at that tab a year later
     /// deserves the same sentence as someone arriving today.</para>
     /// </summary>
-    public bool ShowHints => !_hintsRetired || IsRhythm;
+    public bool ShowHints => !_hintsRetired || IsCycle;
 
     /// <summary>Shown alongside the lens hint until focus has been used once.</summary>
     public bool ShowFocusHint => !_hintsRetired && Legend.Count > 1;
@@ -205,8 +214,7 @@ public class ConstellationViewModel : BaseViewModel
     /// itself claims.</summary>
     public string LensDescription => Loc.Format(Lens switch
     {
-        SkyLens.Clock => "Sky_A11yClock",
-        SkyLens.Rhythm => "Sky_A11yRhythm",
+        SkyLens.Cycle => "Sky_A11yCycle",
         SkyLens.Nights => "Sky_A11yNights",
         _ => "Sky_A11yTimeline",
     }, Events.Count);
@@ -226,31 +234,39 @@ public class ConstellationViewModel : BaseViewModel
 
     // ── Focus ────────────────────────────────────────────────────────────────────
 
-    /// <summary>The one kind brought forward, or null for all of them.</summary>
-    public CelestialCategory? Focus
-    {
-        get => _focus;
-        private set
-        {
-            if (!SetProperty(ref _focus, value))
-                return;
+    /// <summary>The kinds brought forward, or empty for all of them.</summary>
+    public IReadOnlyList<CelestialCategory> Focus => _focus;
 
-            foreach (var item in Legend)
-                item.IsFocused = value == item.Category;
-
-            RetireHints();
-            RepaintRequested?.Invoke();
-        }
-    }
-
-    /// <summary>Tap a legend key to bring that kind forward; tap it again to let the
-    /// whole sky back in.</summary>
+    /// <summary>
+    /// Tap a legend key to bring that kind forward; tap it again to let it back into
+    /// the crowd.
+    ///
+    /// <para><b>Up to three at once</b>, because the question an owner actually has is
+    /// usually about two things — the nights he seized, against the nights the evening
+    /// dose went in. Both are drawn at their real times and nothing is overlaid or
+    /// computed; the conclusion is the owner's to draw, exactly as it would be turning
+    /// the pages of a paper diary.</para>
+    /// </summary>
     private void ToggleFocus(CelestialLegendItem? item)
     {
         if (item is null)
             return;
 
-        Focus = Focus == item.Category ? null : item.Category;
+        if (!_focus.Remove(item.Category))
+        {
+            // At the cap, the oldest choice makes way — so a tap always does something
+            // rather than silently refusing.
+            if (_focus.Count >= MaxFocus)
+                _focus.RemoveAt(0);
+
+            _focus.Add(item.Category);
+        }
+
+        foreach (var key in Legend)
+            key.IsFocused = _focus.Contains(key.Category);
+
+        RetireHints();
+        RepaintRequested?.Invoke();
     }
 
     private void SetLens(string? lens)
@@ -344,6 +360,7 @@ public class ConstellationViewModel : BaseViewModel
             OnPropertyChanged(nameof(SelectedSymbol));
             OnPropertyChanged(nameof(SelectedGap));
             OnPropertyChanged(nameof(HasSelectedGap));
+            BuildSameDay();
         }
     }
 
@@ -407,6 +424,63 @@ public class ConstellationViewModel : BaseViewModel
     }
 
     public bool HasSelectedGap => !string.IsNullOrEmpty(SelectedGap);
+
+    /// <summary>
+    /// What else was written down on the same day as the tapped entry.
+    ///
+    /// <para>This is the useful half of "did anything go with it" — and it is useful
+    /// precisely because it does <b>nothing</b> but recall. It lists the day's other
+    /// entries at their own times and stops. No window, no overlay, no ordering by
+    /// relevance, no suggestion that any of it is connected. An owner reading "the night
+    /// he seized, he had eaten nothing since morning" has noticed something worth saying
+    /// to a vet; Felova has only turned the page for them.</para>
+    ///
+    /// <para>Capped, and the cap is not a summary — on a day with more entries than fit,
+    /// the line underneath says how many are not shown rather than choosing which
+    /// matter.</para>
+    /// </summary>
+    public ObservableCollection<string> SameDay { get; } = new();
+
+    public bool HasSameDay => SameDay.Count > 0;
+
+    /// <summary>"and 4 more", or empty. Never a selection of which four.</summary>
+    public string SameDayMore { get; private set; } = string.Empty;
+    public bool HasSameDayMore => !string.IsNullOrEmpty(SameDayMore);
+
+    private const int SameDayLimit = 5;
+
+    private void BuildSameDay()
+    {
+        var lines = new List<string>(SameDayLimit);
+        var extra = 0;
+
+        if (Selected is CelestialEvent chosen)
+        {
+            var day = chosen.When.Date;
+            for (int i = 0; i < Events.Count; i++)
+            {
+                if (i == _selectedIndex || Events[i].When.Date != day)
+                    continue;
+
+                if (lines.Count < SameDayLimit)
+                    lines.Add($"{Events[i].When:HH\\:mm} · {Events[i].Title}");
+                else
+                    extra++;
+            }
+        }
+
+        // Built first, then swapped in one synchronous block — never cleared across an
+        // await (AI/coding-standards.md).
+        SameDay.Clear();
+        foreach (var line in lines)
+            SameDay.Add(line);
+
+        SameDayMore = extra > 0 ? Loc.Format("Sky_AlsoMore", extra) : string.Empty;
+
+        OnPropertyChanged(nameof(HasSameDay));
+        OnPropertyChanged(nameof(SameDayMore));
+        OnPropertyChanged(nameof(HasSameDayMore));
+    }
 
     /// <summary>Minutes, hours or days — whichever a person would actually say. Two
     /// seizures twenty minutes apart is a very different sentence from two eighteen
@@ -535,14 +609,13 @@ public class ConstellationViewModel : BaseViewModel
                 Label = CelestialVisuals.Label(category),
                 Symbol = SymbolFor(category),
                 Tilt = items.Count % 2 == 0 ? -3 : 2.5,
-                IsFocused = _focus == category,
+                IsFocused = _focus.Contains(category),
             });
         }
 
         // A kind that is no longer in the sky cannot stay in focus — changing the range
         // would otherwise leave the whole page dimmed for something with nothing in it.
-        if (_focus is CelestialCategory kind && !present.Contains(kind))
-            _focus = null;
+        _focus.RemoveAll(kind => !present.Contains(kind));
 
         // Built first, then swapped in one synchronous block — never cleared across an
         // await (AI/coding-standards.md).
@@ -560,7 +633,7 @@ public class ConstellationViewModel : BaseViewModel
         OnPropertyChanged(nameof(MaxPeriodDays));
         // A fold longer than half the new stretch can show nothing; pull it back in
         // rather than leaving the lens looking broken.
-        PeriodDays = Math.Min(PeriodDays, MaxPeriodDays);
+        PeriodDays = Math.Clamp(PeriodDays, 1, MaxPeriodDays);
         await LoadAsync();
     }
 

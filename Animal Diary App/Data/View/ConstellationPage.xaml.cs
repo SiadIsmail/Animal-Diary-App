@@ -37,6 +37,11 @@ public partial class ConstellationPage : ContentPage
     /// an accumulation, which drifts over a long drag.</summary>
     private double _panStartScroll;
     private double _panStartScrollY;
+    private double _panStartPeriod;
+
+    /// <summary>Canvas units of drag per day of fold. Loose enough that a whole
+    /// month's worth of periods is one comfortable sweep of the thumb.</summary>
+    private const double DaysPerDragUnit = 16.0;
 
     private bool _tracked;
     private bool _sharing;
@@ -341,9 +346,8 @@ public partial class ConstellationPage : ContentPage
 
         _drawable.Stars = sky.Lens switch
         {
-            SkyLens.Clock => ConstellationLayout.PlaceOnDial(sky.Events, sky.From, sky.To, width, height),
-            SkyLens.Rhythm => ConstellationLayout.PlaceFolded(
-                sky.Events, sky.From, sky.PeriodDays, width, height, sky.Signature),
+            SkyLens.Cycle => ConstellationLayout.PlaceOnRing(
+                sky.Events, sky.From, sky.To, sky.PeriodDays, width, height),
             SkyLens.Nights => ConstellationLayout.PlaceOnWall(sky.Events, sky.From, width, rowHeight),
             _ => ConstellationLayout.Place(sky.Events, sky.From, sky.To, width, height, sky.Signature),
         };
@@ -376,8 +380,7 @@ public partial class ConstellationPage : ContentPage
 
         _drawable.Ticks = sky.Lens switch
         {
-            SkyLens.Clock => ConstellationTicks.Dial(width, height),
-            SkyLens.Rhythm => ConstellationTicks.Fold(sky.PeriodDays, width, height),
+            SkyLens.Cycle => ConstellationTicks.Ring(sky.PeriodDays, width, height),
             SkyLens.Nights => ConstellationTicks.Wall(
                 sky.From, _drawable.RowCount, _drawable.RowHeight, width, height),
             // Only the tick STEP depends on the zoom (month names become days as you go
@@ -416,10 +419,7 @@ public partial class ConstellationPage : ContentPage
     {
         var width = SkyHost.Width;
         var lens = vm.ConstellationVM.Lens;
-
-        // A clock is not panned, and a fold is one turn wide — there is nowhere to go.
-        // The wall of nights goes the other way: down through the days.
-        if (width <= 0 || lens is SkyLens.Clock or SkyLens.Rhythm)
+        if (width <= 0)
             return;
 
         switch (e.StatusType)
@@ -427,17 +427,31 @@ public partial class ConstellationPage : ContentPage
             case GestureStatus.Started:
                 _panStartScroll = _scrollX;
                 _panStartScrollY = _scrollY;
+                _panStartPeriod = vm.ConstellationVM.PeriodDays;
                 break;
 
             case GestureStatus.Running:
-                // Dragging right moves the sky right, so time runs backwards under the
-                // finger — the direction people expect from every map they have used.
-                if (lens == SkyLens.Nights)
+                if (lens == SkyLens.Cycle)
+                {
+                    // A ring has nowhere to be panned to, so the drag does the thing the
+                    // lens is actually for: it TURNS THE FOLD. Reaching for the whole
+                    // canvas to look for a rhythm is a far more direct way to ask the
+                    // question than nudging a slider under it.
+                    vm.ConstellationVM.PeriodDays = _panStartPeriod + e.TotalX / DaysPerDragUnit;
+                }
+                else if (lens == SkyLens.Nights)
+                {
                     _scrollY = _panStartScrollY - e.TotalY;
+                    ApplyCamera();
+                }
                 else
+                {
+                    // Dragging right moves the sky right, so time runs backwards under
+                    // the finger — the direction people expect from every map.
                     _scrollX = _panStartScroll - e.TotalX;
+                    ApplyCamera();
+                }
 
-                ApplyCamera();
                 break;
         }
     }
