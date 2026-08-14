@@ -53,7 +53,12 @@ public class ConstellationViewModel : BaseViewModel
 {
     private readonly ConstellationService _constellation;
     private readonly ActivePetService _activePet;
+    private readonly SettingsService _settings;
     private readonly IAnalyticsService _analytics;
+
+    /// <summary>Device-scoped, not per pet: the controls are the same controls whoever
+    /// you are looking at, so learning them once is enough.</summary>
+    private const string HintsRetiredFlag = "sky.hints.retired";
 
     /// <summary>The offered stretches. Presets only, like the vet report's look-backs —
     /// a date-range picker is a form, and this is a thing to look at.</summary>
@@ -66,14 +71,17 @@ public class ConstellationViewModel : BaseViewModel
     private SkyLens _lens = SkyLens.Timeline;
     private CelestialCategory? _focus;
     private double _periodDays = 7;
+    private bool _hintsRetired;
 
     public ConstellationViewModel(
         ConstellationService constellation,
         ActivePetService activePet,
+        SettingsService settings,
         IAnalyticsService analytics)
     {
         _constellation = constellation;
         _activePet = activePet;
+        _settings = settings;
         _analytics = analytics;
 
         SetRangeCommand = new Command<string>(async days => await SetRangeAsync(days));
@@ -94,9 +102,17 @@ public class ConstellationViewModel : BaseViewModel
     public ICommand SetLensCommand { get; }
     public ICommand ToggleFocusCommand { get; }
 
-    /// <summary>Raised when the arrangement changed but the DATA did not — a lens, a
-    /// fold, a focus. The page re-places and repaints without going near the database.</summary>
+    /// <summary>Raised when the ARRANGEMENT changed but the data did not — a lens or a
+    /// fold. The page re-places and flies the stars to their new positions without
+    /// going near the database.</summary>
     public event Action? ViewChanged;
+
+    /// <summary>Raised when only the PAINTING changed — the focus. Deliberately not
+    /// <see cref="ViewChanged"/>: re-placing for a focus is both wasted work and, worse,
+    /// it used to reset the camera, so tapping a legend key threw the wall of nights
+    /// back to its bottom and lost the Timeline's zoom. Nobody moved; someone got
+    /// brighter.</summary>
+    public event Action? RepaintRequested;
 
     // ── The lenses ───────────────────────────────────────────────────────────────
 
@@ -111,8 +127,11 @@ public class ConstellationViewModel : BaseViewModel
             OnPropertyChanged(nameof(IsTimeline));
             OnPropertyChanged(nameof(IsClock));
             OnPropertyChanged(nameof(IsRhythm));
+            OnPropertyChanged(nameof(IsNights));
             OnPropertyChanged(nameof(Hint));
+            OnPropertyChanged(nameof(LensDescription));
             SelectedIndex = -1;
+            RetireHints();
             ViewChanged?.Invoke();
         }
     }
@@ -120,6 +139,7 @@ public class ConstellationViewModel : BaseViewModel
     public bool IsTimeline => Lens == SkyLens.Timeline;
     public bool IsClock => Lens == SkyLens.Clock;
     public bool IsRhythm => Lens == SkyLens.Rhythm;
+    public bool IsNights => Lens == SkyLens.Nights;
 
     /// <summary>How far the Rhythm lens folds time, in days. <b>The owner sets this and
     /// the app never does</b> — Felova offers a dial and says nothing whatsoever about
@@ -130,7 +150,7 @@ public class ConstellationViewModel : BaseViewModel
         get => _periodDays;
         set
         {
-            var rounded = Math.Round(Math.Clamp(value, 2, 60));
+            var rounded = Math.Round(Math.Clamp(value, 2, MaxPeriodDays));
             if (!SetProperty(ref _periodDays, rounded))
                 return;
 
@@ -140,16 +160,69 @@ public class ConstellationViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// The longest fold worth offering: <b>half the stretch on screen</b>.
+    ///
+    /// <para>You cannot see a repeat in a window that does not hold at least two of
+    /// them, so beyond this the lens has nothing to show — and folding a seven-day
+    /// range at sixty days crammed every entry into the leftmost tenth of the card and
+    /// simply looked broken. This is a mechanical bound, not the app choosing a period:
+    /// it says what the picture is capable of showing, never what the answer is.</para>
+    /// </summary>
+    public double MaxPeriodDays => Math.Max(2, Math.Min(60, RangeDays / 2));
+
     public string PeriodLabel => Loc.Format("Sky_FoldEvery", (int)PeriodDays);
 
-    /// <summary>What this lens is for, said in one line. The Rhythm lens in particular
-    /// is useless without it — a fold dial explains nothing about itself.</summary>
+    /// <summary>What this lens is for, said in one line.</summary>
     public string Hint => Loc.GetString(Lens switch
     {
         SkyLens.Clock => "Sky_HintClock",
         SkyLens.Rhythm => "Sky_HintRhythm",
+        SkyLens.Nights => "Sky_HintNights",
         _ => "Sky_HintTimeline",
     });
+
+    /// <summary>
+    /// Whether the introductory lines are still shown.
+    ///
+    /// <para>They retire the moment the owner uses either control they describe — the
+    /// same shape as Today's card hint ("said once, plainly, and then only cued"). An
+    /// app that permanently instructs stops feeling personal; the permanent half of the
+    /// cue is the outline every legend key wears, which is what keeps focus findable
+    /// after the sentence has gone.</para>
+    ///
+    /// <para>The <b>Rhythm</b> hint is the exception and never retires. A fold dial
+    /// explains nothing about itself, and someone arriving at that tab a year later
+    /// deserves the same sentence as someone arriving today.</para>
+    /// </summary>
+    public bool ShowHints => !_hintsRetired || IsRhythm;
+
+    /// <summary>Shown alongside the lens hint until focus has been used once.</summary>
+    public bool ShowFocusHint => !_hintsRetired && Legend.Count > 1;
+
+    /// <summary>What the canvas is, for a screen reader — which cannot see a sky. It
+    /// names the arrangement and how much is in it, which is everything the picture
+    /// itself claims.</summary>
+    public string LensDescription => Loc.Format(Lens switch
+    {
+        SkyLens.Clock => "Sky_A11yClock",
+        SkyLens.Rhythm => "Sky_A11yRhythm",
+        SkyLens.Nights => "Sky_A11yNights",
+        _ => "Sky_A11yTimeline",
+    }, Events.Count);
+
+    /// <summary>The controls have been found; the sentences can go. Fire-and-forget —
+    /// a hint that fails to retire is not worth an error path.</summary>
+    private void RetireHints()
+    {
+        if (_hintsRetired)
+            return;
+
+        _hintsRetired = true;
+        OnPropertyChanged(nameof(ShowHints));
+        OnPropertyChanged(nameof(ShowFocusHint));
+        _settings.SetFlagAsync(HintsRetiredFlag, true).Forget();
+    }
 
     // ── Focus ────────────────────────────────────────────────────────────────────
 
@@ -165,7 +238,8 @@ public class ConstellationViewModel : BaseViewModel
             foreach (var item in Legend)
                 item.IsFocused = value == item.Category;
 
-            ViewChanged?.Invoke();
+            RetireHints();
+            RepaintRequested?.Invoke();
         }
     }
 
@@ -378,6 +452,12 @@ public class ConstellationViewModel : BaseViewModel
         var generation = ++_loadGeneration;
         var pet = _activePet.ActivePet;
 
+        if (!_hintsRetired)
+        {
+            _hintsRetired = await _settings.GetFlagAsync(HintsRetiredFlag);
+            OnPropertyChanged(nameof(ShowHints));
+        }
+
         IsLoading = true;
         try
         {
@@ -427,6 +507,8 @@ public class ConstellationViewModel : BaseViewModel
         OnPropertyChanged(nameof(IsEmpty));
         OnPropertyChanged(nameof(AsterismName));
         OnPropertyChanged(nameof(HasAsterism));
+        OnPropertyChanged(nameof(LensDescription));
+        OnPropertyChanged(nameof(ShowFocusHint));
         OnPropertyChanged(nameof(ShareTitle));
         OnPropertyChanged(nameof(ShareSubtitle));
         SkyChanged?.Invoke();
@@ -475,6 +557,10 @@ public class ConstellationViewModel : BaseViewModel
             return;
 
         RangeDays = value;
+        OnPropertyChanged(nameof(MaxPeriodDays));
+        // A fold longer than half the new stretch can show nothing; pull it back in
+        // rather than leaving the lens looking broken.
+        PeriodDays = Math.Min(PeriodDays, MaxPeriodDays);
         await LoadAsync();
     }
 

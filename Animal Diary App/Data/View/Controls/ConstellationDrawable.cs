@@ -39,7 +39,10 @@ using Microsoft.Maui.Graphics;
 /// those pans.</param>
 /// <param name="Y">Canvas y. The timeline's dates all sit at the foot of the card;
 /// the dial's hours sit around it.</param>
-public readonly record struct SkyTick(double X, double Y, string Label);
+/// <param name="Pinned">Stays put while the content scrolls under it. The wall of
+/// nights scrolls vertically, and its hours belong to the card while its dates belong
+/// to the rows — so the two have to behave differently.</param>
+public readonly record struct SkyTick(double X, double Y, string Label, bool Pinned = false);
 
 public sealed class ConstellationDrawable : IDrawable
 {
@@ -104,6 +107,48 @@ public sealed class ConstellationDrawable : IDrawable
     /// <summary>Which way the sky is folded. The Timeline hangs its stars off a
     /// horizon and moves under the camera; the Clock is a dial and does neither.</summary>
     public SkyLens Lens { get; set; } = SkyLens.Timeline;
+
+    /// <summary>How far the wall of nights has been dragged, in canvas units. The
+    /// Nights lens is the only one that scrolls vertically — a year of rows is taller
+    /// than any card.</summary>
+    public double ScrollY { get; set; }
+
+    /// <summary>One night's height on the wall, from <c>ConstellationLayout.RowHeight</c>.</summary>
+    public double RowHeight { get; set; }
+
+    /// <summary>How many nights the wall holds.</summary>
+    public int RowCount { get; set; }
+
+    // ── The lens change, in flight ───────────────────────────────────────────────
+    // Switching lens used to be a cut: four screens with a hard edge between them.
+    // Flown instead, the transformation TEACHES ITSELF — three months of entries
+    // visibly collapse into a wedge at three in the morning, and nobody has to read a
+    // sentence to understand what the Clock is. It is the difference between four
+    // views and one instrument.
+    //
+    // The tween runs in SCREEN space, deliberately. Each lens has its own camera (the
+    // Timeline zooms, the wall scrolls) and interpolating between two cameras as well
+    // as two layouts is a knot with nothing to show for it; resolving both ends to
+    // pixels first makes the whole thing one lerp.
+
+    /// <summary>0 → the old lens, 1 → settled on the new one. 1 at rest.</summary>
+    public double Transition { get; set; } = 1;
+
+    /// <summary>The lens being left. Its backdrop fades out as the new one fades in.</summary>
+    public SkyLens FromLens { get; set; } = SkyLens.Timeline;
+
+    /// <summary>Where each star was, and where it is going, already in canvas
+    /// coordinates. One entry per event in <see cref="Events"/> order, or empty when
+    /// nothing is in flight.</summary>
+    public IReadOnlyList<PointF> TweenFrom { get; set; } = Array.Empty<PointF>();
+    public IReadOnlyList<PointF> TweenTo { get; set; } = Array.Empty<PointF>();
+
+    /// <summary>Symbols are sized differently per lens (a wall bounds them by its
+    /// rows), so the size flies too.</summary>
+    public float TweenFromRadius { get; set; }
+    public float TweenToRadius { get; set; }
+
+    private bool InFlight => Transition < 1 && TweenFrom.Count > 0 && TweenFrom.Count == TweenTo.Count;
 
     /// <summary>
     /// One kind brought forward, everything else dropped back to context — or null for
@@ -202,25 +247,59 @@ public sealed class ConstellationDrawable : IDrawable
     private float StarX(in SkyStar star) =>
         ScreenX(star.X) + (float)(star.NudgeX * ConstellationLayout.NudgeFade(Zoom));
 
+    /// <summary>Canvas y for a placed star. Only the wall of nights scrolls vertically;
+    /// on every other lens a star's y is already where it belongs.</summary>
+    private float ScreenY(double contentY) =>
+        (float)(Lens == SkyLens.Nights ? contentY - ScrollY : contentY);
+
     public void Draw(ICanvas canvas, RectF rect)
     {
         if (rect.Width <= 0 || rect.Height <= 0)
             return;
 
+        var t = (float)Math.Clamp(Transition, 0, 1);
+
         DrawAtmosphere(canvas, rect);
         DrawBubbles(canvas, rect);
         DrawDust(canvas, rect);
-        DrawAsterism(canvas, rect);
 
-        if (Lens == SkyLens.Clock)
-            DrawDial(canvas, rect);
+        // The pet's figure sits behind three of the four lenses. Not the wall: a
+        // constellation drawn across a hundred ruled rows is noise, and the rows are
+        // the thing being read. Mid-flight it fades rather than blinks.
+        var figure = Lerp(Weight(FromLens), Weight(Lens), t);
+        if (figure > 0.01f)
+            DrawAsterism(canvas, rect, figure);
+
+        if (t < 1 && FromLens != Lens)
+        {
+            DrawBackdrop(canvas, rect, FromLens, 1 - t);
+            DrawBackdrop(canvas, rect, Lens, t);
+        }
         else
-            DrawPath(canvas, rect);
+        {
+            DrawBackdrop(canvas, rect, Lens, 1);
+        }
 
-        DrawTicks(canvas, rect);
-        DrawStars(canvas, rect);
+        // The labels belong to the arriving lens; they fade up rather than travel,
+        // because a date sliding into an hour means nothing.
+        DrawTicks(canvas, rect, t);
+        DrawStars(canvas, rect, t);
         DrawVignette(canvas, rect);
+
+        static float Weight(SkyLens lens) => lens == SkyLens.Nights ? 0f : 1f;
     }
+
+    private void DrawBackdrop(ICanvas canvas, RectF rect, SkyLens lens, float alpha)
+    {
+        switch (lens)
+        {
+            case SkyLens.Clock: DrawDial(canvas, rect, alpha); break;
+            case SkyLens.Nights: DrawWall(canvas, rect, alpha); break;
+            default: DrawPath(canvas, rect, alpha); break;
+        }
+    }
+
+    private static float Lerp(float from, float to, float t) => from + (to - from) * t;
 
     /// <summary>A soft darkening at the corners. It is what makes the card read as a
     /// window onto a night rather than a rectangle painted dark — and it settles the
@@ -398,7 +477,7 @@ public sealed class ConstellationDrawable : IDrawable
     /// each mean something), and they are dimmer than any event. Someone glancing at
     /// this must never wonder whether the figure is telling them something.</para>
     /// </summary>
-    private void DrawAsterism(ICanvas canvas, RectF rect)
+    private void DrawAsterism(ICanvas canvas, RectF rect, float alpha)
     {
         if (!Asterism.HasShape)
             return;
@@ -411,7 +490,7 @@ public sealed class ConstellationDrawable : IDrawable
         // Dim. The figure is the room, not the record — if it can compete with an event
         // for attention, it is drawn wrong.
         canvas.StrokeSize = 1f;
-        canvas.StrokeColor = _asterism.WithAlpha(0.10f);
+        canvas.StrokeColor = _asterism.WithAlpha(0.10f * alpha);
         canvas.StrokeLineCap = LineCap.Round;
 
         foreach (var line in Asterism.Lines)
@@ -427,9 +506,9 @@ public sealed class ConstellationDrawable : IDrawable
             var brightness = (float)stars[i].Brightness;
             var radius = 1.5f + brightness * 1.9f;
 
-            canvas.FillColor = _asterism.WithAlpha(0.07f * brightness);
+            canvas.FillColor = _asterism.WithAlpha(0.07f * brightness * alpha);
             canvas.FillCircle(X(i), Y(i), radius * 2.8f);
-            canvas.FillColor = _asterism.WithAlpha(0.22f + 0.2f * brightness);
+            canvas.FillColor = _asterism.WithAlpha((0.22f + 0.2f * brightness) * alpha);
             canvas.FillCircle(X(i), Y(i), radius);
         }
     }
@@ -439,7 +518,7 @@ public sealed class ConstellationDrawable : IDrawable
     /// <summary>A thin glowing path rather than an axis: two strokes, the wide one
     /// nearly transparent. Sampled every few pixels because it is a sine sum, not a
     /// data series — there are no points to join.</summary>
-    private void DrawPath(ICanvas canvas, RectF rect)
+    private void DrawPath(ICanvas canvas, RectF rect, float alpha)
     {
         const float step = 5f;
         var path = new PathF();
@@ -459,11 +538,11 @@ public sealed class ConstellationDrawable : IDrawable
         canvas.StrokeLineCap = LineCap.Round;
         canvas.StrokeLineJoin = LineJoin.Round;
 
-        canvas.StrokeColor = _pathColor.WithAlpha(0.11f);
+        canvas.StrokeColor = _pathColor.WithAlpha(0.11f * alpha);
         canvas.StrokeSize = 7f;
         canvas.DrawPath(path);
 
-        canvas.StrokeColor = _pathColor.WithAlpha(0.5f);
+        canvas.StrokeColor = _pathColor.WithAlpha(0.5f * alpha);
         canvas.StrokeSize = 1.2f;
         canvas.DrawPath(path);
     }
@@ -476,7 +555,7 @@ public sealed class ConstellationDrawable : IDrawable
     /// wedge of stars is the thing being looked at, and every extra line drawn here is
     /// something competing with it.</para>
     /// </summary>
-    private void DrawDial(ICanvas canvas, RectF rect)
+    private void DrawDial(ICanvas canvas, RectF rect, float alpha)
     {
         var centreX = rect.X + rect.Width / 2;
         var centreY = rect.Y + rect.Height / 2;
@@ -486,16 +565,16 @@ public sealed class ConstellationDrawable : IDrawable
 
         canvas.StrokeLineCap = LineCap.Round;
 
-        canvas.StrokeColor = _pathColor.WithAlpha(0.10f);
+        canvas.StrokeColor = _pathColor.WithAlpha(0.10f * alpha);
         canvas.StrokeSize = 5f;
         canvas.DrawCircle(centreX, centreY, outer);
 
-        canvas.StrokeColor = _pathColor.WithAlpha(0.4f);
+        canvas.StrokeColor = _pathColor.WithAlpha(0.4f * alpha);
         canvas.StrokeSize = 1f;
         canvas.DrawCircle(centreX, centreY, outer);
 
         // Midnight, six, noon, six — just enough to know which way round the day runs.
-        canvas.StrokeColor = _pathColor.WithAlpha(0.3f);
+        canvas.StrokeColor = _pathColor.WithAlpha(0.3f * alpha);
         canvas.StrokeSize = 1.2f;
         for (int q = 0; q < 4; q++)
         {
@@ -508,17 +587,77 @@ public sealed class ConstellationDrawable : IDrawable
         }
     }
 
+    /// <summary>
+    /// The wall's own backdrop: a soft daylight wash across the middle of each day, and
+    /// the faintest banding to tell one night from the next.
+    ///
+    /// <para><b>The wash is the whole idea.</b> With the daytime hours lit and the
+    /// small hours left dark, "these keep happening in the middle of the night" is
+    /// something you see before you have read a single label — and it is drawn from
+    /// clock time alone, so it asserts nothing. It is a gradient rather than two hard
+    /// edges because dawn is not a boundary and the picture should not pretend it
+    /// is.</para>
+    ///
+    /// <para>The banding is deliberately at the edge of visible. Rows have to be
+    /// separable or the wall is a smear, but this app does not draw gridlines, and a
+    /// ruled page would turn the one surface built for looking into a spreadsheet.</para>
+    /// </summary>
+    private void DrawWall(ICanvas canvas, RectF rect, float alpha)
+    {
+        if (RowHeight <= 0 || RowCount <= 0)
+            return;
+
+        var inset = (float)ConstellationLayout.WallInset;
+        var plotLeft = rect.X + inset;
+        var plotWidth = rect.Width - inset - 8f;
+        if (plotWidth <= 0)
+            return;
+
+        // Daylight: nothing at midnight, warmest around noon.
+        var wash = new RectF(plotLeft, rect.Y, plotWidth, rect.Height);
+        canvas.SaveState();
+        canvas.SetFillPaint(new LinearGradientPaint
+        {
+            GradientStops = new[]
+            {
+                new PaintGradientStop(0f, _glowSand.WithAlpha(0f)),
+                new PaintGradientStop(0.27f, _glowSand.WithAlpha(0.045f * alpha)),
+                new PaintGradientStop(0.5f, _glowSand.WithAlpha(0.075f * alpha)),
+                new PaintGradientStop(0.73f, _glowSand.WithAlpha(0.045f * alpha)),
+                new PaintGradientStop(1f, _glowSand.WithAlpha(0f)),
+            },
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(1, 0)
+        }, wash);
+        canvas.FillRectangle(wash);
+        canvas.RestoreState();
+
+        // Only the rows actually on screen — a year is three thousand pixels of wall.
+        var first = Math.Max(0, (int)Math.Floor(ScrollY / RowHeight));
+        var last = Math.Min(RowCount - 1, (int)Math.Ceiling((ScrollY + rect.Height) / RowHeight));
+
+        canvas.FillColor = _dust.WithAlpha(0.028f * alpha);
+        for (int row = first; row <= last; row++)
+        {
+            if (row % 2 != 0)
+                continue;
+
+            var top = rect.Y + (float)(row * RowHeight - ScrollY);
+            canvas.FillRectangle(plotLeft, top, plotWidth, (float)RowHeight);
+        }
+    }
+
     /// <summary>Dates, floated at the foot of the sky with no rule under them. The one
     /// axis that means anything is time, so it is the one that gets labels — and even
     /// it gets no line.</summary>
-    private void DrawTicks(ICanvas canvas, RectF rect)
+    private void DrawTicks(ICanvas canvas, RectF rect, float alpha)
     {
-        if (Ticks.Count == 0)
+        if (Ticks.Count == 0 || alpha <= 0.01f)
             return;
 
         canvas.Font = Font.Default;
         canvas.FontSize = 10f;
-        canvas.FontColor = _tickColor.WithAlpha(0.55f);
+        canvas.FontColor = _tickColor.WithAlpha(0.55f * alpha);
 
         foreach (var tick in Ticks)
         {
@@ -528,14 +667,24 @@ public sealed class ConstellationDrawable : IDrawable
             if (x < rect.X - 40 || x > rect.Right + 40)
                 continue;
 
-            canvas.DrawString(tick.Label, x, rect.Y + (float)tick.Y, HorizontalAlignment.Center);
+            var y = rect.Y + (tick.Pinned ? (float)tick.Y : ScreenY(tick.Y));
+            if (y < rect.Y - 12 || y > rect.Bottom + 12)
+                continue;
+
+            canvas.DrawString(tick.Label, x, y, HorizontalAlignment.Center);
         }
     }
 
     // ── The events ───────────────────────────────────────────────────────────────
 
-    private void DrawStars(ICanvas canvas, RectF rect)
+    private void DrawStars(ICanvas canvas, RectF rect, float t)
     {
+        if (InFlight)
+        {
+            DrawStarsInFlight(canvas, rect, t);
+            return;
+        }
+
         if (Stars.Count == 0)
             return;
 
@@ -544,7 +693,13 @@ public sealed class ConstellationDrawable : IDrawable
         // full size as the crowd around them thins out: the reveal is one rule, not a
         // second code path (see ConstellationLayout.StarRadius).
         var screenWidth = (WorldWidth > 0 ? WorldWidth : rect.Width) * (Zoom <= 0 ? 1 : Zoom);
-        var radius = (float)ConstellationLayout.StarRadius(screenWidth, Events.Count);
+
+        // On the wall a symbol is bounded by its ROW, not by how much time is on
+        // screen: rows are the structure, and a star that overflowed one would be read
+        // as belonging to the night above or below it.
+        var radius = Lens == SkyLens.Nights
+            ? (float)Math.Clamp(RowHeight * 0.38, 2.2, 5.6)
+            : (float)ConstellationLayout.StarRadius(screenWidth, Events.Count);
 
         // Glow needs ROOM, not just size. A halo is wider than its symbol, so on a run
         // of daily entries — one mood a day, ten pixels apart — every halo touched its
@@ -594,7 +749,7 @@ public sealed class ConstellationDrawable : IDrawable
                 canvas,
                 category,
                 rect.X + x,
-                rect.Y + (float)star.Y,
+                rect.Y + ScreenY(star.Y),
                 selected ? MathF.Max(radius * 1.6f, 6f) : (dimmed ? radius * 0.72f : radius),
                 color,
                 (glow || selected) && !dimmed,
@@ -606,8 +761,43 @@ public sealed class ConstellationDrawable : IDrawable
             {
                 canvas.StrokeColor = color.WithAlpha(0.75f);
                 canvas.StrokeSize = 1.2f;
-                canvas.DrawCircle(rect.X + x, rect.Y + (float)star.Y, MathF.Max(radius * 3.4f, 15f));
+                canvas.DrawCircle(rect.X + x, rect.Y + ScreenY(star.Y), MathF.Max(radius * 3.4f, 15f));
             }
+        }
+    }
+
+    /// <summary>
+    /// Mid-flight: every star drawn between where it was and where it is going.
+    ///
+    /// <para>No links, no guides, no selection ring — the only thing worth watching
+    /// during a lens change is the entries themselves moving, and everything else is
+    /// furniture that belongs to one end or the other. Positions are already in canvas
+    /// coordinates, so the camera is deliberately not applied: it belongs to whichever
+    /// lens the flight lands on.</para>
+    /// </summary>
+    private void DrawStarsInFlight(ICanvas canvas, RectF rect, float t)
+    {
+        var radius = Lerp(TweenFromRadius, TweenToRadius, t);
+        if (radius <= 0)
+            return;
+
+        for (int i = 0; i < TweenFrom.Count && i < Events.Count; i++)
+        {
+            var from = TweenFrom[i];
+            var to = TweenTo[i];
+
+            var x = rect.X + Lerp(from.X, to.X, t);
+            var y = rect.Y + Lerp(from.Y, to.Y, t);
+            if (x < rect.X - 40 || x > rect.Right + 40 || y < rect.Y - 40 || y > rect.Bottom + 40)
+                continue;
+
+            var category = Events[i].Category;
+            var color = ColorFor(category);
+            if (Focus is CelestialCategory kind && kind != category)
+                color = color.WithAlpha(0.3f);
+
+            CelestialSymbols.Draw(canvas, category, x, y, radius, color, glow: false,
+                tilt: i % 2 == 0 ? -0.11f : 0.09f);
         }
     }
 
@@ -650,8 +840,8 @@ public sealed class ConstellationDrawable : IDrawable
                 continue;
 
             canvas.DrawLine(
-                rect.X + ox, rect.Y + (float)other.Y,
-                rect.X + x, rect.Y + (float)star.Y);
+                rect.X + ox, rect.Y + ScreenY(other.Y),
+                rect.X + x, rect.Y + ScreenY(star.Y));
         }
     }
 

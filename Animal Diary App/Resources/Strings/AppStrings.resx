@@ -918,9 +918,16 @@
   <data name="Sky_LensTimeline" xml:space="preserve"><value>Timeline</value></data>
   <data name="Sky_LensClock" xml:space="preserve"><value>Clock</value></data>
   <data name="Sky_LensRhythm" xml:space="preserve"><value>Rhythm</value></data>
+  <data name="Sky_HintFocus" xml:space="preserve"><value>Tap a symbol to follow just that one.</value></data>
+  <data name="Sky_A11yTimeline" xml:space="preserve"><value>Timeline. {0} entries, oldest to newest.</value></data>
+  <data name="Sky_A11yClock" xml:space="preserve"><value>Clock. {0} entries, placed by the time of day they happened.</value></data>
+  <data name="Sky_A11yRhythm" xml:space="preserve"><value>Rhythm. {0} entries, with time folded so repeats line up.</value></data>
+  <data name="Sky_A11yNights" xml:space="preserve"><value>Nights. {0} entries, one row per day and the hours running across.</value></data>
+  <data name="Sky_LensNights" xml:space="preserve"><value>Nights</value></data>
   <data name="Sky_HintTimeline" xml:space="preserve"><value>Pinch to look closer. Tap a star.</value></data>
   <data name="Sky_HintClock" xml:space="preserve"><value>Where in the day things happened.</value></data>
   <data name="Sky_HintRhythm" xml:space="preserve"><value>Turn the dial. If something repeats, it lines up.</value></data>
+  <data name="Sky_HintNights" xml:space="preserve"><value>One night per row. Drag up and down through the days.</value></data>
   <data name="Sky_FoldEvery" xml:space="preserve"><value>Every {0} days</value></data>
   <data name="Sky_FoldDay" xml:space="preserve"><value>Day {0}</value></data>
   <data name="Sky_DialHour" xml:space="preserve"><value>{0}:00</value></data>

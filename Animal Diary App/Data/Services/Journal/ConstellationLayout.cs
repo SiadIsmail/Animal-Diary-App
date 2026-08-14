@@ -35,7 +35,10 @@ public enum SkyLens
 
     /// <summary>Time folded at a period the owner chooses, so the history lies over
     /// itself and a repeat shows as an alignment.</summary>
-    Rhythm
+    Rhythm,
+
+    /// <summary>One night per row, stacked. Hour of day across, days down.</summary>
+    Nights
 }
 
 /// <summary>One placed star. <see cref="PathY"/> rides along because the guide line
@@ -295,6 +298,73 @@ public static class ConstellationLayout
 
             var x = centreX + Math.Cos(angle) * radius;
             var y = centreY + Math.Sin(angle) * radius;
+
+            stars[i] = new SkyStar(x, y, y);
+        }
+
+        return stars;
+    }
+
+    // ── The wall of nights ────────────────────────────────────────────────────
+    /// <summary>Thinner than this and a row stops being a row — the symbol in it is a
+    /// smudge and two entries an hour apart touch. Below it the wall grows past the
+    /// card and is scrolled instead of squeezed.</summary>
+    public const double MinRowHeight = 8.0;
+
+    /// <summary>Room down the left for the dates, inside the plotted day.</summary>
+    public const double WallInset = 34.0;
+
+    /// <summary>How tall each night's row is: fill the card when there are few days,
+    /// and never go below <see cref="MinRowHeight"/> when there are many.</summary>
+    public static double RowHeight(int dayCount, double viewportHeight) =>
+        dayCount <= 0 ? viewportHeight : Math.Max(MinRowHeight, viewportHeight / dayCount);
+
+    /// <summary>How many days the wall covers, inclusive of both ends.</summary>
+    public static int DayCount(DateTime from, DateTime to) =>
+        Math.Max(1, (int)(to.Date - from.Date).TotalDays + 1);
+
+    /// <summary>
+    /// <b>The Nights lens.</b> One day per row, stacked oldest at the top; across a row
+    /// is the hour of the day. The actogram, which is the shape a human epilepsy diary
+    /// has been drawn in for decades — and for a reason.
+    ///
+    /// <para>It is the only arrangement here that answers <b>four questions in one
+    /// picture</b>: a habit at 3am is a vertical band, a multi-day rhythm is a diagonal
+    /// drift, a cluster — two or three inside one day, which is the threshold a lot of
+    /// dogs' emergency plans hang on — is a single crowded row, and a change in how
+    /// much is being recorded is the wall getting denser as the eye travels down.</para>
+    ///
+    /// <para>Still only time on both axes, and still nothing computed: the app draws
+    /// the rows and says nothing whatsoever about what is in them.</para>
+    /// </summary>
+    /// <param name="rowHeight">From <see cref="RowHeight"/> — the page decides it,
+    /// because only the page knows how tall the card is.</param>
+    /// <returns>Stars in CONTENT space: y runs down the whole wall, which is usually
+    /// taller than the card. The drawable scrolls it.</returns>
+    public static SkyStar[] PlaceOnWall(
+        IReadOnlyList<CelestialEvent> events,
+        DateTime from,
+        double width,
+        double rowHeight)
+    {
+        if (events.Count == 0 || width <= WallInset || rowHeight <= 0)
+            return Array.Empty<SkyStar>();
+
+        var plotWidth = width - WallInset - 8;
+        var stars = new SkyStar[events.Count];
+
+        for (int i = 0; i < events.Count; i++)
+        {
+            var when = events[i].When;
+            var day = (int)(when.Date - from.Date).TotalDays;
+
+            var dayFraction = when.TimeOfDay.Ticks / (double)TimeSpan.TicksPerDay;
+            var x = WallInset + dayFraction * plotWidth;
+
+            // Sat in the middle of its row, with a wobble that stays inside it — two
+            // entries at the same hour of the same day are two marks, not one.
+            var wobble = Jitter(when.Ticks, 1.0) * rowHeight * 0.17;
+            var y = (day + 0.5) * rowHeight + wobble;
 
             stars[i] = new SkyStar(x, y, y);
         }
