@@ -363,6 +363,22 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         }
     }
 
+    /// <summary>Heading over the Care tab's reading surfaces (vet summary, documents,
+    /// constellation). It carries the active pet's name on purpose: every row under it
+    /// follows the pet switcher, and the card itself has no other way to say so.
+    /// Falls back to a nameless form rather than rendering "'s record" — a pet with a
+    /// blank name shouldn't produce a broken possessive (AI/app-voice.md §20).</summary>
+    public string RecordSectionTitle
+    {
+        get
+        {
+            var name = ActivePet?.Name;
+            return string.IsNullOrWhiteSpace(name)
+                ? LocalizationManager.Instance.GetString("Care_RecordSectionNoName")
+                : LocalizationManager.Instance.Format("Care_RecordSection", name);
+        }
+    }
+
     /// <summary>Localized "Medications for {pet}" header shown on the Medications page.</summary>
     public string MedicationsHeader =>
         LocalizationManager.Instance.Format("Med_ForPet", SelectedPet?.Name ?? string.Empty);
@@ -399,6 +415,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
                 OnPropertyChanged(nameof(ActivePet));
                 OnPropertyChanged(nameof(ActivePetEmoji));
                 OnPropertyChanged(nameof(ActivePetSubtitle));
+                OnPropertyChanged(nameof(RecordSectionTitle));
                 // The chips describe the active pet — they have to follow a switch.
                 LoadActivePetTagsAsync().Forget();
             }
@@ -409,6 +426,10 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         {
             foreach (var tag in ActivePetTags)
                 tag.RefreshLabel();
+            // Same reason, for the properties that build a sentence out of a resource:
+            // they are resolved per read, so a live language switch needs a nudge.
+            OnPropertyChanged(nameof(ActivePetSubtitle));
+            OnPropertyChanged(nameof(RecordSectionTitle));
         };
     }
 
@@ -589,6 +610,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(ActivePet));
         OnPropertyChanged(nameof(ActivePetEmoji));
         OnPropertyChanged(nameof(ActivePetSubtitle));
+        OnPropertyChanged(nameof(RecordSectionTitle));
         return true;
     }
 
@@ -677,6 +699,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(ActivePet));
         OnPropertyChanged(nameof(ActivePetEmoji));
         OnPropertyChanged(nameof(ActivePetSubtitle));
+        OnPropertyChanged(nameof(RecordSectionTitle));
     }
 
     // Parsed birthday parts: null when the field is blank OR unparseable. Blank month

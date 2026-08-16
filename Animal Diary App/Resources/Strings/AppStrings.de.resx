@@ -378,10 +378,20 @@
   <data name="Pets_Manage" xml:space="preserve"><value>Verwalten</value></data>
   <data name="ConditionPicker_Title" xml:space="preserve"><value>Hat {0} anhaltende Erkrankungen?</value></data>
   <data name="ConditionPicker_Sub" xml:space="preserve"><value>Wähle alles Zutreffende, dann hält Felova das Richtige für {0} fest. Du kannst das später ändern.</value></data>
-  <data name="Pets_QuickManagement" xml:space="preserve"><value>Schnellverwaltung</value></data>
   <data name="Pets_AddPet" xml:space="preserve"><value>Tier hinzufügen</value></data>
-  <data name="Pets_Medication" xml:space="preserve"><value>Medikament</value></data>
-  <data name="Pets_MedicationSubtitle" xml:space="preserve"><value>Zeitpläne und Dosen</value></data>
+  <!-- Plural here, unlike the English singular: the button opens the list of this
+       pet's medications. Shares a 50/50 row with Pets_Manage ("Verwalten"). -->
+  <data name="Pets_Medication" xml:space="preserve"><value>Medikamente</value></data>
+  <!-- Deliberately not a translation of "{0}'s record": the German genitive breaks on
+       names ending in s/z/x ("Max' ..."), and pet names are user input. "Alles zu {0}"
+       says the same thing, works with every name, and is shorter. -->
+  <data name="Care_RecordSection" xml:space="preserve"><value>Alles zu {0}</value></data>
+  <data name="Care_RecordSectionNoName" xml:space="preserve"><value>Alles Festgehaltene</value></data>
+  <data name="Care_SharedCare" xml:space="preserve"><value>Gemeinsame Pflege</value></data>
+  <data name="Care_ShareRowTitle" xml:space="preserve"><value>Jemanden einladen</value></data>
+  <data name="Care_ShareRowSubtitle" xml:space="preserve"><value>Oder sehen, wer schon mithilft</value></data>
+  <data name="Care_JoinRowTitle" xml:space="preserve"><value>Einladungscode nutzen</value></data>
+  <data name="Care_JoinRowSubtitle" xml:space="preserve"><value>Bei einem anderen Tier mithelfen</value></data>
   <data name="Pets_Documents" xml:space="preserve"><value>Dokumente</value></data>
   <data name="Pets_DocumentsSubtitle" xml:space="preserve"><value>Berichte, Scans und Dateien</value></data>
   <data name="Pets_Export" xml:space="preserve"><value>Tierarztbericht</value></data>
@@ -715,7 +725,6 @@
   <data name="Cloud_Join" xml:space="preserve"><value>Beitreten</value></data>
   <data name="Cloud_JoinSuccess" xml:space="preserve"><value>Hinzugefügt. Das Tier wird jetzt synchronisiert…</value></data>
   <data name="Cloud_JoinRowTitle" xml:space="preserve"><value>Einem Tier beitreten</value></data>
-  <data name="Cloud_JoinRowSubtitle" xml:space="preserve"><value>Einladungscode? Hilf bei der Pflege mit</value></data>
   <data name="Cloud_JoinSubtitle" xml:space="preserve"><value>Gib den Code ein, den dir jemand geschickt hat</value></data>
   <data name="Cloud_JoinBody" xml:space="preserve"><value>Gib den Einladungscode ein, den dir jemand geschickt hat. Du siehst dann das Tagebuch des Tieres und kannst es mitpflegen.</value></data>
   <data name="Cloud_ErrInviteInvalid" xml:space="preserve"><value>Dieser Code ist ungültig oder abgelaufen. Bitte um einen neuen.</value></data>
@@ -825,8 +834,10 @@
   <data name="Today_PickerOnOtherCard" xml:space="preserve"><value>Steht auf der anderen Karte. Die beiden tauschen dann</value></data>
   <data name="Common_MmolSuffix" xml:space="preserve"><value>mmol/l</value></data>
   <!-- ── Feedback-Sheet (unten auf der Pflege-Seite) ── -->
-  <data name="Feedback_RowTitle" xml:space="preserve"><value>Sag uns, was nicht funktioniert</value></data>
-  <data name="Feedback_RowSubtitle" xml:space="preserve"><value>Oder was du dir wünschst</value></data>
+  <data name="Care_FeedbackSection" xml:space="preserve"><value>Feedback</value></data>
+  <data name="Feedback_RowTitle" xml:space="preserve"><value>Erzähl uns, was du denkst</value></data>
+  <data name="Feedback_RowAction" xml:space="preserve"><value>Schreib uns</value></data>
+  <data name="Feedback_RowSubtitle" xml:space="preserve"><value>Was du dir wünschst, oder was nicht funktioniert</value></data>
   <data name="Feedback_SheetTitle" xml:space="preserve"><value>Schreib uns</value></data>
   <data name="Feedback_SheetBody" xml:space="preserve"><value>Zwei Wege. Beide landen bei denselben zwei Leuten.</value></data>
   <data name="Feedback_DiscordTitle" xml:space="preserve"><value>Auf Discord schreiben</value></data>

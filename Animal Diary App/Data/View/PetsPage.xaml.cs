@@ -212,7 +212,10 @@ public partial class PetsPage : ContentPage
         await Navigation.PushAsync(new ManagePetPage(vm));
     }
 
-    async void OnAddMedicationClicked(object? sender, EventArgs args)
+    // The "Medication" button on the active pet's card. Named for the page it opens
+    // (the medication list for this pet), not for adding — adding is one of the things
+    // that page does, and it was the old row's misleading name.
+    async void OnMedicationClicked(object? sender, EventArgs args)
     {
         await Navigation.PushAsync(new MedicationsPage(vm));
     }

@@ -3,20 +3,8 @@ namespace Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Models;
 using SQLite;
 
-/// <summary>How a table's rows are reached from a pet — the shape of the WHERE
-/// clause that selects "everything belonging to pet N".</summary>
-public enum PetScope
-{
-    /// <summary>The pet row itself, keyed by its own primary key.</summary>
-    Root,
-
-    /// <summary>Has a direct <c>PetId</c> column (most tables).</summary>
-    ByPetId,
-
-    /// <summary>Hangs off a medication, which hangs off the pet
-    /// (<c>MedicationSchedule</c>).</summary>
-    ByMedicationId,
-}
+// PetScope and the WHERE fragments built from it live in PetScopeSql.cs — pure strings,
+// compile-linked into the test project so the demo-exclusion guard can be proven.
 
 /// <summary>Any table this app creates — synced or device-local. The two lifecycle
 /// steps every table shares, expressed without naming its type.</summary>
@@ -50,14 +38,12 @@ public abstract class SyncedTable : AppTable
 
     /// <summary>The <c>WHERE</c> fragment selecting this table's rows for one pet,
     /// with a single <c>?</c> parameter bound to the pet's local id.</summary>
-    public string PetPredicate => Scope switch
-    {
-        PetScope.Root => "Id = ?",
-        PetScope.ByPetId => "PetId = ?",
-        PetScope.ByMedicationId =>
-            "MedicationId in (select Id from \"Medication\" where PetId = ?)",
-        _ => throw new NotSupportedException($"Unhandled {nameof(PetScope)}: {Scope}"),
-    };
+    public string PetPredicate => PetScopeSql.Belongs(Scope);
+
+    /// <summary>The <c>WHERE</c> fragment excluding this table's demo rows. Takes no
+    /// parameter. Every path that can put a row on the wire must AND this in — see
+    /// <see cref="PetScopeSql.ExcludesDemo"/> and <c>Pet.IsDemo</c>.</summary>
+    public string ExcludesDemoPredicate => PetScopeSql.ExcludesDemo(Scope);
 
     public abstract void BackfillSyncColumns(SQLiteConnection conn);
 
@@ -108,7 +94,16 @@ public sealed class SyncedTable<T> : SyncedTable where T : class, ISyncable, new
         // Assign the global identity to pre-existing rows. GUIDs must be generated
         // per row in C# (SQLite has no uuid()), but after the first launch this
         // query returns nothing and the whole backfill is a no-op.
-        var missing = conn.Query<T>($"select * from \"{table}\" where SyncId is null or SyncId = ''");
+        //
+        // Demo rows are skipped, and that exclusion is load-bearing rather than an
+        // optimization. A seeded demo pet is deliberately left with NO SyncId, because it
+        // has no cloud identity and never can have one — and the membership purge reads an
+        // empty SyncId as "this pet was never on an account, leave it alone". Without this
+        // clause the backfill would hand every demo row a GUID on the very next launch,
+        // quietly re-arming that purge against a creator's demo pets. (It would also churn
+        // several thousand rows through Update on the launch after seeding.)
+        var missing = conn.Query<T>(
+            $"select * from \"{table}\" where (SyncId is null or SyncId = '') and {ExcludesDemoPredicate}");
         foreach (var row in missing)
         {
             row.SyncId = Guid.NewGuid().ToString();
@@ -131,6 +126,9 @@ public sealed class SyncedTable<T> : SyncedTable where T : class, ISyncable, new
 /// access was revoked (no tombstone: it must not propagate).</item>
 /// <item><c>CloudSyncService</c> dirty-marking / identity re-minting on enable and on
 /// an account switch.</item>
+/// <item><c>TableSync.CollectDirtyAsync</c> and the two sweeps above — excluding demo
+/// rows from every path that can put data on the wire (<c>Pet.IsDemo</c>,
+/// <see cref="SyncedTable.ExcludesDemoPredicate"/>).</item>
 /// </list>
 ///
 /// <para><b>Why this exists.</b> Those five lists used to be written out by hand, in
@@ -179,10 +177,18 @@ public static class SyncedTables
     /// <summary>Children before parents — the order any delete cascade must use.</summary>
     public static IEnumerable<SyncedTable> InDeletionOrder => All.Reverse();
 
-    /// <summary>Local table names, for the bulk SQL the sync engine runs across all
-    /// of them (mark-all-dirty, re-mint identities).</summary>
-    public static IReadOnlyList<string> LocalTableNames { get; } =
-        All.Select(t => t.LocalTable).ToList();
+    private static readonly Dictionary<Type, SyncedTable> ByEntityType =
+        All.ToDictionary(t => t.EntityType);
+
+    /// <summary>This entity's registry entry — its pet scope, and the WHERE fragments
+    /// built from it. Throws for a type that isn't registered, which is the right
+    /// outcome: a synced table missing from <see cref="All"/> is the silent-omission
+    /// class of bug this registry exists to make impossible.</summary>
+    public static SyncedTable For<T>() where T : class, ISyncable, new() =>
+        ByEntityType.TryGetValue(typeof(T), out var table)
+            ? table
+            : throw new InvalidOperationException(
+                $"{typeof(T).Name} is synced but missing from {nameof(SyncedTables)}.{nameof(All)}.");
 
     /// <summary>
     /// The device-local tables: created and wiped like the rest, but never synced,

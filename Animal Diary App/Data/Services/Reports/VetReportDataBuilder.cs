@@ -244,10 +244,29 @@ public class VetReportDataBuilder
             trends.Add(new ReportSeries
             {
                 Label = VetReportStrings.SeriesSeizuresPerWeek,
-                Points = VetReportSampleData.BuildWeeklyCounts(seizureDates, from, to)
+                Points = BuildWeeklyCounts(seizureDates, from, to)
             });
 
         return trends;
+    }
+
+    /// <summary>Occurrences bucketed into calendar weeks (points dated at each week's
+    /// start).
+    ///
+    /// <para>Lived in <c>VetReportSampleData</c> until the demo pets replaced that
+    /// fixture's larger half — an odd home for it, since the REAL report was always its
+    /// only caller.</para></summary>
+    private static IReadOnlyList<ReportPoint> BuildWeeklyCounts(
+        IEnumerable<DateTime> occurrences, DateTime from, DateTime to)
+    {
+        var dates = occurrences.Select(d => d.Date).ToList();
+        var points = new List<ReportPoint>();
+        for (var weekStart = from.Date; weekStart <= to.Date; weekStart = weekStart.AddDays(7))
+        {
+            var weekEnd = weekStart.AddDays(6);
+            points.Add(new ReportPoint(weekStart, dates.Count(d => d >= weekStart && d <= weekEnd)));
+        }
+        return points;
     }
 
     // Water intake, kept as two DISTINCT data types (see ReportWater). The report is

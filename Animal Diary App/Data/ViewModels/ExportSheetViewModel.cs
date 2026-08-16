@@ -30,11 +30,6 @@ public class ExportSheetViewModel : BaseViewModel
     private readonly CustomTrackerService _custom;
     private readonly IAnalyticsService _analytics;
 
-    /// <summary>Flip to true to generate from <see cref="VetReportSampleData"/>'s
-    /// fake data — iterate on the PDF layout without real logged entries. Sample
-    /// files are saved (View/Share work) but never listed in Documents.</summary>
-    private const bool UseSampleReportData = false;
-
     private Pet _pet = new();
     private VetReportFile? _result;
 
@@ -235,18 +230,16 @@ public class ExportSheetViewModel : BaseViewModel
 
         try
         {
-#pragma warning disable CS0162 // unreachable branch — intentional compile-time switch
-            if (UseSampleReportData)
-                _result = await _reports.GenerateSampleAsync();
-            else
-                _result = _pet.Id == 0
-                    ? null // no active pet behaves like "no data"
-                    : await _reports.GenerateAsync(
-                        _pet.Id, DateTime.Today.AddDays(-SelectedDays), DateTime.Today,
-                        IncludePhoto, IncludeWaterMeasured, IncludeWaterObservations,
-                        IncludeAppetiteMeasured, IncludeAppetiteObservations, IncludeMood,
-                        IncludeCustom);
-#pragma warning restore CS0162
+            // One path. The compile-time sample-data switch that used to wrap this is gone:
+            // a demo pet's report is generated from real rows through this very call, so
+            // filming an export and shipping one are now literally the same code.
+            _result = _pet.Id == 0
+                ? null // no active pet behaves like "no data"
+                : await _reports.GenerateAsync(
+                    _pet.Id, DateTime.Today.AddDays(-SelectedDays), DateTime.Today,
+                    IncludePhoto, IncludeWaterMeasured, IncludeWaterObservations,
+                    IncludeAppetiteMeasured, IncludeAppetiteObservations, IncludeMood,
+                    IncludeCustom);
 
             if (_result == null)
             {

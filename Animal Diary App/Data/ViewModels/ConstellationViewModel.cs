@@ -53,12 +53,7 @@ public class ConstellationViewModel : BaseViewModel
 {
     private readonly ConstellationService _constellation;
     private readonly ActivePetService _activePet;
-    private readonly SettingsService _settings;
     private readonly IAnalyticsService _analytics;
-
-    /// <summary>Device-scoped, not per pet: the controls are the same controls whoever
-    /// you are looking at, so learning them once is enough.</summary>
-    private const string HintsRetiredFlag = "sky.hints.retired";
 
     /// <summary>The offered stretches. Presets only, like the vet report's look-backs —
     /// a date-range picker is a form, and this is a thing to look at.</summary>
@@ -75,17 +70,14 @@ public class ConstellationViewModel : BaseViewModel
     /// again with two kinds missing.</summary>
     private const int MaxFocus = 3;
     private double _periodDays = 1;
-    private bool _hintsRetired;
 
     public ConstellationViewModel(
         ConstellationService constellation,
         ActivePetService activePet,
-        SettingsService settings,
         IAnalyticsService analytics)
     {
         _constellation = constellation;
         _activePet = activePet;
-        _settings = settings;
         _analytics = analytics;
 
         SetRangeCommand = new Command<string>(async days => await SetRangeAsync(days));
@@ -134,7 +126,6 @@ public class ConstellationViewModel : BaseViewModel
             OnPropertyChanged(nameof(Hint));
             OnPropertyChanged(nameof(LensDescription));
             SelectedIndex = -1;
-            RetireHints();
             ViewChanged?.Invoke();
         }
     }
@@ -192,22 +183,16 @@ public class ConstellationViewModel : BaseViewModel
     });
 
     /// <summary>
-    /// Whether the introductory lines are still shown.
+    /// Shown alongside the lens hint whenever there is more than one kind to choose
+    /// between.
     ///
-    /// <para>They retire the moment the owner uses either control they describe — the
-    /// same shape as Today's card hint ("said once, plainly, and then only cued"). An
-    /// app that permanently instructs stops feeling personal; the permanent half of the
-    /// cue is the outline every legend key wears, which is what keeps focus findable
-    /// after the sentence has gone.</para>
-    ///
-    /// <para>The <b>Cycle</b> hint is the exception and never retires. A fold dial
-    /// explains nothing about itself, and someone arriving at that tab a year later
-    /// deserves the same sentence as someone arriving today.</para>
+    /// <para>Not a retiring hint. The Constellation is not a daily surface — someone
+    /// opens it before an appointment, which might be twice a year — so "they will have
+    /// learned it by now" is an assumption about a habit nobody has. Both lines stay,
+    /// and they sit at the top where they are read before the picture rather than
+    /// explaining it afterwards.</para>
     /// </summary>
-    public bool ShowHints => !_hintsRetired || IsCycle;
-
-    /// <summary>Shown alongside the lens hint until focus has been used once.</summary>
-    public bool ShowFocusHint => !_hintsRetired && Legend.Count > 1;
+    public bool ShowFocusHint => Legend.Count > 1;
 
     /// <summary>What the canvas is, for a screen reader — which cannot see a sky. It
     /// names the arrangement and how much is in it, which is everything the picture
@@ -218,19 +203,6 @@ public class ConstellationViewModel : BaseViewModel
         SkyLens.Nights => "Sky_A11yNights",
         _ => "Sky_A11yTimeline",
     }, Events.Count);
-
-    /// <summary>The controls have been found; the sentences can go. Fire-and-forget —
-    /// a hint that fails to retire is not worth an error path.</summary>
-    private void RetireHints()
-    {
-        if (_hintsRetired)
-            return;
-
-        _hintsRetired = true;
-        OnPropertyChanged(nameof(ShowHints));
-        OnPropertyChanged(nameof(ShowFocusHint));
-        _settings.SetFlagAsync(HintsRetiredFlag, true).Forget();
-    }
 
     // ── Focus ────────────────────────────────────────────────────────────────────
 
@@ -265,7 +237,6 @@ public class ConstellationViewModel : BaseViewModel
         foreach (var key in Legend)
             key.IsFocused = _focus.Contains(key.Category);
 
-        RetireHints();
         RepaintRequested?.Invoke();
     }
 
@@ -335,11 +306,6 @@ public class ConstellationViewModel : BaseViewModel
         : Loc.Format("Sky_CountMany", Events.Count);
 
     public bool IsEmpty => !IsLoading && Events.Count == 0;
-
-    /// <summary>True while the sky is made up. Drives an unmissable banner: nothing in
-    /// this app may show invented medical history without saying so, however
-    /// temporary the build is meant to be.</summary>
-    public bool IsSampleSky => ConstellationConfig.UseSampleSky;
 
     // ── The tapped star ──────────────────────────────────────────────────────────
 
@@ -526,12 +492,6 @@ public class ConstellationViewModel : BaseViewModel
         var generation = ++_loadGeneration;
         var pet = _activePet.ActivePet;
 
-        if (!_hintsRetired)
-        {
-            _hintsRetired = await _settings.GetFlagAsync(HintsRetiredFlag);
-            OnPropertyChanged(nameof(ShowHints));
-        }
-
         IsLoading = true;
         try
         {
@@ -541,15 +501,12 @@ public class ConstellationViewModel : BaseViewModel
             var to = DateTime.Now.Date;
             var from = to.AddDays(-(RangeDays - 1));
 
-            // The development switch (AI: ConstellationConfig.UseSampleSky ships false).
-            // It replaces the read entirely rather than adding to it — a sky that mixed
-            // invented history with someone's real records would be unreadable, and
-            // worse, indistinguishable.
-            var events = ConstellationConfig.UseSampleSky
-                ? ConstellationSampleSky.Generate(from, to)
-                : pet is null || pet.Id == 0
-                    ? new List<CelestialEvent>()
-                    : await _constellation.GetRangeAsync(pet.Id, from, to);
+            // One read path, always. The compile-time sample-sky switch that used to sit
+            // here is gone: a demo pet is a real pet with real rows, so it arrives through
+            // this same query and there is nothing left to branch on.
+            var events = pet is null || pet.Id == 0
+                ? new List<CelestialEvent>()
+                : await _constellation.GetRangeAsync(pet.Id, from, to);
 
             // A newer range (or a newer pet) owns the sky now — this result is history.
             if (generation != _loadGeneration)
