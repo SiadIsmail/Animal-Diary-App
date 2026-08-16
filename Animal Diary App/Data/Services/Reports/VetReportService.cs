@@ -50,16 +50,17 @@ public class VetReportService : IVetReportService
         return await _library.AddAsync(report);
     }
 
-    /// <summary>Which fake fixture <see cref="GenerateSampleAsync"/> renders: true for
-    /// the one-page <see cref="VetReportSampleData.CreateCompact"/> (store screenshots),
-    /// false for the full two-page <see cref="VetReportSampleData.Create"/> (layout work).
-    /// Only reachable when the caller has already opted into sample data.</summary>
-    private const bool UseCompactSample = false;
-
-    // Sample documents are written to disk (so View/Share work while iterating on
-    // the layout) but the row is never inserted — Id stays 0, Documents never lists it.
+    // Sample documents are written to disk (so View/Share work) but the row is never
+    // inserted — Id stays 0, Documents never lists it.
+    //
+    // Only the ONE-PAGE fixture is left. The full 90-day layout-stress fixture is gone,
+    // replaced by exporting a seeded demo pet: that runs the real builder over real rows,
+    // so it exercises page breaks and the continuation header more honestly than a
+    // hand-written VetReportData ever did. This one survives because it does a job the
+    // demo pets cannot — a store screenshot needs a report that ends on page one, and
+    // that is bought by carrying less, not by shrinking type.
     public Task<VetReportFile> GenerateSampleAsync() =>
-        SaveAsync(UseCompactSample ? VetReportSampleData.CreateCompact() : VetReportSampleData.Create(), petId: 0);
+        SaveAsync(VetReportSampleData.CreateCompact(), petId: 0);
 
     private async Task<VetReportFile> SaveAsync(VetReportData data, int petId)
     {

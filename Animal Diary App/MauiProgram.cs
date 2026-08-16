@@ -90,6 +90,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PetPauseService>();
 		builder.Services.AddSingleton<PetPhotoService>();
 		builder.Services.AddSingleton<PetDeletionService>();
+		// The local-only hard delete, shared by revoked-access purges and leaving demo mode.
+		builder.Services.AddSingleton<PetPurgeService>();
 		builder.Services.AddSingleton<MedicationService>();
 		builder.Services.AddSingleton<MedicationDoseLogService>();
 		builder.Services.AddSingleton<DayDoseService>();
@@ -109,6 +111,12 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PendingItemsService>();
 		builder.Services.AddSingleton<TodayCardService>();
 		builder.Services.AddSingleton<ConstellationService>();
+
+		// ── Demo data (the seeded creator pets) ──────────────────────────────
+		// Registered on every build: a creator holds a store build, so unlike the
+		// fixtures this replaces it cannot be a compile-time switch. Nothing happens
+		// until the demo section of the dev sheet seeds it.
+		builder.Services.AddSingleton<Data.Services.Demo.DemoModeService>();
 
 		// ── Reports (vet PDF + the library around it) ────────────────────────
 		builder.Services.AddSingleton<VetReportDataBuilder>();

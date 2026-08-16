@@ -395,10 +395,22 @@
   <data name="Pets_Manage" xml:space="preserve"><value>Manage</value></data>
   <data name="ConditionPicker_Title" xml:space="preserve"><value>Does {0} have any ongoing conditions?</value></data>
   <data name="ConditionPicker_Sub" xml:space="preserve"><value>Pick any that apply, and Felova will note the right things for {0}. You can change this later.</value></data>
-  <data name="Pets_QuickManagement" xml:space="preserve"><value>Quick management</value></data>
   <data name="Pets_AddPet" xml:space="preserve"><value>Add pet</value></data>
+  <!-- Care tab: second button on the active pet's card, beside "Manage". Keep it to
+       one word; it shares a 50/50 row with Pets_Manage. -->
   <data name="Pets_Medication" xml:space="preserve"><value>Medication</value></data>
-  <data name="Pets_MedicationSubtitle" xml:space="preserve"><value>Schedules and doses</value></data>
+  <!-- Care tab: heading over the vet summary / documents / constellation card.
+       {0} is the active pet's name. Care_RecordSectionNoName covers a blank name. -->
+  <data name="Care_RecordSection" xml:space="preserve"><value>{0}'s record</value></data>
+  <data name="Care_RecordSectionNoName" xml:space="preserve"><value>The record</value></data>
+  <!-- Care tab: heading over the two sharing rows. -->
+  <data name="Care_SharedCare" xml:space="preserve"><value>Shared care</value></data>
+  <!-- Care tab sharing rows, titled by direction so they can't be mistaken for each
+       other: you invite someone in, or you use a code someone sent you. -->
+  <data name="Care_ShareRowTitle" xml:space="preserve"><value>Invite someone</value></data>
+  <data name="Care_ShareRowSubtitle" xml:space="preserve"><value>Or see who's already helping</value></data>
+  <data name="Care_JoinRowTitle" xml:space="preserve"><value>Use an invite code</value></data>
+  <data name="Care_JoinRowSubtitle" xml:space="preserve"><value>Help with someone else's pet</value></data>
   <data name="Pets_Documents" xml:space="preserve"><value>Documents</value></data>
   <data name="Pets_DocumentsSubtitle" xml:space="preserve"><value>Reports, scans, and files</value></data>
   <data name="Pets_Export" xml:space="preserve"><value>Vet summary</value></data>
@@ -737,7 +749,6 @@
   <data name="Cloud_Join" xml:space="preserve"><value>Join</value></data>
   <data name="Cloud_JoinSuccess" xml:space="preserve"><value>Added. Syncing the pet now…</value></data>
   <data name="Cloud_JoinRowTitle" xml:space="preserve"><value>Join a pet</value></data>
-  <data name="Cloud_JoinRowSubtitle" xml:space="preserve"><value>Have an invite code? Help with the care</value></data>
   <data name="Cloud_JoinSubtitle" xml:space="preserve"><value>Enter the code someone shared with you</value></data>
   <data name="Cloud_JoinBody" xml:space="preserve"><value>Enter the invite code someone shared with you. You'll see their pet's diary and can help keep it up to date.</value></data>
   <data name="Cloud_ErrInviteInvalid" xml:space="preserve"><value>That code is invalid or has expired. Ask for a new one.</value></data>
@@ -847,8 +858,15 @@
   <data name="Today_PickerOnOtherCard" xml:space="preserve"><value>On the other card. Picking it swaps them</value></data>
   <data name="Common_MmolSuffix" xml:space="preserve"><value>mmol/L</value></data>
   <!-- ── Feedback sheet (bottom of the Care page) ── -->
-  <data name="Feedback_RowTitle" xml:space="preserve"><value>Tell us what's not working</value></data>
-  <data name="Feedback_RowSubtitle" xml:space="preserve"><value>Or what you wish it did</value></data>
+  <!-- Care tab: heading over the feedback card. -->
+  <data name="Care_FeedbackSection" xml:space="preserve"><value>Feedback</value></data>
+  <!-- Deliberately open-ended, and the wish comes before the bug. Leading with
+       "what's not working" framed the whole card as a bug report and told people
+       anything else was off-topic. -->
+  <data name="Feedback_RowTitle" xml:space="preserve"><value>Tell us anything</value></data>
+  <!-- Button on the feedback card. Keep it to three words. -->
+  <data name="Feedback_RowAction" xml:space="preserve"><value>Write to us</value></data>
+  <data name="Feedback_RowSubtitle" xml:space="preserve"><value>What you wish it did, or what isn't working</value></data>
   <data name="Feedback_SheetTitle" xml:space="preserve"><value>Reach us</value></data>
   <data name="Feedback_SheetBody" xml:space="preserve"><value>Two ways in. Either one lands with the same two people.</value></data>
   <data name="Feedback_DiscordTitle" xml:space="preserve"><value>Find us on Discord</value></data>

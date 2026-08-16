@@ -201,18 +201,40 @@ public partial class ConstellationPage : ContentPage
     // ── The flight between lenses ────────────────────────────────────────────────
 
     private const uint FlightMilliseconds = 620;
+    private const uint FoldMilliseconds = 260;
     private const string FlightName = "sky.lens";
 
-    /// <summary>Where every star is on the canvas right now, and how big — the "from"
-    /// end of a flight, taken before anything is re-placed.</summary>
+    /// <summary>
+    /// Where every star is on the canvas <b>right now</b>, and how big — the "from" end
+    /// of a flight, taken before anything is re-placed.
+    ///
+    /// <para>If a flight is already in the air it reads the interpolated positions
+    /// rather than the last target. That is what lets turning the fold dial chain: each
+    /// step sets off from wherever the stars actually are, so a scrub is one continuous
+    /// drift instead of a series of jumps back to the previous answer.</para>
+    /// </summary>
     private (PointF[] Points, float Radius, SkyLens Lens) Snapshot()
     {
         var stars = _drawable.Stars;
         var points = new PointF[stars.Count];
+
+        var mid = _drawable.Transition < 1
+            && _drawable.TweenFrom.Count == stars.Count
+            && _drawable.TweenTo.Count == stars.Count;
+
         for (int i = 0; i < stars.Count; i++)
-            points[i] = new PointF(StarScreenX(stars[i]), StarScreenY(stars[i]));
+        {
+            points[i] = mid
+                // The animation hands back already-eased values, so this is simply
+                // where the star is on screen at this instant.
+                ? Between(_drawable.TweenFrom[i], _drawable.TweenTo[i], (float)_drawable.Transition)
+                : new PointF(StarScreenX(stars[i]), StarScreenY(stars[i]));
+        }
 
         return (points, CurrentStarRadius(), _drawable.Lens);
+
+        static PointF Between(PointF a, PointF b, float t) =>
+            new(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t);
     }
 
     /// <summary>
@@ -228,12 +250,16 @@ public partial class ConstellationPage : ContentPage
         this.AbortAnimation(FlightName);
 
         var stars = _drawable.Stars;
-        if (before.Points.Length != stars.Count || stars.Count == 0
-            || before.Lens == _drawable.Lens || ReducedMotion.IsEnabled)
+        if (before.Points.Length != stars.Count || stars.Count == 0 || ReducedMotion.IsEnabled)
         {
             Settle();
             return;
         }
+
+        // A lens change is a journey and gets the full arc. Turning the fold is a
+        // nudge — the same stars rearranging on the same ring — so it moves quickly
+        // enough to keep up with a thumb, and slowly enough to be followed.
+        var length = before.Lens == _drawable.Lens ? FoldMilliseconds : FlightMilliseconds;
 
         var to = new PointF[stars.Count];
         for (int i = 0; i < stars.Count; i++)
@@ -251,7 +277,7 @@ public partial class ConstellationPage : ContentPage
             _drawable.Transition = v;
             Sky.Invalidate();
         }, 0, 1, Easing.CubicInOut)
-        .Commit(this, FlightName, length: FlightMilliseconds, finished: (_, _) => Settle());
+        .Commit(this, FlightName, length: length, finished: (_, _) => Settle());
     }
 
     /// <summary>Land: nothing in flight, the arriving lens drawn normally.</summary>

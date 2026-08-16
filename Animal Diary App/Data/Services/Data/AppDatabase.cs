@@ -41,6 +41,13 @@ public class AppDatabase
         {
             foreach (var table in SyncedTables.All)
                 table.BackfillSyncColumns(conn);
+
+            // Same NULL story, one column, one table: Pet.IsDemo is additive, so every pet
+            // written before demo mode existed holds NULL. The sync guard is phrased as a
+            // set membership test and so reads NULL correctly on its own (see
+            // PetScopeSql.ExcludesDemo) — this normalizes the column anyway, so that any
+            // future reader is free to write the obvious `IsDemo = 0` and be right.
+            conn.Execute("update \"Pet\" set IsDemo = 0 where IsDemo is null");
         });
     }
 }

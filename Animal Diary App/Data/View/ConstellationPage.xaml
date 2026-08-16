@@ -54,10 +54,10 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
 
         <!-- The app's own page ground, unchanged from every other page. -->
-        <controls:WaterBackground Grid.RowSpan="5"/>
+        <controls:WaterBackground Grid.RowSpan="6"/>
 
         <!-- ── Header: back + who this is ── -->
         <Grid Grid.Row="0"
@@ -202,7 +202,7 @@
              Timeline answers "when did this happen", which a list can also do; the
              other two answer "when in the DAY" and "does it come round again", which
              nothing else in the app can. Same pill row as the range, one row up. -->
-        <Grid Grid.Row="2" Margin="22,0,22,10">
+        <Grid Grid.Row="2" Margin="22,0,22,8">
 
             <Border BackgroundColor="{StaticResource Well}"
                     StrokeThickness="0"
@@ -271,6 +271,29 @@
 
         </Grid>
 
+        <!-- ── How to read this ──
+             Above the sky, not below it: these are read BEFORE the picture rather than
+             explaining it afterwards. They never retire, either. The Constellation is
+             not a daily surface — someone opens it before an appointment, which might
+             be twice a year — so "they will have learned it by now" would be an
+             assumption about a habit nobody has. -->
+        <VerticalStackLayout Grid.Row="3"
+                             Margin="22,0,22,8"
+                             Spacing="0"
+                             VerticalOptions="End">
+            <Label Text="{Binding ConstellationVM.Hint}"
+                   FontFamily="{StaticResource FontHand}"
+                   FontSize="15.5"
+                   TextColor="{StaticResource InkSecondary}"
+                   HorizontalTextAlignment="Center"/>
+            <Label Text="{loc:Translate Sky_HintFocus}"
+                   IsVisible="{Binding ConstellationVM.ShowFocusHint}"
+                   FontFamily="{StaticResource FontHand}"
+                   FontSize="15.5"
+                   TextColor="{StaticResource InkSecondary}"
+                   HorizontalTextAlignment="Center"/>
+        </VerticalStackLayout>
+
         <!-- ── The night card ──
              Taped to the page, like the Journal's warm-paper mood note: the same
              asymmetric radius, the same soft ink shadow, the same washi strip at a
@@ -281,7 +304,7 @@
              is InputTransparent so it can never swallow a drag, and the Grid's own
              background is what makes it hit-testable (the photo cropper's stage does
              the same). -->
-        <Grid Grid.Row="3" Margin="18,4,18,0">
+        <Grid Grid.Row="4" Margin="18,0,18,0">
             <Border StrokeThickness="0"
                     StrokeShape="RoundRectangle 26,20,22,28">
                 <Border.Shadow>
@@ -357,25 +380,11 @@
                            Margin="16,0,0,10"
                            InputTransparent="True"/>
 
-                    <!-- The development switch is on and this sky is invented.
-                         Unlocalized on purpose, like the hidden dev sheet: it is not a
-                         product string, and it must read the same however the phone is
-                         set. -->
-                    <Border IsVisible="{Binding ConstellationVM.IsSampleSky}"
-                            BackgroundColor="{StaticResource Clay}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 999"
-                            Padding="12,5"
-                            Margin="0,10,0,0"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Start"
-                            InputTransparent="True">
-                        <Label Text="SAMPLE DATA — not this pet's records"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="10.5"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource White}"/>
-                    </Border>
+                    <!-- The "SAMPLE DATA" banner is gone with the fixture it warned about.
+                         It existed because the old switch REPLACED the real pet's history:
+                         same pet, same name, invented seizures, and no way for an owner to
+                         tell. Demo data is now a separate seeded pet the owner can switch
+                         away from and delete, so the pet itself is the disclosure. -->
                 </Grid>
             </Border>
 
@@ -400,7 +409,7 @@
              for a dark sky read out here on the daylight page. Only the kinds actually
              present are listed (the ViewModel filters), so a pet that has never had a
              seizure is never shown a seizure symbol. -->
-        <VerticalStackLayout Grid.Row="4" Padding="16,14,16,14" Spacing="8">
+        <VerticalStackLayout Grid.Row="5" Padding="16,12,16,14" Spacing="8">
 
             <FlexLayout Wrap="Wrap"
                         JustifyContent="Center"
@@ -454,24 +463,6 @@
                 </BindableLayout.ItemTemplate>
             </FlexLayout>
 
-            <!-- The app's handwriting, for the one aside on the page. It changes with
-                 the lens — the fold dial in particular explains nothing about itself. -->
-            <Label Text="{Binding ConstellationVM.Hint}"
-                   IsVisible="{Binding ConstellationVM.ShowHints}"
-                   FontFamily="{StaticResource FontHand}"
-                   FontSize="16"
-                   TextColor="{StaticResource InkSecondary}"
-                   HorizontalTextAlignment="Center"/>
-
-            <!-- Said once. After that the outline on each key is the whole cue —
-                 a spelled-out hint that retires plus a permanent quiet one, exactly
-                 as Today's stat cards do it. -->
-            <Label Text="{loc:Translate Sky_HintFocus}"
-                   IsVisible="{Binding ConstellationVM.ShowFocusHint}"
-                   FontFamily="{StaticResource FontHand}"
-                   FontSize="16"
-                   TextColor="{StaticResource InkSecondary}"
-                   HorizontalTextAlignment="Center"/>
         </VerticalStackLayout>
 
         <!-- ── One tapped star ──
@@ -481,7 +472,7 @@
              rather than on the canvas, where it would become a second thing the picture
              encodes. IsPresented is OneWay: the selection is the ViewModel's, and the
              scrim's dismiss goes back through the command. -->
-        <controls:FelovaBottomSheet Grid.RowSpan="5"
+        <controls:FelovaBottomSheet Grid.RowSpan="6"
                                     IsPresented="{Binding ConstellationVM.HasSelection, Mode=OneWay}"
                                     Title="{Binding ConstellationVM.SelectedTitle}"
                                     DismissCommand="{Binding ConstellationVM.ClearSelectionCommand}">

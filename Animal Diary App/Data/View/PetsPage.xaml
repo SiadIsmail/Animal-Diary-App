@@ -233,16 +233,36 @@
                             </VerticalStackLayout>
                         </Grid>
 
-                        <!-- Action — one "Manage" button opens the full Manage Pet page -->
-                        <Button Text="{loc:Translate Pets_Manage}"
-                                FontFamily="{StaticResource FontSans}"
-                                FontSize="13"
-                                FontAttributes="Bold"
-                                HeightRequest="44"
-                                CornerRadius="14"
-                                BackgroundColor="{StaticResource Teal}"
-                                TextColor="{StaticResource White}"
-                                Clicked="OnManageClicked"/>
+                        <!-- Actions — the two doors that CHANGE what Felova does for this
+                             pet, kept on the pet itself rather than in the row list below.
+                             Both are pet-scoped, so the switcher above visibly governs
+                             them; the rows below are the reading surfaces. Medication used
+                             to be the first row of a six-row "Quick management" card, where
+                             it was the only entry that configured anything. -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Grid.Column="0"
+                                    Text="{loc:Translate Pets_Manage}"
+                                    FontFamily="{StaticResource FontSans}"
+                                    FontSize="13"
+                                    FontAttributes="Bold"
+                                    HeightRequest="44"
+                                    CornerRadius="14"
+                                    BackgroundColor="{StaticResource Teal}"
+                                    TextColor="{StaticResource White}"
+                                    Clicked="OnManageClicked"/>
+                            <Button Grid.Column="1"
+                                    Text="{loc:Translate Pets_Medication}"
+                                    FontFamily="{StaticResource FontSans}"
+                                    FontSize="13"
+                                    FontAttributes="Bold"
+                                    HeightRequest="44"
+                                    CornerRadius="14"
+                                    BackgroundColor="{StaticResource Well}"
+                                    TextColor="{StaticResource TealDeep}"
+                                    BorderColor="{StaticResource TealLine}"
+                                    BorderWidth="1"
+                                    Clicked="OnMedicationClicked"/>
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
 
@@ -267,34 +287,40 @@
                     </HorizontalStackLayout>
                 </Border>
 
-                <!-- ═══════════ MANAGE ═══════════ -->
-                <Label Text="{loc:Translate Pets_QuickManagement}"
+                <!-- ═══════════ THE RECORD ═══════════
+                     The three surfaces that READ what is already written down and take it
+                     out of the app. None of them changes anything, which is what separates
+                     them from the pet card above. The heading carries the pet's name
+                     because every row here follows the switcher, and nothing else on the
+                     card said so. -->
+                <Label Text="{Binding PetVM.RecordSectionTitle}"
                        Style="{StaticResource SectionLabel}"/>
 
                 <Border Style="{StaticResource CardSurface}"
                         Padding="4">
                     <VerticalStackLayout>
 
-                        <!-- Medication -->
+                        <!-- Vet summary — first, because it is the reason most people open
+                             this tab, and it sat fourth of six before. -->
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="14"
                               Padding="14,15">
                             <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnAddMedicationClicked"/>
+                                <TapGestureRecognizer Command="{Binding ExportSheetVM.OpenCommand}"/>
                             </Grid.GestureRecognizers>
                             <Border Grid.Column="0"
                                     WidthRequest="40" HeightRequest="40"
-                                    BackgroundColor="{StaticResource TealTint}"
+                                    BackgroundColor="{StaticResource BlueTint}"
                                     StrokeThickness="0" StrokeShape="RoundRectangle 13"
                                     VerticalOptions="Center">
-                                <Label Text="💊" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                <Label Text="📤" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                <Label Text="{loc:Translate Pets_Medication}"
+                                <Label Text="{loc:Translate Pets_Export}"
                                        FontFamily="{StaticResource FontSans}"
                                        FontSize="14" FontAttributes="Bold"
                                        TextColor="{StaticResource Ink}"/>
-                                <Label Text="{loc:Translate Pets_MedicationSubtitle}"
+                                <Label Text="{loc:Translate Pets_ExportSubtitle}"
                                        FontFamily="{StaticResource FontSans}"
                                        FontSize="12"
                                        TextColor="{StaticResource InkSecondary}"/>
@@ -306,7 +332,8 @@
 
                         <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}" Margin="14,0"/>
 
-                        <!-- Documents -->
+                        <!-- Documents — directly under Export, because it is where the
+                             summaries made by the row above end up. -->
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="14"
                               Padding="14,15">
@@ -349,7 +376,7 @@
                             </Grid.GestureRecognizers>
                             <Border Grid.Column="0"
                                     WidthRequest="40" HeightRequest="40"
-                                    BackgroundColor="{StaticResource VioletSoftTint}"
+                                    BackgroundColor="{StaticResource BlueTint}"
                                     StrokeThickness="0" StrokeShape="RoundRectangle 13"
                                     VerticalOptions="Center">
                                 <Label Text="✨" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
@@ -369,42 +396,28 @@
                                    VerticalOptions="Center"/>
                         </Grid>
 
-                        <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}" Margin="14,0"/>
+                    </VerticalStackLayout>
+                </Border>
 
-                        <!-- Export -->
-                        <Grid ColumnDefinitions="Auto,*,Auto"
-                              ColumnSpacing="14"
-                              Padding="14,15">
-                            <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ExportSheetVM.OpenCommand}"/>
-                            </Grid.GestureRecognizers>
-                            <Border Grid.Column="0"
-                                    WidthRequest="40" HeightRequest="40"
-                                    BackgroundColor="{StaticResource HoneyWarmTint}"
-                                    StrokeThickness="0" StrokeShape="RoundRectangle 13"
-                                    VerticalOptions="Center">
-                                <Label Text="📤" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                <Label Text="{loc:Translate Pets_Export}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="14" FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}"/>
-                                <Label Text="{loc:Translate Pets_ExportSubtitle}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="12"
-                                       TextColor="{StaticResource InkSecondary}"/>
-                            </VerticalStackLayout>
-                            <Label Grid.Column="2" Text="›"
-                                   FontSize="22" TextColor="{StaticResource InkTertiary}"
-                                   VerticalOptions="Center"/>
-                        </Grid>
+                <!-- ═══════════ SHARED CARE ═══════════
+                     The two halves of sharing, which used to sit at the bottom of the
+                     same list as everything else and read as near-synonyms there. They
+                     are titled by DIRECTION now: you invite someone to your pet, or you
+                     use a code someone sent you. This is also the one group that isn't
+                     purely pet-scoped, which is another reason it can't live under the
+                     pet's own heading. -->
+                <Label Text="{loc:Translate Care_SharedCare}"
+                       Style="{StaticResource SectionLabel}"/>
 
-                        <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}" Margin="14,0"/>
+                <Border Style="{StaticResource CardSurface}"
+                        Padding="4">
+                    <VerticalStackLayout>
 
-                        <!-- Shared care — first-class here, not buried in Manage. Opens the
-                             sharing sheet when cloud is set up, otherwise the account door
-                             (sharing rides the sync, so it needs an account + backup). -->
+                        <!-- Invite someone — first-class here, not buried in Manage. Opens
+                             the sharing sheet when cloud is set up, otherwise the account
+                             door (sharing rides the sync, so it needs an account + backup).
+                             The sheet also lists who is already helping, which is what the
+                             subtitle's second half promises. -->
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="14"
                               Padding="14,15">
@@ -419,11 +432,11 @@
                                 <Label Text="🤝" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                <Label Text="{loc:Translate Cloud_SharingRowTitle}"
+                                <Label Text="{loc:Translate Care_ShareRowTitle}"
                                        FontFamily="{StaticResource FontSans}"
                                        FontSize="14" FontAttributes="Bold"
                                        TextColor="{StaticResource Ink}"/>
-                                <Label Text="{loc:Translate Cloud_SharingRowSubtitle}"
+                                <Label Text="{loc:Translate Care_ShareRowSubtitle}"
                                        FontFamily="{StaticResource FontSans}"
                                        FontSize="12"
                                        TextColor="{StaticResource InkSecondary}"/>
@@ -435,8 +448,8 @@
 
                         <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}" Margin="14,0"/>
 
-                        <!-- Join a pet with an invite code — the caregiver side of sharing,
-                             first-class here instead of buried in the cloud sheet. -->
+                        <!-- Use an invite code — the caregiver side of sharing, first-class
+                             here instead of buried in the cloud sheet. -->
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="14"
                               Padding="14,15">
@@ -451,11 +464,11 @@
                                 <Label Text="🔑" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                <Label Text="{loc:Translate Cloud_JoinRowTitle}"
+                                <Label Text="{loc:Translate Care_JoinRowTitle}"
                                        FontFamily="{StaticResource FontSans}"
                                        FontSize="14" FontAttributes="Bold"
                                        TextColor="{StaticResource Ink}"/>
-                                <Label Text="{loc:Translate Cloud_JoinRowSubtitle}"
+                                <Label Text="{loc:Translate Care_JoinRowSubtitle}"
                                        FontFamily="{StaticResource FontSans}"
                                        FontSize="12"
                                        TextColor="{StaticResource InkSecondary}"/>
@@ -468,36 +481,59 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Feedback / something broken — last thing on the page, understated on
-                     purpose. The row asks for the thing, not the channel: Discord and
-                     the direct email are only named once the sheet is open. -->
-                <Border Style="{StaticResource CardSurface}"
-                        Padding="14,15">
+                <!-- ═══════════ FEEDBACK ═══════════
+                     Last on the page, but deliberately NOT quiet: this is the only surface
+                     that asks the owner for something, and an understated row at the end of
+                     a scroll gets ignored. It gets the page's group-heading treatment like
+                     every other section, a teal stroke instead of the GlassLine every other
+                     card wears, and a filled button — so it reads as an invitation rather
+                     than a seventh destination.
+                     The copy asks for the thing, not the channel: Discord and the direct
+                     email are only named once the sheet is open. -->
+                <Label Text="{loc:Translate Care_FeedbackSection}"
+                       Style="{StaticResource SectionLabel}"/>
+
+                <Border BackgroundColor="{StaticResource Glass}"
+                        Stroke="{StaticResource TealLine}"
+                        StrokeThickness="1.5"
+                        StrokeShape="RoundRectangle 17,14,15,18"
+                        Padding="18">
+                    <!-- The whole card stays tappable as well as the button: the button is
+                         the signal, not the only target. -->
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding FeedbackVM.OpenCommand}"/>
                     </Border.GestureRecognizers>
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                        <Border Grid.Column="0"
-                                WidthRequest="40" HeightRequest="40"
-                                BackgroundColor="{StaticResource HoneyWarmTint}"
-                                StrokeThickness="0" StrokeShape="RoundRectangle 13"
-                                VerticalOptions="Center">
-                            <Label Text="💬" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
-                        </Border>
-                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                            <Label Text="{loc:Translate Feedback_RowTitle}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14" FontAttributes="Bold"
-                                   TextColor="{StaticResource Ink}"/>
-                            <Label Text="{loc:Translate Feedback_RowSubtitle}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="12"
-                                   TextColor="{StaticResource InkSecondary}"/>
-                        </VerticalStackLayout>
-                        <Label Grid.Column="2" Text="›"
-                               FontSize="22" TextColor="{StaticResource InkTertiary}"
-                               VerticalOptions="Center"/>
-                    </Grid>
+                    <VerticalStackLayout Spacing="15">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                            <Border Grid.Column="0"
+                                    WidthRequest="44" HeightRequest="44"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 14"
+                                    VerticalOptions="Center">
+                                <Label Text="💬" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="{loc:Translate Feedback_RowTitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="15" FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Text="{loc:Translate Feedback_RowSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12.5"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Button Text="{loc:Translate Feedback_RowAction}"
+                                FontFamily="{StaticResource FontSans}"
+                                FontSize="13.5"
+                                FontAttributes="Bold"
+                                HeightRequest="46"
+                                CornerRadius="14"
+                                BackgroundColor="{StaticResource Teal}"
+                                TextColor="{StaticResource White}"
+                                Command="{Binding FeedbackVM.OpenCommand}"/>
+                    </VerticalStackLayout>
                 </Border>
 
             </VerticalStackLayout>

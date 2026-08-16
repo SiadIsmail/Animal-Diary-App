@@ -121,6 +121,11 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
 {
     private readonly string _localTable = typeof(T).Name;
 
+    /// <summary>Resolved once, at construction, from the one table registry — so a synced
+    /// table that was never registered fails loudly at startup rather than quietly pushing
+    /// demo rows forever.</summary>
+    private readonly string _excludesDemo = SyncedTables.For<T>().ExcludesDemoPredicate;
+
     public string LocalTable => _localTable;
     private readonly Func<T, SyncRunContext, Task<Dictionary<string, object?>?>> _toCloud;
     private readonly Func<JsonElement, SyncRunContext, Task<T?>> _fromCloud;
@@ -195,9 +200,21 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
         return applied;
     }
 
+    /// <summary>
+    /// The upload queue for this table: every dirty row, minus every demo row.
+    ///
+    /// <para><b>This is the guard that matters.</b> The bulk sweeps in
+    /// <c>CloudSyncService</c> exclude demo data too, but they are the secondary defence —
+    /// a creator who logs a live entry on a seeded demo pet goes through the ordinary write
+    /// path, and <c>SyncStamp.Touch</c> marks that row dirty exactly like any other, because
+    /// it stamps an <c>ISyncable</c> and has no idea which pet it belongs to. Filtering at
+    /// collection is what makes "seeded history never leaves the device" true for every
+    /// route into the queue rather than just the ones we thought of.</para>
+    /// </summary>
     public async Task<List<PendingPush>> CollectDirtyAsync(SyncRunContext ctx)
     {
-        var rows = await ctx.Db.QueryAsync<T>($"select * from \"{_localTable}\" where IsDirty = 1");
+        var rows = await ctx.Db.QueryAsync<T>(
+            $"select * from \"{_localTable}\" where IsDirty = 1 and {_excludesDemo}");
         var result = new List<PendingPush>();
         foreach (var row in rows)
         {

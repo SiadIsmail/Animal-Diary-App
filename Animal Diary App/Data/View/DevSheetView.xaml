@@ -97,6 +97,41 @@
 
                 </VerticalStackLayout>
 
+                <!-- Demo data. Reached by BOTH codes: the creator code opens only this,
+                     the developer code opens this and the diagnostics above. It replaces
+                     the compile-time sample-data switches, which a creator holding a store
+                     build could never have reached. -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowDemo}">
+
+                    <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0" StrokeShape="RoundRectangle 12" Padding="12,10">
+                        <Label Text="{Binding DemoState}" FontFamily="{StaticResource FontSans}"
+                               FontSize="12" TextColor="{StaticResource Ink}"/>
+                    </Border>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" IsEnabled="{Binding DemoIdle}">
+                        <Border BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SeedDemoCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="Add demo pets" FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                   TextColor="{StaticResource White}" HorizontalTextAlignment="Center" Padding="0,12"/>
+                        </Border>
+                        <Border Grid.Column="1" BackgroundColor="{StaticResource ClayTint}" Stroke="#EFD3CE"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ClearDemoCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="Remove demo pets" FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                   TextColor="{StaticResource Clay}" HorizontalTextAlignment="Center" Padding="0,12"/>
+                        </Border>
+                    </Grid>
+
+                    <Label Text="Seeds Kira (epilepsy) and Mira (diabetes) with a year of history in the app's current language. Nothing is uploaded — demo pets never sync."
+                           FontFamily="{StaticResource FontSans}" FontSize="11" LineHeight="1.3"
+                           TextColor="{StaticResource InkSecondary}"/>
+
+                </VerticalStackLayout>
+
             </VerticalStackLayout>
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>

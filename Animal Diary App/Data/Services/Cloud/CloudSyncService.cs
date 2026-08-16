@@ -159,7 +159,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     private readonly ICloudAuthService _auth;
     private readonly SyncStateStore _state;
     private readonly MedicationReminderScheduler _reminders;
-    private readonly ActivePetService _activePet;
+    private readonly PetPurgeService _purge;
     private readonly IAnalyticsService _analytics;
     private readonly Billing.ITrialAnchor _trialAnchor;
     // Read for one thing only: whether signing out costs a redeemed access code. The grant
@@ -201,7 +201,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         ICloudAuthService auth,
         SyncStateStore state,
         MedicationReminderScheduler reminders,
-        ActivePetService activePet,
+        PetPurgeService purge,
         IAnalyticsService analytics,
         Billing.ITrialAnchor trialAnchor,
         Billing.IGrantSource grants)
@@ -211,7 +211,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         _auth = auth;
         _state = state;
         _reminders = reminders;
-        _activePet = activePet;
+        _purge = purge;
         _analytics = analytics;
         _trialAnchor = trialAnchor;
         _grants = grants;
@@ -555,52 +555,22 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         var pets = await _db.Connection.QueryAsync<Pet>("select * from \"Pet\"");
         foreach (var pet in pets)
         {
-            if (string.IsNullOrEmpty(pet.SyncId) || pet.IsDirty || roles.ContainsKey(pet.SyncId))
+            // IsDemo is named explicitly rather than leaning on the empty-SyncId arm above.
+            // Both are true of a seeded pet today, but one is a fact about what it IS and
+            // the other is a consequence of how it was written — and a creator's demo pets
+            // vanishing mid-shoot, on a sync they didn't ask for, is the kind of failure
+            // that only ever shows up in front of an audience.
+            if (pet.IsDemo || string.IsNullOrEmpty(pet.SyncId) || pet.IsDirty || roles.ContainsKey(pet.SyncId))
                 continue;
-            await PurgePetAsync(pet);
+            await _purge.PurgePetAsync(pet);
             purged++;
         }
         return purged;
     }
 
-    /// <summary>Hard-delete a pet and everything that hangs off it from THIS
-    /// device (medical data for a pet the user no longer cares for must not stay
-    /// behind), cancel its reminders, and repair the active-pet selection.</summary>
-    private async Task PurgePetAsync(Pet pet)
-    {
-        Debug.WriteLine($"[Cloud] purging pet {pet.Id} ({pet.SyncId}) — membership revoked");
-
-        var meds = await _db.Connection.QueryAsync<Medication>(
-            "select * from \"Medication\" where PetId = ?", pet.Id);
-
-        // Children before parents, straight off the registry — MedicationSchedule's
-        // predicate is a subquery over Medication, so it must run while those rows
-        // still exist, which InDeletionOrder guarantees. Hard deletes, not tombstones:
-        // this removal is local-only and must never propagate (see PetDeletionService
-        // for the delete that does).
-        await _db.Connection.RunInTransactionAsync(conn =>
-        {
-            foreach (var table in SyncedTables.InDeletionOrder)
-                conn.Execute($"delete from \"{table.LocalTable}\" where {table.PetPredicate}", pet.Id);
-        });
-
-        // The med rows are gone, so the idempotent sync takes its cancel path
-        // (notifications + pending instances).
-        foreach (var med in meds)
-        {
-            try { await _reminders.SyncMedicationAsync(med.Id); }
-            catch (Exception ex) { Debug.WriteLine($"[Cloud] purge reminder cancel {med.Id} failed: {ex.Message}"); }
-        }
-
-        // Don't leave the UI pointing at a pet that no longer exists.
-        if (_activePet.ActivePet?.Id == pet.Id)
-        {
-            var remaining = await _db.Connection.QueryAsync<Pet>(
-                "select * from \"Pet\" where IsDeleted = 0 limit 1");
-            if (remaining.Count > 0)
-                await _activePet.LoadActivePetAsync(remaining[0].Id);
-        }
-    }
+    // PurgePetAsync moved to PetPurgeService — leaving demo mode needs the identical
+    // three steps (rows, reminders, active-pet repair), and "delete a pet locally" was
+    // never a cloud concept in the first place.
 
     /// <summary>Returns how many rows were actually applied locally.</summary>
     private async Task<int> PullTableAsync(ITableSync table, SyncRunContext ctx, CloudSession session)
@@ -800,8 +770,11 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         // cancelled, active-pet selection repaired).
         foreach (var pet in await _db.Connection.QueryAsync<Pet>("select * from \"Pet\""))
         {
+            // A demo pet has no SyncId and no membership, so it already fails this test —
+            // which is the wanted outcome. Signing out must not take a creator's seeded
+            // pets with it: they were never part of the account being left.
             if (!string.IsNullOrEmpty(pet.SyncId) && _petRoles.ContainsKey(pet.SyncId))
-                await PurgePetAsync(pet);
+                await _purge.PurgePetAsync(pet);
         }
 
         // Everything account-scoped, in one call that a future key cannot escape. NB the
@@ -821,26 +794,40 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
             "select count(*) from \"Pet\" where IsDeleted = 0");
     }
 
-    /// <summary>Queue every active row for upload (tombstones stay local noise).</summary>
+    /// <summary>Queue every active row for upload (tombstones stay local noise).
+    ///
+    /// <para>Demo rows are skipped. This sweep is the reason <c>Pet.IsDemo</c> could not be
+    /// handled at insert time alone: it runs when the owner turns backup ON, which is
+    /// typically LONG after a demo pet was seeded, and without the exclusion it would hand a
+    /// creator's invented history to their real account in one call.</para></summary>
     private async Task MarkAllDirtyAsync()
     {
-        foreach (var t in SyncedTables.LocalTableNames)
-            await _db.Connection.ExecuteAsync($"update \"{t}\" set IsDirty = 1 where IsDeleted = 0");
+        foreach (var t in SyncedTables.All)
+            await _db.Connection.ExecuteAsync(
+                $"update \"{t.LocalTable}\" set IsDirty = 1 " +
+                $"where IsDeleted = 0 and {t.ExcludesDemoPredicate}");
     }
 
     /// <summary>Fresh GUIDs for every active row + cleared cursors, so a switch to
     /// a new account uploads clean copies instead of colliding with rows owned by
-    /// the previous account.</summary>
+    /// the previous account.
+    ///
+    /// <para>Demo rows keep the empty SyncId they were seeded with. Minting one would give
+    /// them a cloud identity they must never have, and an empty SyncId is separately what
+    /// keeps a demo pet out of the membership purge (see <c>ApplyMembershipAsync</c>) — so a
+    /// signed-in creator's demo pets survive a sync instead of vanishing mid-shoot.</para></summary>
     private async Task ResetSyncIdentityAsync()
     {
         await _db.Connection.RunInTransactionAsync(conn =>
         {
-            foreach (var t in SyncedTables.LocalTableNames)
+            foreach (var t in SyncedTables.All)
             {
-                conn.Execute($"update \"{t}\" set IsDirty = 0 where IsDeleted = 1");
-                var ids = conn.QueryScalars<int>($"select Id from \"{t}\" where IsDeleted = 0");
+                var name = t.LocalTable;
+                conn.Execute($"update \"{name}\" set IsDirty = 0 where IsDeleted = 1");
+                var ids = conn.QueryScalars<int>(
+                    $"select Id from \"{name}\" where IsDeleted = 0 and {t.ExcludesDemoPredicate}");
                 foreach (var id in ids)
-                    conn.Execute($"update \"{t}\" set SyncId = ? where Id = ?", Guid.NewGuid().ToString(), id);
+                    conn.Execute($"update \"{name}\" set SyncId = ? where Id = ?", Guid.NewGuid().ToString(), id);
             }
         });
 
