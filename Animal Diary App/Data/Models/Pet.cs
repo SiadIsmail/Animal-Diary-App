@@ -20,7 +20,7 @@ public class Pet : INotifyPropertyChanged, ISyncable
     /// <para><b>It lives on the pet and nowhere else.</b> Demo-ness is a property of the
     /// animal, not of an individual weigh-in, so putting the flag on every row would create
     /// a state that can disagree with itself — a demo pet holding a non-demo seizure — and
-    /// nothing would catch it. Child rows are reached through <see cref="PetScopeSql"/>
+    /// nothing would catch it. Child rows are reached through <c>PetScopeSql</c>
     /// instead, which derives them from this one column.</para>
     ///
     /// <para><b>What it guards:</b> demo rows must never reach an account. They are excluded
