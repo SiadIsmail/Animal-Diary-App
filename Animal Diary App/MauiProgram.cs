@@ -134,6 +134,17 @@ public static class MauiProgram
 
 		// ── Notifications ────────────────────────────────────────────────────
 		builder.Services.AddSingleton<INotificationService, Data.Services.Data.Device.NotificationService>();
+
+		// Install referrer: Android reads Google Play's, every other platform has no such
+		// concept (Apple's campaign tokens never reach the app), so they get the null source
+		// and creator attribution there depends entirely on the typed code.
+#if ANDROID
+		builder.Services.AddSingleton<Data.Services.Data.Device.IInstallReferrerSource,
+			Platforms.Android.AndroidInstallReferrerSource>();
+#else
+		builder.Services.AddSingleton<Data.Services.Data.Device.IInstallReferrerSource,
+			Data.Services.Data.Device.NullInstallReferrerSource>();
+#endif
 		builder.Services.AddSingleton<ReminderInstanceService>();
 		builder.Services.AddSingleton<MedicationDoseReconciler>();
 		builder.Services.AddSingleton<MedicationReminderScheduler>();

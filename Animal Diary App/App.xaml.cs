@@ -582,10 +582,12 @@ public partial class App : Application
 					await MaybeShowReadOnlyReassuranceAsync();
 					await MaybeShowPreEndNudgeAsync();
 					await MaybeShowGrantEndingNudgeAsync();
-					// A creator code typed before there was an account. The service also
-					// claims on SessionChanged; this covers the launch where sign-in already
-					// happened but the claim never landed (offline at the time).
-					await _referrals.ClaimPendingAsync();
+					// Attribution: restore the channel onto analytics, read Google Play's
+					// install referrer once per install, and claim a code typed before there
+					// was an account. The service also claims on SessionChanged; this covers
+					// the launch where sign-in already happened but the claim never landed
+					// (offline at the time).
+					await _referrals.InitializeAsync();
 				}
 				catch (Exception ex)
 				{
