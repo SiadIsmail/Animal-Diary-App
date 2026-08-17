@@ -37,4 +37,69 @@ public static class AnalyticsContext
     /// <summary>The coarse <c>account_state</c> property value for the current state.</summary>
     public static string AccountState =>
         _isSignedIn ? AnalyticsEvents.AccountStateSignedIn : AnalyticsEvents.AccountStateAnonymous;
+
+    // Backed by device Preferences rather than the app's SQLite settings, and lazily loaded
+    // on first read. That is not an optimization — it is what makes the value correct on the
+    // FIRST event of a cold launch.
+    //
+    // app_opened fires from CreateWindow, which by documented design can run before startup
+    // has finished (see App.StartAsync). Any restore that waits on the database therefore
+    // lands after the session's first event, so every cold start would report `none` and the
+    // top of every funnel would be unsegmentable. Preferences is readable synchronously from
+    // the payload builder, exactly as AnalyticsIdentity already does for the same reason.
+    private const string ReferralKey = "analytics_referral_source";
+
+    // null = not yet loaded from Preferences. volatile: written by the referral layer,
+    // read on whatever thread builds a payload.
+    private static volatile string? _referralSource;
+
+    /// <summary>Which creator this install came through, or <c>none</c>. Carried on every
+    /// event exactly like <see cref="AccountState"/>, so any funnel can be segmented by
+    /// channel without a second event stream.
+    ///
+    /// <para><b>This is a CHANNEL, not a person.</b> It answers "how was Felova found",
+    /// which is the same character of fact as the platform or the language — never who the
+    /// user is, and never the code they typed (a code is closer to a token than a label).
+    /// The privacy boundary above is unchanged: no id, no email, no account identifier, and
+    /// events still carry <c>$process_person_profile = false</c>, so nothing here can be
+    /// joined into a person profile.</para>
+    ///
+    /// <para>Deliberately coarse and never null — an unset value reports <c>none</c>, so
+    /// "organic" is a filterable bucket rather than a missing property.</para></summary>
+    public static string ReferralSource
+    {
+        get
+        {
+            if (_referralSource != null)
+                return _referralSource;
+
+            // A failed read must not become "no analytics context forever": fall back to
+            // none and let a later write correct it.
+            try { _referralSource = Preferences.Default.Get(ReferralKey, AnalyticsEvents.ReferralSourceNone); }
+            catch { _referralSource = AnalyticsEvents.ReferralSourceNone; }
+            return _referralSource;
+        }
+        set
+        {
+            var normalized = string.IsNullOrWhiteSpace(value) ? AnalyticsEvents.ReferralSourceNone : value;
+            _referralSource = normalized;
+            try { Preferences.Default.Set(ReferralKey, normalized); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Analytics] referral persist failed: {ex.Message}"); }
+        }
+    }
+
+    /// <summary>Forget the channel. Called from the data reset beside
+    /// <see cref="AnalyticsIdentity.Rotate"/>: a reset mints a fresh anonymous id so no event
+    /// stream runs unbroken across it, and leaving a channel label attached to the new one
+    /// would be the one thread still tying the two together.
+    ///
+    /// <para>Needed explicitly because this lives in <c>Preferences</c>, which the reset's
+    /// table sweep does not reach — the SQLite copy in <c>AppSettings</c> goes with
+    /// everything else.</para></summary>
+    public static void ClearReferral()
+    {
+        _referralSource = AnalyticsEvents.ReferralSourceNone;
+        try { Preferences.Default.Remove(ReferralKey); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Analytics] referral clear failed: {ex.Message}"); }
+    }
 }

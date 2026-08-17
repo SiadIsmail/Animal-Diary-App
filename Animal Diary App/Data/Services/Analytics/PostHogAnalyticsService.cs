@@ -181,6 +181,10 @@ public sealed class PostHogAnalyticsService : IAnalyticsService
         // NOT an identity — it links to no account, only reports whether cloud is on, so
         // signed-in behaviour can be segmented without ever calling identify().
         props[AnalyticsEvents.PropAccountState] = AnalyticsContext.AccountState;
+        // Which creator this install came through, on every event for the same reason as the
+        // line above: it turns every existing funnel into one that can be split by channel,
+        // without a second event stream. A channel label, never the code and never a person.
+        props[AnalyticsEvents.PropReferralSource] = AnalyticsContext.ReferralSource;
         // Coarse install age. Carried by every event because a funnel cannot express "this
         // step must be at least a day after the previous one" — as a property it becomes an
         // ordinary filter, which is what makes the "came back later" step measurable.

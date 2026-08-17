@@ -46,7 +46,7 @@
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.4.0</ApplicationDisplayVersion>
-		<ApplicationVersion>22</ApplicationVersion>
+		<ApplicationVersion>23</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>None</WindowsPackageType>
@@ -187,8 +187,14 @@
 	     format quirks, which matters because the tag is the only thing standing between
 	     a camera shot and an avatar that arrives a quarter-turn wrong. Android-only —
 	     iOS applies orientation on UIImage and needs none of this. -->
+	<!-- Play Install Referrer, for creator-link attribution: Google Play preserves a
+	     `referrer` value through an install and the app reads it once on first run.
+	     Microsoft's binding (MIT) over com.android.installreferrer:installreferrer 2.2.
+	     Android-only by nature — Apple's campaign tokens reach App Store Connect
+	     analytics and are not readable by the app, so iOS gets the null source. -->
 	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 		<PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.4.2.3" />
+		<PackageReference Include="Xamarin.Google.Android.InstallReferrer" Version="2.2.0.6" />
 	</ItemGroup>
 
 	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' OR $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">

@@ -214,6 +214,23 @@ public static class AnalyticsEvents
     /// ever derived from it, and the analytics <c>distinct_id</c> stays a random,
     /// rotatable GUID unrelated to the Supabase user.</summary>
     public const string PropAccountState = "account_state";
+    /// <summary>Which creator this install came through, or <see cref="ReferralSourceNone"/>
+    /// — attached to EVERY event by the central payload builder, exactly like
+    /// <see cref="PropAccountState"/>, so any existing funnel can be split by channel
+    /// without a second event stream or a single new event.
+    ///
+    /// <para>It carries the creator's <b>display name</b>, never the code. A channel label
+    /// is the same character of fact as the platform or the language: it says how the app
+    /// was found, not who found it. The code is closer to a token and stays out of
+    /// analytics entirely, as does the account — events keep
+    /// <c>$process_person_profile = false</c>, so nothing here can be joined into a person
+    /// profile.</para>
+    ///
+    /// <para>Exact per-creator <i>revenue</i> attribution is still answered in Postgres by
+    /// <c>creator_code_stats</c>, which joins to real purchases. This property answers the
+    /// different question those tables cannot: how people who arrived through a creator
+    /// <i>behave</i> — do they onboard, log, come back.</para></summary>
+    public const string PropReferralSource = "referral_source";
     /// <summary>Coarse age of the install in UTC calendar days, as a bucket
     /// (<c>0</c>/<c>1</c>/<c>2-3</c>/<c>4-7</c>/<c>8-14</c>/<c>15+</c> — see
     /// <see cref="AnalyticsTenure"/>). Attached to EVERY event by the central payload
@@ -306,4 +323,9 @@ public static class AnalyticsEvents
     public const string AccountStateAnonymous = "anonymous";
     /// <summary>Signed in to a cloud account. Says nothing about <i>who</i>.</summary>
     public const string AccountStateSignedIn = "signed_in";
+
+    /// <summary>No creator attached to this install — organic, or a link/code that was never
+    /// used. An explicit bucket rather than a missing property, so "organic" is filterable
+    /// and comparable instead of being an absence.</summary>
+    public const string ReferralSourceNone = "none";
 }

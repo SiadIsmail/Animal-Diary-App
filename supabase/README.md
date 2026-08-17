@@ -214,10 +214,32 @@ values ('THETO', 'Theto', 'YouTube, deal signed 2026-08');
 `creator` is shown back to the user ("Thanks. We'll know you came from Theto."), so write
 it the way they spell their own name.
 
+### Their install link (Android)
+
+Give the creator this alongside the code. Google Play preserves the `referrer` value
+through the install and the app reads it on first launch, so their audience is attributed
+**without typing anything**:
+
+```
+https://play.google.com/store/apps/details?id=com.felova.app&referrer=creator%3DTHETO
+```
+
+`%3D` is an encoded `=`; the whole referrer value must be URL-encoded. `utm_source=THETO`
+also works as a fallback if they're pasting into a tool that builds UTM links, but
+`creator=` wins when both are present.
+
+**Android only.** Apple's campaign tokens reach App Store Connect analytics and are not
+readable by the app, so on iOS the typed code is the only route. Nothing to configure —
+the link just won't attribute there.
+
+Attribution from a link is recorded as `source = 'install_referrer'`; a typed code is
+`source = 'typed'`. Both are kept, so `creator_code_stats` shows which half is working.
+
 **Reading the result:**
 
 ```sql
--- One row per creator: how many accounts entered the code, how many purchases followed.
+-- One row per creator: who arrived how, and how many purchases followed.
+-- creator | code | accounts_entered | from_link | typed_in | purchases | last_purchase
 select * from public.creator_code_stats order by purchases desc;
 
 -- The individual credited purchases.

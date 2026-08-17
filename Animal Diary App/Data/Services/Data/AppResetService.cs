@@ -74,6 +74,12 @@ public class AppResetService
         // involved (events never carry any), but this keeps the reset total.
         Analytics.AnalyticsIdentity.Rotate();
 
+        // The creator channel lives in Preferences, which the table sweep above cannot
+        // reach. Cleared here so the fresh anonymous id starts with nothing attached —
+        // otherwise the channel label would be the one thread still tying the new event
+        // stream to the old one.
+        Analytics.AnalyticsContext.ClearReferral();
+
         MainThread.BeginInvokeOnMainThread(() =>
         {
             _activePetService.ActivePet = new Pet();
