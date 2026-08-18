@@ -1,0 +1,36 @@
+{
+  "felova_import_version": 1,
+  "generated_at": "2026-08-18T10:00:00Z",
+  "source_note": "Test import: new pet, 5 consecutive seizure days + 2 custom trackers (5 entries each)",
+  "pets": [
+    {
+      "match": "new",
+      "name": "Rat",
+      "species": "Rat",
+      "birth_year": 2025,
+      "custom_trackers": [
+        { "ref": "limp", "name": "Limping", "shape": "tick", "icon": "🩹", "color": "rose" },
+        { "ref": "play", "name": "Play time", "shape": "amount", "unit": "min", "icon": "🎾", "color": "honey", "include_in_report": false }
+      ],
+      "entries": [
+        { "type": "seizure", "date": "2026-07-10", "time": "09:00", "duration_minutes": 1 },
+        { "type": "seizure", "date": "2026-07-11", "time": "13:20", "duration_minutes": 2, "seizure_type": "generalized" },
+        { "type": "seizure", "date": "2026-07-12", "time": "22:10", "duration_minutes": 1 },
+        { "type": "seizure", "date": "2026-07-13", "time": "06:40", "duration_minutes": 3, "note": "Looked worse than the previous days" },
+        { "type": "seizure", "date": "2026-07-14", "time": "17:05", "duration_minutes": 1 },
+
+        { "type": "custom", "tracker": "limp", "date": "2026-07-10", "time": "18:00" },
+        { "type": "custom", "tracker": "limp", "date": "2026-07-11" },
+        { "type": "custom", "tracker": "limp", "date": "2026-07-12", "time": "12:30" },
+        { "type": "custom", "tracker": "limp", "date": "2026-07-13" },
+        { "type": "custom", "tracker": "limp", "date": "2026-07-14", "time": "08:15" },
+
+        { "type": "custom", "tracker": "play", "date": "2026-07-10", "amount": 10 },
+        { "type": "custom", "tracker": "play", "date": "2026-07-11", "amount": 5 },
+        { "type": "custom", "tracker": "play", "date": "2026-07-12", "amount": 15 },
+        { "type": "custom", "tracker": "play", "date": "2026-07-13", "amount": 5 },
+        { "type": "custom", "tracker": "play", "date": "2026-07-14", "amount": 20 }
+      ]
+    }
+  ]
+}

@@ -99,6 +99,9 @@ public class MainViewModel
     /// <summary>The hidden developer diagnostics sheet (Settings → "Code").</summary>
     public DevSheetViewModel DevVM { get; }
 
+    /// <summary>The AI entry importer, reached from the dev sheet behind its own code.</summary>
+    public ImportViewModel ImportVM { get; }
+
     // ── Vet-report surfaces (export sheet on Pets, preview page, Documents page) ──
     public ExportSheetViewModel ExportSheetVM { get; }
     public ReportPreviewViewModel ReportPreviewVM { get; }
@@ -144,6 +147,7 @@ public class MainViewModel
  PhotoEditorSheetViewModel photoEditorVM,
  Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
  DevSheetViewModel devVM,
+ ImportViewModel importVM,
  Animal_Diary_App.Data.Services.Cloud.ICloudSyncService cloudSync,
  IAnalyticsService analytics)
     {
@@ -182,9 +186,10 @@ public class MainViewModel
         PhotoEditorVM = photoEditorVM;
         Entitlements = entitlements;
         DevVM = devVM;
+        ImportVM = importVM;
         CloudSync = cloudSync;
 
-        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM, SubscribeVM, RedeemVM, DevVM };
+        _draftViewModels = new IResettableDraft[] { PetVM, MedicationVM, CloudVM, SubscribeVM, RedeemVM, DevVM, ImportVM };
     }
 
     /// <summary>

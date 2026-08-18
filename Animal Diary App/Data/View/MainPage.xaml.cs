@@ -29,6 +29,8 @@ public partial class MainPage : ContentPage
     {
         base.OnAppearing();
 
+        vm.DevVM.ImportRequested += OnImportRequested;
+
         vm.SettingsVM.ConfirmDeleteAllData = () =>
             DisplayAlert(
                 LocalizationManager.Instance.GetString("Settings_DeleteConfirmTitle"),
@@ -143,6 +145,7 @@ public partial class MainPage : ContentPage
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
         vm.TodayCardSheetVM.Changed -= OnStatCardsChanged;
+        vm.DevVM.ImportRequested -= OnImportRequested;
     }
 
     private void OnResetCompleted(object? sender, EventArgs e)
@@ -366,4 +369,19 @@ public partial class MainPage : ContentPage
         }
         return new Point(x, y);
     }
+
+    // The dev sheet is a ContentView and cannot navigate, so the hosting page pushes the
+    // importer on its behalf (same shape as the export sheet's ViewRequested below).
+    private async void OnImportRequested()
+    {
+        try
+        {
+            await Navigation.PushAsync(new ImportPage(vm));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Import] push failed: {ex}");
+        }
+    }
+
 }

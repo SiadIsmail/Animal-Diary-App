@@ -379,9 +379,9 @@ public class CustomTrackerSheetViewModel : BaseViewModel
 
         // The cap is checked on CREATE only: an existing tracker must always stay
         // editable, even if the limit later moved beneath it.
-        if (_editing == null && await _custom.CountForPetAsync(pet.Id) >= CustomTrackerService.MaxPerPet)
+        if (_editing == null && await _custom.CountForPetAsync(pet.Id) >= CustomTracker.MaxPerPet)
         {
-            NameError = Loc.Format("Custom_TooMany", CustomTrackerService.MaxPerPet);
+            NameError = Loc.Format("Custom_TooMany", CustomTracker.MaxPerPet);
             return;
         }
 

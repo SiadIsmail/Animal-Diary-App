@@ -27,13 +27,6 @@ public class CustomTrackerService
         _db = database.Connection;
     }
 
-    /// <summary>How many custom trackers one pet may have at once.
-    ///
-    /// <para>Not scarcity — the chip row, the "+" sheet and the report section each have
-    /// to stay a readable page, and an owner with forty trackers has built a form, not a
-    /// diary. Archived ones don't count: retiring one must always make room.</para></summary>
-    public const int MaxPerPet = 10;
-
     // ── Definitions ─────────────────────────────────────────────────────────────
 
     /// <summary>The pet's live trackers — what the Journal asks for and offers. Ordered
@@ -65,7 +58,7 @@ public class CustomTrackerService
             .Where(c => c.Id == id && c.IsDeleted == false)
             .FirstOrDefaultAsync()!;
 
-    /// <summary>How many live trackers the pet has — the gate on <see cref="MaxPerPet"/>.</summary>
+    /// <summary>How many live trackers the pet has — the gate on <see cref="CustomTracker.MaxPerPet"/>.</summary>
     public async Task<int> CountForPetAsync(int petId) => (await GetForPetAsync(petId)).Count;
 
     /// <summary>Insert a new definition (Id == 0) or update one in place.</summary>
@@ -168,7 +161,7 @@ public class CustomTrackerService
     /// only when there is something for it to include.</para>
     ///
     /// <para>One small query per opted-in tracker, capped at
-    /// <see cref="MaxPerPet"/> of them and run once when the sheet opens — cheaper than
+    /// <see cref="CustomTracker.MaxPerPet"/> of them and run once when the sheet opens — cheaper than
     /// pulling every entry the pet ever wrote to answer a yes/no.</para></summary>
     public async Task<bool> HasReportableEntriesAsync(int petId)
     {

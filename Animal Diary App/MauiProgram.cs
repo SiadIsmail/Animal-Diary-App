@@ -82,6 +82,8 @@ public static class MauiProgram
 		// Crop + rotate, between picking a photo and it becoming a pet's avatar.
 		builder.Services.AddSingleton<PhotoEditorSheetViewModel>();
 		builder.Services.AddSingleton<DevSheetViewModel>();
+		// The AI entry importer, reached from the dev sheet behind its own code.
+		builder.Services.AddSingleton<ImportViewModel>();
 
 		// ── Data / SQLite ────────────────────────────────────────────────────
 		builder.Services.AddSingleton<AppDatabase>();
@@ -111,6 +113,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PendingItemsService>();
 		builder.Services.AddSingleton<TodayCardService>();
 		builder.Services.AddSingleton<ConstellationService>();
+
+		// ── Import (AI-written entry files) ──────────────────────────────────
+		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Import.ImportService>();
 
 		// ── Demo data (the seeded creator pets) ──────────────────────────────
 		// Registered on every build: a creator holds a store build, so unlike the
