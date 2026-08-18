@@ -405,7 +405,7 @@ public class ManagePetViewModel : BaseViewModel
         // in the plan, OR room for one more of the owner's own. Counting only the shipped
         // ones would hide "add your own" the moment a pet used all six.
         CanAddTracker = CarePlanRows.Count(r => !r.Key.IsCustom) < System.Enum.GetValues<TrackerId>().Length
-            || _customById.Count < CustomTrackerService.MaxPerPet;
+            || _customById.Count < CustomTracker.MaxPerPet;
 
         Medications.Clear();
         foreach (var m in meds)
@@ -696,7 +696,7 @@ public class ManagePetViewModel : BaseViewModel
         // "Something else" sits LAST and always, unless the pet is already at the cap.
         // Last because the shipped six answer most of what people want and need no
         // setup; always because the whole point is that the list is not the limit.
-        if (_customById.Count < CustomTrackerService.MaxPerPet)
+        if (_customById.Count < CustomTracker.MaxPerPet)
             options.Add(new AddTrackerOption
             {
                 TrackerId = null,

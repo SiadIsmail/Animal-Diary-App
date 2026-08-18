@@ -151,10 +151,14 @@ public static class AnalyticsIdentity
         if (string.IsNullOrEmpty(stored))
             return null;
 
+        // RoundtripKind is mutually exclusive with AdjustToUniversal/AssumeLocal/
+        // AssumeUniversal — combining them throws ArgumentException on every call.
+        // Format() writes "o" with a trailing "Z", so RoundtripKind alone already
+        // yields DateTimeKind.Utc.
         return DateTime.TryParse(
             stored,
             CultureInfo.InvariantCulture,
-            DateTimeStyles.RoundtripKind | DateTimeStyles.AdjustToUniversal,
+            DateTimeStyles.RoundtripKind,
             out var parsed)
                 ? DateTime.SpecifyKind(parsed, DateTimeKind.Utc)
                 : null;

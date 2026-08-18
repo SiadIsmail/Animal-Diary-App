@@ -132,6 +132,24 @@
 
                 </VerticalStackLayout>
 
+                <!-- The AI import bridge. Its own code, because unlike the two sections
+                     above this one WRITES to the diary. -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowImport}">
+
+                    <Border BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenImportCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="Open importer" FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                               TextColor="{StaticResource White}" HorizontalTextAlignment="Center" Padding="0,12"/>
+                    </Border>
+
+                    <Label Text="Reads a Felova import file (JSON) written by an AI from a pet owner's notes. Nothing is written until you confirm the preview."
+                           FontFamily="{StaticResource FontSans}" FontSize="11" LineHeight="1.3"
+                           TextColor="{StaticResource InkSecondary}"/>
+
+                </VerticalStackLayout>
+
             </VerticalStackLayout>
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>

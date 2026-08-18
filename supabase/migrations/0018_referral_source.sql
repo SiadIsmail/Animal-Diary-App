@@ -113,8 +113,19 @@ end $$;
 -- migration: "the link works, nobody types the code" and "nobody clicks, but the
 -- code converts" are opposite problems with opposite fixes, and one blended
 -- number hides both.
+--
+-- DROP then CREATE, not CREATE OR REPLACE. Replacing a view may only APPEND
+-- columns — it cannot rename, reorder, or insert one — and the new columns belong
+-- next to accounts_entered rather than tacked on after last_purchase, where they
+-- would read as an afterthought. CREATE OR REPLACE fails outright here:
+--     cannot change name of view column "purchases" to "from_link"
+--
+-- Plain DROP, never CASCADE: nothing depends on this view today, and if something
+-- ever does, failing loudly beats silently dropping it.
 
-create or replace view public.creator_code_stats as
+drop view if exists public.creator_code_stats;
+
+create view public.creator_code_stats as
   select c.creator,
          min(c.code) filter (where c.active)                as code,
          (select count(distinct e.user_id)
@@ -138,8 +149,12 @@ create or replace view public.creator_code_stats as
    group by c.creator;
 
 -- ── 4. grants ───────────────────────────────────────────────────────────────
--- Re-granted because the function was dropped and recreated above; a dropped
--- function takes its grants with it.
+-- Re-granted because the function AND the view were dropped and recreated above;
+-- a dropped object takes its grants with it.
+--
+-- Every statement in this file is idempotent (add column if not exists, drop …
+-- if exists, create or replace), so re-running the whole thing after a partial
+-- failure is safe and is the intended recovery.
 
 revoke execute on function public.enter_creator_code(text, text) from public, anon;
 grant  execute on function public.enter_creator_code(text, text) to authenticated;

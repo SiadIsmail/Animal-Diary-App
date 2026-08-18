@@ -32,6 +32,19 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
     /// </summary>
     private const string CreatorCode = "Nightsky";
 
+    /// <summary>
+    /// The code that opens the AI entry importer. <b>Its own code, separate from both of
+    /// the above</b>, for the same reason they are separate from each other: the importer
+    /// WRITES to the diary, which neither of the others does, so reaching it must not be a
+    /// side effect of handing a creator the demo pets.
+    ///
+    /// <para>Deliberately temporary and deliberately guessable. It exists so the feature
+    /// can be tested on a real device without shipping it to anyone who has not been told
+    /// it is there; it is not a security boundary, and it should be replaced by a real
+    /// entry point (or removed) before this stops being an internal tool.</para>
+    /// </summary>
+    private const string ImportCode = "Import";
+
     private readonly ICloudAuthService _auth;
     private readonly ICloudSyncService _sync;
     private readonly DemoModeService _demo;
@@ -49,6 +62,7 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
             async () => { var pet = await _demo.SeedAsync(); return pet is null ? "Nothing seeded." : $"Seeded. Active pet: {pet.Name}."; }));
         ClearDemoCommand = new Command(async () => await RunDemoAsync(
             async () => { var n = await _demo.ClearAsync(); return $"Removed {n} demo pet(s)."; }));
+        OpenImportCommand = new Command(() => { IsPresented = false; ImportRequested?.Invoke(); });
         RefreshCommand = new Command(RefreshState);
         CopyCommand = new Command(async () => await CopyAsync());
         ClearLogCommand = new Command(() => { CloudDiagnostics.Clear(); RefreshState(); });
@@ -68,16 +82,22 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
 
     /// <summary>What the entered code opened. Two levels, because the creator code is given
     /// out and the developer code is not.</summary>
-    private enum Access { Locked, Creator, Developer }
+    private enum Access { Locked, Creator, Developer, Import }
 
     private Access _access;
 
-    public string Title => _access == Access.Creator ? "Demo data" : "Developer";
+    public string Title => _access switch
+    {
+        Access.Creator => "Demo data",
+        Access.Import => "Import",
+        _ => "Developer",
+    };
 
     public string Subtitle => _access switch
     {
         Access.Developer => "Cloud diagnostics",
         Access.Creator => "Seeded pets for filming",
+        Access.Import => "Entries from an AI-written file",
         _ => "Enter code",
     };
 
@@ -86,10 +106,14 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
     /// <summary>The diagnostics half — developer code only.</summary>
     public bool IsUnlocked => _access == Access.Developer;
 
-    /// <summary>The demo half. Both codes reach it: a developer needs the seeded pets as
-    /// much as a creator does, and it is the fixture that replaced the compile-time
-    /// switches.</summary>
-    public bool ShowDemo => _access != Access.Locked;
+    /// <summary>The demo half. The creator and developer codes reach it: a developer needs
+    /// the seeded pets as much as a creator does, and it is the fixture that replaced the
+    /// compile-time switches. The import code does NOT — it opens one door.</summary>
+    public bool ShowDemo => _access is Access.Creator or Access.Developer;
+
+    /// <summary>The importer's door. The developer code reaches it too, so testing the
+    /// feature does not mean signing out of the diagnostics panel first.</summary>
+    public bool ShowImport => _access is Access.Import or Access.Developer;
 
     private string _codeInput = string.Empty;
     public string CodeInput { get => _codeInput; set => SetProperty(ref _codeInput, value); }
@@ -100,7 +124,13 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
     private string _log = string.Empty;
     public string Log { get => _log; set => SetProperty(ref _log, value); }
 
+    /// <summary>Asks the hosting page to push the importer. A ContentView cannot navigate,
+    /// so the page that hosts this sheet does it — the same shape DocumentsViewModel uses
+    /// for its preview push.</summary>
+    public event Action? ImportRequested;
+
     public ICommand OpenCommand { get; }
+    public ICommand OpenImportCommand { get; }
     public ICommand DismissCommand { get; }
     public ICommand UnlockCommand { get; }
     public ICommand RefreshCommand { get; }
@@ -117,6 +147,7 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
         {
             GateCode => Access.Developer,
             CreatorCode => Access.Creator,
+            ImportCode => Access.Import,
             _ => Access.Locked,
         };
 
@@ -131,6 +162,7 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(IsLocked));
         OnPropertyChanged(nameof(IsUnlocked));
         OnPropertyChanged(nameof(ShowDemo));
+        OnPropertyChanged(nameof(ShowImport));
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
 
@@ -272,6 +304,7 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(IsLocked));
         OnPropertyChanged(nameof(IsUnlocked));
         OnPropertyChanged(nameof(ShowDemo));
+        OnPropertyChanged(nameof(ShowImport));
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
     }

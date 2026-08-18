@@ -135,6 +135,29 @@
     <Compile Include="..\Animal Diary App\Data\Services\Demo\DemoHistory.cs" Link="Demo\DemoHistory.cs" />
   </ItemGroup>
 
+  <!-- The AI import bridge. Everything that DECIDES anything is here: what a file may
+       contain, what rejects it, what is written and what is skipped. All of it is pure by
+       construction (ImportValidator takes an ImportSnapshot and a "today" rather than a
+       database and a clock) precisely so it could be linked here — the alternative is a
+       feature whose entire safety model is only exercised by importing files by hand.
+
+       ConditionCatalog/Condition and CustomTrackerVisuals come along because the format
+       validates against the app's OWN vocabularies rather than copies of them: a condition
+       id or a tracker colour the app dropped must stop being importable in the same change,
+       and a duplicated list is how that quietly fails to happen. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\Condition.cs" Link="Import\Condition.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\ConditionCatalog.cs" Link="Import\ConditionCatalog.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\CustomTrackerVisuals.cs" Link="Import\CustomTrackerVisuals.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportFormat.cs" Link="Import\ImportFormat.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportFile.cs" Link="Import\ImportFile.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportDiagnostics.cs" Link="Import\ImportDiagnostics.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportSnapshot.cs" Link="Import\ImportSnapshot.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportPlan.cs" Link="Import\ImportPlan.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportFileParser.cs" Link="Import\ImportFileParser.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportValidator.cs" Link="Import\ImportValidator.cs" />
+  </ItemGroup>
+
   <!-- The Constellation's geometry. This is the surface's whole meaning ("position is
        when it happened, and nothing else is encoded"), so it was deliberately kept out
        of the drawable: the only MAUI thing about placing a star is the canvas it lands

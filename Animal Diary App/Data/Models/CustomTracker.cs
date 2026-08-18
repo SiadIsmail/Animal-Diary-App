@@ -48,6 +48,17 @@ public enum CustomShape
 /// </summary>
 public class CustomTracker : ISyncable
 {
+    /// <summary>How many custom trackers one pet may have at once.
+    ///
+    /// <para>Not scarcity — the chip row, the "+" sheet and the report section each have
+    /// to stay a readable page, and an owner with forty trackers has built a form, not a
+    /// diary. Archived ones don't count: retiring one must always make room.</para>
+    ///
+    /// <para>It lives on the model rather than on <c>CustomTrackerService</c> because it
+    /// is a rule about the thing, not about the store — and the import validator, which
+    /// enforces the same cap, is deliberately free of anything that opens a database.</para></summary>
+    public const int MaxPerPet = 10;
+
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
 

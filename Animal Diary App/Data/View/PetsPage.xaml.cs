@@ -22,6 +22,8 @@ public partial class PetsPage : ContentPage
     {
         base.OnAppearing();
 
+        vm.DevVM.ImportRequested += OnImportRequested;
+
         vm.SettingsVM.ConfirmDeleteAllData = () =>
             DisplayAlert(
                 LocalizationManager.Instance.GetString("Settings_DeleteConfirmTitle"),
@@ -89,6 +91,7 @@ public partial class PetsPage : ContentPage
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
         vm.SharingVM.ConfirmLeave = null;
         vm.SharingVM.LeftPet -= OnLeftPet;
+        vm.DevVM.ImportRequested -= OnImportRequested;
     }
 
     // Shared care is a first-class action here. Sharing rides the cloud sync (the invite
@@ -231,4 +234,19 @@ public partial class PetsPage : ContentPage
     {
         await Navigation.PushAsync(new ConstellationPage(vm));
     }
+
+    // The dev sheet is a ContentView and cannot navigate, so the hosting page pushes the
+    // importer on its behalf (same shape as the export sheet's ViewRequested below).
+    private async void OnImportRequested()
+    {
+        try
+        {
+            await Navigation.PushAsync(new ImportPage(vm));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Import] push failed: {ex}");
+        }
+    }
+
 }
