@@ -53,6 +53,7 @@ public class ConstellationViewModel : BaseViewModel
 {
     private readonly ConstellationService _constellation;
     private readonly ActivePetService _activePet;
+    private readonly PetConditionService _conditions;
     private readonly IAnalyticsService _analytics;
 
     /// <summary>The offered stretches. Presets only, like the vet report's look-backs —
@@ -63,21 +64,28 @@ public class ConstellationViewModel : BaseViewModel
     private bool _isLoading;
     private int _selectedIndex = -1;
     private int _loadGeneration;
-    private SkyLens _lens = SkyLens.Timeline;
+    private SkyLens _lens = SkyLens.History;
     private readonly List<CelestialCategory> _focus = new();
 
     /// <summary>Past three, "focused" stops meaning anything — it is just the sky
     /// again with two kinds missing.</summary>
     private const int MaxFocus = 3;
+
+    /// <summary>The owner has picked a focus themselves, so stop deriving one. Same
+    /// "seeded once, then owned" shape the care plan and Today's cards use — a derived
+    /// default is only a default until there is an intent to protect.</summary>
+    private bool _focusChosen;
     private double _periodDays = 1;
 
     public ConstellationViewModel(
         ConstellationService constellation,
         ActivePetService activePet,
+        PetConditionService conditions,
         IAnalyticsService analytics)
     {
         _constellation = constellation;
         _activePet = activePet;
+        _conditions = conditions;
         _analytics = analytics;
 
         SetRangeCommand = new Command<string>(async days => await SetRangeAsync(days));
@@ -120,9 +128,8 @@ public class ConstellationViewModel : BaseViewModel
             if (!SetProperty(ref _lens, value))
                 return;
 
-            OnPropertyChanged(nameof(IsTimeline));
+            OnPropertyChanged(nameof(IsHistory));
             OnPropertyChanged(nameof(IsCycle));
-            OnPropertyChanged(nameof(IsNights));
             OnPropertyChanged(nameof(Hint));
             OnPropertyChanged(nameof(LensDescription));
             SelectedIndex = -1;
@@ -130,11 +137,10 @@ public class ConstellationViewModel : BaseViewModel
         }
     }
 
-    public bool IsTimeline => Lens == SkyLens.Timeline;
+    public bool IsHistory => Lens == SkyLens.History;
     public bool IsCycle => Lens == SkyLens.Cycle;
-    public bool IsNights => Lens == SkyLens.Nights;
 
-    /// <summary>How far the Rhythm lens folds time, in days. <b>The owner sets this and
+    /// <summary>How far the Cycle ring folds time, in days. <b>The owner sets this and
     /// the app never does</b> — Felova offers a dial and says nothing whatsoever about
     /// what lines up on it. Suggesting a period would be the app claiming a pattern,
     /// which is exactly the claim it cannot support.</summary>
@@ -178,8 +184,7 @@ public class ConstellationViewModel : BaseViewModel
     public string Hint => Loc.GetString(Lens switch
     {
         SkyLens.Cycle => "Sky_HintCycle",
-        SkyLens.Nights => "Sky_HintNights",
-        _ => "Sky_HintTimeline",
+        _ => "Sky_HintHistory",
     });
 
     /// <summary>
@@ -200,8 +205,7 @@ public class ConstellationViewModel : BaseViewModel
     public string LensDescription => Loc.Format(Lens switch
     {
         SkyLens.Cycle => "Sky_A11yCycle",
-        SkyLens.Nights => "Sky_A11yNights",
-        _ => "Sky_A11yTimeline",
+        _ => "Sky_A11yHistory",
     }, Events.Count);
 
     // ── Focus ────────────────────────────────────────────────────────────────────
@@ -223,6 +227,8 @@ public class ConstellationViewModel : BaseViewModel
     {
         if (item is null)
             return;
+
+        _focusChosen = true;
 
         if (!_focus.Remove(item.Category))
         {
@@ -271,28 +277,13 @@ public class ConstellationViewModel : BaseViewModel
 
     public string PetName => _activePet.ActivePet?.Name ?? string.Empty;
 
-    /// <summary>Everything decorative that belongs to this pet — the wave's shape, the
-    /// starfield's seed, the atmosphere's colour. Rebuilt on load because the active
-    /// pet can change under the page.</summary>
+    /// <summary>The one decorative thing that belongs to this pet: the colour its
+    /// atmosphere leans towards. Rebuilt on load because the active pet can change
+    /// under the page.</summary>
     public SkySignature Signature { get; private set; } = SkySignature.Default;
 
-    /// <summary>This pet's own figure of stars, drawn from their name. Decoration, and
-    /// nothing but — see <see cref="ConstellationAsterism"/> for the line it must not
-    /// cross.</summary>
-    public Asterism Asterism { get; private set; } = Asterism.Empty;
-
-    /// <summary>"Charly's constellation" — the figure's name, shown quietly in the
-    /// corner of the sky. It is what makes a screenshot of this mean something to
-    /// someone who wasn't told what they are looking at.</summary>
-    public string AsterismName => Asterism.HasShape
-        ? Loc.Format("Sky_AsterismName", PetName)
-        : string.Empty;
-
-    public bool HasAsterism => Asterism.HasShape;
-
-    /// <summary>The title on a shared picture: the figure's name, or the pet's own if
-    /// they have no figure yet.</summary>
-    public string ShareTitle => Asterism.HasShape ? AsterismName : PetName;
+    /// <summary>The title on a shared picture.</summary>
+    public string ShareTitle => Loc.Format("Sky_ShareTitle", PetName);
 
     /// <summary>The line under it — the stretch, and how much is in it. Both facts
     /// about the records; nothing about the animal.</summary>
@@ -520,10 +511,20 @@ public class ConstellationViewModel : BaseViewModel
             // Derived from who the pet IS, never from what is in the sky — so it is
             // identical whether this is their first day or their fifth year.
             Signature = SkySignature.For(pet?.Name, pet?.BirthYear ?? 0);
-            // The name overload, not the signature one: a pet with no name yet gets the
-            // default sky but NO figure, because a figure is the name made visible and
-            // there is nothing to make visible.
-            Asterism = ConstellationAsterism.For(pet?.Name, pet?.BirthYear ?? 0);
+
+            // Volume is not importance: a quarter of twice-daily doses is 180 entries
+            // against six seizures. Opening on the kind the pet's conditions suggest is
+            // the honest way to keep the rare thing findable — see
+            // CelestialVisuals.OpeningFocusFor.
+            if (!_focusChosen)
+            {
+                _focus.Clear();
+                if (CelestialVisuals.OpeningFocusFor(await _conditions.GetConditionIdsAsync(pet))
+                    is CelestialCategory opening)
+                {
+                    _focus.Add(opening);
+                }
+            }
 
             BuildLegend();
         }
@@ -536,8 +537,6 @@ public class ConstellationViewModel : BaseViewModel
         OnPropertyChanged(nameof(PetName));
         OnPropertyChanged(nameof(CountLine));
         OnPropertyChanged(nameof(IsEmpty));
-        OnPropertyChanged(nameof(AsterismName));
-        OnPropertyChanged(nameof(HasAsterism));
         OnPropertyChanged(nameof(LensDescription));
         OnPropertyChanged(nameof(ShowFocusHint));
         OnPropertyChanged(nameof(ShareTitle));

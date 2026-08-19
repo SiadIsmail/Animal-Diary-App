@@ -114,6 +114,35 @@ public static class CelestialVisuals
         return i >= 0 && i < Map.Length ? Map[i] : Map[^1];
     }
 
+    /// <summary>
+    /// The kind to open focused on, given the pet's conditions — or null when nothing
+    /// suggests one.
+    ///
+    /// <para>It exists because <b>volume is not importance</b>. Twice-daily medication
+    /// is a hundred and eighty entries in a quarter and six seizures are six, so a sky
+    /// showing everything equally shows mostly doses. Sizing seizures larger would be
+    /// the app ranking them; opening with the kind the owner most likely came for,
+    /// which they can change with one tap, is not.</para>
+    ///
+    /// <para>Same shape and the same condition ids as <c>TodayCardCatalog.DefaultsFor</c>:
+    /// a derived default, nothing written until the owner expresses an intent of their
+    /// own. Nothing is hidden either — the rest of the sky is dimmed, not removed.</para>
+    /// </summary>
+    public static CelestialCategory? OpeningFocusFor(IEnumerable<string?>? conditionIds)
+    {
+        foreach (var id in conditionIds ?? Array.Empty<string?>())
+        {
+            switch (id)
+            {
+                case "epilepsy": return CelestialCategory.Seizure;
+                case "diabetes": return CelestialCategory.Glucose;
+                case "ckd": return CelestialCategory.Water;
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>The category's localized name, resolved now (never cached).</summary>
     public static string Label(CelestialCategory category) =>
         Helpers.LocalizationManager.Instance.GetString(For(category).LabelKey);

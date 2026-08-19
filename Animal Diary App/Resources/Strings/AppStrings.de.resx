@@ -904,15 +904,13 @@
   <!-- Die drei Ansichten: wann es passiert ist, wann am TAG es passiert ist, und ob
        es wiederkehrt. -->
   <data name="Sky_LensTimeline" xml:space="preserve"><value>Verlauf</value></data>
+  <data name="Sky_LensHistory" xml:space="preserve"><value>Verlauf</value></data>
   <data name="Sky_LensCycle" xml:space="preserve"><value>Zyklus</value></data>
   <data name="Sky_HintFocus" xml:space="preserve"><value>Tippe ein Symbol an, um nur dem zu folgen.</value></data>
-  <data name="Sky_A11yTimeline" xml:space="preserve"><value>Verlauf. {0} Einträge, von alt nach neu.</value></data>
+  <data name="Sky_A11yHistory" xml:space="preserve"><value>Verlauf. {0} Einträge, quer nach Datum und nach unten nach Uhrzeit.</value></data>
   <data name="Sky_A11yCycle" xml:space="preserve"><value>Zyklus. {0} Einträge, auf einen Ring gefaltet, damit sich Wiederholungen aufreihen.</value></data>
-  <data name="Sky_A11yNights" xml:space="preserve"><value>Nächte. {0} Einträge, eine Zeile pro Tag, die Stunden von links nach rechts.</value></data>
-  <data name="Sky_LensNights" xml:space="preserve"><value>Nächte</value></data>
-  <data name="Sky_HintTimeline" xml:space="preserve"><value>Zum Heranzoomen aufziehen. Tippe einen Stern an.</value></data>
-  <data name="Sky_HintCycle" xml:space="preserve"><value>Zieh am Himmel, um die Faltung zu drehen. Was sich wiederholt, reiht sich auf.</value></data>
-  <data name="Sky_HintNights" xml:space="preserve"><value>Eine Nacht pro Zeile. Zieh nach oben und unten durch die Tage.</value></data>
+  <data name="Sky_HintHistory" xml:space="preserve"><value>Quer: das Datum. Nach unten: die Uhrzeit.</value></data>
+  <data name="Sky_HintCycle" xml:space="preserve"><value>Rund um den Ring: wo im Zeitraum. Von innen nach außen: älter, dann neuer.</value></data>
   <data name="Sky_FoldEvery" xml:space="preserve"><value>Alle {0} Tage</value></data>
   <data name="Sky_FoldDayLabel" xml:space="preserve"><value>Über einen Tag</value></data>
   <data name="Sky_FoldWeekLabel" xml:space="preserve"><value>Über eine Woche</value></data>
@@ -943,9 +941,9 @@
   <data name="Sky_TickMonth" xml:space="preserve"><value>MMM yyyy</value></data>
   <data name="Pets_Constellation" xml:space="preserve"><value>Sternbild</value></data>
   <data name="Pets_ConstellationSubtitle" xml:space="preserve"><value>Alles Festgehaltene, über die Zeit</value></data>
-  <data name="Sky_AsterismName" xml:space="preserve"><value>Sternbild von {0}</value></data>
   <data name="Sky_Share" xml:space="preserve"><value>Diesen Himmel teilen</value></data>
   <data name="Sky_ShareRange" xml:space="preserve"><value>Letzte {0} Tage</value></data>
+  <data name="Sky_ShareTitle" xml:space="preserve"><value>Verlauf von {0}</value></data>
   <data name="Sky_ShareFailedTitle" xml:space="preserve"><value>Bild nicht erstellt</value></data>
   <data name="Sky_ShareFailedBody" xml:space="preserve"><value>Beim Zusammensetzen des Bildes ist etwas schiefgelaufen. Versuch es gleich noch einmal.</value></data>
 </root>

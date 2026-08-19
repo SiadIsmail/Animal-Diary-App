@@ -4,15 +4,18 @@
     ─────────────────────────────────────────────────────────
     One pet's history as a night sky. Pushed from Quick management on the Care page.
 
-    The rule the whole screen obeys:
+    BOTH AXES ARE TIME, AND BOTH ARE LABELLED.
 
-        Position is WHEN something happened. Symbol is WHAT happened. Density is HOW
-        MUCH was recorded. Nothing else is encoded.
+    On History, across is the date and down is the time of day; on Cycle the same
+    entries are folded onto a ring. Nothing else is encoded anywhere — no value axis,
+    no bar, no aggregate, nothing sized or coloured by a reading. This is the
+    reading-only counterpart to the vet report: the same owner-logged facts, arranged
+    so a quarter can be taken in at a glance without any of it being interpreted.
 
-    So there is no y-axis, no gridline, no bar and no trend anywhere below — height
-    on the canvas means "several at once", never "worse". This is the reading-only
-    counterpart to the vet report: the same owner-logged facts, arranged so a year
-    can be taken in at a glance without any of it being interpreted.
+    An earlier version left the vertical axis meaningless and filled it with ornament —
+    a wandering path, hairlines between entries, a figure of stars, drifting bubbles.
+    It was pretty and nobody could read it. Everything on the canvas now either IS the
+    data or labels it.
 
     THE PAGE IS NOT DARK — the sky is.
 
@@ -208,21 +211,21 @@
                     StrokeThickness="0"
                     StrokeShape="RoundRectangle 999"
                     Padding="3">
-                <Grid ColumnDefinitions="*,*,*">
+                <Grid ColumnDefinitions="*,*">
 
                     <Border Grid.Column="0" BackgroundColor="Transparent"
                             StrokeThickness="0" StrokeShape="RoundRectangle 999">
                         <Border.Triggers>
-                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsTimeline}" Value="True">
+                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsHistory}" Value="True">
                                 <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
                             </DataTrigger>
                         </Border.Triggers>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="Timeline"/>
+                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="History"/>
                         </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Sky_LensTimeline}" Style="{StaticResource SkyRangeTab}">
+                        <Label Text="{loc:Translate Sky_LensHistory}" Style="{StaticResource SkyRangeTab}">
                             <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsTimeline}" Value="True">
+                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsHistory}" Value="True">
                                     <Setter Property="TextColor" Value="{StaticResource Ink}"/>
                                 </DataTrigger>
                             </Label.Triggers>
@@ -248,24 +251,6 @@
                         </Label>
                     </Border>
 
-                    <Border Grid.Column="2" BackgroundColor="Transparent"
-                            StrokeThickness="0" StrokeShape="RoundRectangle 999">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border" Binding="{Binding ConstellationVM.IsNights}" Value="True">
-                                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ConstellationVM.SetLensCommand}" CommandParameter="Nights"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Sky_LensNights}" Style="{StaticResource SkyRangeTab}">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label" Binding="{Binding ConstellationVM.IsNights}" Value="True">
-                                    <Setter Property="TextColor" Value="{StaticResource Ink}"/>
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                    </Border>
                 </Grid>
             </Border>
 
@@ -365,20 +350,6 @@
                                     VerticalOptions="Center"/>
                         </Grid>
                     </Border>
-
-                    <!-- The figure's name, quietly in the corner. In the app's own
-                         handwriting, because this is the one sentence on the page that
-                         is about the animal rather than about the records. -->
-                    <Label Text="{Binding ConstellationVM.AsterismName}"
-                           IsVisible="{Binding ConstellationVM.HasAsterism}"
-                           FontFamily="{StaticResource FontHand}"
-                           FontSize="16"
-                           TextColor="{StaticResource SkyInk}"
-                           Opacity="0.75"
-                           HorizontalOptions="Start"
-                           VerticalOptions="End"
-                           Margin="16,0,0,10"
-                           InputTransparent="True"/>
 
                     <!-- The "SAMPLE DATA" banner is gone with the fixture it warned about.
                          It existed because the old switch REPLACED the real pet's history:

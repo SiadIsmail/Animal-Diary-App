@@ -28,15 +28,10 @@ public partial class ConstellationPage : ContentPage
     private double _zoom = 1;
     private double _scrollX;
 
-    /// <summary>How far down the wall of nights. Only the Nights lens uses it — a year
-    /// of rows is several screens tall, where every other lens fits its card.</summary>
-    private double _scrollY;
-
     /// <summary>Where the sky sat when the current drag began. A pan reports its total
     /// travel since the finger went down, so the offset is always start + total — never
     /// an accumulation, which drifts over a long drag.</summary>
     private double _panStartScroll;
-    private double _panStartScrollY;
     private double _panStartPeriod;
 
     /// <summary>Canvas units of drag per day of fold. Loose enough that a whole
@@ -130,10 +125,8 @@ public partial class ConstellationPage : ContentPage
     {
         _zoom = MinZoom;
         _scrollX = 0;
-        _scrollY = 0;
         Rebuild();
         FitToData();
-        OpenAtTheNewestNight();
         Settle();
     }
 
@@ -150,7 +143,7 @@ public partial class ConstellationPage : ContentPage
     {
         var width = SkyHost.Width;
         var stars = _drawable.Stars;
-        if (width <= 0 || stars.Count < 2 || vm.ConstellationVM.Lens != SkyLens.Timeline)
+        if (width <= 0 || stars.Count < 2 || vm.ConstellationVM.Lens != SkyLens.History)
             return;
 
         double first = double.MaxValue, last = double.MinValue;
@@ -184,7 +177,6 @@ public partial class ConstellationPage : ContentPage
 
         Rebuild();
         FitToData();
-        OpenAtTheNewestNight();
 
         FlyTo(before);
     }
@@ -205,15 +197,15 @@ public partial class ConstellationPage : ContentPage
     private const string FlightName = "sky.lens";
 
     /// <summary>
-    /// Where every star is on the canvas <b>right now</b>, and how big — the "from" end
-    /// of a flight, taken before anything is re-placed.
+    /// Where every star is on the canvas <b>right now</b> — the "from" end of a
+    /// flight, taken before anything is re-placed.
     ///
     /// <para>If a flight is already in the air it reads the interpolated positions
     /// rather than the last target. That is what lets turning the fold dial chain: each
     /// step sets off from wherever the stars actually are, so a scrub is one continuous
     /// drift instead of a series of jumps back to the previous answer.</para>
     /// </summary>
-    private (PointF[] Points, float Radius, SkyLens Lens) Snapshot()
+    private (PointF[] Points, SkyLens Lens) Snapshot()
     {
         var stars = _drawable.Stars;
         var points = new PointF[stars.Count];
@@ -231,7 +223,7 @@ public partial class ConstellationPage : ContentPage
                 : new PointF(StarScreenX(stars[i]), StarScreenY(stars[i]));
         }
 
-        return (points, CurrentStarRadius(), _drawable.Lens);
+        return (points, _drawable.Lens);
 
         static PointF Between(PointF a, PointF b, float t) =>
             new(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t);
@@ -245,7 +237,7 @@ public partial class ConstellationPage : ContentPage
     /// has been asked to reduce motion — the same courtesy the page background
     /// already pays.</para>
     /// </summary>
-    private void FlyTo((PointF[] Points, float Radius, SkyLens Lens) before)
+    private void FlyTo((PointF[] Points, SkyLens Lens) before)
     {
         this.AbortAnimation(FlightName);
 
@@ -268,8 +260,6 @@ public partial class ConstellationPage : ContentPage
         _drawable.FromLens = before.Lens;
         _drawable.TweenFrom = before.Points;
         _drawable.TweenTo = to;
-        _drawable.TweenFromRadius = before.Radius;
-        _drawable.TweenToRadius = CurrentStarRadius();
         _drawable.Transition = 0;
 
         new Animation(v =>
@@ -291,41 +281,12 @@ public partial class ConstellationPage : ContentPage
     }
 
     private float StarScreenX(in SkyStar star) => (float)(
-        _drawable.Lens == SkyLens.Timeline
-            ? star.X * _zoom - _scrollX + star.NudgeX * ConstellationLayout.NudgeFade(_zoom)
+        _drawable.Lens == SkyLens.History
+            ? star.X * _zoom - _scrollX + ConstellationLayout.HourGutter
             : star.X);
 
-    private float StarScreenY(in SkyStar star) =>
-        (float)(_drawable.Lens == SkyLens.Nights ? star.Y - _scrollY : star.Y);
+    private float StarScreenY(in SkyStar star) => (float)star.Y;
 
-    /// <summary>The symbol size the current lens draws at — the wall bounds it by its
-    /// rows, everything else by how much time is on screen.</summary>
-    private float CurrentStarRadius()
-    {
-        if (_drawable.Lens == SkyLens.Nights)
-            return (float)Math.Clamp(_drawable.RowHeight * 0.38, 2.2, 5.6);
-
-        var width = (_drawable.WorldWidth > 0 ? _drawable.WorldWidth : SkyHost.Width) * _zoom;
-        return (float)ConstellationLayout.StarRadius(width, _drawable.Events.Count);
-    }
-
-    /// <summary>
-    /// The wall starts at the bottom.
-    ///
-    /// <para>Oldest night at the top is the convention, and it is the right way round —
-    /// time reads downward, and "is more being written down lately?" is the wall
-    /// getting busier as the eye travels. But the night someone opened this to look at
-    /// is almost always the most recent one, and making them drag through a year to
-    /// reach it would be a poor way to say hello.</para>
-    /// </summary>
-    private void OpenAtTheNewestNight()
-    {
-        if (vm.ConstellationVM.Lens != SkyLens.Nights)
-            return;
-
-        _scrollY = WallOverflow();
-        ApplyCamera();
-    }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -355,30 +316,24 @@ public partial class ConstellationPage : ContentPage
         var sky = vm.ConstellationVM;
 
         _drawable.Events = sky.Events;
-        _drawable.Asterism = sky.Asterism;
         // Before Place: the signature shapes the wave the stars are placed against.
         _drawable.Signature = sky.Signature;
         _drawable.Lens = sky.Lens;
         _drawable.Focus = sky.Focus;
-        _drawable.WorldWidth = width;
         _drawable.SelectedIndex = sky.SelectedIndex;
 
         // The lens decides what the axis means. Only the Timeline keeps a camera —
         // a clock is not panned, and a fold is exactly one turn wide.
-        var days = ConstellationLayout.DayCount(sky.From, sky.To);
-        var rowHeight = ConstellationLayout.RowHeight(days, height);
-        _drawable.RowHeight = rowHeight;
-        _drawable.RowCount = days;
+        // The plot sits past the hour gutter, so the world is that much narrower than
+        // the card — the gutter is screen furniture and must not scroll with the dates.
+        var world = Math.Max(1, width - ConstellationLayout.HourGutter);
+        _drawable.WorldWidth = world;
 
-        _drawable.Stars = sky.Lens switch
-        {
-            SkyLens.Cycle => ConstellationLayout.PlaceOnRing(
-                sky.Events, sky.From, sky.To, sky.PeriodDays, width, height),
-            SkyLens.Nights => ConstellationLayout.PlaceOnWall(sky.Events, sky.From, width, rowHeight),
-            _ => ConstellationLayout.Place(sky.Events, sky.From, sky.To, width, height, sky.Signature),
-        };
+        _drawable.Stars = sky.Lens == SkyLens.Cycle
+            ? ConstellationLayout.PlaceOnRing(sky.Events, sky.From, sky.To, sky.PeriodDays, width, height)
+            : ConstellationLayout.PlaceOnGrid(sky.Events, sky.From, sky.To, world, height);
 
-        if (sky.Lens != SkyLens.Timeline)
+        if (sky.Lens != SkyLens.History)
         {
             _zoom = MinZoom;
             _scrollX = 0;
@@ -399,20 +354,12 @@ public partial class ConstellationPage : ContentPage
         var height = SkyHost.Height;
 
         _scrollX = ClampScroll(_scrollX, width);
-        _scrollY = ClampScrollY();
         _drawable.Zoom = _zoom;
         _drawable.ScrollX = _scrollX;
-        _drawable.ScrollY = _scrollY;
 
-        _drawable.Ticks = sky.Lens switch
-        {
-            SkyLens.Cycle => ConstellationTicks.Ring(sky.PeriodDays, width, height),
-            SkyLens.Nights => ConstellationTicks.Wall(
-                sky.From, _drawable.RowCount, _drawable.RowHeight, width, height),
-            // Only the tick STEP depends on the zoom (month names become days as you go
-            // in); the positions stay in world units.
-            _ => ConstellationTicks.Build(sky.From, sky.To, width, height, _zoom),
-        };
+        _drawable.Ticks = sky.Lens == SkyLens.Cycle
+            ? ConstellationTicks.Ring(sky.PeriodDays, width, height)
+            : ConstellationTicks.Grid(sky.From, sky.To, Math.Max(1, width - ConstellationLayout.HourGutter), height, _zoom);
 
         Sky.Invalidate();
     }
@@ -421,18 +368,6 @@ public partial class ConstellationPage : ContentPage
     /// further — there is nothing either side of the range that was asked for.</summary>
     private double ClampScroll(double scrollX, double viewportWidth) =>
         Math.Clamp(scrollX, 0, Math.Max(0, viewportWidth * _zoom - viewportWidth));
-
-    /// <summary>How tall the wall is beyond the card, and so how far it can be
-    /// dragged. Zero on every other lens — they fit by construction.</summary>
-    private double WallOverflow()
-    {
-        if (vm.ConstellationVM.Lens != SkyLens.Nights)
-            return 0;
-
-        return Math.Max(0, _drawable.RowCount * _drawable.RowHeight - SkyHost.Height);
-    }
-
-    private double ClampScrollY() => Math.Clamp(_scrollY, 0, WallOverflow());
 
     /// <summary>The furthest in the sky may be zoomed. Tied to the stretch being looked
     /// at, so a week and a year both bottom out with roughly a day across the canvas —
@@ -452,7 +387,6 @@ public partial class ConstellationPage : ContentPage
         {
             case GestureStatus.Started:
                 _panStartScroll = _scrollX;
-                _panStartScrollY = _scrollY;
                 _panStartPeriod = vm.ConstellationVM.PeriodDays;
                 break;
 
@@ -464,11 +398,6 @@ public partial class ConstellationPage : ContentPage
                     // canvas to look for a rhythm is a far more direct way to ask the
                     // question than nudging a slider under it.
                     vm.ConstellationVM.PeriodDays = _panStartPeriod + e.TotalX / DaysPerDragUnit;
-                }
-                else if (lens == SkyLens.Nights)
-                {
-                    _scrollY = _panStartScrollY - e.TotalY;
-                    ApplyCamera();
                 }
                 else
                 {
@@ -488,7 +417,7 @@ public partial class ConstellationPage : ContentPage
             return;
 
         var width = SkyHost.Width;
-        if (width <= 0 || vm.ConstellationVM.Lens != SkyLens.Timeline)
+        if (width <= 0 || vm.ConstellationVM.Lens != SkyLens.History)
             return;
 
         // Scale is the factor SINCE THE LAST EVENT, so multiplying in is the whole of
@@ -519,10 +448,15 @@ public partial class ConstellationPage : ContentPage
         // Back through the camera: the finger is on the screen, the stars live in the
         // world. The zoom rides along so "near enough to count" stays the same
         // distance under the fingertip however far in it is.
-        var worldX = (point.X + _scrollX) / _zoom;
-        var worldY = point.Y + _scrollY;
+        // Back through the camera: the finger is on the screen, the stars live in the
+        // world — and on History the plot starts past the hour gutter.
+        var worldX = vm.ConstellationVM.Lens == SkyLens.History
+            ? (point.X - ConstellationLayout.HourGutter + _scrollX) / _zoom
+            : point.X;
+
         var index = ConstellationLayout.HitTest(
-            _drawable.Stars, worldX, worldY, TapReach, _zoom);
+            _drawable.Stars, worldX, point.Y, TapReach,
+            vm.ConstellationVM.Lens == SkyLens.History ? _zoom : 1);
 
         // Empty sky clears the selection rather than being ignored: tapping away is
         // how people close things they opened by tapping.
