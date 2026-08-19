@@ -197,7 +197,10 @@
     <Grid RowDefinitions="*,Auto">
 
         <!-- Water background — bottom layer, spans the whole page -->
-        <controls:WaterBackground Grid.RowSpan="2"/>
+        <!-- Motion is driven by the page (OnAppearing / OnDisappearing) so only the
+             visible tab ever animates. See WaterBackground.xaml.cs for why that is
+             the page's job and not the control's. -->
+        <controls:WaterBackground x:Name="Backdrop" Grid.RowSpan="2"/>
 
         <!-- ================= JOURNAL ================= -->
         <ScrollView Grid.Row="0"
@@ -576,21 +579,57 @@
                             Grid.RowSpan="2"
                             Margin="0,0,0,92"/>
 
+        <!-- ── Overlay sheets ───────────────────────────────────────────────────
+             Each is a SheetHost: the body is built the first time it is needed,
+             not when the page inflates. Declaration order is still z-order.
+             See Controls/SheetHost.cs for why. -->
+
         <!-- Journal input sheets (all share FelovaBottomSheet). Overlays above every
              layer; input-transparent when closed so they never block the Journal. -->
-        <views:GlucoseSheetView Grid.RowSpan="2" BindingContext="{Binding GlucoseSheetVM}"/>
-        <views:MoodSheetView Grid.RowSpan="2" BindingContext="{Binding MoodSheetVM}"/>
-        <views:WeightSheetView Grid.RowSpan="2" BindingContext="{Binding WeightSheetVM}"/>
-        <views:AppetiteSheetView Grid.RowSpan="2" BindingContext="{Binding AppetiteSheetVM}"/>
-        <views:SeizureSheetView Grid.RowSpan="2" BindingContext="{Binding SeizureSheetVM}"/>
-        <views:WaterSheetView Grid.RowSpan="2" BindingContext="{Binding WaterSheetVM}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding GlucoseSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:GlucoseSheetView}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding MoodSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:MoodSheetView}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding WeightSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:WeightSheetView}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding AppetiteSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:AppetiteSheetView}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding SeizureSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:SeizureSheetView}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding WaterSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:WaterSheetView}"/>
+
         <!-- One sheet for every tracker the owner defined; its title is their own name for it. -->
-        <views:CustomEntrySheetView Grid.RowSpan="2" BindingContext="{Binding CustomEntrySheetVM}"/>
-        <views:AddAnythingSheetView Grid.RowSpan="2" BindingContext="{Binding JournalVM}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding CustomEntrySheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:CustomEntrySheetView}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding JournalVM}"
+                            Presented="{Binding IsAddSheetVisible}"
+                            SheetTemplate="{DataTemplate views:AddAnythingSheetView}"/>
 
         <!-- Monetization sheets: the subscribe ask + the reassuring trial messages. -->
-        <views:SubscribeSheetView Grid.RowSpan="2" BindingContext="{Binding SubscribeVM}"/>
-        <views:TrialMessageSheetView Grid.RowSpan="2" BindingContext="{Binding TrialMessageVM}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding SubscribeVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:SubscribeSheetView}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding TrialMessageVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:TrialMessageSheetView}"/>
 
     </Grid>
 

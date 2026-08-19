@@ -360,11 +360,16 @@ public class MainPageViewModel : BaseViewModel
     /// whose label key is the mood one — a walk would show up on Today as "Mood".</para></summary>
     public CustomTracker? NextUpCustom { get; private set; }
 
+    /// <summary>Re-read everything on this page that comes from the clock rather than
+    /// the database. Runs on every appearance, including the ones that skip the reload:
+    /// the hour can roll past noon or 6pm while the page sits on another tab.</summary>
+    public void RefreshClockDerived() => OnPropertyChanged(nameof(Greeting));
+
     public async Task LoadTodayCareAsync()
     {
         // Cheap, and this runs on every appearance — so a page left open across
         // noon or 6pm picks up the right greeting when it comes back.
-        OnPropertyChanged(nameof(Greeting));
+        RefreshClockDerived();
 
         if (ActivePet == null)
         {
@@ -431,8 +436,11 @@ public class MainPageViewModel : BaseViewModel
     {
         try
         {
+            // Short-circuits before touching the database when the daily reminder is on,
+            // and asks for a COUNT rather than every medication row when it isn't — this
+            // runs on every appearance, including the ones that skip the rest of the load.
             var hasReminders = DailyCareReminderSettings.Enabled
-                || (await _medicationService.GetAllMedicationsAsync()).Any(m => !m.IsArchived);
+                || await _medicationService.AnyActiveMedicationsAsync();
 
             RemindersBlocked = hasReminders && !await _reminderScheduler.AreRemindersDeliverableAsync();
         }

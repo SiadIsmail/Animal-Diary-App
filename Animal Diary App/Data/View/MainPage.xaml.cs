@@ -1,6 +1,7 @@
 ﻿namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.Models;
+using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Helpers;
@@ -13,6 +14,21 @@ public partial class MainPage : ContentPage
 {
     private readonly MainViewModel vm;
     private int _toastSeq;
+
+    /// <summary>The overlay sheets are queued for background building once, after the
+    /// first load settles. Re-queuing on every remote-change reload would only enqueue
+    /// no-ops (Realise is idempotent), but the flag keeps the intent obvious.</summary>
+    private bool _sheetsQueued;
+
+    /// <summary>What the last completed load was a load of, and when. Together they
+    /// decide whether an appearance has to hit the database at all.</summary>
+    /// <summary>The data version is read BEFORE the load and stamped AFTER it, never
+    /// re-read at the end. A cloud pull that lands mid-load bumps the version and posts
+    /// its own reload; stamping the post-load value would make that reload look
+    /// redundant and skip it, leaving the page a caregiver's entry behind. Reading it
+    /// first can only cause one extra reload, which is the harmless direction.</summary>
+    private PageLoadKey _loaded;
+    private DateTime _loadedAtUtc = DateTime.MinValue;
 
     public MainPage(MainViewModel mainViewModel)
     {
@@ -28,6 +44,10 @@ public partial class MainPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        // Only the visible tab animates its backdrop — all three pages stay alive for
+        // the Shell's lifetime, so a self-starting background ran three copies forever.
+        Backdrop.Start();
 
         vm.DevVM.ImportRequested += OnImportRequested;
 
@@ -70,25 +90,62 @@ public partial class MainPage : ContentPage
     {
         try
         {
+            // Always, however fresh the page is: the reminder health probe is a LIVE
+            // read of an OS permission that can be revoked while the app isn't running,
+            // and a cached answer there is the one failure this product least wants
+            // (see MainPageViewModel). The greeting comes from the clock, not the
+            // database, so it follows the hour rolling past noon or 6pm.
+            vm.MainPageVM.RefreshClockDerived();
+            await vm.MainPageVM.RefreshReminderHealthAsync();
+
+            // Nothing has changed since this page last loaded, and that was moments
+            // ago: the queries below would repaint identical pixels. Keyed on the
+            // active pet and the day as well as the data version, because switching
+            // pets writes no row and neither does midnight passing. See DataVersion
+            // for why the freshness window is part of the guard, not a nicety.
+            var version = DataVersion.Current;
+            var key = new PageLoadKey(
+                version, vm.MainPageVM.ActivePet?.Id ?? 0, DateTime.Now.Date);
+            if (key == _loaded && DateTime.UtcNow - _loadedAtUtc < PageLoadKey.Freshness)
+            {
+                // Still re-derive the next-up card: whether its action button is
+                // showing depends on the time of day, not on anything stored.
+                RefreshNextUp();
+                return;
+            }
+
             await vm.LoadAsync();
-            // The charts and the today-care snapshot are independent of each
-            // other; overlap their queries instead of running them back-to-back.
-            // LoadTodayCareAsync drives the care ring (bound) + next-up card and
-            // re-runs on every appearance, so logs made on other tabs are
-            // reflected the moment this page returns.
-            await Task.WhenAll(
-                vm.MainPageVM.LoadWeightChartAsync(),
-                vm.MainPageVM.LoadMoodTimelineAsync(),
-                // Both customizable stat cards: which records they hold and the
-                // pet's latest value for each.
-                vm.MainPageVM.LoadStatCardsAsync(),
-                vm.MainPageVM.LoadTodayCareAsync(),
-                // Live check, on every appearance: notifications can be switched off
-                // in system settings at any time, and reminders then stop silently.
-                vm.MainPageVM.RefreshReminderHealthAsync());
+
+            // One at a time, not Task.WhenAll. These all end in sqlite-net, whose async
+            // API queues each query to the thread pool and then serializes them on the
+            // one shared connection — so fanning out occupied four pooled threads to run
+            // one query and gained nothing. Same wall time, one thread.
+            await vm.MainPageVM.LoadWeightChartAsync();
+            await vm.MainPageVM.LoadMoodTimelineAsync();
+            // Both customizable stat cards: which records they hold and the
+            // pet's latest value for each.
+            await vm.MainPageVM.LoadStatCardsAsync();
+            // Drives the care ring (bound) + next-up card, so logs made on other tabs
+            // are reflected the moment this page returns.
+            await vm.MainPageVM.LoadTodayCareAsync();
 
             SetAside();
             RefreshNextUp();
+
+            // The pet and the day are re-read (the load can switch the active pet); the
+            // version is the one captured before it started — see the field's note.
+            _loaded = new PageLoadKey(
+                version, vm.MainPageVM.ActivePet?.Id ?? 0, DateTime.Now.Date);
+            _loadedAtUtc = DateTime.UtcNow;
+
+            // The sheets can be built now that the page has its data: deferred to here
+            // deliberately, so their inflation never competes with the load the person
+            // is actually waiting for. See Controls/SheetHost.cs.
+            if (!_sheetsQueued)
+            {
+                _sheetsQueued = true;
+                Controls.SheetHost.PreloadAll(this);
+            }
         }
         catch (Exception ex)
         {
@@ -137,6 +194,7 @@ public partial class MainPage : ContentPage
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        Backdrop.Stop();
         vm.SettingsVM.ConfirmDeleteAllData = null;
         vm.SettingsVM.ConfirmDeleteAllDataCloud = null;
         vm.CloudVM.ConfirmDeleteAccount = null;

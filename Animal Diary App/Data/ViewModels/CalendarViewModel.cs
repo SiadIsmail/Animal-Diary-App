@@ -126,7 +126,9 @@ public class CalendarViewModel : BaseViewModel
         SelectPetCommand = new Command<Pet>(async pet => await SelectPetAsync(pet));
     }
 
-    public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
+    /// <summary>Range-batched: the chip row is rebuilt on every Journal appearance, and
+    /// each chip is a ~24-element template. See RangeObservableCollection.</summary>
+    public RangeObservableCollection<Pet> Pets { get; } = new();
 
     /// <summary>
     /// The ONE place chip selection is written. A single pass over the live list sets
@@ -155,11 +157,7 @@ public class CalendarViewModel : BaseViewModel
         var currentId = _activePetService.ActivePet?.Id ?? 0;
         var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
 
-        Pets.Clear();
-        foreach (var pet in petsFromDb)
-        {
-            Pets.Add(pet);
-        }
+        Pets.ReplaceAll(petsFromDb);
         if (Pets.Count == 0)
             return;
 

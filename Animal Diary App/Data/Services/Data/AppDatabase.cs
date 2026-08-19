@@ -31,7 +31,18 @@ public class AppDatabase
     {
         // Every table the app has, from the one registry — a new table is a line in
         // SyncedTables, not an edit here (see that file for why).
-        await Task.WhenAll(SyncedTables.Everything.Select(t => t.CreateTableAsync(_db)));
+        //
+        // ONE transaction rather than nineteen concurrent CreateTableAsync calls. That
+        // Task.WhenAll looked like parallelism and wasn't: sqlite-net's async API queues
+        // each call to the THREAD POOL and then serializes them all on the one shared
+        // connection, so it occupied nineteen pooled threads to do one thing at a time —
+        // on the cold-start path, where the pool is still at its minimum size and has to
+        // inject threads one at a time to satisfy them. Same work, one hop.
+        await _db.RunInTransactionAsync(conn =>
+        {
+            foreach (var table in SyncedTables.Everything)
+                table.CreateTable(conn);
+        });
 
         // Rows written before the sync columns existed carry NULLs in them, and
         // NULL breaks both filters (`IsDeleted = 0` excludes NULL — every old row

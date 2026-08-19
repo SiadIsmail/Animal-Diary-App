@@ -16,7 +16,11 @@ public abstract class AppTable
     /// name unless told otherwise, and nothing here overrides that.</summary>
     public string LocalTable => EntityType.Name;
 
-    public abstract Task CreateTableAsync(SQLiteAsyncConnection db);
+    /// <summary>Create the table on an already-open synchronous connection. Every
+    /// table is created inside ONE transaction at startup (see AppDatabase), so this
+    /// is the form that path uses; the async form below is not otherwise needed.</summary>
+    public abstract void CreateTable(SQLiteConnection conn);
+
     public abstract Task DeleteEveryRowAsync(SQLiteAsyncConnection db);
 }
 
@@ -24,7 +28,7 @@ public abstract class AppTable
 public sealed class LocalOnlyTable<T> : AppTable where T : new()
 {
     public override Type EntityType => typeof(T);
-    public override Task CreateTableAsync(SQLiteAsyncConnection db) => db.CreateTableAsync<T>();
+    public override void CreateTable(SQLiteConnection conn) => conn.CreateTable<T>();
     public override Task DeleteEveryRowAsync(SQLiteAsyncConnection db) => db.DeleteAllAsync<T>();
 }
 
@@ -61,7 +65,7 @@ public sealed class SyncedTable<T> : SyncedTable where T : class, ISyncable, new
     public override Type EntityType => typeof(T);
     public override PetScope Scope { get; }
 
-    public override Task CreateTableAsync(SQLiteAsyncConnection db) => db.CreateTableAsync<T>();
+    public override void CreateTable(SQLiteConnection conn) => conn.CreateTable<T>();
 
     public override Task DeleteEveryRowAsync(SQLiteAsyncConnection db) => db.DeleteAllAsync<T>();
 

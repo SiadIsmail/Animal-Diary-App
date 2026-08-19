@@ -277,7 +277,8 @@ public class PetViewModel : BaseViewModel, IResettableDraft
             _photos.Delete(DraftPhotoFileName);
     }
 
-    public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
+    /// <summary>Range-batched — see RangeObservableCollection.</summary>
+    public RangeObservableCollection<Pet> Pets { get; } = new();
 
     public Pet ActivePet
     {
@@ -291,7 +292,8 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     /// then its medication count. Read-only display of what the condition and
     /// medication stores already hold — the Care card states, it doesn't edit
     /// (Manage owns that).</summary>
-    public ObservableCollection<PetProfileTag> ActivePetTags { get; } = new();
+    /// <summary>Range-batched — see RangeObservableCollection.</summary>
+    public RangeObservableCollection<PetProfileTag> ActivePetTags { get; } = new();
 
     /// <summary>Which tag load is the current one. Incremented on entry to
     /// <see cref="LoadActivePetTagsAsync"/>; a load whose generation is stale by the
@@ -331,19 +333,23 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         if (generation != _tagLoadGeneration)
             return;
 
-        // Everything below is synchronous, so the swap can't be interleaved.
-        ActivePetTags.Clear();
+        // Everything below is synchronous, so the swap can't be interleaved. The list is
+        // built first and handed over in one notification, so the chip row costs a single
+        // layout pass instead of one per chip.
+        var tags = new List<PetProfileTag>();
 
         foreach (var id in conditionIds)
-            ActivePetTags.Add(new PetProfileTag { ResourceKey = ConditionCatalog.GetCondition(id).NameKey });
+            tags.Add(new PetProfileTag { ResourceKey = ConditionCatalog.GetCondition(id).NameKey });
 
         if (medCount > 0)
-            ActivePetTags.Add(new PetProfileTag
+            tags.Add(new PetProfileTag
             {
                 ResourceKey = medCount == 1 ? "Pets_MedicationCountOne" : "Pets_MedicationCountMany",
                 Count = medCount,
                 IsMedication = true
             });
+
+        ActivePetTags.ReplaceAll(tags);
     }
 
     // Type · age, but the age half is dropped when the pet's age is unknown so we never
@@ -660,11 +666,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         var allPets = await _petService.GetPetsAsync();
         var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
 
-        Pets.Clear();
-        foreach (var pet in allPets)
-        {
-            Pets.Add(pet);
-        }
+        Pets.ReplaceAll(allPets);
 
         if (Pets.Count > 0)
         {

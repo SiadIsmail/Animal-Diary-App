@@ -4,7 +4,14 @@
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
              x:DataType="vms:MainViewModel"
-             x:Class="Animal_Diary_App.Data.View.SettingsPanelView">
+             x:Class="Animal_Diary_App.Data.View.SettingsPanelView"
+             IsPanelOpen="{Binding SettingsVM.IsPanelOpen, Mode=TwoWay}">
+
+    <!-- IsPanelOpen is bound HERE rather than by each hosting page. Both pages that
+         show this panel bound it identically, and the panel is now built lazily
+         inside a SheetHost (Controls/SheetHost.cs) which creates the body from a
+         template and so cannot carry a binding on its behalf. Two-way is
+         load-bearing: tapping the scrim or the close button writes false back. -->
 
     <ContentView.Resources>
         <!-- Reusable settings link card (Account rows, About and support) -->
