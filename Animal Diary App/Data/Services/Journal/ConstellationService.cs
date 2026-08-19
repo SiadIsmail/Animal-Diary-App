@@ -65,29 +65,29 @@ public class ConstellationService
         from = from.Date;
         to = to.Date;
 
-        // Issued together, not one awaited hop after another: this runs on a range
-        // that can be a year wide, and nine sequential scans is the whole latency of
-        // the page. None of them depends on another's result.
-        var entriesTask = _petEntries.GetPetEntriesByPetIdAndRangeAsync(petId, from, to);
-        var glucoseTask = _glucose.GetForRangeAsync(petId, from, to);
-        var appetiteTask = _appetite.GetForRangeAsync(petId, from, to);
-        var appetiteAmountTask = _appetite.GetAmountsForRangeAsync(petId, from, to);
-        var waterAmountTask = _water.GetAmountsForRangeAsync(petId, from, to);
-        var waterLevelTask = _water.GetLevelsForRangeAsync(petId, from, to);
-        var seizureTask = _seizures.GetForRangeAsync(petId, from, to);
+        // One range scan at a time. Issuing them together read as parallelism but was
+        // not: sqlite-net's async API queues every call to the thread pool and then
+        // serializes them on the one shared connection, so ten concurrent range scans
+        // meant ten pooled threads and nine of them blocked on a lock. The scans ran in
+        // sequence regardless. Each is covered by a composite (PetId, Date) index — if
+        // this page ever needs fewer round trips, the answer is a wider query.
+        var entries = await _petEntries.GetPetEntriesByPetIdAndRangeAsync(petId, from, to);
+        var glucoseEntries = await _glucose.GetForRangeAsync(petId, from, to);
+        var appetiteEntries = await _appetite.GetForRangeAsync(petId, from, to);
+        var appetiteAmounts = await _appetite.GetAmountsForRangeAsync(petId, from, to);
+        var waterAmounts = await _water.GetAmountsForRangeAsync(petId, from, to);
+        var waterLevels = await _water.GetLevelsForRangeAsync(petId, from, to);
+        var seizureEntries = await _seizures.GetForRangeAsync(petId, from, to);
         // One query for every owner-defined tracker there is, grouped in memory —
         // the same thing that makes "as many as you like" affordable in the Journal.
-        var customTask = _custom.GetForRangeAsync(petId, from, to);
-        var customDefsTask = _custom.GetAllForPetAsync(petId);
-        var medsTask = _medications.GetMedicationsByPetIdAsync(petId);
-
-        await Task.WhenAll(entriesTask, glucoseTask, appetiteTask, appetiteAmountTask,
-            waterAmountTask, waterLevelTask, seizureTask, customTask, customDefsTask, medsTask);
+        var customEntries = await _custom.GetForRangeAsync(petId, from, to);
+        var customDefs = await _custom.GetAllForPetAsync(petId);
+        var meds = await _medications.GetMedicationsByPetIdAsync(petId);
 
         // ── Mood + weight: two independent readings sharing the day's PetEntry row,
         //    each with its own recorded time. A legacy row without one sits at the
         //    start of its day rather than being dropped — it still happened.
-        foreach (var entry in entriesTask.Result)
+        foreach (var entry in entries)
         {
             if (entry.MoodLevel > 0)
             {
@@ -109,7 +109,7 @@ public class ConstellationService
             }
         }
 
-        foreach (var g in glucoseTask.Result)
+        foreach (var g in glucoseEntries)
         {
             events.Add(new CelestialEvent(
                 At(g.Date, g.Time),
@@ -122,7 +122,7 @@ public class ConstellationService
         // relative word. They stay ONE symbol here and are never merged into one
         // value: the two kinds sit side by side in the detail line exactly as they
         // sit in separate graphs in the vet report (AI/design-decisions.md).
-        foreach (var a in appetiteTask.Result)
+        foreach (var a in appetiteEntries)
         {
             var word = ((AppetiteLevel)a.Level).GetDisplayName().ToLowerInvariant();
             events.Add(new CelestialEvent(
@@ -132,7 +132,7 @@ public class ConstellationService
                 WithFood(Loc.Format("Journal_AteWord", word), a.Food)));
         }
 
-        foreach (var a in appetiteAmountTask.Result)
+        foreach (var a in appetiteAmounts)
         {
             events.Add(new CelestialEvent(
                 At(a.Date, a.Time),
@@ -141,7 +141,7 @@ public class ConstellationService
                 WithFood(Loc.Format("Journal_AppetiteGrams", a.Grams.ToString("0.#", CultureInfo.CurrentCulture)), a.Food)));
         }
 
-        foreach (var w in waterAmountTask.Result)
+        foreach (var w in waterAmounts)
         {
             events.Add(new CelestialEvent(
                 At(w.Date, w.Time),
@@ -150,7 +150,7 @@ public class ConstellationService
                 Loc.Format("Journal_WaterMl", w.AmountMl.ToString("0.#", CultureInfo.CurrentCulture))));
         }
 
-        foreach (var w in waterLevelTask.Result)
+        foreach (var w in waterLevels)
         {
             var word = ((WaterLevel)w.Level).GetDisplayName().ToLowerInvariant();
             events.Add(new CelestialEvent(
@@ -160,7 +160,7 @@ public class ConstellationService
                 Loc.Format("Journal_DrankWord", word)));
         }
 
-        foreach (var s in seizureTask.Result)
+        foreach (var s in seizureEntries)
         {
             events.Add(new CelestialEvent(
                 At(s.Date, s.Time),
@@ -172,8 +172,8 @@ public class ConstellationService
         // Owner-defined trackers, including RETIRED ones: an entry outlives the
         // retirement of the tracker that collected it, and reading only the live list
         // would blank out April the moment someone tidied their care plan.
-        var defs = customDefsTask.Result.ToDictionary(d => d.Id);
-        foreach (var c in customTask.Result)
+        var defs = customDefs.ToDictionary(d => d.Id);
+        foreach (var c in customEntries)
         {
             var def = defs.GetValueOrDefault(c.CustomTrackerId);
             events.Add(new CelestialEvent(
@@ -183,7 +183,7 @@ public class ConstellationService
                 CustomDetail(c, def)));
         }
 
-        events.AddRange(await GatherDosesAsync(medsTask.Result, from, to));
+        events.AddRange(await GatherDosesAsync(meds, from, to));
 
         // The one ordering: everything, purely by time. Same rule as the Journal's
         // day timeline — there are no per-kind lanes here and there must never be.

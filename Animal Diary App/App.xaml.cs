@@ -48,6 +48,10 @@ public partial class App : Application
 		_doseLogs = doseLogs;
 		_services = services;
 
+		// "Has anything changed since this page last loaded?" — subscribed here so it
+		// is live before the first write, and before any page can ask.
+		DataVersion.Initialize();
+
 		// Keep the store identity on the signed-in account, so one subscription follows the
 		// person across devices instead of being stranded on the install that bought it.
 		// Signing in is never required to buy or to keep access — with no account the store

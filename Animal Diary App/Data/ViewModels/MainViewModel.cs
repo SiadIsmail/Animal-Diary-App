@@ -202,11 +202,18 @@ public class MainViewModel
         foreach (var draft in _draftViewModels)
             draft.ResetDraft();
     }
+    /// <summary>The shared "reload the pet-scoped state" call, used by Today and Pets.
+    ///
+    /// <para>It deliberately does NOT prepare the Journal. That used to happen here as a
+    /// prewarm ("so Calendar opens ready"), but <c>CalendarPage.OnAppearing</c> runs
+    /// <see cref="CalendarViewModel.PrepareDataAsync"/> itself on every appearance, so the
+    /// prewarm was never read — it just cost Today and Pets a pet-list query, a saved-id
+    /// query, and a full seven-day medication schedule expansion on every single
+    /// appearance. <see cref="PetViewModel.LoadPetsAsync"/> already publishes the active
+    /// pet, which is the only thing outside the Journal that depended on it.</para></summary>
     public async Task LoadAsync()
     {
         await PetVM.LoadPetsAsync();
-        await Task.WhenAll(
-            MainPageVM.LoadLatestWeightAsync(),
-            CalendarVM.PrepareDataAsync());
+        await MainPageVM.LoadLatestWeightAsync();
     }
 }

@@ -54,6 +54,17 @@ public class MedicationService
             .Where(m => m.IsDeleted == false)
             .ToListAsync();
     }
+
+    /// <summary>Does any pet on this device have a live medication? A count, not a load:
+    /// the Today page asks this on every single appearance to decide whether the
+    /// "reminders are switched off" banner is even relevant, and it does not need the
+    /// rows.</summary>
+    public async Task<bool> AnyActiveMedicationsAsync()
+    {
+        return await _db.Table<Medication>()
+            .Where(m => m.IsDeleted == false && m.IsArchived == false)
+            .CountAsync() > 0;
+    }
     public async Task<List<MedicationSchedule>> GetMedicationSchedulesByMedicationIdAsync(int id)
     {
         return await _db.Table<MedicationSchedule>()

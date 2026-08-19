@@ -6,6 +6,11 @@ using Animal_Diary_App.Helpers;
 
 public partial class PetsPage : ContentPage
 {
+    /// <summary>The overlay sheets are queued for background building once, after the
+    /// first load settles. Re-queuing on every remote-change reload would only enqueue
+    /// no-ops (Realise is idempotent), but the flag keeps the intent obvious.</summary>
+    private bool _sheetsQueued;
+
     private readonly MainViewModel vm;
     public PetsPage(MainViewModel mainViewModel)
     {
@@ -21,6 +26,9 @@ public partial class PetsPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        // Only the visible tab animates its backdrop — see MainPage for why.
+        Backdrop.Start();
 
         vm.DevVM.ImportRequested += OnImportRequested;
 
@@ -69,6 +77,15 @@ public partial class PetsPage : ContentPage
             // Re-read on every appearance so conditions or medications changed on
             // Manage / Medications are reflected the moment this page returns.
             await vm.PetVM.LoadActivePetTagsAsync();
+
+            // The sheets can be built now that the page has its data: deferred to here
+            // deliberately, so their inflation never competes with the load the person
+            // is actually waiting for. See Controls/SheetHost.cs.
+            if (!_sheetsQueued)
+            {
+                _sheetsQueued = true;
+                Controls.SheetHost.PreloadAll(this);
+            }
         }
         catch (Exception ex)
         {
@@ -81,6 +98,7 @@ public partial class PetsPage : ContentPage
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        Backdrop.Stop();
         vm.SettingsVM.ConfirmDeleteAllData = null;
         vm.SettingsVM.ConfirmDeleteAllDataCloud = null;
         vm.CloudVM.ConfirmDeleteAccount = null;

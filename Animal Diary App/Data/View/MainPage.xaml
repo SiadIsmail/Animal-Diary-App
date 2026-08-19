@@ -50,7 +50,10 @@
     <Grid RowDefinitions="*,Auto">
 
         <!-- Water background — bottom layer, spans the whole page -->
-        <controls:WaterBackground Grid.RowSpan="2"/>
+        <!-- Motion is driven by the page (OnAppearing / OnDisappearing) so only the
+             visible tab ever animates. See WaterBackground.xaml.cs for why that is
+             the page's job and not the control's. -->
+        <controls:WaterBackground x:Name="Backdrop" Grid.RowSpan="2"/>
 
         <!-- ================= TODAY ================= -->
         <ScrollView Grid.Row="0">
@@ -540,31 +543,56 @@
             </HorizontalStackLayout>
         </Border>
 
+        <!-- ── Overlay sheets ───────────────────────────────────────────────────
+             Each is a SheetHost: the body is built the first time it is needed,
+             not when the page inflates. Declaration order is still z-order.
+             See Controls/SheetHost.cs for why. -->
+
         <!-- Today stat-card picker ("what matters most today?") -->
-        <view:TodayCardSheetView Grid.RowSpan="2"
-                                 BindingContext="{Binding TodayCardSheetVM}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding TodayCardSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate view:TodayCardSheetView}"/>
 
         <!-- Cloud Features sheet (FelovaBottomSheet; click-through while closed) -->
-        <view:CloudSheetView Grid.RowSpan="2"
-                             BindingContext="{Binding CloudVM}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding CloudVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate view:CloudSheetView}"/>
 
         <!-- Monetization sheets (subscribe + trial messages + access code) -->
-        <view:SubscribeSheetView Grid.RowSpan="2" BindingContext="{Binding SubscribeVM}"/>
-        <view:TrialMessageSheetView Grid.RowSpan="2" BindingContext="{Binding TrialMessageVM}"/>
-        <view:RedeemCodeSheetView Grid.RowSpan="2" BindingContext="{Binding RedeemVM}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding SubscribeVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate view:SubscribeSheetView}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding TrialMessageVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate view:TrialMessageSheetView}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding RedeemVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate view:RedeemCodeSheetView}"/>
 
         <!-- Hidden developer diagnostics sheet -->
-        <view:DevSheetView Grid.RowSpan="2"
-                           BindingContext="{Binding DevVM}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding DevVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate view:DevSheetView}"/>
 
-        <!-- Settings panel overlay -->
-        <view:SettingsPanelView Grid.RowSpan="2"
-                                IsPanelOpen="{Binding SettingsVM.IsPanelOpen, Mode=TwoWay}"/>
+        <!-- Settings panel overlay. Its BindingContext stays the page's MainViewModel
+             (the panel reads across several child VMs), and it binds its own
+             IsPanelOpen internally — see SettingsPanelView.xaml. -->
+        <controls:SheetHost Grid.RowSpan="2"
+                            Presented="{Binding SettingsVM.IsPanelOpen}"
+                            SheetTemplate="{DataTemplate view:SettingsPanelView}"/>
 
         <!-- Confirm sheet LAST, so it renders above the settings panel: "Delete all data"
              is reached from inside that panel, which stays open behind the question. -->
-        <view:ConfirmSheetView Grid.RowSpan="2"
-                               BindingContext="{Binding ConfirmVM}"/>
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding ConfirmVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate view:ConfirmSheetView}"/>
 
     </Grid>
 

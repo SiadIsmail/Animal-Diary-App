@@ -237,7 +237,10 @@ public class JournalLogViewModel : BaseViewModel
     public ICommand SkipDoseCommand { get; }
 
     // ── Chip row ────────────────────────────────────────────────────────────────
-    public ObservableCollection<JournalChip> Chips { get; } = new();
+    /// <summary>Range-batched: a chip row is rebuilt on every appearance, every save and
+    /// every date change, and Clear() + per-item Add() made BindableLayout instantiate a
+    /// template and invalidate layout once PER CHIP. See RangeObservableCollection.</summary>
+    public RangeObservableCollection<JournalChip> Chips { get; } = new();
 
     private string _heading = string.Empty;
     public string Heading { get => _heading; private set => SetProperty(ref _heading, value); }
@@ -280,7 +283,10 @@ public class JournalLogViewModel : BaseViewModel
     // Mood, weight, glucose, appetite, seizures and medication doses all become
     // TimelineItems here and are sorted purely by time — a single ordering, no
     // per-kind sections. The page renders them with one template selector.
-    public ObservableCollection<TimelineItem> TimelineItems { get; } = new();
+    /// <summary>Range-batched — see <see cref="Chips"/>. This is the list whose length
+    /// the owner controls without bound, so it is the one that most needed it: a busy
+    /// day rebuilt ~20 cards of ~22 elements each, one layout pass apiece.</summary>
+    public RangeObservableCollection<TimelineItem> TimelineItems { get; } = new();
 
     public bool HasTimelineItems => TimelineItems.Count > 0;
 
@@ -368,32 +374,48 @@ public class JournalLogViewModel : BaseViewModel
             ? (await _custom.GetAllForPetAsync(pet!.Id)).ToDictionary(c => c.Id)
             : new Dictionary<int, CustomTracker>();
 
+        // The two things BOTH halves of this screen need, fetched once. The timeline
+        // needs the plan (for the glucose target range) and the day's doses (for the
+        // dose cards); the pending engine needs exactly the same two. They used to be
+        // read twice per reload — the care plan is three queries and the dose join is
+        // another three, so that was six round trips spent re-answering a question this
+        // method had already asked.
+        IReadOnlyList<CarePlanItem> plan = System.Array.Empty<CarePlanItem>();
+        IReadOnlyList<DayDose> doses = System.Array.Empty<DayDose>();
+        if (_hasPet)
+        {
+            plan = await _carePlan.GetPlanAsync(pet);
+            doses = await _dayDoses.GetForDayAsync(pet!.Id, _date);
+        }
+
         // Gather everything (the awaits) BEFORE touching the observable collections.
         // Several reloads fire on startup (OnAppearing + the date/pet PropertyChanged
         // handlers); if we cleared before awaiting, their clear+add would interleave
         // and duplicate the rows. The fill below is await-free, so each reload rebuilds
         // atomically on the UI thread.
-        var timeline = await GatherTimelineAsync(pet, customById);
+        var timeline = await GatherTimelineAsync(pet, customById, plan, doses);
 
         IReadOnlyList<PendingItem> pending = System.Array.Empty<PendingItem>();
         if (_hasPet && IsToday)
-            pending = await _pending.GetAsync(pet!, _date);
+            pending = await _pending.GetAsync(pet!, _date, plan, doses);
 
         // ── atomic fill: no awaits from here on ──
+        // Both lists are built completely and then handed over in ONE notification.
+        // The rule about not clearing before an await still holds and still matters;
+        // this additionally stops the refill itself from costing a layout pass per row.
         _customById = customById;
-        TimelineItems.Clear();
-        foreach (var t in timeline) TimelineItems.Add(t);
+        TimelineItems.ReplaceAll(timeline);
         RaiseTimelineFlags();
 
-        Chips.Clear();
+        var chips = new List<JournalChip>();
         if (_hasPet && IsToday)
         {
-            BuildChips(pending);
-            var count = Chips.Count; // real pending items, before the trailing "+"
+            BuildChips(pending, chips);
+            var count = chips.Count; // real pending items, before the trailing "+"
             HasPending = count > 0;
             Heading = BuildHeading(count);
             if (HasPending)
-                Chips.Add(new JournalChip
+                chips.Add(new JournalChip
                 {
                     Kind = JournalChipKind.Add,
                     Icon = "＋",
@@ -405,6 +427,8 @@ public class JournalLogViewModel : BaseViewModel
             HasPending = false;
         }
 
+        Chips.ReplaceAll(chips);
+
         NotifyStates();
 
         // After-write hook: a logging change today alters what's still pending, so
@@ -415,13 +439,13 @@ public class JournalLogViewModel : BaseViewModel
             _dailyReminders.RefreshAsync().Forget();
     }
 
-    private void BuildChips(IReadOnlyList<PendingItem> pending)
+    private void BuildChips(IReadOnlyList<PendingItem> pending, List<JournalChip> into)
     {
         int i = 0;
         foreach (var item in pending)
         {
             var tilt = (i++ % 2 == 0) ? -0.4 : 0.4;
-            Chips.Add(item.Kind == PendingKind.Medication
+            into.Add(item.Kind == PendingKind.Medication
                 ? MedChip(item, tilt)
                 : TrackerChip(item, tilt));
         }
@@ -510,35 +534,40 @@ public class JournalLogViewModel : BaseViewModel
     // a single chronological ordering across every kind (§3). Legacy mood/weight rows
     // with no stored time sort at the start of the day.
     private async Task<List<TimelineItem>> GatherTimelineAsync(
-        Pet? pet, IReadOnlyDictionary<int, CustomTracker> customById)
+        Pet? pet, IReadOnlyDictionary<int, CustomTracker> customById,
+        IReadOnlyList<CarePlanItem> plan, IReadOnlyList<DayDose> doses)
     {
         var items = new List<TimelineItem>();
 
         if (pet == null || pet.Id == 0)
             return items;
 
-        // Every store for the day, issued together rather than one awaited round trip
-        // after another. None of them depends on another's result, and this method runs
-        // on every Journal appearance, every date change, every save and every
-        // RemoteChangesApplied — nine sequential hops was most of the day view's latency.
-        // (Doses stay separate below: that call already batches its own joins.)
-        var entryTask = _petEntries.GetPetEntryByDateAndPetIdAsync(_date, pet.Id);
-        var planTask = _carePlan.GetPlanAsync(pet);
-        var glucoseTask = _glucose.GetForDateAsync(pet.Id, _date);
-        var appetiteTask = _appetite.GetForDateAsync(pet.Id, _date);
-        var appetiteAmountTask = _appetite.GetAmountsForDateAsync(pet.Id, _date);
-        var waterAmountTask = _water.GetAmountsForDateAsync(pet.Id, _date);
-        var waterLevelTask = _water.GetLevelsForDateAsync(pet.Id, _date);
-        var seizureTask = _seizures.GetForDateAsync(pet.Id, _date);
+        // One store at a time, on purpose.
+        //
+        // These used to be issued together under a Task.WhenAll, on the reasoning that
+        // none depends on another's result. They don't — but sqlite-net's async API is
+        // not asynchronous I/O: every ...Async call is queued to the THREAD POOL, where
+        // it takes a lock on the one shared connection. Issuing eight at once therefore
+        // occupied eight pooled threads to run one query, seven of them blocked on the
+        // lock, and asked the pool to grow past its core count at exactly the moment
+        // (launch, tab switch) when it is least able to. The queries ran sequentially
+        // either way. Awaiting them in turn costs the same wall time and one thread.
+        //
+        // Each is a point lookup on a composite (PetId, Date) index — see the entry
+        // models. If this ever needs to be fewer round trips, the answer is a wider
+        // query, not more concurrency.
+        var entry = await _petEntries.GetPetEntryByDateAndPetIdAsync(_date, pet.Id);
+        var glucoseEntries = await _glucose.GetForDateAsync(pet.Id, _date);
+        var appetiteEntries = await _appetite.GetForDateAsync(pet.Id, _date);
+        var appetiteAmounts = await _appetite.GetAmountsForDateAsync(pet.Id, _date);
+        var waterAmounts = await _water.GetAmountsForDateAsync(pet.Id, _date);
+        var waterLevels = await _water.GetLevelsForDateAsync(pet.Id, _date);
+        var seizureEntries = await _seizures.GetForDateAsync(pet.Id, _date);
         // ONE query covering every custom tracker the pet has, however many that is —
         // grouped below. This is what keeps "as many as you like" free here.
-        var customTask = _custom.GetForDateAsync(pet.Id, _date);
-
-        await Task.WhenAll(entryTask, planTask, glucoseTask, appetiteTask,
-            appetiteAmountTask, waterAmountTask, waterLevelTask, seizureTask, customTask);
+        var customEntries = await _custom.GetForDateAsync(pet.Id, _date);
 
         // Mood + Weight (both live on the day's PetEntry, each with its own time).
-        var entry = entryTask.Result;
         if (entry != null)
         {
             if (entry.MoodLevel > 0)
@@ -580,9 +609,9 @@ public class JournalLogViewModel : BaseViewModel
         }
 
         // Glucose (rose) — value is precise; range sentence only when a range exists.
-        var range = planTask.Result
+        var range = plan
             .FirstOrDefault(t => t.Key.Is(TrackerId.Glucose))?.TargetRange;
-        foreach (var g in glucoseTask.Result)
+        foreach (var g in glucoseEntries)
         {
             items.Add(new TimelineItem
             {
@@ -600,7 +629,7 @@ public class JournalLogViewModel : BaseViewModel
         // Appetite (honey) — two kinds that can both appear: the day's qualitative
         // reading (Didn't eat … everything) and any exact grams events. Both may carry
         // a food label. Never judged.
-        foreach (var a in appetiteTask.Result)
+        foreach (var a in appetiteEntries)
         {
             var word = ((AppetiteLevel)a.Level).GetDisplayName().ToLowerInvariant();
             items.Add(new TimelineItem
@@ -615,7 +644,7 @@ public class JournalLogViewModel : BaseViewModel
                 Sub = WithFood(Loc.Format("Journal_AteWord", word), a.Food)
             });
         }
-        foreach (var a in appetiteAmountTask.Result)
+        foreach (var a in appetiteAmounts)
         {
             items.Add(new TimelineItem
             {
@@ -634,7 +663,7 @@ public class JournalLogViewModel : BaseViewModel
         //   • exact ml readings, one card each (additive events), and
         //   • the day's single relative reading (Barely … a lot).
         // Never judged; the value is a plain fact.
-        foreach (var w in waterAmountTask.Result)
+        foreach (var w in waterAmounts)
         {
             items.Add(new TimelineItem
             {
@@ -648,7 +677,7 @@ public class JournalLogViewModel : BaseViewModel
                 Sub = Loc.Format("Journal_WaterMl", w.AmountMl.ToString("0.#", CultureInfo.CurrentCulture))
             });
         }
-        foreach (var w in waterLevelTask.Result)
+        foreach (var w in waterLevels)
         {
             var word = ((WaterLevel)w.Level).GetDisplayName().ToLowerInvariant();
             items.Add(new TimelineItem
@@ -665,7 +694,7 @@ public class JournalLogViewModel : BaseViewModel
         }
 
         // Seizures (violet) — logged as they happen; optional duration + note.
-        foreach (var s in seizureTask.Result)
+        foreach (var s in seizureEntries)
         {
             items.Add(new TimelineItem
             {
@@ -683,7 +712,7 @@ public class JournalLogViewModel : BaseViewModel
         // The owner's own trackers. One card per entry (they are events), wearing the
         // name, emoji and colour from the definition — including a RETIRED one, so
         // tidying the care plan never erases what was already written down.
-        foreach (var c in customTask.Result)
+        foreach (var c in customEntries)
         {
             var def = customById.GetValueOrDefault(c.CustomTrackerId);
             var visual = CustomTrackerVisuals.For(def);
@@ -702,7 +731,7 @@ public class JournalLogViewModel : BaseViewModel
 
         // Medication doses — placed at the moment they were tapped as taken/skipped
         // (their resolved time), falling back to the scheduled time when not yet acted on.
-        items.AddRange(await GatherDoseItemsAsync(pet.Id, _date));
+        items.AddRange(BuildDoseItems(doses, _date));
 
         // ── the single ordering: everything, purely by time ──
         var ordered = items.OrderBy(i => i.Time ?? TimeSpan.Zero).ToList();
@@ -978,13 +1007,13 @@ public class JournalLogViewModel : BaseViewModel
     // Today's scheduled doses as timeline entries, from the shared DayDoseService
     // (same meds → schedules → logs join the pending engine + Calendar use). A dose
     // sits at its resolved (tapped) time when acted on, else at its scheduled time.
-    private async Task<List<TimelineItem>> GatherDoseItemsAsync(int petId, DateTime date)
+    private static List<TimelineItem> BuildDoseItems(IReadOnlyList<DayDose> doses, DateTime date)
     {
         var now = DateTime.Now;
         var honey = Tint("HoneyWarmTint");
         var result = new List<TimelineItem>();
 
-        foreach (var d in await _dayDoses.GetForDayAsync(petId, date))
+        foreach (var d in doses)
         {
             var canToggle = date < now.Date || (date == now.Date && d.ScheduledTime <= now.TimeOfDay);
             var outcome = d.Log?.Status;

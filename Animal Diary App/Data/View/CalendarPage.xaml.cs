@@ -29,6 +29,21 @@ public partial class CalendarPage : ContentPage
 
 	private readonly SettingsService _settings;
 
+	/// <summary>The overlay sheets are queued for background building once, after the
+	/// first load settles. Re-queuing on every remote-change reload would only enqueue
+	/// no-ops (Realise is idempotent), but the flag keeps the intent obvious.</summary>
+	private bool _sheetsQueued;
+
+	/// <summary>What the last completed load was a load of, and when. Together they
+	/// decide whether an appearance has to hit the database at all.</summary>
+	/// <summary>The data version is read BEFORE the load and stamped AFTER it, never
+	/// re-read at the end. A cloud pull that lands mid-load bumps the version and posts
+	/// its own reload; stamping the post-load value would make that reload look
+	/// redundant and skip it, leaving the page a caregiver's entry behind. Reading it
+	/// first can only cause one extra reload, which is the harmless direction.</summary>
+	private PageLoadKey _loaded;
+	private DateTime _loadedAtUtc = DateTime.MinValue;
+
 	public CalendarPage(MainViewModel mainViewModel, SettingsService settings)
 	{
 		InitializeComponent();
@@ -86,6 +101,9 @@ public partial class CalendarPage : ContentPage
 	{
 		base.OnAppearing();
 
+		// Only the visible tab animates its backdrop — see MainPage for why.
+		Backdrop.Start();
+
 		// Engagement signal: the Journal tab was opened.
 		vm.Analytics.Track(AnalyticsEvents.CalendarOpened);
 
@@ -115,6 +133,17 @@ public partial class CalendarPage : ContentPage
 	{
 		try
 		{
+			// Nothing has changed since this page last loaded, and that was moments ago:
+			// the ~30 queries below would repaint identical pixels. Keyed on the active
+			// pet and the day as well as the data version, because switching pets writes
+			// no row and neither does midnight passing. See DataVersion for why the
+			// freshness window is part of the guard rather than a nicety.
+			var version = DataVersion.Current;
+			var key = new PageLoadKey(
+				version, vm.CalendarVM.CurrentPetId, vm.CalendarVM.CurrentSelectedDate);
+			if (key == _loaded && DateTime.UtcNow - _loadedAtUtc < PageLoadKey.Freshness)
+				return;
+
 			// Data may have changed on other tabs while we were away — mark the
 			// Journal context stale so exactly one reload runs for this appearance
 			// (usually via the property-changed handler as PrepareDataAsync loads).
@@ -133,8 +162,23 @@ public partial class CalendarPage : ContentPage
 				await vm.JournalVM.ReloadAsync(_lastJournalDate);
 			}
 
+			// Arriving on a day that was ALREADY finished is not an achievement to
+			// replay — snap the paws on. The staggered fade belongs to the moment the
+			// day becomes done, which OnJournalVmPropertyChanged owns. It also used to
+			// hold this reload open for 720ms of Task.Delay on every appearance.
 			if (vm.JournalVM.ShowAllDone)
-				await AnimatePawsAsync();
+				ShowPaws();
+
+			// The sheets can be built now that the page has its data: deferred to here
+			// deliberately, so their inflation never competes with the load the person
+			// is actually waiting for. See Controls/SheetHost.cs.
+			if (!_sheetsQueued)
+			{
+				_sheetsQueued = true;
+				Controls.SheetHost.PreloadAll(this);
+			}
+
+			StampLoaded(version);
 		}
 		catch (Exception ex)
 		{
@@ -150,6 +194,7 @@ public partial class CalendarPage : ContentPage
 	protected override void OnDisappearing()
 	{
 		base.OnDisappearing();
+		Backdrop.Stop();
 		vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
 		vm.CalendarVM.PropertyChanged -= OnCalendarVmPropertyChanged;
 		vm.JournalVM.PropertyChanged -= OnJournalVmPropertyChanged;
@@ -320,10 +365,24 @@ public partial class CalendarPage : ContentPage
 	// notifications don't bounce back through the handler below.
 	private async Task ReloadJournalAsync()
 	{
+		var version = DataVersion.Current;
 		_lastJournalPetId = vm.CalendarVM.CurrentPetId;
 		_lastJournalDate = vm.CalendarVM.CurrentSelectedDate;
 		await vm.JournalVM.ReloadAsync(_lastJournalDate);
 		await vm.CalendarVM.RefreshEntriesAsync();
+		// The page is current as of the write that got us here, so leaving and coming
+		// straight back doesn't have to re-read it all.
+		StampLoaded(version);
+	}
+
+	/// <summary>Record what the page is now showing, for the appearance guard above.
+	/// The pet and the date are re-read (a load can switch the active pet); the version
+	/// is the caller's, captured before its load — see the field's note.</summary>
+	private void StampLoaded(int version)
+	{
+		_loaded = new PageLoadKey(
+			version, vm.CalendarVM.CurrentPetId, vm.CalendarVM.CurrentSelectedDate);
+		_loadedAtUtc = DateTime.UtcNow;
 	}
 
 	private async void OnCalendarVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -452,16 +511,25 @@ public partial class CalendarPage : ContentPage
 		return new Point(x, y);
 	}
 
+	/// <summary>The four paw glyphs at rest. They start at Opacity 0 in XAML so the
+	/// staggered fade has somewhere to come from; this is how they get there when there
+	/// is nothing to celebrate — a revisit to a day that was already finished.</summary>
+	private void ShowPaws()
+	{
+		foreach (var paw in new[] { Paw1, Paw2, Paw3, Paw4 })
+			paw.Opacity = 0.85;
+	}
+
 	/// <summary>Fade the four paw glyphs in with a staggered delay (skipped when the
-	/// OS asks for reduced motion — they simply appear at full opacity).</summary>
+	/// OS asks for reduced motion — they simply appear at full opacity). Called only on
+	/// the TRANSITION into an all-done day, never on an appearance that finds one.</summary>
 	private async Task AnimatePawsAsync()
 	{
 		var paws = new[] { Paw1, Paw2, Paw3, Paw4 };
 
 		if (ReducedMotion.IsEnabled)
 		{
-			foreach (var paw in paws)
-				paw.Opacity = 0.85;
+			ShowPaws();
 			return;
 		}
 

@@ -47,11 +47,29 @@ public class PendingItemsService
     {
         var day = date.Date;
         var plan = await _carePlan.GetPlanAsync(pet);
+        var doses = await _dayDoses.GetForDayAsync(pet.Id, day);
 
-        var doses = await GatherDosesAsync(pet.Id, day);
+        return await GetAsync(pet, date, plan, doses);
+    }
+
+    /// <summary>
+    /// The same answer, for a caller that has already fetched the care plan and the
+    /// day's doses.
+    ///
+    /// <para>The Journal is that caller. Building its timeline needs both, and so does
+    /// this — so a reload used to read the pet's conditions, trackers and custom
+    /// trackers twice, and run the medications → schedules → logs join twice, for one
+    /// screen. Passing them in is deliberately explicit rather than a cache inside
+    /// <see cref="CarePlanService"/>: a stale care plan means a tracker the owner just
+    /// added silently fails to appear, and that is not a risk worth taking to save a
+    /// query.</para></summary>
+    public async Task<IReadOnlyList<PendingItem>> GetAsync(
+        Pet pet, DateTime date, IReadOnlyList<CarePlanItem> plan, IReadOnlyList<DayDose> doses)
+    {
+        var day = date.Date;
         var entries = await GatherEntryDatesAsync(pet.Id, day);
 
-        return PendingEngine.Compute(plan, doses, entries, day);
+        return PendingEngine.Compute(plan, Project(pet.Id, doses), entries, day);
     }
 
     /// <summary>
@@ -80,12 +98,12 @@ public class PendingItemsService
     // meds → schedules → logs join is shared with the Journal timeline + Calendar
     // via DayDoseService; here we project it to the engine's flat snapshot.
     private async Task<IReadOnlyList<ScheduledDose>> GatherDosesAsync(int petId, DateTime day)
-    {
-        var doses = await _dayDoses.GetForDayAsync(petId, day);
-        return doses
+        => Project(petId, await _dayDoses.GetForDayAsync(petId, day));
+
+    private static IReadOnlyList<ScheduledDose> Project(int petId, IReadOnlyList<DayDose> doses)
+        => doses
             .Select(d => new ScheduledDose(d.Medication.Id, petId, d.Medication.Name, d.ScheduledTime, d.Given))
             .ToList();
-    }
 
     // Each tracker's recent entry dates (rolling 7 days, enough for the weekly
     // window). Mood + weight live on PetEntry; glucose, appetite + water in their

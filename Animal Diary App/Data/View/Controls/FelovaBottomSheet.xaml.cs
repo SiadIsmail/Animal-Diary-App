@@ -228,6 +228,16 @@ public partial class FelovaBottomSheet : ContentView
     {
         var reduce = ReducedMotion.IsEnabled;
 
+        // A sheet built on demand has never been laid out, so the container's height —
+        // and with it HiddenOffset, i.e. where "just below the screen" actually is — is
+        // not known yet, and the slide would start from the 2000 fallback and whip in
+        // faster than every later open. Give Android one layout pass first. Same beat,
+        // for the same reason, as SettingsPanelView takes before its panel slides.
+        // Only ever hit on a sheet's FIRST presentation (see Controls/SheetHost.cs);
+        // once realised, a sheet stays laid out for the life of the page.
+        if (SheetContainer.Height <= 0)
+            await Task.Delay(16);
+
         // Start just below the screen and transparent, then slide up + fade the scrim
         // in. No forced remeasures here: the body is already laid out (hidden sheets
         // are only translated, never collapsed), and invalidating mid-animation made

@@ -419,7 +419,14 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
             // Only when local data actually changed — pushes and no-op cycles
             // must not cause pointless page reloads.
             if (changed > 0)
+            {
+                // Applied rows are written without a SyncStamp (they are already the
+                // remote truth, so they must not come back marked dirty), which means
+                // they do not reach the write hook. Bump explicitly or a page that just
+                // loaded would consider itself current and skip the reload below.
+                DataVersion.Bump();
                 RemoteChangesApplied?.Invoke();
+            }
 
             CloudDiagnostics.Record($"[Cloud] sync OK ({changed} rows applied)");
             return SyncOutcome.Success;
