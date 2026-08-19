@@ -87,6 +87,30 @@ public static class ConstellationLayout
     /// </summary>
     private const double JitterAmplitude = 2.2;
 
+    // ── Arriving ──────────────────────────────────────────────────────────────
+    /// <summary>How much of the load is spent staggering rather than fading. 0.55 means
+    /// the last entry starts arriving when the first is 55% through — weighted towards
+    /// the sweep rather than the fade, because the travel is the part anyone sees.</summary>
+    public const double StaggerShare = 0.55;
+
+    /// <summary>
+    /// How far into its own arrival a star is, given how far the load has run and where
+    /// the star sits along the date axis (0 = the oldest edge, 1 = the newest).
+    ///
+    /// <para>The stagger runs along the DATE axis on purpose: the history visibly
+    /// writes itself left to right, so the horizontal axis explains itself before
+    /// anyone has read the caption. That is the whole reason the animation exists —
+    /// it is the only ornament here that teaches something.</para>
+    /// </summary>
+    public static double ArrivalOf(double reveal, double xFraction)
+    {
+        if (reveal >= 1)
+            return 1;
+
+        var start = StaggerShare * Math.Clamp(xFraction, 0, 1);
+        return Math.Clamp((reveal - start) / (1 - StaggerShare), 0, 1);
+    }
+
     /// <summary>How big a star is drawn, from how much room each one has on screen.
     /// Derived from spacing rather than count, so zooming in grows the symbols back as
     /// the crowd around them thins — the progressive reveal, with no second rule.</summary>
