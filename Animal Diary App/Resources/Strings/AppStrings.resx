@@ -933,7 +933,6 @@
   <data name="Sky_Empty" xml:space="preserve"><value>Nothing was written down in this stretch of time.</value></data>
   <!-- The three lenses. Same entries, three arrangements: when it happened, when in
        the DAY it happened, and whether it comes round again. -->
-  <data name="Sky_LensTimeline" xml:space="preserve"><value>Timeline</value></data>
   <data name="Sky_LensHistory" xml:space="preserve"><value>History</value></data>
   <data name="Sky_LensCycle" xml:space="preserve"><value>Cycle</value></data>
   <data name="Sky_HintFocus" xml:space="preserve"><value>Tap a symbol to follow just that one.</value></data>
@@ -957,7 +956,6 @@
   <data name="Sky_GapHours" xml:space="preserve"><value>{0} hours after the last one</value></data>
   <data name="Sky_GapDayOne" xml:space="preserve"><value>1 day after the last one</value></data>
   <data name="Sky_GapDays" xml:space="preserve"><value>{0} days after the last one</value></data>
-  <data name="Sky_Close" xml:space="preserve"><value>Close</value></data>
   <data name="Sky_Range7" xml:space="preserve"><value>1W</value></data>
   <data name="Sky_Range30" xml:space="preserve"><value>1M</value></data>
   <data name="Sky_Range90" xml:space="preserve"><value>3M</value></data>

@@ -183,12 +183,15 @@
          size as the Journal timeline's tinted icon tiles. -->
     <Color x:Key="NightTile">#14343B</Color>
 
-    <!-- The only text that sits ON the night: the empty-state line and the dates under
-         the sky. Everything else on the page — the heading, the range tabs, the legend,
-         the hint — is ordinary daylight Ink, because the page is a daylight page. The
-         chrome tokens this section used to carry (SkyGlass/SkyWell/SkyLine/SkyText) are
-         gone with the all-dark version that needed them; don't reintroduce them without
-         reintroducing the mistake. -->
+    <!-- The text that sits ON the night: the empty-state line, the dates under the sky,
+         the fold dial's label, and the peek that opens when a star is tapped. Ink for a
+         heading, SkyInk for everything secondary.
+
+         Everything else on the page — the page heading, the range tabs, the legend, the
+         hints — is ordinary daylight Ink, because the page is a daylight page. The
+         all-dark version's chrome tokens (SkyGlass/SkyWell/SkyLine) stayed deleted with
+         it; don't reintroduce those without reintroducing the mistake. -->
+    <Color x:Key="SkyText">#EAF6F2</Color>
     <Color x:Key="SkyInk">#9FC4C0</Color>
     <!-- Hairline for the one control that sits ON the night: the fold dial. -->
     <Color x:Key="SkyLineSoft">#33FFFFFF</Color>

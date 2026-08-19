@@ -57,12 +57,28 @@ public partial class ConstellationPage : ContentPage
         Sky.Drawable = _drawable;
 
         // The canvas has no size until it is laid out, and it changes on rotation.
-        SkyHost.SizeChanged += (_, _) => Rebuild();
+        SkyHost.SizeChanged += (_, _) =>
+        {
+            Rebuild();
+            if (_revealPending)
+                PlayReveal();
+        };
     }
 
-    // Android back closes the tapped-star sheet before it navigates.
+    /// <summary>Android back clears the tapped entry before it navigates — the peek is
+    /// in the card now rather than in an overlay, so nothing else would close it.</summary>
     protected override bool OnBackButtonPressed()
-        => BackDismiss.TryCloseTopmostOverlay(this) || base.OnBackButtonPressed();
+    {
+        if (vm.ConstellationVM.HasSelection)
+        {
+            vm.ConstellationVM.SelectedIndex = -1;
+            return true;
+        }
+
+        // No BackDismiss walk: this page hosts no overlay any more — the peek is a card
+        // inside the sky — so there is nothing for it to find.
+        return base.OnBackButtonPressed();
+    }
 
     protected override async void OnAppearing()
     {
@@ -101,8 +117,15 @@ public partial class ConstellationPage : ContentPage
         vm.ConstellationVM.ViewChanged -= OnViewChanged;
         vm.ConstellationVM.RepaintRequested -= OnRepaintRequested;
         this.AbortAnimation(FlightName);
+        this.AbortAnimation(RevealName);
+        this.AbortAnimation(SelectionName);
+        this.AbortAnimation(BloomName);
         vm.ConstellationVM.PropertyChanged -= OnViewModelPropertyChanged;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
+
+        // The ViewModel is a singleton, so this visit's exploration would otherwise be
+        // waiting here next time — including the flag that suppresses the opening focus.
+        vm.ConstellationVM.EndVisit();
     }
 
     private void OnRemoteChangesApplied() =>
@@ -128,6 +151,44 @@ public partial class ConstellationPage : ContentPage
         Rebuild();
         FitToData();
         Settle();
+        PlayReveal();
+    }
+
+    /// <summary>Set when new data lands, cleared once the reveal has actually run.
+    ///
+    /// <para>On the first visit the entries arrive before the card has been measured,
+    /// so there is nothing placed to animate and the reveal was being spent on an empty
+    /// canvas — the one time it most wanted to be seen. It now waits for the first
+    /// layout that produces stars.</para></summary>
+    private bool _revealPending;
+
+    /// <summary>The sky writes itself left to right. The stagger lives in the drawable
+    /// (it knows where each star sits); this only drives the clock.</summary>
+    private void PlayReveal()
+    {
+        this.AbortAnimation(RevealName);
+
+        if (ReducedMotion.IsEnabled)
+        {
+            _revealPending = false;
+            _drawable.Reveal = 1;
+            Sky.Invalidate();
+            return;
+        }
+
+        if (_drawable.Stars.Count == 0)
+        {
+            // Nothing placed yet: hold the sky back rather than burning the reveal on
+            // an empty canvas, and run it the moment the first real layout lands.
+            _revealPending = true;
+            _drawable.Reveal = 0;
+            return;
+        }
+
+        _revealPending = false;
+        _drawable.Reveal = 0;
+        new Animation(v => { _drawable.Reveal = v; Sky.Invalidate(); }, 0, 1, Easing.CubicOut)
+            .Commit(this, RevealName, length: RevealMilliseconds);
     }
 
     /// <summary>
@@ -178,6 +239,7 @@ public partial class ConstellationPage : ContentPage
         Rebuild();
         FitToData();
 
+        MarkSelectedDay();
         FlyTo(before);
     }
 
@@ -187,7 +249,26 @@ public partial class ConstellationPage : ContentPage
     private void OnRepaintRequested()
     {
         _drawable.Focus = vm.ConstellationVM.Focus;
-        Sky.Invalidate();
+        PlayBloom();
+    }
+
+    /// <summary>Focus is a transformation, not a dimmer switch: the unfocused recede
+    /// while the chosen kind blooms and chains. Animating it is what makes it read as
+    /// bringing something forward rather than turning the rest off.</summary>
+    private void PlayBloom()
+    {
+        this.AbortAnimation(BloomName);
+
+        if (ReducedMotion.IsEnabled)
+        {
+            _drawable.Bloom = 1;
+            Sky.Invalidate();
+            return;
+        }
+
+        _drawable.Bloom = 0;
+        new Animation(v => { _drawable.Bloom = v; Sky.Invalidate(); }, 0, 1, Easing.CubicOut)
+            .Commit(this, BloomName, length: BloomMilliseconds);
     }
 
     // ── The flight between lenses ────────────────────────────────────────────────
@@ -195,6 +276,18 @@ public partial class ConstellationPage : ContentPage
     private const uint FlightMilliseconds = 620;
     private const uint FoldMilliseconds = 260;
     private const string FlightName = "sky.lens";
+
+    // ── The three moments ────────────────────────────────────────────────────────
+    // Everything expressive on this surface is a RESPONSE, never wallpaper: the
+    // resting picture stays plain enough to read, and the beauty is what arriving,
+    // touching and focusing feel like. Each is skipped whole when the OS asks for
+    // reduced motion — the page background already pays that courtesy.
+    private const uint RevealMilliseconds = 1150;
+    private const uint SelectionMilliseconds = 430;
+    private const uint BloomMilliseconds = 340;
+    private const string RevealName = "sky.reveal";
+    private const string SelectionName = "sky.select";
+    private const string BloomName = "sky.bloom";
 
     /// <summary>
     /// Where every star is on the canvas <b>right now</b> — the "from" end of a
@@ -294,7 +387,67 @@ public partial class ConstellationPage : ContentPage
             return;
 
         _drawable.SelectedIndex = vm.ConstellationVM.SelectedIndex;
-        Sky.Invalidate();
+        MarkSelectedDay();
+        PlaceDetailCard();
+        PlaySelection();
+    }
+
+    /// <summary>
+    /// Which slice of time the open sheet is talking about.
+    ///
+    /// <para>The column and the brightened siblings are "Also that day" drawn on the
+    /// canvas — the same entries the sheet lists, shown where they happened. The span
+    /// is computed here because the page is what knows the range.</para>
+    /// </summary>
+    private void MarkSelectedDay()
+    {
+        var sky = vm.ConstellationVM;
+        var index = sky.SelectedIndex;
+
+        if (index < 0 || index >= sky.Events.Count)
+        {
+            _drawable.HighlightDay = null;
+            return;
+        }
+
+        var day = sky.Events[index].When.Date;
+        var world = Math.Max(1, SkyHost.Width - ConstellationLayout.HourGutter);
+
+        _drawable.HighlightDay = day;
+        _drawable.HighlightFromX = ConstellationLayout.XFor(day, sky.From, sky.To, world);
+        _drawable.HighlightToX = ConstellationLayout.XFor(day.AddDays(1), sky.From, sky.To, world);
+    }
+
+    /// <summary>Put the peek on the opposite half of the card from the star it
+    /// describes, so it never covers the thing it is pointing at.</summary>
+    private void PlaceDetailCard()
+    {
+        var sky = vm.ConstellationVM;
+        var index = sky.SelectedIndex;
+        var height = SkyHost.Height;
+
+        if (index < 0 || index >= _drawable.Stars.Count || height <= 0)
+            return;
+
+        DetailCard.VerticalOptions = _drawable.Stars[index].Y > height / 2
+            ? LayoutOptions.Start
+            : LayoutOptions.End;
+    }
+
+    private void PlaySelection()
+    {
+        this.AbortAnimation(SelectionName);
+
+        if (ReducedMotion.IsEnabled || _drawable.HighlightDay is null)
+        {
+            _drawable.Selection = 1;
+            Sky.Invalidate();
+            return;
+        }
+
+        _drawable.Selection = 0;
+        new Animation(v => { _drawable.Selection = v; Sky.Invalidate(); }, 0, 1, Easing.CubicOut)
+            .Commit(this, SelectionName, length: SelectionMilliseconds);
     }
 
     // ── Placement ────────────────────────────────────────────────────────────────

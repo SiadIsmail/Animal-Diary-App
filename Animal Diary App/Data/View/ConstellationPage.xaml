@@ -351,6 +351,105 @@
                         </Grid>
                     </Border>
 
+
+                    <!-- ── The tapped entry ──
+                         In the card, not in a bottom sheet. The sheet was the app's
+                         standard overlay and it was the wrong one here: it drops a scrim
+                         over everything and takes half the screen, so the column and the
+                         brightened siblings — the entire point of tapping a star — were
+                         hidden behind the thing describing them. The shared-sheet rule
+                         governs INPUT; this is a read-only peek, so it can sit on the
+                         night it belongs to.
+
+                         It takes whichever half of the card the star is NOT in (the
+                         code-behind flips it), so it never covers what it is talking
+                         about. -->
+                    <Border x:Name="DetailCard"
+                            IsVisible="{Binding ConstellationVM.HasSelection}"
+                            BackgroundColor="{StaticResource NightTile}"
+                            Stroke="{StaticResource SkyLineSoft}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 16"
+                            Padding="12,10"
+                            Margin="10"
+                            VerticalOptions="End">
+                        <VerticalStackLayout Spacing="5">
+
+                            <Grid ColumnDefinitions="30,*,26" ColumnSpacing="9">
+                                <GraphicsView Grid.Column="0"
+                                              Drawable="{Binding ConstellationVM.SelectedSymbol}"
+                                              InputTransparent="True"
+                                              VerticalOptions="Center"/>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                                    <Label Text="{Binding ConstellationVM.SelectedTitle}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="13.5"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource SkyText}"/>
+                                    <Label Text="{Binding ConstellationVM.SelectedWhen}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="11.5"
+                                           TextColor="{StaticResource SkyInk}"/>
+                                </VerticalStackLayout>
+
+                                <Label Grid.Column="2" Text="✕"
+                                       FontSize="15"
+                                       TextColor="{StaticResource SkyInk}"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalOptions="Center">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ConstellationVM.ClearSelectionCommand}"/>
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </Grid>
+
+                            <Label Text="{Binding ConstellationVM.SelectedDetail}"
+                                   IsVisible="{Binding ConstellationVM.HasSelectedDetail}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12.5"
+                                   TextColor="{StaticResource SkyText}"/>
+
+                            <Label Text="{Binding ConstellationVM.SelectedGap}"
+                                   IsVisible="{Binding ConstellationVM.HasSelectedGap}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   TextColor="{StaticResource SkyInk}"/>
+
+                            <!-- What else was written down that day — the same entries the
+                                 lit column is pointing at. -->
+                            <VerticalStackLayout IsVisible="{Binding ConstellationVM.HasSameDay}"
+                                                 Spacing="2"
+                                                 Margin="0,3,0,0">
+                                <Label Text="{loc:Translate Sky_AlsoThatDay}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="9.5"
+                                       FontAttributes="Bold"
+                                       CharacterSpacing="1.2"
+                                       TextColor="{StaticResource SkyInk}"/>
+
+                                <FlexLayout Wrap="Wrap"
+                                            BindableLayout.ItemsSource="{Binding ConstellationVM.SameDay}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Label Text="{Binding .}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="11.5"
+                                                   TextColor="{StaticResource SkyText}"
+                                                   Margin="0,0,12,0"/>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </FlexLayout>
+
+                                <Label Text="{Binding ConstellationVM.SameDayMore}"
+                                       IsVisible="{Binding ConstellationVM.HasSameDayMore}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource SkyInk}"/>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+
                     <!-- The "SAMPLE DATA" banner is gone with the fixture it warned about.
                          It existed because the old switch REPLACED the real pet's history:
                          same pet, same name, invented seizures, and no way for an owner to
@@ -443,111 +542,5 @@
              rather than on the canvas, where it would become a second thing the picture
              encodes. IsPresented is OneWay: the selection is the ViewModel's, and the
              scrim's dismiss goes back through the command. -->
-        <controls:FelovaBottomSheet Grid.RowSpan="6"
-                                    IsPresented="{Binding ConstellationVM.HasSelection, Mode=OneWay}"
-                                    Title="{Binding ConstellationVM.SelectedTitle}"
-                                    DismissCommand="{Binding ConstellationVM.ClearSelectionCommand}">
-            <controls:FelovaBottomSheet.SheetContent>
-                <VerticalStackLayout Spacing="12" Padding="0,2,0,4">
-
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                        <!-- The same scrap of night the legend wears, so the star you
-                             tapped is recognisably the one now being described. -->
-                        <Border Grid.Column="0"
-                                WidthRequest="40" HeightRequest="40"
-                                BackgroundColor="{StaticResource NightTile}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 20,19,20,19"
-                                Rotation="-3"
-                                VerticalOptions="Center">
-                            <GraphicsView Drawable="{Binding ConstellationVM.SelectedSymbol}"
-                                          InputTransparent="True"/>
-                        </Border>
-
-                        <Border Grid.Column="1"
-                                BackgroundColor="{StaticResource Well}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 14"
-                                Padding="14,12">
-                            <VerticalStackLayout Spacing="3">
-                                <Label Text="{Binding ConstellationVM.SelectedCategoryLabel}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="10.5"
-                                       FontAttributes="Bold"
-                                       CharacterSpacing="1.3"
-                                       TextColor="{StaticResource InkTertiary}"/>
-                                <Label Text="{Binding ConstellationVM.SelectedWhen}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="14"
-                                       TextColor="{StaticResource Ink}"/>
-                                <Label Text="{Binding ConstellationVM.SelectedDetail}"
-                                       IsVisible="{Binding ConstellationVM.HasSelectedDetail}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="13"
-                                       TextColor="{StaticResource InkSecondary}"/>
-
-                                <!-- Where this sits relative to the last one of its
-                                     kind. Every kind gets it, which is what keeps it a
-                                     fact about the diary rather than a counter aimed
-                                     at seizures. -->
-                                <Label Text="{Binding ConstellationVM.SelectedGap}"
-                                       IsVisible="{Binding ConstellationVM.HasSelectedGap}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="12"
-                                       TextColor="{StaticResource InkTertiary}"
-                                       Margin="0,3,0,0"/>
-                            </VerticalStackLayout>
-                        </Border>
-                    </Grid>
-
-                    <!-- What else was written down that day. Recall and nothing else:
-                         the day's other entries at their own times, in order, with no
-                         window, no overlay and no suggestion that any of it is
-                         connected. Felova turns the page; the owner reads it. -->
-                    <VerticalStackLayout IsVisible="{Binding ConstellationVM.HasSameDay}"
-                                         Spacing="4"
-                                         Padding="2,0">
-                        <Label Text="{loc:Translate Sky_AlsoThatDay}"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="10.5"
-                               FontAttributes="Bold"
-                               CharacterSpacing="1.3"
-                               TextColor="{StaticResource InkTertiary}"/>
-
-                        <VerticalStackLayout Spacing="2"
-                                             BindableLayout.ItemsSource="{Binding ConstellationVM.SameDay}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="x:String">
-                                    <Label Text="{Binding .}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="12.5"
-                                           TextColor="{StaticResource InkSecondary}"/>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
-
-                        <Label Text="{Binding ConstellationVM.SameDayMore}"
-                               IsVisible="{Binding ConstellationVM.HasSameDayMore}"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="11.5"
-                               TextColor="{StaticResource InkTertiary}"/>
-                    </VerticalStackLayout>
-
-                    <Label Text="{loc:Translate Sky_Close}"
-                           Padding="0,4"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="12.5"
-                           FontAttributes="Bold"
-                           TextColor="{StaticResource TealDeep}"
-                           HorizontalTextAlignment="Center">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ConstellationVM.ClearSelectionCommand}"/>
-                        </Label.GestureRecognizers>
-                    </Label>
-
-                </VerticalStackLayout>
-            </controls:FelovaBottomSheet.SheetContent>
-        </controls:FelovaBottomSheet>
-
     </Grid>
 </ContentPage>

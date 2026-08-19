@@ -238,6 +238,34 @@ public class ConstellationLensTests
         Assert.True(ConstellationLayout.StarRadius(Width * 8, 400) > ConstellationLayout.StarRadius(Width, 400));
     }
 
+    // ── Arriving ─────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void TheSkyWritesItselfLeftToRight()
+    {
+        // The one ornament that teaches something: the stagger runs along the DATE
+        // axis, so watching the load explains the horizontal axis before the caption
+        // has been read. Early in the reveal the oldest entries have started and the
+        // newest have not.
+        var early = ConstellationLayout.ArrivalOf(0.2, xFraction: 0.0);
+        var late = ConstellationLayout.ArrivalOf(0.2, xFraction: 1.0);
+
+        Assert.True(early > 0, "the oldest entry had not begun arriving");
+        Assert.Equal(0, late);
+    }
+
+    [Fact]
+    public void EveryStarHasArrivedByTheEnd()
+    {
+        // Whatever the stagger does in the middle, nothing may be left faded out: the
+        // resting picture is the whole history, not most of it.
+        foreach (var fraction in new[] { 0.0, 0.25, 0.5, 0.75, 1.0 })
+        {
+            Assert.Equal(1, ConstellationLayout.ArrivalOf(1, fraction));
+            Assert.InRange(ConstellationLayout.ArrivalOf(0.5, fraction), 0, 1);
+        }
+    }
+
     private static double[] Bearings(IReadOnlyList<SkyStar> stars) => stars
         .Select(s => Math.Atan2(s.Y - Height / 2, s.X - Width / 2))
         .ToArray();

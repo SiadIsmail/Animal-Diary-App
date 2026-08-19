@@ -903,7 +903,6 @@
   <data name="Sky_Empty" xml:space="preserve"><value>In diesem Zeitraum wurde nichts festgehalten.</value></data>
   <!-- Die drei Ansichten: wann es passiert ist, wann am TAG es passiert ist, und ob
        es wiederkehrt. -->
-  <data name="Sky_LensTimeline" xml:space="preserve"><value>Verlauf</value></data>
   <data name="Sky_LensHistory" xml:space="preserve"><value>Verlauf</value></data>
   <data name="Sky_LensCycle" xml:space="preserve"><value>Zyklus</value></data>
   <data name="Sky_HintFocus" xml:space="preserve"><value>Tippe ein Symbol an, um nur dem zu folgen.</value></data>
@@ -927,7 +926,6 @@
   <data name="Sky_GapHours" xml:space="preserve"><value>{0} Stunden nach dem letzten</value></data>
   <data name="Sky_GapDayOne" xml:space="preserve"><value>1 Tag nach dem letzten</value></data>
   <data name="Sky_GapDays" xml:space="preserve"><value>{0} Tage nach dem letzten</value></data>
-  <data name="Sky_Close" xml:space="preserve"><value>Schließen</value></data>
   <data name="Sky_Range7" xml:space="preserve"><value>1W</value></data>
   <data name="Sky_Range30" xml:space="preserve"><value>1M</value></data>
   <data name="Sky_Range90" xml:space="preserve"><value>3M</value></data>

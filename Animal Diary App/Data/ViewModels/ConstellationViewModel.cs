@@ -593,6 +593,31 @@ public class ConstellationViewModel : BaseViewModel
         await LoadAsync();
     }
 
+    /// <summary>
+    /// The page has been left. Forget what this visit explored.
+    ///
+    /// <para>This ViewModel is a DI <b>singleton</b>, so without it a focus picked in
+    /// one visit is still there in the next — and worse, the "the owner has chosen"
+    /// flag stays set too, which permanently defeats the condition-derived opening
+    /// focus for the rest of the process. Someone who once tapped Appetite would never
+    /// again open on their dog's seizures.</para>
+    ///
+    /// <para>Focus is <b>exploration state, not a preference</b>: it is never persisted,
+    /// nothing writes it down, and every visit is meant to start from the same place —
+    /// the kind the pet's conditions suggest. Deliberately narrow: the range, the lens
+    /// and the fold are left alone, because those are how the owner asked to look at the
+    /// data rather than what the app decided to show them.</para>
+    /// </summary>
+    public void EndVisit()
+    {
+        _focusChosen = false;
+        _focus.Clear();
+        SelectedIndex = -1;
+
+        foreach (var key in Legend)
+            key.IsFocused = false;
+    }
+
     /// <summary>Fired once per visit by the page. Coarse and anonymous: which stretch
     /// was being looked at, never what is in it (AI/analytics.md).</summary>
     public void TrackOpened() =>
