@@ -5,15 +5,13 @@ using Animal_Diary_App.Data.Services.Journal;
 using Xunit;
 
 /// <summary>
-/// The decorative fingerprint one pet's sky is drawn from.
+/// The one decorative thing a pet's sky carries: the colour it leans towards.
 ///
-/// <para>Two things are pinned here and both are promises rather than
-/// implementation details. <b>Every band is narrow</b> — the point of per-pet
-/// variation is that no owner can end up with a bad sky, only a different one, and
-/// "we widened one constant" is exactly how that would stop being true. And
-/// <b>nothing decorative may change what the picture means</b>: two pets with
-/// identical diaries still get every event at the same moment, wearing the same
-/// symbol, at the same size.</para>
+/// <para>It used to carry a wave shape and a starfield seed as well. Those existed to
+/// give a meaningless y axis something to be, and they went when the axis got a
+/// meaning — so what is pinned here is only what survived, plus the rule that kept it
+/// safe: an ambient hue may never be one of the colours that says WHICH KIND of thing
+/// was recorded.</para>
 /// </summary>
 public class SkySignatureTests
 {
@@ -25,85 +23,24 @@ public class SkySignatureTests
     }
 
     [Fact]
-    public void DifferentPets_GetDifferentSkies()
-    {
-        var charly = SkySignature.For("Charly", 2019);
-        var luna = SkySignature.For("Luna", 2019);
-        var otherBella = SkySignature.For("Bella", 2016);
-        var bella = SkySignature.For("Bella", 2022);
-
-        Assert.NotEqual(charly, luna);
-        Assert.NotEqual(bella, otherBella);
-    }
-
-    [Fact]
-    public void NoName_GetsTheHandTunedDefault()
+    public void NoName_GetsTheDefault()
     {
         Assert.Equal(SkySignature.Default, SkySignature.For(null));
         Assert.Equal(SkySignature.Default, SkySignature.For("  "));
     }
 
     [Fact]
-    public void DefaultIsNeverTheZeroedStruct()
+    public void EverySkyPicksARealAccent()
     {
-        // default(SkySignature) has zero wavelengths, and PathY divides by them. The
-        // Default property exists precisely so that value can never reach the drawing.
-        Assert.NotEqual(default, SkySignature.Default);
-        Assert.True(SkySignature.Default.LongWavelength > 0);
-        Assert.True(SkySignature.Default.ShortWavelength > 0);
-    }
-
-    [Theory]
-    [InlineData("Charly")]
-    [InlineData("Luna")]
-    [InlineData("Bella")]
-    [InlineData("Milo")]
-    [InlineData("Kiki")]
-    [InlineData("Otto")]
-    [InlineData("小白")]
-    [InlineData("Mr. Bigglesworth")]
-    public void EverySkyStaysInsideTheBands(string name)
-    {
-        var sky = SkySignature.For(name, 2020);
-
-        Assert.InRange(sky.PhaseLong, 0, Math.Tau);
-        Assert.InRange(sky.PhaseShort, 0, Math.Tau);
-        Assert.InRange(sky.LongWavelength, 68, 104);
-        Assert.InRange(sky.ShortWavelength, 22, 34);
-        Assert.InRange(sky.LongWeight, 0.84, 0.93);
-
-        // A HORIZON, not a curve. The ceiling is the load-bearing half: a large
-        // amplitude puts every event on a sweeping S, and a sweeping S through data is
-        // a trend line whatever the comments say it is.
-        Assert.InRange(sky.Amplitude, 0.07, 0.12);
-        Assert.Contains(sky.AccentKey, SkySignature.Accents);
-
-        // The two weights are one mix, so they always sum to a whole wave.
-        Assert.Equal(1.0, sky.LongWeight + sky.ShortWeight, 9);
-    }
-
-    [Theory]
-    [InlineData("Charly")]
-    [InlineData("Luna")]
-    [InlineData("Bella")]
-    [InlineData("Milo")]
-    [InlineData("Kiki")]
-    [InlineData("Otto")]
-    public void EveryPathStaysOnTheCanvas(string name)
-    {
-        // A band is only safe if every value inside it draws a line that fits. The
-        // amplitude ceiling plus the fan's reach is what keeps stars off the frame.
-        var sky = SkySignature.For(name, 2020);
-
-        for (double x = 0; x < 6000; x += 5)
-            Assert.InRange(ConstellationLayout.PathY(x, 400, sky), 0, 400);
+        foreach (var name in new[] { "Charly", "Luna", "Bella", "Milo", "Kiki", "Otto", "小白" })
+            Assert.Contains(SkySignature.For(name, 2020).AccentKey, SkySignature.Accents);
     }
 
     [Fact]
-    public void TheAccentsAreTheirOwnColours()
+    public void TheAccentsAreNeverACategoryColour()
     {
-        // Never a Star* token: those say which KIND of thing was recorded, and a whole
-        // sky glowing in one of them would put a rose wash behind rose glucose stars.
+        // A whole sky glowing in a category's colour would put a rose wash behind rose
+        // glucose stars, and the legend would stop being a promise.
         var categoryColours = CelestialVisuals.All
             .Select(c => CelestialVisuals.For(c).ColorKey)
             .ToHashSet();
@@ -113,22 +50,16 @@ public class SkySignatureTests
     }
 
     [Fact]
-    public void DecorationNeverMovesAStar()
+    public void TheOpeningFocusFollowsTheConditions()
     {
-        // The guarantee the whole idea rests on: change the room, never the record.
-        // Two pets, two skies, identical entries — every event lands at the same x.
-        var events = Enumerable.Range(0, 40)
-            .Select(i => new CelestialEvent(
-                new DateTime(2026, 1, 1).AddHours(i * 7), CelestialCategory.Glucose, "x", string.Empty))
-            .ToArray();
+        // Volume is not importance: 180 doses against six seizures. The default is
+        // derived, never written, and one tap replaces it.
+        Assert.Equal(CelestialCategory.Seizure, CelestialVisuals.OpeningFocusFor(new[] { "epilepsy" }));
+        Assert.Equal(CelestialCategory.Glucose, CelestialVisuals.OpeningFocusFor(new[] { "diabetes" }));
+        Assert.Equal(CelestialCategory.Water, CelestialVisuals.OpeningFocusFor(new[] { "ckd" }));
 
-        var from = new DateTime(2026, 1, 1);
-        var to = new DateTime(2026, 1, 31);
-
-        var charly = ConstellationLayout.Place(events, from, to, 900, 300, SkySignature.For("Charly", 2019));
-        var luna = ConstellationLayout.Place(events, from, to, 900, 300, SkySignature.For("Luna", 2021));
-
-        for (int i = 0; i < events.Length; i++)
-            Assert.Equal(charly[i].X, luna[i].X, 9);
+        Assert.Null(CelestialVisuals.OpeningFocusFor(null));
+        Assert.Null(CelestialVisuals.OpeningFocusFor(Array.Empty<string?>()));
+        Assert.Null(CelestialVisuals.OpeningFocusFor(new[] { "", null }));
     }
 }

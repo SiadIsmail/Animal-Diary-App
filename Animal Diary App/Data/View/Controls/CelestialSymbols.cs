@@ -25,25 +25,24 @@ public static class CelestialSymbols
     /// <param name="radius">Half the symbol's nominal size, in canvas units.</param>
     /// <param name="glow">Whether to lay a soft halo behind it. Off in a dense sky —
     /// three fills per star is what turns five thousand entries into a slideshow.</param>
-    /// <param name="tilt">A small rotation, in radians. The app tilts its icon tiles a
-    /// degree or two either way on every list it has ("imperfection on the frame,
-    /// never on the readout"), and a sky of perfectly upright triangles was the one
-    /// place that read as machine-drawn. Free here: the shapes are already built
-    /// around an angle.</param>
     public static void Draw(
-        ICanvas canvas, CelestialCategory category, float cx, float cy, float radius, Color color, bool glow, float tilt = 0f)
+        ICanvas canvas, CelestialCategory category, float cx, float cy, float radius, Color color, bool glow)
     {
         if (radius <= 0)
             return;
 
-        var up = -MathF.PI / 2f + tilt;
+        // Every symbol upright, always. The app tilts its icon tiles a degree or two on
+        // its lists — imperfection on the frame — but a symbol here is the READOUT: the
+        // same kind has to look identical everywhere it appears, or the legend stops
+        // being a promise and the reader has to re-learn the shape on every screen.
+        const float up = -MathF.PI / 2f;
 
         if (glow)
         {
-            canvas.FillColor = color.WithAlpha(0.14f);
-            canvas.FillCircle(cx, cy, radius * 2.3f);
-            canvas.FillColor = color.WithAlpha(0.22f);
-            canvas.FillCircle(cx, cy, radius * 1.45f);
+            canvas.FillColor = color.WithAlpha(0.12f);
+            canvas.FillCircle(cx, cy, radius * 1.9f);
+            canvas.FillColor = color.WithAlpha(0.18f);
+            canvas.FillCircle(cx, cy, radius * 1.35f);
         }
 
         canvas.FillColor = color;

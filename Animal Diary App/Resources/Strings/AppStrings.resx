@@ -934,15 +934,13 @@
   <!-- The three lenses. Same entries, three arrangements: when it happened, when in
        the DAY it happened, and whether it comes round again. -->
   <data name="Sky_LensTimeline" xml:space="preserve"><value>Timeline</value></data>
+  <data name="Sky_LensHistory" xml:space="preserve"><value>History</value></data>
   <data name="Sky_LensCycle" xml:space="preserve"><value>Cycle</value></data>
   <data name="Sky_HintFocus" xml:space="preserve"><value>Tap a symbol to follow just that one.</value></data>
-  <data name="Sky_A11yTimeline" xml:space="preserve"><value>Timeline. {0} entries, oldest to newest.</value></data>
+  <data name="Sky_A11yHistory" xml:space="preserve"><value>History. {0} entries, placed by date across and time of day down.</value></data>
   <data name="Sky_A11yCycle" xml:space="preserve"><value>Cycle. {0} entries, folded onto a ring so repeats line up.</value></data>
-  <data name="Sky_A11yNights" xml:space="preserve"><value>Nights. {0} entries, one row per day and the hours running across.</value></data>
-  <data name="Sky_LensNights" xml:space="preserve"><value>Nights</value></data>
-  <data name="Sky_HintTimeline" xml:space="preserve"><value>Pinch to look closer. Tap a star.</value></data>
-  <data name="Sky_HintCycle" xml:space="preserve"><value>Drag the sky to turn the fold. What repeats, lines up.</value></data>
-  <data name="Sky_HintNights" xml:space="preserve"><value>One night per row. Drag up and down through the days.</value></data>
+  <data name="Sky_HintHistory" xml:space="preserve"><value>Across: the date. Down: the time of day.</value></data>
+  <data name="Sky_HintCycle" xml:space="preserve"><value>Around the ring: where in the period. Out from the middle: older, then newer.</value></data>
   <data name="Sky_FoldEvery" xml:space="preserve"><value>Every {0} days</value></data>
   <data name="Sky_FoldDayLabel" xml:space="preserve"><value>Across a day</value></data>
   <data name="Sky_FoldWeekLabel" xml:space="preserve"><value>Across a week</value></data>
@@ -973,9 +971,9 @@
   <data name="Sky_TickMonth" xml:space="preserve"><value>MMM yyyy</value></data>
   <data name="Pets_Constellation" xml:space="preserve"><value>Constellation</value></data>
   <data name="Pets_ConstellationSubtitle" xml:space="preserve"><value>Everything written down, over time</value></data>
-  <data name="Sky_AsterismName" xml:space="preserve"><value>{0}'s constellation</value></data>
   <data name="Sky_Share" xml:space="preserve"><value>Share this sky</value></data>
   <data name="Sky_ShareRange" xml:space="preserve"><value>Last {0} days</value></data>
+  <data name="Sky_ShareTitle" xml:space="preserve"><value>{0}’s history</value></data>
   <data name="Sky_ShareFailedTitle" xml:space="preserve"><value>Couldn't make the picture</value></data>
   <data name="Sky_ShareFailedBody" xml:space="preserve"><value>Something went wrong putting the image together. Try again in a moment.</value></data>
 </root>
