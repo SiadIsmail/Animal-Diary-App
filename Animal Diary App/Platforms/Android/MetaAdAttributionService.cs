@@ -115,6 +115,21 @@ public sealed class MetaAdAttributionService : IAdAttributionService
                 FacebookSdk.ApplicationId = MetaAdsConfig.AppId;
                 FacebookSdk.ClientToken = MetaAdsConfig.ClientToken;
 
+#if DEBUG
+                // Debug builds only, and the ONLY way to see this subsystem work: without
+                // these the SDK is silent, so a device test can't tell "reported the
+                // install" from "did nothing". With them, logcat carries the actual POST.
+                //
+                //     adb logcat -s FacebookSDK.AppEvents:V FacebookSDK:V
+                //
+                // Set before SdkInitialize so initialization itself is logged. Both are
+                // plain flag setters in the SDK and need no initialization of their own.
+                // Never enable in Release: it logs event payloads.
+                FacebookSdk.IsDebugEnabled = true;
+                if (LoggingBehavior.AppEvents is LoggingBehavior appEvents)
+                    FacebookSdk.AddLoggingBehavior(appEvents);
+#endif
+
                 // Deprecated in the SDK in favour of FullyInitialize(), which is only true
                 // for the manifest-driven setup: FullyInitialize sets a flag and nothing
                 // else, so with the credentials supplied in code this call is the only
