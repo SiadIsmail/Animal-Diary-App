@@ -49,6 +49,23 @@ public class CelestialLegendItem : BaseViewModel
     public double Tilt { get; init; }
 }
 
+/// <summary>
+/// What the owner wrote down about one kind they brought into focus: how much of it,
+/// and how it fell across the four fixed bands of a day.
+///
+/// <para>It appears only for a focused kind, and only ever states counts — a fact about
+/// the diary, in the same neutral weight as everything else on the page. All four bands
+/// are always listed, in fixed order, zeros included: naming a "peak" would be the app
+/// choosing the finding, where four plain numbers let the owner see it themselves
+/// (Data/Models/RecordFacts.cs).</para>
+///
+/// <para>Computed from the events already in memory — the same
+/// <see cref="DayPartCounts"/> arithmetic <c>RecordFactsService</c> uses, so the sky and
+/// the appointment summary can never disagree about a band. No query, no reload, and
+/// nothing here touches the arrangement.</para>
+/// </summary>
+public readonly record struct CelestialFacts(string Label, string Count, string DayParts);
+
 public class ConstellationViewModel : BaseViewModel
 {
     private readonly ConstellationService _constellation;
@@ -243,7 +260,52 @@ public class ConstellationViewModel : BaseViewModel
         foreach (var key in Legend)
             key.IsFocused = _focus.Contains(key.Category);
 
+        BuildFocusFacts();
+
+        // RepaintRequested, never ViewChanged: focus changes brightness, not placement.
+        // Collapsing the two would re-run the camera fit and throw away the owner's
+        // place in the sky.
         RepaintRequested?.Invoke();
+    }
+
+    /// <summary>Counts for whichever kinds are in focus, in legend order. Empty when
+    /// nothing is focused — the whole sky is on show and a count of everything is
+    /// already in <see cref="CountLine"/>.</summary>
+    public ObservableCollection<CelestialFacts> FocusFacts { get; } = new();
+
+    public bool HasFocusFacts => FocusFacts.Count > 0;
+
+    /// <summary>
+    /// Rebuild the focused kinds' counts from <see cref="Events"/>.
+    ///
+    /// <para>Synchronous and allocation-light on purpose: it runs on every legend tap,
+    /// and a focus that had to wait for a query would make tapping a key feel like
+    /// loading a page.</para>
+    /// </summary>
+    private void BuildFocusFacts()
+    {
+        var rows = new List<CelestialFacts>(_focus.Count);
+
+        // Legend order, not the order they were tapped — the block reads as a caption
+        // for the legend above it, and a list that reshuffles itself as kinds go in and
+        // out of focus is a list that looks ranked.
+        foreach (var category in CelestialVisuals.All)
+        {
+            if (!_focus.Contains(category))
+                continue;
+
+            var moments = Events.Where(e => e.Category == category).ToList();
+            rows.Add(new CelestialFacts(
+                CelestialVisuals.Label(category),
+                RecordFactsText.Things(moments.Count),
+                RecordFactsText.DayParts(DayPartCounts.From(moments.Select(e => e.When.TimeOfDay)))));
+        }
+
+        FocusFacts.Clear();
+        foreach (var row in rows)
+            FocusFacts.Add(row);
+
+        OnPropertyChanged(nameof(HasFocusFacts));
     }
 
     private void SetLens(string? lens)
@@ -527,6 +589,7 @@ public class ConstellationViewModel : BaseViewModel
             }
 
             BuildLegend();
+            BuildFocusFacts();
         }
         finally
         {
@@ -616,6 +679,8 @@ public class ConstellationViewModel : BaseViewModel
 
         foreach (var key in Legend)
             key.IsFocused = false;
+
+        BuildFocusFacts();
     }
 
     /// <summary>Fired once per visit by the page. Coarse and anonymous: which stretch

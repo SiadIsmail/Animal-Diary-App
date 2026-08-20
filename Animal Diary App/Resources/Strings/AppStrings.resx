@@ -859,8 +859,6 @@
   <data name="Today_EmptyMedication" xml:space="preserve"><value>No doses written down yet. You can note one in the Journal.</value></data>
   <data name="Today_CardHint" xml:space="preserve"><value>Tap a card to change what appears here</value></data>
   <data name="Today_CardChangeHint" xml:space="preserve"><value>Tap to change what this card shows</value></data>
-  <data name="Today_PickerTitle" xml:space="preserve"><value>What matters most today?</value></data>
-  <data name="Today_PickerSub" xml:space="preserve"><value>Pick what this card shows about {0}.</value></data>
   <data name="Today_PickerOnOtherCard" xml:space="preserve"><value>On the other card. Picking it swaps them</value></data>
   <data name="Common_MmolSuffix" xml:space="preserve"><value>mmol/L</value></data>
   <!-- ── Feedback sheet (bottom of the Care page) ── -->
@@ -980,4 +978,30 @@
   <data name="Sky_ShareTitle" xml:space="preserve"><value>{0}’s history</value></data>
   <data name="Sky_ShareFailedTitle" xml:space="preserve"><value>Couldn't make the picture</value></data>
   <data name="Sky_ShareFailedBody" xml:space="preserve"><value>Something went wrong putting the image together. Try again in a moment.</value></data>
+  <!-- Facts about the record: counts, bands, the lowest and highest number written
+       down. Never a direction, never an average — see Data/Models/RecordFacts.cs. -->
+  <data name="Facts_CountOne" xml:space="preserve"><value>1 thing written down</value></data>
+  <data name="Facts_CountMany" xml:space="preserve"><value>{0} things written down</value></data>
+  <data name="Facts_DoseOne" xml:space="preserve"><value>1 dose</value></data>
+  <data name="Facts_DoseMany" xml:space="preserve"><value>{0} doses</value></data>
+  <data name="Facts_LastDays" xml:space="preserve"><value>last {0} days</value></data>
+  <data name="Facts_Night" xml:space="preserve"><value>Night</value></data>
+  <data name="Facts_Morning" xml:space="preserve"><value>Morning</value></data>
+  <data name="Facts_Afternoon" xml:space="preserve"><value>Afternoon</value></data>
+  <data name="Facts_Evening" xml:space="preserve"><value>Evening</value></data>
+  <data name="Facts_Lowest" xml:space="preserve"><value>Lowest {0}</value></data>
+  <data name="Facts_Highest" xml:space="preserve"><value>Highest {0}</value></data>
+  <data name="Facts_Latest" xml:space="preserve"><value>Latest {0} on {1}</value></data>
+  <data name="Facts_Given" xml:space="preserve"><value>{0} given</value></data>
+  <data name="Facts_Skipped" xml:space="preserve"><value>{0} skipped</value></data>
+  <data name="Facts_NotRecorded" xml:space="preserve"><value>{0} not recorded</value></data>
+  <data name="Facts_Nothing" xml:space="preserve"><value>Nothing written down in the last {0} days.</value></data>
+  <data name="Today_RecordWeight" xml:space="preserve"><value>Weight</value></data>
+  <data name="Today_RecordMood" xml:space="preserve"><value>Mood</value></data>
+  <data name="Today_RecordGlucose" xml:space="preserve"><value>Glucose</value></data>
+  <data name="Today_RecordAppetite" xml:space="preserve"><value>Appetite</value></data>
+  <data name="Today_RecordWater" xml:space="preserve"><value>Water</value></data>
+  <data name="Today_RecordSeizure" xml:space="preserve"><value>Seizures</value></data>
+  <data name="Today_RecordMedication" xml:space="preserve"><value>Doses</value></data>
+  <data name="Today_PickerShowElse" xml:space="preserve"><value>Show something else here</value></data>
 </root>

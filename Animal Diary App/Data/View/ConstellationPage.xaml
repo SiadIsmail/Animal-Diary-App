@@ -533,6 +533,42 @@
                 </BindableLayout.ItemTemplate>
             </FlexLayout>
 
+            <!-- ── What is in focus, as counts ──
+                 Only for the kinds the owner brought forward, and only ever counts:
+                 how much of it there is, and how it fell across the four fixed bands
+                 of a day. All four are always listed in the same order, zeros
+                 included — naming a busiest one would be the app choosing the finding
+                 (Data/Models/RecordFacts.cs). One weight, one colour, no emphasis on
+                 any number, and nothing here is a claim about the animal. -->
+            <VerticalStackLayout Spacing="7"
+                                 Margin="0,2,0,0"
+                                 IsVisible="{Binding ConstellationVM.HasFocusFacts}"
+                                 BindableLayout.ItemsSource="{Binding ConstellationVM.FocusFacts}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vms:CelestialFacts">
+                        <VerticalStackLayout Spacing="1" HorizontalOptions="Center">
+                            <Label FontFamily="{StaticResource FontSans}"
+                                   FontSize="12"
+                                   TextColor="{StaticResource InkSecondary}"
+                                   HorizontalTextAlignment="Center">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding Label}" FontAttributes="Bold"/>
+                                        <Span Text="  "/>
+                                        <Span Text="{Binding Count}"/>
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Label Text="{Binding DayParts}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   TextColor="{StaticResource InkTertiary}"
+                                   HorizontalTextAlignment="Center"/>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
         </VerticalStackLayout>
 
         <!-- ── One tapped star ──
