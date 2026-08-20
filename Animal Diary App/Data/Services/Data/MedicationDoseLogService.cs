@@ -20,7 +20,7 @@ public class MedicationDoseLogService
     }
 
     /// <summary>How many doses this pet has recorded as given (Taken). Used only for the
-    /// trial pre-end nudge's "you've written down N doses" copy — never a judgement.</summary>
+    /// record's own facts panel — a count of what was written down, never a judgement.</summary>
     public Task<int> GetGivenCountAsync(int petId)
         => _db.Table<MedicationDoseLog>()
             .Where(l => l.PetId == petId && l.IsDeleted == false && l.Status == DoseStatus.Taken)

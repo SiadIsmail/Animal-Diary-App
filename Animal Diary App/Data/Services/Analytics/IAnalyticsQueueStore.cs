@@ -2,7 +2,7 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 
 /// <summary>
 /// Persistence for the offline analytics queue — one blob in, one blob out. Mirrors
-/// <see cref="Billing.ITrialStore"/>: the narrow seam exists so
+/// <see cref="Billing.IPetAccessSource"/>: the narrow seam exists so
 /// <see cref="AnalyticsEventQueue"/> holds no MAUI/file-system types and can be unit
 /// tested against an in-memory fake.
 ///

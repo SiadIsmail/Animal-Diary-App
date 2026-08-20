@@ -8,16 +8,17 @@ namespace Animal_Diary_App.Data.Services.Billing;
 /// <param name="IsCaregiver">True only when the caller is a <i>caregiver</i> on this pet.
 /// The owner's own pets are never sponsored — their access is their own, which is the
 /// structural reason one subscription cannot be shared into unlimited free accounts.</param>
-/// <param name="OwnerHasAccess">Whether the pet's owner had access (subscription or
-/// trial) as of <paramref name="FetchedUtc"/>. Computed server-side; the client never
-/// derives it.</param>
+/// <param name="OwnerHasAccess">Whether the pet's owner had access (a subscription or a
+/// redeemed access code) as of <paramref name="FetchedUtc"/>. Computed server-side by
+/// <c>owner_has_access</c>; the client never derives it. Migration 0021 dropped its trial
+/// arm along with the trial itself.</param>
 /// <param name="FetchedUtc">When this record was last confirmed with the server. Drives
 /// the offline grace window — a caregiver on a plane keeps working.</param>
 public sealed record PetAccessInfo(bool IsCaregiver, bool OwnerHasAccess, DateTime FetchedUtc);
 
 /// <summary>
 /// The seam through which billing reads cloud sponsorship — the sibling of
-/// <see cref="ITrialStore"/>, and for the same reason: it keeps
+/// <see cref="IGrantSource"/>, and for the same reason: it keeps
 /// <see cref="EntitlementService"/> free of any MAUI/SQLite/cloud dependency so the gate
 /// logic stays unit-testable in the plain net9.0 test assembly. Implemented by the cloud
 /// sync engine (which owns the cache) and by its Null counterpart.
@@ -44,7 +45,7 @@ public interface IPetAccessSource
 }
 
 /// <summary>Registered wherever there is no cloud. Nothing to wait for, nothing
-/// sponsored — so access falls back entirely to the local trial/subscription.</summary>
+/// sponsored — so access falls back entirely to the local subscription or grant.</summary>
 public sealed class NullPetAccessSource : IPetAccessSource
 {
     public bool AccessKnown => true;

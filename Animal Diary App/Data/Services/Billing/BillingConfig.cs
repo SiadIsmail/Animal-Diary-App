@@ -1,8 +1,10 @@
 namespace Animal_Diary_App.Data.Services.Billing;
 
 /// <summary>
-/// Monetization configuration. The tunable knobs (trial length, entitlement/offering
-/// ids) live here as single values so they are painless to change. The RevenueCat
+/// Monetization configuration. The tunable knobs (entitlement/offering ids, the
+/// sponsorship grace, the caregiver caps) live here as single values so they are painless
+/// to change. Prices are NOT among them and never will be: they come from RevenueCat
+/// <c>Offerings</c>, store-localized. The RevenueCat
 /// public SDK key is NOT in this committed file: it is supplied by an untracked
 /// partial, <c>BillingConfig.Secret.cs</c> (git-ignored), via <see cref="ApplySecrets"/>.
 ///
@@ -13,29 +15,25 @@ namespace Animal_Diary_App.Data.Services.Billing;
 ///
 /// <para><b>Enable</b> is an explicit switch, deliberately not derived from key
 /// presence: flip it to <c>true</c> only once the key AND the RevenueCat binding are
-/// both wired (slice 1), so the read-only gate can never go live before purchases work.</para>
+/// both wired, so a paid surface can never be withheld before purchases work.</para>
 /// </summary>
 public static partial class BillingConfig
 {
     /// <summary>Master switch. False → <c>NullEntitlementService</c> everywhere, zero
     /// monetization behaviour. True (with the RevenueCat binding in and a key present)
-    /// turns the trial + read-only gate live on Android/iOS. Windows/macOS dev stays on
-    /// the no-op regardless. Currently ON, running against the RevenueCat Test Store key.</summary>
+    /// turns the paid tier live on Android/iOS. Windows/macOS dev stays on the no-op
+    /// regardless. Currently ON, running against the RevenueCat Test Store key.</summary>
     public const bool Enabled = true;
-
-    /// <summary>The free-trial length. One editable value — tune freely (owner will).</summary>
-    public static readonly TimeSpan TrialLength = TimeSpan.FromDays(14);
 
     /// <summary>
     /// DEBUG-ONLY testing switch: run the REAL entitlement gate on Windows/macOS, over a
-    /// no-op store. Access then comes from the trial or from caregiver sponsorship — the
+    /// no-op store. Access then comes from caregiver sponsorship or a redeemed code — the
     /// two things worth testing on a desktop — while purchases stay unavailable.
     ///
     /// <para>Off by default, and deliberately opt-in rather than "on in Debug": the whole
-    /// point of the desktop no-op is that day-to-day development can never be locked out of
-    /// the app. Turn it on only while testing gating, and remember a desktop build cannot
-    /// buy anything, so the only way back out of the read-only state there is to turn this
-    /// off again or move the trial anchor.</para>
+    /// point of the desktop no-op is that day-to-day development never sees a paid surface
+    /// withheld. Turn it on only while testing the boundary, and remember a desktop build
+    /// cannot buy anything, so the only way back out is to turn it off again.</para>
     ///
     /// <para>Why it exists: on desktop the gate is <c>NullEntitlementService</c>, which
     /// reports <c>Subscribed</c> for every account unconditionally. A caregiver test run
@@ -44,12 +42,15 @@ public static partial class BillingConfig
     /// </summary>
     public const bool ForceGateOnDesktop = false;
 
-    /// <summary>Show the pre-end nudge once when the trial has this many days left.</summary>
-    public const int PreEndNudgeDaysBefore = 3;
+    /// <summary>Show the one heads-up this many days before a redeemed access code's grant
+    /// runs out. A grant is the only thing left in the app with an end date — there is no
+    /// trial and the free tier never ends — so this window has exactly one reader.</summary>
+    public const int GrantEndingNoticeDaysBefore = 3;
 
     /// <summary>How long a cached sponsorship keeps working without reaching the server.
-    /// A caregiver at the vet with no signal must still be able to log what just happened,
-    /// so this is deliberately generous.
+    /// A caregiver at the vet with no signal must still reach the pet's summary, so this is
+    /// deliberately generous. It has never bounded logging and no longer could: writing
+    /// things down is free on every tier.
     ///
     /// <para>This bounds ONLY the "owner's subscription lapsed" case. Losing <i>membership</i>
     /// (removed, or you left) is bounded by sync instead: the membership diff purges the pet

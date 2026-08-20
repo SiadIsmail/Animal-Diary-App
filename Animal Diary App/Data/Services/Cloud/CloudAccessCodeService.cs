@@ -194,7 +194,7 @@ public sealed class CloudAccessCodeService : ICloudAccessCodeService, Billing.IG
 }
 
 /// <summary>Registered when the cloud is switched off. Nothing to redeem and nothing
-/// granted, so the gate falls back entirely to the trial and the store.</summary>
+/// granted, so the gate falls back entirely to the store.</summary>
 public sealed class NullCloudAccessCodeService : ICloudAccessCodeService, Billing.IGrantSource
 {
     public bool GrantKnown => true;

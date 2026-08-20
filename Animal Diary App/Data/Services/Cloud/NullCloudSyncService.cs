@@ -13,10 +13,11 @@ public sealed class NullCloudSyncService : ICloudSyncService, Billing.IPetAccess
     public Task InitializeAsync() => Task.CompletedTask;
     public string? GetPetRole(string petSyncId) => null;
     public bool OwnsASharedPet => false;
+    public IReadOnlyList<string> CaregiverPetSyncIds => Array.Empty<string>();
 
     // No cloud ⇒ nothing to wait for and nothing sponsored, so the billing gate falls back
-    // entirely to the local trial/subscription. Reporting AccessKnown=false here would hold
-    // the read-only state open forever.
+    // entirely to the local subscription/grant. Reporting AccessKnown=false here would hold
+    // every paid surface open forever.
     public bool AccessKnown => true;
     public Billing.PetAccessInfo? GetPetAccess(string? petSyncId) => null;
     public Task<SyncOutcome> SyncNowAsync() => Task.FromResult(SyncOutcome.BackupDisabled);

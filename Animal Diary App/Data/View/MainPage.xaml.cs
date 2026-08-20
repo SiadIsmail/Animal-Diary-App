@@ -71,6 +71,16 @@ public partial class MainPage : ContentPage
 
         // No export sheet on this page, so no "save a copy" option here.
         vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null, null);
+        // The backup card's "see the options" line, when backup is part of the paid tier.
+        // Set per host: this page carries the subscribe sheet, so it has somewhere to go.
+        // Onboarding's hosts leave it null, which is what keeps a payment ask out of
+        // onboarding by construction rather than by remembering to.
+        vm.CloudVM.RequestSubscribe = () =>
+        {
+            vm.CloudVM.DismissCommand.Execute(null);
+            vm.SubscribeVM.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceBackup);
+        };
+
         vm.CloudVM.SignedOut += OnSignedOut;
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
@@ -206,6 +216,7 @@ public partial class MainPage : ContentPage
         vm.SettingsVM.ConfirmDeleteAllDataCloud = null;
         vm.CloudVM.ConfirmDeleteAccount = null;
         vm.CloudVM.ConfirmSignOut = null;
+        vm.CloudVM.RequestSubscribe = null;
         vm.CloudVM.SignedOut -= OnSignedOut;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;

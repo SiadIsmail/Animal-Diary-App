@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.Services.Cloud;
+namespace Animal_Diary_App.Data.Services.Cloud;
 
 using System.Diagnostics;
 using System.Text.Json;
@@ -90,13 +90,16 @@ public interface ICloudSyncService
     /// on every sync from the cloud membership list.</summary>
     string? GetPetRole(string petSyncId);
 
-    /// <summary>True when this user owns at least one pet that someone else is caring for.
-    /// Used for exactly one thing: when the owner's own access ends, telling them their
-    /// carers just went read-only too — they are the only person who can change that.</summary>
+    /// <summary>True when this user owns at least one pet that someone else is caring for.</summary>
     bool OwnsASharedPet { get; }
 
+    /// <summary>The pets this device is a CAREGIVER on, by SyncId. Read once at launch by
+    /// the grandfathering snapshot, which needs to know what this install already had when
+    /// the paid boundary moved. Empty when signed out or never synced.</summary>
+    IReadOnlyList<string> CaregiverPetSyncIds { get; }
+
     /// <summary>Raised when a pet's SPONSORSHIP changed between two syncs — the owner
-    /// subscribed, lapsed, or their trial ran out. Carries the pets that just lost
+    /// subscribed, lapsed, or their redeemed code ran out. Carries the pets that just lost
     /// sponsored access, so the UI can say so once rather than letting the app quietly
     /// go read-only. Raised from a background thread; subscribers marshal.
     ///
@@ -124,7 +127,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     //
     // INVARIANT: every key below is account-scoped and MUST carry this prefix, so
     // SignOutTeardownAsync's single ClearPrefixAsync can never miss one. Anything that must
-    // survive a sign-out (the trial anchor, language, preferences) belongs in AppSettings,
+    // survive a sign-out (language, preferences, the grandfathering snapshot) belongs in AppSettings,
     // which is device-scoped — not here.
     private const string CloudStatePrefix = "cloud:";
 
@@ -161,7 +164,6 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     private readonly MedicationReminderScheduler _reminders;
     private readonly PetPurgeService _purge;
     private readonly IAnalyticsService _analytics;
-    private readonly Billing.ITrialAnchor _trialAnchor;
     // Read for one thing only: whether signing out costs a redeemed access code. The grant
     // itself is fetched and cached by CloudAccessCodeService, deliberately outside this
     // cycle (a grant must reach someone who never turned backup on).
@@ -203,7 +205,6 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         MedicationReminderScheduler reminders,
         PetPurgeService purge,
         IAnalyticsService analytics,
-        Billing.ITrialAnchor trialAnchor,
         Billing.IGrantSource grants)
     {
         _db = db;
@@ -213,7 +214,6 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         _reminders = reminders;
         _purge = purge;
         _analytics = analytics;
-        _trialAnchor = trialAnchor;
         _grants = grants;
 
         // Every repository write funnels through SyncStamp — that one hook is the
@@ -278,6 +278,11 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
 
     public bool OwnsASharedPet
         => _petAccess.Values.Any(r => r.Role == "owner" && r.CarerCount > 0);
+
+    // Read from the role map rather than the access map: role is what makes someone a
+    // caregiver, and it is populated on every sync whether or not sponsorship was resolved.
+    public IReadOnlyList<string> CaregiverPetSyncIds
+        => _petRoles.Where(kv => kv.Value == "caregiver").Select(kv => kv.Key).ToList();
 
     // ── IPetAccessSource: what the billing gate reads ───────────────────────
 
@@ -465,46 +470,8 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     /// were previously pushed are candidates: a dirty pet may simply be new and
     /// gets its owner membership by being pushed later this same cycle.
     /// Returns the number of pets purged (they count as local changes).</summary>
-    /// <summary>Reconcile this device's trial anchor with the account's, so the server can
-    /// answer "is this owner still in their trial?" when their caregivers ask.
-    ///
-    /// <para>Runs only when the two disagree — the first sync after signing in, and again
-    /// if the trial starts later (a caregiver who finally creates a pet of their own).
-    /// <c>claim_trial_anchor</c> is set-if-earlier server-side, so this can confirm an
-    /// anchor but never push one later and mint a fresh sponsorship window.</para></summary>
-    private async Task ReconcileTrialAnchorAsync(CloudSession session)
-    {
-        try
-        {
-            var local = await _trialAnchor.GetStartUtcAsync();
-
-            var doc = await _http.RpcAsync(
-                "claim_trial_anchor",
-                new { p_started = local is DateTime v ? CloudJson.ToIso(v) : null },
-                session.AccessToken);
-
-            DateTime? server = null;
-            if (doc != null && doc.RootElement.ValueKind == JsonValueKind.String)
-                server = CloudJson.ParseIso(doc.RootElement.GetString()!);
-
-            // Keeps whichever is earlier, so this converges from either side.
-            await _trialAnchor.AdoptAsync(server);
-        }
-        catch (Exception ex)
-        {
-            // The anchor is not needed to move pet data. A failure here must not abort the
-            // whole cycle and leave someone unable to sync their pet's records.
-            Debug.WriteLine($"[Cloud] trial anchor reconcile failed: {ex.Message}");
-        }
-    }
-
     private async Task<int> SyncMembershipsAsync(CloudSession session)
     {
-        // The owner's trial anchor has to reach the server before it can answer
-        // "does this owner still have access?" for their caregivers. Reconciled first so
-        // this same response already reflects it.
-        await ReconcileTrialAnchorAsync(session);
-
         var doc = await _http.RpcRequiredAsync("list_my_pet_access", new { }, session.AccessToken);
         var roles = new Dictionary<string, string>();
         var access = new Dictionary<string, PetAccessRow>();
@@ -538,8 +505,9 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         }
 
         // Pets this user was being sponsored for a moment ago and no longer is — the owner
-        // lapsed or their trial ended. Membership is intact, so the pet stays; only the
-        // right to write to it went away, and that is worth saying out loud once.
+        // lapsed, or their grant ran out. Membership is intact, so the pet stays; only the
+        // paid, pet-scoped surfaces go away. Nobody subscribes to this today (see App) —
+        // with logging free, there is nothing yet for a caregiver to lose.
         var previous = _petAccess;
         var lostSponsorship = access
             .Where(kv => kv.Value.Role == "caregiver" && !kv.Value.OwnerAccess)
@@ -785,9 +753,9 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         }
 
         // Everything account-scoped, in one call that a future key cannot escape. NB the
-        // trial anchor itself lives in AppSettings and is DEVICE-scoped: clearing it here
-        // would hand out a fresh 14-day trial on every sign-out. Only the reconciliation
-        // marker (cloud:trialAnchor) is account-scoped, and it goes with this prefix.
+        // grandfathering snapshot lives in AppSettings and is DEVICE-scoped, so it is not
+        // touched here: it records what this install already had, which signing out does
+        // not change.
         await _state.ClearPrefixAsync(CloudStatePrefix);
 
         _enabled = false;

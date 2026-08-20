@@ -7,7 +7,7 @@ namespace Animal_Diary_App.Data.Services.Billing;
 /// renews the window from that moment rather than queueing behind the first
 /// (the arithmetic lives server-side, in <c>redeem_access_code</c>).
 ///
-/// <para>The sibling seam of <see cref="ITrialStore"/> and <see cref="IPetAccessSource"/>,
+/// <para>The sibling seam of <see cref="IPetAccessSource"/> and <see cref="IGrandfatheredAccess"/>,
 /// and for the same reason: <b>Billing declares it, Cloud implements it, never the
 /// reverse.</b> Keeping the interface here is what lets the gate logic stay in a plain
 /// net10.0 test assembly with no MAUI, SQLite or Supabase anywhere near it.</para>
@@ -40,8 +40,8 @@ public interface IGrantSource
 
     /// <summary>Whether this account has EVER held a grant, including an expired one.
     /// The guard that stops a lapsed year-long grant from being reported as a lapsed
-    /// 14-day trial: most granted owners did start a trial once, so
-    /// <see cref="IEntitlementService.TrialEverStarted"/> does not protect that copy.</summary>
+    /// cancelled subscription: nothing was charged and there was nothing to cancel, so none
+    /// of the store's wording fits and none of it may be borrowed.</summary>
     bool EverGranted { get; }
 
     /// <summary>Re-read the grant from the server when possible. Called from
@@ -53,7 +53,7 @@ public interface IGrantSource
 
 /// <summary>Registered wherever there is no cloud (cloud disabled, or the Null billing
 /// boundary). Nothing to wait for and nothing granted, so access falls back entirely to
-/// the trial and the store.</summary>
+/// the store.</summary>
 public sealed class NullGrantSource : IGrantSource
 {
     public bool GrantKnown => true;

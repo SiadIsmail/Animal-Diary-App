@@ -53,6 +53,16 @@ public partial class PetsPage : ContentPage
         // This page hosts the export sheet, so sign-out can offer "save a copy first".
         vm.CloudVM.ConfirmSignOut = impact =>
             SignOutPrompt.AskAsync(this, impact, vm.ConfirmVM, () => vm.ExportSheetVM.OpenCommand.Execute(null));
+        // The backup card's "see the options" line, when backup is part of the paid tier.
+        // Set per host: this page carries the subscribe sheet, so it has somewhere to go.
+        // Onboarding's hosts leave it null, which is what keeps a payment ask out of
+        // onboarding by construction rather than by remembering to.
+        vm.CloudVM.RequestSubscribe = () =>
+        {
+            vm.CloudVM.DismissCommand.Execute(null);
+            vm.SubscribeVM.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceBackup);
+        };
+
         vm.CloudVM.SignedOut += OnSignedOut;
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
@@ -103,6 +113,7 @@ public partial class PetsPage : ContentPage
         vm.SettingsVM.ConfirmDeleteAllDataCloud = null;
         vm.CloudVM.ConfirmDeleteAccount = null;
         vm.CloudVM.ConfirmSignOut = null;
+        vm.CloudVM.RequestSubscribe = null;
         vm.CloudVM.SignedOut -= OnSignedOut;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;
@@ -218,11 +229,14 @@ public partial class PetsPage : ContentPage
 
     async void OnAddPetClicked(object? sender, EventArgs args)
     {
-        // Adding another pet is "adding more" — gated in the read-only state. The first
-        // pet is created during onboarding (a different path), so it is never gated here.
-        if (!vm.Entitlements.HasFullAccess)
+        // The free tier covers one animal; a SECOND is a paid surface. The rule itself
+        // lives in Billing.PetLimit — add-time only, demo pets excluded, and it never hides
+        // or locks a pet that already exists. Read the doc comment there before changing
+        // anything here.
+        if (Animal_Diary_App.Data.Services.Billing.PetLimit.BlocksAnotherPet(
+                vm.Entitlements.HasFullAccess, vm.PetVM.Pets.Count(p => !p.IsDemo)))
         {
-            vm.SubscribeVM.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceReadOnly);
+            vm.SubscribeVM.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceSecondPet);
             return;
         }
         await Navigation.PushAsync(new CreatePetPage(vm));

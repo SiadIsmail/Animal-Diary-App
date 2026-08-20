@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
@@ -71,16 +71,16 @@ public class SettingsViewModel : BaseViewModel
     private readonly DevSheetViewModel _devVM;
 
     /// <summary>Subtitle for the Settings → Subscription row: the current state, in the
-    /// user's words (never "read-only" or "expired"). In the trial it carries the time
-    /// left, e.g. "Free trial (3 days left)" or, near the end, "Free trial (12 minutes
-    /// left)". Re-read when the panel opens and when the entitlement changes — not a
-    /// ticking clock (a live countdown would push urgency this brand avoids).
+    /// user's words. Re-read when the panel opens and when the entitlement changes.
     ///
-    /// <para><b>Granted is listed explicitly, and the fallback arm is the reason.</b> It
-    /// ends in the trial format, so any state that is not named here is described as a free
-    /// trial with whatever time the (long-elapsed) trial clock has left. Adding a state to
-    /// <c>AccessState</c> without a case here tells a granted user they are on a "Free trial
-    /// (0 minutes left)". Name every state.</para></summary>
+    /// <para><b>Every state is named, and the fallback arm says nothing about a plan.</b>
+    /// This row is the classic place for an unnamed state to be described as something it
+    /// is not — it used to end in the trial format, so any state without a case here read
+    /// as "Free trial (0 minutes left)". The fallback now covers only <c>Unknown</c>, the
+    /// sub-second window before the store answers, and it says the plainly true thing.</para>
+    ///
+    /// <para>The free arm must never read as a lapse. It is a tier, not an expiry: nothing
+    /// ended, and everything the owner writes down keeps working.</para></summary>
     public string SubscriptionRowSubtitle => _entitlements.State switch
     {
         Animal_Diary_App.Data.Services.Billing.AccessState.Subscribed
@@ -88,13 +88,13 @@ public class SettingsViewModel : BaseViewModel
         Animal_Diary_App.Data.Services.Billing.AccessState.Granted
             => LocalizationManager.Instance.Format(
                 "Settings_SubscriptionGrantedFormat", FormatGrantEnd(_entitlements.GrantedUntilUtc)),
-        Animal_Diary_App.Data.Services.Billing.AccessState.TrialExpired
+        Animal_Diary_App.Data.Services.Billing.AccessState.Free
             => LocalizationManager.Instance.GetString(
-                // A lapsed year-long grant is not a lapsed 14-day trial, and TrialEverStarted
-                // does not tell them apart (most granted owners did start a trial once).
-                _entitlements.EverGranted ? "Settings_SubscriptionGrantEnded" : "Settings_SubscriptionEnded"),
-        _ => LocalizationManager.Instance.Format(
-            "Settings_SubscriptionTrialFormat", FormatTimeLeft(_entitlements.TrialTimeRemaining)),
+                // Someone whose redeemed year ran out is not someone who cancelled, and
+                // EverGranted is the only thing that tells them apart.
+                _entitlements.EverGranted ? "Settings_SubscriptionGrantEnded" : "Settings_SubscriptionFree"),
+        // Unknown only.
+        _ => LocalizationManager.Instance.GetString("Settings_SubscriptionChecking"),
     };
 
     /// <summary>Subtitle for the Settings → Redeem row. Names the end date once a code is
@@ -109,26 +109,6 @@ public class SettingsViewModel : BaseViewModel
     private static string FormatGrantEnd(DateTime? untilUtc)
         => untilUtc is DateTime u ? u.ToLocalTime().ToString("d") : string.Empty;
 
-    /// <summary>Human phrase for the time left: the largest sensible unit, pluralized.
-    /// "3 days" / "1 day" / "5 hours" / "12 minutes".</summary>
-    private static string FormatTimeLeft(TimeSpan remaining)
-    {
-        if (remaining.TotalDays >= 1)
-        {
-            var d = (int)Math.Ceiling(remaining.TotalDays);
-            return Plural(d, "Time_Day", "Time_Days");
-        }
-        if (remaining.TotalHours >= 1)
-        {
-            var h = (int)Math.Ceiling(remaining.TotalHours);
-            return Plural(h, "Time_Hour", "Time_Hours");
-        }
-        var m = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
-        return Plural(m, "Time_Minute", "Time_Minutes");
-    }
-
-    private static string Plural(int n, string singularKey, string pluralKey)
-        => LocalizationManager.Instance.Format(n == 1 ? singularKey : pluralKey, n);
     private readonly DailyCareReminderScheduler _dailyReminders;
     private readonly MedicationReminderScheduler _reminders;
     private readonly IAdAttributionService _adAttribution;
@@ -215,7 +195,8 @@ public class SettingsViewModel : BaseViewModel
         OpenSettingsCommand = new Command(() =>
         {
             IsPanelOpen = true;
-            // The trial time left moves on; recompute the row subtitles for this opening.
+            // A grant's end date and the entitlement can both move; recompute the row
+            // subtitles for this opening.
             OnPropertyChanged(nameof(SubscriptionRowSubtitle));
             OnPropertyChanged(nameof(RedeemRowSubtitle));
             _analytics.Track(AnalyticsEvents.SettingsOpened);

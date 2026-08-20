@@ -596,15 +596,15 @@
                             Presented="{Binding IsPresented}"
                             SheetTemplate="{DataTemplate view:CloudSheetView}"/>
 
-        <!-- Monetization sheets (subscribe + trial messages + access code) -->
+        <!-- Monetization sheets (subscribe + grant messages + access code) -->
         <controls:SheetHost Grid.RowSpan="2"
                             BindingContext="{Binding SubscribeVM}"
                             Presented="{Binding IsPresented}"
                             SheetTemplate="{DataTemplate view:SubscribeSheetView}"/>
         <controls:SheetHost Grid.RowSpan="2"
-                            BindingContext="{Binding TrialMessageVM}"
+                            BindingContext="{Binding AccessMessageVM}"
                             Presented="{Binding IsPresented}"
-                            SheetTemplate="{DataTemplate view:TrialMessageSheetView}"/>
+                            SheetTemplate="{DataTemplate view:AccessMessageSheetView}"/>
         <controls:SheetHost Grid.RowSpan="2"
                             BindingContext="{Binding RedeemVM}"
                             Presented="{Binding IsPresented}"

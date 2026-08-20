@@ -79,7 +79,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<CloudSheetViewModel>();
 		builder.Services.AddSingleton<SharingSheetViewModel>();
 		builder.Services.AddSingleton<SubscribeSheetViewModel>();
-		builder.Services.AddSingleton<TrialMessageViewModel>();
+		builder.Services.AddSingleton<AccessMessageViewModel>();
 		builder.Services.AddSingleton<RedeemCodeSheetViewModel>();
 		builder.Services.AddSingleton<FeedbackSheetViewModel>();
 		builder.Services.AddSingleton<ConfirmSheetViewModel>();
@@ -212,16 +212,6 @@ public static class MauiProgram
 		// The real sync engine when cloud features are compiled in, else a no-op.
 		// Everything holds ICloudSyncService / ICloudAuthService only — no Supabase
 		// types escape Data/Services/Cloud/.
-		//
-		// The trial clock is registered on EVERY platform, ahead of the cloud block: the
-		// sync engine reconciles this device's trial anchor with the account (so the server
-		// can tell a caregiver whether their pet's owner is still in trial), and cloud
-		// registration is not platform-gated. Harmless where billing is off — the Null
-		// entitlement service ignores it, so Windows/macOS dev still never locks.
-		builder.Services.AddSingleton<ITrialStore>(sp => sp.GetRequiredService<SettingsService>());
-		builder.Services.AddSingleton<TrialService>();
-		builder.Services.AddSingleton<ITrialAnchor>(sp => sp.GetRequiredService<TrialService>());
-
 		builder.Services.AddSingleton<CloudHttp>();
 		builder.Services.AddSingleton<SyncStateStore>();
 		builder.Services.AddSingleton<ICloudAuthService, CloudAuthService>();
@@ -254,11 +244,17 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IGrantSource>(sp =>
 			(IGrantSource)sp.GetRequiredService<ICloudAccessCodeService>());
 
+		// What this install already had when the paid boundary moved. Registered on EVERY
+		// platform, and against the concrete type as well as the interface: App drives its
+		// one-shot capture at launch, and the gate reads it through the interface.
+		builder.Services.AddSingleton<GrandfatheredAccessService>();
+		builder.Services.AddSingleton<IGrandfatheredAccess>(sp => sp.GetRequiredService<GrandfatheredAccessService>());
+
 		// ── Billing / monetization boundary ──────────────────────────────────
-		// Mirrors the cloud & analytics boundaries: the real trial + entitlement service
-		// only on a mobile store AND when a key + binding are wired (BillingConfig.Enabled);
-		// otherwise a no-op that grants full access. Windows/macOS dev always gets the
-		// no-op, so it can never lock.
+		// Mirrors the cloud & analytics boundaries: the real entitlement service only on a
+		// mobile store AND when a key + binding are wired (BillingConfig.Enabled); otherwise
+		// a no-op that grants full access. Windows/macOS dev always gets the no-op, so no
+		// paid surface is ever withheld there.
 #if ANDROID || IOS
 		if (BillingConfig.Enabled)
 		{
@@ -276,8 +272,8 @@ public static class MauiProgram
 		// Desktop normally gets the no-op so development can never be locked out. That also
 		// makes a desktop useless as a caregiver TEST device: NullEntitlementService reports
 		// Subscribed for every account, so every gate check passes without exercising one.
-		// This opt-in runs the real gate over a no-op store — access from trial or
-		// sponsorship only, purchases unavailable.
+		// This opt-in runs the real gate over a no-op store — access from sponsorship or a
+		// redeemed code only, purchases unavailable.
 		if (BillingConfig.ForceGateOnDesktop)
 		{
 			builder.Services.AddSingleton<IStoreBilling, NullStoreBilling>();

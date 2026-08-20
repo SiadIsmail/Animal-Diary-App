@@ -3,17 +3,21 @@ namespace Animal_Diary_App.Data.Services.Billing;
 using System.Diagnostics;
 
 /// <summary>
-/// The real entitlement boundary on Android/iOS: composes the app-side
-/// <see cref="TrialService"/> with the store's <see cref="IStoreBilling"/> and exposes
-/// the single gate. This is where the reversible formula lives and nowhere else:
-/// <c>HasFullAccess = trial running OR store entitlement active</c>.
+/// The real entitlement boundary on Android/iOS: composes the store's
+/// <see cref="IStoreBilling"/> with a redeemed access code and exposes the single gate.
+/// The formula lives here and nowhere else:
+/// <c>HasFullAccess = store entitlement active OR grant running</c>.
+///
+/// <para>There is no trial term, and there is no free-tier term either — the free tier is
+/// simply the absence of both, and it gates nothing anyone writes down. See
+/// <see cref="IEntitlementService"/> for what this boundary does and does not sell.</para>
 /// </summary>
 public sealed class EntitlementService : IEntitlementService
 {
-    private readonly TrialService _trial;
     private readonly IStoreBilling _store;
     private readonly IPetAccessSource _access;
     private readonly IGrantSource _grants;
+    private readonly IGrandfatheredAccess _grandfathered;
     private readonly Func<DateTime> _utcNow;
 
     /// <param name="access">Cloud sponsorship cache. <see cref="NullPetAccessSource"/>
@@ -21,18 +25,20 @@ public sealed class EntitlementService : IEntitlementService
     /// <see cref="HasFullAccess"/>.</param>
     /// <param name="grants">Redeemed access codes. <see cref="NullGrantSource"/> wherever
     /// there is no cloud, which removes the term from the formula entirely.</param>
+    /// <param name="grandfathered">What this install already had when the paid boundary
+    /// moved. <see cref="NullGrandfatheredAccess"/> for every install created since.</param>
     /// <param name="utcNow">Clock, injectable so the sponsorship grace window is testable.</param>
     public EntitlementService(
-        TrialService trial,
         IStoreBilling store,
         IPetAccessSource access,
         IGrantSource grants,
+        IGrandfatheredAccess? grandfathered = null,
         Func<DateTime>? utcNow = null)
     {
-        _trial = trial;
         _store = store;
         _access = access;
         _grants = grants;
+        _grandfathered = grandfathered ?? new NullGrandfatheredAccess();
         _utcNow = utcNow ?? (() => DateTime.UtcNow);
         // The store can change the entitlement underneath us (restore on another
         // device, a renewal, an expiry push) — bubble it up as our own change.
@@ -40,27 +46,25 @@ public sealed class EntitlementService : IEntitlementService
     }
 
     // Optimistic-until-known: while the store hasn't confirmed the entitlement yet (the
-    // brief launch fetch), keep access open so a paying subscriber is never locked in that
-    // window. A genuinely-expired user gets ~1s of grace on a cold launch — harmless.
-    // The grant fetch gets the same treatment for the same reason: a granted user on a
-    // second device must not flash into the read-only state before it lands.
+    // brief launch fetch), keep access open so a paying subscriber never sees a paid
+    // surface offered back to them in that window. The grant fetch gets the same treatment
+    // for the same reason: a granted user on a second device must not be asked to
+    // subscribe before it lands.
     public bool HasFullAccess =>
-        _trial.IsActive
-        || _store.HasActiveEntitlement
+        _store.HasActiveEntitlement
         || _grants.IsGranted
         || !_store.EntitlementKnown
         || !_grants.GrantKnown;
 
     // Ordering is deliberate and is the copy contract, not a preference: a subscriber who
     // also holds a code is a SUBSCRIBER (Settings must offer them store management), and a
-    // grant outranks a running trial (telling someone with a redeemed year that they are
-    // "on a free trial" is simply false).
+    // grant outranks nothing else, so it comes next. Everything else is Free — a tier, not
+    // an expiry, and copy must never describe it as one.
     public AccessState State =>
         !_store.EntitlementKnown || !_grants.GrantKnown ? AccessState.Unknown
         : _store.HasActiveEntitlement ? AccessState.Subscribed
         : _grants.IsGranted ? AccessState.Granted
-        : _trial.IsActive ? AccessState.Trial
-        : AccessState.TrialExpired;
+        : AccessState.Free;
 
     public DateTime? GrantedUntilUtc => _grants.GrantedUntilUtc;
 
@@ -76,7 +80,7 @@ public sealed class EntitlementService : IEntitlementService
 
         // Still waiting on the first access fetch: stay open, exactly as the entitlement
         // does above. Signed-out / backup-off / cloud-disabled report Known=true, so this
-        // can never hold the read-only state open for a local-only user.
+        // can never hold a paid surface open for a local-only user.
         if (!_access.AccessKnown)
             return true;
 
@@ -86,17 +90,20 @@ public sealed class EntitlementService : IEntitlementService
         // Sponsorship covers caregivers only. On a pet you OWN, your own (already-failed)
         // access is the whole answer — otherwise a subscription could be laundered into
         // free access for the sponsor's own record.
-        if (!info.IsCaregiver || !info.OwnerHasAccess)
+        if (!info.IsCaregiver)
+            return false;
+
+        // Already caregiving here when the paid boundary moved: keep what you had, whatever
+        // the owner pays now. Checked before the owner's access precisely because the
+        // owner's access is the thing that changed underneath this person.
+        if (_grandfathered.SponsorshipIncluded(petSyncId))
+            return true;
+
+        if (!info.OwnerHasAccess)
             return false;
 
         return _utcNow() - info.FetchedUtc < BillingConfig.SponsorshipOfflineGrace;
     }
-
-    public bool TrialEverStarted => _trial.HasStarted;
-
-    public int TrialDaysLeft => _trial.DaysLeft;
-
-    public TimeSpan TrialTimeRemaining => _trial.TimeRemaining;
 
     public IReadOnlyList<SubscriptionOffer> Offers => _store.Offers;
 
@@ -104,7 +111,6 @@ public sealed class EntitlementService : IEntitlementService
 
     public async Task InitializeAsync()
     {
-        await _trial.InitializeAsync();
         try { await _store.InitializeAsync(); }
         catch (Exception ex) { Debug.WriteLine($"[Billing] store init failed: {ex.Message}"); }
         // Loads the cached grant before anything can read the gate, then tries the server.
@@ -112,8 +118,6 @@ public sealed class EntitlementService : IEntitlementService
         catch (Exception ex) { Debug.WriteLine($"[Billing] grant init failed: {ex.Message}"); }
         StateChanged?.Invoke();
     }
-
-    public Task<bool> EnsureTrialStartedAsync() => _trial.EnsureStartedAsync();
 
     public async Task RefreshAsync()
     {

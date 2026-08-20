@@ -51,7 +51,7 @@ public sealed record TodayCardReading(
 /// branch in <see cref="GetReadingAsync"/>.</para>
 ///
 /// <para><b>The choice is a preference, not medical data</b>, so it lives in the same
-/// device-scoped <c>AppSettings</c> key/value table as the language and the trial
+/// device-scoped <c>AppSettings</c> key/value table as the language and the one-shot
 /// flags rather than in a synced table: it needs no cloud migration, survives a sign
 /// out, and is wiped by a data reset like everything else. It is keyed per pet because
 /// the useful pair follows the pet's conditions — a household with a diabetic cat and

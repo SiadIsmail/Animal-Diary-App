@@ -4,13 +4,13 @@ namespace Animal_Diary_App.Data.Services.Billing;
 /// The thin seam over the native store / RevenueCat SDK. <b>All</b> RevenueCat
 /// awareness lives behind this — no RevenueCat type escapes the Billing folder, the
 /// same rule the cloud boundary follows for Supabase. <see cref="EntitlementService"/>
-/// composes this with the app-side <see cref="TrialService"/>; swapping the real
+/// composes this with a redeemed access code; swapping the real
 /// implementation in is the only place a purchase actually happens.
 ///
 /// <para>Until the RevenueCat MAUI binding is chosen and wired (the slice-1 spike),
 /// <see cref="NullStoreBilling"/> stands in: no entitlement, no offers, purchases
 /// report <see cref="PurchaseOutcome.Unavailable"/>. That keeps the whole app,
-/// including the trial and the read-only gate, compiling and runnable today.</para>
+/// including the whole paid boundary, compiling and runnable today.</para>
 /// </summary>
 public interface IStoreBilling
 {
@@ -79,7 +79,7 @@ public interface IStoreBilling
 /// <summary>
 /// No-store stand-in. Registered on Windows/macOS (no billing) and everywhere until
 /// the RevenueCat binding is wired. Reports no subscription and refuses purchases, so
-/// access can only ever come from the app-side trial while this is in place.
+/// access can only ever come from a redeemed access code while this is in place.
 /// </summary>
 public sealed class NullStoreBilling : IStoreBilling
 {

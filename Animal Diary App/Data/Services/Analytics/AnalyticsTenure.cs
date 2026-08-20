@@ -28,9 +28,9 @@ public static class AnalyticsTenure
     public const string BucketDay1 = "1";
     public const string BucketDays2To3 = "2-3";
     public const string BucketDays4To7 = "4-7";
-    /// <summary>Second week — spans the pre-end nudge (trial is 14 days).</summary>
+    /// <summary>Second week.</summary>
     public const string BucketDays8To14 = "8-14";
-    /// <summary>Past the trial window: the care-only read state and any subscription live here.</summary>
+    /// <summary>Two weeks in and beyond. Everything long-running lives here.</summary>
     public const string BucketDays15Plus = "15+";
 
     /// <summary>Whole UTC calendar days between the install and now; never negative

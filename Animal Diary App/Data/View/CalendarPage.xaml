@@ -629,15 +629,15 @@
                             Presented="{Binding IsPresented}"
                             SheetTemplate="{DataTemplate views:VetQuestionSheetView}"/>
 
-        <!-- Monetization sheets: the subscribe ask + the reassuring trial messages. -->
+        <!-- Monetization sheets: the subscribe ask + the grant-ending/ended messages. -->
         <controls:SheetHost Grid.RowSpan="2"
                             BindingContext="{Binding SubscribeVM}"
                             Presented="{Binding IsPresented}"
                             SheetTemplate="{DataTemplate views:SubscribeSheetView}"/>
         <controls:SheetHost Grid.RowSpan="2"
-                            BindingContext="{Binding TrialMessageVM}"
+                            BindingContext="{Binding AccessMessageVM}"
                             Presented="{Binding IsPresented}"
-                            SheetTemplate="{DataTemplate views:TrialMessageSheetView}"/>
+                            SheetTemplate="{DataTemplate views:AccessMessageSheetView}"/>
 
     </Grid>
 

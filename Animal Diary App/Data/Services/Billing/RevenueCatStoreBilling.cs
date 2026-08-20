@@ -60,7 +60,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
     {
         var key = ApiKey();
         if (string.IsNullOrWhiteSpace(key))
-            return; // No key configured → stays "unavailable"; access can only come from the trial.
+            return; // No key configured → stays "unavailable"; only a redeemed code grants access.
 
         try
         {

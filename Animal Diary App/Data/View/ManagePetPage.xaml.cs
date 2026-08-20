@@ -261,9 +261,6 @@ public partial class ManagePetPage : ContentPage
 
     private async void OnRequestConditionSetup(string conditionId)
     {
-        // Setting up a condition / care plan is "adding more" — gated in read-only.
-        if (PaywallBlocks())
-            return;
         switch (conditionId)
         {
             case "diabetes": await vm.DiabetesSetupVM.OpenAsync(); break;
@@ -278,8 +275,6 @@ public partial class ManagePetPage : ContentPage
     /// diabetes, and a seizure log must never claim epilepsy.</summary>
     private async void OnRequestTrackerSetup(Data.Models.TrackerId trackerId)
     {
-        if (PaywallBlocks())
-            return;
         switch (trackerId)
         {
             case Data.Models.TrackerId.Glucose: await vm.DiabetesSetupVM.OpenAsync(linkCondition: false); break;
@@ -288,32 +283,22 @@ public partial class ManagePetPage : ContentPage
     }
 
     // The owner's own trackers: one sheet, opened empty to create or on a row to edit.
-    // Gated like every other add/edit action on this page — defining what the app asks
-    // for is editing the care plan, so a read-only state must not reach it.
     private void OnRequestCustomTracker(Data.Models.CustomTracker? tracker)
     {
-        if (PaywallBlocks())
-            return;
         if (tracker is null)
             vm.CustomTrackerVM.OpenNew();
         else
             vm.CustomTrackerVM.OpenEdit(tracker);
     }
 
-    /// <summary>Read-only gate for the Manage page's add/edit actions → the subscribe
-    /// sheet (hosted on this page). Returns true = blocked.
-    ///
-    /// <para>Pet-scoped: a caregiver whose owner has access edits the care plan and profile
-    /// of that pet freely. The genuinely owner-only actions on this page — minting invites,
-    /// removing members, deleting the pet cloud-wide — are enforced server-side by role and
-    /// need no billing gate at all.</para></summary>
-    private bool PaywallBlocks()
-    {
-        if (vm.CanEditActivePet)
-            return false;
-        vm.SubscribeVM.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceReadOnly);
-        return true;
-    }
+    // ── The paywall NEVER appears on this page's add/edit actions. ────────────────
+    // The care plan, the trackers, the conditions and the pet profile are all things the
+    // owner writes down, and writing things down is free forever on every tier. This page
+    // used to route each of them to the subscribe sheet; that gate is exactly what the
+    // monetization boundary was inverted to remove. The genuinely owner-only actions here
+    // — minting invites, removing members, deleting the pet cloud-wide — are enforced
+    // server-side by role, and minting an invite carries its own (unchanged) gate inside
+    // SharingSheetViewModel.
 
     private async void OnSheetSaved() => await vm.ManageVM.LoadAsync();
 
@@ -321,9 +306,6 @@ public partial class ManagePetPage : ContentPage
     // mode (it saves in place and pops back — no condition picker).
     private async void OnRequestEditPet()
     {
-        // Editing the pet profile is gated in read-only.
-        if (PaywallBlocks())
-            return;
         vm.PetVM.LoadDraftFromActivePet();
         await Navigation.PushAsync(new CreatePetPage(vm, isEditMode: true));
     }
