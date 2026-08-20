@@ -371,6 +371,72 @@ internal static class SyncTableMaps
             },
             onApplied: (ctx, m) => { ctx.NoteMedication(m.Id, m.SyncId); ctx.AffectedMedications.Add(m.Id); }),
 
+        // ── treatment ledger (what a medication used to be) ──────────────────
+        // Keyed by id: every row is a distinct moment, appended and never edited.
+        //
+        // medication_id travels as a PLAIN uuid with no foreign key, and both
+        // directions tolerate it not resolving. The row is deliberately self-contained
+        // (name and summary are text captured at the change), so an unresolvable
+        // pointer costs nothing readable — whereas returning null from toCloud would
+        // strand the row as permanently dirty, and an FK with a cascade would delete
+        // the history of the thing whose history this exists to preserve.
+        new TableSync<MedicationChange>("medication_changes",
+            toCloud: async (c, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(c.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = c.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["medication_id"] = c.MedicationId == 0
+                        ? null
+                        : await ctx.MedicationUuidAsync(c.MedicationId),
+                    ["changed_at"] = CloudJson.ToIso(c.ChangedAtUtc),
+                    ["kind"] = c.Kind.ToString(),
+                    ["medication_name"] = c.MedicationName,
+                    ["summary"] = c.Summary,
+                    ["note"] = c.Note,
+                    ["client_updated_at"] = CloudJson.ToIso(c.UpdatedAtUtc),
+                    ["deleted_at"] = c.IsDeleted ? CloudJson.ToIso(c.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                var medUuid = CloudJson.GetStringOrNull(el, "medication_id");
+                return new MedicationChange
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    // 0 = "not resolvable here", which is a normal state on a device
+                    // that never held the medication. Never a reason to drop the row.
+                    MedicationId = medUuid == null
+                        ? 0
+                        : await ctx.MedicationLocalIdAsync(medUuid) ?? 0,
+                    ChangedAtUtc = CloudJson.GetIsoDateTime(el, "changed_at"),
+                    // TryParse, not Parse: a newer client's eighth kind must not abort
+                    // the whole pull for every other table in the batch. It reads back
+                    // as the kind whose summary already carries the fact.
+                    Kind = Enum.TryParse<MedicationChangeKind>(CloudJson.GetString(el, "kind"), out var k)
+                        ? k
+                        : MedicationChangeKind.DoseChanged,
+                    MedicationName = CloudJson.GetString(el, "medication_name"),
+                    Summary = CloudJson.GetString(el, "summary"),
+                    Note = CloudJson.GetString(el, "note"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.MedicationId = inc.MedicationId;
+                local.ChangedAtUtc = inc.ChangedAtUtc; local.Kind = inc.Kind;
+                local.MedicationName = inc.MedicationName; local.Summary = inc.Summary;
+                local.Note = inc.Note;
+            }),
+
         // ── trackers (care plan; one per kind per pet) ───────────────────────
         new TableSync<Tracker>("trackers",
             toCloud: async (t, ctx) =>

@@ -162,6 +162,11 @@ public static class SyncedTables
     {
         new SyncedTable<Pet>(PetScope.Root),
         new SyncedTable<Medication>(PetScope.ByPetId),
+        // The treatment ledger hangs off the PET, not the medication — deleting a
+        // medication must not delete the record of what it used to be. ByPetId is what
+        // makes that true for the purge and the tombstone cascade, and the Postgres
+        // side cascades from `pets` for the same reason.
+        new SyncedTable<MedicationChange>(PetScope.ByPetId),
         new SyncedTable<MedicationSchedule>(PetScope.ByMedicationId),
         new SyncedTable<MedicationDoseLog>(PetScope.ByPetId),
         new SyncedTable<PetEntry>(PetScope.ByPetId),

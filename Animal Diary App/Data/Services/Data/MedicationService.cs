@@ -18,10 +18,32 @@ public class MedicationService
         await _db.InsertAsync(SyncStamp.Touch(medication));
     }
 
-    public async Task UpdateMedicationAsync(Medication medication)
-    {
-        await _db.UpdateAsync(SyncStamp.Touch(medication));
-    }
+    /// <summary>
+    /// Write a medication back, appending whatever the treatment ledger sees change.
+    ///
+    /// <para>The stored row is read on the SAME connection, inside the transaction and
+    /// BEFORE the update — the caller hands us an already-mutated object, so the
+    /// database is the only remaining witness to what it used to say. Schedules are not
+    /// this path's business (both sides get the empty set), so it can never claim a
+    /// schedule change it did not make; the archive/restore flip is what actually
+    /// travels through here.</para>
+    /// </summary>
+    public Task UpdateMedicationAsync(Medication medication)
+        => _db.RunInTransactionAsync(conn =>
+        {
+            var before = conn.Table<Medication>()
+                .Where(m => m.Id == medication.Id)
+                .FirstOrDefault();
+
+            conn.Update(SyncStamp.Touch(medication));
+
+            if (before == null)
+                return;
+
+            AppendLedger(conn, MedicationLedger.Diff(
+                before, NoSchedules, medication, NoSchedules,
+                DateTime.UtcNow, MedicationScheduleText.Describe));
+        });
 
     /// <summary>Delete a medication together with all of its schedule rows.
     /// Soft deletes — the rows become tombstones so the deletion can sync.</summary>
@@ -29,8 +51,15 @@ public class MedicationService
     {
         await DeleteSchedulesForMedicationAsync(medicationId);
         var med = await GetMedicationByIdAsync(medicationId);
-        if (med != null)
-            await _db.UpdateAsync(SyncStamp.MarkDeleted(med));
+        if (med == null)
+            return;
+
+        // The ledger row is written first and outlives the medication on purpose: the
+        // fact that this treatment was ever given is not deleted along with the thing
+        // that gave it. It carries its own name and dose text, so it stays readable
+        // with nothing left to join to.
+        await _db.InsertAsync(SyncStamp.Touch(MedicationLedger.Stopped(med, DateTime.UtcNow)));
+        await _db.UpdateAsync(SyncStamp.MarkDeleted(med));
     }
 
     public async Task<Medication?> GetMedicationByIdAsync(int id)
@@ -99,6 +128,14 @@ public class MedicationService
     public Task SaveMedicationWithSchedulesAsync(Medication medication, IReadOnlyList<MedicationSchedule> schedules)
         => _db.RunInTransactionAsync(conn =>
         {
+            // Read the stored row BEFORE the update, on this same connection. The
+            // caller mutates the Medication it loaded, so once conn.Update runs there
+            // is nothing left anywhere that remembers the old dose — which is exactly
+            // the history this ledger exists to stop destroying. Null = a create.
+            var before = medication.Id == 0
+                ? null
+                : conn.Table<Medication>().Where(m => m.Id == medication.Id).FirstOrDefault();
+
             SyncStamp.Touch(medication);
             if (medication.Id == 0)
                 conn.Insert(medication);            // assigns Id
@@ -124,7 +161,29 @@ public class MedicationService
                 schedule.IsDeleted = false;
                 conn.Insert(SyncStamp.Touch(schedule));
             }
+
+            // Same transaction, deliberately: a torn write that kept the new dose and
+            // lost the row recording it would be worse than no ledger at all. `old` is
+            // the schedule set as it stood — it was loaded above to be tombstoned, and
+            // it is the only "before" the diff needs.
+            AppendLedger(conn, MedicationLedger.Diff(
+                before, old, medication, schedules,
+                DateTime.UtcNow, MedicationScheduleText.Describe));
         });
+
+    /// <summary>Both ledger-writing paths append the same way — through SyncStamp, so
+    /// the rows reach the cloud like any other, and one at a time because there are at
+    /// most a handful per save.</summary>
+    private static void AppendLedger(SQLiteConnection conn, IReadOnlyList<MedicationChange> changes)
+    {
+        foreach (var change in changes)
+            conn.Insert(SyncStamp.Touch(change));
+    }
+
+    /// <summary>The empty schedule set, for a write path that does not touch schedules.
+    /// Passing the same set as both sides is what makes "this path can never report a
+    /// schedule change" structural rather than a comment.</summary>
+    private static readonly IReadOnlyList<MedicationSchedule> NoSchedules = Array.Empty<MedicationSchedule>();
 
     /// <summary>Soft-delete every schedule row for a medication (used before re-saving an edit, or on delete).</summary>
     public async Task DeleteSchedulesForMedicationAsync(int medicationId)
