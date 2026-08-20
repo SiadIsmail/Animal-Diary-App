@@ -1,0 +1,101 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- ══ Meta (Facebook) Android SDK binding ═══════════════════════════════════
+	     A C# binding over `com.facebook.android:facebook-core`, used by the app for
+	     ONE thing: reporting the install so a Meta app-promotion campaign can attribute
+	     it. No Login, no Share, no Graph calls. See Data/Services/Attribution/ in the app
+	     project for the seam that consumes this, and AI/analytics.md for the privacy
+	     boundary between this and the (separate, anonymous) PostHog pipeline.
+
+	     WHY A SEPARATE PROJECT rather than binding inside the app csproj:
+	       1. The generated binding emits ~400 unavoidable BG84xx/CS warnings (see NoWarn
+	          below). The app csproj runs TreatWarningsAsErrors, and its whole "a clean
+	          build is 0 errors and 0 warnings" rule depends on not importing that noise.
+	       2. Android-only. The app targets ios/maccatalyst/windows as well, and a binding
+	          project cannot be multi-targeted onto them.
+
+	     WHY THE MAVEN ARTIFACT rather than a NuGet package: there is no maintained one.
+	     Microsoft's Xamarin.Facebook.Android stopped at 11.2.0.1 in 2021; the current
+	     native SDK is 18.x. @(AndroidMavenLibrary) downloads and binds the AAR straight
+	     from Maven Central, which is the supported .NET 9+ path and needs no Gradle
+	     project, no Java wrapper, and no checked-in binary.
+	-->
+
+	<PropertyGroup>
+		<TargetFramework>net10.0-android</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<IsBindingProject>true</IsBindingProject>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<!-- minSdk must not exceed the app's (24). facebook-core declares 15. -->
+		<SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
+	</PropertyGroup>
+
+	<!-- ══ Warnings ══════════════════════════════════════════════════════════════
+	     Every code below comes out of the BINDING GENERATOR reading Meta's own Java/Kotlin
+	     and emitting C# for it. None of them is actionable: we do not own the Java, and the
+	     only alternative is hand-editing 400 generated files that are regenerated on every
+	     build. Suppressed here, at the boundary, so the app project stays at zero warnings.
+
+	       BG8400/BG8401  Kotlin `Companion` objects and their fields collide with the
+	                      enclosing type's members; the generator skips the duplicate. The
+	                      skipped members are Kotlin-internal statics we never call.
+	       BG8403         A type whose name matches its namespace (Com.Facebook.Core.Core).
+	       BG8604/BG8605/ Java types referenced by the SDK that resolve to nothing bindable
+	       BG8606         (mostly Kotlin intrinsics). Reported in java-resolution-report.log;
+	                      none is reachable from the two calls we make.
+	       BG8700/BG8800  Generator-internal advisories about members it declined to emit.
+	       CS0108/CS0114/ Generated overrides/hides that the C# compiler flags because Java
+	       CS0465/CS8765/ and C# disagree about nullability and virtual dispatch. Inherent to
+	       CS8767         every large Java binding.
+	       XAOBS001       The generator still emits calls to APIs .NET 10 marked obsolete.
+	     Keep this a single-line semicolon list (the documented NoWarn format); comments
+	     inside the element leak whitespace into the value. -->
+	<PropertyGroup>
+		<NoWarn>$(NoWarn);BG8400;BG8401;BG8403;BG8604;BG8605;BG8606;BG8700;BG8800;CS0108;CS0114;CS0465;CS8765;CS8767;XAOBS001</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- facebook-core is the App Events half of the SDK. The umbrella artifact
+		     (facebook-android-sdk) additionally pulls Login, Share, Messenger and their
+		     UI, none of which this app uses and all of which would enlarge the binding,
+		     the APK, and the permission surface for nothing.
+
+		     PINNED, not floating: a binding regenerates against whatever version resolves,
+		     so an unpinned bump can turn a green build red without a code change. Re-pin
+		     deliberately, and re-run the Transforms below when you do. -->
+		<AndroidMavenLibrary Include="com.facebook.android:facebook-core" Version="18.3.0" Bind="true" />
+		<!-- Meta's fork of Bolts (their internal task library). A dependency of the above,
+		     never referenced from C#, so it ships as a plain library with Bind="false". -->
+		<AndroidMavenLibrary Include="com.facebook.android:facebook-bolts" Version="18.3.0" Bind="false" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- The Java dependencies facebook-core's POM declares, each satisfied by the
+		     Microsoft-maintained binding NuGet. Without all five the build fails at XA4242
+		     (Java dependency verification) before the generator ever runs. installreferrer
+		     is ALSO referenced by the app (creator-link attribution); the POM asks for 1.0
+		     and 2.2 satisfies it, so the two coexist on one copy.
+
+		     THESE VERSIONS ARE CHOSEN, NOT LATEST. They match what the app's existing
+		     package graph already resolves, because NuGet picks the highest version across
+		     the whole graph: referencing the newest of any AndroidX package here drags the
+		     app's entire AndroidX tree up with it and breaks version constraints that MAUI
+		     and RevenueCat's dependencies pin, which surfaces as a wall of NU1608 restore
+		     warnings in the APP project. Reference-latest cost 12 of them; these versions
+		     cost zero, leaving the app at exactly the two NU1608s it had before this
+		     project existed. Check `dotnet restore` on the app after changing any line
+		     below, not just that this project builds. -->
+		<PackageReference Include="Xamarin.AndroidX.Annotation" Version="1.10.0.1" />
+		<PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" Version="1.17.0.2" />
+		<PackageReference Include="Xamarin.AndroidX.Legacy.Support.Core.Utils" Version="1.0.0.30" />
+		<PackageReference Include="Xamarin.Kotlin.StdLib" Version="2.4.0.1" />
+		<PackageReference Include="Xamarin.Google.Android.InstallReferrer" Version="2.2.0.6" />
+		<!-- Not a facebook-core dependency: it is pulled transitively (Legacy.Support.Core.Utils
+		     -> Loader -> Lifecycle.LiveData.Core) at 2.8.7.1, whose own constraint then
+		     conflicts with the Lifecycle.Common 2.10.0.2 the app resolves. Naming it here at
+		     the matching version is what keeps that NU1608 from appearing. -->
+		<PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core" Version="2.10.0.2" />
+	</ItemGroup>
+
+</Project>

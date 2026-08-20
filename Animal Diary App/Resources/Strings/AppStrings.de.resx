@@ -111,6 +111,12 @@
   <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Alle Daten löschen</value></data>
   <data name="Settings_DeleteConfirmMessage" xml:space="preserve"><value>Das löscht jedes Tier, jeden Eintrag, jedes Medikament und jede Einstellung auf diesem Gerät. Das lässt sich nicht rückgängig machen.</value></data>
   <data name="Settings_DeleteConfirmAccept" xml:space="preserve"><value>Löschen</value></data>
+  <!-- Werbemessung. Ein Schalter, nur Android, direkt über der Datenschutzerklärung,
+       damit Erklärung und Link zusammen stehen. Sagt schlicht, was das Gerät verlässt
+       und was nicht. "tracken" ist als Leitverb tabu (App-Voice §19). -->
+  <data name="Settings_AdvertisingSection" xml:space="preserve"><value>Werbung</value></data>
+  <data name="Settings_AdTrackingTitle" xml:space="preserve"><value>Werbemessung</value></data>
+  <data name="Settings_AdTrackingSubtitle" xml:space="preserve"><value>Wenn dich eine Anzeige hergebracht hat, meldet Felova die Installation an Meta. Nichts über dich oder deine Tiere wird übermittelt.</value></data>
   <!-- Cloud und Abo teilen sich einen Abschnitt "Konto"; die Links und die
        Datenschutzerklärung teilen sich "Info und Support" am Fuß. -->
   <data name="Settings_AccountSection" xml:space="preserve"><value>Konto</value></data>
