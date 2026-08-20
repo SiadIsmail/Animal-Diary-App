@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.Services.Analytics;
+namespace Animal_Diary_App.Data.Services.Analytics;
 
 /// <summary>
 /// The single source of truth for every analytics event name and property key.
@@ -135,26 +135,17 @@ public static class AnalyticsEvents
     /// <summary>The first successful full sync after enabling completed.</summary>
     public const string CloudBackupCompleted = "cloud_backup_completed";
 
-    // ── Trial & subscription funnel ───────────────────────────────────────────
+    // ── Subscription funnel ───────────────────────────────────────────────────
     // Coarse and anonymous like everything else: no price is a person, no plan is an
     // identity. With ~10 users the shape of the funnel + the founder's conversations
     // are the signal, not the counts.
-    /// <summary>The app-side free trial clock started (once, at onboarding completion).</summary>
-    public const string TrialStarted = "trial_started";
+    //
+    // There are no trial events here any more, because there is no trial: trial_started,
+    // trial_explainer_shown, pre_end_nudge_shown and read_only_entered all described a
+    // clock that no longer runs and a read-only state that no longer exists.
     /// <summary>The user completed their first real log (dose given or journal entry).
-    /// The bonding milestone the trial explainer waits for.</summary>
+    /// The first-value milestone the whole funnel is measured against.</summary>
     public const string FirstLogCompleted = "first_log_completed";
-    /// <summary>The reassuring post-first-log trial explainer was shown.</summary>
-    public const string TrialExplainerShown = "trial_explainer_shown";
-    /// <summary>The single pre-trial-end nudge was shown. Property: <see cref="PropTrialDay"/>.</summary>
-    public const string PreEndNudgeShown = "pre_end_nudge_shown";
-    /// <summary>The app entered the care-only read state (trial elapsed / subscription
-    /// lapsed) and showed the reassurance. Property: <see cref="PropTrialDay"/>.</summary>
-    public const string ReadOnlyEntered = "read_only_entered";
-    /// <summary>A caregiver's cover under someone else's subscription ended (that owner
-    /// lapsed or their trial ran out) and we said so. The fact only — never which pet,
-    /// which owner, or how many people were affected.</summary>
-    public const string SponsorshipEnded = "sponsorship_ended";
     /// <summary>The subscribe sheet was viewed. Property: <see cref="PropSubscribeSource"/>
     /// — this is the "where were they when they considered paying" signal.</summary>
     public const string SubscribeScreenViewed = "subscribe_screen_viewed";
@@ -190,13 +181,12 @@ public static class AnalyticsEvents
     /// and at influencer-campaign volumes a creator tag edges toward identifying. This event
     /// exists only to show that the box is being used at all.</summary>
     public const string CreatorCodeEntered = "creator_code_entered";
-    /// <summary>The one heads-up before a redeemed access code's grant ends. The grant
-    /// sibling of <see cref="PreEndNudgeShown"/>; no properties (its "day" would be the
-    /// grant length, which identifies the campaign).</summary>
+    /// <summary>The one heads-up before a redeemed access code's grant ends. No properties:
+    /// its "day" would be the grant length, which identifies the campaign.</summary>
     public const string GrantEndingShown = "grant_ending_shown";
-    /// <summary>The care-only read state began because a GRANT ran out rather than a trial.
-    /// Separate from <see cref="ReadOnlyEntered"/> so the two are not silently pooled: they
-    /// describe different people reaching the same screen.</summary>
+    /// <summary>A redeemed access code's grant ran out and the account is back on the free
+    /// tier. The only "your access changed" event left — everyone else on the free tier
+    /// arrived there without anything being taken away, so there is nothing to record.</summary>
     public const string GrantEnded = "grant_ended";
 
     // ── Property keys ─────────────────────────────────────────────────────────
@@ -259,17 +249,15 @@ public static class AnalyticsEvents
     public const string PropDaysPerWeek = "days_per_week";
     /// <summary>Report look-back window in days (30/90/180).</summary>
     public const string PropRangeDays = "range_days";
-    /// <summary>Where the subscribe sheet was opened from — <see cref="SubscribeSourceSettings"/>
-    /// / <see cref="SubscribeSourceNudge"/> / <see cref="SubscribeSourceReadOnly"/> /
-    /// <see cref="SubscribeSourceExplainer"/>.</summary>
+    /// <summary>Which door the subscribe sheet was opened from. The values are the real
+    /// upgrade doors and nothing else — see the <c>SubscribeSource*</c> constants. This is
+    /// the property that says where someone was standing when they considered paying, so a
+    /// door that cannot be told apart from another is a door you cannot learn from.</summary>
     public const string PropSubscribeSource = "source";
     /// <summary>Subscription cadence — <see cref="PlanYearly"/> / <see cref="PlanMonthly"/>.</summary>
     public const string PropPlan = "plan";
     /// <summary>Store-formatted price string (e.g. "€24.99"). Not personal.</summary>
     public const string PropPrice = "price";
-    /// <summary>Which day of the trial an event happened on (1-based). Coarse
-    /// engagement/timing signal; not identifying.</summary>
-    public const string PropTrialDay = "trial_day";
     /// <summary>Coarse failure bucket for billing events — <see cref="ReasonFailed"/> /
     /// <see cref="ReasonUnavailable"/> / <see cref="ReasonOffline"/> / <see cref="ReasonEmpty"/>.
     /// Never a raw store message.</summary>
@@ -300,12 +288,26 @@ public static class AnalyticsEvents
     public const string DoseStatusTaken = "taken";
     public const string DoseStatusSkipped = "skipped";
 
-    // Subscribe-sheet sources.
+    // Subscribe-sheet sources: the real upgrade doors, one value each.
+    /// <summary>The Settings → subscription row. The deliberate, unprompted door.</summary>
     public const string SubscribeSourceSettings = "settings";
-    public const string SubscribeSourceNudge = "nudge";
-    public const string SubscribeSourceReadOnly = "read_only";
-    public const string SubscribeSourceExplainer = "explainer";
-    public const string SubscribeSourceSponsorshipEnded = "sponsorship_ended";
+    /// <summary>The appointment summary, after the first one has been used (Phase 3). The
+    /// door the whole strategy expects to convert on: maximum anxiety, a hard deadline, a
+    /// concrete artifact and accumulated data all coincide there.</summary>
+    public const string SubscribeSourceSummary = "summary";
+    /// <summary>Adding a second (non-demo) pet.</summary>
+    public const string SubscribeSourceSecondPet = "second_pet";
+    /// <summary>Turning on cloud backup.</summary>
+    public const string SubscribeSourceBackup = "backup";
+    /// <summary>Minting a caregiver invite. Redeeming one is free and has no door.</summary>
+    public const string SubscribeSourceInvite = "invite";
+    /// <summary>The designed vet report, from the export sheet (Phase 2). The plain
+    /// chronological export sits beside it, free, and produces no event.</summary>
+    public const string SubscribeSourceReport = "report";
+    /// <summary>The one heads-up before a redeemed access code's grant runs out, and the
+    /// notice once it has. Not a gate — nothing was withheld to produce it — but it is a
+    /// place someone can decide to pay from, so it needs telling apart from the rest.</summary>
+    public const string SubscribeSourceGrantEnding = "grant_ending";
     // Subscription plans.
     public const string PlanYearly = "yearly";
     public const string PlanMonthly = "monthly";

@@ -2,14 +2,6 @@ namespace Animal_Diary_App.Tests;
 
 using Animal_Diary_App.Data.Services.Billing;
 
-/// <summary>In-memory trial store — no SQLite.</summary>
-internal sealed class FakeTrialStore : ITrialStore
-{
-    public DateTime? Start { get; set; }
-    public Task<DateTime?> GetTrialStartUtcAsync() => Task.FromResult(Start);
-    public Task SetTrialStartUtcAsync(DateTime startUtc) { Start = startUtc; return Task.CompletedTask; }
-}
-
 /// <summary>Scriptable store double — set entitlement/known/offers and the outcomes each
 /// call should return.</summary>
 internal sealed class FakeStore : IStoreBilling
@@ -132,6 +124,24 @@ internal sealed class FakeGrants : IGrantSource
     {
         GrantedUntilUtc = endedAt;
         EverGranted = true;
+        return this;
+    }
+}
+
+/// <summary>Scriptable grandfathering snapshot — what an install already had when the
+/// paid boundary moved.</summary>
+internal sealed class FakeGrandfathered : IGrandfatheredAccess
+{
+    public bool BackupIncluded { get; set; }
+    public HashSet<string> Pets { get; } = new(StringComparer.Ordinal);
+
+    public bool SponsorshipIncluded(string? petSyncId)
+        => !string.IsNullOrEmpty(petSyncId) && Pets.Contains(petSyncId);
+
+    /// <summary>This device was already caregiving on this pet when the boundary moved.</summary>
+    public FakeGrandfathered Caregiving(string petSyncId)
+    {
+        Pets.Add(petSyncId);
         return this;
     }
 }

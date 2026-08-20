@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.View;
+namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services.Analytics;
@@ -90,24 +90,13 @@ public partial class KeepSafePage : ContentPage
 		vm.CloudVM.DismissCommand.Execute(null);
 		vm.Analytics.Track(AnalyticsEvents.OnboardingCompleted);
 
-		// Onboarding is done and the first pet exists — begin the free trial now. Quiet
-		// no-op under the Null boundary (dev / billing disabled). Fire-and-forget so the
-		// handoff into the app isn't blocked.
-		StartTrialAsync().Forget();
-
+		// Nothing billing-related happens here, deliberately. This used to start a trial
+		// clock, and the version before that opened a payment sheet ninety seconds after
+		// install. There is no clock now, and app-voice §17 is explicit that onboarding is
+		// a cost to cut to the bone: asking for money before the product has said anything
+		// useful is the worst possible first sentence. The paywall never appears in
+		// onboarding — the CloudSheetViewModel.RequestSubscribe hook this page leaves null
+		// is what enforces that structurally.
 		(Application.Current as App)?.SwitchToMainApp();
-	}
-
-	private async Task StartTrialAsync()
-	{
-		try
-		{
-			if (await vm.Entitlements.EnsureTrialStartedAsync())
-				vm.Analytics.Track(AnalyticsEvents.TrialStarted);
-		}
-		catch (Exception ex)
-		{
-			System.Diagnostics.Debug.WriteLine($"[Billing] trial start failed: {ex.Message}");
-		}
 	}
 }

@@ -168,12 +168,15 @@ public class SharingSheetViewModel : BaseViewModel
         if (pet == null || string.IsNullOrEmpty(pet.SyncId))
             return;
 
-        // Adding a new caregiver is "adding more" — gated in the read-only state. Existing
-        // shared care keeps working; only minting a fresh invite routes to the paywall.
+        // Minting an invite is paid; REDEEMING one is free and always will be. The
+        // asymmetry is the whole point: the person being handed a code is usually the
+        // second human keeping an animal alive, and charging them at the door is how
+        // shared care stops happening. Existing shared care keeps working either way —
+        // this gates the mint, nothing else.
         if (!_entitlements.HasFullAccess)
         {
             IsPresented = false;
-            _subscribe.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceReadOnly);
+            _subscribe.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceInvite);
             return;
         }
 

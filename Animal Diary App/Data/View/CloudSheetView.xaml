@@ -160,6 +160,20 @@
                 <!-- ── Signed in: status + actions ── -->
                 <VerticalStackLayout Spacing="12" IsVisible="{Binding IsSignedInVisible}">
 
+                    <!-- Backup off and part of the paid tier → say so plainly. No urgency,
+                         no loss framing: nothing already written down is affected either way.
+                         The "see the options" line only renders where the host page has
+                         somewhere for it to go, which is never onboarding. -->
+                    <VerticalStackLayout Spacing="10" IsVisible="{Binding ShowBackupPaidNotice}">
+                        <Label Style="{StaticResource CloudBody}" Text="{loc:Translate Cloud_BackupPaidBody}"/>
+                        <Label Style="{StaticResource CloudLink}" Text="{loc:Translate Cloud_BackupPaidAction}"
+                               IsVisible="{Binding CanRequestSubscribe}" Padding="0,2">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding EnableBackupCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </VerticalStackLayout>
+
                     <!-- Backup off → the one-time enable pitch (this IS the upload consent) -->
                     <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowEnablePrompt}">
                         <Label Style="{StaticResource CloudBody}" Text="{loc:Translate Cloud_BackupOffBody}"/>

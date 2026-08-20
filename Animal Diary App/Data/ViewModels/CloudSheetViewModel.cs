@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Diagnostics;
 using System.Windows.Input;
@@ -20,6 +20,8 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     private readonly ICloudAuthService _auth;
     private readonly ICloudSyncService _sync;
     private readonly ICloudSharingService _sharing;
+    private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
+    private readonly Animal_Diary_App.Data.Services.Billing.IGrandfatheredAccess _grandfathered;
     private Mode _mode = Mode.Intro;
 
     // Set when the user arrived via the Pets page "Join a pet" action but wasn't set up
@@ -27,11 +29,18 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     // completes we drop them on the invite-code input instead of the generic signed-in card.
     private bool _pendingJoin;
 
-    public CloudSheetViewModel(ICloudAuthService auth, ICloudSyncService sync, ICloudSharingService sharing)
+    public CloudSheetViewModel(
+        ICloudAuthService auth,
+        ICloudSyncService sync,
+        ICloudSharingService sharing,
+        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
+        Animal_Diary_App.Data.Services.Billing.IGrandfatheredAccess grandfathered)
     {
         _auth = auth;
         _sync = sync;
         _sharing = sharing;
+        _entitlements = entitlements;
+        _grandfathered = grandfathered;
 
         OpenCommand = new Command(async () => await OpenAsync());
         DismissCommand = new Command(() => IsPresented = false);
@@ -52,6 +61,9 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         // sync finishing) — re-render, marshalled to the UI thread.
         _auth.SessionChanged += () => MainThread.BeginInvokeOnMainThread(RefreshStateFromServices);
         _sync.StateChanged += () => MainThread.BeginInvokeOnMainThread(RefreshStateFromServices);
+        // A purchase can land while this sheet is open (it is one of the doors), and it
+        // changes which face of the backup card shows.
+        _entitlements.StateChanged += () => MainThread.BeginInvokeOnMainThread(RefreshStateFromServices);
     }
 
     // ── sheet shell ─────────────────────────────────────────────────────────
@@ -141,7 +153,35 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
 
     public string SignedInEmail => _auth.Email ?? string.Empty;
     public bool IsBackupEnabled => _sync.IsBackupEnabled;
-    public bool ShowEnablePrompt => _mode == Mode.SignedIn && !_sync.IsBackupEnabled;
+
+    /// <summary>Cloud backup is part of the paid tier. Two exceptions, both deliberate:
+    /// an install that already had backup on when the boundary moved keeps it
+    /// (<see cref="Animal_Diary_App.Data.Services.Billing.IGrandfatheredAccess"/>), and
+    /// someone turning it on in order to REDEEM an invite is never stopped — see
+    /// <see cref="EnableBackupAsync"/>.</summary>
+    public bool BackupNeedsSubscription
+        => !_entitlements.HasFullAccess && !_grandfathered.BackupIncluded;
+
+    /// <summary>The enable button: offered when backup is off and it is actually
+    /// available to this account.</summary>
+    public bool ShowEnablePrompt
+        => _mode == Mode.SignedIn && !_sync.IsBackupEnabled && (!BackupNeedsSubscription || _pendingJoin);
+
+    /// <summary>The paid-tier explanation shown in its place. Plain: what backup is part
+    /// of, and that nothing already written down is affected either way.</summary>
+    public bool ShowBackupPaidNotice
+        => _mode == Mode.SignedIn && !_sync.IsBackupEnabled && BackupNeedsSubscription && !_pendingJoin;
+
+    /// <summary>Raised when the person asks to see the subscription options from the
+    /// backup notice. <b>Set by the hosting page, and deliberately not by this VM.</b>
+    /// Today / Journal / Pets wire it to the subscribe sheet they already host; the
+    /// onboarding hosts (WelcomePage, KeepSafePage) leave it null, which is what makes it
+    /// structurally impossible for a payment ask to appear during onboarding.</summary>
+    public Action? RequestSubscribe { get; set; }
+
+    /// <summary>Whether to show the "see the options" action at all — only where a host
+    /// has offered somewhere for it to go.</summary>
+    public bool CanRequestSubscribe => RequestSubscribe != null;
     public string LastSyncedDisplay => _sync.LastSyncedUtc is DateTime utc
         ? LocalizationManager.Instance.Format("Cloud_LastSynced", utc.ToLocalTime().ToString("g"))
         : Loc("Cloud_NeverSynced");
@@ -288,6 +328,18 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     private async Task EnableBackupAsync()
     {
         ErrorText = string.Empty;
+
+        // Backup is paid — EXCEPT when it is the last thing standing between someone and a
+        // pet they were invited to help care for. Redeeming an invite is free and stays
+        // free, and redeeming needs sync on to pull the pet down; gating here would charge
+        // the second person keeping an animal alive for the right to start. Minting the
+        // invite is where the owner's side is gated, and that is unchanged.
+        if (BackupNeedsSubscription && !_pendingJoin)
+        {
+            RequestSubscribe?.Invoke();
+            return;
+        }
+
         await Run(async () =>
         {
             var outcome = await _sync.EnableBackupAsync();
@@ -483,7 +535,10 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(CanSubmit));
         OnPropertyChanged(nameof(SignedInEmail));
         OnPropertyChanged(nameof(IsBackupEnabled));
+        OnPropertyChanged(nameof(BackupNeedsSubscription));
         OnPropertyChanged(nameof(ShowEnablePrompt));
+        OnPropertyChanged(nameof(ShowBackupPaidNotice));
+        OnPropertyChanged(nameof(CanRequestSubscribe));
         OnPropertyChanged(nameof(LastSyncedDisplay));
         OnPropertyChanged(nameof(SettingsRowSubtitle));
     }

@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -10,9 +10,14 @@ using Animal_Diary_App.Helpers;
 /// The subscribe sheet: the dignified, respectful ask. One <c>FelovaBottomSheet</c>
 /// showing the yearly (emphasized) and monthly options from the store, plus Restore.
 /// It is never a "SUBSCRIBE NOW to unlock" wall — the copy treats the person as the
-/// real user they already are. Reached from Settings, the pre-end nudge, the read-only
-/// state, and the trial explainer; the <see cref="Open"/> source rides along to
-/// analytics so we learn where people actually convert.
+/// real user they already are.
+///
+/// <para>It sells the payoff, never the labour: what it offers is the assembled
+/// appointment summary, the designed report, backup, a second pet and caregiver invites.
+/// Writing things down is free forever, so this sheet is never what stands between
+/// someone and recording what just happened. It is reached from the real upgrade doors
+/// only (see <c>AnalyticsEvents.SubscribeSource*</c>), and the <see cref="Open"/> source
+/// rides along to analytics so we learn which door people actually convert at.</para>
 ///
 /// <para>All money goes through <see cref="IEntitlementService"/>; this VM only holds
 /// sheet state. Under the Null boundary (dev, or before the store is wired) there are

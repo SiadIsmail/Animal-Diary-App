@@ -4,12 +4,16 @@ using Animal_Diary_App.Data.Services.Billing;
 using Xunit;
 
 /// <summary>
-/// The sponsorship rule: a caregiver may write to someone else's pet while THAT owner has
-/// access, and sponsorship never reaches a pet you own yourself.
+/// The sponsorship rule: a caregiver reaches someone else's pet's PAID surfaces while THAT
+/// owner has access, and sponsorship never reaches a pet you own yourself.
 ///
 /// <para>The last property is the one holding the business model up — without it, one
 /// subscription plus invite codes becomes unlimited free accounts — so it is tested from
 /// several directions rather than once.</para>
+///
+/// <para><b>This is no longer a write gate.</b> Every write is free on every tier, so
+/// "may edit" here means the paid, pet-scoped surfaces (the assembled summary, the designed
+/// report), never logging.</para>
 /// </summary>
 public class SponsoredAccessTests
 {
@@ -19,11 +23,12 @@ public class SponsoredAccessTests
 
     /// <summary>Builds a service whose OWN access has run out — the only interesting
     /// starting point, since anyone with their own access passes everything trivially.</summary>
-    private static EntitlementService Locked(FakePetAccess access, out FakeStore store)
+    private static EntitlementService Locked(
+        FakePetAccess access, out FakeStore store, IGrandfatheredAccess? grandfathered = null)
     {
         store = new FakeStore { HasActiveEntitlement = false, EntitlementKnown = true };
-        var trial = new TrialService(new FakeTrialStore(), () => Now);   // never started
-        return new EntitlementService(trial, store, access, new NullGrantSource(), () => Now);
+        return new EntitlementService(
+            store, access, new NullGrantSource(), grandfathered ?? new NullGrandfatheredAccess(), () => Now);
     }
 
     // ── the rule ────────────────────────────────────────────────────────────
@@ -102,8 +107,8 @@ public class SponsoredAccessTests
         // A local-only subscriber has no memberships at all. CanEditPet must not depend on
         // the cloud in any way for them.
         var store = new FakeStore { HasActiveEntitlement = true, EntitlementKnown = true };
-        var trial = new TrialService(new FakeTrialStore(), () => Now);
-        var gate = new EntitlementService(trial, store, new NullPetAccessSource(), new NullGrantSource(), () => Now);
+        var gate = new EntitlementService(
+            store, new NullPetAccessSource(), new NullGrantSource(), new NullGrandfatheredAccess(), () => Now);
 
         Assert.True(gate.CanEditPet(MyPet));
         Assert.True(gate.CanEditPet(null));
@@ -111,15 +116,14 @@ public class SponsoredAccessTests
     }
 
     [Fact]
-    public void A_signed_out_locked_user_is_actually_locked()
+    public void A_signed_out_free_user_really_is_on_the_free_tier()
     {
         // NullPetAccessSource reports AccessKnown = true precisely so the optimistic window
-        // below cannot hold the read-only state open forever for local-only users.
+        // cannot hold the paid surfaces open forever for local-only users.
         var gate = Locked(new FakePetAccess(), out _);
         var offline = new EntitlementService(
-            new TrialService(new FakeTrialStore(), () => Now),
             new FakeStore { HasActiveEntitlement = false, EntitlementKnown = true },
-            new NullPetAccessSource(), new NullGrantSource(), () => Now);
+            new NullPetAccessSource(), new NullGrantSource(), new NullGrandfatheredAccess(), () => Now);
 
         Assert.False(gate.CanEditPet(MyPet));
         Assert.False(offline.CanEditPet(MyPet));
@@ -128,46 +132,58 @@ public class SponsoredAccessTests
     [Fact]
     public void The_gate_stays_open_until_the_first_access_fetch_lands()
     {
-        // A caregiver who just redeemed an invite must not be locked in the seconds before
+        // A caregiver who just redeemed an invite must not be refused in the seconds before
         // the first sync — mirrors the EntitlementKnown grace on the store side.
         var access = new FakePetAccess { AccessKnown = false };
         var gate = Locked(access, out _);
         Assert.True(gate.CanEditPet(TheirPet));
     }
 
-    // ── trial-sponsored, and the "never had a trial" state ──────────────────
+    // ── grandfathering ──────────────────────────────────────────────────────
 
     [Fact]
-    public void An_owner_still_in_their_trial_sponsors_their_caregivers()
+    public void A_caregiver_grandfathered_on_a_pet_keeps_it_when_the_owner_stops_paying()
     {
-        // The owner's trial is evaluated server-side, so from the caregiver's side it looks
-        // identical to a subscription: OwnerHasAccess = true.
-        var gate = Locked(new FakePetAccess().Sponsored(TheirPet, Now), out _);
+        // Migration 0021 dropped the trial arm from owner_has_access, so every owner on the
+        // new free tier stopped sponsoring at once. Someone already caring for one of those
+        // animals must not lose what they had because the boundary moved under them.
+        var grandfathered = new FakeGrandfathered().Caregiving(TheirPet);
+        var gate = Locked(new FakePetAccess().Lapsed(TheirPet, Now), out _, grandfathered);
+
         Assert.True(gate.CanEditPet(TheirPet));
     }
 
     [Fact]
-    public void A_caregiver_who_never_owned_a_pet_has_no_trial_of_their_own()
+    public void Grandfathering_covers_only_the_pets_that_were_already_there()
     {
-        // The trial starts with your first OWN pet, so copy must never tell this person
-        // their trial ended — they never had one.
-        var gate = Locked(new FakePetAccess().Sponsored(TheirPet, Now), out _);
+        // "Keep what you had" is a snapshot, not a standing offer. A pet joined afterwards
+        // is covered by the new rules like everyone else's.
+        var grandfathered = new FakeGrandfathered().Caregiving(TheirPet);
+        var access = new FakePetAccess().Lapsed(TheirPet, Now).Lapsed("joined-later", Now);
+        var gate = Locked(access, out _, grandfathered);
 
-        Assert.False(gate.TrialEverStarted);
-        Assert.Equal(AccessState.TrialExpired, gate.State);
+        Assert.True(gate.CanEditPet(TheirPet));
+        Assert.False(gate.CanEditPet("joined-later"));
     }
 
     [Fact]
-    public async Task Starting_a_trial_marks_it_as_ever_started()
+    public void Grandfathering_never_covers_a_pet_you_own()
     {
-        var store = new FakeStore { EntitlementKnown = true };
-        var trial = new TrialService(new FakeTrialStore(), () => Now);
-        var gate = new EntitlementService(trial, store, new NullPetAccessSource(), new NullGrantSource(), () => Now);
+        // The load-bearing rule survives the exception: a grandfathered snapshot only ever
+        // holds pets this device CAREGIVES on, and CanEditPet checks IsCaregiver before it
+        // consults the snapshot at all. Otherwise an owner could be grandfathered into
+        // their own paid tier forever.
+        var grandfathered = new FakeGrandfathered().Caregiving(MyPet);
+        var gate = Locked(new FakePetAccess().Owned(MyPet, Now, ownerAccess: false), out _, grandfathered);
 
-        Assert.False(gate.TrialEverStarted);
-        Assert.True(await gate.EnsureTrialStartedAsync());
-        Assert.True(gate.TrialEverStarted);
-        Assert.True(gate.HasFullAccess);
+        Assert.False(gate.CanEditPet(MyPet));
+    }
+
+    [Fact]
+    public void An_owner_who_pays_still_sponsors_their_caregivers()
+    {
+        var gate = Locked(new FakePetAccess().Sponsored(TheirPet, Now), out _);
+        Assert.True(gate.CanEditPet(TheirPet));
     }
 
     // ── identity linking ────────────────────────────────────────────────────
@@ -177,7 +193,7 @@ public class SponsoredAccessTests
     {
         var store = new FakeStore();
         var gate = new EntitlementService(
-            new TrialService(new FakeTrialStore(), () => Now), store, new NullPetAccessSource(), new NullGrantSource(), () => Now);
+            store, new NullPetAccessSource(), new NullGrantSource(), new NullGrandfatheredAccess(), () => Now);
 
         await gate.IdentifyAsync("user-123");
         Assert.Equal("user-123", store.IdentifiedAs);
@@ -193,78 +209,5 @@ public class SponsoredAccessTests
         var gate = new NullEntitlementService();
         Assert.True(gate.CanEditPet(MyPet));
         Assert.True(gate.CanEditPet(null));
-        Assert.False(gate.TrialEverStarted);
-    }
-}
-
-/// <summary>
-/// The trial anchor is reconciled with the account so the SERVER can tell a caregiver
-/// whether their pet's owner is still in trial. Reconciliation must be monotone: signing in
-/// can shorten a trial but never extend one, or a fresh email address would mint a fresh
-/// sponsorship window.
-/// </summary>
-public class TrialAnchorTests
-{
-    private static readonly DateTime Now = new(2026, 7, 29, 12, 0, 0, DateTimeKind.Utc);
-
-    [Fact]
-    public async Task Adopts_the_accounts_anchor_when_this_device_has_none()
-    {
-        var store = new FakeTrialStore();
-        var trial = new TrialService(store, () => Now);
-        await trial.InitializeAsync();
-
-        var accountStart = Now - TimeSpan.FromDays(3);
-        await trial.AdoptAsync(accountStart);
-
-        Assert.Equal(accountStart, await trial.GetStartUtcAsync());
-        Assert.Equal(accountStart, store.Start);
-    }
-
-    [Fact]
-    public async Task Adopts_an_earlier_anchor_shortening_the_trial()
-    {
-        var store = new FakeTrialStore { Start = Now };            // started "today" locally
-        var trial = new TrialService(store, () => Now);
-        var earlier = Now - TimeSpan.FromDays(30);                  // the account knows better
-
-        await trial.AdoptAsync(earlier);
-
-        Assert.Equal(earlier, await trial.GetStartUtcAsync());
-        Assert.False(trial.IsActive);   // a 30-day-old anchor is long expired
-    }
-
-    [Fact]
-    public async Task Never_adopts_a_later_anchor()
-    {
-        // The abuse path this closes: sign in with a new email, get a fresh trial.
-        var original = Now - TimeSpan.FromDays(30);
-        var store = new FakeTrialStore { Start = original };
-        var trial = new TrialService(store, () => Now);
-
-        await trial.AdoptAsync(Now);   // a "brand new" account anchor
-
-        Assert.Equal(original, await trial.GetStartUtcAsync());
-        Assert.False(trial.IsActive);
-    }
-
-    [Fact]
-    public async Task A_null_account_anchor_changes_nothing()
-    {
-        var store = new FakeTrialStore { Start = Now };
-        var trial = new TrialService(store, () => Now);
-
-        await trial.AdoptAsync(null);
-
-        Assert.Equal(Now, await trial.GetStartUtcAsync());
-    }
-
-    [Fact]
-    public async Task GetStartUtcAsync_loads_on_demand()
-    {
-        // The sync engine can reach the anchor before billing has initialized; a
-        // synchronous read would report "no trial" and then never re-claim.
-        var trial = new TrialService(new FakeTrialStore { Start = Now }, () => Now);
-        Assert.Equal(Now, await trial.GetStartUtcAsync());   // no InitializeAsync first
     }
 }

@@ -286,25 +286,14 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
     /// </summary>
     public ICommand AddMedicationCommand { get; }
 
-    /// <summary>Read-only gate: adding/editing a medication is "adding more", so it's
-    /// gated. Existing medications keep firing their reminders and can be dosed; only
-    /// creating/changing one routes to the subscribe sheet. Returns true = blocked.
-    ///
-    /// <para>Pet-scoped: a caregiver on a covered pet may change its medications. A dose
-    /// change from the vet is care, not administration, and the caregiver is often the one
-    /// who was at the appointment.</para></summary>
-    private bool BlockedByPaywall()
-    {
-        if (_entitlements.CanEditPet(_activePetService.ActivePet?.SyncId))
-            return false;
-        _subscribe.Open(AnalyticsEvents.SubscribeSourceReadOnly);
-        return true;
-    }
+    // ── The paywall NEVER appears on the medication path. ─────────────────────────
+    // Adding or changing a medication and its schedule is free forever, on every tier.
+    // It used to route to the subscribe sheet when access had lapsed, which meant the
+    // first bill arrived for the right to record a dose change the vet had just made.
+    // Nothing in this file may consult IEntitlementService.
 
     private async Task AddMedicationSheetAsync()
     {
-        if (BlockedByPaywall())
-            return;
         ClearMedicationDraft();
         editingMedicationId = null;
         IsEditingMedication = false;
@@ -322,8 +311,6 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
     private async Task EditMedicationSheetAsync(FilteredMedication? filtered)
     {
         if (filtered == null)
-            return;
-        if (BlockedByPaywall())
             return;
 
         var medication = await _medicationService.GetMedicationByIdAsync(filtered.Id);
@@ -420,20 +407,15 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
     private readonly PetService _petService;
     private readonly MedicationReminderScheduler _reminderScheduler;
     private readonly IAnalyticsService _analytics;
-    private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
-    private readonly SubscribeSheetViewModel _subscribe;
     public List<string> UnitOptions { get; } = new() { "mg", "ml", "tablet", "drops" };
 
-    public MedicationViewModel(MedicationService medicationService, ActivePetService activePetService, PetService petService, MedicationReminderScheduler reminderScheduler, IAnalyticsService analytics,
-        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, SubscribeSheetViewModel subscribe)
+    public MedicationViewModel(MedicationService medicationService, ActivePetService activePetService, PetService petService, MedicationReminderScheduler reminderScheduler, IAnalyticsService analytics)
     {
         _medicationService = medicationService;
         _activePetService = activePetService;
         _petService = petService;
         _reminderScheduler = reminderScheduler;
         _analytics = analytics;
-        _entitlements = entitlements;
-        _subscribe = subscribe;
 
 
         Days = new ObservableCollection<DaySelectionItem>

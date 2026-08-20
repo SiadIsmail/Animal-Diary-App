@@ -46,8 +46,8 @@
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IEntitlementService.cs" Link="Billing\IEntitlementService.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\EntitlementService.cs" Link="Billing\EntitlementService.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\NullEntitlementService.cs" Link="Billing\NullEntitlementService.cs" />
-    <Compile Include="..\Animal Diary App\Data\Services\Billing\TrialService.cs" Link="Billing\TrialService.cs" />
-    <Compile Include="..\Animal Diary App\Data\Services\Billing\ITrialStore.cs" Link="Billing\ITrialStore.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\IGrandfatheredAccess.cs" Link="Billing\IGrandfatheredAccess.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\PetLimit.cs" Link="Billing\PetLimit.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IStoreBilling.cs" Link="Billing\IStoreBilling.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IPetAccessSource.cs" Link="Billing\IPetAccessSource.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IGrantSource.cs" Link="Billing\IGrantSource.cs" />

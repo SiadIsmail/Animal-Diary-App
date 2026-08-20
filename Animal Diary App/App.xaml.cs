@@ -27,10 +27,10 @@ public partial class App : Application
 	private readonly ICloudAuthService _cloudAuth;
 	private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
 	private readonly ICloudReferralService _referrals;
-	private readonly MedicationDoseLogService _doseLogs;
+	private readonly Animal_Diary_App.Data.Services.Billing.GrandfatheredAccessService _grandfathered;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, AppointmentReminderScheduler appointmentReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, ICloudAuthService cloudAuth, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, ICloudReferralService referrals, MedicationDoseLogService doseLogs, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, AppointmentReminderScheduler appointmentReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, ICloudAuthService cloudAuth, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, ICloudReferralService referrals, Animal_Diary_App.Data.Services.Billing.GrandfatheredAccessService grandfathered, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -47,7 +47,7 @@ public partial class App : Application
 		_cloudAuth = cloudAuth;
 		_entitlements = entitlements;
 		_referrals = referrals;
-		_doseLogs = doseLogs;
+		_grandfathered = grandfathered;
 		_services = services;
 
 		// "Has anything changed since this page last loaded?" — subscribed here so it
@@ -60,10 +60,7 @@ public partial class App : Application
 		// simply stays anonymous, exactly as before.
 		_cloudAuth.SessionChanged += OnCloudSessionChanged;
 
-		// A caregiver's cover can end mid-session when a sync lands (the owner lapsed, or
-		// their trial ran out). Say so once rather than letting the app quietly stop
-		// accepting entries.
-		_cloudSync.SponsorshipRevoked += OnSponsorshipRevoked;
+		// SponsorshipRevoked is deliberately not subscribed to — see the note below.
 
 		// Re-engagement signal: the app was foregrounded by tapping a medication
 		// reminder. This is the ONLY place the notification-tap hook is used for
@@ -81,30 +78,15 @@ public partial class App : Application
 		catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Billing] identify failed: {ex.Message}"); }
 	}).Forget();
 
-	/// <summary>A pet this user was caring for under someone else's subscription is no
-	/// longer covered. Tell them once, naming the real reason — they never had a trial of
-	/// their own, so "your trial has ended" would be false. Fires per transition, not once
-	/// forever: if the owner resubscribes and lapses again, this is worth saying again.</summary>
-	private void OnSponsorshipRevoked(IReadOnlyList<string> petSyncIds)
-	{
-		if (petSyncIds.Count == 0)
-			return;
-		MainThread.BeginInvokeOnMainThread(() =>
-		{
-			try
-			{
-				// Name the pet only when it is the one on screen; otherwise stay general
-				// rather than pulling an off-screen pet into view.
-				var active = _vm.PetVM.ActivePet;
-				var name = active != null && petSyncIds.Contains(active.SyncId) ? active.Name : string.Empty;
-				_vm.TrialMessageVM.ShowSponsorshipEnded(name);
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine($"[Billing] sponsorship notice failed: {ex.Message}");
-			}
-		});
-	}
+	// ── Sponsorship changes are no longer announced. ─────────────────────────────
+	// ICloudSyncService.SponsorshipRevoked still fires — the server still reports whether
+	// a pet's owner has access, and Phase 3's appointment summary is the surface that will
+	// need it. Nothing subscribes to it right now, and that is the honest state of things:
+	// with logging free on every tier, a caregiver whose owner is on the free tier loses
+	// nothing at all today, so a sheet saying "new entries are paused" would be false.
+	// The old notice and its copy were deleted rather than left to rot into a lie. When the
+	// summary is gated, resubscribe here with copy that names what actually changed, and
+	// filter out pets covered by IGrandfatheredAccess.SponsorshipIncluded.
 
 	private void OnNotificationTapped(Plugin.LocalNotification.EventArgs.NotificationActionEventArgs e)
 	{
@@ -304,8 +286,8 @@ public partial class App : Application
 		_dailyReminderScheduler.RefreshAsync().Forget();
 
 		// A subscription may have been bought/renewed/cancelled elsewhere while we were
-		// backgrounded; re-check the entitlement. No-op under the Null boundary. Then, if
-		// the trial has quietly elapsed while away, show the one-time reassurance.
+		// backgrounded; re-check the entitlement. No-op under the Null boundary. Then the
+		// two grant notices, which are the only access moments left with a date behind them.
 		Task.Run(async () =>
 		{
 			// Re-assert the store identity before re-checking. IdentifyAsync only fires on
@@ -316,51 +298,16 @@ public partial class App : Application
 			// immediately when the id already matches.
 			await _entitlements.IdentifyAsync(_cloudAuth.UserId);
 			await _entitlements.RefreshAsync();
-			await MaybeShowReadOnlyReassuranceAsync();
-			await MaybeShowPreEndNudgeAsync();
+			await MaybeShowGrantEndedAsync();
 			await MaybeShowGrantEndingNudgeAsync();
 		}).Forget();
 	}
 
-	/// <summary>Once, a few days before the trial ends, a gentle heads-up anchored to what
-	/// the owner has actually built (real dose count + weeks tracked) — loss aversion, not a
-	/// countdown drumbeat. Mutually exclusive with the read-only reassurance (that's
-	/// TrialExpired, this is Trial). No-op under the Null boundary.</summary>
-	private async Task MaybeShowPreEndNudgeAsync()
-	{
-		try
-		{
-			if (_entitlements.State != Animal_Diary_App.Data.Services.Billing.AccessState.Trial)
-				return;
-			if (_entitlements.TrialDaysLeft > Animal_Diary_App.Data.Services.Billing.BillingConfig.PreEndNudgeDaysBefore)
-				return;
-			if (await _settingsService.GetFlagAsync(SettingsFlags.PreEndNudgeShown))
-				return;
-			await _settingsService.SetFlagAsync(SettingsFlags.PreEndNudgeShown, true);
-
-			var pet = _vm.PetVM.ActivePet;
-			var petName = pet?.Name ?? string.Empty;
-			var doseCount = pet != null ? await _doseLogs.GetGivenCountAsync(pet.Id) : 0;
-			var startUtc = await _settingsService.GetTrialStartUtcAsync();
-			var weeks = startUtc is DateTime s
-				? Math.Max(1, (int)Math.Ceiling((DateTime.UtcNow - s).TotalDays / 7))
-				: 1;
-			var daysLeft = _entitlements.TrialDaysLeft;
-
-			MainThread.BeginInvokeOnMainThread(() => _vm.TrialMessageVM.ShowNudge(petName, daysLeft, doseCount, weeks));
-		}
-		catch (Exception ex)
-		{
-			System.Diagnostics.Debug.WriteLine($"[Billing] pre-end nudge failed: {ex.Message}");
-		}
-	}
-
-	/// <summary>The grant sibling of <see cref="MaybeShowPreEndNudgeAsync"/>: once, a few days
-	/// before a redeemed access code's year runs out. Mutually exclusive with it by state
-	/// (that one is Trial, this one is Granted), and it reuses the same
-	/// <see cref="Data.Services.Billing.BillingConfig.PreEndNudgeDaysBefore"/> window with its
-	/// own one-shot flag and its own copy — a year of granted access is not a free trial and
-	/// must not be described as one. No-op under the Null boundary.</summary>
+	/// <summary>Once, a few days before a redeemed access code's year runs out. The only
+	/// end-date notice left in the app: there is no trial, and the free tier never ends, so
+	/// nothing else has a date to warn about. Its copy is its own because a grant is not a
+	/// subscription — nothing was charged and there is nothing to cancel. No-op under the
+	/// Null boundary.</summary>
 	private async Task MaybeShowGrantEndingNudgeAsync()
 	{
 		try
@@ -371,7 +318,7 @@ public partial class App : Application
 				return;
 
 			var daysLeft = (until - DateTime.UtcNow).TotalDays;
-			if (daysLeft > Animal_Diary_App.Data.Services.Billing.BillingConfig.PreEndNudgeDaysBefore)
+			if (daysLeft > Animal_Diary_App.Data.Services.Billing.BillingConfig.GrantEndingNoticeDaysBefore)
 				return;
 			if (await _settingsService.GetFlagAsync(SettingsFlags.GrantEndingNudgeShown))
 				return;
@@ -380,7 +327,7 @@ public partial class App : Application
 			var petName = _vm.PetVM.ActivePet?.Name ?? string.Empty;
 			var endsOn = until.ToLocalTime().ToString("d");
 
-			MainThread.BeginInvokeOnMainThread(() => _vm.TrialMessageVM.ShowGrantEnding(petName, endsOn));
+			MainThread.BeginInvokeOnMainThread(() => _vm.AccessMessageVM.ShowGrantEnding(petName, endsOn));
 		}
 		catch (Exception ex)
 		{
@@ -388,49 +335,38 @@ public partial class App : Application
 		}
 	}
 
-	/// <summary>Once, when the app first finds itself in the care-only read state (trial
-	/// elapsed, no subscription), reassure the owner their data is safe. Reassures first;
-	/// the continue-to-subscribe ask lives inside that sheet. No-op under the Null boundary
-	/// (state is always Subscribed there).</summary>
-	private async Task MaybeShowReadOnlyReassuranceAsync()
+	/// <summary>Once, when a redeemed access code's year has run out and the account is
+	/// back on the free tier. Reassurance is the whole point and it leads: nothing was
+	/// charged, nothing is locked, and everything the owner has written down is still there
+	/// and still being added to. The continue-to-subscribe ask lives inside that sheet.
+	///
+	/// <para>It replaces the old read-only reassurance, which existed because the trial's
+	/// end took writing away. Nothing takes writing away any more, so the ONLY person with
+	/// something to hear here is someone whose grant ended — <c>EverGranted</c> is the
+	/// guard, exactly as the access-code rules require. Everyone else on the free tier is
+	/// simply on the free tier and is told nothing, because nothing happened to
+	/// them.</para>
+	///
+	/// <para>No-op under the Null boundary (state is always Subscribed there).</para></summary>
+	private async Task MaybeShowGrantEndedAsync()
 	{
 		try
 		{
-			if (_entitlements.State != Animal_Diary_App.Data.Services.Billing.AccessState.TrialExpired)
+			if (_entitlements.State != Animal_Diary_App.Data.Services.Billing.AccessState.Free)
 				return;
-			// Two different things end in this state, and they need different sentences.
-			// A lapsed GRANT is checked first: someone who redeemed a code almost certainly
-			// started a trial once too, so TrialEverStarted does not tell them apart, and the
-			// trial copy would date their access wrongly by a year.
-			var grantEnded = _entitlements.EverGranted;
-			// The trial copy is only ever true for someone who had one. A caregiver who only
-			// tends another person's pet never started a trial; when their cover ends they get
-			// the sponsorship message instead.
-			if (!grantEnded && !_entitlements.TrialEverStarted)
+			if (!_entitlements.EverGranted)
 				return;
-			if (await _settingsService.GetFlagAsync(SettingsFlags.ReadOnlyReassuranceShown))
+			if (await _settingsService.GetFlagAsync(SettingsFlags.GrantEndedNoticeShown))
 				return;
-			await _settingsService.SetFlagAsync(SettingsFlags.ReadOnlyReassuranceShown, true);
+			await _settingsService.SetFlagAsync(SettingsFlags.GrantEndedNoticeShown, true);
 
 			var petName = _vm.PetVM.ActivePet?.Name ?? string.Empty;
-			var trialDay = (int)Animal_Diary_App.Data.Services.Billing.BillingConfig.TrialLength.TotalDays;
 
-			// If they share a pet, their carers just went read-only too. The owner is the
-			// only person who can change that, and hearing it here beats discovering it
-			// when someone else can't log a dose.
-			var hasCaregivers = _cloudSync.OwnsASharedPet;
-
-			MainThread.BeginInvokeOnMainThread(() =>
-			{
-				if (grantEnded)
-					_vm.TrialMessageVM.ShowGrantEnded(petName, hasCaregivers);
-				else
-					_vm.TrialMessageVM.ShowReadOnly(petName, trialDay, hasCaregivers);
-			});
+			MainThread.BeginInvokeOnMainThread(() => _vm.AccessMessageVM.ShowGrantEnded(petName));
 		}
 		catch (Exception ex)
 		{
-			System.Diagnostics.Debug.WriteLine($"[Billing] read-only reassurance failed: {ex.Message}");
+			System.Diagnostics.Debug.WriteLine($"[Billing] grant-ended notice failed: {ex.Message}");
 		}
 	}
 
@@ -564,16 +500,10 @@ public partial class App : Application
 				}
 			}).Forget();
 
-			// Billing: initialize the entitlement boundary and, for an already-onboarded
-			// user landing on this build, start the trial clock if it hasn't begun — new
-			// users start theirs at onboarding completion (KeepSafePage). All off the UI
-			// path and a quiet no-op under the Null boundary.
-			//
-			// The trial begins with a pet you OWN. Caring for someone else's animal never
-			// starts your clock: a caregiver is covered by that owner's subscription while
-			// it lasts, and starting a trial for them here would burn it on a record they
-			// don't own and hand them a paywall the owner is already paying to avoid.
-			var petsAtLaunch = pets;
+			// Billing: initialize the entitlement boundary and take the one-shot
+			// grandfathering snapshot. All off the UI path and a quiet no-op under the
+			// Null boundary. There is no trial clock to start any more — the free tier is
+			// permanent, so there is nothing to begin and nothing to run out.
 			Task.Run(async () =>
 			{
 				try
@@ -582,15 +512,18 @@ public partial class App : Application
 					// Same self-heal as OnResume: recover a store identity that never got
 					// linked because sign-up happened offline. No-op when already linked.
 					await _entitlements.IdentifyAsync(_cloudAuth.UserId);
-					// Idempotent — just re-reads persisted state; the launch sync above may
-					// not have got here yet and ownership comes from that cached role map.
+					// Idempotent — just re-reads persisted state. It MUST run before the
+					// snapshot below: the caregiver list comes from that cached membership
+					// map, and taking the snapshot first would record an empty one and
+					// grandfather a real caregiver out of what they had.
 					await _cloudSync.InitializeAsync();
-					var ownsAPet = petsAtLaunch.Any(p =>
-						_cloudSync.GetPetRole(p.SyncId ?? string.Empty) != "caregiver");
-					if (ownsAPet && await _entitlements.EnsureTrialStartedAsync())
-						_analytics.Track(AnalyticsEvents.TrialStarted);
-					await MaybeShowReadOnlyReassuranceAsync();
-					await MaybeShowPreEndNudgeAsync();
+					// The first launch after the paid boundary moved, and only that launch,
+					// records what this install already had: cloud backup, and the pets it
+					// is caregiving on. Both were free before and are paid after; nobody who
+					// already had one loses it. Every launch after this one just reads.
+					await _grandfathered.CaptureOrLoadAsync(
+						_cloudSync.IsBackupEnabled, _cloudSync.CaregiverPetSyncIds);
+					await MaybeShowGrantEndedAsync();
 					await MaybeShowGrantEndingNudgeAsync();
 					// Attribution: restore the channel onto analytics, read Google Play's
 					// install referrer once per install, and claim a code typed before there

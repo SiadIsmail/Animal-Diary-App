@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- TrialMessageSheetView — the three quiet trial moments (explainer / pre-end nudge /
-     read-only reassurance) on one reusable FelovaBottomSheet. Reassures first; the
-     "Continue with Felova" button (→ subscribe) shows only on the nudge and read-only
-     states, never the explainer. BindingContext is a TrialMessageViewModel. -->
+<!-- AccessMessageSheetView — the two quiet grant moments (a redeemed code's year is
+     nearly up / is up) on one reusable FelovaBottomSheet. Reassures first; "Continue
+     with Felova" (→ subscribe) is offered, never insisted on. Replaces the old
+     TrialMessageSheetView, whose three modes were all about a trial that no longer
+     exists. BindingContext is an AccessMessageViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
              xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
-             x:DataType="vms:TrialMessageViewModel"
-             x:Class="Animal_Diary_App.Data.View.TrialMessageSheetView"
+             x:DataType="vms:AccessMessageViewModel"
+             x:Class="Animal_Diary_App.Data.View.AccessMessageSheetView"
              x:Name="Root"
              InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
 
@@ -21,12 +22,7 @@
                 <Label Text="{Binding Body}" FontFamily="{StaticResource FontSans}"
                        FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"/>
 
-                <!-- Explainer only: the single low-key subscribe line (no button) -->
-                <Label Text="{Binding Footnote}" IsVisible="{Binding HasFootnote}"
-                       FontFamily="{StaticResource FontSans}" FontSize="12.5"
-                       TextColor="{StaticResource InkTertiary}"/>
-
-                <!-- Nudge / read-only: continue with Felova (→ subscribe) -->
+                <!-- Continue with Felova (→ subscribe) -->
                 <Border BackgroundColor="{StaticResource Teal}" StrokeThickness="0"
                         StrokeShape="RoundRectangle 13,16,15,14" IsVisible="{Binding ShowContinue}">
                     <Border.GestureRecognizers>

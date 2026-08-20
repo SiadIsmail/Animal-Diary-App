@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -675,6 +675,8 @@
   <data name="Cloud_SignedInAs" xml:space="preserve"><value>Angemeldet als {0}</value></data>
   <data name="Cloud_BackupOffBody" xml:space="preserve"><value>Das Backup ist aus. Wenn du es aktivierst, werden die Tiere auf diesem Gerät in dein Konto hochgeladen und ab dann synchron gehalten.</value></data>
   <data name="Cloud_EnableBackup" xml:space="preserve"><value>Backup aktivieren</value></data>
+  <data name="Cloud_BackupPaidBody" xml:space="preserve"><value>Backup und Abgleich über deine Geräte gehören zu Felova Full. Alles auf diesem Gerät bleibt so oder so genau da, wo es ist, und du kannst jederzeit eine Kopie sichern.</value></data>
+  <data name="Cloud_BackupPaidAction" xml:space="preserve"><value>Sieh dir Felova Full an</value></data>
   <data name="Cloud_EnabledOffline" xml:space="preserve"><value>Backup ist aktiv. Es synchronisiert, sobald du wieder online bist.</value></data>
   <data name="Cloud_BackupOn" xml:space="preserve"><value>Backup ist aktiv</value></data>
   <data name="Cloud_LastSynced" xml:space="preserve"><value>Zuletzt synchronisiert {0}</value></data>
@@ -732,10 +734,16 @@
   <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>Du betreust dieses Tier bereits.</value></data>
   <data name="Cloud_ContinueWithGoogle" xml:space="preserve"><value>Mit Google fortfahren</value></data>
   <data name="Cloud_Or" xml:space="preserve"><value>oder</value></data>
-  <!-- Testphase & Abo (siehe MONETIZATION_PLAN.md). Nativ geschrieben, nicht übersetzt. -->
+  <!-- Abo. Keine Testphase und kein Nur-Lesen-Zustand: festhalten bleibt für immer
+       kostenlos. Bezahlt wird das, wozu der Verlauf sich summiert. Nativ geschrieben,
+       nicht übersetzt. Siehe AI/design-decisions.md, „Die bezahlte Grenze". -->
   <data name="Common_Okay" xml:space="preserve"><value>Okay</value></data>
-  <data name="Subscribe_Title" xml:space="preserve"><value>Mit Felova weitermachen</value></data>
-  <data name="Subscribe_Subtitle" xml:space="preserve"><value>Halte weiter fest, wie es deinem Tier geht.</value></data>
+  <data name="Subscribe_Title" xml:space="preserve"><value>Felova Full</value></data>
+  <data name="Subscribe_Subtitle" xml:space="preserve"><value>Festhalten bleibt kostenlos.</value></data>
+  <data name="Subscribe_IncludesHeader" xml:space="preserve"><value>Mit Felova Full dazu</value></data>
+  <data name="Subscribe_IncludesBody" xml:space="preserve"><value>Die Zusammenfassung seit dem letzten Termin, vor jedem Besuch. Der vollständige Tierarzt-Bericht, fertig gesetzt zum Überreichen. Backup über deine Geräte hinweg. Mehr als ein Tier, und andere, die mit dir pflegen.</value></data>
+  <data name="Subscribe_PromiseKept" xml:space="preserve"><value>Alles, was du schon festgehalten hast, bleibt lesbar und bleibt zum Exportieren deins, mit Abo oder ohne.</value></data>
+  <data name="Subscribe_PromiseAfterLoss" xml:space="preserve"><value>Wenn ein Tier stirbt, bleibt sein Verlauf lesbar, so lange du magst, mit Abo oder ohne.</value></data>
   <data name="Subscribe_PlanYearly" xml:space="preserve"><value>Jährlich</value></data>
   <data name="Subscribe_PlanMonthly" xml:space="preserve"><value>Monatlich</value></data>
   <data name="Subscribe_BestValue" xml:space="preserve"><value>Am günstigsten</value></data>
@@ -754,34 +762,17 @@
   <data name="Subscribe_AlreadySubscribed" xml:space="preserve"><value>Du hast auf diesem Store-Konto bereits ein Felova-Abo, es gab also nichts zu kaufen. Es ist jetzt hier aktiv.</value></data>
   <data name="Subscribe_OwnedByOtherAccount" xml:space="preserve"><value>Auf diesem Store-Konto liegt bereits ein Felova-Abo, und es gehört zu einem anderen Felova-Konto. Melde dich mit diesem Konto an, um es hier zu nutzen, oder ändere es in deinen Store-Abos.</value></data>
   <data name="Subscribe_RestoreProblem" xml:space="preserve"><value>Konnte gerade nicht prüfen. Versuch es gleich noch einmal.</value></data>
-  <data name="Subscribe_ExplainerTitle" xml:space="preserve"><value>Deine ersten {0} Tage gehen auf uns</value></data>
-  <data name="Subscribe_ExplainerBody" xml:space="preserve"><value>Halte alles für {0} fest, ganz ohne Karte. Danach bleibt {0}s Verlauf immer für dich sichtbar. Neue Einträge gehen mit einem Abo weiter, wann immer du so weit bist.</value></data>
-  <data name="Subscribe_ExplainerFootnote" xml:space="preserve"><value>Du kannst jederzeit in den Einstellungen ein Abo abschließen.</value></data>
-  <data name="Subscribe_NudgeTitle" xml:space="preserve"><value>Halte {0}s Verlauf weiter fest</value></data>
-  <data name="Subscribe_NudgeBody" xml:space="preserve"><value>Du hast {0} Dosen und {1} Wochen von {2}s Verlauf festgehalten. Es bleibt für dich sichtbar, und mit einem Abo kannst du weiter dazuschreiben.</value></data>
-  <data name="Subscribe_ReadOnlyTitle" xml:space="preserve"><value>{0}s Verlauf ist sicher</value></data>
-  <data name="Subscribe_ReadOnlyBody" xml:space="preserve"><value>Alles ist noch da und bleibt es auch. Um {0}s Pflege weiter festzuhalten, mach mit Felova weiter, wann immer du magst.</value></data>
-  <data name="Subscribe_ReadOnlyCarersClause" xml:space="preserve"><value>Die anderen, die sich um {0} kümmern, sehen weiterhin alles und können Dosen weiterhin als gegeben markieren.</value></data>
-  <data name="Subscribe_SponsorEndedTitle" xml:space="preserve"><value>Du siehst weiterhin alles zu {0}</value></data>
-  <data name="Subscribe_SponsorEndedBody" xml:space="preserve"><value>{0}s Besitzer hat kein Abo mehr, deshalb pausieren neue Einträge vorerst. Du kannst den gesamten Verlauf weiter lesen, und Dosen als gegeben zu markieren funktioniert weiterhin. Wenn du selbst weiter festhalten möchtest, kannst du mit Felova weitermachen.</value></data>
-  <data name="Subscribe_SponsorEndedTitleGeneric" xml:space="preserve"><value>Du siehst weiterhin alles</value></data>
-  <data name="Subscribe_SponsorEndedBodyGeneric" xml:space="preserve"><value>Der Besitzer eines Tieres, bei dem du mithilfst, hat kein Abo mehr, deshalb pausieren neue Einträge vorerst. Du kannst den gesamten Verlauf weiter lesen, und Dosen als gegeben zu markieren funktioniert weiterhin. Wenn du selbst weiter festhalten möchtest, kannst du mit Felova weitermachen.</value></data>
   <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Dein Abo</value></data>
-  <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Kostenlose Testphase</value></data>
-  <data name="Settings_SubscriptionTrialFormat" xml:space="preserve"><value>Kostenlose Testphase (noch {0})</value></data>
-  <data name="Time_Day" xml:space="preserve"><value>{0} Tag</value></data>
-  <data name="Time_Days" xml:space="preserve"><value>{0} Tage</value></data>
-  <data name="Time_Hour" xml:space="preserve"><value>{0} Stunde</value></data>
-  <data name="Time_Hours" xml:space="preserve"><value>{0} Stunden</value></data>
-  <data name="Time_Minute" xml:space="preserve"><value>{0} Minute</value></data>
-  <data name="Time_Minutes" xml:space="preserve"><value>{0} Minuten</value></data>
   <data name="Settings_SubscriptionActive" xml:space="preserve"><value>Abonniert</value></data>
-  <data name="Settings_SubscriptionEnded" xml:space="preserve"><value>Zum Weitermachen tippen</value></data>
+  <!-- Kostenlos ist eine Stufe, kein Ablauf. Nichts ist zu Ende und nichts ist gesperrt,
+       also darf diese Zeile nie nach Auslaufen oder Countdown klingen. -->
+  <data name="Settings_SubscriptionFree" xml:space="preserve"><value>Kostenlos. Sieh dir Felova Full an</value></data>
+  <data name="Settings_SubscriptionChecking" xml:space="preserve"><value>Wird geprüft</value></data>
   <!-- Gutscheincodes. Ein Code ist kein Abo: nichts wird abgebucht, nichts verlängert sich
        automatisch, es gibt nichts zu kündigen. Jede Zeile nennt das Enddatum statt einer
        Dauer, weil ein zweiter Code ab dem Einlösetag neu läuft. -->
   <data name="Settings_SubscriptionGrantedFormat" xml:space="preserve"><value>Freigeschaltet bis {0}</value></data>
-  <data name="Settings_SubscriptionGrantEnded" xml:space="preserve"><value>Dein Jahr ist vorbei. Zum Weitermachen tippen</value></data>
+  <data name="Settings_SubscriptionGrantEnded" xml:space="preserve"><value>Dein Jahr ist vorbei. Sieh dir Felova Full an</value></data>
   <data name="Settings_RedeemRow" xml:space="preserve"><value>Code einlösen</value></data>
   <data name="Settings_RedeemSubtitle" xml:space="preserve"><value>Falls du einen bekommen hast</value></data>
   <data name="Settings_RedeemActiveFormat" xml:space="preserve"><value>Freigeschaltet bis {0}</value></data>
@@ -802,9 +793,9 @@
   <data name="Subscribe_GrantedSubtitleFormat" xml:space="preserve"><value>Bis {0}</value></data>
   <data name="Subscribe_GrantedBody" xml:space="preserve"><value>Dein Code deckt bis dahin alles ab. Nichts zu zahlen, nichts zu kündigen.</value></data>
   <data name="Subscribe_GrantEndingTitle" xml:space="preserve"><value>Halte {0}s Verlauf weiter fest</value></data>
-  <data name="Subscribe_GrantEndingBody" xml:space="preserve"><value>Dein Code deckt {0}s Pflege noch bis {1} ab. Danach bleibt der Verlauf für dich lesbar, und du kannst mit Felova weitermachen, wann immer du magst.</value></data>
-  <data name="Subscribe_GrantEndedTitle" xml:space="preserve"><value>{0}s Verlauf ist sicher</value></data>
-  <data name="Subscribe_GrantEndedBody" xml:space="preserve"><value>Dein Code ist abgelaufen, neue Einträge pausieren also. Alles, was du festgehalten hast, ist weiterhin da und bleibt es auch. Um {0}s Pflege weiter festzuhalten, mach mit Felova weiter, wann immer du magst.</value></data>
+  <data name="Subscribe_GrantEndingBody" xml:space="preserve"><value>Dein Code deckt Felova Full für {0} noch bis {1} ab. Danach hältst du weiterhin alles genauso fest wie jetzt, und du kannst mit Felova weitermachen, wann immer du magst.</value></data>
+  <data name="Subscribe_GrantEndedTitle" xml:space="preserve"><value>{0}s Verlauf geht weiter</value></data>
+  <data name="Subscribe_GrantEndedBody" xml:space="preserve"><value>Dein Code ist abgelaufen. Nichts ist gesperrt und nichts hat aufgehört: alles, was du für {0} festgehalten hast, ist weiterhin da, und du kannst weiter dazuschreiben. Felova Full ist da, wann immer du die Zusammenfassungen und den vollständigen Bericht zurück möchtest.</value></data>
   <data name="Notif_ChannelMedicationName" xml:space="preserve"><value>Medikamenten-Erinnerungen</value></data>
   <data name="Notif_ChannelMedicationDescription" xml:space="preserve"><value>Erinnerungen an die Gaben, die du eingerichtet hast, und an Gaben, die noch offen sind, weil dein Gerät aus war.</value></data>
   <data name="Notif_ChannelDailyCareName" xml:space="preserve"><value>Tägliche Erinnerung</value></data>

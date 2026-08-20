@@ -97,9 +97,9 @@ public class AnalyticsTenureTests
     }
 
     [Fact]
-    public void TrialBoundaryLandsInTheExpectedBuckets()
+    public void TwoWeekBoundaryLandsInTheExpectedBuckets()
     {
-        // The 14-day trial ends inside 8-14; anything past it reads as 15+.
+        // Day 14 is the last day inside 8-14; anything past it reads as 15+.
         Assert.Equal(AnalyticsTenure.BucketDays8To14, AnalyticsTenure.Bucket(Install, Install.AddDays(14)));
         Assert.Equal(AnalyticsTenure.BucketDays15Plus, AnalyticsTenure.Bucket(Install, Install.AddDays(15)));
     }

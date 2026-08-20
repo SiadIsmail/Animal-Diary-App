@@ -52,23 +52,9 @@ public partial class CalendarPage : ContentPage
 		BindingContext = vm;
 	}
 
-	/// <summary>The read-only gate for a NEW-entry action. When the trial has ended and
-	/// there's no subscription, open the subscribe sheet instead and report that the
-	/// action was blocked. The scheduled-dose loop never calls this — logging a given
-	/// dose stays free (owner decision, docs/history/MONETIZATION_PLAN.md).
-	///
-	/// <para>Pet-scoped, so a caregiver logging on an owner who subscribes (or is still in
-	/// their trial) passes without needing their own subscription.</para></summary>
-	private bool BlockedByPaywall()
-	{
-		if (vm.CanEditActivePet)
-			return false;
-		vm.SubscribeVM.Open(AnalyticsEvents.SubscribeSourceReadOnly);
-		return true;
-	}
-
-	/// <summary>First real log (dose or journal entry): record the milestone once and,
-	/// during the trial, show the reassuring explainer once. Never blocks the log.</summary>
+	/// <summary>First real log (dose or journal entry): record the milestone once.
+	/// Never blocks the log, and nothing on this path may ever ask for money — see
+	/// the note above <see cref="OpenSheetForKindAsync"/>.</summary>
 	private async Task MaybeHandleFirstLogAsync()
 	{
 		try
@@ -77,19 +63,10 @@ public partial class CalendarPage : ContentPage
 				return;
 			await _settings.SetFlagAsync(SettingsFlags.FirstLogDone, true);
 			vm.Analytics.Track(AnalyticsEvents.FirstLogCompleted);
-
-			if (vm.Entitlements.State == Animal_Diary_App.Data.Services.Billing.AccessState.Trial
-				&& !await _settings.GetFlagAsync(SettingsFlags.TrialExplainerShown))
-			{
-				await _settings.SetFlagAsync(SettingsFlags.TrialExplainerShown, true);
-				// Let the just-saved sheet finish sliding out before this one slides in.
-				await Task.Delay(ReducedMotion.IsEnabled ? 60 : 300);
-				vm.TrialMessageVM.ShowExplainer(vm.CalendarVM.ActivePetName);
-			}
 		}
 		catch (Exception ex)
 		{
-			System.Diagnostics.Debug.WriteLine($"[Billing] first-log handling failed: {ex.Message}");
+			System.Diagnostics.Debug.WriteLine($"[Journal] first-log handling failed: {ex.Message}");
 		}
 	}
 
@@ -231,12 +208,10 @@ public partial class CalendarPage : ContentPage
 			switch (chip.Kind)
 			{
 				case JournalChipKind.Add:
-					// Adding a new entry is gated in read-only; the "+" leads to the paywall.
-					if (!BlockedByPaywall())
-						vm.JournalVM.OpenAddSheetCommand.Execute(null);
+					vm.JournalVM.OpenAddSheetCommand.Execute(null);
 					break;
 				case JournalChipKind.Medication:
-					// The scheduled-dose adherence loop is always free.
+					// The dose loop. Never blocked, in any state — a P0 invariant with a test.
 					await LogDoseFlowAsync(chip, v);
 					break;
 				default:
@@ -299,11 +274,13 @@ public partial class CalendarPage : ContentPage
 	// (every owner-defined tracker shares JournalChipKind.Custom). Unused otherwise.
 	private async Task OpenSheetForKindAsync(JournalChipKind kind, TrackerKey tracker)
 	{
-		// The single funnel for opening a NON-medication input sheet (tracker chip or
-		// the add-anything selection) — the one place to gate new journal/symptom logging.
-		if (BlockedByPaywall())
-			return;
-
+		// ── The paywall NEVER appears on this path. ───────────────────────────────
+		// Writing things down is free forever, on every tier. This funnel used to hold
+		// the read-only gate for new journal/symptom entries, and that gate is exactly
+		// what the monetization boundary was inverted to remove: logging is unpaid
+		// labour the owner performs, often at 2am about a sick animal, not a benefit the
+		// app grants. Nothing here may consult IEntitlementService, and nothing may open
+		// the subscribe sheet — see AI/README.md, which carries this as a rule.
 		int petId = vm.CalendarVM.CurrentPetId;
 		string name = vm.CalendarVM.ActivePetName;
 		var date = vm.CalendarVM.CurrentSelectedDate;

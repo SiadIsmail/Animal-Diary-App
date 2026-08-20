@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Models;
 using SQLite;
 
-public class SettingsService : Animal_Diary_App.Data.Services.Billing.ITrialStore
+public class SettingsService
 {
     private readonly SQLiteAsyncConnection _db;
     public SettingsService(AppDatabase database)
@@ -92,35 +92,13 @@ public class SettingsService : Animal_Diary_App.Data.Services.Billing.ITrialStor
         }
     }
 
-    // ── Trial + monetization state ────────────────────────────────────────────
-    // The app-side free trial's start instant, and a set of one-shot UI flags (each
+    // ── One-shot UI flags ─────────────────────────────────────────────────────
+    // A set of one-shot UI flags (each
     // "have we shown X once?"). Stored in the same key/value AppSettings table as
     // language, so they are wiped by AppResetService like everything else.
 
-    private const string TrialStartKey = "TrialStartUtc";
-
-    /// <summary>The UTC instant the trial began, or null if it has not started.
-    /// Persisted as ticks so it round-trips exactly.</summary>
-    public async Task<DateTime?> GetTrialStartUtcAsync()
-    {
-        try
-        {
-            var setting = await _db.FindAsync<AppSettings>(TrialStartKey);
-            if (setting != null && long.TryParse(setting.Value, out var ticks))
-                return new DateTime(ticks, DateTimeKind.Utc);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error retrieving trial start: {ex.Message}");
-        }
-        return null;
-    }
-
-    public async Task SetTrialStartUtcAsync(DateTime startUtc)
-        => await UpsertAsync(TrialStartKey, startUtc.ToUniversalTime().Ticks.ToString());
-
     /// <summary>Read a one-shot flag (default false). Keys are the <c>SettingsFlags.*</c>
-    /// constants — e.g. "the trial explainer has been shown".</summary>
+    /// constants — e.g. "the grant-ending heads-up has been shown".</summary>
     public async Task<bool> GetFlagAsync(string flagKey)
     {
         try
@@ -139,7 +117,7 @@ public class SettingsService : Animal_Diary_App.Data.Services.Billing.ITrialStor
         => await UpsertAsync(flagKey, value.ToString());
 
     /// <summary>Read a free-form preference value, or null when it has never been set.
-    /// The same key/value store as language and the trial flags — device-scoped, wiped
+    /// The same key/value store as language and the one-shot flags — device-scoped, wiped
     /// by <c>AppResetService</c>, and deliberately never synced (a display preference is
     /// not medical data, and the pet ids it can be keyed by are local).</summary>
     public async Task<string?> GetValueAsync(string key)
@@ -179,22 +157,21 @@ public class SettingsService : Animal_Diary_App.Data.Services.Billing.ITrialStor
     }
 }
 
-/// <summary>One-shot UI flag keys for the trial/subscription funnel — each answers
-/// "have we already shown this once?". Constants so producers and readers agree.</summary>
+/// <summary>One-shot UI flag keys — each answers "have we already shown/done this once?".
+/// Constants so producers and readers agree.</summary>
 public static class SettingsFlags
 {
     /// <summary>The user completed their first real log (dose given or journal entry).</summary>
     public const string FirstLogDone = "FirstLogDone";
-    /// <summary>The post-first-log trial explainer has been shown.</summary>
-    public const string TrialExplainerShown = "TrialExplainerShown";
-    /// <summary>The single pre-trial-end nudge has been shown.</summary>
-    public const string PreEndNudgeShown = "PreEndNudgeShown";
-    /// <summary>The reassurance shown once when the app first enters the read-only state.</summary>
-    public const string ReadOnlyReassuranceShown = "ReadOnlyReassuranceShown";
-    /// <summary>The single heads-up before a redeemed access code's grant runs out. Its own
-    /// flag rather than a reuse of <see cref="PreEndNudgeShown"/>: someone can have a trial
-    /// AND, a year later, a grant, and each deserves its one warning.</summary>
+    /// <summary>The reassurance shown once when a redeemed access code's grant has run out
+    /// and the account is back on the free tier.</summary>
+    public const string GrantEndedNoticeShown = "GrantEndedNoticeShown";
+    /// <summary>The single heads-up before a redeemed access code's grant runs out.</summary>
     public const string GrantEndingNudgeShown = "GrantEndingNudgeShown";
+    /// <summary>The one-shot snapshot of what this install already had when the paid
+    /// boundary moved has been taken. See <c>GrandfatheredAccessService</c> — this flag is
+    /// what makes it a snapshot rather than a standing offer.</summary>
+    public const string GrandfatherCaptured = "GrandfatherCaptured";
     /// <summary>The owner has opened the Today stat-card picker at least once, so the
     /// spelled-out "tap a card to change what it shows" hint retires and the small
     /// pencil on each card carries the affordance from then on.</summary>

@@ -1,17 +1,21 @@
 namespace Animal_Diary_App.Data.Services.Billing;
 
 /// <summary>
-/// The app's single monetization boundary. Every feature asks <b>this</b> whether
-/// the user may add/edit — never RevenueCat directly — exactly like features talk to
-/// <see cref="Analytics.IAnalyticsService"/> or the cloud boundary. That indirection
-/// is what makes the trial <i>reversible</i>: today access comes from a no-card,
-/// app-side trial OR a RevenueCat subscription; switching to a store-native
-/// (card-up-front) trial later is a change behind this interface only, because the
-/// <see cref="HasFullAccess"/> formula never moves out of here.
+/// The app's single monetization boundary. Every feature asks <b>this</b> whether the
+/// user has the paid tier — never RevenueCat directly — exactly like features talk to
+/// <see cref="Analytics.IAnalyticsService"/> or the cloud boundary.
+///
+/// <para><b>What this gate is, and what it is emphatically not.</b> Writing things down
+/// is free forever: logging, medications, the care plan, the dose loop, reading, and
+/// getting your data out are never gated, in any state, on any tier. The safety net is
+/// the free product. What this boundary sells is the things the accumulated record is
+/// <i>for</i> — the assembled appointment summary, the designed vet report, a second
+/// pet, cloud backup, minting a caregiver invite. Never reintroduce a check on a logging
+/// path: AI/README.md carries that as a non-negotiable rule.</para>
 ///
 /// <para>The single source of truth is:
-/// <c>HasFullAccess = trial-still-running OR subscription-entitlement-active</c>.
-/// Read it; do not re-derive it from <see cref="State"/> or the trial clock.</para>
+/// <c>HasFullAccess = subscription-entitlement-active OR access-code-grant-running</c>.
+/// Read it; do not re-derive it from <see cref="State"/>.</para>
 ///
 /// Contract for every implementation:
 /// <list type="bullet">
@@ -19,23 +23,29 @@ namespace Animal_Diary_App.Data.Services.Billing;
 ///   exception, to the caller.</item>
 ///   <item>When billing is disabled or the platform has no store (Windows/macOS dev),
 ///   <c>NullEntitlementService</c> is registered and <see cref="HasFullAccess"/> is
-///   always true — the app is never locked in development.</item>
+///   always true — the app is never gated in development.</item>
 /// </list>
 /// </summary>
 public interface IEntitlementService
 {
-    /// <summary><b>Your own</b> access: true while your trial is running or your
-    /// subscription is active; false in the care-only read state. This is the gate for
-    /// actions that are yours alone — creating another pet, minting an invite. For
-    /// anything scoped to a particular pet use <see cref="CanEditPet"/>, which also
-    /// honours sponsorship.</summary>
+    /// <summary><b>Your own</b> paid access: an active subscription or a running grant.
+    /// False on the permanent free tier. This is the gate for the paid surfaces that are
+    /// yours alone — adding a second pet, minting an invite, turning on cloud backup, the
+    /// designed report, the second appointment summary. For anything scoped to a
+    /// particular pet use <see cref="CanEditPet"/>, which also honours sponsorship.</summary>
     bool HasFullAccess { get; }
 
-    /// <summary>The gate for every write scoped to ONE pet (journal entries, medications,
-    /// care plan, pet profile). True when you have your own access, <b>or</b> you are a
-    /// caregiver on this pet and its owner has access — the sponsorship rule:
+    /// <summary>Whether the paid, pet-scoped surfaces are available for ONE pet. True when
+    /// you have your own paid access, <b>or</b> you are a caregiver on this pet and its
+    /// owner does — the sponsorship rule:
     ///
     /// <para><c>CanEditPet = HasFullAccess || (I am a caregiver here &amp;&amp; the owner has access)</c></para>
+    ///
+    /// <para><b>This is no longer a write gate.</b> Every write — journal entries,
+    /// medications, the care plan, the pet profile — is free on every tier, so nothing in
+    /// the logging path may call this. It survives because the paid, pet-scoped surfaces
+    /// (the assembled summary, the designed report) need exactly this question answered,
+    /// sponsorship included.</para>
     ///
     /// Sponsorship never reaches your own pets, which is what stops one subscription from
     /// becoming unlimited free accounts. Pure, synchronous and local-first: it short-circuits
@@ -53,26 +63,11 @@ public interface IEntitlementService
     /// Copy only. See <see cref="IGrantSource"/> for what a grant is and is not.</summary>
     DateTime? GrantedUntilUtc { get; }
 
-    /// <summary>Whether this account has ever held a grant, including an expired one.
-    /// Copy must check it before saying "your trial has ended": a lapsed year-long grant
-    /// is not a lapsed 14-day trial, and <see cref="TrialEverStarted"/> does not
-    /// distinguish them (most granted owners did start a trial once).</summary>
+    /// <summary>Whether this account has ever held a grant, including an expired one. It is
+    /// the guard that selects grant copy: someone whose redeemed year ran out has not
+    /// cancelled anything and must never be addressed as though they had. A grant is not a
+    /// subscription — nothing was charged, nothing renewed, there was nothing to cancel.</summary>
     bool EverGranted { get; }
-
-    /// <summary>Whether a trial was ever started at all. False for someone who only ever
-    /// cared for another person's pet — the trial begins with your FIRST OWN pet. Copy
-    /// must check this before saying "your trial has ended", which would otherwise be
-    /// told to a caregiver who never had one.</summary>
-    bool TrialEverStarted { get; }
-
-    /// <summary>Whole days left in the app-side trial (0 once expired or subscribed).
-    /// Drives the pre-end nudge copy; never a live countdown UI.</summary>
-    int TrialDaysLeft { get; }
-
-    /// <summary>Exact time left in the app-side trial (<see cref="TimeSpan.Zero"/> once
-    /// expired / subscribed / not started). Lets the UI show "3 days left" or, near the
-    /// end, "45 minutes left". Read on demand — it is not a ticking clock.</summary>
-    TimeSpan TrialTimeRemaining { get; }
 
     /// <summary>The store's subscription offers to show on the subscribe sheet
     /// (yearly first). Empty until <see cref="InitializeAsync"/> has run, when the
@@ -80,20 +75,13 @@ public interface IEntitlementService
     IReadOnlyList<SubscriptionOffer> Offers { get; }
 
     /// <summary>Raised whenever <see cref="HasFullAccess"/> or <see cref="State"/> may
-    /// have changed (trial elapsed, purchase, restore, expiry). Marshal to the UI
+    /// have changed (purchase, restore, expiry, a redeemed code). Marshal to the UI
     /// thread before touching bindings.</summary>
     event Action? StateChanged;
 
-    /// <summary>Wire up the store and load persisted trial state. Safe to call once at
+    /// <summary>Wire up the store and load persisted access state. Safe to call once at
     /// startup, off the UI path; idempotent and non-throwing.</summary>
     Task InitializeAsync();
-
-    /// <summary>Idempotently start the trial clock if it has not started yet. Called
-    /// when the app enters the main experience with at least one pet (onboarding
-    /// completion, and for already-onboarded users on first launch of this build).
-    /// Returns true only on the call that actually begins the trial, so the caller can
-    /// fire <c>trial_started</c> exactly once.</summary>
-    Task<bool> EnsureTrialStartedAsync();
 
     /// <summary>Re-check the entitlement with the store (app resume / after a purchase
     /// elsewhere). Non-throwing.</summary>
@@ -127,20 +115,24 @@ public interface IEntitlementService
     Task<string?> GetManagementUrlAsync();
 }
 
-/// <summary>Coarse access state, for copy selection and analytics only.</summary>
+/// <summary>Coarse access state, for copy selection and analytics only.
+///
+/// <para><b>Every consumer must name every member.</b> The Settings subtitle in particular
+/// selects copy by switch, so a state that falls through to a default arm is described to
+/// the user as something it is not. Adding OR removing a member here means visiting all of
+/// them — not just the ones that stop compiling.</para></summary>
 public enum AccessState
 {
     /// <summary>Before <see cref="IEntitlementService.InitializeAsync"/> completes.</summary>
     Unknown,
-    /// <summary>Inside the free trial window.</summary>
-    Trial,
+    /// <summary>The permanent free tier. Not a lapse, not an expiry, and not a countdown:
+    /// everything the owner has written down stays readable, exportable and <b>writable</b>
+    /// here, forever. Copy must never describe this state as ended, over, or running out.</summary>
+    Free,
     /// <summary>Full access from a redeemed access code, running until
     /// <see cref="IEntitlementService.GrantedUntilUtc"/>. Never call this "subscribed" in
     /// copy: nothing was charged, nothing renews, and there is nothing to cancel.</summary>
     Granted,
-    /// <summary>Trial elapsed (or a subscription lapsed) and not currently subscribed
-    /// — the care-only read state.</summary>
-    TrialExpired,
     /// <summary>An active paid subscription.</summary>
     Subscribed
 }
@@ -185,6 +177,6 @@ public enum PurchaseOutcome
 /// price text comes from the store (never hardcoded), so currency and formatting are
 /// always correct for the user's region.</summary>
 /// <param name="Plan">Which cadence this offer is.</param>
-/// <param name="PriceLabel">Store-formatted recurring price, e.g. "€3.99" / "$24.99".</param>
+/// <param name="PriceLabel">Store-formatted recurring price, e.g. "€35.00" / "$39.99".</param>
 /// <param name="StoreProductId">The underlying store product id, for telemetry only.</param>
 public sealed record SubscriptionOffer(SubscriptionPlan Plan, string PriceLabel, string StoreProductId);

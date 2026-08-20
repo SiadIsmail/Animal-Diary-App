@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -699,6 +699,8 @@
   <data name="Cloud_SignedInAs" xml:space="preserve"><value>Signed in as {0}</value></data>
   <data name="Cloud_BackupOffBody" xml:space="preserve"><value>Backup is off. Turning it on uploads the pets on this device to your account and keeps them in sync from then on.</value></data>
   <data name="Cloud_EnableBackup" xml:space="preserve"><value>Turn on backup</value></data>
+  <data name="Cloud_BackupPaidBody" xml:space="preserve"><value>Backup and syncing across your devices are part of Felova Full. Everything on this device stays exactly where it is either way, and you can save a copy of it any time.</value></data>
+  <data name="Cloud_BackupPaidAction" xml:space="preserve"><value>See what Felova Full adds</value></data>
   <data name="Cloud_EnabledOffline" xml:space="preserve"><value>Backup is on. It'll sync once you're back online.</value></data>
   <data name="Cloud_BackupOn" xml:space="preserve"><value>Backup is on</value></data>
   <data name="Cloud_LastSynced" xml:space="preserve"><value>Last synced {0}</value></data>
@@ -756,10 +758,16 @@
   <data name="Cloud_ErrAlreadyMember" xml:space="preserve"><value>You already care for this pet.</value></data>
   <data name="Cloud_ContinueWithGoogle" xml:space="preserve"><value>Continue with Google</value></data>
   <data name="Cloud_Or" xml:space="preserve"><value>or</value></data>
-  <!-- Trial & subscription (see MONETIZATION_PLAN.md). {0}/{1}/{2} are positional. -->
+  <!-- Subscription. There is no trial and no read-only state: writing things down is
+       free forever. What the paid tier sells is what the record adds up to. {0}/{1} are
+       positional. See AI/design-decisions.md, "The paid boundary". -->
   <data name="Common_Okay" xml:space="preserve"><value>Okay</value></data>
-  <data name="Subscribe_Title" xml:space="preserve"><value>Continue with Felova</value></data>
-  <data name="Subscribe_Subtitle" xml:space="preserve"><value>Keep writing down your pet's care.</value></data>
+  <data name="Subscribe_Title" xml:space="preserve"><value>Felova Full</value></data>
+  <data name="Subscribe_Subtitle" xml:space="preserve"><value>Writing things down stays free.</value></data>
+  <data name="Subscribe_IncludesHeader" xml:space="preserve"><value>Felova Full adds</value></data>
+  <data name="Subscribe_IncludesBody" xml:space="preserve"><value>The since-your-last-visit summary, every time you go. The full vet report, laid out and ready to hand over. Backup across your devices. More than one pet, and other people helping you care for them.</value></data>
+  <data name="Subscribe_PromiseKept" xml:space="preserve"><value>Everything you have already written down stays readable and stays yours to export, subscribed or not.</value></data>
+  <data name="Subscribe_PromiseAfterLoss" xml:space="preserve"><value>If a pet dies, their record stays readable for as long as you want it, with or without a subscription.</value></data>
   <data name="Subscribe_PlanYearly" xml:space="preserve"><value>Yearly</value></data>
   <data name="Subscribe_PlanMonthly" xml:space="preserve"><value>Monthly</value></data>
   <data name="Subscribe_BestValue" xml:space="preserve"><value>Best value</value></data>
@@ -778,34 +786,17 @@
   <data name="Subscribe_AlreadySubscribed" xml:space="preserve"><value>You already have a Felova subscription on this store account, so there was nothing to buy. It is active here now.</value></data>
   <data name="Subscribe_OwnedByOtherAccount" xml:space="preserve"><value>This store account already has a Felova subscription, and it belongs to a different Felova account. Sign in with that account to use it here, or change it in your store subscriptions.</value></data>
   <data name="Subscribe_RestoreProblem" xml:space="preserve"><value>Couldn't check just now. Try again in a moment.</value></data>
-  <data name="Subscribe_ExplainerTitle" xml:space="preserve"><value>Your first {0} days are on us</value></data>
-  <data name="Subscribe_ExplainerBody" xml:space="preserve"><value>Write down everything for {0}, no card needed. After that, {0}'s history is always yours to see. Adding new entries continues with a subscription, whenever you're ready.</value></data>
-  <data name="Subscribe_ExplainerFootnote" xml:space="preserve"><value>You can subscribe anytime in Settings.</value></data>
-  <data name="Subscribe_NudgeTitle" xml:space="preserve"><value>Keep {0}'s record going</value></data>
-  <data name="Subscribe_NudgeBody" xml:space="preserve"><value>You've written down {0} doses and {1} weeks of {2}'s history. It stays yours to see, and you can keep adding to it with a subscription.</value></data>
-  <data name="Subscribe_ReadOnlyTitle" xml:space="preserve"><value>{0}'s history is safe</value></data>
-  <data name="Subscribe_ReadOnlyBody" xml:space="preserve"><value>It's all still here, and always will be. To keep writing down {0}'s care, continue with Felova whenever you're ready.</value></data>
-  <data name="Subscribe_ReadOnlyCarersClause" xml:space="preserve"><value>The other people caring for {0} can still see everything, and can still mark doses given.</value></data>
-  <data name="Subscribe_SponsorEndedTitle" xml:space="preserve"><value>You can still see everything for {0}</value></data>
-  <data name="Subscribe_SponsorEndedBody" xml:space="preserve"><value>{0}'s owner is no longer subscribed, so new entries are paused for now. You can still read the full history, and marking doses given still works. If you'd like to keep writing things down yourself, you can continue with Felova.</value></data>
-  <data name="Subscribe_SponsorEndedTitleGeneric" xml:space="preserve"><value>You can still see everything</value></data>
-  <data name="Subscribe_SponsorEndedBodyGeneric" xml:space="preserve"><value>The owner of a pet you help care for is no longer subscribed, so new entries are paused for now. You can still read the full history, and marking doses given still works. If you'd like to keep writing things down yourself, you can continue with Felova.</value></data>
   <data name="Settings_SubscriptionRow" xml:space="preserve"><value>Your subscription</value></data>
-  <data name="Settings_SubscriptionTrial" xml:space="preserve"><value>Free trial</value></data>
-  <data name="Settings_SubscriptionTrialFormat" xml:space="preserve"><value>Free trial ({0} left)</value></data>
-  <data name="Time_Day" xml:space="preserve"><value>{0} day</value></data>
-  <data name="Time_Days" xml:space="preserve"><value>{0} days</value></data>
-  <data name="Time_Hour" xml:space="preserve"><value>{0} hour</value></data>
-  <data name="Time_Hours" xml:space="preserve"><value>{0} hours</value></data>
-  <data name="Time_Minute" xml:space="preserve"><value>{0} minute</value></data>
-  <data name="Time_Minutes" xml:space="preserve"><value>{0} minutes</value></data>
   <data name="Settings_SubscriptionActive" xml:space="preserve"><value>Subscribed</value></data>
-  <data name="Settings_SubscriptionEnded" xml:space="preserve"><value>Tap to continue</value></data>
+  <!-- The free tier is a tier, not an expiry. Nothing ended and nothing is locked, so this
+       line must never read as a lapse, a countdown, or a state to get out of. -->
+  <data name="Settings_SubscriptionFree" xml:space="preserve"><value>Free. See what Felova Full adds</value></data>
+  <data name="Settings_SubscriptionChecking" xml:space="preserve"><value>Checking</value></data>
   <!-- Access codes. A grant is never called a subscription: nothing was charged, nothing
        renews, and there is nothing to cancel. Every line names the end DATE rather than an
        amount of time, because a second code renews from the day it is used. -->
   <data name="Settings_SubscriptionGrantedFormat" xml:space="preserve"><value>Covered until {0}</value></data>
-  <data name="Settings_SubscriptionGrantEnded" xml:space="preserve"><value>Your year is up. Tap to continue</value></data>
+  <data name="Settings_SubscriptionGrantEnded" xml:space="preserve"><value>Your year is up. See what Felova Full adds</value></data>
   <data name="Settings_RedeemRow" xml:space="preserve"><value>Redeem a code</value></data>
   <data name="Settings_RedeemSubtitle" xml:space="preserve"><value>If someone gave you one</value></data>
   <data name="Settings_RedeemActiveFormat" xml:space="preserve"><value>Covered until {0}</value></data>
@@ -826,9 +817,9 @@
   <data name="Subscribe_GrantedSubtitleFormat" xml:space="preserve"><value>Until {0}</value></data>
   <data name="Subscribe_GrantedBody" xml:space="preserve"><value>Your code covers everything until then. Nothing to pay and nothing to cancel.</value></data>
   <data name="Subscribe_GrantEndingTitle" xml:space="preserve"><value>Keep {0}'s record going</value></data>
-  <data name="Subscribe_GrantEndingBody" xml:space="preserve"><value>Your code covers {0}'s care until {1}. After that the history stays yours to read, and you can continue with Felova whenever you're ready.</value></data>
-  <data name="Subscribe_GrantEndedTitle" xml:space="preserve"><value>{0}'s history is safe</value></data>
-  <data name="Subscribe_GrantEndedBody" xml:space="preserve"><value>Your code has run out, so new entries are paused. Everything you've written down is still here, and always will be. To keep writing down {0}'s care, continue with Felova whenever you're ready.</value></data>
+  <data name="Subscribe_GrantEndingBody" xml:space="preserve"><value>Your code covers Felova Full for {0} until {1}. After that you keep writing things down exactly as you do now, and you can continue with Felova whenever you're ready.</value></data>
+  <data name="Subscribe_GrantEndedTitle" xml:space="preserve"><value>{0}'s record carries on</value></data>
+  <data name="Subscribe_GrantEndedBody" xml:space="preserve"><value>Your code has run out. Nothing is locked and nothing has stopped: everything you have written down for {0} is still here, and you can keep adding to it. Felova Full is there whenever you want the summaries and the full report back.</value></data>
   <data name="Notif_ChannelMedicationName" xml:space="preserve"><value>Medication reminders</value></data>
   <data name="Notif_ChannelMedicationDescription" xml:space="preserve"><value>Reminders for the doses you've set up, and doses still open from while your device was off.</value></data>
   <data name="Notif_ChannelDailyCareName" xml:space="preserve"><value>Daily care reminder</value></data>

@@ -24,6 +24,27 @@
                 <!-- ── OFFERS face (not subscribed) ── -->
                 <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowOffers}">
 
+                    <!-- What the paid tier actually is. It sells the payoff — the assembled
+                         summary, the designed report — never the labour of writing things
+                         down, which is free forever. -->
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="{loc:Translate Subscribe_IncludesHeader}" FontFamily="{StaticResource FontSans}"
+                               FontSize="12" FontAttributes="Bold" TextColor="{StaticResource InkSecondary}"/>
+                        <Label Text="{loc:Translate Subscribe_IncludesBody}" FontFamily="{StaticResource FontSans}"
+                               FontSize="13.5" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"/>
+                    </VerticalStackLayout>
+
+                    <!-- The two promises, stated plainly and once. The second one is a
+                         promise being kept, not a feature being sold: the moment it reads
+                         as marketing it stops working, so it gets no emphasis, no icon and
+                         no heading of its own. -->
+                    <VerticalStackLayout Spacing="6" Margin="0,2,0,2">
+                        <Label Text="{loc:Translate Subscribe_PromiseKept}" FontFamily="{StaticResource FontSans}"
+                               FontSize="12.5" LineHeight="1.4" TextColor="{StaticResource InkTertiary}"/>
+                        <Label Text="{loc:Translate Subscribe_PromiseAfterLoss}" FontFamily="{StaticResource FontSans}"
+                               FontSize="12.5" LineHeight="1.4" TextColor="{StaticResource InkTertiary}"/>
+                    </VerticalStackLayout>
+
                     <!-- The offers (yearly first, monthly below). Disabled (dimmed, no taps)
                          while a purchase is in flight so a second tap can't double-fire. -->
                     <VerticalStackLayout Spacing="10" IsVisible="{Binding ShowOfferList}"

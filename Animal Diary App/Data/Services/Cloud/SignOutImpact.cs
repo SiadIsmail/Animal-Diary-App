@@ -4,7 +4,7 @@ namespace Animal_Diary_App.Data.Services.Cloud;
 /// What signing out will remove from this device, so the user is asked rather than surprised.
 ///
 /// <para>Its own file, free of MAUI and SQLite, so the "is there anything to warn about"
-/// decision can be unit-tested — same reason <c>ITrialStore</c> and <c>IPetAccessSource</c>
+/// decision can be unit-tested — same reason <c>IGrantSource</c> and <c>IPetAccessSource</c>
 /// are separated out of the services that use them.</para>
 /// </summary>
 /// <param name="PetNames">Pets that leave the device. They are NOT deleted from the account —

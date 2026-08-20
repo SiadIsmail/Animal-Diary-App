@@ -78,15 +78,22 @@ public class MainViewModel
     /// <summary>The Manage-pet "Pet sharing" sheet (invites, members, leave).</summary>
     public SharingSheetViewModel SharingVM { get; }
 
-    /// <summary>The monetization boundary — the single gate every add/edit surface
-    /// checks. Exposed here so hand-built pages reach it through the shared VM, like
-    /// <see cref="Analytics"/> and <see cref="CloudSync"/>.</summary>
+    /// <summary>The monetization boundary — the single gate every PAID surface checks.
+    /// Exposed here so hand-built pages reach it through the shared VM, like
+    /// <see cref="Analytics"/> and <see cref="CloudSync"/>.
+    ///
+    /// <para><b>Nothing in a logging path may read this.</b> Writing things down is free
+    /// forever; what this gate withholds is the assembled appointment summary, the
+    /// designed report, a second pet, backup, and minting an invite.</para></summary>
     public Animal_Diary_App.Data.Services.Billing.IEntitlementService Entitlements { get; }
 
-    /// <summary>The gate for the pet-scoped surfaces (Journal, Manage, Medications): true
-    /// when you may write to the pet currently being looked at. Differs from
-    /// <c>Entitlements.HasFullAccess</c> for a <b>caregiver on someone else's pet</b>, who
-    /// is covered by that owner's subscription or trial.
+    /// <summary>The paid gate for the surfaces scoped to ONE pet: true when the pet
+    /// currently being looked at is covered, either by your own access or — for a
+    /// <b>caregiver on someone else's pet</b> — by that owner's.
+    ///
+    /// <para>Its old callers were the three write gates (Journal, Manage, Medications) and
+    /// they are gone: those writes are free. It is kept because the paid pet-scoped
+    /// surfaces need exactly this question, sponsorship included.</para>
     ///
     /// <para>Read it per action, never cache it: the active pet changes under the page,
     /// and sponsorship can end mid-session when a sync lands.</para></summary>
@@ -95,8 +102,8 @@ public class MainViewModel
     /// <summary>The subscribe sheet (yearly + monthly + restore).</summary>
     public SubscribeSheetViewModel SubscribeVM { get; }
 
-    /// <summary>The reusable trial-message sheet (explainer / pre-end nudge / read-only).</summary>
-    public TrialMessageViewModel TrialMessageVM { get; }
+    /// <summary>The reusable grant-message sheet (a redeemed code's year ending / ended).</summary>
+    public AccessMessageViewModel AccessMessageVM { get; }
 
     /// <summary>The access-code sheet, opened from Settings only.</summary>
     public RedeemCodeSheetViewModel RedeemVM { get; }
@@ -160,7 +167,7 @@ public class MainViewModel
  CloudSheetViewModel cloudVM,
  SharingSheetViewModel sharingVM,
  SubscribeSheetViewModel subscribeVM,
- TrialMessageViewModel trialMessageVM,
+ AccessMessageViewModel accessMessageVM,
  RedeemCodeSheetViewModel redeemVM,
  FeedbackSheetViewModel feedbackVM,
  ConfirmSheetViewModel confirmVM,
@@ -203,7 +210,7 @@ public class MainViewModel
         CloudVM = cloudVM;
         SharingVM = sharingVM;
         SubscribeVM = subscribeVM;
-        TrialMessageVM = trialMessageVM;
+        AccessMessageVM = accessMessageVM;
         RedeemVM = redeemVM;
         FeedbackVM = feedbackVM;
         ConfirmVM = confirmVM;
