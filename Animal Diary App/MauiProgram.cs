@@ -114,6 +114,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PendingItemsService>();
 		builder.Services.AddSingleton<TodayCardService>();
 		builder.Services.AddSingleton<ConstellationService>();
+		// Facts about the record — one computation, three surfaces (Today's card
+		// sheet, the Constellation legend, the appointment summary).
+		builder.Services.AddSingleton<RecordFactsService>();
 
 		// ── Import (AI-written entry files) ──────────────────────────────────
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Import.ImportService>();

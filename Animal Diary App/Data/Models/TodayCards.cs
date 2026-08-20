@@ -137,19 +137,25 @@ public static class TodayCardCatalog
     /// keep the lines those two cards already shipped with; the rest follow the same
     /// shape — state the absence, name where to write one, judge nothing. A seizure card
     /// with no entries must never read as an achievement.</param>
-    public readonly record struct TodayCardMeta(TodayCardId Id, TrackerId? Tracker, string LabelKey, string EmptyKey);
+    /// <param name="RecordKey">AppStrings key for the record's NAME on its own
+    /// ("Glucose"), as opposed to <paramref name="LabelKey"/>'s "Last glucose". The card
+    /// face reports a last reading and is worded for it; a heading over a stretch of
+    /// history is not about the last one, and "Last glucose" above ninety days of counts
+    /// would say something untrue. Two keys, one row, so they cannot drift.</param>
+    public readonly record struct TodayCardMeta(
+        TodayCardId Id, TrackerId? Tracker, string LabelKey, string EmptyKey, string RecordKey);
 
     /// <summary>Every card type, in the order the picker sheet offers them: the two
     /// every pet can use first, then the condition-shaped ones.</summary>
     public static IReadOnlyList<TodayCardMeta> Cards { get; } = new List<TodayCardMeta>
     {
-        new(TodayCardId.Weight,     TrackerId.Weight,   "Today_CardWeight",     "Main_WeightEmptyCard"),
-        new(TodayCardId.Mood,       TrackerId.Mood,     "Today_CardMood",       "Main_MoodEmptyCard"),
-        new(TodayCardId.Glucose,    TrackerId.Glucose,  "Today_CardGlucose",    "Today_EmptyGlucose"),
-        new(TodayCardId.Appetite,   TrackerId.Appetite, "Today_CardAppetite",   "Today_EmptyAppetite"),
-        new(TodayCardId.Water,      TrackerId.Water,    "Today_CardWater",      "Today_EmptyWater"),
-        new(TodayCardId.Seizure,    TrackerId.Seizure,  "Today_CardSeizure",    "Today_EmptySeizure"),
-        new(TodayCardId.Medication, null,               "Today_CardMedication", "Today_EmptyMedication"),
+        new(TodayCardId.Weight,     TrackerId.Weight,   "Today_CardWeight",     "Main_WeightEmptyCard",  "Today_RecordWeight"),
+        new(TodayCardId.Mood,       TrackerId.Mood,     "Today_CardMood",       "Main_MoodEmptyCard",    "Today_RecordMood"),
+        new(TodayCardId.Glucose,    TrackerId.Glucose,  "Today_CardGlucose",    "Today_EmptyGlucose",    "Today_RecordGlucose"),
+        new(TodayCardId.Appetite,   TrackerId.Appetite, "Today_CardAppetite",   "Today_EmptyAppetite",   "Today_RecordAppetite"),
+        new(TodayCardId.Water,      TrackerId.Water,    "Today_CardWater",      "Today_EmptyWater",      "Today_RecordWater"),
+        new(TodayCardId.Seizure,    TrackerId.Seizure,  "Today_CardSeizure",    "Today_EmptySeizure",    "Today_RecordSeizure"),
+        new(TodayCardId.Medication, null,               "Today_CardMedication", "Today_EmptyMedication", "Today_RecordMedication"),
     };
 
     /// <summary>Doses are not trackers, so medication carries its own visual here rather
@@ -186,6 +192,11 @@ public static class TodayCardCatalog
     /// <summary>The card's localized name ("Last seizure"), resolved now, never cached.</summary>
     public static string Label(TodayCardId card) =>
         Helpers.LocalizationManager.Instance.GetString(Meta(card).LabelKey);
+
+    /// <summary>The record's name on its own ("Seizures") — what a stretch of history is
+    /// headed with, where "Last seizure" would be a claim about the wrong thing.</summary>
+    public static string RecordName(TodayCardId card) =>
+        Helpers.LocalizationManager.Instance.GetString(Meta(card).RecordKey);
 
     // ── Defaults ──────────────────────────────────────────────────────────────
     //

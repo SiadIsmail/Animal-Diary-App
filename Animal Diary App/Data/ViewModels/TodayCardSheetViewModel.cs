@@ -45,13 +45,26 @@ public class TodayCardOption : BaseViewModel
 }
 
 /// <summary>
-/// The "what matters most" sheet: tap a Today card, choose what it shows.
+/// What the tapped card's record says, and — below it — what else could sit there.
 ///
-/// <para>Deliberately one screenful of records with no cadence, no toggles and no
-/// ordering — this is a question about the owner's day, not a dashboard editor. It
-/// changes <b>only</b> which record the card displays; nothing here starts, stops or
-/// configures any tracking (that is the care plan's job on the Manage page), so a card
-/// can show a record the pet's plan doesn't ask for and vice versa.</para>
+/// <para><b>Two sections, in that order.</b> The facts come first because they are the
+/// reason to tap a card more than once: reconfiguring is something an owner does once
+/// and never again, so a sheet that only offered the picker had nothing to come back
+/// for. The card FACE is untouched by any of this — it states the last recorded value
+/// and when, and nothing else, because a count on the face would break the rule that
+/// keeps a card from ever reading as a score (AI/domain.md).</para>
+///
+/// <para>The facts are <see cref="RecordFactsService"/>'s, over a fixed <b>last 90
+/// days</b>, with no range picker: a stretch the owner can tune is a control, and this
+/// panel is a statement about what they wrote down. Everything in it is arithmetic on
+/// their own entries and is computed identically for every record — see the doctrine on
+/// <see cref="RecordFacts"/>.</para>
+///
+/// <para>The picker below is unchanged: one screenful of records with no cadence, no
+/// toggles and no ordering. It changes <b>only</b> which record the card displays;
+/// nothing here starts, stops or configures any tracking (that is the care plan's job
+/// on the Manage page), so a card can show a record the pet's plan doesn't ask for and
+/// vice versa.</para>
 ///
 /// <para>Follows the shared sheet contract in AI/coding-standards.md, minus the
 /// <c>Saved</c>/undo pair: a display preference is not a journal entry, and picking
@@ -61,14 +74,23 @@ public class TodayCardSheetViewModel : BaseViewModel
 {
     private readonly TodayCardService _cards;
     private readonly CustomTrackerService _custom;
+    private readonly RecordFactsService _facts;
+
+    /// <summary>The stretch the facts cover. Fixed, and deliberately not offered as a
+    /// choice — see the class summary.</summary>
+    private const int FactsDays = 90;
 
     private Pet? _pet;
     private TodayCardSlot _slot;
+    private RecordFacts? _snapshot;
+    private string _recordName = string.Empty;
 
-    public TodayCardSheetViewModel(TodayCardService cards, CustomTrackerService custom)
+    public TodayCardSheetViewModel(
+        TodayCardService cards, CustomTrackerService custom, RecordFactsService facts)
     {
         _cards = cards;
         _custom = custom;
+        _facts = facts;
 
         PickCommand = new Command<TodayCardOption>(async option => await PickAsync(option));
         DismissCommand = new Command(() => IsPresented = false);
@@ -80,9 +102,47 @@ public class TodayCardSheetViewModel : BaseViewModel
     private bool _isPresented;
     public bool IsPresented { get => _isPresented; set => SetProperty(ref _isPresented, value); }
 
-    public string Title => LocalizationManager.Instance.GetString("Today_PickerTitle");
+    /// <summary>The record's name on its own — "Glucose", not "Last glucose". What sits
+    /// under it is ninety days, not the last reading.</summary>
+    public string Title => _recordName;
 
-    public string Subtitle => LocalizationManager.Instance.Format("Today_PickerSub", _pet?.Name ?? string.Empty);
+    /// <summary>Empty on purpose: the sheet's subtitle slot is the Caveat handwriting
+    /// line, which is a voice. Facts are stated in plain sans in the body, unweighted
+    /// and all in one colour.</summary>
+    public string Subtitle => string.Empty;
+
+    // ── Section 1: facts about the record ────────────────────────────────────
+
+    /// <summary>There is something to state. False leaves only <see cref="FactsNothing"/>
+    /// and the picker.</summary>
+    public bool HasFacts => _snapshot?.HasAny == true;
+
+    /// <summary>"84 things written down · last 90 days".</summary>
+    public string FactsCount => _snapshot is null ? string.Empty : RecordFactsText.CountAndRange(_snapshot);
+
+    /// <summary>"Night 4 · Morning 61 · Afternoon 12 · Evening 7" — all four bands, in
+    /// fixed order, zeros included.</summary>
+    public string FactsDayParts => _snapshot is null ? string.Empty : RecordFactsText.DayParts(_snapshot);
+
+    /// <summary>"Lowest 3.1 · Highest 22.4 · Latest 14.2 on 19 Aug", for the records that
+    /// carry numbers.</summary>
+    public string FactsValues => _snapshot is null ? string.Empty : RecordFactsText.Values(_snapshot);
+    public bool HasFactsValues => FactsValues.Length > 0;
+
+    /// <summary>"308 given · 11 skipped · 6 not recorded" — medication only.</summary>
+    public string FactsDoses => _snapshot is null ? string.Empty : RecordFactsText.Doses(_snapshot);
+    public bool HasFactsDoses => FactsDoses.Length > 0;
+
+    /// <summary>Nothing in the range. Stated plainly and left alone — an empty stretch is
+    /// never framed as a failure to engage (AI/app-voice.md §11).</summary>
+    public string FactsNothing => _snapshot is null ? string.Empty : RecordFactsText.Nothing(_snapshot);
+    public bool ShowFactsNothing => _snapshot is not null && !_snapshot.HasAny;
+
+    // ── Section 2: the picker ────────────────────────────────────────────────
+
+    /// <summary>The heading the picker sits under, now that it is no longer the whole
+    /// sheet.</summary>
+    public string PickerHeading => LocalizationManager.Instance.GetString("Today_PickerShowElse");
 
     /// <summary>Every record a card can hold, in catalog order. Rebuilt per open —
     /// there are seven of them and the selection marks change every time.</summary>
@@ -108,28 +168,60 @@ public class TodayCardSheetViewModel : BaseViewModel
             .Select(meta => new TodayCardOption(meta.Id, ((TodayCardKey)meta.Id) == mine, ((TodayCardKey)meta.Id) == theirs))
             .ToList();
 
-        // The owner's own trackers, after the shipped records. The LIVE list, not the
-        // archived-inclusive one: a retired tracker is not something to newly put on
-        // Today, even though a card already pointing at one keeps working.
-        if (pet is not null && pet.Id != 0)
+        // The archived-inclusive list, read once and used twice. The picker offers only
+        // the LIVE ones — a retired tracker is not something to newly put on Today — but
+        // a card already pointing at a retired one must still NAME it: retiring means
+        // "stop asking", not "forget" (AI/domain.md).
+        var definitions = pet is not null && pet.Id != 0
+            ? await _custom.GetAllForPetAsync(pet.Id)
+            : new List<CustomTracker>();
+
+        foreach (var c in definitions.Where(c => !c.IsArchived))
         {
-            foreach (var c in await _custom.GetForPetAsync(pet.Id))
-            {
-                var key = TodayCardKey.Custom(c.Id);
-                rows.Add(new TodayCardOption(
-                    key, key == mine, key == theirs,
-                    customName: c.Name,
-                    customIcon: CustomTrackerVisuals.For(c).Icon));
-            }
+            var key = TodayCardKey.Custom(c.Id);
+            rows.Add(new TodayCardOption(
+                key, key == mine, key == theirs,
+                customName: c.Name,
+                customIcon: CustomTrackerVisuals.For(c).Icon));
         }
+
+        var name = mine.IsCustom
+            ? definitions.FirstOrDefault(c => c.Id == mine.CustomId)?.Name
+                ?? LocalizationManager.Instance.GetString("Today_CardCustom")
+            : TodayCardCatalog.RecordName(mine.BuiltIn!.Value);
+
+        // The stretch ends TODAY and includes it — the same convention the
+        // Constellation's range uses, so the two never disagree by a day.
+        var to = DateTime.Now.Date;
+        var snapshot = await _facts.GetAsync(pet, mine, to.AddDays(-(FactsDays - 1)), to);
+
+        _recordName = name;
+        _snapshot = snapshot;
 
         Options.Clear();
         foreach (var row in rows)
             Options.Add(row);
 
+        RefreshFacts();
+        IsPresented = true;
+    }
+
+    /// <summary>Re-raise every displayed string. The getters do the work, so there is
+    /// nothing to recompute — same shape as <c>TodayCardItem.RefreshLocalized</c>.</summary>
+    private void RefreshFacts()
+    {
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
-        IsPresented = true;
+        OnPropertyChanged(nameof(HasFacts));
+        OnPropertyChanged(nameof(FactsCount));
+        OnPropertyChanged(nameof(FactsDayParts));
+        OnPropertyChanged(nameof(FactsValues));
+        OnPropertyChanged(nameof(HasFactsValues));
+        OnPropertyChanged(nameof(FactsDoses));
+        OnPropertyChanged(nameof(HasFactsDoses));
+        OnPropertyChanged(nameof(FactsNothing));
+        OnPropertyChanged(nameof(ShowFactsNothing));
+        OnPropertyChanged(nameof(PickerHeading));
     }
 
     private async Task PickAsync(TodayCardOption? option)

@@ -2,11 +2,19 @@
 <!--
     TodayCardSheetView
     ─────────────────────────────────────────────────────────
-    "What matters most today?" — tap a Today card, pick the record it should show.
+    Tap a Today card: what this record says over the last 90 days, then what else
+    could sit here.
 
-    A question, not a settings screen: one screenful of records, no cadences, no
-    switches, no ordering. Choosing here changes only what Today displays; what the
-    Journal asks for is the care plan's business, on the Manage page.
+    Two sections. The facts come first because they are the reason to tap a card more
+    than once — reconfiguring is done once and never again. Everything in the facts
+    block is one weight, one colour, one size: no arrow, no tint, no emphasis, and the
+    four day-part bands always all four in fixed order, zeros included. Anything that
+    ranked or highlighted one of them would be the app naming the finding instead of
+    the owner seeing it (Data/Models/RecordFacts.cs).
+
+    The picker below is unchanged: one screenful of records, no cadences, no switches,
+    no ordering. Choosing here changes only what Today displays; what the Journal asks
+    for is the care plan's business, on the Manage page.
 
     BindingContext is the TodayCardSheetViewModel (set by MainPage).
 -->
@@ -25,11 +33,52 @@
                                 DismissCommand="{Binding DismissCommand}">
         <controls:FelovaBottomSheet.SheetContent>
 
+            <VerticalStackLayout Spacing="14" Padding="0,2,0,0">
+
+            <!-- ── Facts about the record ───────────────────────────────────
+                 Counts and dates, stated flat. InkSecondary throughout: a colour
+                 here would read as a verdict on a number the app cannot judge. -->
+            <VerticalStackLayout Spacing="5" IsVisible="{Binding HasFacts}">
+                <Label Text="{Binding FactsCount}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="13.5"
+                       TextColor="{StaticResource Ink}"/>
+                <Label Text="{Binding FactsDayParts}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="12.5"
+                       TextColor="{StaticResource InkSecondary}"/>
+                <Label Text="{Binding FactsValues}"
+                       IsVisible="{Binding HasFactsValues}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="12.5"
+                       TextColor="{StaticResource InkSecondary}"/>
+                <Label Text="{Binding FactsDoses}"
+                       IsVisible="{Binding HasFactsDoses}"
+                       FontFamily="{StaticResource FontSans}"
+                       FontSize="12.5"
+                       TextColor="{StaticResource InkSecondary}"/>
+            </VerticalStackLayout>
+
+            <!-- Nothing in the range. Says so and stops. -->
+            <Label Text="{Binding FactsNothing}"
+                   IsVisible="{Binding ShowFactsNothing}"
+                   FontFamily="{StaticResource FontSans}"
+                   FontSize="12.5"
+                   TextColor="{StaticResource InkSecondary}"/>
+
+            <BoxView HeightRequest="1"
+                     BackgroundColor="{StaticResource GlassLine}"
+                     Margin="0,2"/>
+
+            <Label Text="{Binding PickerHeading}"
+                   FontFamily="{StaticResource FontSans}"
+                   FontSize="12"
+                   TextColor="{StaticResource InkTertiary}"/>
+
             <!-- BindableLayout, not CollectionView: seven fixed rows with no scrolling
                  (see AddTrackerSheetView for why a RecyclerView misbehaves in an
                  auto-sized sheet). -->
             <VerticalStackLayout Spacing="9"
-                                 Padding="0,2,0,0"
                                  BindableLayout.ItemsSource="{Binding Options}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vms:TodayCardOption">
@@ -89,6 +138,8 @@
                         </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
             </VerticalStackLayout>
 
         </controls:FelovaBottomSheet.SheetContent>

@@ -158,6 +158,17 @@
     <Compile Include="..\Animal Diary App\Data\Services\Import\ImportValidator.cs" Link="Import\ImportValidator.cs" />
   </ItemGroup>
 
+  <!-- Facts about the record. The arithmetic is linked, the WORDING is not: RecordFactsText
+       resolves AppStrings, and this project ships no resx. What is worth proving here is the
+       shape — the four day bands are half-open and total to the count, a one-per-day store
+       counts DAYS rather than rows, an empty range is a zero-count snapshot rather than null,
+       and nothing anywhere computes a mean. Every one of those is silent when wrong: the panel
+       still renders, with numbers that quietly say something the owner never wrote down.
+       TodayCards is already linked above and carries TodayCardKey. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\RecordFacts.cs" Link="Facts\RecordFacts.cs" />
+  </ItemGroup>
+
   <!-- The treatment ledger's diff: what a medication edit records, and — the half that
        actually needed a test — what it must NOT record. "An unchanged save writes no row"
        and "a rename plus a dose change writes two" are invisible failures on a device:
