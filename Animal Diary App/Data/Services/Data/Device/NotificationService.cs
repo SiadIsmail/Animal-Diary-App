@@ -21,6 +21,7 @@ public class NotificationService : INotificationService
     // necessary; never "fix" importance in place and expect it to take effect.
     private const string MedicationChannelId = "felova.medication.v1";
     private const string DailyCareChannelId = "felova.dailycare.v1";
+    private const string AppointmentChannelId = "felova.appointment.v1";
 
     public async Task<bool> RequestNotificationPermissionAsync(bool requestExactAlarm = false)
     {
@@ -96,6 +97,17 @@ public class NotificationService : INotificationService
                     EnableSound = false,
                     EnableVibration = false,
                 },
+                new()
+                {
+                    Id = AppointmentChannelId,
+                    Name = L.GetString("Notif_ChannelAppointmentName"),
+                    Description = L.GetString("Notif_ChannelAppointmentDescription"),
+                    // Low and silent like the daily nudge, but separately controllable:
+                    // silencing one must not silence the other.
+                    Importance = AndroidImportance.Low,
+                    EnableSound = false,
+                    EnableVibration = false,
+                },
             });
         }
         catch (Exception ex)
@@ -134,9 +146,12 @@ public class NotificationService : INotificationService
         };
 
 #if ANDROID
-        request.Android.ChannelId = content.Channel == NotificationChannelKind.DailyCare
-            ? DailyCareChannelId
-            : MedicationChannelId;
+        request.Android.ChannelId = content.Channel switch
+        {
+            NotificationChannelKind.DailyCare => DailyCareChannelId,
+            NotificationChannelKind.Appointment => AppointmentChannelId,
+            _ => MedicationChannelId,
+        };
 #endif
 
         try

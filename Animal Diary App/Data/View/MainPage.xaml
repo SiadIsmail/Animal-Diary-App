@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:Animal_Diary_App.Helpers"
@@ -125,6 +125,35 @@
                             </Label.GestureRecognizers>
                         </Label>
                     </VerticalStackLayout>
+                </Border>
+
+                <!-- 1c ── The visit that is near ──
+                     The appointment lives quietly on Care and takes over Today only
+                     when it is close: same slot and same GlassCard as the notice above,
+                     visible only inside the last seven days.
+
+                     No countdown, no urgency, and no colour change as it approaches —
+                     a visit does not become more important on the Tuesday than it was
+                     on the Friday, and pretending otherwise would be the app adding
+                     alarm the owner did not ask for (AI/app-voice.md §8). -->
+                <Border Style="{StaticResource GlassCard}"
+                        IsVisible="{Binding MainPageVM.HasNearVisit}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding MainPageVM.OpenAppointmentCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="{Binding MainPageVM.NearVisitLine}"
+                                   Style="{StaticResource SerifHeading}"/>
+                            <Label Text="{loc:Translate Today_VisitSummaryReady}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="13"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
+                        <Label Grid.Column="1" Text="→"
+                               FontSize="20" TextColor="{StaticResource TealDeep}"
+                               VerticalOptions="Center"/>
+                    </Grid>
                 </Border>
 
                 <!-- 2 ── Active pet hero: precise care ring + avatar ── -->

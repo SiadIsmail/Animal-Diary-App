@@ -56,6 +56,30 @@
 
                     <VerticalStackLayout Spacing="8">
                         <Label Text="{loc:Translate Export_PeriodLabel}" Style="{StaticResource FieldLabel}"/>
+
+                        <!-- The since-your-last-visit stretch, when the appointment page
+                             opened this sheet. Its own chip because that window matches
+                             none of the three presets, and a sheet opening with nothing
+                             lit reads as broken. Hidden entirely otherwise. -->
+                        <Border Style="{StaticResource PeriodChip}"
+                                IsVisible="{Binding HasSinceVisit}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSinceVisitSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SelectSinceVisitCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{Binding SinceVisitLabel}" Style="{StaticResource PeriodChipLabel}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding IsSinceVisitSelected}" Value="True">
+                                        <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
 
                             <Border Style="{StaticResource PeriodChip}">

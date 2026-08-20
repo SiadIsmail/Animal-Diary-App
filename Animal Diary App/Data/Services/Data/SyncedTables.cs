@@ -184,6 +184,7 @@ public static class SyncedTables
         // A note to self about a conversation, not a record of the animal. Its only
         // parent is the pet — a question is deliberately never linked to a visit.
         new SyncedTable<VetQuestion>(PetScope.ByPetId),
+        new SyncedTable<VetVisit>(PetScope.ByPetId),
     };
 
     /// <summary>Children before parents — the order any delete cascade must use.</summary>

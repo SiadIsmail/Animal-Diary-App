@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.View;
+namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
@@ -80,6 +80,7 @@ public partial class MainPage : ContentPage
         // The owner changed what a stat card shows: re-read both (a pick can swap
         // the pair, so neither card can be refreshed on its own).
         vm.TodayCardSheetVM.Changed += OnStatCardsChanged;
+        vm.MainPageVM.AppointmentRequested += OnAppointmentRequested;
 
         await ReloadDataAsync();
     }
@@ -97,6 +98,11 @@ public partial class MainPage : ContentPage
             // database, so it follows the hour rolling past noon or 6pm.
             vm.MainPageVM.RefreshClockDerived();
             await vm.MainPageVM.RefreshReminderHealthAsync();
+
+            // Always, for the same reason: "within seven days" moves by itself at
+            // midnight, so a cached answer would leave the band up a day too long or
+            // miss the day it should appear.
+            await vm.MainPageVM.RefreshNearVisitAsync();
 
             // Nothing has changed since this page last loaded, and that was moments
             // ago: the queries below would repaint identical pixels. Keyed on the
@@ -203,7 +209,22 @@ public partial class MainPage : ContentPage
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
         vm.TodayCardSheetVM.Changed -= OnStatCardsChanged;
+        vm.MainPageVM.AppointmentRequested -= OnAppointmentRequested;
         vm.DevVM.ImportRequested -= OnImportRequested;
+    }
+
+    // The band on Today is a door to the appointment page. The VM raises; the page
+    // pushes — the same split every other pushed page here uses.
+    private async void OnAppointmentRequested()
+    {
+        try
+        {
+            await Navigation.PushAsync(new AppointmentPage(vm));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainPage] appointment push failed: {ex}");
+        }
     }
 
     private void OnResetCompleted(object? sender, EventArgs e)

@@ -652,8 +652,8 @@
   <data name="Notif_MoodCheckInBody" xml:space="preserve"><value>Du kannst festhalten, wie es {0} geht, wenn du einen Moment hast.</value></data>
   <data name="Notif_WeightCheckInTitle" xml:space="preserve"><value>{0}s Wiegen</value></data>
   <data name="Notif_WeightCheckInBody" xml:space="preserve"><value>Ein kurzes Wiegen für {0}, wann immer es dir passt.</value></data>
-  <data name="Notif_AppointmentTitle" xml:space="preserve"><value>Bald für {0}</value></data>
-  <data name="Notif_AppointmentBody" xml:space="preserve"><value>{0}s {1} steht an.</value></data>
+  <data name="Notif_AppointmentTitle" xml:space="preserve"><value>Tierarztbesuch morgen</value></data>
+  <data name="Notif_AppointmentBody" xml:space="preserve"><value>{0}, {1}. Deine Zusammenfassung ist fertig.</value></data>
   <data name="Settings_ResetDeviceOnly" xml:space="preserve"><value>Nur dieses Gerät. Backup behalten.</value></data>
   <data name="Settings_ResetEverything" xml:space="preserve"><value>Alles, auch mein Cloud-Backup</value></data>
   <data name="Cloud_RowTitle" xml:space="preserve"><value>Cloud-Funktionen</value></data>
@@ -983,4 +983,56 @@
   <data name="Vet_QuestionOpenHeading" xml:space="preserve"><value>Steht schon auf deiner Liste</value></data>
   <data name="Vet_QuestionSave" xml:space="preserve"><value>Notieren</value></data>
   <data name="Vet_QuestionToast" xml:space="preserve"><value>Für den nächsten Besuch notiert.</value></data>
+  <!-- ── Tierarztbesuche. Nur Fakten: kein Countdown, keine Dringlichkeit,
+       kein Wort, das lauter wird, je näher der Termin rückt (§8). -->
+  <data name="Pets_VetVisits" xml:space="preserve"><value>Tierarztbesuche</value></data>
+  <data name="Pets_VetVisitsSubtitle" xml:space="preserve"><value>Was ansteht, und was sich seit dem letzten Mal geändert hat</value></data>
+  <data name="Today_VisitLine" xml:space="preserve"><value>{0} hat am {1} einen Tierarzttermin</value></data>
+  <data name="Today_VisitLineWho" xml:space="preserve"><value>{0} ist am {2} bei {1}</value></data>
+  <data name="Today_VisitSummaryReady" xml:space="preserve"><value>Deine Zusammenfassung ist fertig.</value></data>
+  <data name="Vet_VisitsTitle" xml:space="preserve"><value>Tierarztbesuche</value></data>
+  <data name="Vet_VisitsSub" xml:space="preserve"><value>Für {0}</value></data>
+  <data name="Vet_EmptyTitle" xml:space="preserve"><value>Noch keine Besuche</value></data>
+  <data name="Vet_EmptyBody" xml:space="preserve"><value>Trag einen Besuch ein, und Felova stellt alles, was du seit dem letzten Mal festgehalten hast, dafür auf eine Seite.</value></data>
+  <data name="Vet_AddVisit" xml:space="preserve"><value>Besuch eintragen</value></data>
+  <data name="Vet_PastVisits" xml:space="preserve"><value>FRÜHERE BESUCHE</value></data>
+  <data name="Vet_HowDidItGo" xml:space="preserve"><value>Wie ist es gelaufen?</value></data>
+  <data name="Vet_SinceVisit" xml:space="preserve"><value>Seit dem letzten Besuch — {0}, {1} Tage</value></data>
+  <data name="Vet_SinceStart" xml:space="preserve"><value>Seit du angefangen hast, Dinge festzuhalten — {0}, {1} Tage</value></data>
+  <data name="Vet_WhatChanged" xml:space="preserve"><value>WAS SICH GEÄNDERT HAT</value></data>
+  <data name="Vet_NewSince" xml:space="preserve"><value>NEU SEIT DEM LETZTEN MAL</value></data>
+  <data name="Vet_NewRecord" xml:space="preserve"><value>{0} — festgehalten seit dem {1}</value></data>
+  <data name="Vet_WhatYouWrote" xml:space="preserve"><value>WAS DU FESTGEHALTEN HAST</value></data>
+  <data name="Vet_FullSummary" xml:space="preserve"><value>Vollständige Zusammenfassung</value></data>
+  <data name="Vet_QuestionsHeading" xml:space="preserve"><value>DEINE FRAGEN ({0})</value></data>
+  <data name="Vet_QuestionsEmpty" xml:space="preserve"><value>Alles, was du fragen willst, steht dann hier.</value></data>
+  <data name="Vet_QuestionAnswered" xml:space="preserve"><value>Als beantwortet markieren</value></data>
+  <!-- Das Behandlungsprotokoll, wie die Zusammenfassung es liest. Alter Wert,
+       neuer Wert, Datum — nie eine Bewertung. -->
+  <data name="Vet_LedgerStarted" xml:space="preserve"><value>Begonnen · {0}</value></data>
+  <data name="Vet_LedgerArchived" xml:space="preserve"><value>Stillgelegt</value></data>
+  <data name="Vet_LedgerRestored" xml:space="preserve"><value>Wieder in Gebrauch</value></data>
+  <data name="Vet_LedgerStopped" xml:space="preserve"><value>Abgesetzt</value></data>
+  <data name="Vet_LedgerChanged" xml:space="preserve"><value>Geändert</value></data>
+  <!-- Das Eintragen-Blatt. -->
+  <data name="Vet_VisitAddTitle" xml:space="preserve"><value>Besuch eintragen</value></data>
+  <data name="Vet_VisitEditTitle" xml:space="preserve"><value>Tierarztbesuch</value></data>
+  <data name="Vet_VisitNoteTitle" xml:space="preserve"><value>Wie ist es gelaufen?</value></data>
+  <data name="Vet_VisitSub" xml:space="preserve"><value>Für {0}</value></data>
+  <data name="Vet_VisitDayLabel" xml:space="preserve"><value>TAG</value></data>
+  <data name="Vet_VisitTimeLabel" xml:space="preserve"><value>ICH KENNE DIE UHRZEIT</value></data>
+  <data name="Vet_VisitTimeHint" xml:space="preserve"><value>Lass das aus, wenn du nur den Tag kennst.</value></data>
+  <data name="Vet_VisitPracticeLabel" xml:space="preserve"><value>PRAXIS</value></data>
+  <data name="Vet_VisitPracticePlaceholder" xml:space="preserve"><value>Optional</value></data>
+  <data name="Vet_VisitVetLabel" xml:space="preserve"><value>TIERARZT ODER TIERÄRZTIN</value></data>
+  <data name="Vet_VisitVetPlaceholder" xml:space="preserve"><value>Optional</value></data>
+  <data name="Vet_VisitNoteLabel" xml:space="preserve"><value>WAS GESAGT WURDE</value></data>
+  <data name="Vet_VisitNotePlaceholder" xml:space="preserve"><value>In deinen eigenen Worten</value></data>
+  <data name="Vet_VisitDelete" xml:space="preserve"><value>Diesen Besuch entfernen</value></data>
+  <data name="Vet_VisitToastSaved" xml:space="preserve"><value>Besuch gespeichert.</value></data>
+  <data name="Vet_VisitToastDeleted" xml:space="preserve"><value>Besuch entfernt.</value></data>
+  <data name="Export_SinceVisit" xml:space="preserve"><value>Seit dem letzten Besuch · {0} Tage</value></data>
+  <data name="Notif_ChannelAppointmentName" xml:space="preserve"><value>Tierarztbesuche</value></data>
+  <data name="Notif_ChannelAppointmentDescription" xml:space="preserve"><value>Eine leise Erinnerung am Abend vor einem Besuch.</value></data>
+  <data name="Notif_AppointmentBodyNoTime" xml:space="preserve"><value>{0}. Deine Zusammenfassung ist fertig.</value></data>
 </root>

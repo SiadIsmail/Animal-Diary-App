@@ -42,6 +42,13 @@ public class MainViewModel
     /// (see Data/Models/VetQuestion.cs).</summary>
     public VetQuestionSheetViewModel VetQuestionSheetVM { get; }
 
+    /// <summary>Add or edit one vet visit.</summary>
+    public VetVisitSheetViewModel VetVisitSheetVM { get; }
+
+    /// <summary>The appointment page — the visit as a STATE, not a fourth tab
+    /// (see Data/Models/VetVisit.cs).</summary>
+    public AppointmentViewModel AppointmentVM { get; }
+
     // ── Reusable condition-setup sheets ("one menu, two doors": onboarding + Manage) ──
     public DiabetesSetupSheetViewModel DiabetesSetupVM { get; }
     public CkdSetupSheetViewModel CkdSetupVM { get; }
@@ -132,6 +139,8 @@ public class MainViewModel
  AppetiteSheetViewModel appetiteSheetVM,
  SeizureSheetViewModel seizureSheetVM,
  VetQuestionSheetViewModel vetQuestionSheetVM,
+ VetVisitSheetViewModel vetVisitSheetVM,
+ AppointmentViewModel appointmentVM,
  WaterSheetViewModel waterSheetVM,
  TodayCardSheetViewModel todayCardSheetVM,
  DiabetesSetupSheetViewModel diabetesSetupVM,
@@ -174,6 +183,8 @@ public class MainViewModel
         WaterSheetVM = waterSheetVM;
         TodayCardSheetVM = todayCardSheetVM;
         VetQuestionSheetVM = vetQuestionSheetVM;
+        VetVisitSheetVM = vetVisitSheetVM;
+        AppointmentVM = appointmentVM;
         DiabetesSetupVM = diabetesSetupVM;
         CkdSetupVM = ckdSetupVM;
         EpilepsySetupVM = epilepsySetupVM;

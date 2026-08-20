@@ -84,8 +84,23 @@ public static class NotificationMessages
     public static string WeightCheckInTitle(string petName) => L.Format("Notif_WeightCheckInTitle", SafePet(petName));
     public static string WeightCheckInBody(string petName) => L.Format("Notif_WeightCheckInBody", SafePet(petName));
 
-    public static string AppointmentTitle(string petName) => L.Format("Notif_AppointmentTitle", SafePet(petName));
-    public static string AppointmentBody(string petName, string what) => L.Format("Notif_AppointmentBody", SafePet(petName), what);
+    // ── The one reminder before a vet visit ──────────────────────────────
+    //
+    // Verbatim the approved pattern in AI/app-voice.md §8: it names the day, the pet
+    // and the time, says the summary is ready, and stops. No urgency word, nothing
+    // about the animal's condition, and no count of anything.
+
+    /// <summary>"Vet visit tomorrow". No pet name: the body carries it, and a title
+    /// that reads as a fact about the day is calmer on a lock screen than one that
+    /// opens with a name.</summary>
+    public static string AppointmentTitle() => L.GetString("Notif_AppointmentTitle");
+
+    /// <summary>"Charly, 9:30. Your summary is ready." — or without the time when the
+    /// owner only knew the day. The app never fabricates the missing half.</summary>
+    public static string AppointmentBody(string petName, TimeSpan? time)
+        => time is TimeSpan t
+            ? L.Format("Notif_AppointmentBody", SafePet(petName), t.ToString(@"hh\:mm"))
+            : L.Format("Notif_AppointmentBodyNoTime", SafePet(petName));
 
     private static string SafePet(string petName)
         => string.IsNullOrWhiteSpace(petName) ? L.GetString("Notif_SafePet") : petName.Trim();

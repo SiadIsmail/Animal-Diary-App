@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    AppointmentPage.xaml
+    ─────────────────────────────────────────────────────────
+    The vet visit as a thing the app knows about, reached from the Care page's
+    "Vet visits" row and from the band on Today.
+
+    Three states, one scrolling page:
+      B  an upcoming visit  → the "since your last visit" summary
+      C  the last visit has happened and nothing was written down → "How did it go?"
+      A  neither            → the past list, or a first-run empty state
+
+    EVERY NUMBER HERE IS A FACT ABOUT THE RECORD. Counts, dates, the owner's own
+    values, and the words they typed. One weight, one colour, no arrows, no tints
+    that encode a verdict — and the four day-part bands always all four, in fixed
+    order, zeros included. There is deliberately no before/after pair of counts
+    around a treatment change. See Data/Models/RecordFacts.cs.
+
+    BindingContext is the MainViewModel; content binds through AppointmentVM.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
+             x:DataType="vms:MainViewModel"
+             x:Class="Animal_Diary_App.Data.View.AppointmentPage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
+             BackgroundColor="#C4E6E3">
+
+    <ContentPage.Resources>
+        <Style x:Key="SectionHead" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="CharacterSpacing" Value="1.4"/>
+            <Setter Property="TextColor" Value="{StaticResource InkTertiary}"/>
+        </Style>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 19,15,17,20"/>
+            <Setter Property="Padding" Value="16,15"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid>
+
+        <controls:WaterBackground/>
+
+        <ScrollView>
+            <VerticalStackLayout Padding="22,20,22,44" Spacing="14">
+
+                <!-- Subhead: back + title -->
+                <Grid ColumnDefinitions="40,*,40" ColumnSpacing="10" Margin="0,0,0,4">
+                    <Border Grid.Column="0"
+                            WidthRequest="40" HeightRequest="40"
+                            BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 20">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnBackClicked"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="‹" FontSize="26"
+                               TextColor="{StaticResource InkSecondary}"
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                        <Label Text="{Binding AppointmentVM.Title}"
+                               FontFamily="{StaticResource FontSerif}"
+                               FontSize="21"
+                               TextColor="{StaticResource Ink}"
+                               HorizontalTextAlignment="Center"/>
+                        <Label Text="{Binding AppointmentVM.Subtitle}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="11"
+                               TextColor="{StaticResource InkTertiary}"
+                               HorizontalTextAlignment="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- ═══ First run ═══
+                     Says what the screen is for and stops. Never framed as a failure
+                     to engage (AI/app-voice.md §11). -->
+                <VerticalStackLayout Spacing="8"
+                                     IsVisible="{Binding AppointmentVM.IsEmpty}"
+                                     Margin="0,20,0,0">
+                    <Label Text="{loc:Translate Vet_EmptyTitle}"
+                           FontFamily="{StaticResource FontSerif}"
+                           FontSize="18"
+                           TextColor="{StaticResource Ink}"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Text="{loc:Translate Vet_EmptyBody}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="13.5"
+                           LineHeight="1.4"
+                           TextColor="{StaticResource InkSecondary}"
+                           HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+
+                <!-- ═══ STATE C ═══
+                     The last visit happened and nothing has been written down about
+                     it. Offered plainly, once — no nagging, no repeat. -->
+                <Border Style="{StaticResource Card}"
+                        IsVisible="{Binding AppointmentVM.ShowNotePrompt}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding AppointmentVM.WriteNoteCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="{loc:Translate Vet_HowDidItGo}"
+                                   FontFamily="{StaticResource FontSerif}"
+                                   FontSize="16"
+                                   TextColor="{StaticResource Ink}"/>
+                            <Label Text="{Binding AppointmentVM.NotePromptWhen}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12.5"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
+                        <Label Grid.Column="1" Text="›"
+                               FontSize="22" TextColor="{StaticResource InkTertiary}"
+                               VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- ═══ STATE B ═══ the next visit, and the summary for it ═══ -->
+                <VerticalStackLayout Spacing="14" IsVisible="{Binding AppointmentVM.HasNext}">
+
+                    <Border Style="{StaticResource Card}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding AppointmentVM.EditNextCommand}"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout Spacing="3">
+                            <Label Text="{Binding AppointmentVM.NextHeadline}"
+                                   FontFamily="{StaticResource FontSerif}"
+                                   FontSize="17"
+                                   TextColor="{StaticResource Ink}"/>
+                            <Label Text="{Binding AppointmentVM.SinceLine}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12.5"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- WHAT CHANGED — the treatment ledger over the window,
+                         chronological. Each row is what the stored row said at the
+                         time, so a since-renamed medication still reads correctly. -->
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding AppointmentVM.HasChanges}">
+                        <Label Text="{loc:Translate Vet_WhatChanged}" Style="{StaticResource SectionHead}"/>
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="9"
+                                                 BindableLayout.ItemsSource="{Binding AppointmentVM.Changes}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vms:LedgerLine">
+                                        <Grid ColumnDefinitions="66,*" ColumnSpacing="10">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding Day}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12.5"
+                                                   TextColor="{StaticResource InkTertiary}"/>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="1">
+                                                <Label Text="{Binding Name}"
+                                                       FontFamily="{StaticResource FontSans}"
+                                                       FontSize="13.5"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{StaticResource Ink}"/>
+                                                <Label Text="{Binding What}"
+                                                       FontFamily="{StaticResource FontSans}"
+                                                       FontSize="13"
+                                                       TextColor="{StaticResource InkSecondary}"/>
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- NEW SINCE LAST TIME — a fact about the DIARY: these are the
+                         records whose first-ever entry falls inside the window. It is
+                         never a claim about why the owner started writing them down. -->
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding AppointmentVM.HasNewRecords}">
+                        <Label Text="{loc:Translate Vet_NewSince}" Style="{StaticResource SectionHead}"/>
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="6"
+                                                 BindableLayout.ItemsSource="{Binding AppointmentVM.NewRecords}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Label Text="{Binding .}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="13"
+                                               LineHeight="1.35"
+                                               TextColor="{StaticResource InkSecondary}"/>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- WHAT YOU WROTE DOWN — every record with data in the window,
+                         same order, same three lines, every time. Including the ones
+                         with nothing interesting in them: dropping the quiet ones
+                         would be the app deciding which record matters. -->
+                    <VerticalStackLayout Spacing="8" IsVisible="{Binding AppointmentVM.HasRecords}">
+                        <Label Text="{loc:Translate Vet_WhatYouWrote}" Style="{StaticResource SectionHead}"/>
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="13"
+                                                 BindableLayout.ItemsSource="{Binding AppointmentVM.Records}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vms:SummaryLine">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{Binding Name}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="13.5"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource Ink}"/>
+                                            <Label Text="{Binding Count}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12.5"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                            <Label Text="{Binding DayParts}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12.5"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                            <Label Text="{Binding Values}"
+                                                   IsVisible="{Binding HasValues}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12.5"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                            <Label Text="{Binding Doses}"
+                                                   IsVisible="{Binding HasDoses}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12.5"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                        </VerticalStackLayout>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Full summary → the existing export sheet, pre-filled with this
+                         window. There is no second PDF path. -->
+                    <Border BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 17,14,15,18">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding AppointmentVM.FullSummaryCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Vet_FullSummary}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,15"/>
+                    </Border>
+
+                </VerticalStackLayout>
+
+                <!-- ═══ YOUR QUESTIONS ═══
+                     Shown in every state: questions accumulate BETWEEN visits, and a
+                     list you can only see once an appointment is booked is a list you
+                     stop adding to. Tap the tick to mark one answered. -->
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0"
+                               Text="{Binding AppointmentVM.QuestionsHeading}"
+                               Style="{StaticResource SectionHead}"
+                               VerticalOptions="Center"/>
+                        <Border Grid.Column="1"
+                                WidthRequest="30" HeightRequest="30"
+                                BackgroundColor="{StaticResource TealTint}"
+                                StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                                SemanticProperties.Description="{loc:Translate Vet_QuestionRow}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding AppointmentVM.AddQuestionCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="＋" FontSize="15"
+                                   TextColor="{StaticResource TealDeep}"
+                                   HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                    </Grid>
+
+                    <Border Style="{StaticResource Card}" IsVisible="{Binding AppointmentVM.HasQuestions}">
+                        <VerticalStackLayout Spacing="10"
+                                             BindableLayout.ItemsSource="{Binding AppointmentVM.Questions}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vms:QuestionLine">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="11">
+                                        <Border Grid.Column="0"
+                                                WidthRequest="26" HeightRequest="26"
+                                                BackgroundColor="Transparent"
+                                                Stroke="{StaticResource TealLine}"
+                                                StrokeThickness="1.5"
+                                                StrokeShape="RoundRectangle 9"
+                                                VerticalOptions="Start"
+                                                SemanticProperties.Description="{loc:Translate Vet_QuestionAnswered}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AppointmentVM.AnswerQuestionCommand}"
+                                                    CommandParameter="{Binding .}"/>
+                                            </Border.GestureRecognizers>
+                                            <Label Text="✓" FontSize="13"
+                                                   TextColor="{StaticResource TealLine}"
+                                                   HorizontalOptions="Center" VerticalOptions="Center"/>
+                                        </Border>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Text}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="13.5"
+                                               LineHeight="1.35"
+                                               TextColor="{StaticResource Ink}"
+                                               VerticalOptions="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="{loc:Translate Vet_QuestionsEmpty}"
+                           IsVisible="{Binding AppointmentVM.HasQuestions, Converter={StaticResource InvertedBoolConverter}}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12.5"
+                           LineHeight="1.35"
+                           TextColor="{StaticResource InkSecondary}"/>
+                </VerticalStackLayout>
+
+                <!-- ═══ STATE A ═══ the past, newest first ═══ -->
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding AppointmentVM.HasPastVisits}">
+                    <Label Text="{loc:Translate Vet_PastVisits}" Style="{StaticResource SectionHead}"/>
+                    <VerticalStackLayout Spacing="9"
+                                         BindableLayout.ItemsSource="{Binding AppointmentVM.PastVisits}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:VisitLine">
+                                <Border Style="{StaticResource Card}" Padding="14,13">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AppointmentVM.OpenVisitCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding When}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="13.5"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource Ink}"/>
+                                        <Label Text="{Binding Where}"
+                                               IsVisible="{Binding HasWhere}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="12.5"
+                                               TextColor="{StaticResource InkSecondary}"/>
+                                        <Label Text="{Binding Note}"
+                                               IsVisible="{Binding HasNote}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="12.5"
+                                               LineHeight="1.35"
+                                               TextColor="{StaticResource InkSecondary}"
+                                               Margin="0,3,0,0"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Always available: a visit can be added whatever state the page is in. -->
+                <Border BackgroundColor="{StaticResource Glass}"
+                        Stroke="{StaticResource GlassLine}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 17,14,15,18"
+                        Margin="0,4,0,0">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding AppointmentVM.AddVisitCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{loc:Translate Vet_AddVisit}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource TealDeep}"
+                           HorizontalTextAlignment="Center"
+                           Padding="0,15"/>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Shared confirmation/undo pill. Declared BEFORE the sheets so they render
+             above it — a toast raised while a sheet is open would otherwise sit behind
+             the scrim, which is why every mutation here closes its sheet first. -->
+        <controls:UndoToast x:Name="Toast" Margin="0,0,0,28"/>
+
+        <!-- Overlay sheets. Declaration order is z-order. -->
+        <controls:SheetHost BindingContext="{Binding VetVisitSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:VetVisitSheetView}"/>
+        <controls:SheetHost BindingContext="{Binding VetQuestionSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:VetQuestionSheetView}"/>
+
+    </Grid>
+</ContentPage>

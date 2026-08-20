@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Cloud;
@@ -19,6 +19,7 @@ public partial class App : Application
 	private readonly ActivePetService _activePetService;
 	private readonly MedicationReminderScheduler _reminderScheduler;
 	private readonly DailyCareReminderScheduler _dailyReminderScheduler;
+	private readonly AppointmentReminderScheduler _appointmentReminderScheduler;
 	private readonly Animal_Diary_App.Data.Services.Data.Device.INotificationService _notifications;
 	private readonly SettingsService _settingsService;
 	private readonly IAnalyticsService _analytics;
@@ -29,7 +30,7 @@ public partial class App : Application
 	private readonly MedicationDoseLogService _doseLogs;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, ICloudAuthService cloudAuth, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, ICloudReferralService referrals, MedicationDoseLogService doseLogs, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, AppointmentReminderScheduler appointmentReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, ICloudAuthService cloudAuth, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, ICloudReferralService referrals, MedicationDoseLogService doseLogs, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -38,6 +39,7 @@ public partial class App : Application
 		_activePetService = activePetService;
 		_reminderScheduler = reminderScheduler;
 		_dailyReminderScheduler = dailyReminderScheduler;
+		_appointmentReminderScheduler = appointmentReminderScheduler;
 		_notifications = notifications;
 		_settingsService = settingsService;
 		_analytics = analytics;
@@ -536,6 +538,10 @@ public partial class App : Application
 					await _reminderScheduler.CatchUpAndRefreshAsync(resendMissed: false);
 					// Arm/refresh today's daily care reminder for each pet (no-op when off).
 					await _dailyReminderScheduler.RefreshAsync();
+					// One notification the evening before a vet visit. A one-shot, so it
+					// is re-armed here like everything else — never a recurrence rule
+					// handed to the OS (AI/design-decisions.md).
+					await _appointmentReminderScheduler.RefreshAsync();
 				}
 				catch (Exception ex)
 				{
