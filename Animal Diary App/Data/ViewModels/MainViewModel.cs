@@ -49,6 +49,10 @@ public class MainViewModel
     /// (see Data/Models/VetVisit.cs).</summary>
     public AppointmentViewModel AppointmentVM { get; }
 
+    /// <summary>Today's look-back half: one block per record in the pet's care plan,
+    /// replacing the hardcoded mood ribbon and weight chart.</summary>
+    public TodayLookBackViewModel LookBackVM { get; }
+
     // ── Reusable condition-setup sheets ("one menu, two doors": onboarding + Manage) ──
     public DiabetesSetupSheetViewModel DiabetesSetupVM { get; }
     public CkdSetupSheetViewModel CkdSetupVM { get; }
@@ -141,6 +145,7 @@ public class MainViewModel
  VetQuestionSheetViewModel vetQuestionSheetVM,
  VetVisitSheetViewModel vetVisitSheetVM,
  AppointmentViewModel appointmentVM,
+ TodayLookBackViewModel lookBackVM,
  WaterSheetViewModel waterSheetVM,
  TodayCardSheetViewModel todayCardSheetVM,
  DiabetesSetupSheetViewModel diabetesSetupVM,
@@ -185,6 +190,7 @@ public class MainViewModel
         VetQuestionSheetVM = vetQuestionSheetVM;
         VetVisitSheetVM = vetVisitSheetVM;
         AppointmentVM = appointmentVM;
+        LookBackVM = lookBackVM;
         DiabetesSetupVM = diabetesSetupVM;
         CkdSetupVM = ckdSetupVM;
         EpilepsySetupVM = epilepsySetupVM;

@@ -55,18 +55,28 @@ public class RecordFactsService
     /// <summary>
     /// The facts for one record over <paramref name="from"/>..<paramref name="to"/>
     /// (inclusive, date-only).
+    /// </summary>
+    public async Task<RecordFacts> GetAsync(Pet? pet, TodayCardKey kind, DateTime from, DateTime to)
+        => (await GetSnapshotAsync(pet, kind, from, to)).Facts;
+
+    /// <summary>
+    /// The facts <b>and</b> the marks a surface can draw, from ONE pass over the store.
+    ///
+    /// <para>The two were always the same read — the facts path was already gathering
+    /// exactly these moments and handing them to the builder. A caller that wants both
+    /// (Today's look-back section) would otherwise scan every record twice.</para>
     ///
     /// <para>Never throws: a record whose store cannot be read yields the same
     /// zero-count snapshot as one that is genuinely empty, because the surfaces that
     /// show this have nothing useful to say about the difference.</para>
     /// </summary>
-    public async Task<RecordFacts> GetAsync(Pet? pet, TodayCardKey kind, DateTime from, DateTime to)
+    public async Task<RecordSnapshot> GetSnapshotAsync(Pet? pet, TodayCardKey kind, DateTime from, DateTime to)
     {
         from = from.Date;
         to = to.Date;
 
         if (pet is null || pet.Id == 0)
-            return RecordFacts.Empty(kind, from, to);
+            return RecordSnapshot.Empty(RecordFacts.Empty(kind, from, to));
 
         try
         {
@@ -82,13 +92,13 @@ public class RecordFactsService
                 TodayCardId.Water => await WaterAsync(pet.Id, kind, from, to),
                 TodayCardId.Seizure => await SeizureAsync(pet.Id, kind, from, to),
                 TodayCardId.Medication => await MedicationAsync(pet.Id, kind, from, to),
-                _ => RecordFacts.Empty(kind, from, to),
+                _ => RecordSnapshot.Empty(RecordFacts.Empty(kind, from, to)),
             };
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[RecordFacts] {kind} failed: {ex.Message}");
-            return RecordFacts.Empty(kind, from, to);
+            return RecordSnapshot.Empty(RecordFacts.Empty(kind, from, to));
         }
     }
 
@@ -98,48 +108,62 @@ public class RecordFactsService
     // pet per day, re-logging replaces it. A legacy row with no recorded time sits at
     // the start of its day, exactly as the Constellation places it: it still happened.
 
-    private async Task<RecordFacts> WeightAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
+    private async Task<RecordSnapshot> WeightAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
     {
         var rows = await _petEntries.GetPetEntriesByPetIdAndRangeAsync(petId, from, to);
-        return RecordFactsBuilder.Build(kind, from, to,
-            NoMoments,
-            rows.Where(e => e.Weight > 0)
-                .Select(e => new RecordMoment(At(e.Date, e.WeightTimeTicks), e.Weight)));
+        var measured = rows.Where(e => e.Weight > 0)
+            .Select(e => new RecordMoment(At(e.Date, e.WeightTimeTicks), e.Weight))
+            .ToList();
+
+        return new RecordSnapshot(
+            RecordFactsBuilder.Build(kind, from, to, NoMoments, measured),
+            measured, NoObservations, NoMoments);
     }
 
-    private async Task<RecordFacts> MoodAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
+    private async Task<RecordSnapshot> MoodAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
     {
-        var rows = await _petEntries.GetPetEntriesByPetIdAndRangeAsync(petId, from, to);
+        var all = await _petEntries.GetPetEntriesByPetIdAndRangeAsync(petId, from, to);
+        var rows = all.Where(e => e.MoodLevel > 0).ToList();
 
-        // No value: a mood is a word (see MoodLevel). Passing the stored 1–5 here would
-        // hand "Lowest 1 · Highest 4" to a surface that must never turn an observation
-        // into a number (AI/design-decisions.md, "Communication layer").
-        return RecordFactsBuilder.Build(kind, from, to,
+        // No value: a mood is a word (see MoodLevel). Passing the stored 1–5 into a
+        // RecordMoment would hand "Lowest 1 · Highest 4" to a surface that must never
+        // turn an observation into a number (AI/design-decisions.md, "Communication
+        // layer") — which is why the level travels in a RecordObservation instead, where
+        // nothing can take its minimum.
+        return new RecordSnapshot(
+            RecordFactsBuilder.Build(kind, from, to,
+                NoMoments,
+                rows.Select(e => new RecordMoment(At(e.Date, e.MoodTimeTicks), null))),
             NoMoments,
-            rows.Where(e => e.MoodLevel > 0)
-                .Select(e => new RecordMoment(At(e.Date, e.MoodTimeTicks), null)));
+            rows.Select(e => new RecordObservation(At(e.Date, e.MoodTimeTicks), e.MoodLevel)).ToList(),
+            NoMoments);
     }
 
     // ── Event stores ─────────────────────────────────────────────────────────
 
-    private async Task<RecordFacts> GlucoseAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
+    private async Task<RecordSnapshot> GlucoseAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
     {
         var rows = await _glucose.GetForRangeAsync(petId, from, to);
-        return RecordFactsBuilder.Build(kind, from, to,
-            rows.Select(g => new RecordMoment(g.Date.Date + g.Time, g.Value)),
-            NoMoments);
+        var measured = rows.Select(g => new RecordMoment(g.Date.Date + g.Time, g.Value)).ToList();
+
+        return new RecordSnapshot(
+            RecordFactsBuilder.Build(kind, from, to, measured, NoMoments),
+            measured, NoObservations, NoMoments);
     }
 
-    private async Task<RecordFacts> SeizureAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
+    private async Task<RecordSnapshot> SeizureAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
     {
         var rows = await _seizures.GetForRangeAsync(petId, from, to);
 
         // Duration is deliberately NOT the value. It is an attribute of the occurrence,
         // not the reading, and "Lowest 1 · Highest 6" minutes reads as a severity scale
-        // the app has no business implying.
-        return RecordFactsBuilder.Build(kind, from, to,
-            rows.Select(s => new RecordMoment(s.Date.Date + s.Time, null)),
-            NoMoments);
+        // the app has no business implying. So a seizure carries no number at all, and
+        // the only thing a surface can draw is WHEN it happened.
+        var events = rows.Select(s => new RecordMoment(s.Date.Date + s.Time, null)).ToList();
+
+        return new RecordSnapshot(
+            RecordFactsBuilder.Build(kind, from, to, events, NoMoments),
+            NoMoments, NoObservations, events);
     }
 
     // ── The two-store records ────────────────────────────────────────────────
@@ -152,39 +176,60 @@ public class RecordFactsService
     // the diary ("you wrote something down about water 40 times"), not about the
     // animal, and is reached the same way for every kind.
 
-    private async Task<RecordFacts> AppetiteAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
+    private async Task<RecordSnapshot> AppetiteAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
     {
         var amounts = await _appetite.GetAmountsForRangeAsync(petId, from, to);
         var levels = await _appetite.GetForRangeAsync(petId, from, to);
 
-        return RecordFactsBuilder.Build(kind, from, to,
-            amounts.Select(a => new RecordMoment(a.Date.Date + a.Time, a.Grams)),
-            levels.Select(l => new RecordMoment(l.Date.Date + l.Time, null)));
+        var measured = amounts.Select(a => new RecordMoment(a.Date.Date + a.Time, a.Grams)).ToList();
+
+        // TWO lists, never one. A surface holding both draws two separate charts; there
+        // is no shape here that could accidentally merge grams with "ate most of it".
+        return new RecordSnapshot(
+            RecordFactsBuilder.Build(kind, from, to,
+                measured,
+                levels.Select(l => new RecordMoment(l.Date.Date + l.Time, null))),
+            measured,
+            levels.Select(l => new RecordObservation(l.Date.Date + l.Time, l.Level)).ToList(),
+            NoMoments);
     }
 
-    private async Task<RecordFacts> WaterAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
+    private async Task<RecordSnapshot> WaterAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
     {
         var amounts = await _water.GetAmountsForRangeAsync(petId, from, to);
         var levels = await _water.GetLevelsForRangeAsync(petId, from, to);
 
-        return RecordFactsBuilder.Build(kind, from, to,
-            amounts.Select(a => new RecordMoment(a.Date.Date + a.Time, a.AmountMl)),
-            levels.Select(l => new RecordMoment(l.Date.Date + l.Time, null)));
+        var measured = amounts.Select(a => new RecordMoment(a.Date.Date + a.Time, a.AmountMl)).ToList();
+
+        return new RecordSnapshot(
+            RecordFactsBuilder.Build(kind, from, to,
+                measured,
+                levels.Select(l => new RecordMoment(l.Date.Date + l.Time, null))),
+            measured,
+            levels.Select(l => new RecordObservation(l.Date.Date + l.Time, l.Level)).ToList(),
+            NoMoments);
     }
 
     // ── Owner-defined trackers ───────────────────────────────────────────────
 
-    private async Task<RecordFacts> CustomAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
+    private async Task<RecordSnapshot> CustomAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
     {
         var rows = (await _custom.GetForRangeAsync(petId, from, to))
-            .Where(e => e.CustomTrackerId == kind.CustomId);
+            .Where(e => e.CustomTrackerId == kind.CustomId)
+            .Select(e => new RecordMoment(e.Date.Date + e.Time, e.Amount))
+            .ToList();
 
         // An Amount tracker's number is in the OWNER's unit, so lowest and highest are
         // theirs to read; a Tick tracker has no number at all and Amount is null, which
-        // the builder simply leaves out. Nothing has to know which shape it is.
-        return RecordFactsBuilder.Build(kind, from, to,
-            rows.Select(e => new RecordMoment(e.Date.Date + e.Time, e.Amount)),
-            NoMoments);
+        // the builder simply leaves out. The split below is the same question asked of
+        // the data rather than of the definition — a tracker the owner declared as
+        // Amount but only ever ticked draws as marks, which is what it actually is.
+        var measured = rows.Where(m => m.Value is not null).ToList();
+        var events = rows.Where(m => m.Value is null).ToList();
+
+        return new RecordSnapshot(
+            RecordFactsBuilder.Build(kind, from, to, rows, NoMoments),
+            measured, NoObservations, events);
     }
 
     // ── Doses ────────────────────────────────────────────────────────────────
@@ -200,7 +245,7 @@ public class RecordFactsService
     /// date and above by today, so a past day can never show phantom doses and a future
     /// one is not yet "not recorded".</para>
     /// </summary>
-    private async Task<RecordFacts> MedicationAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
+    private async Task<RecordSnapshot> MedicationAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
     {
         // Archived medications are included when they were still dosed in the period —
         // a range of history needs the whole picture, exactly as the report does.
@@ -256,13 +301,18 @@ public class RecordFactsService
             }
         }
 
-        return RecordFactsBuilder.Build(kind, from, to, moments, NoMoments,
-            new DoseCounts(given, skipped, notRecorded));
+        // Facts only, and no marks to draw. Three hundred doses over a quarter is a solid
+        // band on any axis — it would say "this pet is medicated", which the three counts
+        // below already say better.
+        return RecordSnapshot.Empty(
+            RecordFactsBuilder.Build(kind, from, to, moments, NoMoments,
+                new DoseCounts(given, skipped, notRecorded)));
     }
 
     // ── Shared ───────────────────────────────────────────────────────────────
 
-    private static readonly IEnumerable<RecordMoment> NoMoments = Array.Empty<RecordMoment>();
+    private static readonly RecordMoment[] NoMoments = Array.Empty<RecordMoment>();
+    private static readonly RecordObservation[] NoObservations = Array.Empty<RecordObservation>();
 
     /// <summary>Mood and weight store their time of day as nullable ticks; a row written
     /// before per-entry times has none and sits at the start of its day.</summary>

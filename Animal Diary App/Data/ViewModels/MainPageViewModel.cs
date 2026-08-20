@@ -24,15 +24,13 @@ public class MainPageViewModel : BaseViewModel
     private readonly CustomTrackerService _customTrackers;
     private readonly VetVisitService _vetVisits;
 
-    public MoodTimelineViewModel MoodTimeline { get; }
-
     public Pet ActivePet
     {
         get => _activePetService.ActivePet;
         set => _activePetService.ActivePet = value;
     }
 
-    public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService, MoodTimelineViewModel moodTimeline,
+    public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService,
         PendingItemsService pendingItems, MedicationService medicationService, MedicationDoseLogService doseLogService, MedicationReminderScheduler reminderScheduler,
         TodayCardService todayCards, TodayCardSheetViewModel cardPicker,
         CustomTrackerService customTrackers, VetVisitService vetVisits)
@@ -49,7 +47,6 @@ public class MainPageViewModel : BaseViewModel
         _cardPicker = cardPicker;
         _customTrackers = customTrackers;
         _vetVisits = vetVisits;
-        MoodTimeline = moodTimeline;
 
         OpenAppointmentCommand = new Command(() => AppointmentRequested?.Invoke());
 
@@ -57,20 +54,6 @@ public class MainPageViewModel : BaseViewModel
         // for why they are not rebuilt per load.
         PrimaryCard = new TodayCardItem(TodayCardSlot.Primary, OnCardTapped);
         SecondaryCard = new TodayCardItem(TodayCardSlot.Secondary, OnCardTapped);
-
-        // Commands are created once — an expression-bodied `=> new Command(...)`
-        // property hands out a fresh instance per read, which allocates on every
-        // binding access and can never support CanExecuteChanged.
-        SetChartRangeCommand = new Command<string>(days =>
-        {
-            if (int.TryParse(days, out var d))
-                ChartRangeDays = d;
-        });
-        NavigateToMoodDateCommand = new Command<DateTime>(date =>
-        {
-            // Stub: would navigate the Journal to this date.
-            System.Diagnostics.Debug.WriteLine($"Tapped mood date: {date:M/d/yyyy}");
-        });
 
         _activePetService.PropertyChanged += (s, e) =>
         {
@@ -86,7 +69,6 @@ public class MainPageViewModel : BaseViewModel
         LocalizationManager.Instance.PropertyChanged += (s, e) =>
         {
             OnPropertyChanged(nameof(Greeting));
-            OnPropertyChanged(nameof(WeightTrendLabel));
             OnPropertyChanged(nameof(CardHintText));
             // The cards resolve every string per read; they just need to be told.
             PrimaryCard.RefreshLocalized();
@@ -112,75 +94,6 @@ public class MainPageViewModel : BaseViewModel
         set => SetProperty(ref latestWeight, value);
     }
 
-    public ObservableCollection<ChartDataPoint> WeightChartData { get; } = new();
-
-    /// <summary>Which weight-chart load is the current one. A load whose generation is
-    /// stale by the time its query returns discards its result instead of writing it.</summary>
-    private int _weightChartGeneration;
-
-    /// <summary>Raised after the weight series is reloaded so the chart surface
-    /// (a GraphicsView) can pull fresh values and invalidate itself.</summary>
-    public event Action? WeightChartUpdated;
-
-    private bool hasSufficientWeightData;
-    public bool HasSufficientWeightData
-    {
-        get => hasSufficientWeightData;
-        set => SetProperty(ref hasSufficientWeightData, value);
-    }
-
-    // ── Weight-trend chart state ─────────────────────────────────────────
-    // Selected range in days: 14 (2W) · 30 (1M) · 90 (3M) · 3650 (All).
-    private int chartRangeDays = 30;
-    public int ChartRangeDays
-    {
-        get => chartRangeDays;
-        set
-        {
-            if (SetProperty(ref chartRangeDays, value))
-                LoadWeightChartAsync().Forget();
-        }
-    }
-
-    public ICommand SetChartRangeCommand { get; }
-
-    // Padded value axis the chart normalizes points into.
-    private double weightAxisMin;
-    public double WeightAxisMin { get => weightAxisMin; set => SetProperty(ref weightAxisMin, value); }
-
-    private double weightAxisMax = 1;
-    public double WeightAxisMax { get => weightAxisMax; set => SetProperty(ref weightAxisMax, value); }
-
-    // Most-recent weight, shown big above the chart.
-    private string currentWeightLabel = "—";
-    public string CurrentWeightLabel { get => currentWeightLabel; set => SetProperty(ref currentWeightLabel, value); }
-
-    // Signed change across the visible range; null when the range holds no readings.
-    private decimal? weightDiff;
-
-    /// <summary>True when the change across the range is negligible.</summary>
-    public bool WeightTrendIsStable => weightDiff is null || Math.Abs(weightDiff.Value) < 0.05m;
-
-    /// <summary>The trend chip's text. A real change is stated as a signed value
-    /// ("+0.3 kg") — a fact, never coloured or worded as good or bad, because the app
-    /// cannot know which a given pet's change is. A negligible change reads as a plain
-    /// sentence instead of a hollow "±0.0 kg". Resolved per read so a live language
-    /// switch re-translates it (this VM is a singleton).</summary>
-    public string WeightTrendLabel
-    {
-        get
-        {
-            if (weightDiff is null)
-                return string.Empty;
-
-            if (WeightTrendIsStable)
-                return LocalizationManager.Instance.GetString("Main_WeightStable");
-
-            var sign = weightDiff.Value > 0 ? "+" : "−";
-            return $"{sign}{Math.Abs(weightDiff.Value).ToString("0.0")} kg";
-        }
-    }
-
     private PetEntry? EntryToday;
 
     public async Task LoadLatestWeightAsync()
@@ -190,65 +103,6 @@ public class MainPageViewModel : BaseViewModel
         EntryToday = await _petEntryService.GetLatestWeightEntryAsync(ActivePet.Id);
         // Clear on a pet with no weigh-ins too, or the previous pet's value lingers.
         LatestWeight = EntryToday?.Weight ?? 0;
-    }
-
-    public async Task LoadWeightChartAsync()
-    {
-        if (ActivePet == null) return;
-
-        // Gather first, mutate after (see coding-standards.md, "Rebuilding an
-        // ObservableCollection"): clearing before the await let an overlapping load
-        // clear between this one's Clear and its Adds, doubling the series — which
-        // also skewed the min/max axis padding computed below.
-        var generation = ++_weightChartGeneration;
-        var entries = await _petEntryService.GetWeightEntriesForRangeAsync(ActivePet.Id, ChartRangeDays);
-
-        // A newer load started while this one queried (a pet switch, or a second
-        // appearance). Its data is the current one — drop these rather than draw the
-        // previous pet's weights.
-        if (generation != _weightChartGeneration)
-            return;
-
-        WeightChartData.Clear();
-        foreach (var entry in entries)
-        {
-            WeightChartData.Add(new ChartDataPoint
-            {
-                Date = entry.Date,
-                Value = entry.Weight
-            });
-        }
-
-        if (entries.Count > 0)
-        {
-            var min = entries.Min(e => e.Weight);
-            var max = entries.Max(e => e.Weight);
-
-            // Pad the axis a little so the line never hugs the top/bottom edge,
-            // and so a perfectly flat series still renders as a centered line.
-            var pad = (max - min) * 0.15m;
-            if (pad < 0.1m) pad = 0.2m;
-            WeightAxisMin = (double)(min - pad);
-            WeightAxisMax = (double)(max + pad);
-
-            var latest = entries[^1].Weight;
-            CurrentWeightLabel = latest.ToString("0.0");
-
-            weightDiff = latest - entries[0].Weight;
-        }
-        else
-        {
-            CurrentWeightLabel = "—";
-            weightDiff = null;
-            WeightAxisMin = 0;
-            WeightAxisMax = 1;
-        }
-
-        OnPropertyChanged(nameof(WeightTrendIsStable));
-        OnPropertyChanged(nameof(WeightTrendLabel));
-
-        HasSufficientWeightData = entries.Count >= 2;
-        WeightChartUpdated?.Invoke();
     }
 
     // ── The two customizable stat cards ──────────────────────────────────────
@@ -325,14 +179,6 @@ public class MainPageViewModel : BaseViewModel
         ShowCardHint = false;
         await _SettingsService.SetFlagAsync(SettingsFlags.TodayCardsDiscovered, true);
     }
-
-    public async Task LoadMoodTimelineAsync()
-    {
-        if (ActivePet == null) return;
-        await MoodTimeline.LoadLast30DaysAsync(ActivePet.Id);
-    }
-
-    public ICommand NavigateToMoodDateCommand { get; }
 
     // ── Today's care: the avatar ring + next-up card ─────────────────────
     // Both are derived from the SAME PendingEngine snapshot the Journal's
