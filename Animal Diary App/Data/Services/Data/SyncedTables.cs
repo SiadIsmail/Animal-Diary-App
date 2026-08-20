@@ -181,6 +181,9 @@ public static class SyncedTables
         // The definition before its entries — see the ordering note above.
         new SyncedTable<CustomTracker>(PetScope.ByPetId),
         new SyncedTable<CustomEntry>(PetScope.ByPetId),
+        // A note to self about a conversation, not a record of the animal. Its only
+        // parent is the pet — a question is deliberately never linked to a visit.
+        new SyncedTable<VetQuestion>(PetScope.ByPetId),
     };
 
     /// <summary>Children before parents — the order any delete cascade must use.</summary>

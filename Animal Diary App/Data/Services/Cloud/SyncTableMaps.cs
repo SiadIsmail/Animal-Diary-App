@@ -1020,5 +1020,52 @@ internal static class SyncTableMaps
                 local.Date = inc.Date; local.Time = inc.Time;
                 local.Amount = inc.Amount; local.Note = inc.Note;
             }),
+
+        // ── questions for the vet ────────────────────────────────────────────
+        // Keyed by id: two devices writing "ask about the wobbliness" are two
+        // separate thoughts someone had, and converging them on their text would
+        // silently delete one. Same reasoning as custom trackers and medications.
+        //
+        // The cloud column is question_text, not text: a bare column called `text`
+        // is a type name everywhere else, and push_rows assembles its column list
+        // as SQL text (see migration 0020).
+        new TableSync<VetQuestion>("vet_questions",
+            toCloud: async (q, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(q.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = q.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["question_text"] = q.Text,
+                    ["asked_at"] = CloudJson.ToIso(q.CreatedAtUtc),
+                    // Null IS the value: it means the question is still open, and it
+                    // has to stay distinguishable from every real answer date.
+                    ["answered_at"] = q.AnsweredAtUtc is DateTime a ? CloudJson.ToIso(a) : null,
+                    ["client_updated_at"] = CloudJson.ToIso(q.UpdatedAtUtc),
+                    ["deleted_at"] = q.IsDeleted ? CloudJson.ToIso(q.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new VetQuestion
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Text = CloudJson.GetString(el, "question_text"),
+                    CreatedAtUtc = CloudJson.GetIsoDateTime(el, "asked_at"),
+                    AnsweredAtUtc = CloudJson.GetIsoDateTimeOrNull(el, "answered_at"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Text = inc.Text;
+                local.CreatedAtUtc = inc.CreatedAtUtc; local.AnsweredAtUtc = inc.AnsweredAtUtc;
+            }),
     };
 }

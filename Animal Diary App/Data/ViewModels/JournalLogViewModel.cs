@@ -20,7 +20,11 @@ using Animal_Diary_App.Helpers;
 //  knows trackers and med doses.
 // ─────────────────────────────────────────────────────────────────────────────
 
-public enum JournalChipKind { Medication, Glucose, Mood, Appetite, Weight, Seizure, Water, Custom, Add }
+// VetQuestion is a routing key only. It names a row in the "+" sheet and the sheet
+// that row opens — it is never built into a chip, because a question is not a thing to
+// be done today. BuildChips reads PendingItems, which come from the care plan, and a
+// question is not a tracker, so it cannot appear there by construction.
+public enum JournalChipKind { Medication, Glucose, Mood, Appetite, Weight, Seizure, Water, Custom, Add, VetQuestion }
 
 /// <summary>One "Still to do" chip.</summary>
 public class JournalChip
@@ -353,6 +357,8 @@ public class JournalLogViewModel : BaseViewModel
         await BuildAddOptionsAsync();
         OnPropertyChanged(nameof(AddSheetTitle));
         OnPropertyChanged(nameof(AddSheetSubtitle));
+        OnPropertyChanged(nameof(VetQuestionLabel));
+        OnPropertyChanged(nameof(VetQuestionHeading));
         IsAddSheetVisible = true;
     }
 
@@ -1136,6 +1142,33 @@ public class JournalLogViewModel : BaseViewModel
         (TrackerId.Weight,   JournalChipKind.Weight),
         (TrackerId.Seizure,  JournalChipKind.Seizure),
     };
+
+    /// <summary>
+    /// The "+" sheet's third block: one row, on its own, for something that is not a log
+    /// type at all.
+    ///
+    /// <para>It sits apart from both groups deliberately. <c>AddOptions</c> is the pet's
+    /// plan and <c>MoreOptions</c> is "everything else the app can record" — a question
+    /// is neither, because it records nothing about the animal. Putting it in either
+    /// list would make it read as a tracker, which is the one thing it must never
+    /// become.</para>
+    /// </summary>
+    public AddOption VetQuestionOption { get; } = new()
+    {
+        Kind = JournalChipKind.VetQuestion,
+        // A note about a conversation, not a record — hence the speech balloon rather
+        // than any of the tracker icons.
+        Icon = "\U0001F4AC",
+        Label = string.Empty,   // resolved live by the view; see VetQuestionLabel
+    };
+
+    /// <summary>Resolved per read, never cached — this VM is a singleton and a cached
+    /// string would freeze in the language active at construction.</summary>
+    public string VetQuestionLabel => Loc.GetString("Vet_QuestionRow");
+
+    /// <summary>The heading the row sits under: it names the occasion rather than the
+    /// person, which is what a question-for-the-visit actually belongs to.</summary>
+    public string VetQuestionHeading => Loc.GetString("Vet_QuestionSection");
 
     private async Task BuildAddOptionsAsync()
     {

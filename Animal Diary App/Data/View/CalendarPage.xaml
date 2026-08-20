@@ -621,6 +621,14 @@
                             Presented="{Binding IsAddSheetVisible}"
                             SheetTemplate="{DataTemplate views:AddAnythingSheetView}"/>
 
+        <!-- Not an input sheet for the Journal, though it wears the same chrome: a
+             question is a note to self about a conversation, not a record of the
+             animal (see Data/Models/VetQuestion.cs). -->
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding VetQuestionSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:VetQuestionSheetView}"/>
+
         <!-- Monetization sheets: the subscribe ask + the reassuring trial messages. -->
         <controls:SheetHost Grid.RowSpan="2"
                             BindingContext="{Binding SubscribeVM}"
