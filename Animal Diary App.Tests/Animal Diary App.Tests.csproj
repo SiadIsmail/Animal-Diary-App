@@ -158,6 +158,18 @@
     <Compile Include="..\Animal Diary App\Data\Services\Import\ImportValidator.cs" Link="Import\ImportValidator.cs" />
   </ItemGroup>
 
+  <!-- The treatment ledger's diff: what a medication edit records, and — the half that
+       actually needed a test — what it must NOT record. "An unchanged save writes no row"
+       and "a rename plus a dose change writes two" are invisible failures on a device:
+       nothing crashes, the history is just wrong forever afterwards, and it cannot be
+       backfilled. MedicationLedger is pure for exactly that reason; the schedule wording
+       arrives as a delegate, so no resx is needed here. MedicationChange comes along as
+       the type it returns. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\MedicationChange.cs" Link="Ledger\MedicationChange.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Data\MedicationLedger.cs" Link="Ledger\MedicationLedger.cs" />
+  </ItemGroup>
+
   <!-- The Constellation's geometry. This is the surface's whole meaning ("position is
        when it happened, and nothing else is encoded"), so it was deliberately kept out
        of the drawable: the only MAUI thing about placing a star is the canvas it lands

@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
@@ -216,7 +216,7 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
                 // (day × time) — so the weekly wording never has to assume the
                 // editor's rectangular shape.
                 FrequencyDisplay = DescribeFrequency(distinctDays.Count, distinctTimes.Count, rows.Count),
-                TimesDisplay = DescribeTimes(distinctDays, distinctTimes),
+                TimesDisplay = MedicationScheduleText.Describe(distinctDays, distinctTimes),
                 Note = medication.Notes
             });
         }
@@ -250,37 +250,6 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
             ? loc.GetString("Med_OnceWeekly")
             : loc.Format("Med_TimesWeekly", dosesPerWeek);
     }
-
-    /// <summary>
-    /// The "when" tag: which days, then the times of day. Days are omitted when it's
-    /// every day, because the cadence tag beside it already says "daily" — otherwise
-    /// "4× a week" leaves the owner with no way to know WHICH days.
-    /// </summary>
-    private static string DescribeTimes(IReadOnlyCollection<DayOfWeek> days, IReadOnlyCollection<TimeSpan> times)
-    {
-        var loc = LocalizationManager.Instance;
-        var clock = string.Join(" · ", times.Select(t => t.ToString(@"hh\:mm")));
-
-        if (days.Count == 0 || days.Count >= 7)
-            return clock;
-
-        var names = string.Join(", ", days
-            .OrderBy(d => ((int)d + 6) % 7) // Monday-first, matching the day picker
-            .Select(d => loc.GetString(DayResourceKey(d))));
-
-        return string.IsNullOrEmpty(clock) ? names : $"{names} · {clock}";
-    }
-
-    private static string DayResourceKey(DayOfWeek day) => day switch
-    {
-        DayOfWeek.Monday => "Day_Mon",
-        DayOfWeek.Tuesday => "Day_Tue",
-        DayOfWeek.Wednesday => "Day_Wed",
-        DayOfWeek.Thursday => "Day_Thu",
-        DayOfWeek.Friday => "Day_Fri",
-        DayOfWeek.Saturday => "Day_Sat",
-        _ => "Day_Sun",
-    };
 
     /// <summary>
     /// Archive (or restore) a medication. Archiving cancels its reminders;
