@@ -185,6 +185,22 @@ public class MedicationService
     /// schedule change" structural rather than a comment.</summary>
     private static readonly IReadOnlyList<MedicationSchedule> NoSchedules = Array.Empty<MedicationSchedule>();
 
+    /// <summary>
+    /// The pet's treatment ledger over a window, chronological.
+    ///
+    /// <para>Scoped by PET, never by medication, and that is the point of the table: it
+    /// still reads correctly for a medication that has since been renamed, archived or
+    /// deleted, because every row carries its own name and summary text.</para>
+    /// </summary>
+    public async Task<List<MedicationChange>> GetChangesForRangeAsync(int petId, DateTime fromUtc, DateTime toUtc)
+    {
+        var rows = await _db.Table<MedicationChange>()
+            .Where(c => c.PetId == petId && c.IsDeleted == false
+                        && c.ChangedAtUtc >= fromUtc && c.ChangedAtUtc <= toUtc)
+            .ToListAsync();
+        return rows.OrderBy(c => c.ChangedAtUtc).ThenBy(c => c.Id).ToList();
+    }
+
     /// <summary>Soft-delete every schedule row for a medication (used before re-saving an edit, or on delete).</summary>
     public async Task DeleteSchedulesForMedicationAsync(int medicationId)
     {

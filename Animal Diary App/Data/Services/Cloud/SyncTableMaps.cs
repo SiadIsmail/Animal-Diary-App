@@ -1067,5 +1067,58 @@ internal static class SyncTableMaps
                 local.PetId = inc.PetId; local.Text = inc.Text;
                 local.CreatedAtUtc = inc.CreatedAtUtc; local.AnsweredAtUtc = inc.AnsweredAtUtc;
             }),
+
+        // ── vet visits ───────────────────────────────────────────────────────
+        // Keyed by id. No natural key on (pet, date): two visits on one day is a
+        // real thing (a morning consult and an afternoon scan), and converging them
+        // would silently merge two appointments into one.
+        //
+        // The date travels as a plain date and the time as nullable ticks, never as
+        // one timestamp — an appointment is a WALL-CLOCK thing, and folding an
+        // unknown time into midnight UTC would move half the world's visits across
+        // a day boundary.
+        new TableSync<VetVisit>("vet_visits",
+            toCloud: async (v, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(v.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = v.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["visit_date"] = CloudJson.ToDateOnly(v.Date),
+                    // Null IS the value: the owner knew the day and not the slot.
+                    ["time_ticks"] = v.Time is TimeSpan t ? t.Ticks : (long?)null,
+                    ["practice"] = v.Practice,
+                    ["vet_name"] = v.VetName,
+                    ["visit_note"] = v.VisitNote,
+                    ["client_updated_at"] = CloudJson.ToIso(v.UpdatedAtUtc),
+                    ["deleted_at"] = v.IsDeleted ? CloudJson.ToIso(v.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                var ticks = CloudJson.GetLongOrNull(el, "time_ticks");
+                return new VetVisit
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "visit_date")),
+                    Time = ticks is long ts ? TimeSpan.FromTicks(ts) : null,
+                    Practice = CloudJson.GetString(el, "practice"),
+                    VetName = CloudJson.GetString(el, "vet_name"),
+                    VisitNote = CloudJson.GetString(el, "visit_note"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.Practice = inc.Practice; local.VetName = inc.VetName;
+                local.VisitNote = inc.VisitNote;
+            }),
     };
 }

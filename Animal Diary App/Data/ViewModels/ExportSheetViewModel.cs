@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -48,6 +48,7 @@ public class ExportSheetViewModel : BaseViewModel
         OpenCommand = new Command(async () => await OpenAsync());
         DismissCommand = new Command(() => IsPresented = false);
         SelectPeriodCommand = new Command<string>(SelectPeriod);
+        SelectSinceVisitCommand = new Command(() => { if (HasSinceVisit) SelectedDays = SinceVisitDays; });
         ToggleIncludePhotoCommand = new Command(() => IncludePhoto = !IncludePhoto);
         ToggleIncludeWaterMeasuredCommand = new Command(() => IncludeWaterMeasured = !IncludeWaterMeasured);
         ToggleIncludeWaterObservationsCommand = new Command(() => IncludeWaterObservations = !IncludeWaterObservations);
@@ -78,7 +79,49 @@ public class ExportSheetViewModel : BaseViewModel
     /// <summary>How far back the report looks. The chips are the only UI for this
     /// today; a custom range would extend here (GenerateAsync already takes dates).</summary>
     private int _selectedDays = 90;
-    public int SelectedDays { get => _selectedDays; set => SetProperty(ref _selectedDays, value); }
+    public int SelectedDays
+    {
+        get => _selectedDays;
+        set
+        {
+            if (SetProperty(ref _selectedDays, value))
+                OnPropertyChanged(nameof(IsSinceVisitSelected));
+        }
+    }
+
+    /// <summary>
+    /// The since-your-last-visit stretch, when the appointment page opened this sheet;
+    /// 0 otherwise.
+    ///
+    /// <para>It gets a chip of its OWN rather than silently selecting nothing. A
+    /// hundred-and-fifty-nine-day window matches none of the three presets, and a sheet
+    /// that opens with no chip lit reads as broken — the same rule the care-plan adjust
+    /// sheet follows: every rung the sheet can save is one it displayed
+    /// (AI/adding-a-tracker.md).</para>
+    /// </summary>
+    private int _sinceVisitDays;
+    public int SinceVisitDays
+    {
+        get => _sinceVisitDays;
+        private set
+        {
+            if (SetProperty(ref _sinceVisitDays, value))
+            {
+                OnPropertyChanged(nameof(HasSinceVisit));
+                OnPropertyChanged(nameof(SinceVisitLabel));
+                OnPropertyChanged(nameof(IsSinceVisitSelected));
+            }
+        }
+    }
+
+    public bool HasSinceVisit => SinceVisitDays > 0;
+
+    /// <summary>Highlights the extra chip. A DataTrigger cannot compare against a value
+    /// that changes per open, so the comparison lives here.</summary>
+    public bool IsSinceVisitSelected => HasSinceVisit && SelectedDays == SinceVisitDays;
+
+    public string SinceVisitLabel =>
+        LocalizationManager.Instance.Format("Export_SinceVisit", SinceVisitDays);
 
     /// <summary>Whether the active pet actually has a photo file on this device — the
     /// "Include photo" toggle is only shown when true.</summary>
@@ -157,6 +200,7 @@ public class ExportSheetViewModel : BaseViewModel
     public ICommand OpenCommand { get; }
     public ICommand DismissCommand { get; }
     public ICommand SelectPeriodCommand { get; }
+    public ICommand SelectSinceVisitCommand { get; }
     public ICommand ToggleIncludePhotoCommand { get; }
     public ICommand ToggleIncludeWaterMeasuredCommand { get; }
     public ICommand ToggleIncludeWaterObservationsCommand { get; }
@@ -168,7 +212,12 @@ public class ExportSheetViewModel : BaseViewModel
     public ICommand ViewCommand { get; }
     public ICommand ShareCommand { get; }
 
-    private async Task OpenAsync()
+    /// <summary>Open pre-filled with a stretch the caller worked out — the appointment
+    /// page's "Full summary", which hands over exactly the window it just described.
+    /// Nothing else about the sheet changes: same toggles, same one PDF path.</summary>
+    public Task OpenForRangeAsync(int days) => OpenAsync(days > 0 ? days : null);
+
+    private async Task OpenAsync(int? days = null)
     {
         _pet = _activePetService.ActivePet;
 
@@ -177,7 +226,11 @@ public class ExportSheetViewModel : BaseViewModel
         IsDone = false;
         IsGenerating = false;
         StatusMessage = string.Empty;
-        SelectedDays = 90;
+
+        // A caller-supplied stretch brings its own chip; otherwise the extra chip is
+        // cleared so a previous appointment's window can never linger into a plain open.
+        SinceVisitDays = days ?? 0;
+        SelectedDays = days ?? 90;
 
         // Photo opt-in defaults off every open; the toggle only shows when the pet has
         // a photo file present on this device.

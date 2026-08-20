@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.App.Job;
 using Android.Content;
 using Animal_Diary_App.Data.Services;
@@ -130,6 +130,12 @@ internal static class ReminderRecovery
         var dailyScheduler = services.GetService<DailyCareReminderScheduler>();
         if (dailyScheduler is not null)
             await dailyScheduler.RefreshAsync();
+
+        // And the one reminder before a vet visit — same reason: a reboot clears the
+        // OS alarm, and this one-shot may be days out.
+        var appointmentScheduler = services.GetService<AppointmentReminderScheduler>();
+        if (appointmentScheduler is not null)
+            await appointmentScheduler.RefreshAsync();
     }
 
     private static async Task ApplySavedLanguageAsync(IServiceProvider services)

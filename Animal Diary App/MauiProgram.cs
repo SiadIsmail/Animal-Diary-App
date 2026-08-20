@@ -63,6 +63,8 @@ public static class MauiProgram
 		// Today's stat-card picker (which record each of the two cards shows).
 		builder.Services.AddSingleton<TodayCardSheetViewModel>();
 		builder.Services.AddSingleton<VetQuestionSheetViewModel>();
+		builder.Services.AddSingleton<VetVisitSheetViewModel>();
+		builder.Services.AddSingleton<AppointmentViewModel>();
 
 		// Condition-setup sheets, shared by onboarding and the Manage page.
 		builder.Services.AddSingleton<DiabetesSetupSheetViewModel>();
@@ -119,6 +121,8 @@ public static class MauiProgram
 		// sheet, the Constellation legend, the appointment summary).
 		builder.Services.AddSingleton<RecordFactsService>();
 		builder.Services.AddSingleton<VetQuestionService>();
+		builder.Services.AddSingleton<VetVisitService>();
+		builder.Services.AddSingleton<AppointmentSummaryService>();
 
 		// ── Import (AI-written entry files) ──────────────────────────────────
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Import.ImportService>();
@@ -183,6 +187,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<MedicationDoseReconciler>();
 		builder.Services.AddSingleton<MedicationReminderScheduler>();
 		builder.Services.AddSingleton<DailyCareReminderScheduler>();
+		builder.Services.AddSingleton<AppointmentReminderScheduler>();
 
 		builder.Services.AddSingleton<App>();
 

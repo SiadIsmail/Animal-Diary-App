@@ -22,6 +22,7 @@ public class MainPageViewModel : BaseViewModel
     private readonly TodayCardService _todayCards;
     private readonly TodayCardSheetViewModel _cardPicker;
     private readonly CustomTrackerService _customTrackers;
+    private readonly VetVisitService _vetVisits;
 
     public MoodTimelineViewModel MoodTimeline { get; }
 
@@ -34,7 +35,7 @@ public class MainPageViewModel : BaseViewModel
     public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService, MoodTimelineViewModel moodTimeline,
         PendingItemsService pendingItems, MedicationService medicationService, MedicationDoseLogService doseLogService, MedicationReminderScheduler reminderScheduler,
         TodayCardService todayCards, TodayCardSheetViewModel cardPicker,
-        CustomTrackerService customTrackers)
+        CustomTrackerService customTrackers, VetVisitService vetVisits)
     {
         _petEntryService = petEntryService;
         _petService = petService;
@@ -47,7 +48,10 @@ public class MainPageViewModel : BaseViewModel
         _todayCards = todayCards;
         _cardPicker = cardPicker;
         _customTrackers = customTrackers;
+        _vetVisits = vetVisits;
         MoodTimeline = moodTimeline;
+
+        OpenAppointmentCommand = new Command(() => AppointmentRequested?.Invoke());
 
         // The two stat cards are stable instances refreshed in place — see TodayCardItem
         // for why they are not rebuilt per load.
@@ -426,6 +430,88 @@ public class MainPageViewModel : BaseViewModel
         try { AppInfo.Current.ShowSettingsUI(); }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MainPage] settings open failed: {ex.Message}"); }
     });
+
+    // ── The visit that is near ───────────────────────────────────────────────
+    //
+    // The appointment is a STATE, not a destination (see Data/Models/VetVisit.cs):
+    // it lives on the Care page and only reaches Today when it is close. Seven days,
+    // fixed — near enough to be worth saying, far enough to still be useful.
+
+    /// <summary>How close a visit has to be before Today says anything about it.</summary>
+    private const int NearVisitDays = 7;
+
+    private bool _hasNearVisit;
+
+    /// <summary>A visit is scheduled within the next week.</summary>
+    public bool HasNearVisit
+    {
+        get => _hasNearVisit;
+        private set => SetProperty(ref _hasNearVisit, value);
+    }
+
+    private string _nearVisitLine = string.Empty;
+
+    /// <summary>"Charly sees Dr. Weiss on Thursday, 15:30" — or without the vet, or
+    /// without the time, depending on what the owner actually told the app. It states
+    /// the fact and stops: no countdown, no "in 2 days", nothing that grows louder as
+    /// the date approaches.</summary>
+    public string NearVisitLine
+    {
+        get => _nearVisitLine;
+        private set => SetProperty(ref _nearVisitLine, value);
+    }
+
+    /// <summary>The band is a door. The page owns navigation, so the VM raises and the
+    /// code-behind pushes — the same split every other pushed page here uses.</summary>
+    public event Action? AppointmentRequested;
+
+    public ICommand OpenAppointmentCommand { get; }
+
+    /// <summary>
+    /// Re-read the active pet's next visit. Cheap — one indexed range query — and run on
+    /// every appearance, because "within seven days" changes by itself at midnight.
+    /// </summary>
+    public async Task RefreshNearVisitAsync()
+    {
+        try
+        {
+            var pet = ActivePet;
+            var next = pet is null || pet.Id == 0 ? null : await _vetVisits.GetNextAsync(pet.Id);
+
+            if (next is null || (next.Date.Date - DateTime.Today).TotalDays > NearVisitDays)
+            {
+                HasNearVisit = false;
+                NearVisitLine = string.Empty;
+                return;
+            }
+
+            NearVisitLine = BuildNearVisitLine(pet!.Name, next);
+            HasNearVisit = true;
+        }
+        catch (Exception ex)
+        {
+            // A failed read must never light the band falsely.
+            System.Diagnostics.Debug.WriteLine($"[MainPage] next visit check failed: {ex.Message}");
+            HasNearVisit = false;
+        }
+    }
+
+    /// <summary>Whatever the owner did not give is simply absent — never a placeholder
+    /// and never a guessed hour (the same rule as an unknown birth month).</summary>
+    private static string BuildNearVisitLine(string petName, Data.Models.VetVisit visit)
+    {
+        var loc = LocalizationManager.Instance;
+        var day = visit.Date.ToString("dddd", System.Globalization.CultureInfo.CurrentCulture);
+        var when = visit.Time is TimeSpan t ? $"{day}, {t:hh\\:mm}" : day;
+
+        var who = !string.IsNullOrWhiteSpace(visit.VetName) ? visit.VetName.Trim()
+            : !string.IsNullOrWhiteSpace(visit.Practice) ? visit.Practice.Trim()
+            : string.Empty;
+
+        return who.Length > 0
+            ? loc.Format("Today_VisitLineWho", petName, who, when)
+            : loc.Format("Today_VisitLine", petName, when);
+    }
 
     /// <summary>
     /// Re-check whether the OS will deliver reminders. A live check on every

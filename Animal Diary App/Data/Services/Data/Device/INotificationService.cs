@@ -27,7 +27,13 @@ namespace Animal_Diary_App.Data.Services.Data.Device
 
         /// <summary>The opt-in once-a-day care reminder. Low importance, never makes a
         /// sound (AI/app-voice.md §8.7).</summary>
-        DailyCare
+        DailyCare,
+
+        /// <summary>The one reminder the evening before a vet visit. Low importance and
+        /// silent (§8.7), but its OWN channel: someone who silences the daily care nudge
+        /// in system settings almost certainly still wants to be told about the
+        /// appointment, and one channel for both would take that choice away.</summary>
+        Appointment
     }
 
     /// <summary>

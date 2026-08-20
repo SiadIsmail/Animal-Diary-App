@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.View;
+namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services;
@@ -244,6 +244,14 @@ public partial class PetsPage : ContentPage
     async void OnDocumentsClicked(object? sender, EventArgs args)
     {
         await Navigation.PushAsync(new DocumentsPage(vm));
+    }
+
+    // The appointment page reads what is already there; adding a visit from it goes
+    // through the visit sheet, which is where any gate would belong. Not gated here,
+    // like the Constellation below.
+    async void OnVetVisitsClicked(object? sender, EventArgs args)
+    {
+        await Navigation.PushAsync(new AppointmentPage(vm));
     }
 
     // The Constellation reads what is already there and writes nothing, so it is not

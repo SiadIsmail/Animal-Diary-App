@@ -48,6 +48,7 @@ public class PetDeletionService
 {
     private readonly AppDatabase _db;
     private readonly MedicationReminderScheduler _reminders;
+    private readonly Animal_Diary_App.Data.Services.Notifications.AppointmentReminderScheduler _appointments;
     private readonly ReportLibraryService _reports;
     private readonly ActivePetService _activePet;
     private readonly ICloudSharingService _sharing;
@@ -59,6 +60,7 @@ public class PetDeletionService
     public PetDeletionService(
         AppDatabase db,
         MedicationReminderScheduler reminders,
+        Animal_Diary_App.Data.Services.Notifications.AppointmentReminderScheduler appointments,
         ReportLibraryService reports,
         ActivePetService activePet,
         ICloudSharingService sharing,
@@ -68,6 +70,7 @@ public class PetDeletionService
     {
         _db = db;
         _reminders = reminders;
+        _appointments = appointments;
         _reports = reports;
         _activePet = activePet;
         _sharing = sharing;
@@ -104,6 +107,17 @@ public class PetDeletionService
         {
             try { await _reminders.CancelMedicationAsync(med.Id); }
             catch (Exception ex) { Debug.WriteLine($"[PetDelete] cancel reminders for med {med.Id} failed: {ex.Message}"); }
+        }
+
+        // Its vet visits too: each is a one-shot armed by the visit's local id, and
+        // cancelling by id here is what stops one firing for a pet that no longer
+        // exists. The refresh below would not find them — by then they are tombstones.
+        var visits = await conn.QueryAsync<VetVisit>(
+            "select * from \"VetVisit\" where PetId = ? and IsDeleted = 0", pet.Id);
+        foreach (var visit in visits)
+        {
+            try { await _appointments.CancelAsync(visit.Id); }
+            catch (Exception ex) { Debug.WriteLine($"[PetDelete] cancel visit {visit.Id} failed: {ex.Message}"); }
         }
 
         // Load every live row that belongs to the pet, then tombstone the lot in one

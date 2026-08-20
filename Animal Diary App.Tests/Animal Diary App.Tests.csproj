@@ -158,6 +158,16 @@
     <Compile Include="..\Animal Diary App\Data\Services\Import\ImportValidator.cs" Link="Import\ImportValidator.cs" />
   </ItemGroup>
 
+  <!-- The vet visit's derived state and its notification id. Both are silent when
+       wrong: a visit that turns "past" at lunchtime hides the summary while the owner is
+       still in the waiting room, and an id that collides with another range cancels
+       somebody else's reminder. NotificationIds is plain arithmetic; VetVisit contributes
+       sqlite-net attributes only, like the other linked models. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\VetVisit.cs" Link="Vet\VetVisit.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Notifications\NotificationIds.cs" Link="Vet\NotificationIds.cs" />
+  </ItemGroup>
+
   <!-- Facts about the record. The arithmetic is linked, the WORDING is not: RecordFactsText
        resolves AppStrings, and this project ships no resx. What is worth proving here is the
        shape — the four day bands are half-open and total to the count, a one-per-day store

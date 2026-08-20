@@ -51,8 +51,16 @@ public static class NotificationIds
     /// <summary>The single daily-care reminder id for a pet (one per pet per day).</summary>
     public static int DailyCare(int petId) => DailyCareBase + petId;
 
+    /// <summary>The single reminder for one vet visit — the evening before.
+    ///
+    /// <para><b>Not</b> multiplied by <see cref="SlotsPerEntity"/>, unlike the
+    /// medication ids above: a visit has exactly one reminder and always will (one, not
+    /// a series — see <c>AppointmentReminderScheduler</c>). Reserving ten slots each
+    /// would spend the range ten times faster and let visit id 100,000 land on top of
+    /// the daily-care block, for headroom nothing can ever use.</para></summary>
+    public static int Appointment(int visitId) => AppointmentBase + visitId;
+
     // ── Reserved for future reminder types ───────────────────────────────
     public static int MoodCheckIn(int petId) => MoodCheckInBase + petId * SlotsPerEntity;
     public static int WeightCheckIn(int petId) => WeightCheckInBase + petId * SlotsPerEntity;
-    public static int Appointment(int appointmentId) => AppointmentBase + appointmentId * SlotsPerEntity;
 }

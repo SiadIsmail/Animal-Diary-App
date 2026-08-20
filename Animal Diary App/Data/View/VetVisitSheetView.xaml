@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    VetVisitSheetView
+    ─────────────────────────────────────────────────────────
+    Add or edit one vet visit, in the shared FelovaBottomSheet.
+
+    The time is behind a switch, not a picker sitting on some invented hour: owners
+    often know the day and not the slot, and this app never fills in the half of a
+    date it was not told (the same rule as a pet's unknown birth month).
+
+    "What the vet said" appears only for a visit that has already happened — a note
+    written beforehand would be a prediction.
+
+    BindingContext is a VetVisitSheetViewModel; open it via that VM's OpenAsync.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:VetVisitSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.VetVisitSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <ContentView.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="CharacterSpacing" Value="1"/>
+            <Setter Property="TextColor" Value="{StaticResource InkSecondary}"/>
+        </Style>
+        <Style x:Key="FieldBox" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 14"/>
+            <Setter Property="Padding" Value="12,2"/>
+        </Style>
+    </ContentView.Resources>
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <Grid RowDefinitions="*,Auto" RowSpacing="16">
+
+                <ScrollView x:Name="Body"
+                            Grid.Row="0"
+                            VerticalOptions="Start"
+                            VerticalScrollBarVisibility="Never">
+                    <VerticalStackLayout Spacing="14" Padding="0,2,0,0">
+
+                        <!-- Day -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{loc:Translate Vet_VisitDayLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBox}">
+                                <DatePicker Date="{Binding Date}"
+                                            FontFamily="{StaticResource FontSans}"
+                                            FontSize="15"
+                                            TextColor="{StaticResource Ink}"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Time · optional. The switch is the answer to "do you know
+                             the time?", so OFF stores null rather than an invented hour. -->
+                        <VerticalStackLayout Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0"
+                                       Text="{loc:Translate Vet_VisitTimeLabel}"
+                                       Style="{StaticResource FieldLabel}"
+                                       VerticalOptions="Center"/>
+                                <Switch Grid.Column="1"
+                                        IsToggled="{Binding HasTime}"
+                                        OnColor="{StaticResource Teal}"
+                                        ThumbColor="{StaticResource White}"/>
+                            </Grid>
+                            <Border Style="{StaticResource FieldBox}"
+                                    IsVisible="{Binding HasTime}">
+                                <TimePicker Time="{Binding Time}"
+                                            Format="HH:mm"
+                                            FontFamily="{StaticResource FontSans}"
+                                            FontSize="15"
+                                            TextColor="{StaticResource Ink}"/>
+                            </Border>
+                            <Label Text="{loc:Translate Vet_VisitTimeHint}"
+                                   IsVisible="{Binding HasTime, Converter={StaticResource InvertedBoolConverter}}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12"
+                                   TextColor="{StaticResource InkTertiary}"/>
+                        </VerticalStackLayout>
+
+                        <!-- Practice · free text, no directory and no lookup -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{loc:Translate Vet_VisitPracticeLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBox}">
+                                <Entry Text="{Binding Practice}"
+                                       Placeholder="{loc:Translate Vet_VisitPracticePlaceholder}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="15"
+                                       TextColor="{StaticResource Ink}"
+                                       PlaceholderColor="{StaticResource InkTertiary}"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Vet · free text, same treatment -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{loc:Translate Vet_VisitVetLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBox}">
+                                <Entry Text="{Binding VetName}"
+                                       Placeholder="{loc:Translate Vet_VisitVetPlaceholder}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="15"
+                                       TextColor="{StaticResource Ink}"
+                                       PlaceholderColor="{StaticResource InkTertiary}"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- What the vet said · only once the visit has happened -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding ShowNote}">
+                            <Label Text="{loc:Translate Vet_VisitNoteLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource FieldBox}">
+                                <Editor Text="{Binding VisitNote}"
+                                        Placeholder="{loc:Translate Vet_VisitNotePlaceholder}"
+                                        AutoSize="TextChanges"
+                                        HeightRequest="86"
+                                        FontFamily="{StaticResource FontSans}"
+                                        FontSize="15"
+                                        TextColor="{StaticResource Ink}"
+                                        PlaceholderColor="{StaticResource InkTertiary}"/>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Remove · no confirm dialog; the toast's Undo is the safety
+                             net (AI/design-decisions.md → "Deletion uses the undo toast"). -->
+                        <Label Text="{loc:Translate Vet_VisitDelete}"
+                               IsVisible="{Binding CanDelete}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="13"
+                               TextColor="{StaticResource RoseDeep}"
+                               HorizontalTextAlignment="Center"
+                               Margin="0,4,0,0">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding DeleteCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_NotNow}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_Save}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </Grid>
+
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>
