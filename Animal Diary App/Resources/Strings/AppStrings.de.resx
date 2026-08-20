@@ -973,4 +973,14 @@
   <data name="Today_RecordSeizure" xml:space="preserve"><value>Anfälle</value></data>
   <data name="Today_RecordMedication" xml:space="preserve"><value>Dosen</value></data>
   <data name="Today_PickerShowElse" xml:space="preserve"><value>Hier etwas anderes zeigen</value></data>
+  <!-- Fragen für den Tierarztbesuch. Eine Notiz an sich selbst über ein Gespräch,
+       kein Eintrag über das Tier — also nirgends als Aufgabe für heute formuliert. -->
+  <data name="Vet_QuestionSection" xml:space="preserve"><value>Für den nächsten Tierarztbesuch</value></data>
+  <data name="Vet_QuestionRow" xml:space="preserve"><value>Frage für den Tierarztbesuch</value></data>
+  <data name="Vet_QuestionTitle" xml:space="preserve"><value>Frage für den Tierarztbesuch</value></data>
+  <data name="Vet_QuestionSub" xml:space="preserve"><value>Etwas, das du zu {0} fragen willst.</value></data>
+  <data name="Vet_QuestionPlaceholder" xml:space="preserve"><value>Was möchtest du fragen?</value></data>
+  <data name="Vet_QuestionOpenHeading" xml:space="preserve"><value>Steht schon auf deiner Liste</value></data>
+  <data name="Vet_QuestionSave" xml:space="preserve"><value>Notieren</value></data>
+  <data name="Vet_QuestionToast" xml:space="preserve"><value>Für den nächsten Besuch notiert.</value></data>
 </root>

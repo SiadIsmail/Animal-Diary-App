@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    VetQuestionSheetView
+    ─────────────────────────────────────────────────────────
+    "Question for the vet" — the one thing owners reliably forget, written down where
+    they already are.
+
+    Not a journal entry, and the sheet says so by what it does NOT have: no date, no
+    time picker, no value, no tracker. Just what is already on the list, and a field.
+    The list above the field is read-only — ticking and deleting live on the
+    appointment page, where the list is actually read.
+
+    BindingContext is a VetQuestionSheetViewModel; open it via that VM's OpenAsync.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:VetQuestionSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.VetQuestionSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+
+            <!-- The body owns its scroller and pins the actions below it, as
+                 FelovaBottomSheet requires: the list of open questions is unbounded.
+                 VerticalOptions="Start" on the ScrollView plus the code-behind's
+                 ceiling makes the sheet hug two questions and scroll at twenty — a
+                 plain filling ScrollView stretches even a short sheet to full height
+                 on Android (see AddAnythingSheetView). -->
+            <Grid RowDefinitions="*,Auto" RowSpacing="16">
+
+                <ScrollView x:Name="Body"
+                            Grid.Row="0"
+                            VerticalOptions="Start"
+                            VerticalScrollBarVisibility="Never">
+                    <VerticalStackLayout Spacing="14" Padding="0,2,0,0">
+
+                        <!-- Already written down. Shown so adding a second question
+                             doesn't feel like writing into the dark. Their words,
+                             verbatim, in one weight — nothing here is ranked, dated
+                             or counted. -->
+                        <VerticalStackLayout Spacing="7" IsVisible="{Binding HasOpen}">
+                            <Label Text="{Binding OpenHeading}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   CharacterSpacing="1"
+                                   TextColor="{StaticResource InkSecondary}"/>
+
+                            <VerticalStackLayout Spacing="6"
+                                                 BindableLayout.ItemsSource="{Binding Open}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vms:VetQuestionLine">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                            <Label Grid.Column="0"
+                                                   Text="·"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource InkTertiary}"/>
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding Text}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="13.5"
+                                                   LineHeight="1.35"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
+                        <Border BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 14"
+                                Padding="12,2">
+                            <Editor Text="{Binding QuestionText}"
+                                    Placeholder="{loc:Translate Vet_QuestionPlaceholder}"
+                                    AutoSize="TextChanges"
+                                    HeightRequest="76"
+                                    FontFamily="{StaticResource FontSans}"
+                                    FontSize="15"
+                                    TextColor="{StaticResource Ink}"
+                                    PlaceholderColor="{StaticResource InkTertiary}"/>
+                        </Border>
+
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <!-- Actions, pinned below the scroller so Save stays put while the
+                     list moves. -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_NotNow}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.Shadow>
+                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                        </Border.Shadow>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Vet_QuestionSave}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </Grid>
+
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>

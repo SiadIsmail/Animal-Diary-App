@@ -37,6 +37,11 @@ public class MainViewModel
     /// Data/Models/TodayCards.cs).</summary>
     public TodayCardSheetViewModel TodayCardSheetVM { get; }
 
+    /// <summary>"Question for the vet" — a note to self about a conversation.
+    /// Deliberately NOT a Journal input sheet, though it wears the same chrome
+    /// (see Data/Models/VetQuestion.cs).</summary>
+    public VetQuestionSheetViewModel VetQuestionSheetVM { get; }
+
     // ── Reusable condition-setup sheets ("one menu, two doors": onboarding + Manage) ──
     public DiabetesSetupSheetViewModel DiabetesSetupVM { get; }
     public CkdSetupSheetViewModel CkdSetupVM { get; }
@@ -126,6 +131,7 @@ public class MainViewModel
  WeightSheetViewModel weightSheetVM,
  AppetiteSheetViewModel appetiteSheetVM,
  SeizureSheetViewModel seizureSheetVM,
+ VetQuestionSheetViewModel vetQuestionSheetVM,
  WaterSheetViewModel waterSheetVM,
  TodayCardSheetViewModel todayCardSheetVM,
  DiabetesSetupSheetViewModel diabetesSetupVM,
@@ -167,6 +173,7 @@ public class MainViewModel
         SeizureSheetVM = seizureSheetVM;
         WaterSheetVM = waterSheetVM;
         TodayCardSheetVM = todayCardSheetVM;
+        VetQuestionSheetVM = vetQuestionSheetVM;
         DiabetesSetupVM = diabetesSetupVM;
         CkdSetupVM = ckdSetupVM;
         EpilepsySetupVM = epilepsySetupVM;

@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.View;
+namespace Animal_Diary_App.Data.View;
 
 using System.ComponentModel;
 using Animal_Diary_App.Data.Models;
@@ -116,6 +116,7 @@ public partial class CalendarPage : ContentPage
 		vm.WeightSheetVM.Saved += OnSheetSaved;
 		vm.AppetiteSheetVM.Saved += OnSheetSaved;
 		vm.SeizureSheetVM.Saved += OnSheetSaved;
+		vm.VetQuestionSheetVM.Saved += OnVetQuestionSaved;
 		vm.WaterSheetVM.Saved += OnSheetSaved;
 		vm.CustomEntrySheetVM.Saved += OnSheetSaved;
 
@@ -205,6 +206,7 @@ public partial class CalendarPage : ContentPage
 		vm.WeightSheetVM.Saved -= OnSheetSaved;
 		vm.AppetiteSheetVM.Saved -= OnSheetSaved;
 		vm.SeizureSheetVM.Saved -= OnSheetSaved;
+		vm.VetQuestionSheetVM.Saved -= OnVetQuestionSaved;
 		vm.WaterSheetVM.Saved -= OnSheetSaved;
 		vm.CustomEntrySheetVM.Saved -= OnSheetSaved;
 	}
@@ -316,6 +318,10 @@ public partial class CalendarPage : ContentPage
 			case JournalChipKind.Weight: await vm.WeightSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Appetite: await vm.AppetiteSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Seizure: await vm.SeizureSheetVM.OpenAsync(petId, name, date); break;
+			// Not a log type — the date is ignored, and nothing about it reaches the
+			// timeline or the chips. It rides this funnel for the paywall gate and the
+			// close-then-open handoff, which are the same for any sheet.
+			case JournalChipKind.VetQuestion: await vm.VetQuestionSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Water: await vm.WaterSheetVM.OpenAsync(petId, name, date); break;
 			// One sheet for every owner-defined tracker; the key says which.
 			case JournalChipKind.Custom:
@@ -344,6 +350,16 @@ public partial class CalendarPage : ContentPage
 			System.Diagnostics.Debug.WriteLine($"[CalendarPage] OnSheetSaved failed: {ex}");
 		}
 	}
+
+	// A question for the vet was written down → toast with its undo, and nothing else.
+	//
+	// Deliberately NOT OnSheetSaved: no bubble-pop, because bubbles rising off a
+	// question would be the app congratulating someone for worrying; no journal reload,
+	// because a question is not in the timeline and not a chip; and no entry_type event,
+	// because it is not a journal entry (TrackJournalEntry maps this kind to null too,
+	// so neither path can emit one).
+	private void OnVetQuestionSaved(JournalSaveResult result) => Toast.Show(result.Message,
+		async () => await result.UndoAsync());
 
 	// A timeline entry was deleted → refresh, then a 6-second undo-toast that restores
 	// it. No bubble-pop: a deletion isn't a "logged something" celebration.

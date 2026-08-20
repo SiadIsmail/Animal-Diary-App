@@ -1004,4 +1004,14 @@
   <data name="Today_RecordSeizure" xml:space="preserve"><value>Seizures</value></data>
   <data name="Today_RecordMedication" xml:space="preserve"><value>Doses</value></data>
   <data name="Today_PickerShowElse" xml:space="preserve"><value>Show something else here</value></data>
+  <!-- Questions for the vet. A note to self about a conversation — never a record
+       of the animal, so nothing here is worded as something to be done today. -->
+  <data name="Vet_QuestionSection" xml:space="preserve"><value>For the next vet visit</value></data>
+  <data name="Vet_QuestionRow" xml:space="preserve"><value>Question for the vet</value></data>
+  <data name="Vet_QuestionTitle" xml:space="preserve"><value>Question for the vet</value></data>
+  <data name="Vet_QuestionSub" xml:space="preserve"><value>Something to remember to ask about {0}.</value></data>
+  <data name="Vet_QuestionPlaceholder" xml:space="preserve"><value>What would you like to ask?</value></data>
+  <data name="Vet_QuestionOpenHeading" xml:space="preserve"><value>Already on your list</value></data>
+  <data name="Vet_QuestionSave" xml:space="preserve"><value>Add it</value></data>
+  <data name="Vet_QuestionToast" xml:space="preserve"><value>Saved for the next visit.</value></data>
 </root>

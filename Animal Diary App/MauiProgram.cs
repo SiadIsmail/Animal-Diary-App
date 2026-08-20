@@ -62,6 +62,7 @@ public static class MauiProgram
 
 		// Today's stat-card picker (which record each of the two cards shows).
 		builder.Services.AddSingleton<TodayCardSheetViewModel>();
+		builder.Services.AddSingleton<VetQuestionSheetViewModel>();
 
 		// Condition-setup sheets, shared by onboarding and the Manage page.
 		builder.Services.AddSingleton<DiabetesSetupSheetViewModel>();
@@ -117,6 +118,7 @@ public static class MauiProgram
 		// Facts about the record — one computation, three surfaces (Today's card
 		// sheet, the Constellation legend, the appointment summary).
 		builder.Services.AddSingleton<RecordFactsService>();
+		builder.Services.AddSingleton<VetQuestionService>();
 
 		// ── Import (AI-written entry files) ──────────────────────────────────
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Import.ImportService>();
