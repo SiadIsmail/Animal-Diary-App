@@ -111,6 +111,12 @@
   <data name="Settings_DeleteConfirmTitle" xml:space="preserve"><value>Delete all data</value></data>
   <data name="Settings_DeleteConfirmMessage" xml:space="preserve"><value>This deletes every pet, entry, medication, and setting on this device. It can't be undone.</value></data>
   <data name="Settings_DeleteConfirmAccept" xml:space="preserve"><value>Delete</value></data>
+  <!-- Ad measurement. One switch, Android only, shown just above the privacy policy
+       so the explanation and the link sit together. Says plainly what leaves the
+       device and what does not; never the words "tracking" or "advertising ID". -->
+  <data name="Settings_AdvertisingSection" xml:space="preserve"><value>Advertising</value></data>
+  <data name="Settings_AdTrackingTitle" xml:space="preserve"><value>Ad measurement</value></data>
+  <data name="Settings_AdTrackingSubtitle" xml:space="preserve"><value>If an ad brought you here, Felova tells Meta the install happened. Nothing about you or your pets is sent.</value></data>
   <!-- Cloud and subscription share one "Account" section; the links and the
        privacy policy share one "About and support" section near the foot. -->
   <data name="Settings_AccountSection" xml:space="preserve"><value>Account</value></data>

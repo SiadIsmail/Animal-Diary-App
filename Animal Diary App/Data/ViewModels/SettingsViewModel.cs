@@ -2,6 +2,7 @@
 
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
+using Animal_Diary_App.Data.Services.Attribution;
 using Animal_Diary_App.Data.Services.Cloud;
 using Animal_Diary_App.Data.Services.Notifications;
 using Animal_Diary_App.Helpers;
@@ -130,6 +131,31 @@ public class SettingsViewModel : BaseViewModel
         => LocalizationManager.Instance.Format(n == 1 ? singularKey : pluralKey, n);
     private readonly DailyCareReminderScheduler _dailyReminders;
     private readonly MedicationReminderScheduler _reminders;
+    private readonly IAdAttributionService _adAttribution;
+
+    /// <summary>Whether to show the ad-measurement row at all. False on every platform and
+    /// build without Meta attribution (iOS, Windows, macOS, or Meta switched off), where a
+    /// switch would claim to control something that isn't running.</summary>
+    public bool AdTrackingVisible => _adAttribution.IsAvailable;
+
+    /// <summary>
+    /// The owner's ad-measurement choice. On by default; this row is the way out.
+    ///
+    /// <para>Applied through the service rather than by writing the preference here,
+    /// because switching off has to reach the SDK in this process too, not just persist a
+    /// bool for the next launch.</para>
+    /// </summary>
+    public bool AdTrackingEnabled
+    {
+        get => _adAttribution.Enabled;
+        set
+        {
+            if (value == _adAttribution.Enabled)
+                return;
+            _adAttribution.SetEnabled(value);
+            OnPropertyChanged();
+        }
+    }
 
     /// <summary>Whether a cloud account is signed in — pages pick the reset-confirm
     /// message with it (the cloud variant explains the ownership rule).</summary>
@@ -140,7 +166,8 @@ public class SettingsViewModel : BaseViewModel
         CloudSheetViewModel cloudVM, DevSheetViewModel devVM, DailyCareReminderScheduler dailyReminders,
         MedicationReminderScheduler reminders,
         SubscribeSheetViewModel subscribeVM, RedeemCodeSheetViewModel redeemVM,
-        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements)
+        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
+        IAdAttributionService adAttribution)
     {
         _appResetService = appResetService;
         _settingsService = settingsService;
@@ -154,6 +181,7 @@ public class SettingsViewModel : BaseViewModel
         _subscribeVM = subscribeVM;
         _redeemVM = redeemVM;
         _entitlements = entitlements;
+        _adAttribution = adAttribution;
         // Keep both rows fresh when the entitlement changes (purchase, expiry, redemption).
         _entitlements.StateChanged += () =>
         {

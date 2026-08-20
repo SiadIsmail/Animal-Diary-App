@@ -1,7 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools">
-	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true"></application>
+	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true">
+		<!-- Meta SDK auto-initialization: off, all three flags.
+
+		     The credentials live in code rather than here (see MetaAdsConfig and why), so
+		     facebook-core's FacebookInitProvider — a ContentProvider that runs before any
+		     app code and calls sdkInitialize unconditionally — already finds no app id and
+		     gives up. These are the belt to that braces: if anyone ever does add the app id
+		     to this file, the SDK still cannot start collecting before
+		     MetaAdAttributionService has checked whether the owner allows it. That service
+		     turns all three on at runtime once it has. Do not set any of them true here. -->
+		<meta-data android:name="com.facebook.sdk.AutoInitEnabled" android:value="false" />
+		<meta-data android:name="com.facebook.sdk.AutoLogAppEventsEnabled" android:value="false" />
+		<meta-data android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled" android:value="false" />
+	</application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -21,11 +34,25 @@
 			<action android:name="android.media.action.IMAGE_CAPTURE" />
 		</intent>
 	</queries>
-	<!-- Strip the advertising-ID permission that RevenueCat's transitive dependency
-	     (Xamarin.GooglePlayServices.Ads.Identifier, via Kebechet.Maui.RevenueCat) merges
-	     in. This app does not use the advertising ID: analytics identity is an anonymous
-	     random GUID (see AnalyticsIdentity.cs) and RevenueCat attribution is not used.
-	     tools:node="remove" makes the manifest merger drop it, so AD_ID stays out of the
-	     shipped AAB and the Play "advertising ID" declaration is honestly "No". -->
-	<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+	<!-- The advertising ID (AD_ID) is COLLECTED, for one purpose: attributing an install to
+	     a Meta ad campaign. facebook-core declares it (along with the four Privacy Sandbox
+	     ACCESS_ADSERVICES_* permissions) and the merger brings it in; that is intended, so
+	     there is deliberately no uses-permission line here to strip it.
+
+	     This REVERSES an earlier decision, and the reversal is the point of this comment.
+	     AD_ID used to be removed with tools:node="remove" — RevenueCat's transitive
+	     Ads.Identifier dependency merged it in, nothing used it, and dropping it kept the
+	     Play declaration honestly "No". That is no longer true. Do not restore the removal
+	     while Meta attribution ships: the merger would silently drop the permission, the SDK
+	     would find no advertising id on Android 13+, and installs would go unattributed with
+	     nothing in the build to explain why.
+
+	     Consequences that travel with this, and must stay in step:
+	       • Play Data Safety declares the advertising ID as collected AND shared with a
+	         third party for advertising. Both must be ticked.
+	       • The privacy policy at felova.app/privacy has to say the same.
+	       • The owner can switch it off in Settings (AdTrackingSettings); the SDK then never
+	         initializes and no advertising id is read.
+	     Analytics is unaffected and still never sees it — its identity is a random GUID
+	     (AnalyticsIdentity.cs) and the two subsystems share no code. See AI/analytics.md. -->
 </manifest>

@@ -328,6 +328,40 @@
                     </Border>
                 </Grid>
 
+                <!-- ── ADVERTISING ── -->
+                <!-- Hidden wholesale on any platform or build without Meta attribution, so
+                     the switch never claims to control something that isn't running. -->
+                <Label Text="{loc:Translate Settings_AdvertisingSection}"
+                       Style="{StaticResource SettingsSectionHeader}"
+                       IsVisible="{Binding SettingsVM.AdTrackingVisible}"/>
+
+                <Border BackgroundColor="{StaticResource Glass}"
+                        Stroke="{StaticResource GlassLine}"
+                        StrokeThickness="1.5"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="16,14"
+                        IsVisible="{Binding SettingsVM.AdTrackingVisible}">
+                    <!-- Toggle row: title + plain reason (§17) + Switch. -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{loc:Translate Settings_AdTrackingTitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"/>
+                            <Label Text="{loc:Translate Settings_AdTrackingSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11"
+                                   LineHeight="1.35"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                VerticalOptions="Center"
+                                IsToggled="{Binding SettingsVM.AdTrackingEnabled}"
+                                OnColor="{StaticResource Teal}"/>
+                    </Grid>
+                </Border>
+
                 <!-- ── ABOUT AND SUPPORT ── -->
                 <!-- Outbound links and the privacy policy, near the foot where
                      read-once material belongs. -->

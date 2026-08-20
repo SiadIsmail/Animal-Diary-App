@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="keystore.props" Condition="Exists('keystore.props')" />
 
 	<PropertyGroup>
@@ -195,6 +195,23 @@
 	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 		<PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.4.2.3" />
 		<PackageReference Include="Xamarin.Google.Android.InstallReferrer" Version="2.2.0.6" />
+	</ItemGroup>
+
+	<!-- Meta (Facebook) App Events, for ONE thing: reporting the install so a Meta
+	     app-promotion campaign can attribute it. Android-only because the app does not ship
+	     on the App Store yet and Meta's iOS SDK is a separate binding job; every other
+	     platform registers NullAdAttributionService and does nothing.
+
+	     A local binding project rather than a package, because no maintained NuGet binding
+	     exists — Microsoft's Xamarin.Facebook.Android stopped at 11.2.0.1 in 2021 and the
+	     native SDK is on 18.x. It stays a separate project so its ~400 unavoidable
+	     generated-code warnings never reach this csproj's TreatWarningsAsErrors. The AAR
+	     carries no .so of its own, so nothing here touches the 16 KB alignment constraint.
+
+	     See Data/Services/Attribution/ for the seam, and AI/analytics.md for why this is
+	     kept structurally separate from the anonymous PostHog pipeline. -->
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<ProjectReference Include="..\Felova.Meta.Binding\Felova.Meta.Binding.csproj" />
 	</ItemGroup>
 
 	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' OR $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">

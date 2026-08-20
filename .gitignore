@@ -24,6 +24,9 @@ Animal Diary App/keystore.props
 # RevenueCat public SDK keys — kept out of git (the .example template is committed).
 Animal Diary App/Data/Services/Billing/BillingConfig.Secret.cs
 
+# Meta App ID + Client Token — same arrangement (the .example template is committed).
+Animal Diary App/Data/Services/Attribution/MetaAdsConfig.Secret.cs
+
 # Project-local working docs (AI-assistant context; not part of the public repo)
 AI/
 AI_CONTEXT.md

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
+using Animal_Diary_App.Data.Services.Attribution;
 using Animal_Diary_App.Data.Services.Billing;
 using Animal_Diary_App.Data.Services.Cloud;
 using Animal_Diary_App.Data.Services.Journal;
@@ -150,6 +151,29 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Data.Services.Data.Device.IInstallReferrerSource,
 			Data.Services.Data.Device.NullInstallReferrerSource>();
 #endif
+		// ── Ad attribution boundary (mirrors the analytics/cloud/billing boundaries) ──
+		// Reports the install to Meta so an app-promotion campaign can attribute it, and
+		// nothing else — no events, no properties, no user or pet data ever reaches it (see
+		// AI/analytics.md for the boundary, which is a product rule, not a style choice).
+		//
+		// Two conditions, both required: an Android build with the SDK binding, AND Meta
+		// enabled with credentials present. Anything else resolves the no-op, which also
+		// hides the Settings toggle. iOS is deliberately on the no-op for now — the app
+		// isn't on the App Store yet and Meta's iOS SDK is a separate binding.
+#if ANDROID
+		if (MetaAdsConfig.Enabled && MetaAdsConfig.IsConfigured)
+		{
+			builder.Services.AddSingleton<IAdAttributionService,
+				Platforms.Android.MetaAdAttributionService>();
+		}
+		else
+		{
+			builder.Services.AddSingleton<IAdAttributionService, NullAdAttributionService>();
+		}
+#else
+		builder.Services.AddSingleton<IAdAttributionService, NullAdAttributionService>();
+#endif
+
 		builder.Services.AddSingleton<ReminderInstanceService>();
 		builder.Services.AddSingleton<MedicationDoseReconciler>();
 		builder.Services.AddSingleton<MedicationReminderScheduler>();

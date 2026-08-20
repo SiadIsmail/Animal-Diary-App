@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+
+  <!--
+    Three classes are dropped from the binding. Each one is a HARD BUILD ERROR if left
+    in, not a preference: the generator emits a C# class that does not satisfy the
+    abstract members it inherits, and the compiler rejects it.
+
+      GraphRequestAsyncTask   CS0534: does not implement AsyncTask.DoInBackground.
+      FileDownloadTask        CS0534: same, in the app-events internals.
+      GraphRequestBatch       CS0534 + CS0115: extends AbstractList without an emittable
+                              Size()/Get(int); the generated InvokeSize() overrides nothing.
+
+    Safe to remove because none is reachable from what the app calls. The app uses exactly
+    two entry points, FacebookSdk (init + the three consent flags) and AppEventsLogger
+    (ActivateApp), and neither takes or returns any of these types. They remain present in
+    the shipped .aar and fully usable by Meta's own Java at runtime; only the C# projection
+    is suppressed.
+
+    If a future SDK bump reintroduces a CS0534/CS0115 on some other class, extend this list
+    the same way rather than reaching for a Java wrapper project.
+  -->
+  <remove-node path="/api/package[@name='com.facebook']/class[@name='GraphRequestAsyncTask']" />
+  <remove-node path="/api/package[@name='com.facebook']/class[@name='GraphRequestBatch']" />
+  <remove-node path="/api/package[@name='com.facebook.appevents.internal']/class[@name='FileDownloadTask']" />
+
+</metadata>
