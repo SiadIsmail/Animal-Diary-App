@@ -16,7 +16,6 @@
     <ContentPage.Resources>
         <ResourceDictionary>
             <helpers:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
-            <helpers:MoodToHeightConverter x:Key="MoodToHeight"/>
 
             <!-- Frosted glass card surface (matches Journal) -->
             <Style x:Key="GlassCard"
@@ -34,6 +33,18 @@
             </Style>
 
             <!-- Warm italic-serif section heading -->
+            <!-- One range button in the look-back selector; the label and the
+                 selected accent are set per-instance. Hoisted here from the retired
+                 WeightChartView, which owned the only copy. -->
+            <Style x:Key="RangeTab" TargetType="Label">
+                <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="TextColor" Value="{StaticResource InkTertiary}"/>
+                <Setter Property="HorizontalTextAlignment" Value="Center"/>
+                <Setter Property="Padding" Value="0,5"/>
+            </Style>
+
             <Style x:Key="SerifHeading"
                    TargetType="Label">
                 <Setter Property="FontFamily"
@@ -385,143 +396,230 @@
                     </Grid>
                 </VerticalStackLayout>
 
-                <!-- 5 ── Mood ribbon (DATA — accurate heights) ── -->
+                <!-- 5 ── Looking back ──
+                     One block per record in the pet's CARE PLAN, in fixed catalog
+                     order, for every record that has anything in the range.
+
+                     This replaced a hardcoded mood ribbon and a hardcoded weight
+                     chart. The top of this page already follows the pet — the ring,
+                     next-up and the two cards all derive from the plan or the pet's
+                     conditions — while the bottom drew the same two records for
+                     everyone, so an owner managing a diabetic cat scrolled past a
+                     glucose card into a weight chart and a mood ribbon.
+
+                     It is NOT a dashboard and adds no knob: the care plan is the list
+                     the owner already curated on Manage, and the single range selector
+                     is the one the weight chart already had. Nothing here is ordered by
+                     volume and no record is dropped for being quiet — that would be the
+                     app deciding which one matters (Data/Models/RecordFacts.cs). -->
                 <VerticalStackLayout Spacing="12"
-                                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData}">
+                                     IsVisible="{Binding LookBackVM.HasBlocks}">
 
-                    <Label Text="{loc:Translate Main_MoodMonthHeading}"
-                           Style="{StaticResource SerifHeading}"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <Label Grid.Column="0"
+                               Text="{Binding LookBackVM.Heading}"
+                               Style="{StaticResource SerifHeading}"
+                               VerticalOptions="Center"/>
 
-                    <Border Style="{StaticResource GlassCard}">
-                        <VerticalStackLayout Spacing="12">
+                        <!-- One range for the whole section: a per-block range would be
+                             a knob per record, which is exactly the settings screen this
+                             page must not become. -->
+                        <Border Grid.Column="1"
+                                BackgroundColor="{StaticResource Well}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 999"
+                                Padding="3">
+                            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="0" WidthRequest="168">
 
-                            <Label Text="{loc:Translate Main_Last30Days}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource InkTertiary}"/>
+                                <Border Grid.Column="0" BackgroundColor="Transparent"
+                                        StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding LookBackVM.RangeDays}" Value="14">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding LookBackVM.SetRangeCommand}" CommandParameter="14"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Today_Range2W}" Style="{StaticResource RangeTab}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding LookBackVM.RangeDays}" Value="14">
+                                                <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
 
-                            <FlexLayout Direction="Row"
-                                        Wrap="NoWrap"
-                                        AlignItems="End"
-                                        HeightRequest="30"
-                                        BindableLayout.ItemsSource="{Binding MainPageVM.MoodTimeline.TimelineDays}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate x:DataType="vms:MoodTimelineDay">
-                                        <!-- Height encodes the real mood value; only the
-                                             corner radius is decorative. -->
-                                        <Border HeightRequest="{Binding Mood, Converter={StaticResource MoodToHeight}}"
-                                                Margin="1.5,0"
-                                                BackgroundColor="{Binding MoodColor}"
-                                                StrokeThickness="0"
-                                                FlexLayout.Grow="1"
-                                                VerticalOptions="End"
-                                                StrokeShape="RoundRectangle 4,3,4,3">
-                                            <Border.GestureRecognizers>
-                                                <TapGestureRecognizer
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MainPageVM.NavigateToMoodDateCommand}"
-                                                    CommandParameter="{Binding Date}"/>
-                                            </Border.GestureRecognizers>
-                                        </Border>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </FlexLayout>
+                                <Border Grid.Column="1" BackgroundColor="Transparent"
+                                        StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding LookBackVM.RangeDays}" Value="30">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding LookBackVM.SetRangeCommand}" CommandParameter="30"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Today_Range1M}" Style="{StaticResource RangeTab}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding LookBackVM.RangeDays}" Value="30">
+                                                <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
 
-                            <!-- Legend (colours mirror MoodLevel.GetColor — kept exact) -->
-                            <FlexLayout Wrap="Wrap"
-                                        Direction="Row"
-                                        AlignItems="Center">
-                                <HorizontalStackLayout Spacing="5"
-                                                       Margin="0,0,12,0">
-                                    <Border WidthRequest="8"
-                                            HeightRequest="8"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3"
-                                            BackgroundColor="{StaticResource MGreat}"
-                                            VerticalOptions="Center"/>
-                                    <Label Text="{loc:Translate Mood_Excellent}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="10.5"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource InkTertiary}"/>
-                                </HorizontalStackLayout>
-                                <HorizontalStackLayout Spacing="5"
-                                                       Margin="0,0,12,0">
-                                    <Border WidthRequest="8"
-                                            HeightRequest="8"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3"
-                                            BackgroundColor="{StaticResource MGood}"
-                                            VerticalOptions="Center"/>
-                                    <Label Text="{loc:Translate Mood_Good}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="10.5"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource InkTertiary}"/>
-                                </HorizontalStackLayout>
-                                <HorizontalStackLayout Spacing="5"
-                                                       Margin="0,0,12,0">
-                                    <Border WidthRequest="8"
-                                            HeightRequest="8"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3"
-                                            BackgroundColor="{StaticResource MOkay}"
-                                            VerticalOptions="Center"/>
-                                    <Label Text="{loc:Translate Mood_Neutral}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="10.5"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource InkTertiary}"/>
-                                </HorizontalStackLayout>
-                                <HorizontalStackLayout Spacing="5"
-                                                       Margin="0,0,12,0">
-                                    <Border WidthRequest="8"
-                                            HeightRequest="8"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3"
-                                            BackgroundColor="{StaticResource MLow}"
-                                            VerticalOptions="Center"/>
-                                    <Label Text="{loc:Translate Mood_Bad}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="10.5"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource InkTertiary}"/>
-                                </HorizontalStackLayout>
-                                <HorizontalStackLayout Spacing="5"
-                                                       Margin="0,0,12,0">
-                                    <Border WidthRequest="8"
-                                            HeightRequest="8"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 3"
-                                            BackgroundColor="{StaticResource MUnwell}"
-                                            VerticalOptions="Center"/>
-                                    <Label Text="{loc:Translate Mood_VeryBad}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="10.5"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource InkTertiary}"/>
-                                </HorizontalStackLayout>
-                            </FlexLayout>
-                        </VerticalStackLayout>
-                    </Border>
+                                <Border Grid.Column="2" BackgroundColor="Transparent"
+                                        StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding LookBackVM.RangeDays}" Value="90">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding LookBackVM.SetRangeCommand}" CommandParameter="90"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Today_Range3M}" Style="{StaticResource RangeTab}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding LookBackVM.RangeDays}" Value="90">
+                                                <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+
+                                <Border Grid.Column="3" BackgroundColor="Transparent"
+                                        StrokeThickness="0" StrokeShape="RoundRectangle 999">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding LookBackVM.RangeDays}" Value="365">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding LookBackVM.SetRangeCommand}" CommandParameter="365"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Today_Range1Y}" Style="{StaticResource RangeTab}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding LookBackVM.RangeDays}" Value="365">
+                                                <Setter Property="TextColor" Value="{StaticResource Ink}"/>
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="12"
+                                         BindableLayout.ItemsSource="{Binding LookBackVM.Blocks}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:LookBackBlock">
+                                <Border Style="{StaticResource GlassCard}">
+                                    <VerticalStackLayout Spacing="10">
+
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Label Text="{Binding Icon}" FontSize="15" VerticalOptions="Center"/>
+                                            <Label Text="{Binding Name}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="14"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource Ink}"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+
+                                        <!-- Measured: a line over time. X is WHEN it was
+                                             written down, never the index of the reading;
+                                             straight segments, a dot on every real entry,
+                                             and no line across a long gap. -->
+                                        <Label Text="{loc:Translate Today_Measured}"
+                                               IsVisible="{Binding IsDualStore}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="10.5"
+                                               FontAttributes="Bold"
+                                               CharacterSpacing="1"
+                                               TextColor="{StaticResource InkTertiary}"/>
+                                        <GraphicsView Drawable="{Binding Chart}"
+                                                      IsVisible="{Binding HasChart}"
+                                                      HeightRequest="118"
+                                                      HorizontalOptions="Fill"
+                                                      InputTransparent="True"/>
+
+                                        <!-- Observed: one mark per reading, placed by date,
+                                             heighted by the stored level. Named separately
+                                             when a record holds both, because measurements
+                                             and observations are never merged into one
+                                             picture (AI/design-decisions.md). -->
+                                        <Label Text="{loc:Translate Today_Observed}"
+                                               IsVisible="{Binding IsDualStore}"
+                                               FontFamily="{StaticResource FontSans}"
+                                               FontSize="10.5"
+                                               FontAttributes="Bold"
+                                               CharacterSpacing="1"
+                                               TextColor="{StaticResource InkTertiary}"
+                                               Margin="0,4,0,0"/>
+                                        <GraphicsView Drawable="{Binding Observations}"
+                                                      IsVisible="{Binding HasObservations}"
+                                                      HeightRequest="34"
+                                                      HorizontalOptions="Fill"
+                                                      InputTransparent="True"/>
+
+                                        <!-- Events: one mark per occurrence, at the moment
+                                             it happened. Same size, same colour, always —
+                                             nothing is encoded but when. -->
+                                        <GraphicsView Drawable="{Binding Events}"
+                                                      IsVisible="{Binding HasEvents}"
+                                                      HeightRequest="34"
+                                                      HorizontalOptions="Fill"
+                                                      InputTransparent="True"/>
+
+                                        <!-- The dates along the foot. One axis for the
+                                             whole block, however many charts sit above it:
+                                             they cover the same stretch, and a second axis
+                                             would suggest they did not. Inset by the same
+                                             6px the drawables pad by, so a label sits over
+                                             the day it names. -->
+                                        <AbsoluteLayout IsVisible="{Binding HasAxis}"
+                                                        HeightRequest="14"
+                                                        Margin="6,2,6,0"
+                                                        BindableLayout.ItemsSource="{Binding Axis}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="vms:AxisTick">
+                                                    <Label Text="{Binding Label}"
+                                                           AbsoluteLayout.LayoutBounds="{Binding Bounds}"
+                                                           AbsoluteLayout.LayoutFlags="XProportional"
+                                                           FontFamily="{StaticResource FontSans}"
+                                                           FontSize="10"
+                                                           TextColor="{StaticResource InkTertiary}"/>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </AbsoluteLayout>
+
+                                        <!-- The facts, in the same words the card sheet and
+                                             the appointment summary state them. One weight,
+                                             one colour: nothing here is emphasised. -->
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{Binding Count}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12.5"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                            <Label Text="{Binding DayParts}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12.5"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                            <Label Text="{Binding Values}"
+                                                   IsVisible="{Binding HasValues}"
+                                                   FontFamily="{StaticResource FontSans}"
+                                                   FontSize="12.5"
+                                                   TextColor="{StaticResource InkSecondary}"/>
+                                        </VerticalStackLayout>
+
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
                 </VerticalStackLayout>
-
-                <!-- Mood empty state -->
-                <VerticalStackLayout Spacing="8"
-                                     Padding="16"
-                                     IsVisible="{Binding MainPageVM.MoodTimeline.HasMoodData, Converter={StaticResource InvertedBoolConverter}}">
-                    <Label Text="😊"
-                           FontSize="32"
-                           HorizontalTextAlignment="Center"/>
-                    <Label Text="{loc:Translate Main_MoodEmptyState}"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="12"
-                           TextColor="{StaticResource InkSecondary}"
-                           HorizontalTextAlignment="Center"/>
-                </VerticalStackLayout>
-
-                <!-- 6 ── Weight chart (DATA — precise line chart) ── -->
-                <view:WeightChartView/>
 
             </VerticalStackLayout>
         </ScrollView>

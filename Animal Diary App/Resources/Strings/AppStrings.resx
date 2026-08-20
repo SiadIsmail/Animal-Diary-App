@@ -133,13 +133,9 @@
   <data name="Main_GreetingMorning" xml:space="preserve"><value>Good morning</value></data>
   <data name="Main_GreetingAfternoon" xml:space="preserve"><value>Good afternoon</value></data>
   <data name="Main_GreetingEvening" xml:space="preserve"><value>Good evening</value></data>
-  <data name="Main_Last30Days" xml:space="preserve"><value>Last 30 days</value></data>
-  <data name="Main_MoodEmptyState" xml:space="preserve"><value>You can note how your pet's feeling in the Journal</value></data>
   <data name="Main_Aside1" xml:space="preserve"><value>How {0} is doing today</value></data>
   <data name="Main_Aside2" xml:space="preserve"><value>{0}'s day so far</value></data>
   <data name="Main_Aside3" xml:space="preserve"><value>Today with {0}</value></data>
-  <data name="Main_MoodMonthHeading" xml:space="preserve"><value>How the month has felt</value></data>
-  <data name="Main_WeighInsHeading" xml:space="preserve"><value>The weigh-ins</value></data>
   <data name="Main_WeightStable" xml:space="preserve"><value>About the same as before</value></data>
   <data name="Main_NextMedEyebrow" xml:space="preserve"><value>Next up</value></data>
   <data name="Main_AllCaughtUpTitle" xml:space="preserve"><value>All caught up</value></data>
@@ -393,7 +389,6 @@
   <data name="Care_YourPets" xml:space="preserve"><value>Your pets</value></data>
 
   <!-- ── Weight chart ── -->
-  <data name="Weight_EmptyState" xml:space="preserve"><value>Add a few weigh-ins to see the trend</value></data>
 
   <!-- ── Pets page ── -->
   <data name="Pets_MedicationCountOne" xml:space="preserve"><value>{0} medication</value></data>
@@ -1067,4 +1062,13 @@
   <data name="Notif_ChannelAppointmentName" xml:space="preserve"><value>Vet visits</value></data>
   <data name="Notif_ChannelAppointmentDescription" xml:space="preserve"><value>One quiet reminder the evening before a visit.</value></data>
   <data name="Notif_AppointmentBodyNoTime" xml:space="preserve"><value>{0}. Your summary is ready.</value></data>
+  <!-- Today's look-back half: one block per record in the pet's care plan.
+       Replaced a hardcoded mood ribbon and weight chart. -->
+  <data name="Today_LookingBack" xml:space="preserve"><value>Looking back</value></data>
+  <data name="Today_Range2W" xml:space="preserve"><value>2W</value></data>
+  <data name="Today_Range1M" xml:space="preserve"><value>1M</value></data>
+  <data name="Today_Range3M" xml:space="preserve"><value>3M</value></data>
+  <data name="Today_Range1Y" xml:space="preserve"><value>1Y</value></data>
+  <data name="Today_Measured" xml:space="preserve"><value>MEASURED</value></data>
+  <data name="Today_Observed" xml:space="preserve"><value>HOW IT SEEMED</value></data>
 </root>

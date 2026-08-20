@@ -126,8 +126,9 @@ public partial class MainPage : ContentPage
             // API queues each query to the thread pool and then serializes them on the
             // one shared connection — so fanning out occupied four pooled threads to run
             // one query and gained nothing. Same wall time, one thread.
-            await vm.MainPageVM.LoadWeightChartAsync();
-            await vm.MainPageVM.LoadMoodTimelineAsync();
+            // One section now, reading the pet's care plan, where two hardcoded
+            // surfaces (a mood ribbon and a weight chart) used to be.
+            await vm.LookBackVM.LoadAsync();
             // Both customizable stat cards: which records they hold and the
             // pet's latest value for each.
             await vm.MainPageVM.LoadStatCardsAsync();

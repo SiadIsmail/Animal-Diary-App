@@ -54,6 +54,33 @@ public readonly record struct TodayCardKey(TodayCardId? BuiltIn, int CustomId)
 
     public static TodayCardKey Custom(int customTrackerId) => new(null, customTrackerId);
 
+    /// <summary>
+    /// The same record, named as a care-plan key.
+    ///
+    /// <para>The two unions overlap but are not the same set: a care plan holds
+    /// trackers, and <see cref="TodayCardId.Medication"/> is not one (doses are not a
+    /// tracker — see <see cref="TodayCardCatalog"/>). So this converts one way only, and
+    /// an unmapped tracker returns null rather than guessing — the same posture as
+    /// <see cref="TryParse"/>, where a record a later version dropped must fail loudly
+    /// rather than silently become weight.</para>
+    /// </summary>
+    public static TodayCardKey? From(TrackerKey tracker)
+    {
+        if (tracker.IsCustom)
+            return Custom(tracker.CustomId);
+
+        return tracker.BuiltIn switch
+        {
+            TrackerId.Weight => TodayCardId.Weight,
+            TrackerId.Mood => TodayCardId.Mood,
+            TrackerId.Glucose => TodayCardId.Glucose,
+            TrackerId.Appetite => TodayCardId.Appetite,
+            TrackerId.Water => TodayCardId.Water,
+            TrackerId.Seizure => TodayCardId.Seizure,
+            _ => null,
+        };
+    }
+
     public bool Is(TodayCardId id) => BuiltIn == id;
 
     /// <summary>The stored form: the enum's name, or <c>custom:7</c>. Round-trips through

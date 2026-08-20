@@ -128,6 +128,19 @@ public readonly record struct DoseCounts(int Given, int Skipped, int NotRecorded
 public readonly record struct RecordMoment(DateTime When, decimal? Value);
 
 /// <summary>
+/// One relative reading, on the day it was written down.
+///
+/// <para>A SEPARATE type from <see cref="RecordMoment"/>, and that separation is the
+/// rule rather than tidiness: <paramref name="Level"/> is a row index on a word-labelled
+/// axis, never a value. It picks which labelled row a mark sits on and is never shown,
+/// summed, averaged or trended — which is exactly why it cannot travel in a
+/// <c>RecordMoment</c>, where something would eventually take its minimum and print
+/// "Lowest 2" (AI/design-decisions.md → "Communication layer, not interpretation
+/// layer").</para>
+/// </summary>
+public readonly record struct RecordObservation(DateTime When, int Level);
+
+/// <summary>
 /// What one record says about a stretch of time, stated as counts and dates.
 /// </summary>
 /// <param name="Kind">Which record — the same key Today's cards use, which is the one
@@ -164,6 +177,41 @@ public sealed record RecordFacts(
     /// record, and every caller would otherwise need a second empty path.</summary>
     public static RecordFacts Empty(TodayCardKey kind, DateTime from, DateTime to) =>
         new(kind, from, to, 0, default);
+}
+
+/// <summary>
+/// Everything one record has to say about a range: the facts, and the marks a surface
+/// can draw. Gathered in ONE pass, because the reads behind them are identical — the
+/// facts service was already fetching exactly these moments and throwing them away into
+/// the builder.
+///
+/// <para>The three lists are what decides how a record is DRAWN; there is deliberately
+/// no shape enum, because the shape is a fact about the data rather than a table someone
+/// has to keep in step with it. A record with measurements gets a line, one with
+/// observations gets a word-labelled ribbon, one with neither gets marks at the moments
+/// it happened — and a record with both (water, appetite) gets two separate charts,
+/// never one merged one.</para>
+/// </summary>
+/// <param name="Measured">Readings carrying a number — kg, mmol/L, mL, grams, a custom
+/// Amount.</param>
+/// <param name="Observed">Relative readings, as labelled rows. Never numbers.</param>
+/// <param name="Events">Occurrences with no value at all — a seizure, a Tick tracker.
+/// Position is when it happened, and nothing else is encoded.</param>
+public sealed record RecordSnapshot(
+    RecordFacts Facts,
+    IReadOnlyList<RecordMoment> Measured,
+    IReadOnlyList<RecordObservation> Observed,
+    IReadOnlyList<RecordMoment> Events)
+{
+    public bool HasMeasured => Measured.Count > 0;
+    public bool HasObserved => Observed.Count > 0;
+    public bool HasEvents => Events.Count > 0;
+
+    public static RecordSnapshot Empty(RecordFacts facts) => new(
+        facts,
+        Array.Empty<RecordMoment>(),
+        Array.Empty<RecordObservation>(),
+        Array.Empty<RecordMoment>());
 }
 
 /// <summary>

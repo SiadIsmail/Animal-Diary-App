@@ -45,7 +45,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<MedicationViewModel>();
 		builder.Services.AddSingleton<ConditionPickerViewModel>();
 		builder.Services.AddSingleton<MainPageViewModel>();
-		builder.Services.AddSingleton<MoodTimelineViewModel>();
 		builder.Services.AddSingleton<SettingsViewModel>();
 		builder.Services.AddSingleton<ManagePetViewModel>();
 		builder.Services.AddSingleton<JournalLogViewModel>();
@@ -65,6 +64,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<VetQuestionSheetViewModel>();
 		builder.Services.AddSingleton<VetVisitSheetViewModel>();
 		builder.Services.AddSingleton<AppointmentViewModel>();
+		builder.Services.AddSingleton<TodayLookBackViewModel>();
 
 		// Condition-setup sheets, shared by onboarding and the Manage page.
 		builder.Services.AddSingleton<DiabetesSetupSheetViewModel>();
