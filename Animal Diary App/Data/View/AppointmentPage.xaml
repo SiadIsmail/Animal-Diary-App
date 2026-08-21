@@ -52,7 +52,9 @@
 
         <controls:WaterBackground/>
 
-        <ScrollView>
+        <!-- Named so the code-behind can tell when the owner reached the bottom, which
+             is what "used their free summary" means. See AppointmentPage.OnScrolled. -->
+        <ScrollView x:Name="PageScroll" Scrolled="OnScrolled">
             <VerticalStackLayout Padding="22,20,22,44" Spacing="14">
 
                 <!-- Subhead: back + title -->
@@ -146,6 +148,14 @@
                                    TextColor="{StaticResource InkSecondary}"/>
                         </VerticalStackLayout>
                     </Border>
+
+                    <!-- ═══ THE ASSEMBLED SUMMARY — the one paid thing on this page ═══
+                         Everything OUTSIDE this block is free on every tier, permanently:
+                         the visit card above, the question list, ticking one answered, the
+                         "how did it go?" note, and the past-visit list. Someone must always
+                         be able to record that a visit is happening and what was said at
+                         it. Do not move anything else in here. -->
+                    <VerticalStackLayout Spacing="14" IsVisible="{Binding AppointmentVM.CanSeeSummary}">
 
                     <!-- WHAT CHANGED — the treatment ledger over the window,
                          chronological. Each row is what the stored row said at the
@@ -263,6 +273,54 @@
                                HorizontalTextAlignment="Center"
                                Padding="0,15"/>
                     </Border>
+
+                    </VerticalStackLayout>
+
+                    <!-- ═══ The offer, in the summary's place ═══
+                         Shown once the free one has been used. It states what the next
+                         summary covers and what it costs, and then stops.
+
+                         NO countdown, no "before your appointment on Thursday", no red,
+                         nothing that reads as urgency. The appointment IS the deadline,
+                         and leaning on it would be the app using someone's worry about
+                         their animal as leverage. The price comes from the store, never
+                         from a string here. -->
+                    <VerticalStackLayout Spacing="12" IsVisible="{Binding AppointmentVM.ShowSummaryOffer}">
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="9">
+                                <Label Text="{Binding AppointmentVM.SummaryOfferTitle}"
+                                       FontFamily="{StaticResource FontSerif}"
+                                       FontSize="17"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Text="{Binding AppointmentVM.SummaryOfferBody}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="13.5" LineHeight="1.45"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                                <Label Text="{Binding AppointmentVM.SummaryOfferPromise}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12" LineHeight="1.4"
+                                       TextColor="{StaticResource InkTertiary}"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border BackgroundColor="{StaticResource Teal}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 17,14,15,18">
+                            <Border.Shadow>
+                                <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                            </Border.Shadow>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding AppointmentVM.SubscribeCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Subscribe_ContinueLabel}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource White}"
+                                   HorizontalTextAlignment="Center"
+                                   Padding="0,15"/>
+                        </Border>
+                    </VerticalStackLayout>
 
                 </VerticalStackLayout>
 

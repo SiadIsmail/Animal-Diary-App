@@ -29,7 +29,26 @@ public class PaywallBoundaryTests
         Path.Combine("Data", "ViewModels", "JournalLogViewModel.cs"),
     };
 
-    /// <summary>Anything that can withhold a paid surface. A logging path may not name one.</summary>
+    /// <summary>Places the paywall may never reach, for reasons that are not about
+    /// logging. The appointment SUMMARY is paid; none of these are, and each is one
+    /// plausible refactor away from becoming so.</summary>
+    private static readonly string[] NeverGatedFiles =
+    {
+        // A notification may never carry a payment ask, of any kind.
+        Path.Combine("Data", "Services", "Notifications", "AppointmentReminderScheduler.cs"),
+        // Today's band inside 7 days is the safety net, not the artifact.
+        Path.Combine("Data", "ViewModels", "MainPageViewModel.cs"),
+        // Assembling the summary is free to COMPUTE; only showing it is gated, and that
+        // decision belongs to the ViewModel. A gate down here would also silence the
+        // Today band, which reads the same service.
+        Path.Combine("Data", "Services", "Journal", "AppointmentSummaryService.cs"),
+        // Recording that a visit happened, and what was said at it. Never gated.
+        Path.Combine("Data", "ViewModels", "VetVisitSheetViewModel.cs"),
+        Path.Combine("Data", "ViewModels", "VetQuestionSheetViewModel.cs"),
+    };
+
+    /// <summary>Anything that can withhold a paid surface. None of the files above may
+    /// name one.</summary>
     private static readonly string[] GateTokens =
     {
         "IEntitlementService",
@@ -43,10 +62,44 @@ public class PaywallBoundaryTests
     [Fact]
     public void No_logging_path_can_reach_the_paywall()
     {
+        var offenders = Scan(LoggingPathFiles);
+
+        Assert.True(offenders.Count == 0,
+            "The paywall must never appear in the logging path. Writing things down is free "
+            + "forever, on every tier, and a gate here means the first bill arrives for the "
+            + "right to keep working at 2am about a sick animal. Found:\n  "
+            + string.Join("\n  ", offenders));
+    }
+
+    [Fact]
+    public void The_paywall_never_reaches_a_notification_the_today_band_or_a_visit_record()
+    {
+        // The appointment layer is where the paid tier lives, which is exactly why these
+        // five files need a test: the gate is one file away from each of them, and every
+        // one of them would be a defensible-looking place to put it.
+        //
+        //   A notification with a payment ask in it is indefensible outright.
+        //   The Today band is the safety net; withholding it withholds the reminder.
+        //   The summary SERVICE is shared with that band, so gating there silences both.
+        //   The visit sheet and the question sheet are someone recording what a vet just
+        //   said, in a car park, having been told something they did not want to hear.
+        var offenders = Scan(NeverGatedFiles);
+
+        Assert.True(offenders.Count == 0,
+            "The paywall may not appear here. Only the ASSEMBLED SUMMARY is paid, and that "
+            + "gate belongs in AppointmentViewModel.CanSeeSummary and nowhere else. Found:\n  "
+            + string.Join("\n  ", offenders));
+    }
+
+    /// <summary>Every line in these files that names something able to withhold a paid
+    /// surface. Comments are skipped: they are where the rule is written down, so they
+    /// must be allowed to name the very things the code may not call.</summary>
+    private static List<string> Scan(string[] files)
+    {
         var app = AppFolder();
         var offenders = new List<string>();
 
-        foreach (var relative in LoggingPathFiles)
+        foreach (var relative in files)
         {
             var path = Path.Combine(app, relative);
             if (!File.Exists(path))
@@ -54,8 +107,6 @@ public class PaywallBoundaryTests
 
             foreach (var line in File.ReadAllLines(path))
             {
-                // Comments are where this rule is written down, so they must be allowed to
-                // name the very things the code may not call.
                 var trimmed = line.TrimStart();
                 if (trimmed.StartsWith("//") || trimmed.StartsWith("///") || trimmed.StartsWith("*"))
                     continue;
@@ -66,11 +117,7 @@ public class PaywallBoundaryTests
             }
         }
 
-        Assert.True(offenders.Count == 0,
-            "The paywall must never appear in the logging path. Writing things down is free "
-            + "forever, on every tier, and a gate here means the first bill arrives for the "
-            + "right to keep working at 2am about a sick animal. Found:\n  "
-            + string.Join("\n  ", offenders));
+        return offenders;
     }
 
     [Fact]

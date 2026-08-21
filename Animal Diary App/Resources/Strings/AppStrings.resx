@@ -1037,6 +1037,14 @@
   <data name="Vet_NewRecord" xml:space="preserve"><value>{0} — you started writing this down on {1}</value></data>
   <data name="Vet_WhatYouWrote" xml:space="preserve"><value>WHAT YOU WROTE DOWN</value></data>
   <data name="Vet_FullSummary" xml:space="preserve"><value>Full summary</value></data>
+  <!-- The offer, shown once the free summary has been used, in its place. It says what
+       the next one covers and what the tier is called, then stops. No countdown, no
+       reference to the appointment being close, no red, no urgency: the appointment is
+       already the deadline and leaning on it would use someone's worry as leverage.
+       The PRICE is never here — it comes from the store, localized. -->
+  <data name="Vet_SummaryOfferTitle" xml:space="preserve"><value>That's {0}'s first summary</value></data>
+  <data name="Vet_SummaryOfferBody" xml:space="preserve"><value>The next one covers everything from today onward: what changes, what you write down, and what you want to ask. It comes with Felova Full.</value></data>
+  <data name="Vet_SummaryOfferPromise" xml:space="preserve"><value>Everything you have already written down stays yours to read and to export, subscribed or not.</value></data>
   <data name="Vet_QuestionsHeading" xml:space="preserve"><value>YOUR QUESTIONS ({0})</value></data>
   <data name="Vet_QuestionsEmpty" xml:space="preserve"><value>Anything you want to remember to ask will show up here.</value></data>
   <data name="Vet_QuestionAnswered" xml:space="preserve"><value>Mark as answered</value></data>

@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsSession.cs" Link="Analytics\AnalyticsSession.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsTenure.cs" Link="Analytics\AnalyticsTenure.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsHistory.cs" Link="Analytics\AnalyticsHistory.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsEventQueue.cs" Link="Analytics\AnalyticsEventQueue.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Analytics\IAnalyticsQueueStore.cs" Link="Analytics\IAnalyticsQueueStore.cs" />
   </ItemGroup>

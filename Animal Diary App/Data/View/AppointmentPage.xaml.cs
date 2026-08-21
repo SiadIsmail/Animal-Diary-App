@@ -110,6 +110,51 @@ public partial class AppointmentPage : ContentPage
         }
     }
 
+    /// <summary>
+    /// The owner reached the bottom of the page. That is what "used their free summary"
+    /// means when they did not export it: they read it to the end.
+    ///
+    /// <para><b>Why the bottom of the page and not the top of the summary.</b> The flag
+    /// spends someone's one free artifact, so the bar has to be genuine use rather than a
+    /// glance. Opening the page is not it — the brief for this feature is explicit that
+    /// someone who taps in, looks confused and leaves has not had their free one, and an
+    /// on-appearing flag would take it from them anyway. Scrolling past the ledger, the
+    /// new records and the whole "what you wrote down" block is the cheapest honest
+    /// signal available without instrumenting reading itself.</para>
+    ///
+    /// <para>The VM is idempotent and re-checks its own preconditions, so this firing on
+    /// every scroll tick, on a page with no summary, or on the paid tier is a no-op.</para>
+    /// </summary>
+    private void OnScrolled(object? sender, ScrolledEventArgs e)
+    {
+        // Fully qualified: this file lives in Animal_Diary_App.Data.View, so a bare "View"
+        // binds to the namespace.
+        if (PageScroll.Content is not Microsoft.Maui.Controls.View content)
+            return;
+
+        // Within a line or two of the end. An exact equality never fires: the platforms
+        // disagree about sub-pixel content height, and Android's overscroll bounce lands
+        // ScrollY fractionally short.
+        const double slack = 24;
+        var reachedEnd = e.ScrollY + PageScroll.Height >= content.Height - slack;
+        if (!reachedEnd)
+            return;
+
+        MarkSummaryUsedAsync().Forget();
+    }
+
+    private async Task MarkSummaryUsedAsync()
+    {
+        try
+        {
+            await vm.AppointmentVM.MarkSummaryUsedAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Appointment] mark-used failed: {ex}");
+        }
+    }
+
     // "Full summary" routes to the EXISTING export sheet, pre-filled with the
     // since-last-visit stretch. There is deliberately no second PDF path — and no pop
     // either: this page is reached from BOTH Care and Today, so it cannot assume what a
@@ -118,6 +163,11 @@ public partial class AppointmentPage : ContentPage
     {
         try
         {
+            // Exporting it is the other way to have genuinely used it, and the stronger
+            // one: they took it out of the app to hand over. Marked here rather than in
+            // the export sheet because the sheet is shared with the Pets page, where an
+            // export has nothing to do with an appointment summary.
+            await MarkSummaryUsedAsync();
             await vm.ExportSheetVM.OpenForRangeAsync(days);
         }
         catch (Exception ex)
