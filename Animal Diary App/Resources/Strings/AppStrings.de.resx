@@ -1004,6 +1004,12 @@
   <data name="Vet_NewRecord" xml:space="preserve"><value>{0} — festgehalten seit dem {1}</value></data>
   <data name="Vet_WhatYouWrote" xml:space="preserve"><value>WAS DU FESTGEHALTEN HAST</value></data>
   <data name="Vet_FullSummary" xml:space="preserve"><value>Vollständige Zusammenfassung</value></data>
+  <!-- Das Angebot, nachdem die kostenlose Zusammenfassung genutzt wurde, an ihrer Stelle.
+       Kein Countdown, kein Hinweis auf den nahen Termin, kein Rot, keine Dringlichkeit.
+       Der Preis steht nie hier, er kommt aus dem Store. -->
+  <data name="Vet_SummaryOfferTitle" xml:space="preserve"><value>Das war {0}s erste Zusammenfassung</value></data>
+  <data name="Vet_SummaryOfferBody" xml:space="preserve"><value>Die nächste deckt alles ab dem heutigen Tag ab: was sich ändert, was du festhältst und was du fragen möchtest. Sie gehört zu Felova Full.</value></data>
+  <data name="Vet_SummaryOfferPromise" xml:space="preserve"><value>Alles, was du schon festgehalten hast, bleibt für dich lesbar und exportierbar, mit Abo oder ohne.</value></data>
   <data name="Vet_QuestionsHeading" xml:space="preserve"><value>DEINE FRAGEN ({0})</value></data>
   <data name="Vet_QuestionsEmpty" xml:space="preserve"><value>Alles, was du fragen willst, steht dann hier.</value></data>
   <data name="Vet_QuestionAnswered" xml:space="preserve"><value>Als beantwortet markieren</value></data>

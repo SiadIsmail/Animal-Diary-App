@@ -146,6 +146,18 @@ public static class AnalyticsEvents
     /// <summary>The user completed their first real log (dose given or journal entry).
     /// The first-value milestone the whole funnel is measured against.</summary>
     public const string FirstLogCompleted = "first_log_completed";
+    /// <summary>The owner USED their one free "since your last visit" summary — read it to
+    /// the end, or exported it. No properties.
+    ///
+    /// <para>It is the step the whole paid tier is built on: nobody converts on a
+    /// description of an artifact, they convert on having held one. Read it against
+    /// <c>subscribe_screen_viewed where source = summary</c> to see how many people who
+    /// held one came back for the next.</para>
+    ///
+    /// <para>It fires on genuine USE, never on opening the appointment page, which is why
+    /// it is worth having at all: an "opened" count would silently include everyone who
+    /// tapped in and left, and would flatter the number that matters most.</para></summary>
+    public const string FirstSummaryUsed = "first_summary_used";
     /// <summary>The subscribe sheet was viewed. Property: <see cref="PropSubscribeSource"/>
     /// — this is the "where were they when they considered paying" signal.</summary>
     public const string SubscribeScreenViewed = "subscribe_screen_viewed";
@@ -231,6 +243,22 @@ public static class AnalyticsEvents
     /// install age alongside a timestamp is a far narrower fingerprint, and the coarse
     /// value answers every question we actually ask of it.</summary>
     public const string PropDaysSinceInstall = "days_since_install";
+    /// <summary>How long the active pet's record has been accumulating, as a coarse
+    /// bucket (<c>0</c>/<c>1-7</c>/<c>8-30</c>/<c>31-90</c>/<c>91-180</c>/<c>181+</c> —
+    /// see <see cref="AnalyticsHistory"/>). Carried by the paywall and purchase events.
+    ///
+    /// <para><b>It is the one number that can falsify the paid boundary.</b> The whole
+    /// strategy assumes willingness to pay rises with accumulated history; segmenting
+    /// conversion by this is the only way to find out. Month-4+ converting at several times
+    /// month-1 means the flywheel is real and the later move is to raise the price. A flat
+    /// curve means the tier is not compounding and the boundary needs rethinking rather
+    /// than repricing.</para>
+    ///
+    /// <para>Same shape and the same rules as <see cref="PropDaysSinceInstall"/>: bucketed
+    /// rather than exact, and it describes the EVENT, never the user. It carries no pet, no
+    /// condition, no medical detail, and no count of anything logged — only how long the
+    /// record has existed.</para></summary>
+    public const string PropDaysOfHistory = "days_of_history";
     /// <summary>Coarse species bucket (dog/cat/bird/rabbit/fish/other) — NEVER the
     /// free-text custom type a user might enter, which could be identifying.</summary>
     public const string PropSpecies = "species";

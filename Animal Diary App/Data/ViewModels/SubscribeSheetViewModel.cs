@@ -2,8 +2,10 @@ namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Billing;
+using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
@@ -27,13 +29,27 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
 {
     private readonly IEntitlementService _entitlements;
     private readonly IAnalyticsService _analytics;
+    private readonly HistoryDepthService _history;
+    private readonly ActivePetService _activePet;
 
     private string _source = AnalyticsEvents.SubscribeSourceSettings;
 
-    public SubscribeSheetViewModel(IEntitlementService entitlements, IAnalyticsService analytics)
+    /// <summary>The history bucket as of this opening. Resolved when the sheet opens so the
+    /// purchase event carries the same value the paywall event did — the two are read as
+    /// one funnel, and a boundary crossed between them would split a person across two
+    /// cohorts. Empty until the first open.</summary>
+    private string _historyBucket = AnalyticsHistory.None;
+
+    public SubscribeSheetViewModel(
+        IEntitlementService entitlements,
+        IAnalyticsService analytics,
+        HistoryDepthService history,
+        ActivePetService activePet)
     {
         _entitlements = entitlements;
         _analytics = analytics;
+        _history = history;
+        _activePet = activePet;
 
         DismissCommand = new Command(() => IsPresented = false);
         PurchaseCommand = new Command<SubscriptionOfferItem>(async o => await PurchaseAsync(o));
@@ -162,15 +178,36 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         _source = source;
         StatusText = string.Empty;
         RefreshMode();
-        _analytics.Track(AnalyticsEvents.SubscribeScreenViewed, new Dictionary<string, object?>
-        {
-            [AnalyticsEvents.PropSubscribeSource] = source,
-        });
         IsPresented = true;
+        // The sheet is already on screen before this resolves. Deliberate: the history
+        // bucket costs a read, and telemetry may never sit between someone and the screen
+        // they asked for.
+        TrackViewedAsync(source).Forget();
         // Re-fetch on open: the initial load may still be in flight or have failed on a
         // flaky launch, which is exactly when the empty-offers dead-end appeared.
         if (ShowOffers)
             LoadOffersAsync().Forget();
+    }
+
+    /// <summary>Resolve how deep the record is, then record the view. Non-throwing: a
+    /// telemetry property may never be the thing that breaks the paywall.</summary>
+    private async Task TrackViewedAsync(string source)
+    {
+        try
+        {
+            _historyBucket = await _history.BucketAsync(_activePet.ActivePet);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Analytics] history bucket failed: {ex.Message}");
+            _historyBucket = AnalyticsHistory.None;
+        }
+
+        _analytics.Track(AnalyticsEvents.SubscribeScreenViewed, new Dictionary<string, object?>
+        {
+            [AnalyticsEvents.PropSubscribeSource] = source,
+            [AnalyticsEvents.PropDaysOfHistory] = _historyBucket,
+        });
     }
 
     /// <summary>(Re)fetch the offerings with a visible loading state, then reflect the
@@ -250,6 +287,9 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
                             ? AnalyticsEvents.PlanYearly : AnalyticsEvents.PlanMonthly,
                         [AnalyticsEvents.PropPrice] = item.Offer.PriceLabel,
                         [AnalyticsEvents.PropSubscribeSource] = _source,
+                        // The value this sheet's opening resolved, not a fresh read: the two
+                        // events are one funnel and must land in the same cohort.
+                        [AnalyticsEvents.PropDaysOfHistory] = _historyBucket,
                     });
                     // Don't just vanish — flip to the thank-you / subscribed view so the
                     // purchase is confirmed. RefreshMode also runs via StateChanged, but

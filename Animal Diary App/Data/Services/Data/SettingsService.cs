@@ -168,6 +168,17 @@ public static class SettingsFlags
     public const string GrantEndedNoticeShown = "GrantEndedNoticeShown";
     /// <summary>The single heads-up before a redeemed access code's grant runs out.</summary>
     public const string GrantEndingNudgeShown = "GrantEndingNudgeShown";
+    /// <summary>The owner has USED their one free "since your last visit" summary —
+    /// read it to the end, or exported it. Not "opened the page": someone who taps in,
+    /// looks confused and leaves has not had their free one, and this flag is the only
+    /// thing standing between them and being asked to pay for something they never saw.
+    ///
+    /// <para>Device-scoped in <c>AppSettings</c> like every other preference, and that is
+    /// the right home: it is a monetization preference, not medical data, and a reset
+    /// already wipes it. A reinstall hands out another free summary, which is the same
+    /// accepted, self-defeating abuse path the old trial anchor had — a reinstall also
+    /// wipes the record the summary is assembled FROM.</para></summary>
+    public const string FirstSummaryUsed = "FirstSummaryUsed";
     /// <summary>The owner has opened the Today stat-card picker at least once, so the
     /// spelled-out "tap a card to change what it shows" hint retires and the small
     /// pencil on each card carries the affordance from then on.</summary>

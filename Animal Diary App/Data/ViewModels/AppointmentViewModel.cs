@@ -80,6 +80,10 @@ public class AppointmentViewModel : BaseViewModel
     private readonly AppointmentSummaryService _summaries;
     private readonly VetVisitSheetViewModel _visitSheet;
     private readonly VetQuestionSheetViewModel _questionSheet;
+    private readonly SettingsService _settings;
+    private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
+    private readonly SubscribeSheetViewModel _subscribe;
+    private readonly Animal_Diary_App.Data.Services.Analytics.IAnalyticsService _analytics;
 
     private int _loadGeneration;
     private VetVisit? _next;
@@ -91,7 +95,11 @@ public class AppointmentViewModel : BaseViewModel
         VetQuestionService questions,
         AppointmentSummaryService summaries,
         VetVisitSheetViewModel visitSheet,
-        VetQuestionSheetViewModel questionSheet)
+        VetQuestionSheetViewModel questionSheet,
+        SettingsService settings,
+        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
+        SubscribeSheetViewModel subscribe,
+        Animal_Diary_App.Data.Services.Analytics.IAnalyticsService analytics)
     {
         _activePet = activePet;
         _visits = visits;
@@ -99,6 +107,10 @@ public class AppointmentViewModel : BaseViewModel
         _summaries = summaries;
         _visitSheet = visitSheet;
         _questionSheet = questionSheet;
+        _settings = settings;
+        _entitlements = entitlements;
+        _subscribe = subscribe;
+        _analytics = analytics;
 
         AddVisitCommand = new Command(async () => await OpenVisitAsync(null));
         OpenVisitCommand = new Command<VisitLine>(async line => await OpenVisitAsync(line?.Visit));
@@ -107,6 +119,8 @@ public class AppointmentViewModel : BaseViewModel
         AddQuestionCommand = new Command(async () => await OpenQuestionSheetAsync());
         AnswerQuestionCommand = new Command<QuestionLine>(async line => await AnswerAsync(line));
         FullSummaryCommand = new Command(() => FullSummaryRequested?.Invoke(SummaryDays));
+        SubscribeCommand = new Command(() =>
+            _subscribe.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceSummary));
     }
 
     private static LocalizationManager Loc => LocalizationManager.Instance;
@@ -124,6 +138,9 @@ public class AppointmentViewModel : BaseViewModel
     public ICommand AnswerQuestionCommand { get; }
     public ICommand FullSummaryCommand { get; }
 
+    /// <summary>The upgrade door, from the summary card and nowhere else on this page.</summary>
+    public ICommand SubscribeCommand { get; }
+
     public string Title => Loc.GetString("Vet_VisitsTitle");
     public string Subtitle => Loc.Format("Vet_VisitsSub", _activePet.ActivePet?.Name ?? string.Empty);
 
@@ -132,6 +149,71 @@ public class AppointmentViewModel : BaseViewModel
     private bool _hasNext;
     /// <summary>An upcoming visit exists — the summary below is about it.</summary>
     public bool HasNext { get => _hasNext; private set => SetProperty(ref _hasNext, value); }
+
+    // ── The one paid thing on this page ──────────────────────────────────────
+    //
+    //  THE ASSEMBLED SUMMARY, AND NOTHING ELSE. Everything else here is free on every
+    //  tier, permanently: adding a visit, editing it, the question list, ticking a
+    //  question answered, the "how did it go?" note, and the list of past visits.
+    //  Someone must always be able to record that a visit is happening and what was said
+    //  at it — a paywall between an owner and the note they are writing in the car park
+    //  is exactly the inversion this whole boundary was moved to remove.
+    //
+    //  Nor does it appear on the Today band or in the day-before notification. Those are
+    //  the safety net, not the artifact, and a payment ask attached to a countdown toward
+    //  a medical appointment is the single worst place this app could put one.
+    //
+    //  THE FIRST SUMMARY IS FREE, IN FULL. Not a preview, not three of five sections, not
+    //  a blur. Generated, readable, exportable. Nobody converts on a description of an
+    //  artifact; they convert on having held one — and an owner who has watched their vet
+    //  read it knows exactly what the second one is worth.
+
+    private bool _firstSummaryUsed;
+
+    /// <summary>Whether the assembled summary renders. True while the owner still has
+    /// their free one, and true forever on the paid tier.</summary>
+    private bool _canSeeSummary = true;
+    public bool CanSeeSummary { get => _canSeeSummary; private set => SetProperty(ref _canSeeSummary, value); }
+
+    /// <summary>The upgrade card, shown in the summary's place once the free one has been
+    /// used. Mutually exclusive with <see cref="CanSeeSummary"/>.</summary>
+    public bool ShowSummaryOffer => HasNext && !CanSeeSummary;
+
+    /// <summary>Offer copy, named for the pet.</summary>
+    public string SummaryOfferTitle =>
+        Loc.Format("Vet_SummaryOfferTitle", _activePet.ActivePet?.Name ?? string.Empty);
+
+    public string SummaryOfferBody => Loc.GetString("Vet_SummaryOfferBody");
+
+    /// <summary>The promise that is kept whatever they decide, stated once and plainly.
+    /// It is not a feature being sold, so it carries no emphasis of its own.</summary>
+    public string SummaryOfferPromise => Loc.GetString("Vet_SummaryOfferPromise");
+
+    /// <summary>
+    /// The owner has now genuinely USED their free summary — read it to the end, or
+    /// exported it. Idempotent, and deliberately NOT called when the page merely opens:
+    /// someone who taps in, looks confused and leaves has not had their free one.
+    ///
+    /// <para>It does not change what is on screen. The summary they are looking at stays
+    /// exactly where it is; the offer appears on the NEXT visit's summary, which is the
+    /// one they have not been given. Swapping a card out from under someone mid-read
+    /// would be the app taking something back while they used it.</para>
+    /// </summary>
+    public async Task MarkSummaryUsedAsync()
+    {
+        if (_firstSummaryUsed || !HasNext || !CanSeeSummary)
+            return;
+        try
+        {
+            _firstSummaryUsed = true;
+            await _settings.SetFlagAsync(SettingsFlags.FirstSummaryUsed, true);
+            _analytics.Track(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.FirstSummaryUsed);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Appointment] first-summary flag failed: {ex.Message}");
+        }
+    }
 
     private string _nextHeadline = string.Empty;
     /// <summary>"CHARLY · Dr. Weiss · Thursday, 15:30" — the pet, whoever the owner
@@ -210,6 +292,10 @@ public class AppointmentViewModel : BaseViewModel
             ? null
             : await _summaries.BuildAsync(pet);
 
+        // The gate, resolved before the atomic fill. Read every load rather than cached:
+        // a purchase can land while this page is open, and the pet can change under it.
+        var firstUsed = await _settings.GetFlagAsync(SettingsFlags.FirstSummaryUsed);
+
         // Questions are the one part State A also shows: they accumulate between visits,
         // and a list you can only see once an appointment is booked is a list you stop
         // adding to.
@@ -234,9 +320,19 @@ public class AppointmentViewModel : BaseViewModel
         HasNext = next is not null;
         NextHeadline = next is null ? string.Empty : Headline(pet, next);
 
+        _firstSummaryUsed = firstUsed;
+        // Pet-scoped, so a caregiver on a subscribed owner's animal sees every summary
+        // without buying their own.
+        CanSeeSummary = _entitlements.CanEditPet(pet?.SyncId) || !firstUsed;
+
         BuildSummary(summary);
         BuildQuestions(questions);
         BuildPast(past);
+
+        OnPropertyChanged(nameof(ShowSummaryOffer));
+        OnPropertyChanged(nameof(SummaryOfferTitle));
+        OnPropertyChanged(nameof(SummaryOfferBody));
+        OnPropertyChanged(nameof(SummaryOfferPromise));
 
         ShowNotePrompt = _noteCandidate is not null;
         NotePromptWhen = _noteCandidate is null ? string.Empty : DayAndTime(_noteCandidate);

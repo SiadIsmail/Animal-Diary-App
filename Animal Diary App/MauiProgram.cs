@@ -123,6 +123,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<VetQuestionService>();
 		builder.Services.AddSingleton<VetVisitService>();
 		builder.Services.AddSingleton<AppointmentSummaryService>();
+		// Singleton because its whole point is the per-session cache: finding a pet's first
+		// entry is one all-of-history read per record kind, affordable once and not per sheet.
+		builder.Services.AddSingleton<HistoryDepthService>();
 
 		// ── Import (AI-written entry files) ──────────────────────────────────
 		builder.Services.AddSingleton<Animal_Diary_App.Data.Services.Import.ImportService>();
