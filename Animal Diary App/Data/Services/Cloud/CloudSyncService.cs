@@ -93,11 +93,6 @@ public interface ICloudSyncService
     /// <summary>True when this user owns at least one pet that someone else is caring for.</summary>
     bool OwnsASharedPet { get; }
 
-    /// <summary>The pets this device is a CAREGIVER on, by SyncId. Read once at launch by
-    /// the grandfathering snapshot, which needs to know what this install already had when
-    /// the paid boundary moved. Empty when signed out or never synced.</summary>
-    IReadOnlyList<string> CaregiverPetSyncIds { get; }
-
     /// <summary>Raised when a pet's SPONSORSHIP changed between two syncs — the owner
     /// subscribed, lapsed, or their redeemed code ran out. Carries the pets that just lost
     /// sponsored access, so the UI can say so once rather than letting the app quietly
@@ -127,7 +122,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     //
     // INVARIANT: every key below is account-scoped and MUST carry this prefix, so
     // SignOutTeardownAsync's single ClearPrefixAsync can never miss one. Anything that must
-    // survive a sign-out (language, preferences, the grandfathering snapshot) belongs in AppSettings,
+    // survive a sign-out (language, preferences) belongs in AppSettings,
     // which is device-scoped — not here.
     private const string CloudStatePrefix = "cloud:";
 
@@ -278,11 +273,6 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
 
     public bool OwnsASharedPet
         => _petAccess.Values.Any(r => r.Role == "owner" && r.CarerCount > 0);
-
-    // Read from the role map rather than the access map: role is what makes someone a
-    // caregiver, and it is populated on every sync whether or not sponsorship was resolved.
-    public IReadOnlyList<string> CaregiverPetSyncIds
-        => _petRoles.Where(kv => kv.Value == "caregiver").Select(kv => kv.Key).ToList();
 
     // ── IPetAccessSource: what the billing gate reads ───────────────────────
 
@@ -752,10 +742,9 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
                 await _purge.PurgePetAsync(pet);
         }
 
-        // Everything account-scoped, in one call that a future key cannot escape. NB the
-        // grandfathering snapshot lives in AppSettings and is DEVICE-scoped, so it is not
-        // touched here: it records what this install already had, which signing out does
-        // not change.
+        // Everything account-scoped, in one call that a future key cannot escape.
+        // Device-scoped state (language, preferences) lives in AppSettings and is
+        // deliberately untouched: signing out does not change what this device prefers.
         await _state.ClearPrefixAsync(CloudStatePrefix);
 
         _enabled = false;

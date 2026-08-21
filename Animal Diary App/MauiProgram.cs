@@ -244,12 +244,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IGrantSource>(sp =>
 			(IGrantSource)sp.GetRequiredService<ICloudAccessCodeService>());
 
-		// What this install already had when the paid boundary moved. Registered on EVERY
-		// platform, and against the concrete type as well as the interface: App drives its
-		// one-shot capture at launch, and the gate reads it through the interface.
-		builder.Services.AddSingleton<GrandfatheredAccessService>();
-		builder.Services.AddSingleton<IGrandfatheredAccess>(sp => sp.GetRequiredService<GrandfatheredAccessService>());
-
 		// ── Billing / monetization boundary ──────────────────────────────────
 		// Mirrors the cloud & analytics boundaries: the real entitlement service only on a
 		// mobile store AND when a key + binding are wired (BillingConfig.Enabled); otherwise

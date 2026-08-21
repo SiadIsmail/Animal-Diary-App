@@ -19,6 +19,12 @@ using Animal_Diary_App.Helpers;
 /// (chips + create button, with inline no-data/error text) and the done face
 /// (saved line + actions). <see cref="IsGenerating"/> guards re-entry and turns
 /// the create button into a progress state.
+///
+/// <para><b>Two documents, and the line between them.</b> The DESIGNED report is paid;
+/// the PLAIN log is free forever, on every tier, and is what keeps "getting your data out
+/// is never blocked". A free owner is shown both at equal weight
+/// (<see cref="ShowReportChoice"/>) — the plain export is never the small print under a
+/// sale, because the point of it is that nobody is ever trapped.</para>
 /// </summary>
 public class ExportSheetViewModel : BaseViewModel
 {
@@ -29,13 +35,17 @@ public class ExportSheetViewModel : BaseViewModel
     private readonly PetEntryService _petEntries;
     private readonly CustomTrackerService _custom;
     private readonly IAnalyticsService _analytics;
+    private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
+    private readonly SubscribeSheetViewModel _subscribe;
 
     private Pet _pet = new();
     private VetReportFile? _result;
 
     public ExportSheetViewModel(IVetReportService reports, ActivePetService activePetService,
         WaterEntryService water, AppetiteEntryService appetite, PetEntryService petEntries,
-        CustomTrackerService custom, IAnalyticsService analytics)
+        CustomTrackerService custom, IAnalyticsService analytics,
+        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
+        SubscribeSheetViewModel subscribe)
     {
         _reports = reports;
         _activePetService = activePetService;
@@ -44,6 +54,8 @@ public class ExportSheetViewModel : BaseViewModel
         _petEntries = petEntries;
         _custom = custom;
         _analytics = analytics;
+        _entitlements = entitlements;
+        _subscribe = subscribe;
 
         OpenCommand = new Command(async () => await OpenAsync());
         DismissCommand = new Command(() => IsPresented = false);
@@ -57,6 +69,12 @@ public class ExportSheetViewModel : BaseViewModel
         ToggleIncludeMoodCommand = new Command(() => IncludeMood = !IncludeMood);
         ToggleIncludeCustomCommand = new Command(() => IncludeCustom = !IncludeCustom);
         GenerateCommand = new Command(async () => await GenerateAsync());
+        GeneratePlainCommand = new Command(async () => await GeneratePlainAsync());
+        SubscribeCommand = new Command(() =>
+        {
+            IsPresented = false;
+            _subscribe.Open(AnalyticsEvents.SubscribeSourceReport);
+        });
         ViewCommand = new Command(() =>
         {
             if (_result != null)
@@ -68,6 +86,12 @@ public class ExportSheetViewModel : BaseViewModel
     /// <summary>Raised when the user taps "View" — the hosting page pushes the
     /// preview page for this report (the VM never navigates).</summary>
     public event Action<VetReportFile>? ViewRequested;
+
+    /// <summary>Save the plain chronological log. Free on every tier.</summary>
+    public ICommand GeneratePlainCommand { get; }
+
+    /// <summary>Open the subscribe sheet from the report door.</summary>
+    public ICommand SubscribeCommand { get; }
 
     private bool _isPresented;
     public bool IsPresented { get => _isPresented; set => SetProperty(ref _isPresented, value); }
@@ -261,6 +285,12 @@ public class ExportSheetViewModel : BaseViewModel
 
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
+        // Re-read every open: the active pet changes, and a purchase or a redeemed code
+        // can land between two openings of this sheet.
+        OnPropertyChanged(nameof(ChoiceIntro));
+        OnPropertyChanged(nameof(CanUseDesignedReport));
+        OnPropertyChanged(nameof(ShowReportChoice));
+        OnPropertyChanged(nameof(ShowSectionOptions));
         IsPresented = true;
 
         // Feature-discovery signal: paired with report_exported this yields an
@@ -268,16 +298,90 @@ public class ExportSheetViewModel : BaseViewModel
         _analytics.Track(AnalyticsEvents.ExportSheetOpened);
     }
 
+    /// <summary>Lead line over the two documents. Names the pet, because this is the one
+    /// place the sheet says what both options are FOR.</summary>
+    public string ChoiceIntro => LocalizationManager.Instance.Format("Export_ChoiceIntro", _pet.Name);
+
+    /// <summary>Whether the designed report is available for the pet being exported.
+    /// Pet-scoped, so a caregiver on a subscribed owner's animal gets it without buying
+    /// their own.</summary>
+    public bool CanUseDesignedReport => _entitlements.CanEditPet(_pet.SyncId);
+
+    /// <summary>Free owner: show both documents, at equal weight, and neither dressed as
+    /// the lesser one. Read fresh on every open — a purchase can land between two.</summary>
+    public bool ShowReportChoice => !CanUseDesignedReport;
+
+    /// <summary>The per-section toggles configure the DESIGNED report only. Hiding them
+    /// when it is not available is not a lock; it is not asking someone to tune knobs on
+    /// a document they are not making. The period chips stay, because they apply to
+    /// both.</summary>
+    public bool ShowSectionOptions => CanUseDesignedReport;
+
     private void SelectPeriod(string days)
     {
         if (int.TryParse(days, out var parsed) && parsed > 0)
             SelectedDays = parsed;
     }
 
+    /// <summary>The FREE export. Never gated, never configurable, and deliberately not
+    /// routed through <see cref="GenerateAsync"/>'s include-flags: it is everything that
+    /// was written down, in order, and there is nothing to decide.</summary>
+    private async Task GeneratePlainAsync()
+    {
+        if (IsGenerating)
+            return;
+        IsGenerating = true;
+        StatusMessage = string.Empty;
+
+        try
+        {
+            _result = _pet.Id == 0
+                ? null
+                : await _reports.GeneratePlainAsync(
+                    _pet.Id, DateTime.Today.AddDays(-SelectedDays), DateTime.Today);
+
+            if (_result == null)
+            {
+                StatusMessage = LocalizationManager.Instance.GetString("Export_NoData");
+                return;
+            }
+
+            OnPropertyChanged(nameof(DoneMessage));
+            OnPropertyChanged(nameof(ResultFileName));
+            IsDone = true;
+
+            // Same event as the designed report, with the kind alongside the window. It is
+            // one funnel: the question is whether people get their data out at all, and
+            // splitting it into two events would make the free half look like a
+            // second-class feature in the numbers as well as on the sheet.
+            _analytics.Track(AnalyticsEvents.ReportExported, new Dictionary<string, object?>
+            {
+                [AnalyticsEvents.PropRangeDays] = SelectedDays,
+                [AnalyticsEvents.PropReportKind] = AnalyticsEvents.ReportKindPlain,
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[VetReport] plain export failed: {ex}");
+            StatusMessage = LocalizationManager.Instance.GetString("Export_Failed");
+        }
+        finally
+        {
+            IsGenerating = false;
+        }
+    }
+
     private async Task GenerateAsync()
     {
         if (IsGenerating)
             return;
+        // The designed report is the paid artifact. Reached only from a button that is
+        // hidden without access, so this is a backstop rather than the gate.
+        if (!CanUseDesignedReport)
+        {
+            SubscribeCommand.Execute(null);
+            return;
+        }
         IsGenerating = true;
         StatusMessage = string.Empty;
 
@@ -309,6 +413,7 @@ public class ExportSheetViewModel : BaseViewModel
             _analytics.Track(AnalyticsEvents.ReportExported, new Dictionary<string, object?>
             {
                 [AnalyticsEvents.PropRangeDays] = SelectedDays,
+                [AnalyticsEvents.PropReportKind] = AnalyticsEvents.ReportKindDesigned,
             });
         }
         catch (Exception ex)

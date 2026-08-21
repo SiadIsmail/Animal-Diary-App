@@ -432,6 +432,14 @@
   <data name="Export_Days90" xml:space="preserve"><value>90 days</value></data>
   <data name="Export_Days180" xml:space="preserve"><value>180 days</value></data>
   <data name="Export_Generate" xml:space="preserve"><value>Make the summary</value></data>
+  <!-- The two documents, offered at equal weight to a free owner. Neither line may read
+       as the lesser option: the plain log is a real answer, not a consolation. No
+       urgency, no "only", no loss framing. -->
+  <data name="Export_ChoiceIntro" xml:space="preserve"><value>Two ways to take {0}'s record with you.</value></data>
+  <data name="Export_PlainTitle" xml:space="preserve"><value>Save the plain log</value></data>
+  <data name="Export_PlainBody" xml:space="preserve"><value>Everything you wrote down, in order, with dates and times. Always free.</value></data>
+  <data name="Export_DesignedTitle" xml:space="preserve"><value>Make the full report</value></data>
+  <data name="Export_DesignedBody" xml:space="preserve"><value>Laid out by section, with the charts and the medication history. Part of Felova Full.</value></data>
   <data name="Export_Generating" xml:space="preserve"><value>Working…</value></data>
   <data name="Export_DoneMessage" xml:space="preserve"><value>Your summary of the last {0} days is ready. It's all on one page.</value></data>
   <data name="Export_View" xml:space="preserve"><value>View</value></data>
@@ -500,6 +508,13 @@
   <data name="Report_EventAppetiteLevel" xml:space="preserve"><value>owner logged appetite level {0} of 5</value></data>
   <data name="Report_MoreEvents" xml:space="preserve"><value>+ {0} earlier event(s) in the period not listed.</value></data>
   <data name="Report_SectionNotes" xml:space="preserve"><value>Owner's notes</value></data>
+  <!-- The plain export. Its own column labels, because it answers "what did I record,
+       and when", not "what does the vet need". -->
+  <data name="Report_SectionPlainLog" xml:space="preserve"><value>Everything written down</value></data>
+  <data name="Report_PlainLogIntro" xml:space="preserve"><value>Every entry recorded in this period, oldest first, exactly as it was written down.</value></data>
+  <data name="Report_ColWhen" xml:space="preserve"><value>When</value></data>
+  <data name="Report_ColWhat" xml:space="preserve"><value>What</value></data>
+  <data name="Report_ColRecorded" xml:space="preserve"><value>Recorded</value></data>
   <data name="Report_MoreNotes" xml:space="preserve"><value>+ {0} earlier note(s) in the period not listed.</value></data>
 
   <data name="Docs_Title" xml:space="preserve"><value>Documents</value></data>

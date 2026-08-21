@@ -10,7 +10,6 @@ using System.Collections.ObjectModel;
 
 public class MainPageViewModel : BaseViewModel
 {
-    public List<PetEntry> Entries { get; set; } = new();
     private readonly PetEntryService _petEntryService;
     private readonly PetService _petService;
     private readonly ActivePetService _activePetService;

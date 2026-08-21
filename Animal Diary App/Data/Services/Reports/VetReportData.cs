@@ -17,6 +17,11 @@ namespace Animal_Diary_App.Data.Services.Reports;
 /// <see cref="VetReportSampleData"/> (fake data for layout iteration).</summary>
 public sealed class VetReportData
 {
+    /// <summary>Which of the two documents this snapshot is for. It selects the section
+    /// set in <c>VetReportDocument</c> and which half of this DTO is populated — the
+    /// designed sections below, or <see cref="PlainLog"/>. Never both.</summary>
+    public ReportStyle Style { get; init; } = ReportStyle.Designed;
+
     public required ReportPetInfo Pet { get; init; }
 
     /// <summary>Inclusive date range the report covers.</summary>
@@ -57,12 +62,55 @@ public sealed class VetReportData
     /// added, give it its own list here and its own section.)</summary>
     public IReadOnlyList<ReportNote> Notes { get; init; } = Array.Empty<ReportNote>();
 
+    /// <summary>Everything the owner wrote down in the range, flattened into one
+    /// time-ordered list. Populated only for <see cref="ReportStyle.Plain"/>; the designed
+    /// report never reads it, and the plain export reads nothing else.</summary>
+    public IReadOnlyList<ReportLogLine> PlainLog { get; init; } = Array.Empty<ReportLogLine>();
+
     /// <summary>True when the range contains anything at all beyond the pet's
     /// master data. Used to refuse generating an empty document.</summary>
-    public bool HasAnyData =>
-        Medications.Count > 0 || Trends.Count > 0 || Water.HasContent || Appetite.HasContent
-        || Mood.HasContent || Events.Count > 0 || Notes.Count > 0 || Custom.HasContent;
+    public bool HasAnyData => Style == ReportStyle.Plain
+        ? PlainLog.Count > 0
+        : Medications.Count > 0 || Trends.Count > 0 || Water.HasContent || Appetite.HasContent
+          || Mood.HasContent || Events.Count > 0 || Notes.Count > 0 || Custom.HasContent;
 }
+
+/// <summary>
+/// The two documents this feature produces, and the line between free and paid.
+///
+/// <para><b>Portability is free; the artifact is the product.</b> AI/domain.md makes
+/// "getting your data out is never blocked" a promise, and <see cref="Plain"/> is what
+/// keeps it: everything logged, in order, with dates and times, on every tier forever.
+/// That fully satisfies it — you can take your data, always, in a form a vet can read.
+/// <see cref="Designed"/> is the work done ON that data: sections, charts, the
+/// measured-vs-observed separation, the treatment ledger, the front sheet. That is not
+/// your data, and it is the paid one.</para>
+///
+/// <para>Both render through the SAME document layer and the same PDF stack — one
+/// <c>VetReportDocument</c>, one section interface, one renderer. There is deliberately
+/// no second PDF path: a parallel implementation is how the free export quietly rots
+/// while nobody is watching, and the PDF stack must stay free of native libraries
+/// (AI/known-constraints.md).</para>
+/// </summary>
+public enum ReportStyle
+{
+    /// <summary>The full report: every section, charts included. Paid.</summary>
+    Designed,
+    /// <summary>The plain chronological log. Free forever, on every tier.</summary>
+    Plain
+}
+
+/// <summary>
+/// One thing the owner wrote down, as the plain export prints it.
+/// </summary>
+/// <param name="When">Local date and time it was recorded at.</param>
+/// <param name="HasTime">False for a legacy mood/weight row saved before per-entry times
+/// existed. Those sit at the start of their day, and the export prints the date alone
+/// rather than claiming midnight — the app does not invent a moment it was never told.</param>
+/// <param name="What">The kind, in the owner's language, or an owner-defined tracker's
+/// own name (verbatim user text, never translated).</param>
+/// <param name="Detail">The reading exactly as it was written down, or empty.</param>
+public readonly record struct ReportLogLine(DateTime When, bool HasTime, string What, string Detail);
 
 /// <summary>
 /// The owner's daily read on how their pet seemed. Purely qualitative, and held the

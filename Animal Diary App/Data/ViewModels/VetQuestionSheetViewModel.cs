@@ -73,7 +73,7 @@ public class VetQuestionSheetViewModel : BaseViewModel
 
     /// <summary>What is already on the list for this pet, oldest first. Read-only and
     /// shown above the field so the owner can see they are adding to something.</summary>
-    public ObservableCollection<VetQuestionLine> Open { get; } = new();
+    public RangeObservableCollection<VetQuestionLine> Open { get; } = new();
 
     public bool HasOpen => Open.Count > 0;
 
@@ -98,9 +98,7 @@ public class VetQuestionSheetViewModel : BaseViewModel
             ? new List<VetQuestion>()
             : await _questions.GetOpenAsync(petId);
 
-        Open.Clear();
-        foreach (var row in rows)
-            Open.Add(new VetQuestionLine(row.Text));
+        Open.ReplaceAll(rows.Select(row => new VetQuestionLine(row.Text)));
 
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));

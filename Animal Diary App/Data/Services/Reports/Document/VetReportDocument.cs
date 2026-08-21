@@ -4,18 +4,26 @@ using Animal_Diary_App.Data.Services.Reports.Document.Sections;
 using MigraDoc.DocumentObjectModel;
 
 /// <summary>
-/// Builds the whole report as a MigraDoc <see cref="MigraDoc.DocumentObjectModel.Document"/>:
+/// Builds a report as a MigraDoc <see cref="MigraDoc.DocumentObjectModel.Document"/>:
 /// the DTO plus an ordered list of sections. To reorder, remove or add a section, edit
-/// <see cref="Sections"/> — nothing else. Sections with no content for this pet/range omit
-/// themselves via <see cref="IVetReportSection.HasContent"/>.
+/// <see cref="DesignedSections"/> — nothing else. Sections with no content for this
+/// pet/range omit themselves via <see cref="IVetReportSection.HasContent"/>.
+///
+/// <para><b>Two documents, one layer.</b> The section list is chosen by
+/// <see cref="VetReportData.Style"/>: the designed report gets all of them, the plain
+/// export gets the header and the log. Everything else — page setup, the running header,
+/// the disclaimer footer, fonts, the renderer — is shared, deliberately. A separate PDF
+/// path for the free export is how the free export quietly rots, and it would be a second
+/// place for a PDF dependency to creep in (AI/known-constraints.md: the stack must stay
+/// free of native libraries).</para>
 ///
 /// The caller owns the <see cref="ReportContext"/> (its temp chart files must survive until
 /// the PDF is rendered) — see <c>VetReportService</c>.
 /// </summary>
 public sealed class VetReportDocument
 {
-    /// <summary>Document order, top to bottom — decreasing decision-value.</summary>
-    private static readonly IVetReportSection[] Sections =
+    /// <summary>The designed report, top to bottom — decreasing decision-value.</summary>
+    private static readonly IVetReportSection[] DesignedSections =
     {
         new HeaderSection(),
         new MedicationsSection(),
@@ -26,6 +34,16 @@ public sealed class VetReportDocument
         new EventsSection(),
         new CustomSection(),
         new NotesSection(),
+    };
+
+    /// <summary>The plain export. The header stays because app-voice §18 requires the
+    /// pet, the species, the age and the period covered at the top of anything that lands
+    /// in front of a professional — that is identification, not design work, and a page of
+    /// undated rows about an unnamed animal is not a form a vet can read.</summary>
+    private static readonly IVetReportSection[] PlainSections =
+    {
+        new HeaderSection(),
+        new PlainLogSection(),
     };
 
     // A4 is 21.0 cm wide (72 pt/inch, 2.54 cm/inch → 595.276 pt); usable width is that
@@ -63,7 +81,8 @@ public sealed class VetReportDocument
         BuildFooter(section.Footers.Primary);
         BuildFooter(section.Footers.FirstPage);
 
-        foreach (var s in Sections)
+        var sections = _data.Style == ReportStyle.Plain ? PlainSections : DesignedSections;
+        foreach (var s in sections)
             if (s.HasContent(_data))
                 s.Compose(section, _data, ctx);
 

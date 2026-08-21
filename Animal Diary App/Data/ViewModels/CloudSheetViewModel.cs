@@ -21,7 +21,6 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     private readonly ICloudSyncService _sync;
     private readonly ICloudSharingService _sharing;
     private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
-    private readonly Animal_Diary_App.Data.Services.Billing.IGrandfatheredAccess _grandfathered;
     private Mode _mode = Mode.Intro;
 
     // Set when the user arrived via the Pets page "Join a pet" action but wasn't set up
@@ -33,14 +32,12 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         ICloudAuthService auth,
         ICloudSyncService sync,
         ICloudSharingService sharing,
-        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
-        Animal_Diary_App.Data.Services.Billing.IGrandfatheredAccess grandfathered)
+        Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements)
     {
         _auth = auth;
         _sync = sync;
         _sharing = sharing;
         _entitlements = entitlements;
-        _grandfathered = grandfathered;
 
         OpenCommand = new Command(async () => await OpenAsync());
         DismissCommand = new Command(() => IsPresented = false);
@@ -154,13 +151,10 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     public string SignedInEmail => _auth.Email ?? string.Empty;
     public bool IsBackupEnabled => _sync.IsBackupEnabled;
 
-    /// <summary>Cloud backup is part of the paid tier. Two exceptions, both deliberate:
-    /// an install that already had backup on when the boundary moved keeps it
-    /// (<see cref="Animal_Diary_App.Data.Services.Billing.IGrandfatheredAccess"/>), and
-    /// someone turning it on in order to REDEEM an invite is never stopped — see
+    /// <summary>Cloud backup is part of the paid tier. One exception, deliberate: someone
+    /// turning it on in order to REDEEM an invite is never stopped — see
     /// <see cref="EnableBackupAsync"/>.</summary>
-    public bool BackupNeedsSubscription
-        => !_entitlements.HasFullAccess && !_grandfathered.BackupIncluded;
+    public bool BackupNeedsSubscription => !_entitlements.HasFullAccess;
 
     /// <summary>The enable button: offered when backup is off and it is actually
     /// available to this account.</summary>

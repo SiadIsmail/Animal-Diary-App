@@ -13,7 +13,6 @@ public sealed class NullCloudSyncService : ICloudSyncService, Billing.IPetAccess
     public Task InitializeAsync() => Task.CompletedTask;
     public string? GetPetRole(string petSyncId) => null;
     public bool OwnsASharedPet => false;
-    public IReadOnlyList<string> CaregiverPetSyncIds => Array.Empty<string>();
 
     // No cloud ⇒ nothing to wait for and nothing sponsored, so the billing gate falls back
     // entirely to the local subscription/grant. Reporting AccessKnown=false here would hold

@@ -168,10 +168,6 @@ public static class SettingsFlags
     public const string GrantEndedNoticeShown = "GrantEndedNoticeShown";
     /// <summary>The single heads-up before a redeemed access code's grant runs out.</summary>
     public const string GrantEndingNudgeShown = "GrantEndingNudgeShown";
-    /// <summary>The one-shot snapshot of what this install already had when the paid
-    /// boundary moved has been taken. See <c>GrandfatheredAccessService</c> — this flag is
-    /// what makes it a snapshot rather than a standing offer.</summary>
-    public const string GrandfatherCaptured = "GrandfatherCaptured";
     /// <summary>The owner has opened the Today stat-card picker at least once, so the
     /// spelled-out "tap a card to change what it shows" hint retires and the small
     /// pencil on each card carries the affordance from then on.</summary>

@@ -50,6 +50,16 @@ public class VetReportService : IVetReportService
         return await _library.AddAsync(report);
     }
 
+    public async Task<VetReportFile?> GeneratePlainAsync(int petId, DateTime from, DateTime to)
+    {
+        var data = await _builder.BuildPlainAsync(petId, from, to);
+        if (!data.HasAnyData)
+            return null;
+
+        var report = await SaveAsync(data, petId);
+        return await _library.AddAsync(report);
+    }
+
     // Sample documents are written to disk (so View/Share work) but the row is never
     // inserted — Id stays 0, Documents never lists it.
     //
@@ -64,7 +74,7 @@ public class VetReportService : IVetReportService
 
     private async Task<VetReportFile> SaveAsync(VetReportData data, int petId)
     {
-        var fileName = UniqueFileName(data.Pet.Name, data.GeneratedAt);
+        var fileName = UniqueFileName(data.Pet.Name, data.GeneratedAt, data.Style);
         var report = new VetReportFile
         {
             PetId = petId,
@@ -112,10 +122,13 @@ public class VetReportService : IVetReportService
     }
 
     /// <summary>"{Pet}_Felova_{date_time}.pdf", de-duplicated with a numeric suffix —
-    /// re-exports must never overwrite an earlier report in the library.</summary>
-    private static string UniqueFileName(string petName, DateTime createdAt)
+    /// re-exports must never overwrite an earlier report in the library. The plain export
+    /// carries "_log" so the two are told apart in a file manager and in an email
+    /// attachment list, where the app's own labels are not there to help.</summary>
+    private static string UniqueFileName(string petName, DateTime createdAt, ReportStyle style)
     {
-        var baseName = $"{SanitizeFileName(petName)}_Felova_{createdAt:yyyy-MM-dd_HHmm}";
+        var kind = style == ReportStyle.Plain ? "_log" : string.Empty;
+        var baseName = $"{SanitizeFileName(petName)}_Felova{kind}_{createdAt:yyyy-MM-dd_HHmm}";
         var fileName = baseName + ".pdf";
         for (var n = 2; File.Exists(Path.Combine(ReportLibraryService.ReportsDirectory, fileName)); n++)
             fileName = $"{baseName}_{n}.pdf";

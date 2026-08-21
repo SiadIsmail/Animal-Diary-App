@@ -1,5 +1,19 @@
 # Billing System Audit — RevenueCat / Trial / Read-only Gate
 
+> ## Audited a model that has since been replaced (2026-08-21).
+>
+> The trial and the read-only gate are gone; see the header of
+> [MONETIZATION_PLAN.md](MONETIZATION_PLAN.md). Findings that were about the *trial*
+> (C2, L1, L3, and M6's original framing) are moot, and H6 — "read-only is porous" —
+> resolved itself in the opposite direction: those gates were deleted rather than
+> completed, because gating a medication edit was the mistake.
+>
+> **Everything else in here still applies and is still the reference.** C1 (the Test
+> Store key must not ship), H1 (optimistic-until-known), H2 (offer-list snapshot),
+> H3 (no update listener), H4/M1 (pending and already-owned), M2–M7 and the
+> best-practices checklist are all about the RevenueCat integration, which did not
+> change. C1 in particular is still open and still release-blocking.
+>
 > Date: 2026-07-28. Scope: the whole monetization stack — `Data/Services/Billing/`,
 > the subscribe + trial-message VMs/views, the read-only gate wiring, lifecycle hooks,
 > DI, config/secret, and analytics. Method: read every billing file against current

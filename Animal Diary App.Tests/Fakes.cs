@@ -127,21 +127,3 @@ internal sealed class FakeGrants : IGrantSource
         return this;
     }
 }
-
-/// <summary>Scriptable grandfathering snapshot — what an install already had when the
-/// paid boundary moved.</summary>
-internal sealed class FakeGrandfathered : IGrandfatheredAccess
-{
-    public bool BackupIncluded { get; set; }
-    public HashSet<string> Pets { get; } = new(StringComparer.Ordinal);
-
-    public bool SponsorshipIncluded(string? petSyncId)
-        => !string.IsNullOrEmpty(petSyncId) && Pets.Contains(petSyncId);
-
-    /// <summary>This device was already caregiving on this pet when the boundary moved.</summary>
-    public FakeGrandfathered Caregiving(string petSyncId)
-    {
-        Pets.Add(petSyncId);
-        return this;
-    }
-}

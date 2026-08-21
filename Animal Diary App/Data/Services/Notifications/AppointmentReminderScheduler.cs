@@ -85,13 +85,19 @@ public class AppointmentReminderScheduler
     private async Task RefreshCoreAsync()
     {
         var upcoming = await _visits.GetAllUpcomingAsync();
+        if (upcoming.Count == 0)
+            return;
+
+        // Every pet once, not one lookup per group. A household with four animals was
+        // four round trips into the same table on every launch and every visit save.
+        var pets = (await _pets.GetPetsAsync()).ToDictionary(p => p.Id);
         var now = DateTime.Now;
 
         // Group by pet so each one arms only its NEXT visit. Two appointments in the
         // same fortnight would otherwise both fire, and the second is not news yet.
         foreach (var group in upcoming.GroupBy(v => v.PetId))
         {
-            var pet = await _pets.GetPetByIdAsync(group.Key);
+            pets.TryGetValue(group.Key, out var pet);
             var next = group.OrderBy(v => v.When).First();
 
             // Every visit that is not the next one loses its reminder. Cancelling is

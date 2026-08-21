@@ -24,6 +24,7 @@ public class VetReportDataBuilder
     private readonly WaterEntryService _water;
     private readonly TrackerService _trackers;
     private readonly CustomTrackerService _custom;
+    private readonly ConstellationService _everything;
 
     public VetReportDataBuilder(
         PetService pets,
@@ -36,7 +37,8 @@ public class VetReportDataBuilder
         SeizureEntryService seizures,
         WaterEntryService water,
         TrackerService trackers,
-        CustomTrackerService custom)
+        CustomTrackerService custom,
+        ConstellationService everything)
     {
         _pets = pets;
         _conditions = conditions;
@@ -49,6 +51,58 @@ public class VetReportDataBuilder
         _water = water;
         _trackers = trackers;
         _custom = custom;
+        _everything = everything;
+    }
+
+    /// <summary>
+    /// Snapshot for the PLAIN export: everything the owner wrote down in the range, in
+    /// time order, and nothing else. Free forever on every tier — this is the promise
+    /// that you can always take your data out (AI/domain.md).
+    ///
+    /// <para>It reuses <see cref="ConstellationService.GetRangeAsync"/> rather than
+    /// flattening the stores a second time. That service already exists to answer exactly
+    /// this question — "everything for one pet over a stretch, sorted purely by time" —
+    /// and it reads every store in one pass. A second flattener here would be ~150 lines
+    /// that drift apart the first time a tracker is added, and a new tracker would then
+    /// be logged, stored, and silently missing from the one export that promises
+    /// completeness.</para>
+    ///
+    /// <para>It inherits that service's one deliberate exclusion, and the exclusion is
+    /// right here too: an automatically-stamped <c>Missed</c> dose is not a star and is
+    /// not a line, because nobody wrote it down. The plain export prints the owner's
+    /// record. The designed report is where a missed dose is counted, in words.</para>
+    /// </summary>
+    public async Task<VetReportData> BuildPlainAsync(int petId, DateTime from, DateTime to)
+    {
+        from = from.Date;
+        to = to.Date;
+
+        var pet = await _pets.GetPetByIdAsync(petId)
+            ?? throw new InvalidOperationException($"Pet {petId} not found.");
+
+        var conditionIds = await _conditions.GetConditionIdsAsync(pet);
+        var events = await _everything.GetRangeAsync(petId, from, to);
+
+        return new VetReportData
+        {
+            Style = ReportStyle.Plain,
+            // No photo: the plain export is the portable copy of a record, not a document
+            // designed to be handed over, and a face on it buys nothing.
+            Pet = await BuildPetInfoAsync(pet, conditionIds, weightPoints: new List<ReportPoint>(), includePhoto: false),
+            From = from,
+            To = to,
+            GeneratedAt = DateTime.Now,
+            PlainLog = events.Select(e => new ReportLogLine(
+                e.When,
+                // A legacy mood/weight row saved before per-entry times existed sits at
+                // the start of its day, so midnight here means "no time was recorded" and
+                // the export prints the date alone. It costs a genuine 00:00 entry its
+                // clock time, which is the harmless direction: understating what was
+                // recorded beats inventing a moment the owner never gave us.
+                HasTime: e.When.TimeOfDay != TimeSpan.Zero,
+                e.Title,
+                e.Detail)).ToList(),
+        };
     }
 
     /// <summary>Snapshot everything the report might show for the pet in

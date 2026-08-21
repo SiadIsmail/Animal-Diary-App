@@ -38,8 +38,10 @@ public sealed class SeriesChartDrawable : IDrawable
     public double Min { get; set; }
     public double Max { get; set; }
 
-    /// <summary>The record's accent, resolved by the caller through <c>AppColors</c>.</summary>
-    public Color Accent { get; set; } = Color.FromArgb("#3E8FB0");
+    /// <summary>The record's accent, resolved by the caller through <c>AppColors</c>.
+    /// Required rather than defaulted: a fallback hex here would be a colour outside the
+    /// palette that no theme change could reach, and every caller has the real one.</summary>
+    public required Color Accent { get; set; }
 
     private static readonly Color GridColor = Color.FromArgb("#1A0D3A3C"); // ink @ ~10%
 
@@ -149,8 +151,11 @@ public sealed class ObservationStripDrawable : IDrawable
 {
     public IReadOnlyList<ObservationMark> Marks { get; set; } = System.Array.Empty<ObservationMark>();
 
-    /// <summary>Rows on the scale. Five everywhere so far (mood, water, appetite).</summary>
-    public int Levels { get; set; } = 5;
+    /// <summary>Rows on the scale. Every relative reading in this app is 1–5 (mood,
+    /// water, appetite), so this is a constant rather than a setting no caller sets —
+    /// a second scale would need a labelled axis to go with it, which is a design
+    /// decision and not a number.</summary>
+    private const int Levels = 5;
 
     private static readonly Color BaselineColor = Color.FromArgb("#1A0D3A3C");
 
@@ -202,7 +207,8 @@ public sealed class EventStripDrawable : IDrawable
     /// <summary>Where each occurrence sits along the range, 0..1.</summary>
     public IReadOnlyList<double> Positions { get; set; } = System.Array.Empty<double>();
 
-    public Color Accent { get; set; } = Color.FromArgb("#8E7CC3");
+    /// <summary>The record's accent. Required for the same reason as the line chart's.</summary>
+    public required Color Accent { get; set; }
 
     private static readonly Color BaselineColor = Color.FromArgb("#1A0D3A3C");
 

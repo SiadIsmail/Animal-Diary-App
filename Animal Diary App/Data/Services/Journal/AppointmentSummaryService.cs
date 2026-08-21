@@ -77,11 +77,6 @@ public class AppointmentSummaryService
     private readonly CustomTrackerService _custom;
     private readonly MedicationService _medications;
 
-    /// <summary>Far enough back to be "everything", without handing SQLite a
-    /// <c>DateTime.MinValue</c> that no index range can help with. No pet's diary
-    /// predates the app.</summary>
-    private static readonly DateTime Epoch = new(2000, 1, 1);
-
     public AppointmentSummaryService(
         VetVisitService visits,
         VetQuestionService questions,
@@ -95,6 +90,11 @@ public class AppointmentSummaryService
         _custom = custom;
         _medications = medications;
     }
+
+    /// <summary>Everything, with no floor of our own. A sentinel date would silently
+    /// hide an entry imported from before it, and "up to X" is a scan either way — the
+    /// lower bound buys nothing to be clever about.</summary>
+    private static DateTime Everything => DateTime.MinValue;
 
     /// <summary>
     /// Assemble the summary for one pet.
@@ -140,7 +140,7 @@ public class AppointmentSummaryService
             if (anchor is null || key.Is(TodayCardId.Medication))
                 continue;                       // doses are not a tracker
 
-            var before = await _facts.GetAsync(pet, key, Epoch, from.AddDays(-1));
+            var before = await _facts.GetAsync(pet, key, Everything, from.AddDays(-1));
             if (!before.HasAny && facts.FirstOn is DateTime first)
                 newRecords.Add(new NewRecord(name, first));
         }
@@ -192,7 +192,7 @@ public class AppointmentSummaryService
         DateTime? earliest = null;
         foreach (var (key, _) in kinds)
         {
-            var facts = await _facts.GetAsync(pet, key, Epoch, today);
+            var facts = await _facts.GetAsync(pet, key, Everything, today);
             if (facts.FirstOn is DateTime first && (earliest is null || first < earliest))
                 earliest = first;
         }
