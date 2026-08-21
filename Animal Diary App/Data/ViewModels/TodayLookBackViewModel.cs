@@ -1,6 +1,5 @@
 namespace Animal_Diary_App.Data.ViewModels;
 
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -89,12 +88,6 @@ public class TodayLookBackViewModel : BaseViewModel
 
     private int _loadGeneration;
 
-    /// <summary>The stretches on offer. Presets, like everywhere else in this app — a
-    /// date-range picker is a form. Deliberately capped at a year: this section reads one
-    /// range per record in the plan, and an "all time" option would turn a nine-tracker
-    /// pet's Today into nine decade-wide scans.</summary>
-    public static readonly int[] RangeOptions = { 14, 30, 90, 365 };
-
     public TodayLookBackViewModel(
         ActivePetService activePet,
         CarePlanService carePlan,
@@ -125,7 +118,16 @@ public class TodayLookBackViewModel : BaseViewModel
         private set => SetProperty(ref _rangeDays, value);
     }
 
-    public ObservableCollection<LookBackBlock> Blocks { get; } = new();
+    /// <summary>The blocks, in fixed catalog order. A <see cref="RangeObservableCollection{T}"/>
+    /// because Today is a tab page and this list is rendered by <c>BindableLayout</c>,
+    /// which has no virtualization — <c>Clear()</c> plus a per-item <c>Add()</c> builds a
+    /// template and invalidates layout once per row (AI/coding-standards.md).
+    ///
+    /// <para>The offered stretches are 14 / 30 / 90 / 365 days, named in the XAML's four
+    /// range tabs. Deliberately capped at a year: this section reads one range per record
+    /// in the plan, and an "all time" option would turn a nine-tracker pet's Today into
+    /// nine decade-wide scans.</para></summary>
+    public RangeObservableCollection<LookBackBlock> Blocks { get; } = new();
 
     private bool _hasBlocks;
 
@@ -159,7 +161,7 @@ public class TodayLookBackViewModel : BaseViewModel
 
         if (pet is null || pet.Id == 0)
         {
-            Blocks.Clear();
+            Blocks.ReplaceAll(Array.Empty<LookBackBlock>());
             HasBlocks = false;
             return;
         }
@@ -177,47 +179,35 @@ public class TodayLookBackViewModel : BaseViewModel
         // Fixed catalog order, not care-plan order — the plan's own order is an
         // implementation detail of how it was seeded, and a section that reshuffles
         // itself when a tracker is added looks ranked.
-        var ordered = plan
-            .Select(item => TodayCardKey.From(item.Key) is TodayCardKey k ? (Key: (TodayCardKey?)k, item.Key) : (null, item.Key))
-            .Where(x => x.Key is not null)
-            .OrderBy(x => CatalogOrder(x.Key!.Value))
-            .ToList();
+        var ordered = new List<(TodayCardKey Card, TrackerKey Tracker)>(plan.Count);
+        foreach (var item in plan)
+        {
+            // A tracker with no card key is one no version of this app records — it
+            // cannot have a snapshot either, so there is nothing to draw.
+            if (TodayCardKey.From(item.Key) is TodayCardKey card)
+                ordered.Add((card, item.Key));
+        }
+        ordered.Sort((a, b) => TodayCardCatalog.Order(a.Card).CompareTo(TodayCardCatalog.Order(b.Card)));
 
         var blocks = new List<LookBackBlock>(ordered.Count);
-        foreach (var (key, trackerKey) in ordered)
+        foreach (var (card, tracker) in ordered)
         {
-            var snapshot = await _facts.GetSnapshotAsync(pet, key!.Value, from, to);
+            var snapshot = await _facts.GetSnapshotAsync(pet, card, from, to);
             if (!snapshot.Facts.HasAny)
                 continue;                   // nothing written down about it in this range
 
-            blocks.Add(BuildBlock(key.Value, trackerKey, definitions, snapshot, from, to));
+            blocks.Add(BuildBlock(card, tracker, definitions, snapshot, from, to));
         }
 
         // A newer load (a pet switch, a range change) owns the section now.
         if (generation != _loadGeneration)
             return;
 
-        // Built completely, then swapped in one synchronous block — never cleared across
-        // an await (AI/coding-standards.md).
-        Blocks.Clear();
-        foreach (var block in blocks)
-            Blocks.Add(block);
-
+        // Built completely, then swapped in ONE notification — never cleared across an
+        // await, and never refilled item by item (AI/coding-standards.md).
+        Blocks.ReplaceAll(blocks);
         HasBlocks = blocks.Count > 0;
         OnPropertyChanged(nameof(Heading));
-    }
-
-    /// <summary>Position in <see cref="TodayCardCatalog.Cards"/>; the owner's own
-    /// trackers follow the shipped ones, in the order they created them.</summary>
-    private static int CatalogOrder(TodayCardKey key)
-    {
-        if (key.IsCustom)
-            return 100 + key.CustomId;
-
-        for (var i = 0; i < TodayCardCatalog.Cards.Count; i++)
-            if (TodayCardCatalog.Cards[i].Id == key.BuiltIn)
-                return i;
-        return 99;
     }
 
     private LookBackBlock BuildBlock(
@@ -233,14 +223,20 @@ public class TodayLookBackViewModel : BaseViewModel
 
         // A custom tracker is named by the owner, verbatim; a shipped one by its record
         // key ("Glucose"), never the card face's "Last glucose" — this block is about a
-        // stretch of time, not the last reading.
-        var name = key.IsCustom
-            ? (definitions.TryGetValue(key.CustomId, out var def) ? def.Name : Loc.GetString("Today_CardCustom"))
-            : TodayCardCatalog.RecordName(key.BuiltIn!.Value);
+        // stretch of time, not the last reading. One lookup answers both halves; a
+        // definition that has vanished (a hard purge) leaves the generic pair, which is
+        // the honest outcome when there is nothing left to name.
+        CustomTracker? definition = null;
+        if (key.IsCustom)
+            definitions.TryGetValue(key.CustomId, out definition);
 
-        var icon = key.IsCustom
-            ? (definitions.TryGetValue(key.CustomId, out var d2) ? CustomTrackerVisuals.For(d2).Icon : CustomTrackerVisuals.DefaultIcon)
-            : visual.Icon;
+        var name = !key.IsCustom
+            ? TodayCardCatalog.RecordName(key.BuiltIn!.Value)
+            : definition?.Name ?? Loc.GetString("Today_CardCustom");
+
+        var icon = !key.IsCustom
+            ? visual.Icon
+            : definition is null ? CustomTrackerVisuals.DefaultIcon : CustomTrackerVisuals.For(definition).Icon;
 
         return new LookBackBlock
         {

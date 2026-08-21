@@ -7,7 +7,7 @@ namespace Animal_Diary_App.Data.Services.Billing;
 /// renews the window from that moment rather than queueing behind the first
 /// (the arithmetic lives server-side, in <c>redeem_access_code</c>).
 ///
-/// <para>The sibling seam of <see cref="IPetAccessSource"/> and <see cref="IGrandfatheredAccess"/>,
+/// <para>The sibling seam of <see cref="IPetAccessSource"/>,
 /// and for the same reason: <b>Billing declares it, Cloud implements it, never the
 /// reverse.</b> Keeping the interface here is what lets the gate logic stay in a plain
 /// net10.0 test assembly with no MAUI, SQLite or Supabase anywhere near it.</para>

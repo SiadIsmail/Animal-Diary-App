@@ -17,15 +17,16 @@
 --  WHAT THIS TAKES AWAY, AND FROM WHOM. This function's only job is telling a
 --  caregiver whether the owner of a pet they help with is covered. Dropping the
 --  trial clause means every owner on the new free tier stops sponsoring. That is
---  intended — a free tier that sponsors unlimited caregivers is not a tier — but
---  it lands on people who are currently caregiving for a free owner. They are
---  grandfathered CLIENT-side, per install, by IGrandfatheredAccess: the first
---  launch after the change records which pets this device was already caregiving
---  on, and CanEditPet keeps honouring those regardless of what the owner pays.
---  It is device-scoped and a reinstall loses it, which is accepted: the
---  population is tiny (RevenueCat has only ever run on the Test Store key, so no
---  purchase has ever completed) and the failure mode is being asked to
---  subscribe, never losing data.
+--  intended — a free tier that sponsors unlimited caregivers is not a tier — and
+--  it applies to everyone at once, including people already caregiving for a free
+--  owner. Nobody is grandfathered, deliberately.
+--
+--  That is affordable because RevenueCat has only ever run on the Test Store key,
+--  so no purchase has ever completed and the affected population is a handful of
+--  installs. And because of what sponsorship now reaches: with logging free on
+--  every tier, an unsponsored caregiver keeps reading everything and keeps writing
+--  everything down. What they lose is the paid pet-scoped surfaces, which is a
+--  subscribe prompt, not a loss of care or of data.
 --
 --  Nothing here touches medical data, and nothing here can gate a write: the app
 --  never asked the server for permission to log, and after this change nothing

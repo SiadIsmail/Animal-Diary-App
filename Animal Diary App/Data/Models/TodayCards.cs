@@ -225,6 +225,30 @@ public static class TodayCardCatalog
     public static string RecordName(TodayCardId card) =>
         Helpers.LocalizationManager.Instance.GetString(Meta(card).RecordKey);
 
+    /// <summary>
+    /// A record's place in the one canonical order: the shipped cards as listed in
+    /// <see cref="Cards"/>, then the owner's own trackers in the order they created them.
+    ///
+    /// <para>It lives here because the order is a property of the catalog, not of any
+    /// surface that walks it — a screen that sorted differently would be that screen
+    /// deciding which record matters. A key with no row sorts last rather than throwing,
+    /// the same posture as <see cref="Meta"/>: a record dropped in a later version should
+    /// look unfinished, not take somebody else's place.</para>
+    /// </summary>
+    public static int Order(TodayCardKey key)
+    {
+        const int AfterEveryShippedCard = 1_000;
+
+        if (key.IsCustom)
+            return AfterEveryShippedCard + key.CustomId;
+
+        for (var i = 0; i < Cards.Count; i++)
+            if (Cards[i].Id == key.BuiltIn)
+                return i;
+
+        return AfterEveryShippedCard - 1;
+    }
+
     // ── Defaults ──────────────────────────────────────────────────────────────
     //
     // The pair a pet starts with, chosen from its conditions — the same idea as

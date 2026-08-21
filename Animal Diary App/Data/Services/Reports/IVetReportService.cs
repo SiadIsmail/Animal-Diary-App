@@ -36,6 +36,20 @@ public interface IVetReportService
         bool includeMood = true,
         bool includeCustom = true);
 
+    /// <summary>
+    /// Generate the PLAIN export: everything the owner wrote down in the range, in time
+    /// order, with dates and times. Same return shape as <see cref="GenerateAsync"/> —
+    /// it lands in the report library like any other document — and null when the range
+    /// holds nothing.
+    ///
+    /// <para><b>Free forever, on every tier.</b> This is the method that keeps
+    /// "getting your data out is never blocked" true (AI/domain.md). No caller may gate
+    /// it, and it takes no include/exclude flags on purpose: an export that promises
+    /// everything is not something to configure your way out of. The designed report is
+    /// the paid artifact; this is the data.</para>
+    /// </summary>
+    Task<VetReportFile?> GeneratePlainAsync(int petId, DateTime from, DateTime to);
+
     /// <summary>Generate a PDF from the fake <see cref="VetReportSampleData"/> — for
     /// iterating on the layout without real logged data. The files land in the
     /// reports folder but the returned row is NOT persisted, so sample documents

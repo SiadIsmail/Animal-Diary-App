@@ -160,6 +160,30 @@ public class PaywallBoundaryTests
         Assert.Contains("EverGranted", members);
     }
 
+    // ── getting your data out ────────────────────────────────────────────────
+
+    [Fact]
+    public void The_plain_export_takes_no_options_to_configure_it_away()
+    {
+        // "Everything you wrote down" is not something to tune. GenerateAsync carries seven
+        // include-flags because a DESIGNED report is a document you compose; the free export
+        // is the data, and every flag added here would be one more way for it to quietly
+        // become less than complete. Pet and a date range, nothing else.
+        //
+        // A source scan rather than reflection: the interface names model types that would
+        // drag the SQLite entity layer into this assembly for one signature check.
+        var source = File.ReadAllText(Path.Combine(
+            AppFolder(), "Data", "Services", "Reports", "IVetReportService.cs"));
+
+        var at = source.IndexOf("GeneratePlainAsync", StringComparison.Ordinal);
+        Assert.True(at >= 0, "IVetReportService.GeneratePlainAsync is gone. The free, "
+            + "always-available export is what keeps 'getting your data out is never "
+            + "blocked' true.");
+
+        var signature = source.Substring(at, source.IndexOf(';', at) - at);
+        Assert.DoesNotContain("bool", signature, StringComparison.Ordinal);
+    }
+
     /// <summary>The app project folder, found by walking up from the test binaries.</summary>
     private static string AppFolder()
     {

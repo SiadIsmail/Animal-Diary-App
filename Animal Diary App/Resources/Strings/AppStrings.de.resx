@@ -413,6 +413,13 @@
   <data name="Export_Days90" xml:space="preserve"><value>90 Tage</value></data>
   <data name="Export_Days180" xml:space="preserve"><value>180 Tage</value></data>
   <data name="Export_Generate" xml:space="preserve"><value>Bericht erstellen</value></data>
+  <!-- Die zwei Dokumente, gleichwertig angeboten. Keine der Zeilen darf nach der
+       schlechteren Option klingen: das einfache Protokoll ist eine echte Antwort. -->
+  <data name="Export_ChoiceIntro" xml:space="preserve"><value>Zwei Wege, {0}s Verlauf mitzunehmen.</value></data>
+  <data name="Export_PlainTitle" xml:space="preserve"><value>Einfaches Protokoll sichern</value></data>
+  <data name="Export_PlainBody" xml:space="preserve"><value>Alles, was du festgehalten hast, der Reihe nach, mit Datum und Uhrzeit. Immer kostenlos.</value></data>
+  <data name="Export_DesignedTitle" xml:space="preserve"><value>Vollständigen Bericht erstellen</value></data>
+  <data name="Export_DesignedBody" xml:space="preserve"><value>Nach Abschnitten gesetzt, mit den Grafiken und dem Medikamentenverlauf. Teil von Felova Full.</value></data>
   <data name="Export_Generating" xml:space="preserve"><value>Wird erstellt…</value></data>
   <data name="Export_DoneMessage" xml:space="preserve"><value>Dein Bericht über die letzten {0} Tage ist fertig. Alles auf einer Seite.</value></data>
   <data name="Export_View" xml:space="preserve"><value>Ansehen</value></data>
@@ -480,6 +487,13 @@
   <data name="Report_EventAppetiteLevel" xml:space="preserve"><value>Appetit mit Stufe {0} von 5 erfasst</value></data>
   <data name="Report_MoreEvents" xml:space="preserve"><value>+ {0} weitere Ereignisse im Zeitraum, hier nicht aufgeführt.</value></data>
   <data name="Report_SectionNotes" xml:space="preserve"><value>Eigene Notizen</value></data>
+  <!-- Der einfache Export. Eigene Spaltenbeschriftungen, denn er beantwortet „was habe
+       ich wann festgehalten", nicht „was braucht die Praxis". -->
+  <data name="Report_SectionPlainLog" xml:space="preserve"><value>Alles Festgehaltene</value></data>
+  <data name="Report_PlainLogIntro" xml:space="preserve"><value>Jeder Eintrag aus diesem Zeitraum, ältester zuerst, genau so festgehalten.</value></data>
+  <data name="Report_ColWhen" xml:space="preserve"><value>Wann</value></data>
+  <data name="Report_ColWhat" xml:space="preserve"><value>Was</value></data>
+  <data name="Report_ColRecorded" xml:space="preserve"><value>Festgehalten</value></data>
   <data name="Report_MoreNotes" xml:space="preserve"><value>+ {0} weitere Notizen im Zeitraum, hier nicht aufgeführt.</value></data>
 
   <data name="Docs_Title" xml:space="preserve"><value>Dokumente</value></data>

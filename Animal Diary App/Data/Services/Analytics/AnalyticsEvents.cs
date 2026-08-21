@@ -249,6 +249,12 @@ public static class AnalyticsEvents
     public const string PropDaysPerWeek = "days_per_week";
     /// <summary>Report look-back window in days (30/90/180).</summary>
     public const string PropRangeDays = "range_days";
+    /// <summary>Which of the two documents was produced — <see cref="ReportKindDesigned"/>
+    /// / <see cref="ReportKindPlain"/>. Both ride the ONE report_exported event on purpose:
+    /// the question is whether people get their data out at all, and two events would make
+    /// the free half look like a second-class feature in the numbers as well as on the
+    /// sheet. As a property it still splits cleanly when that is the question.</summary>
+    public const string PropReportKind = "report_kind";
     /// <summary>Which door the subscribe sheet was opened from. The values are the real
     /// upgrade doors and nothing else — see the <c>SubscribeSource*</c> constants. This is
     /// the property that says where someone was standing when they considered paying, so a
@@ -287,6 +293,10 @@ public static class AnalyticsEvents
     // values count as engagement for retention.
     public const string DoseStatusTaken = "taken";
     public const string DoseStatusSkipped = "skipped";
+
+    // The two documents the export sheet can produce.
+    public const string ReportKindDesigned = "designed";
+    public const string ReportKindPlain = "plain";
 
     // Subscribe-sheet sources: the real upgrade doors, one value each.
     /// <summary>The Settings → subscription row. The deliberate, unprompted door.</summary>

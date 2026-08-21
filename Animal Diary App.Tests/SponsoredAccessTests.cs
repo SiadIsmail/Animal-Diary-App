@@ -23,12 +23,10 @@ public class SponsoredAccessTests
 
     /// <summary>Builds a service whose OWN access has run out — the only interesting
     /// starting point, since anyone with their own access passes everything trivially.</summary>
-    private static EntitlementService Locked(
-        FakePetAccess access, out FakeStore store, IGrandfatheredAccess? grandfathered = null)
+    private static EntitlementService Locked(FakePetAccess access, out FakeStore store)
     {
         store = new FakeStore { HasActiveEntitlement = false, EntitlementKnown = true };
-        return new EntitlementService(
-            store, access, new NullGrantSource(), grandfathered ?? new NullGrandfatheredAccess(), () => Now);
+        return new EntitlementService(store, access, new NullGrantSource(), () => Now);
     }
 
     // ── the rule ────────────────────────────────────────────────────────────
@@ -107,8 +105,7 @@ public class SponsoredAccessTests
         // A local-only subscriber has no memberships at all. CanEditPet must not depend on
         // the cloud in any way for them.
         var store = new FakeStore { HasActiveEntitlement = true, EntitlementKnown = true };
-        var gate = new EntitlementService(
-            store, new NullPetAccessSource(), new NullGrantSource(), new NullGrandfatheredAccess(), () => Now);
+        var gate = new EntitlementService(store, new NullPetAccessSource(), new NullGrantSource(), () => Now);
 
         Assert.True(gate.CanEditPet(MyPet));
         Assert.True(gate.CanEditPet(null));
@@ -123,7 +120,7 @@ public class SponsoredAccessTests
         var gate = Locked(new FakePetAccess(), out _);
         var offline = new EntitlementService(
             new FakeStore { HasActiveEntitlement = false, EntitlementKnown = true },
-            new NullPetAccessSource(), new NullGrantSource(), new NullGrandfatheredAccess(), () => Now);
+            new NullPetAccessSource(), new NullGrantSource(), () => Now);
 
         Assert.False(gate.CanEditPet(MyPet));
         Assert.False(offline.CanEditPet(MyPet));
@@ -139,46 +136,6 @@ public class SponsoredAccessTests
         Assert.True(gate.CanEditPet(TheirPet));
     }
 
-    // ── grandfathering ──────────────────────────────────────────────────────
-
-    [Fact]
-    public void A_caregiver_grandfathered_on_a_pet_keeps_it_when_the_owner_stops_paying()
-    {
-        // Migration 0021 dropped the trial arm from owner_has_access, so every owner on the
-        // new free tier stopped sponsoring at once. Someone already caring for one of those
-        // animals must not lose what they had because the boundary moved under them.
-        var grandfathered = new FakeGrandfathered().Caregiving(TheirPet);
-        var gate = Locked(new FakePetAccess().Lapsed(TheirPet, Now), out _, grandfathered);
-
-        Assert.True(gate.CanEditPet(TheirPet));
-    }
-
-    [Fact]
-    public void Grandfathering_covers_only_the_pets_that_were_already_there()
-    {
-        // "Keep what you had" is a snapshot, not a standing offer. A pet joined afterwards
-        // is covered by the new rules like everyone else's.
-        var grandfathered = new FakeGrandfathered().Caregiving(TheirPet);
-        var access = new FakePetAccess().Lapsed(TheirPet, Now).Lapsed("joined-later", Now);
-        var gate = Locked(access, out _, grandfathered);
-
-        Assert.True(gate.CanEditPet(TheirPet));
-        Assert.False(gate.CanEditPet("joined-later"));
-    }
-
-    [Fact]
-    public void Grandfathering_never_covers_a_pet_you_own()
-    {
-        // The load-bearing rule survives the exception: a grandfathered snapshot only ever
-        // holds pets this device CAREGIVES on, and CanEditPet checks IsCaregiver before it
-        // consults the snapshot at all. Otherwise an owner could be grandfathered into
-        // their own paid tier forever.
-        var grandfathered = new FakeGrandfathered().Caregiving(MyPet);
-        var gate = Locked(new FakePetAccess().Owned(MyPet, Now, ownerAccess: false), out _, grandfathered);
-
-        Assert.False(gate.CanEditPet(MyPet));
-    }
-
     [Fact]
     public void An_owner_who_pays_still_sponsors_their_caregivers()
     {
@@ -192,8 +149,7 @@ public class SponsoredAccessTests
     public async Task Identify_passes_the_account_through_and_clears_it_on_sign_out()
     {
         var store = new FakeStore();
-        var gate = new EntitlementService(
-            store, new NullPetAccessSource(), new NullGrantSource(), new NullGrandfatheredAccess(), () => Now);
+        var gate = new EntitlementService(store, new NullPetAccessSource(), new NullGrantSource(), () => Now);
 
         await gate.IdentifyAsync("user-123");
         Assert.Equal("user-123", store.IdentifiedAs);

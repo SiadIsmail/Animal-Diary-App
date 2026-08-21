@@ -37,6 +37,16 @@ public static class VetReportStrings
     public static string Page => L.GetString("Report_Page");
     public static string PageOf => L.GetString("Report_PageOf");
 
+    // ── Plain export ──────────────────────────────────────────────────────────
+    // The free, portable copy: everything written down, in order. Its own three column
+    // labels rather than reuse of the designed report's, because it answers a different
+    // question — not "what does the vet need" but "what did I record, and when".
+    public static string SectionPlainLog => L.GetString("Report_SectionPlainLog");
+    public static string PlainLogIntro => L.GetString("Report_PlainLogIntro");
+    public static string ColWhen => L.GetString("Report_ColWhen");
+    public static string ColWhat => L.GetString("Report_ColWhat");
+    public static string ColRecorded => L.GetString("Report_ColRecorded");
+
     // ── Header ────────────────────────────────────────────────────────────────
     public static string Conditions => L.GetString("Report_Conditions");
     public static string Weight => L.GetString("Report_Weight");

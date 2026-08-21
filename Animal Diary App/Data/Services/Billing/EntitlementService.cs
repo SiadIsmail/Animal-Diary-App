@@ -17,7 +17,6 @@ public sealed class EntitlementService : IEntitlementService
     private readonly IStoreBilling _store;
     private readonly IPetAccessSource _access;
     private readonly IGrantSource _grants;
-    private readonly IGrandfatheredAccess _grandfathered;
     private readonly Func<DateTime> _utcNow;
 
     /// <param name="access">Cloud sponsorship cache. <see cref="NullPetAccessSource"/>
@@ -25,20 +24,16 @@ public sealed class EntitlementService : IEntitlementService
     /// <see cref="HasFullAccess"/>.</param>
     /// <param name="grants">Redeemed access codes. <see cref="NullGrantSource"/> wherever
     /// there is no cloud, which removes the term from the formula entirely.</param>
-    /// <param name="grandfathered">What this install already had when the paid boundary
-    /// moved. <see cref="NullGrandfatheredAccess"/> for every install created since.</param>
     /// <param name="utcNow">Clock, injectable so the sponsorship grace window is testable.</param>
     public EntitlementService(
         IStoreBilling store,
         IPetAccessSource access,
         IGrantSource grants,
-        IGrandfatheredAccess? grandfathered = null,
         Func<DateTime>? utcNow = null)
     {
         _store = store;
         _access = access;
         _grants = grants;
-        _grandfathered = grandfathered ?? new NullGrandfatheredAccess();
         _utcNow = utcNow ?? (() => DateTime.UtcNow);
         // The store can change the entitlement underneath us (restore on another
         // device, a renewal, an expiry push) — bubble it up as our own change.
@@ -90,16 +85,7 @@ public sealed class EntitlementService : IEntitlementService
         // Sponsorship covers caregivers only. On a pet you OWN, your own (already-failed)
         // access is the whole answer — otherwise a subscription could be laundered into
         // free access for the sponsor's own record.
-        if (!info.IsCaregiver)
-            return false;
-
-        // Already caregiving here when the paid boundary moved: keep what you had, whatever
-        // the owner pays now. Checked before the owner's access precisely because the
-        // owner's access is the thing that changed underneath this person.
-        if (_grandfathered.SponsorshipIncluded(petSyncId))
-            return true;
-
-        if (!info.OwnerHasAccess)
+        if (!info.IsCaregiver || !info.OwnerHasAccess)
             return false;
 
         return _utcNow() - info.FetchedUtc < BillingConfig.SponsorshipOfflineGrace;

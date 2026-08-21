@@ -46,7 +46,6 @@
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IEntitlementService.cs" Link="Billing\IEntitlementService.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\EntitlementService.cs" Link="Billing\EntitlementService.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\NullEntitlementService.cs" Link="Billing\NullEntitlementService.cs" />
-    <Compile Include="..\Animal Diary App\Data\Services\Billing\IGrandfatheredAccess.cs" Link="Billing\IGrandfatheredAccess.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\PetLimit.cs" Link="Billing\PetLimit.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IStoreBilling.cs" Link="Billing\IStoreBilling.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Billing\IPetAccessSource.cs" Link="Billing\IPetAccessSource.cs" />
@@ -177,6 +176,15 @@
        TodayCards is already linked above and carries TodayCardKey. -->
   <ItemGroup>
     <Compile Include="..\Animal Diary App\Data\Models\RecordFacts.cs" Link="Facts\RecordFacts.cs" />
+  </ItemGroup>
+
+  <!-- The vet report's DTO, linked for one decision it carries: HasAnyData, which is what
+       refuses to produce an empty document. It answers differently per ReportStyle, and both
+       arms fail silently when wrong — a blank plain log handed to a vet, or a free export
+       refused because the DESIGNED sections happened to be empty. Plain records and enums,
+       no MAUI and no SQLite. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Services\Reports\VetReportData.cs" Link="Reports\VetReportData.cs" />
   </ItemGroup>
 
   <!-- The treatment ledger's diff: what a medication edit records, and — the half that

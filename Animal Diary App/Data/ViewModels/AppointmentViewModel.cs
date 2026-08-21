@@ -1,6 +1,5 @@
 namespace Animal_Diary_App.Data.ViewModels;
 
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -151,25 +150,25 @@ public class AppointmentViewModel : BaseViewModel
     /// covers exactly the stretch the page just described.</summary>
     public int SummaryDays { get; private set; } = 90;
 
-    public ObservableCollection<LedgerLine> Changes { get; } = new();
+    public RangeObservableCollection<LedgerLine> Changes { get; } = new();
     public bool HasChanges => Changes.Count > 0;
 
-    public ObservableCollection<string> NewRecords { get; } = new();
+    public RangeObservableCollection<string> NewRecords { get; } = new();
     public bool HasNewRecords => NewRecords.Count > 0;
 
-    public ObservableCollection<SummaryLine> Records { get; } = new();
+    public RangeObservableCollection<SummaryLine> Records { get; } = new();
     public bool HasRecords => Records.Count > 0;
 
     // ── Questions ────────────────────────────────────────────────────────────
 
-    public ObservableCollection<QuestionLine> Questions { get; } = new();
+    public RangeObservableCollection<QuestionLine> Questions { get; } = new();
     public bool HasQuestions => Questions.Count > 0;
 
     public string QuestionsHeading => Loc.Format("Vet_QuestionsHeading", Questions.Count);
 
     // ── State A / C: the past ────────────────────────────────────────────────
 
-    public ObservableCollection<VisitLine> PastVisits { get; } = new();
+    public RangeObservableCollection<VisitLine> PastVisits { get; } = new();
     public bool HasPastVisits => PastVisits.Count > 0;
 
     private bool _showNotePrompt;
@@ -194,14 +193,15 @@ public class AppointmentViewModel : BaseViewModel
         var generation = ++_loadGeneration;
         var pet = _activePet.ActivePet;
 
-        var upcoming = pet is null || pet.Id == 0
+        // ONE read of the table, partitioned in memory. GetUpcomingAsync +
+        // GetPastAsync scanned the same rows twice to answer two halves of one
+        // question, and a pet has a handful of visits either way.
+        var all = pet is null || pet.Id == 0
             ? new List<VetVisit>()
-            : await _visits.GetUpcomingAsync(pet.Id);
-        var past = pet is null || pet.Id == 0
-            ? new List<VetVisit>()
-            : await _visits.GetPastAsync(pet.Id);
+            : await _visits.GetAllAsync(pet.Id);          // ascending by moment
 
-        var next = upcoming.FirstOrDefault();
+        var next = all.FirstOrDefault(v => !v.IsPast);
+        var past = all.Where(v => v.IsPast).Reverse().ToList();   // newest first
 
         // The summary is only assembled when there is something to assemble it FOR.
         // It is the most expensive read on the page and it answers a question nobody
@@ -223,7 +223,13 @@ public class AppointmentViewModel : BaseViewModel
 
         // ── atomic fill: no awaits from here on ──
         _next = next;
-        _noteCandidate = past.FirstOrDefault(v => v.NeedsNote);
+
+        // ONLY the most recent past visit, never the first un-noted one found. Scanning
+        // for any visit missing a note meant that if March's had one and January's did
+        // not, the page asked how January went — months later, about a visit the owner
+        // had long since moved on from. "How did it go?" is about the one that just
+        // happened or it is not asked at all.
+        _noteCandidate = past.FirstOrDefault() is { NeedsNote: true } recent ? recent : null;
 
         HasNext = next is not null;
         NextHeadline = next is null ? string.Empty : Headline(pet, next);
@@ -241,14 +247,13 @@ public class AppointmentViewModel : BaseViewModel
 
     private void BuildSummary(AppointmentSummary? summary)
     {
-        Changes.Clear();
-        NewRecords.Clear();
-        Records.Clear();
-
         if (summary is null)
         {
             SinceLine = string.Empty;
             SummaryDays = 90;
+            Changes.ReplaceAll(Array.Empty<LedgerLine>());
+            NewRecords.ReplaceAll(Array.Empty<string>());
+            Records.ReplaceAll(Array.Empty<SummaryLine>());
             return;
         }
 
@@ -257,48 +262,62 @@ public class AppointmentViewModel : BaseViewModel
             ? Loc.Format("Vet_SinceVisit", Day(summary.From), summary.Days)
             : Loc.Format("Vet_SinceStart", Day(summary.From), summary.Days);
 
-        foreach (var change in summary.Changes)
-            Changes.Add(new LedgerLine
-            {
-                // The ledger is stamped in UTC; the owner reads it in their own time.
-                Day = Day(change.ChangedAtUtc.ToLocalTime().Date),
-                Name = change.Name(),
-                What = change.What(),
-            });
+        Changes.ReplaceAll(summary.Changes.Select(change => new LedgerLine
+        {
+            // The ledger is stamped in UTC; the owner reads it in their own time.
+            Day = Day(change.ChangedAtUtc.ToLocalTime().Date),
+            Name = change.MedicationName,
+            What = LedgerFact(change),
+        }));
 
-        foreach (var record in summary.NewRecords)
-            NewRecords.Add(Loc.Format("Vet_NewRecord", record.Name, Day(record.FirstOn)));
+        NewRecords.ReplaceAll(summary.NewRecords
+            .Select(record => Loc.Format("Vet_NewRecord", record.Name, Day(record.FirstOn))));
 
-        foreach (var record in summary.Records)
-            Records.Add(new SummaryLine
-            {
-                Name = record.Name,
-                Count = RecordFactsText.Count(record.Facts),
-                DayParts = RecordFactsText.DayParts(record.Facts),
-                Values = RecordFactsText.Values(record.Facts),
-                Doses = RecordFactsText.Doses(record.Facts),
-            });
+        Records.ReplaceAll(summary.Records.Select(record => new SummaryLine
+        {
+            Name = record.Name,
+            Count = RecordFactsText.Count(record.Facts),
+            DayParts = RecordFactsText.DayParts(record.Facts),
+            Values = RecordFactsText.Values(record.Facts),
+            Doses = RecordFactsText.Doses(record.Facts),
+        }));
     }
 
-    private void BuildQuestions(IReadOnlyList<VetQuestion> questions)
+    /// <summary>
+    /// One ledger row's fact. A dose or schedule change carries its own rendered summary
+    /// — captured when it happened, so it still reads correctly for a medication since
+    /// renamed or deleted; the kinds with no value to state get a word instead.
+    ///
+    /// <para>Chronological facts only. Nothing here says whether a change was an increase
+    /// worth noting, and nothing may put two counts either side of one.</para>
+    /// </summary>
+    private static string LedgerFact(MedicationChange change)
     {
-        Questions.Clear();
-        foreach (var q in questions)
-            Questions.Add(new QuestionLine { Id = q.Id, Text = q.Text });
+        if (!string.IsNullOrWhiteSpace(change.Summary))
+            return change.Kind == MedicationChangeKind.Started
+                ? Loc.Format("Vet_LedgerStarted", change.Summary)
+                : change.Summary;
+
+        return Loc.GetString(change.Kind switch
+        {
+            MedicationChangeKind.Archived => "Vet_LedgerArchived",
+            MedicationChangeKind.Restored => "Vet_LedgerRestored",
+            MedicationChangeKind.Stopped => "Vet_LedgerStopped",
+            _ => "Vet_LedgerChanged",
+        });
     }
 
-    private void BuildPast(IReadOnlyList<VetVisit> past)
-    {
-        PastVisits.Clear();
-        foreach (var visit in past)
-            PastVisits.Add(new VisitLine
-            {
-                Visit = visit,
-                When = DayAndTime(visit),
-                Where = Where(visit),
-                Note = visit.VisitNote,
-            });
-    }
+    private void BuildQuestions(IReadOnlyList<VetQuestion> questions) =>
+        Questions.ReplaceAll(questions.Select(q => new QuestionLine { Id = q.Id, Text = q.Text }));
+
+    private void BuildPast(IReadOnlyList<VetVisit> past) =>
+        PastVisits.ReplaceAll(past.Select(visit => new VisitLine
+        {
+            Visit = visit,
+            When = DayAndTime(visit),
+            Where = Where(visit),
+            Note = visit.VisitNote,
+        }));
 
     private void RaiseAll()
     {
@@ -378,34 +397,3 @@ public class AppointmentViewModel : BaseViewModel
     private static string Day(DateTime date) => date.ToString("d MMM", CultureInfo.CurrentCulture);
 }
 
-/// <summary>Wording for one ledger row. It lives here rather than on the model because
-/// the model is a stored row and must not resolve a localized string at read time — a
-/// singleton that cached one would freeze in the language it was built in.</summary>
-internal static class LedgerLineText
-{
-    /// <summary>The medication's name as of the change. Verbatim user text.</summary>
-    public static string Name(this MedicationChange change) => change.MedicationName;
-
-    /// <summary>
-    /// The fact. A dose or schedule change carries its own rendered summary; the kinds
-    /// with no value to state get a word instead.
-    ///
-    /// <para>Chronological facts only — nothing here says whether a change was an
-    /// increase worth noting, and nothing may put two counts either side of one.</para>
-    /// </summary>
-    public static string What(this MedicationChange change)
-    {
-        if (!string.IsNullOrWhiteSpace(change.Summary))
-            return change.Kind == MedicationChangeKind.Started
-                ? LocalizationManager.Instance.Format("Vet_LedgerStarted", change.Summary)
-                : change.Summary;
-
-        return LocalizationManager.Instance.GetString(change.Kind switch
-        {
-            MedicationChangeKind.Archived => "Vet_LedgerArchived",
-            MedicationChangeKind.Restored => "Vet_LedgerRestored",
-            MedicationChangeKind.Stopped => "Vet_LedgerStopped",
-            _ => "Vet_LedgerChanged",
-        });
-    }
-}

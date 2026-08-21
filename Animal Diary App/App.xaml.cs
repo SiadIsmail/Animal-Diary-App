@@ -27,10 +27,9 @@ public partial class App : Application
 	private readonly ICloudAuthService _cloudAuth;
 	private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
 	private readonly ICloudReferralService _referrals;
-	private readonly Animal_Diary_App.Data.Services.Billing.GrandfatheredAccessService _grandfathered;
 	private readonly IServiceProvider _services;
 
-	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, AppointmentReminderScheduler appointmentReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, ICloudAuthService cloudAuth, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, ICloudReferralService referrals, Animal_Diary_App.Data.Services.Billing.GrandfatheredAccessService grandfathered, IServiceProvider services)
+	public App(PetService petService, MainViewModel vm, AppDatabase database, ActivePetService activePetService, MedicationReminderScheduler reminderScheduler, DailyCareReminderScheduler dailyReminderScheduler, AppointmentReminderScheduler appointmentReminderScheduler, Animal_Diary_App.Data.Services.Data.Device.INotificationService notifications, SettingsService settingsService, IAnalyticsService analytics, ICloudSyncService cloudSync, ICloudAuthService cloudAuth, Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements, ICloudReferralService referrals, IServiceProvider services)
 	{
 		InitializeComponent();
 		_petService = petService;
@@ -47,7 +46,6 @@ public partial class App : Application
 		_cloudAuth = cloudAuth;
 		_entitlements = entitlements;
 		_referrals = referrals;
-		_grandfathered = grandfathered;
 		_services = services;
 
 		// "Has anything changed since this page last loaded?" — subscribed here so it
@@ -85,8 +83,7 @@ public partial class App : Application
 	// with logging free on every tier, a caregiver whose owner is on the free tier loses
 	// nothing at all today, so a sheet saying "new entries are paused" would be false.
 	// The old notice and its copy were deleted rather than left to rot into a lie. When the
-	// summary is gated, resubscribe here with copy that names what actually changed, and
-	// filter out pets covered by IGrandfatheredAccess.SponsorshipIncluded.
+	// summary is gated, resubscribe here with copy that names what actually changed.
 
 	private void OnNotificationTapped(Plugin.LocalNotification.EventArgs.NotificationActionEventArgs e)
 	{
@@ -500,10 +497,10 @@ public partial class App : Application
 				}
 			}).Forget();
 
-			// Billing: initialize the entitlement boundary and take the one-shot
-			// grandfathering snapshot. All off the UI path and a quiet no-op under the
-			// Null boundary. There is no trial clock to start any more — the free tier is
-			// permanent, so there is nothing to begin and nothing to run out.
+			// Billing: initialize the entitlement boundary. All off the UI path and a quiet
+			// no-op under the Null boundary. There is no trial clock to start any more —
+			// the free tier is permanent, so there is nothing to begin and nothing to run
+			// out.
 			Task.Run(async () =>
 			{
 				try
@@ -512,17 +509,6 @@ public partial class App : Application
 					// Same self-heal as OnResume: recover a store identity that never got
 					// linked because sign-up happened offline. No-op when already linked.
 					await _entitlements.IdentifyAsync(_cloudAuth.UserId);
-					// Idempotent — just re-reads persisted state. It MUST run before the
-					// snapshot below: the caregiver list comes from that cached membership
-					// map, and taking the snapshot first would record an empty one and
-					// grandfather a real caregiver out of what they had.
-					await _cloudSync.InitializeAsync();
-					// The first launch after the paid boundary moved, and only that launch,
-					// records what this install already had: cloud backup, and the pets it
-					// is caregiving on. Both were free before and are paid after; nobody who
-					// already had one loses it. Every launch after this one just reads.
-					await _grandfathered.CaptureOrLoadAsync(
-						_cloudSync.IsBackupEnabled, _cloudSync.CaregiverPetSyncIds);
 					await MaybeShowGrantEndedAsync();
 					await MaybeShowGrantEndingNudgeAsync();
 					// Attribution: restore the channel onto analytics, read Google Play's

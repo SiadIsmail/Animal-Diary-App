@@ -24,8 +24,7 @@ public class EntitlementServiceTests
     {
         var store = new FakeStore { EntitlementKnown = known, HasActiveEntitlement = entitled };
         return (new EntitlementService(
-            store, new NullPetAccessSource(), grants ?? new FakeGrants(() => T0),
-            new NullGrandfatheredAccess(), () => T0), store);
+            store, new NullPetAccessSource(), grants ?? new FakeGrants(() => T0), () => T0), store);
     }
 
     // ── the four states ───────────────────────────────────────────────────────
@@ -68,8 +67,7 @@ public class EntitlementServiceTests
         var store = new FakeStore { EntitlementKnown = true, HasActiveEntitlement = false };
         var now = T0;
         var ent = new EntitlementService(
-            store, new NullPetAccessSource(), new FakeGrants(() => now),
-            new NullGrandfatheredAccess(), () => now);
+            store, new NullPetAccessSource(), new FakeGrants(() => now), () => now);
 
         Assert.Equal(AccessState.Free, ent.State);
         now = T0.AddYears(1);

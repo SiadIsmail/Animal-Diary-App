@@ -271,7 +271,7 @@ public class ConstellationViewModel : BaseViewModel
     /// <summary>Counts for whichever kinds are in focus, in legend order. Empty when
     /// nothing is focused — the whole sky is on show and a count of everything is
     /// already in <see cref="CountLine"/>.</summary>
-    public ObservableCollection<CelestialFacts> FocusFacts { get; } = new();
+    public RangeObservableCollection<CelestialFacts> FocusFacts { get; } = new();
 
     public bool HasFocusFacts => FocusFacts.Count > 0;
 
@@ -301,10 +301,7 @@ public class ConstellationViewModel : BaseViewModel
                 RecordFactsText.DayParts(DayPartCounts.From(moments.Select(e => e.When.TimeOfDay)))));
         }
 
-        FocusFacts.Clear();
-        foreach (var row in rows)
-            FocusFacts.Add(row);
-
+        FocusFacts.ReplaceAll(rows);
         OnPropertyChanged(nameof(HasFocusFacts));
     }
 

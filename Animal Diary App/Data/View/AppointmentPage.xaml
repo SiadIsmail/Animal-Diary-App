@@ -406,5 +406,23 @@
                             Presented="{Binding IsPresented}"
                             SheetTemplate="{DataTemplate views:VetQuestionSheetView}"/>
 
+        <!-- The export sheet, hosted HERE rather than opened on the page below.
+             "Full summary" used to pop first and open it on whatever it landed on —
+             which is the Care page when you arrive from there, and Today when you
+             arrive from the band. Today does not host this sheet, so the flag went
+             true with nothing to render it: an invisible sheet and a presented flag
+             stuck on. A sheet VM is only usable on a page that hosts it. -->
+        <controls:SheetHost BindingContext="{Binding ExportSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:ExportSheetView}"/>
+
+        <!-- The subscribe sheet, for the same reason the export sheet is hosted here: a
+             sheet VM is only usable on a page that hosts it. The export sheet offers the
+             paid report alongside the free plain log, and that offer has to have somewhere
+             to go from this page too. -->
+        <controls:SheetHost BindingContext="{Binding SubscribeVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate views:SubscribeSheetView}"/>
+
     </Grid>
 </ContentPage>

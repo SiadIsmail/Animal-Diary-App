@@ -1,6 +1,28 @@
 # Monetization — Free Trial + RevenueCat Subscription
 
-> Status: **BUILT.** This is the original design document, kept as the record of
+> ## SUPERSEDED, 2026-08-21, by the inverted paid boundary.
+>
+> **The model described below is no longer the one that ships.** The trial is deleted
+> and the gate is inverted: logging is free forever, and the paid tier is what the
+> accumulated record is *for* (the assembled appointment summary, the designed vet
+> report, cloud backup, a second pet, minting a caregiver invite). `AccessState` is
+> `Unknown | Free | Granted | Subscribed`; `TrialService`, `ITrialStore`, `ITrialAnchor`,
+> `BillingConfig.TrialLength` and the read-only state are gone, and migration
+> `0021_retire_trial.sql` dropped the server half.
+>
+> The current spec lives in [AI/domain.md](../../AI/domain.md) ("The paid boundary") and
+> [AI/design-decisions.md](../../AI/design-decisions.md) ("The safety net is free, the
+> case file is the product"), which also records *why* it changed.
+>
+> **This document is kept unrewritten, as the record of the model that was replaced.**
+> Its reasoning is still worth having: several of its constraints survive unaltered
+> (reminders never stop firing, the dose loop is never blocked, reading is never blocked,
+> getting your data out is never blocked, a grant is never a subscription, prices are
+> never hardcoded), and §1 in particular is the argument the replacement was built on
+> top of rather than against. Same treatment this document gave
+> [CLOUD_SYNC_PLAN.md](CLOUD_SYNC_PLAN.md) §9.
+>
+> Status: **BUILT, then superseded.** This is the original design document, kept as the record of
 > *why* the billing layer has the shape it has. It is **not** a description of the
 > current implementation — for that see [AI/architecture.md](../../AI/architecture.md) §6,
 > [AI/domain.md](../../AI/domain.md) (the access rules) and `Data/Services/Billing/`.

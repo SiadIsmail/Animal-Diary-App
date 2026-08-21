@@ -138,6 +138,12 @@
                         </Grid>
                     </VerticalStackLayout>
 
+                    <!-- The per-section toggles configure the DESIGNED report only. On the
+                         free tier they are hidden rather than disabled: nobody should be
+                         asked to tune knobs on a document they are not making. The period
+                         chips above stay, because they apply to both documents. -->
+                    <VerticalStackLayout Spacing="16" IsVisible="{Binding ShowSectionOptions}">
+
                     <!-- Include-photo opt-in (only when the pet has a photo) -->
                     <Border BackgroundColor="{StaticResource Glass}"
                             Stroke="{StaticResource GlassLine}"
@@ -378,6 +384,8 @@
                         </Border>
                     </VerticalStackLayout>
 
+                    </VerticalStackLayout>
+
                     <!-- Inline "no data in range" / error line (never an alert) -->
                     <Label Text="{Binding StatusMessage}"
                            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
@@ -385,11 +393,83 @@
                            FontSize="13"
                            TextColor="{StaticResource InkSecondary}"/>
 
+                    <!-- ── The free tier's two documents, at equal weight ──────────────
+                         Identical geometry, identical type, identical fill. Neither is the
+                         primary and neither is the small print: the plain log is a real
+                         answer, not a consolation offered under the sale. The point of it
+                         is that nobody is ever trapped, and a design that whispers it does
+                         not make that true. Order is plain-first for the same reason.
+
+                         Do NOT restyle one of these to "emphasize the upgrade". -->
+                    <VerticalStackLayout Spacing="10" Margin="0,6,0,0"
+                                         IsVisible="{Binding ShowReportChoice}">
+
+                        <Label Text="{Binding ChoiceIntro}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="13" LineHeight="1.4"
+                               TextColor="{StaticResource InkSecondary}"/>
+
+                        <!-- Free: the plain chronological log -->
+                        <Border BackgroundColor="{StaticResource TealTint}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 13,16,15,14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding GeneratePlainCommand}"/>
+                            </Border.GestureRecognizers>
+                            <VerticalStackLayout Padding="14,12" Spacing="2">
+                                <Label Text="{loc:Translate Export_PlainTitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14" FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       HorizontalTextAlignment="Center"/>
+                                <Label Text="{loc:Translate Export_PlainBody}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12" LineHeight="1.35"
+                                       TextColor="{StaticResource InkSecondary}"
+                                       HorizontalTextAlignment="Center"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Paid: the designed report -->
+                        <Border BackgroundColor="{StaticResource TealTint}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 13,16,15,14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SubscribeCommand}"/>
+                            </Border.GestureRecognizers>
+                            <VerticalStackLayout Padding="14,12" Spacing="2">
+                                <Label Text="{loc:Translate Export_DesignedTitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14" FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       HorizontalTextAlignment="Center"/>
+                                <Label Text="{loc:Translate Export_DesignedBody}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12" LineHeight="1.35"
+                                       TextColor="{StaticResource InkSecondary}"
+                                       HorizontalTextAlignment="Center"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <HorizontalStackLayout IsVisible="{Binding IsGenerating}"
+                                               Spacing="10" HorizontalOptions="Center" Padding="0,4">
+                            <ActivityIndicator IsRunning="{Binding IsGenerating}"
+                                               Color="{StaticResource Teal}"
+                                               WidthRequest="20" HeightRequest="20"/>
+                            <Label Text="{loc:Translate Export_Generating}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14" FontAttributes="Bold"
+                                   TextColor="{StaticResource TealDeep}"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+
                     <!-- Create button; shows a spinner while generating -->
                     <Border BackgroundColor="{StaticResource Teal}"
                             StrokeThickness="0"
                             StrokeShape="RoundRectangle 13,16,15,14"
-                            Margin="0,6,0,0">
+                            Margin="0,6,0,0"
+                            IsVisible="{Binding ShowSectionOptions}">
                         <Border.Shadow>
                             <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
                         </Border.Shadow>

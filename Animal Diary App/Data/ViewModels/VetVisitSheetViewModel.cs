@@ -42,9 +42,14 @@ public class VetVisitSheetViewModel : BaseViewModel
         DismissCommand = new Command(() => IsPresented = false);
     }
 
-    /// <summary>Raised after a visit was written or removed: the page reloads, and shows
-    /// the undo toast when the result carries one.</summary>
-    public event Action<JournalSaveResult>? Saved;
+    /// <summary>A visit was written. Carries a confirmation line and <b>no undo</b>:
+    /// this sheet IS the editor, so an edit is reversed by opening it again. Deliberately
+    /// not a <see cref="JournalSaveResult"/> — that type promises an undo, and the page's
+    /// toast shows its button whenever one is present.</summary>
+    public event Action<string>? Saved;
+
+    /// <summary>A visit was removed, with the undo that brings it back.</summary>
+    public event Action<JournalSaveResult>? Deleted;
 
     private bool _isPresented;
     public bool IsPresented { get => _isPresented; set => SetProperty(ref _isPresented, value); }
@@ -128,17 +133,19 @@ public class VetVisitSheetViewModel : BaseViewModel
 
         await _visits.SaveAsync(visit);
 
-        // Moving a visit must move its reminder; a refresh is idempotent and also
-        // un-arms any visit this one just displaced as "the next one".
+        // Cancel THEN refresh, and cancel unconditionally.
+        //
+        // A refresh alone only walks the UPCOMING visits, so moving tomorrow's visit
+        // into the past dropped it out of the sweep entirely and left its already-armed
+        // notification to fire on the eve of a date that no longer exists. Cancelling by
+        // id first means the only reminders that survive are the ones the refresh
+        // deliberately re-arms — and the refresh is idempotent, so a visit that is still
+        // the next one simply gets armed again.
+        await _reminders.CancelAsync(visit.Id);
         await _reminders.RefreshAsync();
 
         IsPresented = false;
-
-        // No undo on a save: the sheet IS the editor, and re-opening it is how an edit
-        // is reversed. The toast still confirms, so a save is never silent.
-        Saved?.Invoke(new JournalSaveResult(
-            LocalizationManager.Instance.GetString("Vet_VisitToastSaved"),
-            () => Task.CompletedTask));
+        Saved?.Invoke(LocalizationManager.Instance.GetString("Vet_VisitToastSaved"));
     }
 
     private async Task DeleteAsync()
@@ -155,7 +162,7 @@ public class VetVisitSheetViewModel : BaseViewModel
         await _reminders.RefreshAsync();
 
         IsPresented = false;
-        Saved?.Invoke(new JournalSaveResult(
+        Deleted?.Invoke(new JournalSaveResult(
             LocalizationManager.Instance.GetString("Vet_VisitToastDeleted"),
             async () =>
             {
