@@ -5,7 +5,7 @@
     The Pets page's "Export vet report" sheet: period chips (30/90/180 days) and
     a create button, flipping to a done face (View / Share / Done) once the PDF
     is saved. Rendered inside the shared FelovaBottomSheet; BindingContext is an
-    ExportSheetViewModel — open it via that VM's OpenCommand.
+    ExportSheetViewModel: open it via that VM's OpenCommand.
 -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -48,522 +48,588 @@
                                 Subtitle="{Binding Subtitle}"
                                 DismissCommand="{Binding DismissCommand}">
         <controls:FelovaBottomSheet.SheetContent>
-            <Grid>
+            <!-- Its own scroller, because this body can outgrow the sheet's 90% cap and
+                 the cap only clips. Opened from the appointment page it also carries the
+                 since-your-last-visit chip, and on the free tier the two-document choice, which
+                 is what pushed it past the cap and left it unreadable and unscrollable.
+                 The pattern is FelovaBottomSheet's documented one (see its header, and
+                 VetVisitSheetView): VerticalOptions="Start" so a short body still hugs,
+                 plus a MaximumHeightRequest set from MaxBodyHeight in the code-behind.
+                 Both halves are needed; either alone is a different bug. -->
+            <ScrollView x:Name="Body"
+                        VerticalOptions="Start"
+                        VerticalScrollBarVisibility="Never">
+                <Grid>
 
-                <!-- ══ Options face: period chips + create ══ -->
-                <VerticalStackLayout Spacing="16" Padding="0,2,0,0"
-                                     IsVisible="{Binding IsDone, Converter={StaticResource InvertedBoolConverter}}">
+                    <!-- ══ Options face: period chips + create ══ -->
+                    <VerticalStackLayout Spacing="16" Padding="0,2,0,0"
+                                         IsVisible="{Binding IsDone, Converter={StaticResource InvertedBoolConverter}}">
 
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{loc:Translate Export_PeriodLabel}" Style="{StaticResource FieldLabel}"/>
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{loc:Translate Export_PeriodLabel}" Style="{StaticResource FieldLabel}"/>
 
-                        <!-- The since-your-last-visit stretch, when the appointment page
-                             opened this sheet. Its own chip because that window matches
-                             none of the three presets, and a sheet opening with nothing
-                             lit reads as broken. Hidden entirely otherwise. -->
-                        <Border Style="{StaticResource PeriodChip}"
-                                IsVisible="{Binding HasSinceVisit}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsSinceVisitSelected}" Value="True">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                </DataTrigger>
-                            </Border.Triggers>
+                            <!-- The since-your-last-visit stretch, when the appointment page
+                                 opened this sheet. Its own chip because that window matches
+                                 none of the three presets, and a sheet opening with nothing
+                                 lit reads as broken. Hidden entirely otherwise. -->
+                            <Border Style="{StaticResource PeriodChip}"
+                                    IsVisible="{Binding HasSinceVisit}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSinceVisitSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectSinceVisitCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding SinceVisitLabel}" Style="{StaticResource PeriodChipLabel}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsSinceVisitSelected}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+
+                                <Border Style="{StaticResource PeriodChip}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SelectedDays}" Value="30">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding SelectPeriodCommand}" CommandParameter="30"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Export_Days30}" Style="{StaticResource PeriodChipLabel}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SelectedDays}" Value="30">
+                                                <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+
+                                <Border Grid.Column="1" Style="{StaticResource PeriodChip}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SelectedDays}" Value="90">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding SelectPeriodCommand}" CommandParameter="90"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Export_Days90}" Style="{StaticResource PeriodChipLabel}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SelectedDays}" Value="90">
+                                                <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+
+                                <Border Grid.Column="2" Style="{StaticResource PeriodChip}">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SelectedDays}" Value="180">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding SelectPeriodCommand}" CommandParameter="180"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Export_Days180}" Style="{StaticResource PeriodChipLabel}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding SelectedDays}" Value="180">
+                                                <Setter Property="TextColor" Value="{StaticResource White}"/>
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <!-- The per-section toggles configure the DESIGNED report only. On the
+                             free tier they are hidden rather than disabled: nobody should be
+                             asked to tune knobs on a document they are not making. The period
+                             chips above stay, because they apply to both documents. -->
+                        <VerticalStackLayout Spacing="16" IsVisible="{Binding ShowSectionOptions}">
+
+                        <!-- Include-photo opt-in (only when the pet has a photo) -->
+                        <Border BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 13"
+                                IsVisible="{Binding HasPhoto}">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SelectSinceVisitCommand}"/>
+                                <TapGestureRecognizer Command="{Binding ToggleIncludePhotoCommand}"/>
                             </Border.GestureRecognizers>
-                            <Label Text="{Binding SinceVisitLabel}" Style="{StaticResource PeriodChipLabel}">
-                                <Label.Triggers>
-                                    <DataTrigger TargetType="Label" Binding="{Binding IsSinceVisitSelected}" Value="True">
-                                        <Setter Property="TextColor" Value="{StaticResource White}"/>
-                                    </DataTrigger>
-                                </Label.Triggers>
-                            </Label>
-                        </Border>
-
-                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-
-                            <Border Style="{StaticResource PeriodChip}">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding SelectedDays}" Value="30">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding SelectPeriodCommand}" CommandParameter="30"/>
-                                </Border.GestureRecognizers>
-                                <Label Text="{loc:Translate Export_Days30}" Style="{StaticResource PeriodChipLabel}">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding SelectedDays}" Value="30">
-                                            <Setter Property="TextColor" Value="{StaticResource White}"/>
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Border>
-
-                            <Border Grid.Column="1" Style="{StaticResource PeriodChip}">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding SelectedDays}" Value="90">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding SelectPeriodCommand}" CommandParameter="90"/>
-                                </Border.GestureRecognizers>
-                                <Label Text="{loc:Translate Export_Days90}" Style="{StaticResource PeriodChipLabel}">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding SelectedDays}" Value="90">
-                                            <Setter Property="TextColor" Value="{StaticResource White}"/>
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Border>
-
-                            <Border Grid.Column="2" Style="{StaticResource PeriodChip}">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding SelectedDays}" Value="180">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding SelectPeriodCommand}" CommandParameter="180"/>
-                                </Border.GestureRecognizers>
-                                <Label Text="{loc:Translate Export_Days180}" Style="{StaticResource PeriodChipLabel}">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding SelectedDays}" Value="180">
-                                            <Setter Property="TextColor" Value="{StaticResource White}"/>
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Border>
-                        </Grid>
-                    </VerticalStackLayout>
-
-                    <!-- The per-section toggles configure the DESIGNED report only. On the
-                         free tier they are hidden rather than disabled: nobody should be
-                         asked to tune knobs on a document they are not making. The period
-                         chips above stay, because they apply to both documents. -->
-                    <VerticalStackLayout Spacing="16" IsVisible="{Binding ShowSectionOptions}">
-
-                    <!-- Include-photo opt-in (only when the pet has a photo) -->
-                    <Border BackgroundColor="{StaticResource Glass}"
-                            Stroke="{StaticResource GlassLine}"
-                            StrokeThickness="1"
-                            StrokeShape="RoundRectangle 13"
-                            IsVisible="{Binding HasPhoto}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ToggleIncludePhotoCommand}"/>
-                        </Border.GestureRecognizers>
-                        <Grid ColumnDefinitions="*,Auto" Padding="14,12">
-                            <Label Text="{loc:Translate Export_IncludePhoto}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14"
-                                   TextColor="{StaticResource Ink}"
-                                   VerticalOptions="Center"/>
-                            <!-- Check box: filled teal with a tick when opted in -->
-                            <Border Grid.Column="1"
-                                    WidthRequest="24"
-                                    HeightRequest="24"
-                                    BackgroundColor="{StaticResource Glass}"
-                                    Stroke="{StaticResource GlassLine}"
-                                    StrokeThickness="1.5"
-                                    StrokeShape="RoundRectangle 7"
-                                    VerticalOptions="Center">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IncludePhoto}" Value="True">
-                                        <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                        <Setter Property="Stroke" Value="{StaticResource Teal}"/>
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Label Text="✓"
+                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                <Label Text="{loc:Translate Export_IncludePhoto}"
+                                       FontFamily="{StaticResource FontSans}"
                                        FontSize="14"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource White}"
-                                       IsVisible="{Binding IncludePhoto}"
-                                       HorizontalOptions="Center"
+                                       TextColor="{StaticResource Ink}"
                                        VerticalOptions="Center"/>
+                                <!-- Check box: filled teal with a tick when opted in -->
+                                <Border Grid.Column="1"
+                                        WidthRequest="24"
+                                        HeightRequest="24"
+                                        BackgroundColor="{StaticResource Glass}"
+                                        Stroke="{StaticResource GlassLine}"
+                                        StrokeThickness="1.5"
+                                        StrokeShape="RoundRectangle 7"
+                                        VerticalOptions="Center">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IncludePhoto}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label Text="✓"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource White}"
+                                           IsVisible="{Binding IncludePhoto}"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Water intake: two independent data types, each its own opt-in
+                             (both default on). Only shown when the pet logs water. The
+                             report keeps measured amounts and owner observations on
+                             separate graphs and never interprets either. -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding HasWater}">
+                            <Label Text="{loc:Translate Export_WaterLabel}" Style="{StaticResource FieldLabel}"/>
+
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 13">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleIncludeWaterMeasuredCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                    <Label Text="{loc:Translate Export_IncludeWaterMeasured}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="14"
+                                           TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                    <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                            BackgroundColor="{StaticResource Glass}"
+                                            Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                            StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IncludeWaterMeasured}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                                <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                               TextColor="{StaticResource White}"
+                                               IsVisible="{Binding IncludeWaterMeasured}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </Grid>
                             </Border>
-                        </Grid>
-                    </Border>
 
-                    <!-- Water intake: two independent data types, each its own opt-in
-                         (both default on). Only shown when the pet logs water. The
-                         report keeps measured amounts and owner observations on
-                         separate graphs and never interprets either. -->
-                    <VerticalStackLayout Spacing="8" IsVisible="{Binding HasWater}">
-                        <Label Text="{loc:Translate Export_WaterLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 13">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleIncludeWaterObservationsCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                    <Label Text="{loc:Translate Export_IncludeWaterObservations}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="14"
+                                           TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                    <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                            BackgroundColor="{StaticResource Glass}"
+                                            Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                            StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IncludeWaterObservations}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                                <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                               TextColor="{StaticResource White}"
+                                               IsVisible="{Binding IncludeWaterObservations}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
 
-                        <Border BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
-                                StrokeShape="RoundRectangle 13">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleIncludeWaterMeasuredCommand}"/>
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
-                                <Label Text="{loc:Translate Export_IncludeWaterMeasured}"
-                                       FontFamily="{StaticResource FontSans}" FontSize="14"
-                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
-                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
-                                        BackgroundColor="{StaticResource Glass}"
-                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
-                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeWaterMeasured}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
-                                           TextColor="{StaticResource White}"
-                                           IsVisible="{Binding IncludeWaterMeasured}"
-                                           HorizontalOptions="Center" VerticalOptions="Center"/>
-                                </Border>
-                            </Grid>
-                        </Border>
+                        <!-- Mood: observations only, so a single toggle rather than the
+                             measured/observed pair. On by default like the rest; an owner who
+                             logged a mood once and would rather not show it just unticks it. -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding HasMood}">
+                            <Label Text="{loc:Translate Export_MoodLabel}" Style="{StaticResource FieldLabel}"/>
 
-                        <Border BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
-                                StrokeShape="RoundRectangle 13">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleIncludeWaterObservationsCommand}"/>
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
-                                <Label Text="{loc:Translate Export_IncludeWaterObservations}"
-                                       FontFamily="{StaticResource FontSans}" FontSize="14"
-                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
-                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
-                                        BackgroundColor="{StaticResource Glass}"
-                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
-                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeWaterObservations}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
-                                           TextColor="{StaticResource White}"
-                                           IsVisible="{Binding IncludeWaterObservations}"
-                                           HorizontalOptions="Center" VerticalOptions="Center"/>
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </VerticalStackLayout>
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 13">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleIncludeMoodCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                    <Label Text="{loc:Translate Export_IncludeMood}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="14"
+                                           TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                    <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                            BackgroundColor="{StaticResource Glass}"
+                                            Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                            StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IncludeMood}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                                <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                               TextColor="{StaticResource White}"
+                                               IsVisible="{Binding IncludeMood}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
 
-                    <!-- Mood: observations only, so a single toggle rather than the
-                         measured/observed pair. On by default like the rest; an owner who
-                         logged a mood once and would rather not show it just unticks it. -->
-                    <VerticalStackLayout Spacing="8" IsVisible="{Binding HasMood}">
-                        <Label Text="{loc:Translate Export_MoodLabel}" Style="{StaticResource FieldLabel}"/>
+                        <!-- Owner-defined trackers: ONE toggle for the whole section, not
+                             one per tracker. Whether a walk belongs in front of a vet is
+                             answered once on the tracker itself; asking again here would put
+                             the same question on a screen people reach while worried. Hidden
+                             unless something opted in has actually been logged. -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding HasCustom}">
+                            <Label Text="{loc:Translate Export_CustomLabel}" Style="{StaticResource FieldLabel}"/>
 
-                        <Border BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
-                                StrokeShape="RoundRectangle 13">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleIncludeMoodCommand}"/>
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
-                                <Label Text="{loc:Translate Export_IncludeMood}"
-                                       FontFamily="{StaticResource FontSans}" FontSize="14"
-                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
-                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
-                                        BackgroundColor="{StaticResource Glass}"
-                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
-                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeMood}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
-                                           TextColor="{StaticResource White}"
-                                           IsVisible="{Binding IncludeMood}"
-                                           HorizontalOptions="Center" VerticalOptions="Center"/>
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </VerticalStackLayout>
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 13">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleIncludeCustomCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                    <Label Text="{loc:Translate Export_IncludeCustom}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="14"
+                                           TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                    <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                            BackgroundColor="{StaticResource Glass}"
+                                            Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                            StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IncludeCustom}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                                <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                               TextColor="{StaticResource White}"
+                                               IsVisible="{Binding IncludeCustom}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
 
-                    <!-- Owner-defined trackers: ONE toggle for the whole section, not
-                         one per tracker. Whether a walk belongs in front of a vet is
-                         answered once on the tracker itself; asking again here would put
-                         the same question on a screen people reach while worried. Hidden
-                         unless something opted in has actually been logged. -->
-                    <VerticalStackLayout Spacing="8" IsVisible="{Binding HasCustom}">
-                        <Label Text="{loc:Translate Export_CustomLabel}" Style="{StaticResource FieldLabel}"/>
+                        <!-- Appetite: same two-type opt-in as water (both default on), only
+                             shown when the pet logs appetite. Measured grams and owner
+                             observations stay on separate graphs; nothing is interpreted. -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding HasAppetite}">
+                            <Label Text="{loc:Translate Export_AppetiteLabel}" Style="{StaticResource FieldLabel}"/>
 
-                        <Border BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
-                                StrokeShape="RoundRectangle 13">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleIncludeCustomCommand}"/>
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
-                                <Label Text="{loc:Translate Export_IncludeCustom}"
-                                       FontFamily="{StaticResource FontSans}" FontSize="14"
-                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
-                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
-                                        BackgroundColor="{StaticResource Glass}"
-                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
-                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeCustom}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
-                                           TextColor="{StaticResource White}"
-                                           IsVisible="{Binding IncludeCustom}"
-                                           HorizontalOptions="Center" VerticalOptions="Center"/>
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </VerticalStackLayout>
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 13">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleIncludeAppetiteMeasuredCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                    <Label Text="{loc:Translate Export_IncludeAppetiteMeasured}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="14"
+                                           TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                    <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                            BackgroundColor="{StaticResource Glass}"
+                                            Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                            StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IncludeAppetiteMeasured}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                                <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                               TextColor="{StaticResource White}"
+                                               IsVisible="{Binding IncludeAppetiteMeasured}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
 
-                    <!-- Appetite: same two-type opt-in as water (both default on), only
-                         shown when the pet logs appetite. Measured grams and owner
-                         observations stay on separate graphs; nothing is interpreted. -->
-                    <VerticalStackLayout Spacing="8" IsVisible="{Binding HasAppetite}">
-                        <Label Text="{loc:Translate Export_AppetiteLabel}" Style="{StaticResource FieldLabel}"/>
+                            <Border BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 13">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleIncludeAppetiteObservationsCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto" Padding="14,12">
+                                    <Label Text="{loc:Translate Export_IncludeAppetiteObservations}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="14"
+                                           TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
+                                    <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
+                                            BackgroundColor="{StaticResource Glass}"
+                                            Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
+                                            StrokeShape="RoundRectangle 7" VerticalOptions="Center">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding IncludeAppetiteObservations}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
+                                                <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Label Text="✓" FontSize="14" FontAttributes="Bold"
+                                               TextColor="{StaticResource White}"
+                                               IsVisible="{Binding IncludeAppetiteObservations}"
+                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
 
-                        <Border BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
-                                StrokeShape="RoundRectangle 13">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleIncludeAppetiteMeasuredCommand}"/>
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
-                                <Label Text="{loc:Translate Export_IncludeAppetiteMeasured}"
-                                       FontFamily="{StaticResource FontSans}" FontSize="14"
-                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
-                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
-                                        BackgroundColor="{StaticResource Glass}"
-                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
-                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeAppetiteMeasured}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
-                                           TextColor="{StaticResource White}"
-                                           IsVisible="{Binding IncludeAppetiteMeasured}"
-                                           HorizontalOptions="Center" VerticalOptions="Center"/>
-                                </Border>
-                            </Grid>
-                        </Border>
+                        </VerticalStackLayout>
 
-                        <Border BackgroundColor="{StaticResource Glass}"
-                                Stroke="{StaticResource GlassLine}" StrokeThickness="1"
-                                StrokeShape="RoundRectangle 13">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleIncludeAppetiteObservationsCommand}"/>
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="*,Auto" Padding="14,12">
-                                <Label Text="{loc:Translate Export_IncludeAppetiteObservations}"
-                                       FontFamily="{StaticResource FontSans}" FontSize="14"
-                                       TextColor="{StaticResource Ink}" VerticalOptions="Center"/>
-                                <Border Grid.Column="1" WidthRequest="24" HeightRequest="24"
-                                        BackgroundColor="{StaticResource Glass}"
-                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1.5"
-                                        StrokeShape="RoundRectangle 7" VerticalOptions="Center">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IncludeAppetiteObservations}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Teal}"/>
-                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Label Text="✓" FontSize="14" FontAttributes="Bold"
-                                           TextColor="{StaticResource White}"
-                                           IsVisible="{Binding IncludeAppetiteObservations}"
-                                           HorizontalOptions="Center" VerticalOptions="Center"/>
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </VerticalStackLayout>
-
-                    </VerticalStackLayout>
-
-                    <!-- Inline "no data in range" / error line (never an alert) -->
-                    <Label Text="{Binding StatusMessage}"
-                           IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="13"
-                           TextColor="{StaticResource InkSecondary}"/>
-
-                    <!-- ── The free tier's two documents, at equal weight ──────────────
-                         Identical geometry, identical type, identical fill. Neither is the
-                         primary and neither is the small print: the plain log is a real
-                         answer, not a consolation offered under the sale. The point of it
-                         is that nobody is ever trapped, and a design that whispers it does
-                         not make that true. Order is plain-first for the same reason.
-
-                         Do NOT restyle one of these to "emphasize the upgrade". -->
-                    <VerticalStackLayout Spacing="10" Margin="0,6,0,0"
-                                         IsVisible="{Binding ShowReportChoice}">
-
-                        <Label Text="{Binding ChoiceIntro}"
+                        <!-- Inline "no data in range" / error line (never an alert) -->
+                        <Label Text="{Binding StatusMessage}"
+                               IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
                                FontFamily="{StaticResource FontSans}"
-                               FontSize="13" LineHeight="1.4"
+                               FontSize="13"
                                TextColor="{StaticResource InkSecondary}"/>
 
-                        <!-- Free: the plain chronological log -->
-                        <Border BackgroundColor="{StaticResource TealTint}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 13,16,15,14">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding GeneratePlainCommand}"/>
-                            </Border.GestureRecognizers>
-                            <VerticalStackLayout Padding="14,12" Spacing="2">
-                                <Label Text="{loc:Translate Export_PlainTitle}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="14" FontAttributes="Bold"
-                                       TextColor="{StaticResource TealDeep}"
-                                       HorizontalTextAlignment="Center"/>
-                                <Label Text="{loc:Translate Export_PlainBody}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="12" LineHeight="1.35"
-                                       TextColor="{StaticResource InkSecondary}"
-                                       HorizontalTextAlignment="Center"/>
-                            </VerticalStackLayout>
-                        </Border>
+                        <!-- ── The free tier's two documents, at equal weight ──────────────
+                             Identical geometry, identical type, identical fill. Neither is the
+                             primary and neither is the small print: the plain log is a real
+                             answer, not a consolation offered under the sale. The point of it
+                             is that nobody is ever trapped, and a design that whispers it does
+                             not make that true. Order is plain-first for the same reason.
 
-                        <!-- Paid: the designed report -->
-                        <Border BackgroundColor="{StaticResource TealTint}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 13,16,15,14">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding SubscribeCommand}"/>
-                            </Border.GestureRecognizers>
-                            <VerticalStackLayout Padding="14,12" Spacing="2">
-                                <Label Text="{loc:Translate Export_DesignedTitle}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="14" FontAttributes="Bold"
-                                       TextColor="{StaticResource TealDeep}"
-                                       HorizontalTextAlignment="Center"/>
-                                <Label Text="{loc:Translate Export_DesignedBody}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="12" LineHeight="1.35"
-                                       TextColor="{StaticResource InkSecondary}"
-                                       HorizontalTextAlignment="Center"/>
-                            </VerticalStackLayout>
-                        </Border>
+                             Do NOT restyle one of these to "emphasize the upgrade". -->
+                        <VerticalStackLayout Spacing="10" Margin="0,6,0,0"
+                                             IsVisible="{Binding ShowReportChoice}">
 
-                        <HorizontalStackLayout IsVisible="{Binding IsGenerating}"
-                                               Spacing="10" HorizontalOptions="Center" Padding="0,4">
-                            <ActivityIndicator IsRunning="{Binding IsGenerating}"
-                                               Color="{StaticResource Teal}"
-                                               WidthRequest="20" HeightRequest="20"/>
-                            <Label Text="{loc:Translate Export_Generating}"
+                            <Label Text="{Binding ChoiceIntro}"
                                    FontFamily="{StaticResource FontSans}"
-                                   FontSize="14" FontAttributes="Bold"
-                                   TextColor="{StaticResource TealDeep}"
-                                   VerticalOptions="Center"/>
-                        </HorizontalStackLayout>
-                    </VerticalStackLayout>
+                                   FontSize="13" LineHeight="1.4"
+                                   TextColor="{StaticResource InkSecondary}"/>
 
-                    <!-- Create button; shows a spinner while generating -->
-                    <Border BackgroundColor="{StaticResource Teal}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 13,16,15,14"
-                            Margin="0,6,0,0"
-                            IsVisible="{Binding ShowSectionOptions}">
-                        <Border.Shadow>
-                            <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
-                        </Border.Shadow>
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding GenerateCommand}"/>
-                        </Border.GestureRecognizers>
-                        <Grid>
-                            <Label Text="{loc:Translate Export_Generate}"
-                                   IsVisible="{Binding IsGenerating, Converter={StaticResource InvertedBoolConverter}}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource White}"
-                                   HorizontalTextAlignment="Center"
-                                   Padding="0,14"/>
+                            <!-- Free: the plain chronological log -->
+                            <Border BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 13,16,15,14">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding GeneratePlainCommand}"/>
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Padding="14,12" Spacing="2">
+                                    <Label Text="{loc:Translate Export_PlainTitle}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource TealDeep}"
+                                           HorizontalTextAlignment="Center"/>
+                                    <Label Text="{loc:Translate Export_PlainBody}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="12" LineHeight="1.35"
+                                           TextColor="{StaticResource InkSecondary}"
+                                           HorizontalTextAlignment="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Paid: the designed report -->
+                            <Border BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 13,16,15,14">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SubscribeCommand}"/>
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Padding="14,12" Spacing="2">
+                                    <Label Text="{loc:Translate Export_DesignedTitle}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource TealDeep}"
+                                           HorizontalTextAlignment="Center"/>
+                                    <Label Text="{loc:Translate Export_DesignedBody}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="12" LineHeight="1.35"
+                                           TextColor="{StaticResource InkSecondary}"
+                                           HorizontalTextAlignment="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+
                             <HorizontalStackLayout IsVisible="{Binding IsGenerating}"
-                                                   Spacing="10" HorizontalOptions="Center" Padding="0,12">
+                                                   Spacing="10" HorizontalOptions="Center" Padding="0,4">
                                 <ActivityIndicator IsRunning="{Binding IsGenerating}"
-                                                   Color="{StaticResource White}"
+                                                   Color="{StaticResource Teal}"
                                                    WidthRequest="20" HeightRequest="20"/>
                                 <Label Text="{loc:Translate Export_Generating}"
                                        FontFamily="{StaticResource FontSans}"
+                                       FontSize="14" FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+
+                        <!-- Create button; shows a spinner while generating -->
+                        <Border BackgroundColor="{StaticResource Teal}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 13,16,15,14"
+                                Margin="0,6,0,0"
+                                IsVisible="{Binding ShowSectionOptions}">
+                            <Border.Shadow>
+                                <Shadow Brush="#149081" Offset="0,3" Radius="10" Opacity="0.3"/>
+                            </Border.Shadow>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding GenerateCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Grid>
+                                <Label Text="{loc:Translate Export_Generate}"
+                                       IsVisible="{Binding IsGenerating, Converter={StaticResource InvertedBoolConverter}}"
+                                       FontFamily="{StaticResource FontSans}"
                                        FontSize="14"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource White}"
-                                       VerticalOptions="Center"/>
-                            </HorizontalStackLayout>
-                        </Grid>
-                    </Border>
-                </VerticalStackLayout>
-
-                <!-- ══ Done face: saved line + View / Share / Done ══ -->
-                <VerticalStackLayout Spacing="14" Padding="0,2,0,0"
-                                     IsVisible="{Binding IsDone}">
-
-                    <Label Text="{Binding DoneMessage}"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="14"
-                           TextColor="{StaticResource Ink}"/>
-                    <Label Text="{Binding ResultFileName}"
-                           FontFamily="{StaticResource FontSans}"
-                           FontSize="12"
-                           TextColor="{StaticResource InkTertiary}"/>
-
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Border BackgroundColor="{StaticResource Teal}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 15,13,13,16">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ViewCommand}"/>
-                            </Border.GestureRecognizers>
-                            <Label Text="{loc:Translate Export_View}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource White}"
-                                   HorizontalTextAlignment="Center"
-                                   Padding="0,14"/>
+                                       HorizontalTextAlignment="Center"
+                                       Padding="0,14"/>
+                                <HorizontalStackLayout IsVisible="{Binding IsGenerating}"
+                                                       Spacing="10" HorizontalOptions="Center" Padding="0,12">
+                                    <ActivityIndicator IsRunning="{Binding IsGenerating}"
+                                                       Color="{StaticResource White}"
+                                                       WidthRequest="20" HeightRequest="20"/>
+                                    <Label Text="{loc:Translate Export_Generating}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource White}"
+                                           VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                            </Grid>
                         </Border>
-                        <Border Grid.Column="1"
-                                BackgroundColor="{StaticResource TealTint}"
-                                StrokeThickness="0"
-                                StrokeShape="RoundRectangle 13,16,15,14">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ShareCommand}"/>
-                            </Border.GestureRecognizers>
-                            <Label Text="{loc:Translate Export_Share}"
-                                   FontFamily="{StaticResource FontSans}"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource TealDeep}"
-                                   HorizontalTextAlignment="Center"
-                                   Padding="0,14"/>
-                        </Border>
-                    </Grid>
+                    </VerticalStackLayout>
 
-                    <Border BackgroundColor="{StaticResource Glass}"
-                            Stroke="{StaticResource GlassLine}"
-                            StrokeThickness="1"
-                            StrokeShape="RoundRectangle 13">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Export_Done}"
+                    <!-- ══ Done face: saved line + View / Share / Done ══ -->
+                    <VerticalStackLayout Spacing="14" Padding="0,2,0,0"
+                                         IsVisible="{Binding IsDone}">
+
+                        <Label Text="{Binding DoneMessage}"
                                FontFamily="{StaticResource FontSans}"
                                FontSize="14"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource Ink}"
-                               HorizontalTextAlignment="Center"
-                               Padding="0,14"/>
-                    </Border>
-                </VerticalStackLayout>
+                               TextColor="{StaticResource Ink}"/>
+                        <Label Text="{Binding ResultFileName}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="12"
+                               TextColor="{StaticResource InkTertiary}"/>
 
-            </Grid>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Border BackgroundColor="{StaticResource Teal}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 15,13,13,16">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ViewCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:Translate Export_View}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource White}"
+                                       HorizontalTextAlignment="Center"
+                                       Padding="0,14"/>
+                            </Border>
+                            <Border Grid.Column="1"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 13,16,15,14">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ShareCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:Translate Export_Share}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       HorizontalTextAlignment="Center"
+                                       Padding="0,14"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- "Was that for a visit?" · once, ever.
+                             Every future summary is anchored to a visit, and nobody exports a
+                             vet report for fun, so the ask rides on something the owner
+                             already chose to do instead of waiting on a page they have to go
+                             and find. No countdown, no colour, no price: it is a question
+                             about their week. Hidden entirely when the app already knows
+                             about an upcoming visit. -->
+                        <VerticalStackLayout Spacing="10"
+                                             IsVisible="{Binding ShowVisitOffer}"
+                                             Margin="0,2,0,0">
+                            <Label Text="{loc:Translate Export_VisitOfferTitle}"
+                                   FontFamily="{StaticResource FontSerif}"
+                                   FontSize="16"
+                                   TextColor="{StaticResource Ink}"/>
+                            <Label Text="{loc:Translate Export_VisitOfferBody}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="13"
+                                   LineHeight="1.4"
+                                   TextColor="{StaticResource InkSecondary}"/>
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Border BackgroundColor="{StaticResource TealTint}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 15,13,13,16">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding AddVisitCommand}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Export_VisitOfferAdd}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource TealDeep}"
+                                           HorizontalTextAlignment="Center"
+                                           Padding="0,14"/>
+                                </Border>
+                                <Border Grid.Column="1"
+                                        BackgroundColor="{StaticResource Glass}"
+                                        Stroke="{StaticResource GlassLine}"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 13,16,15,14">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding DeclineVisitCommand}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{loc:Translate Common_NotNow}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource Ink}"
+                                           HorizontalTextAlignment="Center"
+                                           Padding="0,14"/>
+                                </Border>
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <Border BackgroundColor="{StaticResource Glass}"
+                                Stroke="{StaticResource GlassLine}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 13">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Export_Done}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"
+                                   HorizontalTextAlignment="Center"
+                                   Padding="0,14"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                </Grid>
+            </ScrollView>
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>
 

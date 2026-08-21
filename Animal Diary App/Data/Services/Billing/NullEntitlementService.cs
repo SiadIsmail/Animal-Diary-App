@@ -1,7 +1,7 @@
 namespace Animal_Diary_App.Data.Services.Billing;
 
 /// <summary>
-/// The "no monetization" stand-in — always full access, no store. Registered when
+/// The "no monetization" stand-in: always full access, no store. Registered when
 /// <see cref="BillingConfig.Enabled"/> is false and on platforms without a store
 /// (Windows/macOS dev). Mirrors <c>NullCloudSyncService</c> / <c>NullAnalyticsService</c>:
 /// with this in place the app carries zero monetization behaviour and no paid surface is

@@ -11,7 +11,7 @@ using System.Collections.ObjectModel;
 ///
 /// <para>Deliberately narrow. The Today page's care ring and next-up card derive
 /// from the PendingEngine via <see cref="MainPageViewModel"/>, and the logging
-/// surface lives in <see cref="JournalLogViewModel"/> and the sheet VMs — so this
+/// surface lives in <see cref="JournalLogViewModel"/> and the sheet VMs, so this
 /// VM owns the week strip, the pet chips and the derived day headings, and nothing
 /// else. A dose checklist and mood/weight flags used to live here for the old Today
 /// ring; they were removed in the 2026-07-31 audit once nothing read them.</para>
@@ -93,7 +93,7 @@ public class CalendarViewModel : BaseViewModel
 
     /// <summary>Fire change notifications for every derived Journal label at once.
     /// NOTE: this raises ActivePetName on every entries/doses load, not only on a
-    /// real pet switch — the CalendarPage dedupes its Journal reloads on that.</summary>
+    /// real pet switch: the CalendarPage dedupes its Journal reloads on that.</summary>
     private void NotifyDerived()
     {
         OnPropertyChanged(nameof(ActivePetName));
@@ -121,7 +121,7 @@ public class CalendarViewModel : BaseViewModel
         _medicationService = medicationService;
         _doseLogService = doseLogService;
 
-        // Commands are created once — an expression-bodied `=> new Command(...)`
+        // Commands are created once: an expression-bodied `=> new Command(...)`
         // property hands out a fresh instance per read.
         SelectPetCommand = new Command<Pet>(async pet => await SelectPetAsync(pet));
     }
@@ -145,8 +145,8 @@ public class CalendarViewModel : BaseViewModel
     private async Task LoadPetsAsync()
     {
         // Read everything first, then swap the list in one synchronous block (no await
-        // between the Clear and the last Add). Two loads overlap routinely — switching
-        // tabs starts the Journal's load while the previous page's is still in flight —
+        // between the Clear and the last Add). Two loads overlap routinely: switching
+        // tabs starts the Journal's load while the previous page's is still in flight,
         // and clearing before the await let the second one clear between the first one's
         // Clear and its Adds, leaving the same pet in the list twice.
         var petsFromDb = await _petService.GetPetsAsync();
@@ -163,7 +163,7 @@ public class CalendarViewModel : BaseViewModel
 
         // Every candidate comes out of Pets itself. The old last-resort fallback read
         // the query result instead, which could pick an instance that is not in the
-        // bound list — the chip for it then never highlights.
+        // bound list: the chip for it then never highlights.
         var selected = Pets.FirstOrDefault(p => p.Id == currentId)
             ?? Pets.FirstOrDefault(p => p.Id == savedPetId)
             ?? Pets[0];
@@ -265,7 +265,7 @@ public class CalendarViewModel : BaseViewModel
     /// <summary>
     /// Light refresh when returning to Calendar (week dots only; pets are already
     /// loaded). It still raises the derived headings, and must keep doing so: that
-    /// notification is what <c>CalendarPage</c>'s reload marker keys off — see the
+    /// notification is what <c>CalendarPage</c>'s reload marker keys off: see the
     /// "Journal reloads are deduped by (pet, date)" decision.
     /// </summary>
     public async Task RefreshEntriesAsync()

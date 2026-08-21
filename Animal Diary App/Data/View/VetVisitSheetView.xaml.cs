@@ -10,7 +10,7 @@ public partial class VetVisitSheetView : ContentView
         InitializeComponent();
     }
 
-    /// <summary>Give the body its scroll ceiling — five fields plus a note outgrow the
+    /// <summary>Give the body its scroll ceiling: five fields plus a note outgrow the
     /// sheet's 90% cap on a short screen, and the cap only clips (see
     /// AddAnythingSheetView for the full note).</summary>
     protected override void OnSizeAllocated(double width, double height)

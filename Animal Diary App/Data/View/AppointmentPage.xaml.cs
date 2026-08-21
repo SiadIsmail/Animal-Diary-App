@@ -6,7 +6,7 @@ using Animal_Diary_App.Helpers;
 
 /// <summary>
 /// The appointment page (see XAML). Pushed from the Care page's "Vet visits" row and
-/// from the band on Today — never a Shell tab: a tab is for something used daily, and a
+/// from the band on Today, never a Shell tab: a tab is for something used daily, and a
 /// vet visit happens two to four times a year.
 /// </summary>
 public partial class AppointmentPage : ContentPage
@@ -26,6 +26,7 @@ public partial class AppointmentPage : ContentPage
 
         vm.AppointmentVM.FullSummaryRequested += OnFullSummaryRequested;
         vm.ExportSheetVM.ViewRequested += OnReportViewRequested;
+        vm.ExportSheetVM.AddVisitRequested += OnAddVisitRequested;
         vm.VetVisitSheetVM.Saved += OnVisitSaved;
         vm.VetVisitSheetVM.Deleted += OnVisitDeleted;
         vm.VetQuestionSheetVM.Saved += OnQuestionSaved;
@@ -36,7 +37,7 @@ public partial class AppointmentPage : ContentPage
         }
         catch (Exception ex)
         {
-            // A failed load degrades to the empty state — never crash the page.
+            // A failed load degrades to the empty state, never crash the page.
             System.Diagnostics.Debug.WriteLine($"[Appointment] load failed: {ex}");
         }
     }
@@ -47,19 +48,20 @@ public partial class AppointmentPage : ContentPage
 
         vm.AppointmentVM.FullSummaryRequested -= OnFullSummaryRequested;
         vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;
+        vm.ExportSheetVM.AddVisitRequested -= OnAddVisitRequested;
         vm.VetVisitSheetVM.Saved -= OnVisitSaved;
         vm.VetVisitSheetVM.Deleted -= OnVisitDeleted;
         vm.VetQuestionSheetVM.Saved -= OnQuestionSaved;
     }
 
     /// <summary>Android back closes an open sheet before it navigates
-    /// (<c>Controls/BackDismiss</c>) — the page hosts two.</summary>
+    /// (<c>Controls/BackDismiss</c>): the page hosts two.</summary>
     protected override bool OnBackButtonPressed() =>
         Controls.BackDismiss.TryCloseTopmostOverlay(this) || base.OnBackButtonPressed();
 
     // A visit was written → reload and confirm, with NO Undo button. Editing a visit is
     // reversed by opening the sheet again, and UndoToast shows its button whenever a
-    // callback is present — so handing it a no-op meant a button that visibly did
+    // callback is present, so handing it a no-op meant a button that visibly did
     // nothing. Show(message) is the shape for a confirmation with nothing to take back.
     private async void OnVisitSaved(string message) => await RefreshAsync(message, undo: null);
 
@@ -94,7 +96,7 @@ public partial class AppointmentPage : ContentPage
         }
     }
 
-    /// <summary>The export sheet's "View" button — push the in-app preview for the
+    /// <summary>The export sheet's "View" button: push the in-app preview for the
     /// report it just generated (navigation belongs to pages, not VMs). Mirrors
     /// PetsPage, which hosts the same sheet.</summary>
     private async void OnReportViewRequested(Data.Models.VetReportFile report)
@@ -110,13 +112,27 @@ public partial class AppointmentPage : ContentPage
         }
     }
 
+    /// <summary>The export sheet's one-shot "was that for a visit?" offer. Straight into
+    /// the visit sheet this page already hosts.</summary>
+    private void OnAddVisitRequested()
+    {
+        try
+        {
+            vm.AppointmentVM.AddVisitCommand.Execute(null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Appointment] add-visit open failed: {ex}");
+        }
+    }
+
     /// <summary>
     /// The owner reached the bottom of the page. That is what "used their free summary"
     /// means when they did not export it: they read it to the end.
     ///
     /// <para><b>Why the bottom of the page and not the top of the summary.</b> The flag
     /// spends someone's one free artifact, so the bar has to be genuine use rather than a
-    /// glance. Opening the page is not it — the brief for this feature is explicit that
+    /// glance. Opening the page is not it: the brief for this feature is explicit that
     /// someone who taps in, looks confused and leaves has not had their free one, and an
     /// on-appearing flag would take it from them anyway. Scrolling past the ledger, the
     /// new records and the whole "what you wrote down" block is the cheapest honest
@@ -156,7 +172,7 @@ public partial class AppointmentPage : ContentPage
     }
 
     // "Full summary" routes to the EXISTING export sheet, pre-filled with the
-    // since-last-visit stretch. There is deliberately no second PDF path — and no pop
+    // since-last-visit stretch. There is deliberately no second PDF path, and no pop
     // either: this page is reached from BOTH Care and Today, so it cannot assume what a
     // pop lands on. The sheet is hosted here instead and opens in place.
     private async void OnFullSummaryRequested(int days)

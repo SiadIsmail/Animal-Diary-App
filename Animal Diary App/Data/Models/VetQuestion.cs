@@ -19,7 +19,7 @@ using SQLite;
 //   • It says nothing about the pet, so nothing here is ever interpreted, matched
 //     on, or counted into anything. Text is the owner's words, verbatim.
 //
-//  NO LINK TO A VISIT, deliberately. A question is open or answered — that is the
+//  NO LINK TO A VISIT, deliberately. A question is open or answered, that is the
 //  whole state machine. Tying it to a visit would need a cross-table SyncId
 //  reference for one bit of information nobody has asked for, and would strand
 //  every question written before a visit existed to attach it to.
@@ -51,7 +51,7 @@ public class VetQuestion : ISyncable
     /// <summary><b>Null = still open.</b> The entire state machine.</summary>
     public DateTime? AnsweredAtUtc { get; set; }
 
-    /// <summary>Derived, never stored — the same posture as <c>Pet.AgeYears</c> and a
+    /// <summary>Derived, never stored: the same posture as <c>Pet.AgeYears</c> and a
     /// vet visit being past. One column cannot disagree with itself.</summary>
     [Ignore]
     public bool IsOpen => AnsweredAtUtc is null;

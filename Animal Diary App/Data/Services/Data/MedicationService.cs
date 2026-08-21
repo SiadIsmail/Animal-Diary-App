@@ -22,7 +22,7 @@ public class MedicationService
     /// Write a medication back, appending whatever the treatment ledger sees change.
     ///
     /// <para>The stored row is read on the SAME connection, inside the transaction and
-    /// BEFORE the update — the caller hands us an already-mutated object, so the
+    /// BEFORE the update: the caller hands us an already-mutated object, so the
     /// database is the only remaining witness to what it used to say. Schedules are not
     /// this path's business (both sides get the empty set), so it can never claim a
     /// schedule change it did not make; the archive/restore flip is what actually
@@ -46,7 +46,7 @@ public class MedicationService
         });
 
     /// <summary>Delete a medication together with all of its schedule rows.
-    /// Soft deletes — the rows become tombstones so the deletion can sync.</summary>
+    /// Soft deletes: the rows become tombstones so the deletion can sync.</summary>
     public async Task DeleteMedicationAsync(int medicationId)
     {
         await DeleteSchedulesForMedicationAsync(medicationId);
@@ -121,7 +121,7 @@ public class MedicationService
     /// <summary>
     /// Persist a medication together with its COMPLETE schedule set in one
     /// transaction: insert/update the medication, drop its old schedule rows, and
-    /// insert the new ones. Atomic on purpose — process death between "delete old
+    /// insert the new ones. Atomic on purpose: process death between "delete old
     /// schedules" and "insert new ones" would otherwise leave a medication with no
     /// rules, silently killing its reminders on the next sync.
     /// </summary>
@@ -130,7 +130,7 @@ public class MedicationService
         {
             // Read the stored row BEFORE the update, on this same connection. The
             // caller mutates the Medication it loaded, so once conn.Update runs there
-            // is nothing left anywhere that remembers the old dose — which is exactly
+            // is nothing left anywhere that remembers the old dose, which is exactly
             // the history this ledger exists to stop destroying. Null = a create.
             var before = medication.Id == 0
                 ? null
@@ -164,14 +164,14 @@ public class MedicationService
 
             // Same transaction, deliberately: a torn write that kept the new dose and
             // lost the row recording it would be worse than no ledger at all. `old` is
-            // the schedule set as it stood — it was loaded above to be tombstoned, and
+            // the schedule set as it stood: it was loaded above to be tombstoned, and
             // it is the only "before" the diff needs.
             AppendLedger(conn, MedicationLedger.Diff(
                 before, old, medication, schedules,
                 DateTime.UtcNow, MedicationScheduleText.Describe));
         });
 
-    /// <summary>Both ledger-writing paths append the same way — through SyncStamp, so
+    /// <summary>Both ledger-writing paths append the same way: through SyncStamp, so
     /// the rows reach the cloud like any other, and one at a time because there are at
     /// most a handful per save.</summary>
     private static void AppendLedger(SQLiteConnection conn, IReadOnlyList<MedicationChange> changes)

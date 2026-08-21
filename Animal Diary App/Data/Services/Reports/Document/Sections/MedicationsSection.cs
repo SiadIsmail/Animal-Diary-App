@@ -35,7 +35,11 @@ public class MedicationsSection : IVetReportSection
         {
             var row = table.AddRow();
             BodyCellBold(row, 0, med.Name);
-            BodyCell(row, 1, $"{med.Dose:0.##} {med.Unit}".Trim());
+            // The ledger's answer for the period, falling back to the medication row for
+            // history recorded before the ledger existed. See ReportMedication.DoseText.
+            BodyCell(row, 1, med.DoseText.Length > 0
+                ? med.DoseText
+                : $"{med.Dose:0.##} {med.Unit}".Trim());
             BodyCell(row, 2, Frequency(med));
             BodyCell(row, 3, Adherence(med));
         }

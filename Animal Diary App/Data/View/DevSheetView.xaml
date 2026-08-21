@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- DevSheetView — hidden developer diagnostics on the shared FelovaBottomSheet.
+<!-- DevSheetView: hidden developer diagnostics on the shared FelovaBottomSheet.
      Reached from Settings → "Code"; a gate code reveals cloud/auth state + the
      recent event log, with a Copy button. English-only by intent (a dev tool,
      not a user feature). BindingContext is a DevSheetViewModel. -->
@@ -126,7 +126,7 @@
                         </Border>
                     </Grid>
 
-                    <Label Text="Seeds Kira (epilepsy) and Mira (diabetes) with a year of history in the app's current language. Nothing is uploaded — demo pets never sync."
+                    <Label Text="Seeds Kira (epilepsy) and Mira (diabetes) with a year of history in the app's current language. Nothing is uploaded: demo pets never sync."
                            FontFamily="{StaticResource FontSans}" FontSize="11" LineHeight="1.3"
                            TextColor="{StaticResource InkSecondary}"/>
 

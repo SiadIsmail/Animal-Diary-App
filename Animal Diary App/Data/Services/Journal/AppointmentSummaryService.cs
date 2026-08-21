@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.Models;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  "Since your last visit" — the screen this whole feature exists for.
+//  "Since your last visit": the screen this whole feature exists for.
 //
 //  It is ASSEMBLED, never stored. Nothing about the summary is written down: it is
 //  the treatment ledger, the facts service and the question list, read over one
@@ -11,19 +11,19 @@ using Animal_Diary_App.Data.Models;
 //  disagreed with the diary the moment anything was edited.
 //
 //  The window is (the most recent PAST visit) .. today. If there is no previous
-//  visit the anchor is the pet's first entry instead, and the wording says so —
+//  visit the anchor is the pet's first entry instead, and the wording says so,
 //  the app never invents a visit that did not happen.
 //
 //  THE LINE THIS MUST NOT CROSS. Everything here is a fact about the record:
 //  counts, dates, the owner's own numbers, and the words they typed themselves.
-//  There is no average, no trend, no direction, no ranking, and — explicitly — no
+//  There is no average, no trend, no direction, no ranking, and (explicitly) no
 //  before/after juxtaposition of two counts around a treatment change. Two counts
 //  either side of a dose change ARGUE; whether Felova is allowed to argue is a
 //  decision that has not been made. See Data/Models/RecordFacts.cs.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// <summary>One thing the owner started writing down inside the window. A fact about
-/// the diary — <b>not</b> a claim about why. The app cannot tell a change in the animal
+/// the diary: <b>not</b> a claim about why. The app cannot tell a change in the animal
 /// from a change in the logging, so it says only when the first entry appeared.</summary>
 /// <param name="Name">The record's name, localized for a shipped tracker and verbatim
 /// user text for an owner-defined one.</param>
@@ -39,15 +39,15 @@ public sealed record SummaryRecord(string Name, RecordFacts Facts);
 /// </summary>
 /// <param name="Anchor">The visit the window measures from, or null when there is
 /// none.</param>
-/// <param name="From">Start of the window — the anchor visit's date, or the pet's
+/// <param name="From">Start of the window: the anchor visit's date, or the pet's
 /// first entry when there is no previous visit.</param>
 /// <param name="Days">How long the window is, inclusive.</param>
 /// <param name="Changes">The treatment ledger over the window, chronological.</param>
 /// <param name="NewRecords">Trackers whose first-ever entry falls inside the window.
-/// Empty when there is no previous visit — with the window covering all of history
+/// Empty when there is no previous visit: with the window covering all of history
 /// everything would qualify, which says nothing.</param>
 /// <param name="Records">Every record the pet has data for, in one fixed order, each
-/// stated the same way — including the ones with nothing interesting in them.</param>
+/// stated the same way: including the ones with nothing interesting in them.</param>
 /// <param name="Questions">The owner's open questions, oldest first.</param>
 public sealed record AppointmentSummary(
     VetVisit? Anchor,
@@ -92,7 +92,7 @@ public class AppointmentSummaryService
     }
 
     /// <summary>Everything, with no floor of our own. A sentinel date would silently
-    /// hide an entry imported from before it, and "up to X" is a scan either way — the
+    /// hide an entry imported from before it, and "up to X" is a scan either way: the
     /// lower bound buys nothing to be clever about.</summary>
     private static DateTime Everything => DateTime.MinValue;
 
@@ -134,8 +134,8 @@ public class AppointmentSummaryService
 
             records.Add(new SummaryRecord(name, facts));
 
-            // "New since last time" needs a last time. It also needs a SECOND read —
-            // "did this record exist before the window?" — which is why it is asked
+            // "New since last time" needs a last time. It also needs a SECOND read,
+            // "did this record exist before the window?", which is why it is asked
             // only for records that actually have entries in the window.
             if (anchor is null || key.Is(TodayCardId.Medication))
                 continue;                       // doses are not a tracker
@@ -146,7 +146,7 @@ public class AppointmentSummaryService
         }
 
         // The ledger is stamped in UTC; the window is local dates. Widen by a day at
-        // each end rather than converting — a change made at 23:00 local on the visit
+        // each end rather than converting: a change made at 23:00 local on the visit
         // day belongs in the window, and an hour's slop cannot put a row in the wrong
         // consultation.
         var changes = await _medications.GetChangesForRangeAsync(
@@ -165,7 +165,7 @@ public class AppointmentSummaryService
     /// order: the shipped cards in catalog order, then the owner's own trackers.
     ///
     /// <para>Fixed and complete on purpose. Ordering by how much is in each, or dropping
-    /// the quiet ones, would be the app deciding which record matters — and a summary
+    /// the quiet ones, would be the app deciding which record matters, and a summary
     /// that lists seizures first only when there were many is a summary that has started
     /// making a point.</para>
     /// </summary>
@@ -176,7 +176,7 @@ public class AppointmentSummaryService
         foreach (var meta in TodayCardCatalog.Cards)
             kinds.Add((meta.Id, TodayCardCatalog.RecordName(meta.Id)));
 
-        // Their own name, verbatim — never translated (AI/coding-standards.md).
+        // Their own name, verbatim, never translated (AI/coding-standards.md).
         foreach (var c in definitions)
             kinds.Add((TodayCardKey.Custom(c.Id), c.Name));
 
@@ -185,7 +185,7 @@ public class AppointmentSummaryService
 
     /// <summary>The earliest thing this pet has written down, across every record, or
     /// today when there is nothing at all. Only reached when the pet has never had a
-    /// visit — with one, the anchor's date is the window and none of this runs.</summary>
+    /// visit: with one, the anchor's date is the window and none of this runs.</summary>
     private async Task<DateTime> FirstEntryDateAsync(
         Pet pet, IReadOnlyList<(TodayCardKey Key, string Name)> kinds, DateTime today)
     {

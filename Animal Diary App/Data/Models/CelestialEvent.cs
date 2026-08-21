@@ -4,7 +4,7 @@ namespace Animal_Diary_App.Data.Models;
 //  The Constellation's data shape.
 //
 //  One flattened, read-only projection of everything the owner has written down
-//  for a pet over a stretch of time. It is a READ MODEL — nothing here is stored,
+//  for a pet over a stretch of time. It is a READ MODEL: nothing here is stored,
 //  and nothing here may travel back into an entry store.
 //
 //  The rule the whole surface obeys, and the reason this type is as thin as it is:
@@ -24,12 +24,12 @@ namespace Animal_Diary_App.Data.Models;
 
 /// <summary>
 /// The eight kinds of thing that can appear in the sky. <b>Exactly eight, and the
-/// count is load-bearing</b> — each one gets its own drawn symbol
+/// count is load-bearing</b>: each one gets its own drawn symbol
 /// (<c>CelestialSymbols</c>), and the symbols are distinguishable by SHAPE alone so
 /// the sky is readable without relying on colour.
 ///
 /// <para>The set is the app's six shipped trackers, plus medication doses (which are
-/// not a tracker), plus one bucket for every tracker the owner defined themselves —
+/// not a tracker), plus one bucket for every tracker the owner defined themselves,
 /// the same seven-plus-custom split <c>TodayCardCatalog</c> already uses. A ninth
 /// member would need a ninth symbol that still reads as distinct at 5px, so adding
 /// one is a design decision rather than a line.</para>
@@ -53,10 +53,10 @@ public enum CelestialCategory
 /// </summary>
 /// <param name="When">Local date+time. The ONLY value that affects placement.</param>
 /// <param name="Category">Which symbol is drawn.</param>
-/// <param name="Title">What it was, in the owner's language — "Weigh-in", or an
+/// <param name="Title">What it was, in the owner's language: "Weigh-in", or an
 /// owner-defined tracker's own name (verbatim user text, never translated).</param>
 /// <param name="Detail">The reading as it was written down ("4.8 mmol/L", "ate most
-/// of it"), or empty. Shown only on tap — never rendered into the sky, because a value
+/// of it"), or empty. Shown only on tap, never rendered into the sky, because a value
 /// on the canvas would be a second encoded dimension.</param>
 public readonly record struct CelestialEvent(
     DateTime When,
@@ -65,16 +65,16 @@ public readonly record struct CelestialEvent(
     string Detail);
 
 /// <summary>
-/// How one category looks and reads — the Constellation's counterpart to
+/// How one category looks and reads: the Constellation's counterpart to
 /// <c>TrackerVisuals</c>, and kept as one table for the same reason: the sky, the
 /// legend and the detail card must never disagree about what a symbol means.
 /// </summary>
 /// <param name="LabelKey">AppStrings key for the category's name. A KEY, never a
-/// resolved string — this is a static table and would otherwise survive a live
+/// resolved string: this is a static table and would otherwise survive a live
 /// language switch in the old language (AI/coding-standards.md).</param>
 /// <param name="ColorKey">Colour token from <c>Resources/Styles/Colors.xaml</c>,
 /// resolved through <c>Helpers/AppColors</c>. The Star* tokens are the night-sky
-/// siblings of the daylight tracker accents — a weigh-in is blue in both.</param>
+/// siblings of the daylight tracker accents: a weigh-in is blue in both.</param>
 public readonly record struct CelestialVisual(string LabelKey, string ColorKey);
 
 /// <summary>The one category → (label, colour) table.</summary>
@@ -115,7 +115,7 @@ public static class CelestialVisuals
     }
 
     /// <summary>
-    /// The kind to open focused on, given the pet's conditions — or null when nothing
+    /// The kind to open focused on, given the pet's conditions, or null when nothing
     /// suggests one.
     ///
     /// <para>It exists because <b>volume is not importance</b>. Twice-daily medication
@@ -126,7 +126,7 @@ public static class CelestialVisuals
     ///
     /// <para>Same shape and the same condition ids as <c>TodayCardCatalog.DefaultsFor</c>:
     /// a derived default, nothing written until the owner expresses an intent of their
-    /// own. Nothing is hidden either — the rest of the sky is dimmed, not removed.</para>
+    /// own. Nothing is hidden either: the rest of the sky is dimmed, not removed.</para>
     /// </summary>
     public static CelestialCategory? OpeningFocusFor(IEnumerable<string?>? conditionIds)
     {

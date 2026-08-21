@@ -8,7 +8,7 @@ namespace Animal_Diary_App.Data.Services.Billing;
 /// public SDK key is NOT in this committed file: it is supplied by an untracked
 /// partial, <c>BillingConfig.Secret.cs</c> (git-ignored), via <see cref="ApplySecrets"/>.
 ///
-/// <para>The class compiles with or without that secret file — a missing partial
+/// <para>The class compiles with or without that secret file: a missing partial
 /// method body is a legal no-op, so a fresh clone builds and simply runs key-less
 /// (which registers <c>NullEntitlementService</c> and never locks). Drop the real key
 /// in later without touching this file.</para>
@@ -27,8 +27,8 @@ public static partial class BillingConfig
 
     /// <summary>
     /// DEBUG-ONLY testing switch: run the REAL entitlement gate on Windows/macOS, over a
-    /// no-op store. Access then comes from caregiver sponsorship or a redeemed code — the
-    /// two things worth testing on a desktop — while purchases stay unavailable.
+    /// no-op store. Access then comes from caregiver sponsorship or a redeemed code: the
+    /// two things worth testing on a desktop, while purchases stay unavailable.
     ///
     /// <para>Off by default, and deliberately opt-in rather than "on in Debug": the whole
     /// point of the desktop no-op is that day-to-day development never sees a paid surface
@@ -43,8 +43,8 @@ public static partial class BillingConfig
     public const bool ForceGateOnDesktop = false;
 
     /// <summary>Show the one heads-up this many days before a redeemed access code's grant
-    /// runs out. A grant is the only thing left in the app with an end date — there is no
-    /// trial and the free tier never ends — so this window has exactly one reader.</summary>
+    /// runs out. A grant is the only thing left in the app with an end date: there is no
+    /// trial and the free tier never ends, so this window has exactly one reader.</summary>
     public const int GrantEndingNoticeDaysBefore = 3;
 
     /// <summary>How long a cached sponsorship keeps working without reaching the server.
@@ -55,11 +55,11 @@ public static partial class BillingConfig
     /// <para>This bounds ONLY the "owner's subscription lapsed" case. Losing <i>membership</i>
     /// (removed, or you left) is bounded by sync instead: the membership diff purges the pet
     /// and all its data from the device outright. Two different bounds because they answer
-    /// two different questions — billing vs. privacy. Do not unify them.</para></summary>
+    /// two different questions: billing vs. privacy. Do not unify them.</para></summary>
     public static readonly TimeSpan SponsorshipOfflineGrace = TimeSpan.FromDays(14);
 
     /// <summary>Max caregivers sharing one pet, and max sponsored caregivers one owner may
-    /// have across all their pets. Mirrored in migration 0010 — the server is the real
+    /// have across all their pets. Mirrored in migration 0010: the server is the real
     /// enforcement; these exist so the client can explain the limit in the owner's language.
     /// Never applied retroactively: an owner already over the cap keeps everyone.</summary>
     public const int MaxCaregiversPerPet = 5;
@@ -68,7 +68,7 @@ public static partial class BillingConfig
     /// <summary>RevenueCat entitlement identifier that unlocks full access. Must match the
     /// identifier in the RevenueCat dashboard EXACTLY (it is "Felova Full", spaces and
     /// all). As a safety net the check also treats any active entitlement as full access,
-    /// since this app has a single paid tier — see RevenueCatStoreBilling.IsPremiumActive.</summary>
+    /// since this app has a single paid tier: see RevenueCatStoreBilling.IsPremiumActive.</summary>
     public const string EntitlementId = "Felova Full";
 
     /// <summary>RevenueCat offering identifier holding the yearly + monthly packages.</summary>

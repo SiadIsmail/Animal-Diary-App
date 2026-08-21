@@ -9,7 +9,7 @@ namespace Animal_Diary_App.Tests;
 /// <para>This is the smallest and most consequential function in the reminder path:
 /// both the scheduler (what to arm) and the dose reconciler (what was missed) read it,
 /// so an off-by-one week here is a dose that never fires or a false "missed dose".
-/// The window is deliberately half-open — <c>(from, until]</c> — because the scheduler
+/// The window is deliberately half-open (<c>(from, until]</c>) because the scheduler
 /// re-runs on every launch and an inclusive lower bound would re-arm an occurrence it
 /// had just resolved.</para>
 /// </summary>
@@ -116,7 +116,7 @@ public class MedicationScheduleExpanderTests
     public void OccurrencesAreWallClock_SoADstShiftKeepsTheSameLocalTime()
     {
         // Europe/Berlin springs forward on 2026-03-29. Expansion is deliberately in
-        // local wall-clock time — 08:00 stays 08:00 across the boundary, and the
+        // local wall-clock time: 08:00 stays 08:00 across the boundary, and the
         // conversion to UTC happens later, at the future instant. If this ever returned
         // 07:00 or 09:00, every dose after a DST change would drift by an hour.
         var beforeDst = new DateTime(2026, 3, 23);   // the Monday before

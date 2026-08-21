@@ -201,7 +201,7 @@ public class AnalyticsEventQueueTests
     }
 }
 
-/// <summary>In-memory queue store — no file system.</summary>
+/// <summary>In-memory queue store, no file system.</summary>
 internal sealed class FakeAnalyticsQueueStore : IAnalyticsQueueStore
 {
     public string? Contents { get; set; }

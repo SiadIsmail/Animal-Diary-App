@@ -4,7 +4,7 @@ using Animal_Diary_App.Helpers;
 using Microsoft.Maui.Graphics;
 
 /// <summary>
-/// A precise circular progress ring — a clean full-circle track with a
+/// A precise circular progress ring: a clean full-circle track with a
 /// foreground arc sweeping clockwise from 12 o'clock for <see cref="Progress"/>
 /// (0..1). This is a DATA readout (care completion), so its geometry is exact:
 /// no wobble, no sketch effect. Changes to <see cref="Progress"/> animate the

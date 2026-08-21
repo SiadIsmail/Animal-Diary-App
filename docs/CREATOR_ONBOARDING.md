@@ -17,7 +17,7 @@ Two things, and they do different jobs:
 | **Code** | A word they say out loud: `THETO` | Their audience types it in the app |
 | **Link** | A Play URL carrying the same code | Their audience just taps it |
 
-The link is the one that actually works at scale — most people never type a code. The
+The link is the one that actually works at scale: most people never type a code. The
 code exists for anyone who hears about the app rather than tapping through, and for iOS
 later, where links cannot carry attribution at all.
 
@@ -42,10 +42,10 @@ insert into public.creator_codes (code, creator, note)
 values ('THETO', 'Theto', 'YouTube, deal signed 2026-08');
 ```
 
-- `code` — uppercase. The app upper-cases what the user types, so they can type it any way.
-- `creator` — the display name shown back to them ("We'll know you came from Theto") and
+- `code`: uppercase. The app upper-cases what the user types, so they can type it any way.
+- `creator`: the display name shown back to them ("We'll know you came from Theto") and
   the label on every analytics event. Spell it the way they spell it.
-- `note` — for you. Where the deal came from, when.
+- `note`: for you. Where the deal came from, when.
 
 This fails if the code already exists as an **access code** (migration 0019). That is
 deliberate: access codes grant a year, and a duplicate would silently shadow it.
@@ -59,7 +59,7 @@ https://play.google.com/store/apps/details?id=com.felova.app&referrer=creator%3D
 Swap in their code. `%3D` is an encoded `=` and must stay encoded.
 
 **Android only.** Apple's campaign tokens never reach the app, so on iOS the link still
-installs the app but attributes nothing. Nothing to configure — just do not promise a
+installs the app but attributes nothing. Nothing to configure: just do not promise a
 creator iOS numbers.
 
 ## 4. Send them
@@ -85,7 +85,7 @@ select * from public.creator_code_stats order by purchases desc;
 | `typed_in` | of those, how many typed the code |
 | `purchases` | first purchases credited to them |
 
-`from_link` and `typed_in` **overlap** — one person can do both — so they can sum to more
+`from_link` and `typed_in` **overlap** (one person can do both) so they can sum to more
 than `accounts_entered`. They are two views of the same people, not a split.
 
 In PostHog, break any insight down by `referral_source` to compare their audience against

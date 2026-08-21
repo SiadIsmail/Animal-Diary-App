@@ -9,7 +9,7 @@ using Xunit;
 ///
 /// <para>The numbers are the LOCAL storage. sqlite-net reads <c>[StoreAsText]</c> off the
 /// property's declared type, so a nullable enum column is written as an integer whatever
-/// the attribute says — which makes reordering the members quietly relabel every seizure
+/// the attribute says, which makes reordering the members quietly relabel every seizure
 /// already logged.</para>
 ///
 /// <para>The names are the CLOUD storage (SyncTableMaps writes <c>Type.ToString()</c> into
@@ -51,7 +51,7 @@ public class SeizureTypeTests
     [Fact]
     public void ZeroIsNotAMember()
     {
-        // Null is the only "didn't say", so no member may occupy the default(int) slot —
+        // Null is the only "didn't say", so no member may occupy the default(int) slot,
         // otherwise a row that failed to write a value would read back as a real answer.
         Assert.False(Enum.IsDefined((SeizureType)0));
     }

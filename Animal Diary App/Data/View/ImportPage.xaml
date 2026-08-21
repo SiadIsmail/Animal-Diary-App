@@ -7,7 +7,7 @@
     Import button on the preview is tapped, and a file with any error writes nothing
     at all.
 
-    English-only by intent — an internal tool behind a code, like DevSheetView. See
+    English-only by intent: an internal tool behind a code, like DevSheetView. See
     ImportViewModel for why, and for the day that has to change.
 
     BindingContext is the MainViewModel; content binds through ImportVM.
@@ -61,7 +61,7 @@
 
                 <!-- ── Nothing chosen yet ───────────────────────────────────── -->
                 <VerticalStackLayout Spacing="14" IsVisible="{Binding ImportVM.IsEmpty}">
-                    <Label Text="Choose a Felova import file — a JSON file written from a pet owner's notes. You will see exactly what it does before anything is saved."
+                    <Label Text="Choose a Felova import file: a JSON file written from a pet owner's notes. You will see exactly what it does before anything is saved."
                            FontFamily="{StaticResource FontSans}"
                            FontSize="13" LineHeight="1.35"
                            TextColor="{StaticResource InkSecondary}"

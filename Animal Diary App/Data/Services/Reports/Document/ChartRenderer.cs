@@ -6,7 +6,7 @@ using SkiaSharp;
 /// Draws one small time-series line chart onto a SkiaSharp canvas (see
 /// <see cref="ChartImageRenderer"/>, which hands us an offscreen one and turns the
 /// result into a PNG for MigraDoc to embed). Deliberately plain and grayscale-safe:
-/// black line, white-filled markers, light grey gridlines — meaning never depends on
+/// black line, white-filled markers, light grey gridlines: meaning never depends on
 /// colour. Coordinates are PDF points; the caller decides width/height.
 /// </summary>
 public static class ChartRenderer
@@ -35,7 +35,7 @@ public static class ChartRenderer
         minV -= pad;
         maxV += pad;
         // A series that never goes negative (weights, counts) never gets a
-        // negative axis — padding must not invent values below zero.
+        // negative axis: padding must not invent values below zero.
         if (minV < 0 && values.Min() >= 0)
             minV = 0;
 

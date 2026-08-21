@@ -8,14 +8,14 @@ using Animal_Diary_App.Helpers;
 /// The quiet access moments, on one reusable sheet. It replaces the old
 /// <c>TrialMessageViewModel</c>, whose three modes were all about a trial: the
 /// post-first-log explainer, the pre-end nudge, and the read-only reassurance. There is
-/// no trial any more and there is no read-only state — logging is free forever — so all
+/// no trial any more and there is no read-only state (logging is free forever) so all
 /// three are gone along with the copy that described them.
 ///
 /// <para>What survives is the pair of moments a <b>grant</b> produces, and only a grant:</para>
 /// <list type="bullet">
-///   <item><b>Grant ending</b> — once, a few days before a redeemed access code's year
+///   <item><b>Grant ending</b>: once, a few days before a redeemed access code's year
 ///   runs out.</item>
-///   <item><b>Grant ended</b> — once, when it has. Reassures first; nothing that was
+///   <item><b>Grant ended</b>: once, when it has. Reassures first; nothing that was
 ///   written down is affected, and the free tier still writes.</item>
 /// </list>
 ///

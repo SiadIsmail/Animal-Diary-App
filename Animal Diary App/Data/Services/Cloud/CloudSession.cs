@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 /// <summary>
 /// One signed-in Supabase session: the tokens plus the little identity the UI
 /// shows. Persisted as JSON in <see cref="SecureStorage"/> (never the plain
-/// preferences — these are credentials), loaded once per app run by
+/// preferences: these are credentials), loaded once per app run by
 /// <see cref="CloudAuthService"/>.
 /// </summary>
 public sealed class CloudSession

@@ -7,17 +7,17 @@ namespace Animal_Diary_App.Data.Services.Import;
 //
 //   • An ERROR rejects the ENTIRE file. Nothing is written. There is no "import the
 //     good rows" path, because a file whose rows contradict each other is a file whose
-//     good rows cannot be trusted either — the same transcription pass produced both.
+//     good rows cannot be trusted either: the same transcription pass produced both.
 //
 //   • A NOTICE changes what will be written but not whether it happens: a row skipped
 //     because the day already holds a value, a decorative field normalized, a field
-//     this build does not know. Notices are the reason the preview exists — they are
+//     this build does not know. Notices are the reason the preview exists: they are
 //     the only place "not everything in your file will land" is ever said, and the
 //     rule is that it must be said BEFORE the owner confirms, never after.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// <summary>Where in the file a diagnostic points. Mirrors the file's own structure so
-/// the message can be pasted back to whatever generated it — "pets[0].entries[3]" is
+/// the message can be pasted back to whatever generated it: "pets[0].entries[3]" is
 /// something an AI can act on; "an entry" is not.</summary>
 public readonly record struct ImportLocation(int? PetIndex, int? EntryIndex, string? Field)
 {
@@ -57,7 +57,7 @@ public sealed record ImportError(ImportLocation Location, string Message)
 /// hundred already-present entries reads as one line rather than two hundred.</summary>
 public enum ImportNoticeKind
 {
-    /// <summary>A field this build does not recognise. Ignored — see
+    /// <summary>A field this build does not recognise. Ignored: see
     /// <see cref="ImportFile"/> on why unknown fields do not reject.</summary>
     UnknownField,
 

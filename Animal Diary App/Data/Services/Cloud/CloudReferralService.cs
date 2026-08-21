@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.Services.Cloud;
+namespace Animal_Diary_App.Data.Services.Cloud;
 
 using System.Diagnostics;
 using System.Text.Json;
@@ -17,7 +17,7 @@ public interface ICloudReferralService
     /// usually just installed the app. Signed out it tags the store identity and remembers
     /// the code on the device; signed in it also records it against the account.</para>
     ///
-    /// <para>Never throws for an unknown code — this is a lookup on a shared input box, not
+    /// <para>Never throws for an unknown code: this is a lookup on a shared input box, not
     /// a failed redemption. A network failure does throw <see cref="CloudException"/>.</para></summary>
     Task<string?> TryEnterAsync(string code);
 
@@ -35,7 +35,7 @@ public interface ICloudReferralService
 /// Creator-code attribution, both halves of it.
 ///
 /// <para><b>Why the device remembers the code in <c>AppSettings</c>, not under the
-/// <c>cloud:</c> prefix</b> — the opposite of where <see cref="CloudAccessCodeService"/>
+/// <c>cloud:</c> prefix</b>: the opposite of where <see cref="CloudAccessCodeService"/>
 /// keeps a grant, and deliberately so. A grant is <i>access</i>, so tying it to the account
 /// and dropping it on sign-out is what stops one code covering unlimited accounts. A creator
 /// code is a <i>marketing tag</i> that grants nothing: there is nothing to abuse by keeping
@@ -146,7 +146,7 @@ public sealed class CloudReferralService : ICloudReferralService
     /// value cannot change short of a reinstall, and a device with an unhealthy Play Store
     /// would otherwise pay the timeout on every launch forever for an answer that is not
     /// coming. But REGISTERING the result needs the network, and first launch is exactly when
-    /// a phone is least likely to have it — someone installing on mobile data in a vet's
+    /// a phone is least likely to have it: someone installing on mobile data in a vet's
     /// basement. Flagging both together threw the referral away permanently the moment that
     /// first call failed. The parsed candidate is therefore persisted and retried on later
     /// launches until it lands.</para></summary>
@@ -171,13 +171,13 @@ public sealed class CloudReferralService : ICloudReferralService
                 return;
 
             // Step 2: register it, retried until it succeeds. Validated against the real
-            // codes server-side, never trusted — which is what makes Play's organic default
+            // codes server-side, never trusted, which is what makes Play's organic default
             // (utm_source=google-play&utm_medium=organic) a non-event: "GOOGLE-PLAY" is not a
             // creator code, so the lookup returns null.
             var creator = await TryEnterAsync(candidate, SourceInstallReferrer);
 
             // Cleared on a definitive answer only. A null creator means the server SAID this
-            // is not a creator code — retrying cannot change that. A throw means we never
+            // is not a creator code: retrying cannot change that. A throw means we never
             // reached the server, and the value stays for the next launch.
             // Empty rather than a delete: GetValueAsync reads blank back as null, so this is
             // "unset" by its documented contract and needs no new store method.
@@ -266,7 +266,7 @@ public sealed class CloudReferralService : ICloudReferralService
         AnalyticsContext.ReferralSource = creator;
 
         // The half that reaches anonymous buyers. Done last and independently of the flag
-        // above, so it is re-applied on a later claim too — RevenueCat's identity can change
+        // above, so it is re-applied on a later claim too: RevenueCat's identity can change
         // under us (an anonymous install that later logs in), and re-setting is idempotent.
         await _entitlements.SetAttributionAsync(code);
     }

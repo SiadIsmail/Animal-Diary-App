@@ -235,7 +235,7 @@
   <data name="Journal_SeizureTimeLabel" xml:space="preserve"><value>Time</value></data>
   <!-- Seizure type tiles. The vet's own terms, and nothing else: an owner who doesn't
        know one picks nothing. The same three words are used by the sheet, the Journal
-       timeline and the vet report — the owner and the vet must never be shown different
+       timeline and the vet report: the owner and the vet must never be shown different
        names for the same answer. Key suffixes are the SeizureType member names. -->
   <data name="Journal_SeizureTypeLabel" xml:space="preserve"><value>Type · optional</value></data>
   <data name="Journal_SeizureTypeGeneralized" xml:space="preserve"><value>Generalized</value></data>
@@ -252,7 +252,7 @@
   <data name="Appetite_Level3" xml:space="preserve"><value>About half</value></data>
   <data name="Appetite_Level4" xml:space="preserve"><value>Most of it</value></data>
   <data name="Appetite_Level5" xml:space="preserve"><value>Everything</value></data>
-  <!-- Water (Journal): two modes — relative level tiles (Water_Level*) or an exact ml amount -->
+  <!-- Water (Journal): two modes: relative level tiles (Water_Level*) or an exact ml amount -->
   <data name="Water_Level1" xml:space="preserve"><value>Barely</value></data>
   <data name="Water_Level2" xml:space="preserve"><value>A little</value></data>
   <data name="Water_Level3" xml:space="preserve"><value>Normal</value></data>
@@ -268,7 +268,7 @@
   <data name="Journal_ToastWater" xml:space="preserve"><value>Noted. Drank {0}.</value></data>
   <data name="Common_MlSuffix" xml:space="preserve"><value>ml</value></data>
   <data name="Common_GramSuffix" xml:space="preserve"><value>g</value></data>
-  <!-- Appetite (Journal): two modes — level tiles or exact grams; optional food context -->
+  <!-- Appetite (Journal): two modes: level tiles or exact grams; optional food context -->
   <data name="Journal_AppetiteExactToggle" xml:space="preserve"><value>Exact measurement</value></data>
   <data name="Journal_AppetiteGramsLabel" xml:space="preserve"><value>Amount</value></data>
   <data name="Journal_AppetiteGramsPlaceholder" xml:space="preserve"><value>e.g. 200</value></data>
@@ -480,7 +480,7 @@
   <data name="Report_SectionMood" xml:space="preserve"><value>Mood</value></data>
   <!-- Mood is the one scale the report does NOT borrow from the journal. The Mood_*
        words are adjectives written to sit inside a sentence ("Luna was feeling great"),
-       so German keeps them lowercase — correct there, wrong as standalone chart axis
+       so German keeps them lowercase: correct there, wrong as standalone chart axis
        labels. Same five levels, cased for a label. -->
   <data name="Report_MoodLevel1" xml:space="preserve"><value>Unwell</value></data>
   <data name="Report_MoodLevel2" xml:space="preserve"><value>Low</value></data>
@@ -930,7 +930,7 @@
        One pet's history as a night sky, reached from Quick management on the Care
        page. Read-only: nothing here asks for anything, so nothing here nudges.
        Sky_TickDay / Sky_TickMonth / Sky_WhenFormat are .NET date PATTERNS, not
-       sentences — translate the punctuation and the order, never the letters (d, M,
+       sentences: translate the punctuation and the order, never the letters (d, M,
        y, H, m are format specifiers). -->
   <data name="Sky_Title" xml:space="preserve"><value>Constellation</value></data>
   <data name="Sky_CountOne" xml:space="preserve"><value>1 thing written down</value></data>
@@ -954,7 +954,7 @@
   <data name="Sky_DialHour" xml:space="preserve"><value>{0}:00</value></data>
   <!-- How long after the previous entry OF THE SAME KIND. Every kind gets this line,
        which is what keeps it a fact about the diary and not a counter aimed at
-       seizures — see ConstellationViewModel.SelectedGap. -->
+       seizures: see ConstellationViewModel.SelectedGap. -->
   <data name="Sky_GapMinuteOne" xml:space="preserve"><value>1 minute after the last one</value></data>
   <data name="Sky_GapMinutes" xml:space="preserve"><value>{0} minutes after the last one</value></data>
   <data name="Sky_GapHourOne" xml:space="preserve"><value>1 hour after the last one</value></data>
@@ -980,9 +980,20 @@
   <data name="Sky_ShareFailedTitle" xml:space="preserve"><value>Couldn't make the picture</value></data>
   <data name="Sky_ShareFailedBody" xml:space="preserve"><value>Something went wrong putting the image together. Try again in a moment.</value></data>
   <!-- Facts about the record: counts, bands, the lowest and highest number written
-       down. Never a direction, never an average — see Data/Models/RecordFacts.cs. -->
+       down. Never a direction, never an average: see Data/Models/RecordFacts.cs. -->
   <data name="Facts_CountOne" xml:space="preserve"><value>1 thing written down</value></data>
   <data name="Facts_CountMany" xml:space="preserve"><value>{0} things written down</value></data>
+  <data name="Facts_CountReadingOne" xml:space="preserve"><value>1 reading</value></data>
+  <data name="Facts_CountReadingMany" xml:space="preserve"><value>{0} readings</value></data>
+  <data name="Facts_CountWeighInOne" xml:space="preserve"><value>1 weigh-in</value></data>
+  <data name="Facts_CountWeighInMany" xml:space="preserve"><value>{0} weigh-ins</value></data>
+  <data name="Facts_CountDayOne" xml:space="preserve"><value>1 day recorded</value></data>
+  <data name="Facts_CountDayMany" xml:space="preserve"><value>{0} days recorded</value></data>
+  <data name="Facts_CountSeizureOne" xml:space="preserve"><value>1 seizure</value></data>
+  <data name="Facts_CountSeizureMany" xml:space="preserve"><value>{0} seizures</value></data>
+  <data name="Facts_CountEntryOne" xml:space="preserve"><value>1 entry</value></data>
+  <data name="Facts_CountEntryMany" xml:space="preserve"><value>{0} entries</value></data>
+  <data name="Facts_CountCustom" xml:space="preserve"><value>{0} × {1}</value></data>
   <data name="Facts_DoseOne" xml:space="preserve"><value>1 dose</value></data>
   <data name="Facts_DoseMany" xml:space="preserve"><value>{0} doses</value></data>
   <data name="Facts_LastDays" xml:space="preserve"><value>last {0} days</value></data>
@@ -1004,8 +1015,8 @@
   <data name="Today_RecordWater" xml:space="preserve"><value>Water</value></data>
   <data name="Today_RecordSeizure" xml:space="preserve"><value>Seizures</value></data>
   <data name="Today_RecordMedication" xml:space="preserve"><value>Doses</value></data>
-  <data name="Today_PickerShowElse" xml:space="preserve"><value>Show something else here</value></data>
-  <!-- Questions for the vet. A note to self about a conversation — never a record
+  <data name="Today_PickerTitle" xml:space="preserve"><value>What matters most today?</value></data>
+  <!-- Questions for the vet. A note to self about a conversation, never a record
        of the animal, so nothing here is worded as something to be done today. -->
   <data name="Vet_QuestionSection" xml:space="preserve"><value>For the next vet visit</value></data>
   <data name="Vet_QuestionRow" xml:space="preserve"><value>Question for the vet</value></data>
@@ -1013,6 +1024,8 @@
   <data name="Vet_QuestionSub" xml:space="preserve"><value>Something to remember to ask about {0}.</value></data>
   <data name="Vet_QuestionPlaceholder" xml:space="preserve"><value>What would you like to ask?</value></data>
   <data name="Vet_QuestionOpenHeading" xml:space="preserve"><value>Already on your list</value></data>
+  <data name="Vet_QuestionAbout" xml:space="preserve"><value>About {0} on {1}: </value></data>
+  <data name="Vet_QuestionAsk" xml:space="preserve"><value>Ask about this</value></data>
   <data name="Vet_QuestionSave" xml:space="preserve"><value>Add it</value></data>
   <data name="Vet_QuestionToast" xml:space="preserve"><value>Saved for the next visit.</value></data>
   <!-- ── Vet visits: the appointment as a thing the app knows about ──
@@ -1023,6 +1036,11 @@
   <data name="Today_VisitLine" xml:space="preserve"><value>{0} has a vet visit on {1}</value></data>
   <data name="Today_VisitLineWho" xml:space="preserve"><value>{0} sees {1} on {2}</value></data>
   <data name="Today_VisitSummaryReady" xml:space="preserve"><value>Your summary is ready.</value></data>
+  <data name="Today_VisitNotePrompt" xml:space="preserve"><value>Want to write down what they said?</value></data>
+  <data name="Today_VisitNoteWhoYesterday" xml:space="preserve"><value>You saw {0} yesterday.</value></data>
+  <data name="Today_VisitNoteWhoToday" xml:space="preserve"><value>You saw {0} today.</value></data>
+  <data name="Today_VisitNoteYesterday" xml:space="preserve"><value>{0} was at the vet yesterday.</value></data>
+  <data name="Today_VisitNoteToday" xml:space="preserve"><value>{0} was at the vet today.</value></data>
   <data name="Vet_VisitsTitle" xml:space="preserve"><value>Vet visits</value></data>
   <data name="Vet_VisitsSub" xml:space="preserve"><value>For {0}</value></data>
   <data name="Vet_EmptyTitle" xml:space="preserve"><value>No visits yet</value></data>
@@ -1030,25 +1048,25 @@
   <data name="Vet_AddVisit" xml:space="preserve"><value>Add a visit</value></data>
   <data name="Vet_PastVisits" xml:space="preserve"><value>PAST VISITS</value></data>
   <data name="Vet_HowDidItGo" xml:space="preserve"><value>How did it go?</value></data>
-  <data name="Vet_SinceVisit" xml:space="preserve"><value>Since your last visit — {0}, {1} days</value></data>
-  <data name="Vet_SinceStart" xml:space="preserve"><value>Since you started writing things down — {0}, {1} days</value></data>
+  <data name="Vet_SinceVisit" xml:space="preserve"><value>Since your last visit on {0}. {1} days</value></data>
+  <data name="Vet_SinceStart" xml:space="preserve"><value>Since you started writing things down on {0}. {1} days</value></data>
   <data name="Vet_WhatChanged" xml:space="preserve"><value>WHAT CHANGED</value></data>
   <data name="Vet_NewSince" xml:space="preserve"><value>NEW SINCE LAST TIME</value></data>
-  <data name="Vet_NewRecord" xml:space="preserve"><value>{0} — you started writing this down on {1}</value></data>
+  <data name="Vet_NewRecord" xml:space="preserve"><value>{0}. You started writing this down on {1}</value></data>
   <data name="Vet_WhatYouWrote" xml:space="preserve"><value>WHAT YOU WROTE DOWN</value></data>
   <data name="Vet_FullSummary" xml:space="preserve"><value>Full summary</value></data>
   <!-- The offer, shown once the free summary has been used, in its place. It says what
        the next one covers and what the tier is called, then stops. No countdown, no
        reference to the appointment being close, no red, no urgency: the appointment is
        already the deadline and leaning on it would use someone's worry as leverage.
-       The PRICE is never here — it comes from the store, localized. -->
+       The PRICE is never here: it comes from the store, localized. -->
   <data name="Vet_SummaryOfferTitle" xml:space="preserve"><value>That's {0}'s first summary</value></data>
   <data name="Vet_SummaryOfferBody" xml:space="preserve"><value>The next one covers everything from today onward: what changes, what you write down, and what you want to ask. It comes with Felova Full.</value></data>
   <data name="Vet_SummaryOfferPromise" xml:space="preserve"><value>Everything you have already written down stays yours to read and to export, subscribed or not.</value></data>
   <data name="Vet_QuestionsHeading" xml:space="preserve"><value>YOUR QUESTIONS ({0})</value></data>
   <data name="Vet_QuestionsEmpty" xml:space="preserve"><value>Anything you want to remember to ask will show up here.</value></data>
   <data name="Vet_QuestionAnswered" xml:space="preserve"><value>Mark as answered</value></data>
-  <!-- The ledger, as the summary reads it. Old value, new value, and the date —
+  <!-- The ledger, as the summary reads it. Old value, new value, and the date,
        never whether the change was an increase worth noting. -->
   <data name="Vet_LedgerStarted" xml:space="preserve"><value>Started · {0}</value></data>
   <data name="Vet_LedgerArchived" xml:space="preserve"><value>Retired</value></data>
@@ -1070,15 +1088,21 @@
   <data name="Vet_VisitNoteLabel" xml:space="preserve"><value>WHAT THE VET SAID</value></data>
   <data name="Vet_VisitNotePlaceholder" xml:space="preserve"><value>In your own words</value></data>
   <data name="Vet_VisitDelete" xml:space="preserve"><value>Remove this visit</value></data>
+  <data name="Vet_VisitEditDetails" xml:space="preserve"><value>Edit details</value></data>
+  <data name="Vet_VisitDayFormat" xml:space="preserve"><value>ddd, d MMM</value></data>
   <data name="Vet_VisitToastSaved" xml:space="preserve"><value>Visit saved.</value></data>
   <data name="Vet_VisitToastDeleted" xml:space="preserve"><value>Visit removed.</value></data>
   <data name="Export_SinceVisit" xml:space="preserve"><value>Since your last visit · {0} days</value></data>
+  <data name="Export_VisitOfferTitle" xml:space="preserve"><value>Was that for a visit?</value></data>
+  <data name="Export_VisitOfferBody" xml:space="preserve"><value>Add it and Felova will have the next summary ready.</value></data>
+  <data name="Export_VisitOfferAdd" xml:space="preserve"><value>Add the visit</value></data>
   <data name="Notif_ChannelAppointmentName" xml:space="preserve"><value>Vet visits</value></data>
   <data name="Notif_ChannelAppointmentDescription" xml:space="preserve"><value>One quiet reminder the evening before a visit.</value></data>
   <data name="Notif_AppointmentBodyNoTime" xml:space="preserve"><value>{0}. Your summary is ready.</value></data>
   <!-- Today's look-back half: one block per record in the pet's care plan.
        Replaced a hardcoded mood ribbon and weight chart. -->
   <data name="Today_LookingBack" xml:space="preserve"><value>Looking back</value></data>
+  <data name="Today_WhatChanged" xml:space="preserve"><value>What changed</value></data>
   <data name="Today_Range2W" xml:space="preserve"><value>2W</value></data>
   <data name="Today_Range1M" xml:space="preserve"><value>1M</value></data>
   <data name="Today_Range3M" xml:space="preserve"><value>3M</value></data>

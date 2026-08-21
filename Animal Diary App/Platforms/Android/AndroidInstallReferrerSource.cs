@@ -8,7 +8,7 @@ using Xamarin.Android.InstallReferrer.Api;
 /// <summary>
 /// Reads Google Play's install referrer through the Play Install Referrer Library
 /// (<c>com.android.installreferrer:installreferrer</c>, via Microsoft's binding). This is
-/// the only file that touches an install-referrer type — everything above it sees the plain
+/// the only file that touches an install-referrer type: everything above it sees the plain
 /// <see cref="IInstallReferrerSource"/>.
 ///
 /// <para>The library is a bound service with a callback, not an async call, so the listener
@@ -18,7 +18,7 @@ using Xamarin.Android.InstallReferrer.Api;
 /// <list type="bullet">
 ///   <item><b>The callback can fire more than once.</b> A service that disconnects and
 ///   reconnects re-enters the listener, and a second <c>SetResult</c> on the same source
-///   throws — on a background thread, during launch. Hence <c>TrySetResult</c> throughout.</item>
+///   throws: on a background thread, during launch. Hence <c>TrySetResult</c> throughout.</item>
 ///   <item><b>It can fire never.</b> A device with a broken or absent Play Store can leave
 ///   the connection pending forever, so the wait is time-bounded and the launch path
 ///   continues without an answer.</item>
@@ -96,7 +96,7 @@ public sealed class AndroidInstallReferrerSource : IInstallReferrerSource
         /// <c>ServiceUnavailable</c> rather than waiting out the timeout: the caller has a
         /// one-shot flag and nothing is gained by holding the launch path open for a
         /// connection that is gone. (The Java library's own SERVICE_DISCONNECTED constant is
-        /// not surfaced by this binding, and the two mean the same thing to us — no answer.)</summary>
+        /// not surfaced by this binding, and the two mean the same thing to us, no answer.)</summary>
         public void OnInstallReferrerServiceDisconnected() =>
             _ready.TrySetResult(InstallReferrerClient.InstallReferrerResponse.ServiceUnavailable);
     }

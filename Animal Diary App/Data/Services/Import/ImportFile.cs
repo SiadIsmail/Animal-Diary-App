@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  The wire shape of an import file — deserialization targets and nothing else.
+//  The wire shape of an import file: deserialization targets and nothing else.
 //
 //  Every field is NULLABLE, including the ones the format requires. That is
 //  deliberate: "absent" has to survive parsing so the validator can say "date is
@@ -14,7 +14,7 @@ using System.Text.Json.Serialization;
 //
 //  Unknown properties are CAPTURED rather than dropped ([JsonExtensionData]) so the
 //  preview can report them. A file from a future version of the format should import
-//  the parts this build understands and say plainly what it ignored — silence there
+//  the parts this build understands and say plainly what it ignored: silence there
 //  reads as "everything came through".
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -24,7 +24,7 @@ public sealed class ImportFile
     [JsonPropertyName("felova_import_version")]
     public int? Version { get; set; }
 
-    /// <summary>When the generating AI produced the file. Informational only — it is
+    /// <summary>When the generating AI produced the file. Informational only: it is
     /// shown in the preview and never used to date an entry.</summary>
     [JsonPropertyName("generated_at")]
     public string? GeneratedAt { get; set; }
@@ -45,7 +45,7 @@ public sealed class ImportFile
 /// <summary>One pet block: which animal these entries belong to, and the entries.</summary>
 public sealed class ImportPet
 {
-    /// <summary>"existing" or "new" — see <see cref="ImportPetMatch"/>. Required, and
+    /// <summary>"existing" or "new": see <see cref="ImportPetMatch"/>. Required, and
     /// never inferred from whether a name happens to match.</summary>
     [JsonPropertyName("match")]
     public string? Match { get; set; }
@@ -59,7 +59,7 @@ public sealed class ImportPet
     public string? Species { get; set; }
 
     // Birthday parts. Year is required for a new pet; month and day are optional and
-    // are never fabricated — the app stores an unknown month/day as null rather than
+    // are never fabricated: the app stores an unknown month/day as null rather than
     // inventing "January 1st" (see AI/domain.md → Pet birthday).
 
     [JsonPropertyName("birth_year")]
@@ -88,7 +88,7 @@ public sealed class ImportPet
     public Dictionary<string, JsonElement>? Unknown { get; set; }
 }
 
-/// <summary>One owner-defined tracker the file needs — matched to an existing one by
+/// <summary>One owner-defined tracker the file needs: matched to an existing one by
 /// name, or created.</summary>
 public sealed class ImportCustomTracker
 {
@@ -112,7 +112,7 @@ public sealed class ImportCustomTracker
     [JsonPropertyName("unit")]
     public string? Unit { get; set; }
 
-    /// <summary>One of the emoji the in-app picker offers. Decorative — an unknown one
+    /// <summary>One of the emoji the in-app picker offers. Decorative: an unknown one
     /// is normalized rather than rejected (see <see cref="ImportValidator"/>).</summary>
     [JsonPropertyName("icon")]
     public string? Icon { get; set; }
@@ -121,7 +121,7 @@ public sealed class ImportCustomTracker
     [JsonPropertyName("color")]
     public string? Color { get; set; }
 
-    /// <summary>How often the Journal should ask. Optional — see
+    /// <summary>How often the Journal should ask. Optional: see
     /// <see cref="ImportFormat.DefaultCustomCadence"/>.</summary>
     [JsonPropertyName("cadence")]
     public string? Cadence { get; set; }
@@ -146,7 +146,7 @@ public sealed class ImportCustomTracker
 /// and the discriminator is a plain string, so a union would buy nothing but a custom
 /// converter and a second place for the type vocabulary to live. The validator reads
 /// only the fields the type calls for and reports the rest as unexpected, which is a
-/// better error than a deserializer failing on a shape mismatch — "glucose entries need
+/// better error than a deserializer failing on a shape mismatch: "glucose entries need
 /// a value" is actionable; "could not convert" is not.</para>
 /// </summary>
 public sealed class ImportEntry
@@ -171,11 +171,11 @@ public sealed class ImportEntry
     [JsonPropertyName("value")]
     public decimal? Value { get; set; }
 
-    /// <summary>glucose — "before_food" / "after_food".</summary>
+    /// <summary>glucose: "before_food" / "after_food".</summary>
     [JsonPropertyName("context")]
     public string? Context { get; set; }
 
-    /// <summary>mood, appetite_level, water_level — 1..5.</summary>
+    /// <summary>mood, appetite_level, water_level: 1..5.</summary>
     [JsonPropertyName("level")]
     public int? Level { get; set; }
 
@@ -187,7 +187,7 @@ public sealed class ImportEntry
     [JsonPropertyName("ml")]
     public decimal? Ml { get; set; }
 
-    /// <summary>appetite_level, appetite_amount — free-text food label.</summary>
+    /// <summary>appetite_level, appetite_amount: free-text food label.</summary>
     [JsonPropertyName("food")]
     public string? Food { get; set; }
 
@@ -195,23 +195,23 @@ public sealed class ImportEntry
     [JsonPropertyName("duration_minutes")]
     public int? DurationMinutes { get; set; }
 
-    /// <summary>seizure — "generalized" / "focal" / "focal_to_generalized".</summary>
+    /// <summary>seizure: "generalized" / "focal" / "focal_to_generalized".</summary>
     [JsonPropertyName("seizure_type")]
     public string? SeizureType { get; set; }
 
-    /// <summary>custom — the <see cref="ImportCustomTracker.Ref"/> this records.</summary>
+    /// <summary>custom: the <see cref="ImportCustomTracker.Ref"/> this records.</summary>
     [JsonPropertyName("tracker")]
     public string? Tracker { get; set; }
 
-    /// <summary>custom — the number for an "amount" tracker.</summary>
+    /// <summary>custom: the number for an "amount" tracker.</summary>
     [JsonPropertyName("amount")]
     public decimal? Amount { get; set; }
 
-    /// <summary>mood, seizure, custom — free text the owner wrote.</summary>
+    /// <summary>mood, seizure, custom: free text the owner wrote.</summary>
     [JsonPropertyName("note")]
     public string? Note { get; set; }
 
-    /// <summary>mood — whether this note should reach the vet report's Owner's Notes.
+    /// <summary>mood: whether this note should reach the vet report's Owner's Notes.
     /// Defaults to false, matching the app: notes are private unless opted in per note.</summary>
     [JsonPropertyName("include_note_in_vet_report")]
     public bool? IncludeNoteInVetReport { get; set; }

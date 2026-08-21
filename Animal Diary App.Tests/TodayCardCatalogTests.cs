@@ -7,7 +7,7 @@ using Xunit;
 /// The two rules behind Today's customizable stat cards: which pair a pet starts with,
 /// and that one record can never occupy both cards.
 ///
-/// <para>Both are pure, and both are the kind of thing that breaks silently — a bad
+/// <para>Both are pure, and both are the kind of thing that breaks silently: a bad
 /// default shows an epileptic dog's owner a weigh-in instead of the last seizure, and a
 /// duplicate pair turns two cards into one fact shown twice.</para>
 /// </summary>

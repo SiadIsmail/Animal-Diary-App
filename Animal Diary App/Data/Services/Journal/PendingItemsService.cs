@@ -6,7 +6,7 @@ using Animal_Diary_App.Data.Models;
 /// Gathers a live snapshot for a pet + day and runs it through the pure
 /// <see cref="PendingEngine"/>. This is the async half; all the medical judgement
 /// stays in the engine so it can be unit-tested. Keeping this separate from the
-/// CalendarViewModel is deliberate — the pending list is new functionality, so it
+/// CalendarViewModel is deliberate: the pending list is new functionality, so it
 /// lives in its own service.
 /// </summary>
 /// <summary>Everything the Today page needs about the day's care in one snapshot:
@@ -57,7 +57,7 @@ public class PendingItemsService
     /// day's doses.
     ///
     /// <para>The Journal is that caller. Building its timeline needs both, and so does
-    /// this — so a reload used to read the pet's conditions, trackers and custom
+    /// this, so a reload used to read the pet's conditions, trackers and custom
     /// trackers twice, and run the medications → schedules → logs join twice, for one
     /// screen. Passing them in is deliberately explicit rather than a cache inside
     /// <see cref="CarePlanService"/>: a stale care plan means a tracker the owner just
@@ -75,7 +75,7 @@ public class PendingItemsService
     /// <summary>
     /// The Today page's snapshot: the pending list (same rules as the Journal's
     /// chips) plus the care ring's done/total counts, computed from ONE gather so
-    /// the two can never disagree. Water is a full tracker like the rest now — its
+    /// the two can never disagree. Water is a full tracker like the rest now: its
     /// next-up card routes to the Journal's water sheet, so it counts toward the
     /// ring exactly like glucose or appetite.
     /// </summary>
@@ -93,7 +93,7 @@ public class PendingItemsService
     }
 
     // Today's scheduled doses, each flagged with whether it has been acted on. A
-    // dose is "given" once it has any dose-log row (Taken / Skipped / Missed) — a
+    // dose is "given" once it has any dose-log row (Taken / Skipped / Missed): a
     // deliberately-skipped dose shouldn't keep nagging. Insulin is not special. The
     // meds → schedules → logs join is shared with the Journal timeline + Calendar
     // via DayDoseService; here we project it to the engine's flat snapshot.
@@ -118,7 +118,7 @@ public class PendingItemsService
         var appetiteAmounts = await _appetite.GetAmountsForRangeAsync(petId, from, day);
         var waterAmounts = await _water.GetAmountsForRangeAsync(petId, from, day);
         var waterLevels = await _water.GetLevelsForRangeAsync(petId, from, day);
-        // Every custom tracker's window in ONE query, grouped below — which is why a pet
+        // Every custom tracker's window in ONE query, grouped below, which is why a pet
         // with ten of them costs the same here as a pet with one.
         var customEntries = await _custom.GetForRangeAsync(petId, from, day);
 
@@ -128,11 +128,11 @@ public class PendingItemsService
             [TrackerId.Weight] = petEntries.Where(e => e.Weight > 0).Select(e => e.Date.Date).ToList(),
             [TrackerId.Glucose] = glucose.Select(g => g.Date.Date).ToList(),
             // A day counts as fed if EITHER a qualitative reading or a measured amount
-            // was logged — the union of both appetite stores' dates.
+            // was logged: the union of both appetite stores' dates.
             [TrackerId.Appetite] = appetite.Select(a => a.Date.Date)
                 .Concat(appetiteAmounts.Select(a => a.Date.Date)).ToList(),
             // A day counts as "watered" if EITHER an exact ml reading or a relative
-            // reading was logged — the union of both stores' dates.
+            // reading was logged: the union of both stores' dates.
             [TrackerId.Water] = waterAmounts.Select(w => w.Date.Date)
                 .Concat(waterLevels.Select(w => w.Date.Date)).ToList(),
         };

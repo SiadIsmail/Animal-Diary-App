@@ -7,7 +7,7 @@ using Animal_Diary_App.Helpers;
 /// <summary>
 /// The "feedback or a problem" sheet at the bottom of the Care page. Two doors and
 /// nothing else: the Discord community, or a direct email to the two people who
-/// build this. Deliberately not a form — a report typed into a text box inside a
+/// build this. Deliberately not a form: a report typed into a text box inside a
 /// broken app is the one message most likely to be lost, and neither door needs an
 /// account, a ticket number, or a reply we can't promise.
 /// </summary>
@@ -42,7 +42,7 @@ public sealed class FeedbackSheetViewModel : BaseViewModel
 
     /// <summary>Shown under the email row so the address is readable (and copyable by
     /// eye) even where no mail app is installed to launch. Instance property, not
-    /// static — compiled bindings can't resolve a static one.</summary>
+    /// static: compiled bindings can't resolve a static one.</summary>
     public string EmailAddress => ContactEmail;
 
     public ICommand OpenCommand { get; }
@@ -58,7 +58,7 @@ public sealed class FeedbackSheetViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            // No browser, or the launch was cancelled. Nothing to report — the sheet
+            // No browser, or the launch was cancelled. Nothing to report: the sheet
             // is already closed and the address is on screen behind it.
             Debug.WriteLine($"[Feedback] Discord launch failed: {ex}");
         }

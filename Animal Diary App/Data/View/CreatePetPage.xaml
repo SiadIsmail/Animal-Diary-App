@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-    CreatePetPage.xaml — onboarding step 1 of 2: IDENTITY
+    CreatePetPage.xaml: onboarding step 1 of 2: IDENTITY
     ─────────────────────────────────────────────────────────
     The simple, personal first screen: just the pet's name and a placeholder for
     the future profile-picture feature. "Next" carries the shared PetVM draft to
     PetDetailsPage (step 2) where the technical details are collected.
 
     Used in three contexts (all share this two-page flow):
-      1. First launch — no cancel button, welcoming feel
-      2. Add pet from Pets page — cancel button visible
-      3. Edit pet from Manage — prefilled, cancel button visible
+      1. First launch, no cancel button, welcoming feel
+      2. Add pet from Pets page: cancel button visible
+      3. Edit pet from Manage: prefilled, cancel button visible
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -49,7 +49,7 @@
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Water background — bottom layer, spans the whole page -->
+        <!-- Water background: bottom layer, spans the whole page -->
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ══════════ SCROLLABLE CONTENT ══════════ -->
@@ -73,7 +73,7 @@
                        IsVisible="{Binding PetVM.IdentitySubtitle, Converter={StaticResource StringToBoolConverter}}"
                        Margin="10,0"/>
 
-                <!-- ── Profile photo — tap to add/change/remove ── -->
+                <!-- ── Profile photo: tap to add/change/remove ── -->
                 <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnPhotoTapped"/>
@@ -215,7 +215,7 @@
                                Padding="0,14"/>
                     </Border>
 
-                    <!-- Crop and rotate the photo that is already there — the door back
+                    <!-- Crop and rotate the photo that is already there: the door back
                          into the editor for a photo that arrived crooked, so fixing it
                          never means taking it again. -->
                     <Border BackgroundColor="{StaticResource TealTint}"
@@ -234,7 +234,7 @@
                                Padding="0,14"/>
                     </Border>
 
-                    <!-- Remove — only when a photo is set -->
+                    <!-- Remove: only when a photo is set -->
                     <Border BackgroundColor="{StaticResource Glass}"
                             Stroke="{StaticResource GlassLine}"
                             StrokeThickness="1"

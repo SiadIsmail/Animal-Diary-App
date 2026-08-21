@@ -8,14 +8,14 @@ using Animal_Diary_App.Data.Services.Demo;
 /// <summary>
 /// A hidden developer panel, reached from Settings → "Code" and unlocked with a
 /// gate code. It surfaces the cloud/auth state and the recent event log that is
-/// otherwise swallowed to Debug — so silent sign-in drops, session expiries, and
+/// otherwise swallowed to Debug, so silent sign-in drops, session expiries, and
 /// sync errors become visible and copyable. Read-only diagnostics plus a couple
 /// of manual triggers; it stores and shows nothing user-facing, so its content
 /// is deliberately English-only (not a localized feature).
 /// </summary>
 public class DevSheetViewModel : BaseViewModel, IResettableDraft
 {
-    // The gate code. Obscure by intent — this is a developer affordance, not a
+    // The gate code. Obscure by intent: this is a developer affordance, not a
     // security boundary (the panel only ever shows coarse technical logs).
     private const string GateCode = "Sewr";
 
@@ -24,7 +24,7 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
     /// it opens the demo section and nothing else, so giving it out does not also hand over
     /// the cloud/auth diagnostics panel.
     ///
-    /// <para>It will leak — creators film themselves typing — and that is designed for
+    /// <para>It will leak (creators film themselves typing) and that is designed for
     /// rather than defended against. The worst a stranger can do with it is give themselves
     /// two extra pets they did not create, which sync nowhere (<c>Pet.IsDemo</c>) and which
     /// "Remove demo pets" deletes. Revocability would mean a server round trip on a panel
@@ -68,7 +68,7 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
         ClearLogCommand = new Command(() => { CloudDiagnostics.Clear(); RefreshState(); });
 
         // Both of these can throw (a rejected refresh raises CloudException), and a
-        // `new Command(async () => …)` lambda is async void — an escaping exception
+        // `new Command(async () => …)` lambda is async void: an escaping exception
         // takes the process down. Guarded, and the failure lands in the very log this
         // panel exists to show.
         SyncNowCommand = new Command(async () => await RunDiagnosticAsync(
@@ -103,12 +103,12 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
 
     public bool IsLocked => _access == Access.Locked;
 
-    /// <summary>The diagnostics half — developer code only.</summary>
+    /// <summary>The diagnostics half: developer code only.</summary>
     public bool IsUnlocked => _access == Access.Developer;
 
     /// <summary>The demo half. The creator and developer codes reach it: a developer needs
     /// the seeded pets as much as a creator does, and it is the fixture that replaced the
-    /// compile-time switches. The import code does NOT — it opens one door.</summary>
+    /// compile-time switches. The import code does NOT: it opens one door.</summary>
     public bool ShowDemo => _access is Access.Creator or Access.Developer;
 
     /// <summary>The importer's door. The developer code reaches it too, so testing the
@@ -125,7 +125,7 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
     public string Log { get => _log; set => SetProperty(ref _log, value); }
 
     /// <summary>Asks the hosting page to push the importer. A ContentView cannot navigate,
-    /// so the page that hosts this sheet does it — the same shape DocumentsViewModel uses
+    /// so the page that hosts this sheet does it: the same shape DocumentsViewModel uses
     /// for its preview push.</summary>
     public event Action? ImportRequested;
 
@@ -247,9 +247,9 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Signed in : {_auth.IsSignedIn}");
-        sb.AppendLine($"Email     : {_auth.Email ?? "—"}");
+        sb.AppendLine($"Email     : {_auth.Email ?? "-"}");
         var uid = _auth.UserId;
-        sb.AppendLine($"User id   : {(string.IsNullOrEmpty(uid) ? "—" : uid)}");
+        sb.AppendLine($"User id   : {(string.IsNullOrEmpty(uid) ? "-" : uid)}");
 
         if (_auth.SessionExpiresUtc is DateTime exp)
         {
@@ -259,7 +259,7 @@ public class DevSheetViewModel : BaseViewModel, IResettableDraft
         }
         else
         {
-            sb.AppendLine("Token exp : —");
+            sb.AppendLine("Token exp : -");
         }
 
         sb.AppendLine($"Backup on : {_sync.IsBackupEnabled}");

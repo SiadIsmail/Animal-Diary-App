@@ -12,12 +12,12 @@ using SQLite;
 //
 //  Three absences are deliberate:
 //
-//   • NO STATUS COLUMN. A visit is past if its date is in the past — derived, like
+//   • NO STATUS COLUMN. A visit is past if its date is in the past: derived, like
 //     Pet.AgeYears and VetQuestion.IsOpen. A stored status is a second source of
 //     truth that starts disagreeing with the calendar the moment a device sleeps
 //     through midnight.
 //   • NO PRACTICE OR VET ENTITY, no directory, no lookup. Practice and VetName are
-//     free-text labels for context, exactly like AppetiteEntry.Food — recorded
+//     free-text labels for context, exactly like AppetiteEntry.Food: recorded
 //     without building a system around them.
 //   • NO RECURRENCE. A visit happens; the next one is a different visit.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,13 +38,13 @@ public class VetVisit : ISyncable
     [Indexed]
     public int PetId { get; set; }
 
-    /// <summary>The day, date-only and LOCAL — the same convention as
+    /// <summary>The day, date-only and LOCAL: the same convention as
     /// <see cref="MedicationDoseLog.ScheduledDate"/>. An appointment is a wall-clock
     /// thing; converting it to UTC would move it across midnight for half the world.</summary>
     public DateTime Date { get; set; }
 
     /// <summary><b>Nullable, and that is the design.</b> Owners often know the day and
-    /// not the slot, and this app never fabricates an unknown part of a date — the same
+    /// not the slot, and this app never fabricates an unknown part of a date: the same
     /// rule that leaves <c>Pet.BirthMonth</c> null rather than inventing January.</summary>
     public TimeSpan? Time { get; set; }
 
@@ -59,11 +59,11 @@ public class VetVisit : ISyncable
     public string VisitNote { get; set; } = string.Empty;
 
     /// <summary>The moment the visit sits at, for ordering. A visit with no time sorts
-    /// at the start of its day — it still happens on that day.</summary>
+    /// at the start of its day: it still happens on that day.</summary>
     [Ignore]
     public DateTime When => Date.Date + (Time ?? TimeSpan.Zero);
 
-    /// <summary>Past means the DAY is behind us. Derived, never stored — and by day
+    /// <summary>Past means the DAY is behind us. Derived, never stored, and by day
     /// rather than by the hour, so a morning appointment does not become "past" at
     /// lunchtime while the owner is still in the waiting room.</summary>
     [Ignore]
@@ -75,7 +75,7 @@ public class VetVisit : ISyncable
 
     /// <summary>
     /// When this visit's ONE reminder fires: the evening before, whatever time of day
-    /// the visit itself is at — including a visit with no time at all, which is exactly
+    /// the visit itself is at: including a visit with no time at all, which is exactly
     /// the case an "N hours before" rule could not answer.
     ///
     /// <para>Late enough that the day is winding down and tomorrow is being thought

@@ -20,7 +20,7 @@ using SQLite;
 //  the time-of-day the reading was taken, shown on the timeline.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// <summary>Whether a glucose reading was taken before or after food — the single
+/// <summary>Whether a glucose reading was taken before or after food: the single
 /// most important bit of context for interpreting the number.</summary>
 [StoreAsText]
 public enum FoodContext
@@ -30,7 +30,7 @@ public enum FoodContext
 }
 
 /// <summary>One blood-glucose reading. Multiple per day are expected (a PerDay
-/// tracker), so these are never upserted — each reading is its own row.</summary>
+/// tracker), so these are never upserted: each reading is its own row.</summary>
 public class GlucoseEntry : ISyncable
 {
     [PrimaryKey, AutoIncrement]
@@ -62,19 +62,19 @@ public class GlucoseEntry : ISyncable
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Appetite — like water, TWO modes across TWO stores (see WaterAmountEntry /
+//  Appetite: like water, TWO modes across TWO stores (see WaterAmountEntry /
 //  WaterLevelEntry for the identical shape and the reasons):
 //
-//   • AppetiteEntry       — the qualitative reading (Didn't eat … Everything),
+//   • AppetiteEntry      : the qualitative reading (Didn't eat … Everything),
 //     ONE per day, replace-on-relog. The default mode.
-//   • AppetiteAmountEntry — an exact measured amount of food in grams, ADDITIVE
+//   • AppetiteAmountEntry: an exact measured amount of food in grams, ADDITIVE
 //     like glucose (many per day, never upserted; the report sums per day).
 //
-//  Both carry an OPTIONAL Food string — free-text context ("chicken kibble"),
+//  Both carry an OPTIONAL Food string: free-text context ("chicken kibble"),
 //  never a food entity or change-tracking. Both can coexist on a day.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// <summary>The day's qualitative appetite reading — one per day (like Mood + Weight).
+/// <summary>The day's qualitative appetite reading: one per day (like Mood + Weight).
 /// Stored as the raw 1–5 level; the word is resolved for display (see
 /// <see cref="AppetiteLevelExtensions"/>). A number is never shown to the owner.</summary>
 public class AppetiteEntry : ISyncable
@@ -97,16 +97,16 @@ public class AppetiteEntry : ISyncable
 
     public TimeSpan Time { get; set; }
 
-    /// <summary>1..5 — see <see cref="AppetiteLevel"/>. Stored as the int; displayed
+    /// <summary>1..5: see <see cref="AppetiteLevel"/>. Stored as the int; displayed
     /// as the matching word, never as "3/5".</summary>
     public int Level { get; set; }
 
     /// <summary>Optional free-text food context ("chicken kibble"), or empty. Never a
-    /// food entity — just a label the owner can attach and the report can list.</summary>
+    /// food entity: just a label the owner can attach and the report can list.</summary>
     public string Food { get; set; } = string.Empty;
 }
 
-/// <summary>One exact measured food amount in grams. Additive — many per day are
+/// <summary>One exact measured food amount in grams. Additive: many per day are
 /// expected (a meal each), so never upserted; each is its own row and the report sums
 /// them per day. Mirrors <see cref="WaterAmountEntry"/>.</summary>
 public class AppetiteAmountEntry : ISyncable
@@ -138,7 +138,7 @@ public class AppetiteAmountEntry : ISyncable
 
 /// <summary>One seizure occurrence. A complete seizure diary is one of the most
 /// useful things an owner can hand a vet, so this captures when it happened, how
-/// long it lasted, and anything noticed — while it's still fresh. Logged from the
+/// long it lasted, and anything noticed, while it's still fresh. Logged from the
 /// "+" sheet (an Event tracker), never nagged for.</summary>
 public class SeizureEntry : ISyncable
 {
@@ -163,7 +163,7 @@ public class SeizureEntry : ISyncable
     /// <summary>How long it lasted, in minutes. Null when the owner didn't time it.</summary>
     public int? DurationMinutes { get; set; }
 
-    /// <summary>What kind it was, or NULL when the owner didn't say — which is the
+    /// <summary>What kind it was, or NULL when the owner didn't say, which is the
     /// resting state and a normal answer, not a skipped field. There is deliberately no
     /// "Unknown" member: an owner who doesn't know picks nothing, and the app never
     /// infers a type from the duration, the note, or anything else.</summary>
@@ -173,7 +173,7 @@ public class SeizureEntry : ISyncable
 }
 
 /// <summary>
-/// How a seizure presented — the vet's own vocabulary, because this exists to be read
+/// How a seizure presented: the vet's own vocabulary, because this exists to be read
 /// at an appointment. The app only ever records the owner's answer; nothing suggests,
 /// derives or second-guesses it (AI/app-voice.md §16).
 ///
@@ -182,7 +182,7 @@ public class SeizureEntry : ISyncable
 /// property's declared type, so on a nullable enum (<c>SeizureType?</c> is
 /// <c>Nullable&lt;SeizureType&gt;</c>) the attribute is never found and the column
 /// silently becomes an integer anyway. Pinning the numbers makes that storage safe
-/// instead of a trap. The CLOUD column is text (see SyncTableMaps) — the member names
+/// instead of a trap. The CLOUD column is text (see SyncTableMaps): the member names
 /// are the wire format there, so renaming one orphans every synced row.
 /// </summary>
 public enum SeizureType
@@ -200,7 +200,7 @@ public enum SeizureType
 public static class SeizureTypeExtensions
 {
     /// <summary>The localized term for a stored type (EN + DE via AppStrings). One set of
-    /// words for the sheet, the timeline and the vet report — the owner and the vet must
+    /// words for the sheet, the timeline and the vet report: the owner and the vet must
     /// never be shown different names for the same answer.</summary>
     public static string GetDisplayName(this SeizureType type) =>
         Animal_Diary_App.Helpers.LocalizationManager.Instance.GetString($"Journal_SeizureType{type}");
@@ -211,20 +211,20 @@ public static class SeizureTypeExtensions
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Water intake — TWO independent stores, because the two modes have different
+//  Water intake: TWO independent stores, because the two modes have different
 //  shapes (and a table can carry only one cloud conflict key):
 //
-//   • WaterAmountEntry — exact millilitre readings, ADDITIVE like glucose: many
+//   • WaterAmountEntry: exact millilitre readings, ADDITIVE like glucose: many
 //     per day, each its own event, never upserted. The owner's choice how to
-//     split it — four 100 ml sips or one 400 ml bowl both land as the same daily
+//     split it: four 100 ml sips or one 400 ml bowl both land as the same daily
 //     total (the report sums per day).
-//   • WaterLevelEntry — the quick relative reading, one per day like appetite:
+//   • WaterLevelEntry: the quick relative reading, one per day like appetite:
 //     re-logging replaces the day's row.
 //
 //  Both can coexist for one day; nothing forces the owner to pick a single mode.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// <summary>One exact water reading in millilitres. Additive — many per day are
+/// <summary>One exact water reading in millilitres. Additive: many per day are
 /// expected (the owner logs each drink), so these are never upserted; each is its
 /// own row and the report sums them per day. Mirrors <see cref="GlucoseEntry"/>.</summary>
 public class WaterAmountEntry : ISyncable
@@ -252,7 +252,7 @@ public class WaterAmountEntry : ISyncable
     public decimal AmountMl { get; set; }
 }
 
-/// <summary>The day's relative water reading — one per day (like Appetite + Mood +
+/// <summary>The day's relative water reading: one per day (like Appetite + Mood +
 /// Weight). Stored as the raw 1–5 level; the word is resolved for display (see
 /// <see cref="WaterLevelExtensions"/>). A number is never shown to the owner.</summary>
 public class WaterLevelEntry : ISyncable
@@ -275,12 +275,12 @@ public class WaterLevelEntry : ISyncable
 
     public TimeSpan Time { get; set; }
 
-    /// <summary>1..5 — see <see cref="WaterLevel"/>. Stored as the int; displayed as
+    /// <summary>1..5: see <see cref="WaterLevel"/>. Stored as the int; displayed as
     /// the matching word, never "3/5".</summary>
     public int Level { get; set; }
 }
 
-/// <summary>The five relative water-intake levels — the quick mode for owners who
+/// <summary>The five relative water-intake levels: the quick mode for owners who
 /// don't measure the bowl. The owner sees the WORD; the app stores the int. As with
 /// appetite, there is deliberately no "3/5" anywhere, and no judgement (a low reading
 /// is a neutral fact).</summary>
@@ -306,7 +306,7 @@ public static class WaterLevelExtensions
     }
 
     /// <summary>Fraction of the drop/glass to fill for the level's indicator (0..1).
-    /// Used by the water sheet's progressively-filled glass — no numbers shown.</summary>
+    /// Used by the water sheet's progressively-filled glass, no numbers shown.</summary>
     public static double GlassFill(this WaterLevel level) =>
         level == WaterLevel.None ? 0 : (int)level / 5.0;
 }
@@ -335,7 +335,7 @@ public static class AppetiteLevelExtensions
     }
 
     /// <summary>Fraction of the bowl to fill for the level's indicator (0..1). Used by
-    /// the appetite sheet's progressively-filled bowl — no numbers shown.</summary>
+    /// the appetite sheet's progressively-filled bowl, no numbers shown.</summary>
     public static double BowlFill(this AppetiteLevel level) =>
         level == AppetiteLevel.None ? 0 : (int)level / 5.0;
 }

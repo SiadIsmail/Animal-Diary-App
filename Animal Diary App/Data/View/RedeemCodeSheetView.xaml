@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- RedeemCodeSheetView — entering a code, on the shared FelovaBottomSheet. ONE box for both
+<!-- RedeemCodeSheetView: entering a code, on the shared FelovaBottomSheet. ONE box for both
      kinds: a creator code (public, grants nothing, works signed out) and an access code
      (unique, grants a year, needs an account). The server decides which was typed; the user
      is never asked. The sign-in hand-off is a RESULT state, shown only when a submitted code
-     turned out not to be a creator code while signed out — gating the box on sign-in would
+     turned out not to be a creator code while signed out: gating the box on sign-in would
      block creator codes, whose whole audience has no account yet. Reached from Settings
      only, never from the subscribe sheet. BindingContext is a RedeemCodeSheetViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"

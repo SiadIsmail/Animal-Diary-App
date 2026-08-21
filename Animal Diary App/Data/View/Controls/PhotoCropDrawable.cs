@@ -8,7 +8,7 @@ using Microsoft.Maui.Graphics;
 /// <c>GraphicsView</c> (the <see cref="ProgressRingView"/> / <c>WeightChartDrawable</c>
 /// precedent). No third-party cropper, and nothing here ships a native library.
 ///
-/// <para>The mask is a CIRCLE because the destination is one — <see cref="PetAvatarView"/>
+/// <para>The mask is a CIRCLE because the destination is one: <see cref="PetAvatarView"/>
 /// is round everywhere it appears. The square crop is what gets written; the circle is
 /// what the owner will actually see of it, so it is what they should be aiming with.</para>
 ///
@@ -23,7 +23,7 @@ public sealed class PhotoCropDrawable : IDrawable
     // Breathing room so the mask ring isn't flush against the stage edge.
     private const float Inset = 10f;
 
-    /// <summary>The staged photo's pixels. Null while one is loading — the stage draws
+    /// <summary>The staged photo's pixels. Null while one is loading: the stage draws
     /// its backdrop and nothing else rather than flashing a half-loaded image.</summary>
     public IImage? Image { get; set; }
 
@@ -43,7 +43,7 @@ public sealed class PhotoCropDrawable : IDrawable
     /// <summary>The ring around the crop circle.</summary>
     public Color Outline { get; set; } = Colors.White;
 
-    /// <summary>Behind the photo — visible as bars beside a portrait shot at zoom 1.</summary>
+    /// <summary>Behind the photo: visible as bars beside a portrait shot at zoom 1.</summary>
     public Color Backdrop { get; set; } = Colors.Black;
 
     /// <summary>The crop square: the largest centred square the stage can hold. Public and
@@ -80,7 +80,7 @@ public sealed class PhotoCropDrawable : IDrawable
             canvas.Scale(scale, scale);
 
             // Drawn at the SOURCE size and scaled by the shared factor, rather than at
-            // whatever the decoded image reports — same reason SourceWidth exists.
+            // whatever the decoded image reports: same reason SourceWidth exists.
             canvas.DrawImage(image, -SourceWidth / 2f, -SourceHeight / 2f, SourceWidth, SourceHeight);
 
             canvas.RestoreState();

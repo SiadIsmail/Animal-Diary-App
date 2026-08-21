@@ -17,7 +17,7 @@ using Animal_Diary_App.Helpers;
 /// none of <c>redeem_access_code</c>'s ten-attempts-per-quarter-hour budget.</para>
 ///
 /// <para><b>Signed out is the normal case, not an edge case</b>, and the two kinds diverge
-/// there. A creator code still works with no account (that is the whole point — it must
+/// there. A creator code still works with no account (that is the whole point: it must
 /// reach someone who installed the app a minute ago and has not signed up). An access code
 /// cannot, because a grant has to be bound to an account, so that path hands off to the
 /// account door instead of failing a redemption they cannot fix.</para>
@@ -85,7 +85,7 @@ public sealed class RedeemCodeSheetViewModel : BaseViewModel, IResettableDraft
 
     private bool _needsAccount;
     /// <summary>Set only after a submitted code turned out NOT to be a creator code while
-    /// signed out — i.e. the one case where an account is genuinely required.
+    /// signed out: i.e. the one case where an account is genuinely required.
     ///
     /// <para>This is a <b>result</b> of an attempt, not a mode the sheet opens in. The box is
     /// always shown: gating it on sign-in would block creator codes, which are meant to be
@@ -225,7 +225,7 @@ public sealed class RedeemCodeSheetViewModel : BaseViewModel, IResettableDraft
     /// <summary>Product friction only: are people mistyping codes, hitting the limit, or
     /// bouncing off the account requirement? The code, the campaign and the resulting expiry
     /// are never properties. Campaign attribution is answered in Postgres
-    /// (<c>access_code_stats</c>), where it is exact — see AI/analytics.md.</summary>
+    /// (<c>access_code_stats</c>), where it is exact: see AI/analytics.md.</summary>
     private void Track(string outcome) =>
         _analytics.Track(AnalyticsEvents.AccessCodeRedeemed, new Dictionary<string, object?>
         {

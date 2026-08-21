@@ -5,7 +5,7 @@ using Animal_Diary_App.Data.Models;
 using Xunit;
 
 /// <summary>
-/// Facts about the record — the arithmetic, not the wording.
+/// Facts about the record: the arithmetic, not the wording.
 ///
 /// <para>Every failure here is silent in the app: the panel still renders, with numbers
 /// that quietly say something the owner never wrote down. A band boundary off by an hour
@@ -59,7 +59,7 @@ public class RecordFactsTests
         Assert.Equal(new DayPartCounts(2, 2, 2, 2), facts.DayParts);
     }
 
-    /// <summary>All four, always, in fixed order — an empty band is a zero that stays on
+    /// <summary>All four, always, in fixed order: an empty band is a zero that stays on
     /// screen. Dropping it, or leading with the busiest, would be the app choosing the
     /// finding instead of the owner seeing it.</summary>
     [Fact]
@@ -75,7 +75,7 @@ public class RecordFactsTests
 
     /// <summary>A one-per-day store counts DAYS. Counting its rows would inflate every
     /// count the moment a revived tombstone or a raced natural-key merge left two rows
-    /// on one date — and nothing about the displayed number would look wrong.</summary>
+    /// on one date, and nothing about the displayed number would look wrong.</summary>
     [Fact]
     public void OnePerDayStore_CountsDaysNotRows()
     {
@@ -111,6 +111,48 @@ public class RecordFactsTests
         Assert.Equal(facts.Count, facts.DayParts.Total);
     }
 
+    // ── Where the day-part row appears ───────────────────────────────────────
+    //
+    // Day-parts are stated where the entry's TIME IS A FACT ABOUT THE PET and suppressed
+    // where it is a fact about the owner's routine. Getting this wrong is silent: the row
+    // simply appears (or does not) with numbers that describe when someone picks up their
+    // phone. The counts themselves are unchanged either way: only whether they are worth
+    // stating. See Data/Models/RecordFacts.cs.
+
+    [Fact]
+    public void AnEventStore_StatesItsDayParts()
+    {
+        Assert.True(Build(events: new[] { At(1, 7), At(1, 20) }).StatesDayParts);
+    }
+
+    [Fact]
+    public void AOnePerDayStore_DoesNot()
+    {
+        Assert.False(Build(perDay: new[] { At(1, 8, value: 5.19m), At(2, 9, value: 5.2m) }).StatesDayParts);
+    }
+
+    /// <summary>Morning versus evening is the POINT of a dose, so doses state the row
+    /// even though nothing about them is a reading.</summary>
+    [Fact]
+    public void Doses_StateTheirDayParts()
+    {
+        var facts = Build(events: new[] { At(1, 8), At(1, 20) }, doses: new DoseCounts(2, 0, 0));
+
+        Assert.True(facts.StatesDayParts);
+    }
+
+    /// <summary>Water and appetite hold both shapes. As soon as there are measured
+    /// events, the record genuinely has entries whose moment is a datum.</summary>
+    [Fact]
+    public void ARecordWithBothShapes_StatesTheRowOnceItHasEvents()
+    {
+        Assert.True(Build(
+            events: new[] { At(1, 8, value: 180m) },
+            perDay: new[] { At(1, 20) }).StatesDayParts);
+
+        Assert.False(Build(perDay: new[] { At(1, 20) }).StatesDayParts);
+    }
+
     // ── Nothing written down ─────────────────────────────────────────────────
 
     /// <summary>A zero-count snapshot, never null: "you wrote nothing down" is itself a
@@ -130,7 +172,7 @@ public class RecordFactsTests
         Assert.Null(facts.LastOn);
     }
 
-    /// <summary>An empty range still carries the dose counts — a period where every dose
+    /// <summary>An empty range still carries the dose counts: a period where every dose
     /// went unanswered is not the same as one with no medication in it.</summary>
     [Fact]
     public void EmptyRange_StillCarriesDoseCounts()
@@ -162,7 +204,7 @@ public class RecordFactsTests
         Assert.Equal(new DateTime(2026, 6, 4), facts.LastOn);
     }
 
-    /// <summary>Moments can arrive in any order — the stores are queried without one.</summary>
+    /// <summary>Moments can arrive in any order: the stores are queried without one.</summary>
     [Fact]
     public void OrderOfArrival_DoesNotChangeAnything()
     {
@@ -172,7 +214,7 @@ public class RecordFactsTests
         Assert.Equal(ascending, descending);
     }
 
-    /// <summary>A record with no numbers — a seizure, a mood, a Tick tracker — reports
+    /// <summary>A record with no numbers (a seizure, a mood, a Tick tracker) reports
     /// counts and dates and nothing else. Lowest/Highest on a qualitative record would
     /// mean an observation had been turned into a number.</summary>
     [Fact]
@@ -207,7 +249,7 @@ public class RecordFactsTests
     /// Nothing in this read model averages, trends, ranks or counts a run of days.
     ///
     /// <para>A ratchet, not a proof: it cannot see inside a method body. What it does
-    /// catch is the way this actually gets reintroduced — someone adds
+    /// catch is the way this actually gets reintroduced: someone adds
     /// <c>AverageValue</c> or <c>DaysSince</c> because a screen wanted it, and every
     /// review after that treats it as part of the shape. An average of readings taken at
     /// irregular times is a number that looks meaningful and is not; a streak is

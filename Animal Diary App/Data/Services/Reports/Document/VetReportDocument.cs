@@ -6,23 +6,23 @@ using MigraDoc.DocumentObjectModel;
 /// <summary>
 /// Builds a report as a MigraDoc <see cref="MigraDoc.DocumentObjectModel.Document"/>:
 /// the DTO plus an ordered list of sections. To reorder, remove or add a section, edit
-/// <see cref="DesignedSections"/> — nothing else. Sections with no content for this
+/// <see cref="DesignedSections"/>: nothing else. Sections with no content for this
 /// pet/range omit themselves via <see cref="IVetReportSection.HasContent"/>.
 ///
 /// <para><b>Two documents, one layer.</b> The section list is chosen by
 /// <see cref="VetReportData.Style"/>: the designed report gets all of them, the plain
-/// export gets the header and the log. Everything else — page setup, the running header,
-/// the disclaimer footer, fonts, the renderer — is shared, deliberately. A separate PDF
+/// export gets the header and the log. Everything else (page setup, the running header,
+/// the disclaimer footer, fonts, the renderer) is shared, deliberately. A separate PDF
 /// path for the free export is how the free export quietly rots, and it would be a second
 /// place for a PDF dependency to creep in (AI/known-constraints.md: the stack must stay
 /// free of native libraries).</para>
 ///
 /// The caller owns the <see cref="ReportContext"/> (its temp chart files must survive until
-/// the PDF is rendered) — see <c>VetReportService</c>.
+/// the PDF is rendered): see <c>VetReportService</c>.
 /// </summary>
 public sealed class VetReportDocument
 {
-    /// <summary>The designed report, top to bottom — decreasing decision-value.</summary>
+    /// <summary>The designed report, top to bottom: decreasing decision-value.</summary>
     private static readonly IVetReportSection[] DesignedSections =
     {
         new HeaderSection(),
@@ -38,7 +38,7 @@ public sealed class VetReportDocument
 
     /// <summary>The plain export. The header stays because app-voice §18 requires the
     /// pet, the species, the age and the period covered at the top of anything that lands
-    /// in front of a professional — that is identification, not design work, and a page of
+    /// in front of a professional, that is identification, not design work, and a page of
     /// undated rows about an unnamed animal is not a form a vet can read.</summary>
     private static readonly IVetReportSection[] PlainSections =
     {
@@ -105,7 +105,7 @@ public sealed class VetReportDocument
         var title = p.AddFormattedText(VetReportStrings.RunningTitle(_data.Pet.Name), TextFormat.Bold);
         title.Size = VetReportStyles.SmallSize;
         p.AddTab();
-        p.AddText($"{_data.From.ToString(VetReportStyles.DateFormat)} – {_data.To.ToString(VetReportStyles.DateFormat)}");
+        p.AddText($"{_data.From.ToString(VetReportStyles.DateFormat)}: {_data.To.ToString(VetReportStyles.DateFormat)}");
     }
 
     // The footer is the report's one HARD RULE made visible: everything above is

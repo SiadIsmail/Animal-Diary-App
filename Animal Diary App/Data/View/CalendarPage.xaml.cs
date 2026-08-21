@@ -53,7 +53,7 @@ public partial class CalendarPage : ContentPage
 	}
 
 	/// <summary>First real log (dose or journal entry): record the milestone once.
-	/// Never blocks the log, and nothing on this path may ever ask for money — see
+	/// Never blocks the log, and nothing on this path may ever ask for money: see
 	/// the note above <see cref="OpenSheetForKindAsync"/>.</summary>
 	private async Task MaybeHandleFirstLogAsync()
 	{
@@ -78,7 +78,7 @@ public partial class CalendarPage : ContentPage
 	{
 		base.OnAppearing();
 
-		// Only the visible tab animates its backdrop — see MainPage for why.
+		// Only the visible tab animates its backdrop: see MainPage for why.
 		Backdrop.Start();
 
 		// Engagement signal: the Journal tab was opened.
@@ -88,6 +88,7 @@ public partial class CalendarPage : ContentPage
 		vm.JournalVM.PropertyChanged += OnJournalVmPropertyChanged;
 		vm.JournalVM.RequestOpenSheet += OnRequestOpenSheet;
 		vm.JournalVM.ItemDeleted += OnItemDeleted;
+		vm.JournalVM.AskAboutRequested += OnAskAboutRequested;
 		vm.GlucoseSheetVM.Saved += OnSheetSaved;
 		vm.MoodSheetVM.Saved += OnSheetSaved;
 		vm.WeightSheetVM.Saved += OnSheetSaved;
@@ -98,13 +99,13 @@ public partial class CalendarPage : ContentPage
 		vm.CustomEntrySheetVM.Saved += OnSheetSaved;
 
 		// Another caregiver's changes landing while the Journal is visible reload
-		// it in place — same stale-context path an appearance uses.
+		// it in place: same stale-context path an appearance uses.
 		vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
 
 		await ReloadDataAsync();
 	}
 
-	/// <summary>The Journal's full stale-context reload — runs on every appearance
+	/// <summary>The Journal's full stale-context reload: runs on every appearance
 	/// AND when a cloud sync applies remote changes while the page is visible.
 	/// Routes through the (pet, date) marker so it stays deduped.</summary>
 	private async Task ReloadDataAsync()
@@ -122,7 +123,7 @@ public partial class CalendarPage : ContentPage
 			if (key == _loaded && DateTime.UtcNow - _loadedAtUtc < PageLoadKey.Freshness)
 				return;
 
-			// Data may have changed on other tabs while we were away — mark the
+			// Data may have changed on other tabs while we were away: mark the
 			// Journal context stale so exactly one reload runs for this appearance
 			// (usually via the property-changed handler as PrepareDataAsync loads).
 			_lastJournalPetId = -1;
@@ -141,7 +142,7 @@ public partial class CalendarPage : ContentPage
 			}
 
 			// Arriving on a day that was ALREADY finished is not an achievement to
-			// replay — snap the paws on. The staggered fade belongs to the moment the
+			// replay: snap the paws on. The staggered fade belongs to the moment the
 			// day becomes done, which OnJournalVmPropertyChanged owns. It also used to
 			// hold this reload open for 720ms of Task.Delay on every appearance.
 			if (vm.JournalVM.ShowAllDone)
@@ -161,7 +162,7 @@ public partial class CalendarPage : ContentPage
 		catch (Exception ex)
 		{
 			// A failed load must degrade to an empty page, never crash the app
-			// (async void callers — an escaping exception here kills the process).
+			// (async void callers: an escaping exception here kills the process).
 			System.Diagnostics.Debug.WriteLine($"[CalendarPage] reload failed: {ex}");
 		}
 	}
@@ -178,6 +179,7 @@ public partial class CalendarPage : ContentPage
 		vm.JournalVM.PropertyChanged -= OnJournalVmPropertyChanged;
 		vm.JournalVM.RequestOpenSheet -= OnRequestOpenSheet;
 		vm.JournalVM.ItemDeleted -= OnItemDeleted;
+		vm.JournalVM.AskAboutRequested -= OnAskAboutRequested;
 		vm.GlucoseSheetVM.Saved -= OnSheetSaved;
 		vm.MoodSheetVM.Saved -= OnSheetSaved;
 		vm.WeightSheetVM.Saved -= OnSheetSaved;
@@ -186,6 +188,25 @@ public partial class CalendarPage : ContentPage
 		vm.VetQuestionSheetVM.Saved -= OnVetQuestionSaved;
 		vm.WaterSheetVM.Saved -= OnSheetSaved;
 		vm.CustomEntrySheetVM.Saved -= OnSheetSaved;
+	}
+
+	// A timeline row was swiped for "ask about this". The question sheet is already
+	// hosted here, so it opens in place, pre-filled with the entry's kind and date as
+	// ordinary editable text. Free on every tier, like everything else on this page.
+	private async void OnAskAboutRequested(string prefill)
+	{
+		try
+		{
+			await vm.VetQuestionSheetVM.OpenAsync(
+				vm.CalendarVM.CurrentPetId,
+				vm.CalendarVM.ActivePetName,
+				vm.CalendarVM.CurrentSelectedDate,
+				prefill);
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[Journal] ask-about open failed: {ex}");
+		}
 	}
 
 	/// <summary>Jump-to-today: snap the selection back to the current date.</summary>
@@ -211,7 +232,7 @@ public partial class CalendarPage : ContentPage
 					vm.JournalVM.OpenAddSheetCommand.Execute(null);
 					break;
 				case JournalChipKind.Medication:
-					// The dose loop. Never blocked, in any state — a P0 invariant with a test.
+					// The dose loop. Never blocked, in any state: a P0 invariant with a test.
 					await LogDoseFlowAsync(chip, v);
 					break;
 				default:
@@ -237,7 +258,7 @@ public partial class CalendarPage : ContentPage
 	}
 
 	// Emit journal_entry_created for the sheet that just saved. Only the coarse entry
-	// kind is sent — never the logged value, note, or the pet.
+	// kind is sent, never the logged value, note, or the pet.
 	private void TrackJournalEntry()
 	{
 		var entryType = _lastOpenedSheetKind switch
@@ -280,7 +301,7 @@ public partial class CalendarPage : ContentPage
 		// what the monetization boundary was inverted to remove: logging is unpaid
 		// labour the owner performs, often at 2am about a sick animal, not a benefit the
 		// app grants. Nothing here may consult IEntitlementService, and nothing may open
-		// the subscribe sheet — see AI/README.md, which carries this as a rule.
+		// the subscribe sheet: see AI/README.md, which carries this as a rule.
 		int petId = vm.CalendarVM.CurrentPetId;
 		string name = vm.CalendarVM.ActivePetName;
 		var date = vm.CalendarVM.CurrentSelectedDate;
@@ -295,7 +316,7 @@ public partial class CalendarPage : ContentPage
 			case JournalChipKind.Weight: await vm.WeightSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Appetite: await vm.AppetiteSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Seizure: await vm.SeizureSheetVM.OpenAsync(petId, name, date); break;
-			// Not a log type — the date is ignored, and nothing about it reaches the
+			// Not a log type: the date is ignored, and nothing about it reaches the
 			// timeline or the chips. It rides this funnel for the paywall gate and the
 			// close-then-open handoff, which are the same for any sheet.
 			case JournalChipKind.VetQuestion: await vm.VetQuestionSheetVM.OpenAsync(petId, name, date); break;
@@ -312,7 +333,7 @@ public partial class CalendarPage : ContentPage
 	{
 		try
 		{
-			// "Which logging features are actually used?" — one event per sheet save,
+			// "Which logging features are actually used?": one event per sheet save,
 			// tagged with the kind. This funnel is the forward save path only; undo
 			// runs through the toast callback, so undone saves aren't counted.
 			TrackJournalEntry();
@@ -370,7 +391,7 @@ public partial class CalendarPage : ContentPage
 
 	/// <summary>Record what the page is now showing, for the appearance guard above.
 	/// The pet and the date are re-read (a load can switch the active pet); the version
-	/// is the caller's, captured before its load — see the field's note.</summary>
+	/// is the caller's, captured before its load: see the field's note.</summary>
 	private void StampLoaded(int version)
 	{
 		_loaded = new PageLoadKey(
@@ -384,7 +405,7 @@ public partial class CalendarPage : ContentPage
 			return;
 
 		// ActivePetName is raised by every NotifyDerived, not just real pet
-		// switches — only reload when the (pet, date) context actually changed.
+		// switches: only reload when the (pet, date) context actually changed.
 		var petId = vm.CalendarVM.CurrentPetId;
 		var date = vm.CalendarVM.CurrentSelectedDate;
 		if (petId == _lastJournalPetId && date == _lastJournalDate)
@@ -506,7 +527,7 @@ public partial class CalendarPage : ContentPage
 
 	/// <summary>The four paw glyphs at rest. They start at Opacity 0 in XAML so the
 	/// staggered fade has somewhere to come from; this is how they get there when there
-	/// is nothing to celebrate — a revisit to a day that was already finished.</summary>
+	/// is nothing to celebrate: a revisit to a day that was already finished.</summary>
 	private void ShowPaws()
 	{
 		foreach (var paw in new[] { Paw1, Paw2, Paw3, Paw4 })
@@ -514,7 +535,7 @@ public partial class CalendarPage : ContentPage
 	}
 
 	/// <summary>Fade the four paw glyphs in with a staggered delay (skipped when the
-	/// OS asks for reduced motion — they simply appear at full opacity). Called only on
+	/// OS asks for reduced motion: they simply appear at full opacity). Called only on
 	/// the TRANSITION into an all-done day, never on an appearance that finds one.</summary>
 	private async Task AnimatePawsAsync()
 	{

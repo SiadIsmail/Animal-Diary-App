@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0014 — does an owner-defined tracker reach the vet summary?
+--  0014: does an owner-defined tracker reach the vet summary?
 --
 --  Corrects an omission in 0013, which shipped custom_trackers with no way to say
 --  this. It has to be a column, and it has to sync: only the OWNER can know whether
@@ -15,7 +15,7 @@
 --  silently never reached the summary is the app failing at the appointment where
 --  it mattered.
 --
---  push_rows needs no change — it derives its column list from
+--  push_rows needs no change: it derives its column list from
 --  information_schema.columns, so a new column is picked up automatically.
 -- ═══════════════════════════════════════════════════════════════════════════
 

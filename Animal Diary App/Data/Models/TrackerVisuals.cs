@@ -3,13 +3,13 @@ namespace Animal_Diary_App.Data.Models;
 /// <summary>
 /// How one tracker looks and reads, everywhere it appears.
 ///
-/// <para><see cref="LabelKey"/> is a localization key, never a translated string —
+/// <para><see cref="LabelKey"/> is a localization key, never a translated string,
 /// this is a static table, and a singleton holding a resolved string would survive a
 /// live language switch in the old language (see AI/coding-standards.md). Callers
 /// resolve it per read.</para>
 ///
 /// <para>The colours are token names from <c>Resources/Styles/Colors.xaml</c>,
-/// resolved through <c>Helpers/AppColors</c> — not literals.</para>
+/// resolved through <c>Helpers/AppColors</c>, not literals.</para>
 /// </summary>
 /// <param name="Icon">The emoji shown on chips, timeline tiles and care-plan rows.</param>
 /// <param name="LabelKey">AppStrings key for the tracker's name.</param>
@@ -30,7 +30,7 @@ public readonly record struct TrackerVisual(
 ///
 /// <para><b>Why:</b> the same five emoji and five label keys used to be written out in
 /// four separate <c>switch</c> expressions across three files, so a new tracker looked
-/// right in some surfaces and fell through to a mood face in others — and the Manage
+/// right in some surfaces and fell through to a mood face in others, and the Manage
 /// page's copy used raw ARGB literals instead of the palette, which no theme change
 /// could reach. Adding a tracker is now one line here.</para>
 /// </summary>
@@ -53,13 +53,13 @@ public static class TrackerVisuals
             [TrackerId.Water] = new("💧", "Journal_Water", "BlueTint", "BlueTint", "BlueInk"),
             // Seizure is the one tracker whose timeline tile and care-plan row use
             // different violets (VioletTint is darker than VioletSoftTint). That
-            // predates this table and is preserved deliberately — unifying them is a
+            // predates this table and is preserved deliberately: unifying them is a
             // design decision, not a refactor.
             [TrackerId.Seizure] = new("⚡", "Journal_Seizure", "VioletTint", "VioletSoftTint", "Violet"),
         };
 
     /// <summary>Takes a nullable id because a <c>PendingItem</c> for a medication dose
-    /// carries none — those never reach here today (both call sites gate on
+    /// carries none: those never reach here today (both call sites gate on
     /// <c>PendingKind.Tracker</c>), and if one ever does it should read as unfinished
     /// rather than silently render as mood.</summary>
     public static TrackerVisual For(TrackerId? id) =>
@@ -67,7 +67,7 @@ public static class TrackerVisuals
 
     /// <summary>
     /// The visual for any tracker key. A CUSTOM tracker is not in this table and never
-    /// will be — its icon and colour are owner data, held on its own row — so this
+    /// will be (its icon and colour are owner data, held on its own row) so this
     /// answers <see cref="Fallback"/> for one. Callers holding the definition build the
     /// visual from it instead (see <c>CustomTrackerVisuals</c>); callers that don't get
     /// the plainly-unfinished dot rather than a borrowed identity.

@@ -98,7 +98,7 @@ public class SettingsService
     // language, so they are wiped by AppResetService like everything else.
 
     /// <summary>Read a one-shot flag (default false). Keys are the <c>SettingsFlags.*</c>
-    /// constants — e.g. "the grant-ending heads-up has been shown".</summary>
+    /// constants: e.g. "the grant-ending heads-up has been shown".</summary>
     public async Task<bool> GetFlagAsync(string flagKey)
     {
         try
@@ -117,7 +117,7 @@ public class SettingsService
         => await UpsertAsync(flagKey, value.ToString());
 
     /// <summary>Read a free-form preference value, or null when it has never been set.
-    /// The same key/value store as language and the one-shot flags — device-scoped, wiped
+    /// The same key/value store as language and the one-shot flags: device-scoped, wiped
     /// by <c>AppResetService</c>, and deliberately never synced (a display preference is
     /// not medical data, and the pet ids it can be keyed by are local).</summary>
     public async Task<string?> GetValueAsync(string key)
@@ -157,7 +157,7 @@ public class SettingsService
     }
 }
 
-/// <summary>One-shot UI flag keys — each answers "have we already shown/done this once?".
+/// <summary>One-shot UI flag keys: each answers "have we already shown/done this once?".
 /// Constants so producers and readers agree.</summary>
 public static class SettingsFlags
 {
@@ -168,7 +168,7 @@ public static class SettingsFlags
     public const string GrantEndedNoticeShown = "GrantEndedNoticeShown";
     /// <summary>The single heads-up before a redeemed access code's grant runs out.</summary>
     public const string GrantEndingNudgeShown = "GrantEndingNudgeShown";
-    /// <summary>The owner has USED their one free "since your last visit" summary —
+    /// <summary>The owner has USED their one free "since your last visit" summary,
     /// read it to the end, or exported it. Not "opened the page": someone who taps in,
     /// looks confused and leaves has not had their free one, and this flag is the only
     /// thing standing between them and being asked to pay for something they never saw.
@@ -176,11 +176,17 @@ public static class SettingsFlags
     /// <para>Device-scoped in <c>AppSettings</c> like every other preference, and that is
     /// the right home: it is a monetization preference, not medical data, and a reset
     /// already wipes it. A reinstall hands out another free summary, which is the same
-    /// accepted, self-defeating abuse path the old trial anchor had — a reinstall also
+    /// accepted, self-defeating abuse path the old trial anchor had: a reinstall also
     /// wipes the record the summary is assembled FROM.</para></summary>
     public const string FirstSummaryUsed = "FirstSummaryUsed";
     /// <summary>The owner has opened the Today stat-card picker at least once, so the
     /// spelled-out "tap a card to change what it shows" hint retires and the small
     /// pencil on each card carries the affordance from then on.</summary>
     public const string TodayCardsDiscovered = "TodayCardsDiscovered";
+    /// <summary>The one-shot "was that for a visit?" offer, made after an export.
+    /// Someone generating a vet report is almost certainly preparing for a visit, and a
+    /// visit is what every future summary is anchored to, so the ask is attached to a
+    /// thing they already chose to do, rather than made cold on a page they have to find
+    /// first. Set whichever way they answer: it is offered ONCE.</summary>
+    public const string ExportVisitOfferMade = "ExportVisitOfferMade";
 }

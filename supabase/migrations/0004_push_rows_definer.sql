@@ -1,14 +1,14 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0004 — make push_rows SECURITY DEFINER with explicit authorization.
+--  0004: make push_rows SECURITY DEFINER with explicit authorization.
 --
 --  Even with the pets INSERT policy at `to authenticated with check (true)`
---  (0003), the upsert inside push_rows still failed RLS on an EMPTY table —
+--  (0003), the upsert inside push_rows still failed RLS on an EMPTY table,
 --  enforcement inside the RPC is not matching the policy model, so the push
 --  path stops relying on it. The function now runs as its owner (bypassing
 --  table RLS) and performs the SAME rule itself, loudly:
 --    - caller must be authenticated (named error if the auth context is gone);
 --    - every row must target a pet the caller is a MEMBER of;
---    - brand-new pets are allowed — the ownership trigger makes them the
+--    - brand-new pets are allowed: the ownership trigger makes them the
 --      caller's (and raises its own named error without auth context).
 --  The pull path (PostgREST GET) still goes through RLS unchanged.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -59,7 +59,7 @@ begin
     raise exception 'push_rows: table % is not syncable', p_table;
   end if;
 
-  -- Authorization — explicit because this function bypasses table RLS.
+  -- Authorization: explicit because this function bypasses table RLS.
   if p_table = 'pets' then
     -- Updating an EXISTING pet requires membership; unknown ids are new pets
     -- and become the caller's via the ownership trigger on insert.
@@ -70,7 +70,7 @@ begin
          where not public.is_pet_member(t.id))'
       into bad using p_rows;
   elsif p_table = 'medication_schedules' then
-    -- No pet_id column — authorize through the parent medication.
+    -- No pet_id column: authorize through the parent medication.
     execute
       'select exists (
          select 1 from jsonb_populate_recordset(null::public.medication_schedules, $1) r

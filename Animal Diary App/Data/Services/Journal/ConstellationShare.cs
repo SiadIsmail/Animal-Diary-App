@@ -5,8 +5,8 @@ using SkiaSharp;
 // ─────────────────────────────────────────────────────────────────────────────
 //  How the sky leaves the app.
 //
-//  The captured night card is framed on an ordinary Felova page — the rockpool
-//  wash, the washi tape, the serif name — and handed to the OS share sheet as one
+//  The captured night card is framed on an ordinary Felova page: the rockpool
+//  wash, the washi tape, the serif name, and handed to the OS share sheet as one
 //  PNG. It is the same picture the owner was just looking at, wearing the page it
 //  was looking at it on, so what lands in a group chat is recognisably this app.
 //
@@ -23,7 +23,7 @@ using SkiaSharp;
 //  Maui.Graphics context. That package pins SkiaSharp, and a SkiaSharp pin is
 //  exactly the 16 KB-alignment blocker this repo already paid for once with
 //  QuestPDF (AI/known-constraints.md). So the sky arrives here as a CAPTURE of the
-//  live view — pixel-identical to what was on screen — and only the frame around it
+//  live view (pixel-identical to what was on screen) and only the frame around it
 //  is drawn, with the SkiaSharp the report already uses.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -84,7 +84,7 @@ public static class ConstellationShare
         return path;
     }
 
-    /// <summary>Hand the picture to the OS share sheet — same shape as
+    /// <summary>Hand the picture to the OS share sheet: same shape as
     /// <c>ReportActions.ShareAsync</c>, whose bundled FileProvider is what makes a
     /// private app file shareable on Android with no permission.</summary>
     public static Task ShareAsync(string path, string title) =>
@@ -177,7 +177,7 @@ public static class ConstellationShare
         canvas.Restore();
     }
 
-    /// <summary>Load the app's own faces once. A failure is not fatal — the picture
+    /// <summary>Load the app's own faces once. A failure is not fatal: the picture
     /// falls back to the platform default rather than not existing, because a share
     /// that silently does nothing is worse than one in the wrong typeface.</summary>
     private static void EnsureFonts()

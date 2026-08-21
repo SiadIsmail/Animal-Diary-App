@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.Models;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Where every star sits. Pure arithmetic, no MAUI — which is the point: this is
+//  Where every star sits. Pure arithmetic, no MAUI, which is the point: this is
 //  the whole of the Constellation's meaning, and it is compile-linked into the test
 //  project so that meaning can be pinned down without a device.
 //
@@ -12,12 +12,12 @@ using Animal_Diary_App.Data.Models;
 //  An earlier version had x = date and y = a decorative scatter around a decorative
 //  wave. It was pretty and it was unreadable: shown to someone new, the honest
 //  reaction was "I don't understand anything on this screen". A meaningless axis
-//  cannot be rescued by making it beautiful — and everything that had been added to
+//  cannot be rescued by making it beautiful, and everything that had been added to
 //  make it interesting (a meandering path, a sunflower scatter, hairlines between
 //  entries, a figure of stars behind it) was ornament competing with the data.
 //
-//  Y is now the TIME OF DAY. Nothing changed about what may be encoded — both axes
-//  are still time, nothing is aggregated, ranked, or coloured by value — but the
+//  Y is now the TIME OF DAY. Nothing changed about what may be encoded: both axes
+//  are still time, nothing is aggregated, ranked, or coloured by value, but the
 //  picture answers questions now:
 //
 //    • where in the day something happens   → its height
@@ -35,7 +35,7 @@ using Animal_Diary_App.Data.Models;
 /// Which way the sky is arranged. Two, and each has one job it does better than any
 /// list or calendar could.
 ///
-/// <para>There were three. <b>Nights</b> — one day per row, hours across — was the
+/// <para>There were three. <b>Nights</b> (one day per row, hours across) was the
 /// exact transpose of <see cref="History"/> once y became the time of day, and two
 /// views of the same two axes is a thing to learn twice rather than a second question
 /// answered.</para>
@@ -59,7 +59,7 @@ public static class ConstellationLayout
     // ── The frame ─────────────────────────────────────────────────────────────
     /// <summary>The gutter down the left where the hours are written. The plot is
     /// shifted past it in SCREEN space, so the labels stay put while the dates scroll
-    /// underneath — a gutter measured in world units would scroll away with them.</summary>
+    /// underneath: a gutter measured in world units would scroll away with them.</summary>
     public const double HourGutter = 34.0;
 
     /// <summary>Kept clear at the top for midnight's label, and at the foot for the
@@ -70,26 +70,26 @@ public static class ConstellationLayout
     // ── Star size ─────────────────────────────────────────────────────────────
     // One size for every category, always. Sizing a seizure differently from a dose
     // would be the app ranking them, and the legend would stop being a promise. What
-    // varies is only how much room there is — and only inside a tight band, because a
+    // varies is only how much room there is, and only inside a tight band, because a
     // symbol that changes size between screens is a symbol you have to re-learn.
     private const double MinRadius = 3.3;
     private const double MaxRadius = 5.0;
 
     /// <summary>
     /// A stable wobble so two entries at the very same minute are two marks rather than
-    /// one — <b>along the date axis only</b>.
+    /// one: <b>along the date axis only</b>.
     ///
     /// <para>The height is left exact on purpose. A twice-daily dose draws two clean
     /// horizontal tracks across the sky, and anything scattered against them reads at a
     /// glance; a couple of pixels of vertical noise turns those tracks into fuzzy bands
     /// and throws the clearest signal on the whole surface away. The date axis has
-    /// hundreds of pixels per day to hide a wobble in — an hour has a few.</para>
+    /// hundreds of pixels per day to hide a wobble in: an hour has a few.</para>
     /// </summary>
     private const double JitterAmplitude = 2.2;
 
     // ── Arriving ──────────────────────────────────────────────────────────────
     /// <summary>How much of the load is spent staggering rather than fading. 0.55 means
-    /// the last entry starts arriving when the first is 55% through — weighted towards
+    /// the last entry starts arriving when the first is 55% through: weighted towards
     /// the sweep rather than the fade, because the travel is the part anyone sees.</summary>
     public const double StaggerShare = 0.55;
 
@@ -99,7 +99,7 @@ public static class ConstellationLayout
     ///
     /// <para>The stagger runs along the DATE axis on purpose: the history visibly
     /// writes itself left to right, so the horizontal axis explains itself before
-    /// anyone has read the caption. That is the whole reason the animation exists —
+    /// anyone has read the caption. That is the whole reason the animation exists,
     /// it is the only ornament here that teaches something.</para>
     /// </summary>
     public static double ArrivalOf(double reveal, double xFraction)
@@ -113,7 +113,7 @@ public static class ConstellationLayout
 
     /// <summary>How big a star is drawn, from how much room each one has on screen.
     /// Derived from spacing rather than count, so zooming in grows the symbols back as
-    /// the crowd around them thins — the progressive reveal, with no second rule.</summary>
+    /// the crowd around them thins: the progressive reveal, with no second rule.</summary>
     public static double StarRadius(double contentWidth, int count)
     {
         if (count <= 0 || contentWidth <= 0)
@@ -122,7 +122,7 @@ public static class ConstellationLayout
         return Math.Clamp(contentWidth / count * 0.7, MinRadius, MaxRadius);
     }
 
-    /// <summary>Content x for a moment. The single place a date becomes a distance —
+    /// <summary>Content x for a moment. The single place a date becomes a distance,
     /// linear, so equal gaps in time are equal gaps on screen at every zoom.</summary>
     public static double XFor(DateTime when, DateTime from, DateTime to, double contentWidth)
     {
@@ -147,7 +147,7 @@ public static class ConstellationLayout
     /// <b>The History lens.</b> x is the date, y is the time of day.
     /// </summary>
     /// <returns>One star per event, in the SAME order as <paramref name="events"/>, so
-    /// index is identity — the detail sheet, the hit test and the drawing all key off
+    /// index is identity: the detail sheet, the hit test and the drawing all key off
     /// it.</returns>
     public static SkyStar[] PlaceOnGrid(
         IReadOnlyList<CelestialEvent> events,
@@ -183,18 +183,18 @@ public static class ConstellationLayout
     /// <summary>
     /// <b>The Cycle lens.</b> Time folded at <paramref name="periodDays"/> and laid on
     /// a ring: the angle is where in the period a thing happened, the distance from
-    /// the centre is how far through the chosen stretch it was — <b>oldest in the
+    /// the centre is how far through the chosen stretch it was: <b>oldest in the
     /// middle, most recent at the rim</b>, which the drawing labels, because an
     /// unexplained radius is a question rather than an answer.
     ///
     /// <para><b>The app never chooses the period.</b> It draws whatever fold it is
-    /// handed and says nothing about the result — no "cycle detected", no highlight,
+    /// handed and says nothing about the result, no "cycle detected", no highlight,
     /// no number. An alignment is something the person looking sees, not something
     /// Felova claims, and that distinction is the whole reason this may exist.</para>
     ///
     /// <para><b>A ring rather than a line, because a line has a seam.</b> Folded onto
-    /// one, phase 0.98 and phase 0.02 land at opposite edges — minutes apart in cycle
-    /// terms, drawn as two unrelated clumps — so the one arrangement built to reveal
+    /// one, phase 0.98 and phase 0.02 land at opposite edges: minutes apart in cycle
+    /// terms, drawn as two unrelated clumps, so the one arrangement built to reveal
     /// repeats could hide one purely because of where the range began.</para>
     /// </summary>
     /// <param name="periodDays">The fold. 1 is a day (a clock face), 7 a week.</param>
@@ -243,7 +243,7 @@ public static class ConstellationLayout
         return stars;
     }
 
-    /// <summary>The ring's outer edge — shared by the placement and the drawing, so
+    /// <summary>The ring's outer edge: shared by the placement and the drawing, so
     /// the stars and the dial they sit on can never disagree.</summary>
     public static double RingOuter(double width, double height) =>
         Math.Min(width, height) / 2 - RingPadding;

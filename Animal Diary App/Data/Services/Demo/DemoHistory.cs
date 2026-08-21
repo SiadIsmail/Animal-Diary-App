@@ -11,7 +11,7 @@ using Animal_Diary_App.Data.Models;
 //  projection layer, no per-surface plumbing, and no second code path that can drift
 //  from the real one.
 //
-//  Pure and MAUI-free, so the planted structures can be proven in the test project —
+//  Pure and MAUI-free, so the planted structures can be proven in the test project,
 //  which matters more here than it looks: every one of them is invisible until someone
 //  opens a lens and finds nothing there, on camera.
 //
@@ -20,7 +20,7 @@ using Animal_Diary_App.Data.Models;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// <summary>A parent row with the children that point at it. Grouped rather than
-/// flattened because local ids do not exist until the parent is inserted — the seeder
+/// flattened because local ids do not exist until the parent is inserted: the seeder
 /// inserts, reads the id back, and stamps the children with it.</summary>
 public sealed class DemoMedicationRows
 {
@@ -41,7 +41,7 @@ public sealed class DemoCustomRows
 ///
 /// <para>There is deliberately no <c>Pet</c> row here. The pet's identity is already fully
 /// stated by the <see cref="DemoProfile"/>, and <c>Pet</c> resolves a photo path through
-/// <c>PetPhotoService</c> — building one would drag MAUI into a file whose whole value is
+/// <c>PetPhotoService</c>: building one would drag MAUI into a file whose whole value is
 /// being testable. The seeder builds the pet (and sets <c>IsDemo</c>); this builds the
 /// history, which is what the name says.</para>
 /// </summary>
@@ -59,7 +59,7 @@ public sealed class DemoSeed
     public List<WaterAmountEntry> WaterAmounts { get; } = new();
     public List<WaterLevelEntry> WaterLevels { get; } = new();
 
-    /// <summary>Every row this seed will insert — the seeder's sanity check, and what the
+    /// <summary>Every row this seed will insert: the seeder's sanity check, and what the
     /// test asserting a year lands in the right order of magnitude counts.</summary>
     public int RowCount =>
         Conditions.Count + Trackers.Count
@@ -76,7 +76,7 @@ public static class DemoHistory
     /// </summary>
     /// <param name="profile">Who the pet is and what shape their history takes.</param>
     /// <param name="today">The last day of the history.</param>
-    /// <param name="localize">Resolves an AppStrings key — used only for the custom
+    /// <param name="localize">Resolves an AppStrings key: used only for the custom
     /// trackers' preset names. Passed in rather than reached for, so this stays pure;
     /// tests hand it the identity function.</param>
     public static DemoSeed Build(DemoProfile profile, DateTime today, Func<string, string> localize)
@@ -135,7 +135,7 @@ public static class DemoHistory
                 DoseLogs = new List<MedicationDoseLog>(),
             };
 
-            // One schedule row per (day, time) — the shape the reminder engine expands.
+            // One schedule row per (day, time): the shape the reminder engine expands.
             foreach (var day in med.Days)
                 foreach (var time in med.Times)
                     rows.Schedules.Add(new MedicationSchedule { Day = day, Time = time });
@@ -149,7 +149,7 @@ public static class DemoHistory
 
                 foreach (var time in med.Times)
                 {
-                    // No row at all — nobody opened the app. A scheduled dose with no
+                    // No row at all: nobody opened the app. A scheduled dose with no
                     // outcome is "not yet acted on", which is a true state, not a gap.
                     if (rng.NextDouble() < med.UnloggedRate * Sparseness(profile, from, to, day))
                         continue;
@@ -158,7 +158,7 @@ public static class DemoHistory
 
                     // The weekday-ring story: the LAST dose of the day runs late more often
                     // on Fri/Sat, because that is when a household's evening moves. Folded
-                    // at seven days this becomes a visible spoke — the one pattern an owner
+                    // at seven days this becomes a visible spoke: the one pattern an owner
                     // can actually do something about.
                     var weekend = day.DayOfWeek is DayOfWeek.Friday or DayOfWeek.Saturday;
                     var lateOdds = 0.10 * (weekend && time == lastTime ? med.WeekendLateMultiplier : 1.0);
@@ -194,7 +194,7 @@ public static class DemoHistory
             var rows = new DemoCustomRows
             {
                 // Built exactly as the "add your own" sheet builds one, straight from the
-                // preset — so a demo pet's custom tracker is indistinguishable from an
+                // preset, so a demo pet's custom tracker is indistinguishable from an
                 // owner's, and nothing downstream needs to know it was seeded.
                 Tracker = new CustomTracker
                 {
@@ -260,7 +260,7 @@ public static class DemoHistory
             var density = Sparseness(profile, from, to, day);
 
             // Mood and weight share one row per day (PetEntry), so they are collected
-            // together and written once — two rows for one day would read as two days.
+            // together and written once: two rows for one day would read as two days.
             var loggedMood = rng.NextDouble() < profile.Mood.DayRate * density;
             var loggedWeight = day.DayOfWeek == profile.Weight.OnDay && rng.NextDouble() < 0.8;
 
@@ -277,7 +277,7 @@ public static class DemoHistory
 
                 if (loggedWeight)
                 {
-                    // A slow, signed drift across the year — the report's headline fact,
+                    // A slow, signed drift across the year: the report's headline fact,
                     // stated neutrally. Never coloured good or bad anywhere.
                     var progress = (day - from).TotalDays / totalDays;
                     var target = profile.Weight.StartKg
@@ -306,7 +306,7 @@ public static class DemoHistory
     /// A curve day: several readings spread across one window.
     ///
     /// <para>The readings sit in two tight windows around the insulin times, which is what
-    /// a twice-daily routine actually produces — and folded at a day it draws two arcs
+    /// a twice-daily routine actually produces, and folded at a day it draws two arcs
     /// bracketing the dose spokes. That is the Cycle lens proving itself on a pet with no
     /// seizures at all.</para>
     /// </summary>
@@ -333,7 +333,7 @@ public static class DemoHistory
     }
 
     /// <summary>Both shapes appear, as they do in real use: an exact weight of food some
-    /// days, a word the rest. They are never merged into one reading — the report keeps
+    /// days, a word the rest. They are never merged into one reading: the report keeps
     /// two separate graphs and this is what fills both.</summary>
     private static void BuildAppetiteDay(
         DemoSeed seed, DemoAppetiteHabit habit, Random rng, DateTime day, double density)
@@ -396,7 +396,7 @@ public static class DemoHistory
     /// Two independent structures in one small set of events.
     ///
     /// <para><b>Clusters</b> land roughly <c>ClusterSpacingDays</c> apart with jitter, so a
-    /// fold near that period gathers them at one angle — the "does it come round again"
+    /// fold near that period gathers them at one angle: the "does it come round again"
     /// question. <b>Within</b> a cluster most seizures fall in the small hours, so a fold at
     /// a day collapses the whole year into a wedge, and Nights draws a vertical band. The
     /// two are orthogonal: turning the dial from one day to a fortnight rearranges the same
@@ -405,7 +405,7 @@ public static class DemoHistory
     ///
     /// <para><b>There is no total.</b> Clusters run at their spacing for the whole range and
     /// the year's count falls out of that. An earlier version spent a fixed budget of
-    /// fourteen front-to-back, which quietly emptied the most recent 180 days — so the pet
+    /// fourteen front-to-back, which quietly emptied the most recent 180 days, so the pet
     /// built to demonstrate seizures had none anywhere the 7-, 30- or 90-day ranges were
     /// looking, and they appeared only on the 365-day view where 1,700 other stars are
     /// already competing for attention.</para>
@@ -428,14 +428,14 @@ public static class DemoHistory
                     ? rng.Next(2, pattern.MaxPerCluster + 1)
                     : 1;
 
-                // A cluster is two or three inside about an hour — the threshold a lot of
+                // A cluster is two or three inside about an hour: the threshold a lot of
                 // dogs' emergency plans hang on, and one crowded row in Nights.
                 //
                 // The offsets are worked out BEFORE the start time so the whole cluster can
                 // be placed inside the night band rather than just its first event. Drawing
                 // the start first and letting members drift forward is what the obvious
                 // version does, and it silently walks the tail of every cluster out into the
-                // morning — the band ends up describing where a cluster OPENS, which is not
+                // morning: the band ends up describing where a cluster OPENS, which is not
                 // what the sky draws or what anyone reading the profile would expect.
                 var offsets = new int[size];
                 for (var i = 1; i < size; i++)
@@ -468,7 +468,7 @@ public static class DemoHistory
     /// <summary>
     /// When a cluster starts: usually in the small hours, sometimes anywhere.
     ///
-    /// <para>The scattered minority is not noise for its own sake — a perfect band reads as
+    /// <para>The scattered minority is not noise for its own sake: a perfect band reads as
     /// synthetic, and the honest picture is a tendency rather than a rule.</para>
     /// </summary>
     /// <param name="span">Minutes from the cluster's first event to its last. The start is
@@ -489,7 +489,7 @@ public static class DemoHistory
 
     // ── The shared texture ───────────────────────────────────────────────────────
 
-    /// <summary>Inside the quiet spell — a stretch where nothing at all was written down.
+    /// <summary>Inside the quiet spell: a stretch where nothing at all was written down.
     /// Checked separately from <see cref="IsSilent"/> because it must be deterministic:
     /// the same fortnight has to be empty for every signal, or it reads as a glitch rather
     /// than a fortnight the owner had other things on.</summary>
@@ -499,14 +499,14 @@ public static class DemoHistory
         return day >= start && day < start.AddDays(profile.QuietSpellLength);
     }
 
-    /// <summary>This day gets nothing — either the quiet spell, or one of the ordinary days
+    /// <summary>This day gets nothing: either the quiet spell, or one of the ordinary days
     /// nobody manages to write anything down. Both are normal, and the sky must read as
     /// calm rather than broken.</summary>
     private static bool IsSilent(DemoProfile profile, Random rng, DateTime from, DateTime to, DateTime day) =>
         IsQuiet(profile, to, day) || rng.NextDouble() < profile.SilentDayRate;
 
     /// <summary>
-    /// How much of the day's usual logging actually happened, 0..1 — thin at the start of
+    /// How much of the day's usual logging actually happened, 0..1: thin at the start of
     /// the history, full by the time the ramp finishes.
     ///
     /// <para>A new owner records little and builds the habit. In the Nights lens that reads

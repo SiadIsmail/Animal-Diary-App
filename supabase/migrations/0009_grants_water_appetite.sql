@@ -1,10 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0009 — role grants for the water + appetite tables.
+--  0009: role grants for the water + appetite tables.
 --
 --  Corrects an omission in 0007 / 0008: those migrations created new data tables
 --  with RLS policies but no base-table privileges for `authenticated`. RLS
 --  decides which ROWS a role sees; a GRANT decides whether the role MAY touch the
---  table at all — both are required (same lesson as 0002). Without this, the pull
+--  table at all: both are required (same lesson as 0002). Without this, the pull
 --  side's PostgREST SELECT fails with "42501 permission denied for table …",
 --  which aborts the entire sync run.
 --

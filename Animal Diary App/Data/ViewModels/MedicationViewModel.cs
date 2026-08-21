@@ -188,12 +188,12 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
         var visible = medicationFromDb.Where(m => m.IsArchived == showArchived).ToList();
 
         // Every med in the list belongs to the same pet, and the schedule rows come
-        // in one batched IN-clause query — no per-medication round trips.
+        // in one batched IN-clause query, no per-medication round trips.
         var pet = await _petService.GetPetByIdAsync(petId);
         var schedulesByMed = (await _medicationService.GetSchedulesForMedicationsAsync(visible.Select(m => m.Id).ToList()))
             .ToLookup(s => s.MedicationId);
 
-        // A newer load started while this one queried — it may be for a different pet
+        // A newer load started while this one queried: it may be for a different pet
         // or the other tab, so drop these rows rather than show the wrong list.
         if (generation != _medicationListGeneration)
             return;
@@ -201,7 +201,7 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
         FilteredMedications.Clear();
         foreach (var medication in visible)
         {
-            // Both dimensions of the schedule, not just the times — see DescribeFrequency.
+            // Both dimensions of the schedule, not just the times: see DescribeFrequency.
             var rows = schedulesByMed[medication.Id].ToList();
             var distinctTimes = rows.Select(s => s.Time).Distinct().OrderBy(t => t).ToList();
             var distinctDays = rows.Select(s => s.Day).Distinct().ToList();
@@ -212,8 +212,8 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
                 Name = medication.Name,
                 PetName = pet?.Name ?? LocalizationManager.Instance.GetString("Med_Unknown"),
                 DoseDisplay = $"{medication.Dosage} {medication.Unit}",
-                // rows.Count is the exact number of doses in a week — one row per
-                // (day × time) — so the weekly wording never has to assume the
+                // rows.Count is the exact number of doses in a week: one row per
+                // (day × time), so the weekly wording never has to assume the
                 // editor's rectangular shape.
                 FrequencyDisplay = DescribeFrequency(distinctDays.Count, distinctTimes.Count, rows.Count),
                 TimesDisplay = MedicationScheduleText.Describe(distinctDays, distinctTimes),
@@ -226,7 +226,7 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
     /// The cadence tag. Reads BOTH dimensions of the schedule: a medication is stored
     /// as one row per (day × time), so a Mondays-only dose and an every-day dose both
     /// have exactly one distinct time. Describing the cadence from the times alone
-    /// therefore labelled every weekly medication "once daily" — and a Mon+Wed dose at
+    /// therefore labelled every weekly medication "once daily", and a Mon+Wed dose at
     /// two times "2× daily" when it is 4× a week.
     /// </summary>
     private static string DescribeFrequency(int daysPerWeek, int timesPerDay, int dosesPerWeek)
@@ -372,7 +372,7 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
         get => medicationDraft;
         set
         {
-            // Unhook the OLD draft before SetProperty swaps the field — the
+            // Unhook the OLD draft before SetProperty swaps the field: the
             // previous version unsubscribed from the new value (a no-op).
             var previous = medicationDraft;
             if (SetProperty(ref medicationDraft, value))
@@ -460,7 +460,7 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
             IsAddEditSheetVisible = false;
         });
 
-        // Set defaults — SelectedFrequency drives how many reminder-time pickers
+        // Set defaults: SelectedFrequency drives how many reminder-time pickers
         // are shown (see SyncReminderTimesToFrequency).
         SelectedFrequency = 1;
     }
@@ -531,7 +531,7 @@ public class MedicationViewModel : BaseViewModel, IResettableDraft
         await _medicationService.SaveMedicationWithSchedulesAsync(medication, schedules);
         var medicationId = medication.Id;
 
-        // "Which features provide value?" — record that a medication was set up, with
+        // "Which features provide value?": record that a medication was set up, with
         // only the non-identifying shape of its schedule (how many reminders per day,
         // how many weekdays). Never the name, dose, unit, or notes.
         if (isNewMedication)

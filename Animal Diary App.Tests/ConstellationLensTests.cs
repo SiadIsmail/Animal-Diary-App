@@ -71,7 +71,7 @@ public class ConstellationLensTests
     [Fact]
     public void History_SeveralInOneDayStackVertically()
     {
-        // Three seizures in a day is a vertical run at one date — not a taller bar,
+        // Three seizures in a day is a vertical run at one date, not a taller bar,
         // not a bigger dot: they are simply at the times they happened.
         var day = From.AddDays(20);
         var stars = ConstellationLayout.PlaceOnGrid(
@@ -199,7 +199,7 @@ public class ConstellationLensTests
     public void Fold_CannotBeSetLongerThanHalfTheStretch()
     {
         // You cannot see a repeat in a window that does not hold two of them. A bound on
-        // what the picture can SHOW — never a hint about what the answer is.
+        // what the picture can SHOW, never a hint about what the answer is.
         Assert.Equal(3, MaxFold(7));
         Assert.Equal(15, MaxFold(30));
         Assert.Equal(45, MaxFold(90));
@@ -213,7 +213,7 @@ public class ConstellationLensTests
     [Fact]
     public void BothLensesPlaceTheSameEventsOneForOne()
     {
-        // Index is identity everywhere — the detail sheet, the hit test and the drawing
+        // Index is identity everywhere: the detail sheet, the hit test and the drawing
         // all key off it, so a lens that dropped or reordered a star would describe the
         // wrong entry when one was tapped.
         var events = Enumerable.Range(0, 40).Select(i => At(From.AddHours(i * 13))).ToArray();

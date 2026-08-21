@@ -11,7 +11,7 @@ using SQLite;
 /// Turning demo mode on and off: seeding the two demo pets, and removing them again.
 ///
 /// <para><b>The pets ARE the demo.</b> There is no read-model fixture and no parallel code
-/// path — once the rows are in SQLite, the Constellation, the vet report, Today's cards,
+/// path: once the rows are in SQLite, the Constellation, the vet report, Today's cards,
 /// the Journal chips and the timeline are all just the app reading its own database, and a
 /// creator can log a live entry on camera like any owner. The cost of that is that invented
 /// medical history is sitting in real tables, which is why <c>Pet.IsDemo</c> and its sync
@@ -22,7 +22,7 @@ using SQLite;
 /// </summary>
 public sealed class DemoModeService
 {
-    /// <summary>Device-scoped, like the referral code and for the same reason — it predates
+    /// <summary>Device-scoped, like the referral code and for the same reason: it predates
     /// any account, and it must survive a sign-out mid-shoot.</summary>
     private const string KeySeeded = "DemoSeeded";
 
@@ -47,7 +47,7 @@ public sealed class DemoModeService
     }
 
     /// <summary>Raised after seeding or clearing, so open surfaces re-read. Reuses the same
-    /// pattern as the cloud's RemoteChangesApplied — every page already knows how to reload
+    /// pattern as the cloud's RemoteChangesApplied: every page already knows how to reload
     /// itself on someone else's say-so.</summary>
     public event Action? Changed;
 
@@ -86,7 +86,7 @@ public sealed class DemoModeService
 
         // Reminders are armed AFTER the rows land, and outside the transaction: the
         // scheduler reads the medication back from the database. A demo pet's reminders
-        // firing is wanted, not tolerated — a creator filming a real dose notification
+        // firing is wanted, not tolerated: a creator filming a real dose notification
         // arriving is one of the shots this exists for, and PurgePetAsync cancels them
         // again on the way out.
         await ArmRemindersAsync();
@@ -110,14 +110,14 @@ public sealed class DemoModeService
             Age = profile.AgeYears,
             BirthYear = today.Year - profile.AgeYears,
             // The legacy single-condition column, kept in step with the PetCondition rows
-            // below — PetConditionService folds it into a row on first read for a pet that
+            // below: PetConditionService folds it into a row on first read for a pet that
             // has none, and a seeded pet that disagreed with itself would migrate a
             // duplicate.
             ConditionId = profile.ConditionIds.FirstOrDefault() ?? string.Empty,
             IsDemo = true,
         };
 
-        // One transaction for the whole animal — several thousand rows inserted one at a
+        // One transaction for the whole animal: several thousand rows inserted one at a
         // time is a visible freeze, and a half-seeded pet is worse than none.
         //
         // Rows are inserted RAW, never through SyncStamp: they get no SyncId (they have no
@@ -169,7 +169,7 @@ public sealed class DemoModeService
             }
         });
 
-        Debug.WriteLine($"[Demo] seeded {profile.Name} — {history.RowCount} rows ({(german ? "de" : "en")})");
+        Debug.WriteLine($"[Demo] seeded {profile.Name}: {history.RowCount} rows ({(german ? "de" : "en")})");
         return pet;
     }
 
@@ -182,7 +182,7 @@ public sealed class DemoModeService
         foreach (var row in rows)
             setPetId(row, petId);
 
-        // Already inside RunInTransactionAsync — a nested transaction here throws.
+        // Already inside RunInTransactionAsync: a nested transaction here throws.
         conn.InsertAll(rows, runInTransaction: false);
     }
 
@@ -217,8 +217,8 @@ public sealed class DemoModeService
         await _settings.SetFlagAsync(KeySeeded, false);
 
         // The purge repairs the active pet only when one it deleted was active, and it
-        // picks the first row it finds. If it deleted EVERY pet — a creator who entered the
-        // code on a fresh install and never made one of their own — nothing is active and
+        // picks the first row it finds. If it deleted EVERY pet: a creator who entered the
+        // code on a fresh install and never made one of their own: nothing is active and
         // the app would land on a Today with no pet.
         if (_activePet.ActivePet is null || _activePet.ActivePet.Id == 0)
         {

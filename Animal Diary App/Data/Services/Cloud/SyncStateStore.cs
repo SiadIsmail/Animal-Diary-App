@@ -2,7 +2,7 @@ namespace Animal_Diary_App.Data.Services.Cloud;
 
 using Animal_Diary_App.Data.Models;
 
-/// <summary>Typed access to the <see cref="SyncState"/> key-value table — the sync
+/// <summary>Typed access to the <see cref="SyncState"/> key-value table: the sync
 /// engine's cursors, flags, and account breadcrumbs. Key vocabulary lives in
 /// <see cref="CloudSyncService"/>; nothing else writes this table.</summary>
 public sealed class SyncStateStore
@@ -29,7 +29,7 @@ public sealed class SyncStateStore
     /// that some later feature added.
     ///
     /// <para>That mattered: a stale <c>cloud:cursor:*</c> outliving its account is what let
-    /// a device sign out of one account, into another, and back — and never see the first
+    /// a device sign out of one account, into another, and back, and never see the first
     /// account's pets again, because every cursor sat ahead of their rows.</para>
     ///
     /// <para>Prefixes are literal here; <c>cloud:</c> contains no SQL <c>LIKE</c> wildcard.

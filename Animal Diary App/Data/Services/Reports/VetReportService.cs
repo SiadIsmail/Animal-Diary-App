@@ -9,7 +9,7 @@ using MigraDoc.Rendering;
 /// → files on disk, registered in the <see cref="ReportLibraryService"/>. Entirely
 /// local/offline; nothing leaves the device.
 ///
-/// The document is built with PDFsharp/MigraDoc (pure managed, no native libraries — it
+/// The document is built with PDFsharp/MigraDoc (pure managed, no native libraries: it
 /// replaced QuestPDF, whose SkiaSharp pin broke 16 KB-page-size compliance). Each export
 /// also writes one PNG per page ("{name}.p{n}.png") via the platform
 /// <see cref="IPdfPageRasterizer"/>: the in-app preview shows those images because Android
@@ -61,13 +61,13 @@ public class VetReportService : IVetReportService
     }
 
     // Sample documents are written to disk (so View/Share work) but the row is never
-    // inserted — Id stays 0, Documents never lists it.
+    // inserted: Id stays 0, Documents never lists it.
     //
     // Only the ONE-PAGE fixture is left. The full 90-day layout-stress fixture is gone,
     // replaced by exporting a seeded demo pet: that runs the real builder over real rows,
     // so it exercises page breaks and the continuation header more honestly than a
     // hand-written VetReportData ever did. This one survives because it does a job the
-    // demo pets cannot — a store screenshot needs a report that ends on page one, and
+    // demo pets cannot: a store screenshot needs a report that ends on page one, and
     // that is bought by carrying less, not by shrinking type.
     public Task<VetReportFile> GenerateSampleAsync() =>
         SaveAsync(VetReportSampleData.CreateCompact(), petId: 0);
@@ -100,7 +100,7 @@ public class VetReportService : IVetReportService
             var document = new VetReportDocument(data).Build(ctx);
             var renderer = new PdfDocumentRenderer { Document = document };
             renderer.RenderDocument();
-            // Read the page count BEFORE saving: PdfDocument.Save() is terminal — it
+            // Read the page count BEFORE saving: PdfDocument.Save() is terminal: it
             // finalizes the in-memory document, after which PageCount (and any other
             // access) throws "document was already saved and cannot be modified".
             var pageCount = renderer.PdfDocument.PageCount;
@@ -121,7 +121,7 @@ public class VetReportService : IVetReportService
         return report;
     }
 
-    /// <summary>"{Pet}_Felova_{date_time}.pdf", de-duplicated with a numeric suffix —
+    /// <summary>"{Pet}_Felova_{date_time}.pdf", de-duplicated with a numeric suffix,
     /// re-exports must never overwrite an earlier report in the library. The plain export
     /// carries "_log" so the two are told apart in a file manager and in an email
     /// attachment list, where the app's own labels are not there to help.</summary>
@@ -135,7 +135,7 @@ public class VetReportService : IVetReportService
         return fileName;
     }
 
-    /// <summary>Pet names are free text — strip anything a filesystem would reject.</summary>
+    /// <summary>Pet names are free text: strip anything a filesystem would reject.</summary>
     private static string SanitizeFileName(string name)
     {
         var cleaned = new string(name.Trim()

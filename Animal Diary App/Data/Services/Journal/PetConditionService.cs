@@ -45,7 +45,7 @@ public class PetConditionService
             await _migrateLock.WaitAsync();
             try
             {
-                // Re-check inside the lock — a concurrent reload may have migrated already.
+                // Re-check inside the lock: a concurrent reload may have migrated already.
                 rows = await _db.Table<PetCondition>()
                     .Where(c => c.PetId == pet.Id && c.IsDeleted == false)
                     .ToListAsync();
@@ -69,7 +69,7 @@ public class PetConditionService
 
     /// <summary>Add a condition to a pet (no-op if it already has it, or if empty).
     /// A previously removed condition left a tombstone; adding it back revives that
-    /// row, so one (pet, condition) pair can never map to two rows — the cloud keys
+    /// row, so one (pet, condition) pair can never map to two rows: the cloud keys
     /// conditions by exactly that pair.</summary>
     public async Task AddAsync(int petId, string conditionId)
     {
@@ -95,8 +95,8 @@ public class PetConditionService
     }
 
     /// <summary>Remove a condition from a pet. Its trackers are handled separately by
-    /// the caller (kept or turned off) — this only forgets the condition link. Soft
-    /// delete — the rows become tombstones so the removal can sync.</summary>
+    /// the caller (kept or turned off): this only forgets the condition link. Soft
+    /// delete: the rows become tombstones so the removal can sync.</summary>
     public async Task RemoveAsync(int petId, string conditionId)
     {
         var rows = await _db.Table<PetCondition>()

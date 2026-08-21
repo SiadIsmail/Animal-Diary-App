@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.View;
+namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Data.Services.Analytics;
@@ -16,7 +16,7 @@ public partial class WelcomePage : ContentPage
 	// (Welcome → create pet → back) doesn't re-fire the funnel's entry event.
 	private bool _onboardingStartTracked;
 
-	// A returning user who signs in — or a caregiver who redeems an invite code — pulls
+	// A returning user who signs in (or a caregiver who redeems an invite code) pulls
 	// their pet(s) down through the account sheet hosted here. That first sync raises
 	// RemoteChangesApplied; once pets exist we hand straight off to the tabbed app
 	// instead of making them create a pet. Guarded so a second sync can't hand off twice.
@@ -89,7 +89,7 @@ public partial class WelcomePage : ContentPage
 			try
 			{
 				// Load whatever synced down and pick the active pet (saved-or-first),
-				// exactly as startup does. No pets means nothing to restore yet — a
+				// exactly as startup does. No pets means nothing to restore yet: a
 				// brand-new account still creates its first pet through the primary CTA.
 				await vm.PetVM.LoadPetsAsync();
 				if (_handedOff || vm.PetVM.Pets.Count == 0)

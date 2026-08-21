@@ -2,14 +2,14 @@ namespace Animal_Diary_App.Data.Services.Billing;
 
 /// <summary>
 /// The app's single monetization boundary. Every feature asks <b>this</b> whether the
-/// user has the paid tier — never RevenueCat directly — exactly like features talk to
+/// user has the paid tier (never RevenueCat directly) exactly like features talk to
 /// <see cref="Analytics.IAnalyticsService"/> or the cloud boundary.
 ///
 /// <para><b>What this gate is, and what it is emphatically not.</b> Writing things down
 /// is free forever: logging, medications, the care plan, the dose loop, reading, and
 /// getting your data out are never gated, in any state, on any tier. The safety net is
 /// the free product. What this boundary sells is the things the accumulated record is
-/// <i>for</i> — the assembled appointment summary, the designed vet report, a second
+/// <i>for</i>: the assembled appointment summary, the designed vet report, a second
 /// pet, cloud backup, minting a caregiver invite. Never reintroduce a check on a logging
 /// path: AI/README.md carries that as a non-negotiable rule.</para>
 ///
@@ -23,26 +23,26 @@ namespace Animal_Diary_App.Data.Services.Billing;
 ///   exception, to the caller.</item>
 ///   <item>When billing is disabled or the platform has no store (Windows/macOS dev),
 ///   <c>NullEntitlementService</c> is registered and <see cref="HasFullAccess"/> is
-///   always true — the app is never gated in development.</item>
+///   always true: the app is never gated in development.</item>
 /// </list>
 /// </summary>
 public interface IEntitlementService
 {
     /// <summary><b>Your own</b> paid access: an active subscription or a running grant.
     /// False on the permanent free tier. This is the gate for the paid surfaces that are
-    /// yours alone — adding a second pet, minting an invite, turning on cloud backup, the
+    /// yours alone: adding a second pet, minting an invite, turning on cloud backup, the
     /// designed report, the second appointment summary. For anything scoped to a
     /// particular pet use <see cref="CanEditPet"/>, which also honours sponsorship.</summary>
     bool HasFullAccess { get; }
 
     /// <summary>Whether the paid, pet-scoped surfaces are available for ONE pet. True when
     /// you have your own paid access, <b>or</b> you are a caregiver on this pet and its
-    /// owner does — the sponsorship rule:
+    /// owner does: the sponsorship rule:
     ///
     /// <para><c>CanEditPet = HasFullAccess || (I am a caregiver here &amp;&amp; the owner has access)</c></para>
     ///
-    /// <para><b>This is no longer a write gate.</b> Every write — journal entries,
-    /// medications, the care plan, the pet profile — is free on every tier, so nothing in
+    /// <para><b>This is no longer a write gate.</b> Every write (journal entries,
+    /// medications, the care plan, the pet profile) is free on every tier, so nothing in
     /// the logging path may call this. It survives because the paid, pet-scoped surfaces
     /// (the assembled summary, the designed report) need exactly this question answered,
     /// sponsorship included.</para>
@@ -55,7 +55,7 @@ public interface IEntitlementService
     /// shared", so the answer collapses to <see cref="HasFullAccess"/>.</param>
     bool CanEditPet(string? petSyncId);
 
-    /// <summary>Coarse state for copy/telemetry only — <b>not</b> the gate.
+    /// <summary>Coarse state for copy/telemetry only: <b>not</b> the gate.
     /// <see cref="HasFullAccess"/> is the gate.</summary>
     AccessState State { get; }
 
@@ -66,7 +66,7 @@ public interface IEntitlementService
     /// <summary>Whether this account has ever held a grant, including an expired one. It is
     /// the guard that selects grant copy: someone whose redeemed year ran out has not
     /// cancelled anything and must never be addressed as though they had. A grant is not a
-    /// subscription — nothing was charged, nothing renewed, there was nothing to cancel.</summary>
+    /// subscription: nothing was charged, nothing renewed, there was nothing to cancel.</summary>
     bool EverGranted { get; }
 
     /// <summary>The store's subscription offers to show on the subscribe sheet
@@ -98,7 +98,7 @@ public interface IEntitlementService
 
     /// <summary>Tag the store identity with a creator code, so a purchase made later carries
     /// it (see <see cref="IStoreBilling.SetAttributionAsync"/>). Routed through this boundary
-    /// only because the store seam lives behind it — attribution grants nothing and no gate
+    /// only because the store seam lives behind it: attribution grants nothing and no gate
     /// reads it. Non-throwing.</summary>
     Task SetAttributionAsync(string? creatorCode);
 
@@ -120,7 +120,7 @@ public interface IEntitlementService
 /// <para><b>Every consumer must name every member.</b> The Settings subtitle in particular
 /// selects copy by switch, so a state that falls through to a default arm is described to
 /// the user as something it is not. Adding OR removing a member here means visiting all of
-/// them — not just the ones that stop compiling.</para></summary>
+/// them, not just the ones that stop compiling.</para></summary>
 public enum AccessState
 {
     /// <summary>Before <see cref="IEntitlementService.InitializeAsync"/> completes.</summary>
@@ -144,13 +144,13 @@ public enum SubscriptionPlan
     Monthly
 }
 
-/// <summary>The result of a purchase/restore attempt — never an exception to the UI.</summary>
+/// <summary>The result of a purchase/restore attempt, never an exception to the UI.</summary>
 public enum PurchaseOutcome
 {
     /// <summary>Bought/restored; the entitlement is now active.</summary>
     Success,
     /// <summary>Nothing was bought because this store account already owns a subscription,
-    /// and it belongs to <b>this</b> app account — so access is now active. Distinct from
+    /// and it belongs to <b>this</b> app account, so access is now active. Distinct from
     /// <see cref="Success"/> because telling someone "you subscribed" when they didn't is a
     /// small lie that reads as a double charge. Reachable after a reinstall, or on a second
     /// device sharing the store account.</summary>
@@ -158,14 +158,14 @@ public enum PurchaseOutcome
     /// <summary>This store account already owns a subscription, but it is attached to a
     /// DIFFERENT app account, so it cannot be granted here. The store will not sell a second
     /// one, so the only ways forward are signing in as the account that holds it or managing
-    /// it in the store — say that, rather than reporting a failure they cannot act on.</summary>
+    /// it in the store: say that, rather than reporting a failure they cannot act on.</summary>
     OwnedByAnotherAccount,
     /// <summary>The user backed out of the store sheet. Not an error.</summary>
     Cancelled,
     /// <summary>No active subscription was found to restore.</summary>
     NothingToRestore,
     /// <summary>The payment is deferred (slow card, family approval) or the entitlement
-    /// hasn't propagated yet. Not a failure — it may complete shortly and unlock then.</summary>
+    /// hasn't propagated yet. Not a failure: it may complete shortly and unlock then.</summary>
     Pending,
     /// <summary>Billing is unavailable (no store, offline, misconfigured).</summary>
     Unavailable,

@@ -17,7 +17,7 @@ internal sealed class SyncRunContext
 
     public SQLiteAsyncConnection Db { get; }
 
-    /// <summary>Medication local ids touched by this run's pull — the engine runs
+    /// <summary>Medication local ids touched by this run's pull: the engine runs
     /// the idempotent reminder re-sync for each once the pull is applied.</summary>
     public HashSet<int> AffectedMedications { get; } = new();
 
@@ -78,7 +78,7 @@ internal sealed class SyncRunContext
     }
 
     /// <summary>A pet applied in this run may be looked up by children later in the
-    /// same run — prime the cache instead of re-querying.</summary>
+    /// same run: prime the cache instead of re-querying.</summary>
     public void NotePet(int localId, string uuid) { _petLocal[uuid] = localId; _petUuid[localId] = uuid; }
     public void NoteMedication(int localId, string uuid) { _medLocal[uuid] = localId; _medUuid[localId] = uuid; }
 
@@ -113,7 +113,7 @@ internal interface ITableSync
 /// per-table differences (column mapping, FK resolution, natural keys) are the
 /// delegates. Apply rules:
 /// - match local by SyncId, else by the table's natural key (that's how two
-///   devices' "same" row converges — the local row adopts the canonical id);
+///   devices' "same" row converges: the local row adopts the canonical id);
 /// - a locally-dirty row that is strictly newer wins and pushes later (LWW);
 /// - applied writes never mark dirty (they ARE the server state).
 /// </summary>
@@ -121,7 +121,7 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
 {
     private readonly string _localTable = typeof(T).Name;
 
-    /// <summary>Resolved once, at construction, from the one table registry — so a synced
+    /// <summary>Resolved once, at construction, from the one table registry, so a synced
     /// table that was never registered fails loudly at startup rather than quietly pushing
     /// demo rows forever.</summary>
     private readonly string _excludesDemo = SyncedTables.For<T>().ExcludesDemoPredicate;
@@ -159,7 +159,7 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
             var incoming = await _fromCloud(el, ctx);
             if (incoming == null)
             {
-                // Unresolvable parent — parents sync first, so this is exceptional;
+                // Unresolvable parent: parents sync first, so this is exceptional;
                 // the row returns when its updated_at moves. Log, don't crash.
                 Debug.WriteLine($"[Cloud] skipped {CloudTable} row with unresolved FK");
                 continue;
@@ -204,7 +204,7 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
     /// The upload queue for this table: every dirty row, minus every demo row.
     ///
     /// <para><b>This is the guard that matters.</b> The bulk sweeps in
-    /// <c>CloudSyncService</c> exclude demo data too, but they are the secondary defence —
+    /// <c>CloudSyncService</c> exclude demo data too, but they are the secondary defence,
     /// a creator who logs a live entry on a seeded demo pet goes through the ordinary write
     /// path, and <c>SyncStamp.Touch</c> marks that row dirty exactly like any other, because
     /// it stamps an <c>ISyncable</c> and has no idea which pet it belongs to. Filtering at
@@ -227,7 +227,7 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
                 // invisible in the UI too (every read filters by parent id), so the only
                 // symptom is a "changes not yet saved" count that never goes down.
                 Debug.WriteLine(
-                    $"[Cloud] {_localTable} id={row.Id} is dirty but unpushable (orphaned parent) — skipping");
+                    $"[Cloud] {_localTable} id={row.Id} is dirty but unpushable (orphaned parent): skipping");
                 continue;
             }
 
@@ -251,7 +251,7 @@ internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new(
 
 /// <summary>
 /// The cloud mapping for every synced table, in dependency order (parents before
-/// children — both pull and push walk this order so FKs always resolve).
+/// children: both pull and push walk this order so FKs always resolve).
 ///
 /// <para>The <i>set</i> of tables is owned by <c>SyncedTables</c>; this file owns each
 /// one's cloud name and column translation, which is genuinely bespoke and can't be
@@ -266,7 +266,7 @@ internal static class SyncTableMaps
         var maps = BuildMaps();
 
         // A table in the registry with no mapping would pull and push nothing, forever,
-        // with no error — the owner's data would simply never leave the device. A mapping
+        // with no error: the owner's data would simply never leave the device. A mapping
         // with no registry entry is the mirror image: it syncs, but is never created,
         // backfilled, wiped on reset, or purged with its pet. Both are silent, so neither
         // is allowed to compile-and-run.
@@ -281,7 +281,7 @@ internal static class SyncTableMaps
                 "SyncTableMaps is out of step with SyncedTables. " +
                 $"In the registry but not mapped: [{string.Join(", ", unmapped)}]. " +
                 $"Mapped but not in the registry: [{string.Join(", ", unregistered)}]. " +
-                "Add the missing line to whichever list is short — see SyncedTables.");
+                "Add the missing line to whichever list is short: see SyncedTables.");
         }
 
         return maps;
@@ -377,7 +377,7 @@ internal static class SyncTableMaps
         // medication_id travels as a PLAIN uuid with no foreign key, and both
         // directions tolerate it not resolving. The row is deliberately self-contained
         // (name and summary are text captured at the change), so an unresolvable
-        // pointer costs nothing readable — whereas returning null from toCloud would
+        // pointer costs nothing readable, whereas returning null from toCloud would
         // strand the row as permanently dirty, and an FK with a cascade would delete
         // the history of the thing whose history this exists to preserve.
         new TableSync<MedicationChange>("medication_changes",
@@ -786,7 +786,7 @@ internal static class SyncTableMaps
                     ["pet_id"] = petUuid,
                     ["entry_date"] = CloudJson.ToDateOnly(s.Date),
                     ["time_ticks"] = s.Time.Ticks,
-                    // Text on the wire (the member name), unlike the local int column —
+                    // Text on the wire (the member name), unlike the local int column,
                     // matches how Tracker.Kind and CustomTracker.Shape already travel, and
                     // keeps the cloud row readable. Null when the owner didn't say.
                     ["seizure_type"] = s.Type?.ToString(),
@@ -912,7 +912,7 @@ internal static class SyncTableMaps
 
         // ── custom trackers (the owner's own definitions) ────────────────────
         // No natural key on purpose. "Walk" on two devices is two DIFFERENT trackers
-        // until one syncs to the other — they were typed independently and may hold
+        // until one syncs to the other: they were typed independently and may hold
         // different cadences, units and icons. Converging them on the name would
         // silently merge one person's history into another's, and there is no rule
         // that says two things called Walk are the same thing. SyncId decides
@@ -975,7 +975,7 @@ internal static class SyncTableMaps
         // ── custom entries (append-only events; keyed by id) ─────────────────
         // Carries BOTH ids: pet_id is what RLS and the purge select on, custom_tracker_id
         // is what the entry means. An entry whose tracker hasn't arrived yet resolves to
-        // null and is skipped — the next pull picks it up once the parent exists.
+        // null and is skipped: the next pull picks it up once the parent exists.
         new TableSync<CustomEntry>("custom_entries",
             toCloud: async (e, ctx) =>
             {
@@ -1074,7 +1074,7 @@ internal static class SyncTableMaps
         // would silently merge two appointments into one.
         //
         // The date travels as a plain date and the time as nullable ticks, never as
-        // one timestamp — an appointment is a WALL-CLOCK thing, and folding an
+        // one timestamp: an appointment is a WALL-CLOCK thing, and folding an
         // unknown time into midnight UTC would move half the world's visits across
         // a day boundary.
         new TableSync<VetVisit>("vet_visits",

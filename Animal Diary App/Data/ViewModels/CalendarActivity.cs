@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.ViewModels;
 /// <summary>
 /// Kind of activity surfaced as a calendar dot. Event-based (not boolean flags)
 /// so new indicator types only need a new value here plus a mapping in the
-/// ViewModel — no UI or schema change. <see cref="Symptoms"/>/<see cref="VetVisit"/>
+/// ViewModel, no UI or schema change. <see cref="Symptoms"/>/<see cref="VetVisit"/>
 /// are reserved for future data models and produce no dots yet.
 /// </summary>
 public enum CalendarActivityType

@@ -10,7 +10,7 @@ using Animal_Diary_App.Helpers;
 /// same document and layout diffs stay meaningful.
 ///
 /// <para>There used to be a second, fully-populated 90-day fixture here for layout work.
-/// The seeded demo pets replaced it — exporting Kira or Mira runs the REAL builder over
+/// The seeded demo pets replaced it: exporting Kira or Mira runs the REAL builder over
 /// real rows, which exercises page breaks, the events cap and the continuation header more
 /// honestly than a hand-written <see cref="VetReportData"/> could. This one survives
 /// because a demo pet cannot do its job: a full year of a real diary never ends on page
@@ -19,26 +19,26 @@ using Animal_Diary_App.Helpers;
 public static class VetReportSampleData
 {
     /// <summary>
-    /// A deliberately SMALLER Luna, sized to land on exactly one page — the fixture for
+    /// A deliberately SMALLER Luna, sized to land on exactly one page: the fixture for
     /// app-store screenshots, where a screenshot of page 1 of 2 would be cut off mid-report.
     ///
     /// One page is bought by carrying LESS, never by shrinking type or charts: the
     /// document's own styles are untouched, so what a store image shows is exactly what
     /// an owner gets. Three levers, in the order they were pulled:
     /// <list type="bullet">
-    /// <item><b>30 days instead of 90</b> — the charts are fixed-height either way, but a
+    /// <item><b>30 days instead of 90</b>: the charts are fixed-height either way, but a
     ///   month of points reads as a legible line at screenshot size where a quarter reads
     ///   as a scribble.</item>
-    /// <item><b>Appetite, events and mood left out</b> — the costliest blocks (~240 pt, a
+    /// <item><b>Appetite, events and mood left out</b>: the costliest blocks (~240 pt, a
     ///   whole table, and ~130 pt). Every section omits itself when empty, so nothing
     ///   looks missing.</item>
-    /// <item><b>Two medications, worded short</b> — a third row, or an adherence string long
+    /// <item><b>Two medications, worded short</b>: a third row, or an adherence string long
     ///   enough to wrap, is what pushes the table from tidy to tall.</item>
     /// </list>
     /// The mood chart's ~130 pt went to the notes list instead: a run of dots on a word
     /// axis needs the reader to decode it, while six dated sentences in the owner's own
     /// voice are legible at thumbnail size and say what the app is for. Mood is still in
-    /// the real report — this is a screenshot's priorities, not the product's.
+    /// the real report: this is a screenshot's priorities, not the product's.
     /// </summary>
     public static VetReportData CreateCompact()
     {
@@ -53,7 +53,7 @@ public static class VetReportSampleData
             weight.Add(new ReportPoint(from.AddDays(d), 5.4m - 0.2m * d / 30m + (decimal)(rng.NextDouble() * 0.08 - 0.04)));
 
         // Glucose: one reading most days, settling 13 → 10 mmol/L across the month with a
-        // small daily wobble. Calmer than the 90-day fixture on purpose — a screenshot has
+        // small daily wobble. Calmer than the 90-day fixture on purpose: a screenshot has
         // to be legible at thumbnail size, and 30 points is the most that stays readable.
         var glucose = new List<ReportPoint>();
         for (var d = 0; d <= 30; d++)
@@ -61,7 +61,7 @@ public static class VetReportSampleData
                 glucose.Add(new ReportPoint(from.AddDays(d), 13m - 3m * d / 30m + (decimal)(rng.NextDouble() * 2.4 - 1.2)));
 
         // Water: measured millilitres only. Observations are dropped here purely for
-        // height — one chart instead of two — not because the pairing matters less.
+        // height (one chart instead of two) not because the pairing matters less.
         var waterMeasured = new List<ReportPoint>();
         for (var d = 0; d <= 30; d += 2)
             waterMeasured.Add(new ReportPoint(from.AddDays(d), 260m + (decimal)(rng.NextDouble() * 120)));
@@ -72,7 +72,7 @@ public static class VetReportSampleData
             {
                 Name = "Luna",
                 // Resolved through the same helpers the real builder uses, so a sample
-                // rendered in German says "Katze", not "Cat" — these reach the page.
+                // rendered in German says "Katze", not "Cat": these reach the page.
                 Species = PetTypeNames.Localize("Cat"),
                 AgeYears = 9,
                 Conditions = new[] { ConditionCatalog.GetCondition("diabetes").Name },
@@ -110,7 +110,7 @@ public static class VetReportSampleData
             },
             // The section the mood chart made room for: ten notes, which is exactly
             // VetReportStyles.MaxNotes, so the list is full without the "+N earlier"
-            // line. Each is kept short enough to stay on one line — a wrapped note
+            // line. Each is kept short enough to stay on one line: a wrapped note
             // costs a whole row and the German set runs longer than the English.
             Notes = SampleNotes(from)
         };
@@ -119,7 +119,7 @@ public static class VetReportSampleData
     /// <summary>
     /// The compact fixture's owner notes, in the app's current language.
     ///
-    /// Real owner notes are stored text and are NEVER translated — the report prints
+    /// Real owner notes are stored text and are NEVER translated: the report prints
     /// them exactly as they were typed, and that rule is not bent here. These are not
     /// owner notes; they are fake copy standing in for them, and a German store
     /// screenshot showing English sentences would misrepresent the product. Kept in
@@ -157,7 +157,7 @@ public static class VetReportSampleData
                 "Started playing with the string on her own in the evenings."
             };
 
-        // Newest first, spread across the month — the order NotesSection expects.
+        // Newest first, spread across the month: the order NotesSection expects.
         var days = new[] { 28, 25, 22, 19, 16, 13, 10, 8, 5, 2 };
         return text.Select((t, i) => new ReportNote(from.AddDays(days[i]), t)).ToArray();
     }

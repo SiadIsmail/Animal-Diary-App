@@ -24,7 +24,7 @@ public interface ICloudAccessCodeService
 /// <c>EntitlementService.RefreshAsync</c> (launch + resume) rather than by a sync run.</para>
 ///
 /// <para><b>The cache is account-scoped on purpose.</b> It lives under the <c>cloud:</c>
-/// prefix, which <c>CloudSyncService.SignOutTeardownAsync</c> clears wholesale — so signing
+/// prefix, which <c>CloudSyncService.SignOutTeardownAsync</c> clears wholesale, so signing
 /// out gives up the grant on this device. The alternative (AppSettings, which survives
 /// sign-out) would mean one code could cover an unlimited number of accounts: redeem, sign
 /// out, sign in as someone else, keep both.</para>
@@ -32,7 +32,7 @@ public interface ICloudAccessCodeService
 public sealed class CloudAccessCodeService : ICloudAccessCodeService, Billing.IGrantSource
 {
     // INVARIANT: cloud:-prefixed, like every other account-scoped key. See the key list in
-    // CloudSyncService — anything that must SURVIVE a sign-out belongs in AppSettings instead.
+    // CloudSyncService: anything that must SURVIVE a sign-out belongs in AppSettings instead.
     private const string KeyGrantedUntil = "cloud:grantedUntil";
     private const string KeyEverGranted = "cloud:everGranted";
 
@@ -69,7 +69,7 @@ public sealed class CloudAccessCodeService : ICloudAccessCodeService, Billing.IG
     // ── IGrantSource: what the billing gate reads ───────────────────────────
 
     /// <summary>Unknown ONLY while a signed-in device still owes its first fetch. Signed out
-    /// or cloud-disabled has nothing to wait for and reports true — reporting false there
+    /// or cloud-disabled has nothing to wait for and reports true: reporting false there
     /// would hold the gate open forever for local-only users.</summary>
     public bool GrantKnown => _loaded || !CloudConfig.Enabled || !_auth.IsSignedIn;
 

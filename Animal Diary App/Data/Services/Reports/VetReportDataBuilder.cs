@@ -56,12 +56,12 @@ public class VetReportDataBuilder
 
     /// <summary>
     /// Snapshot for the PLAIN export: everything the owner wrote down in the range, in
-    /// time order, and nothing else. Free forever on every tier — this is the promise
+    /// time order, and nothing else. Free forever on every tier: this is the promise
     /// that you can always take your data out (AI/domain.md).
     ///
     /// <para>It reuses <see cref="ConstellationService.GetRangeAsync"/> rather than
     /// flattening the stores a second time. That service already exists to answer exactly
-    /// this question — "everything for one pet over a stretch, sorted purely by time" —
+    /// this question: "everything for one pet over a stretch, sorted purely by time",
     /// and it reads every store in one pass. A second flattener here would be ~150 lines
     /// that drift apart the first time a tracker is added, and a new tracker would then
     /// be logged, stored, and silently missing from the one export that promises
@@ -165,7 +165,7 @@ public class VetReportDataBuilder
     {
         // Current weight: last reading in range, else the pet's latest ever (so the
         // header still identifies the pet). Change is only stated when the range
-        // itself contains at least two readings — never inferred across gaps.
+        // itself contains at least two readings, never inferred across gaps.
         decimal? currentWeight = weightPoints.Count > 0 ? weightPoints[^1].Value : null;
         if (currentWeight == null)
             currentWeight = (await _petEntries.GetLatestWeightEntryAsync(pet.Id))?.Weight;
@@ -190,13 +190,18 @@ public class VetReportDataBuilder
     private async Task<List<ReportMedication>> BuildMedicationsAsync(int petId, DateTime from, DateTime to)
     {
         // Archived medications are included on purpose when they were still dosed in
-        // the period — a vet reading 90 days of history needs the whole picture.
+        // the period: a vet reading 90 days of history needs the whole picture.
         var meds = await _medications.GetMedicationsByPetIdAsync(petId);
         var medIds = meds.Select(m => m.Id).ToList();
         var schedules = (await _medications.GetSchedulesForMedicationsAsync(medIds))
             .ToLookup(s => s.MedicationId);
         var logs = (await _doseLogs.GetByMedicationsAndRangeAsync(medIds, from, to))
             .ToLookup(l => l.MedicationId);
+
+        // The pet's treatment ledger up to the end of the period. One read for every
+        // medication: it is scoped by pet, which is the whole point of the table.
+        var ledger = await _medications.GetChangesForRangeAsync(
+            petId, DateTime.MinValue, to.Date.AddDays(1).ToUniversalTime());
 
         var result = new List<ReportMedication>();
         foreach (var med in meds)
@@ -205,8 +210,8 @@ public class VetReportDataBuilder
             var medLogs = logs[med.Id].ToList();
 
             // Scheduled doses that actually fell inside the period. The schedule rows
-            // only describe the CURRENT rules — an edited schedule would silently
-            // rewrite history — so the count is the UNION of (a) the current rules
+            // only describe the CURRENT rules: an edited schedule would silently
+            // rewrite history, so the count is the UNION of (a) the current rules
             // walked over the period and (b) every dose log in the period (each log
             // row proves a dose was scheduled then, whatever the rules said at the
             // time). Bounded below by the medication's creation date and above by
@@ -233,6 +238,9 @@ public class VetReportDataBuilder
                 Name = med.Name,
                 Dose = med.Dosage,
                 Unit = med.Unit,
+                DoseText = MedicationLedger.DoseOverPeriod(
+                    ledger, med.Id,
+                    start.Date.ToUniversalTime(), end.Date.AddDays(1).ToUniversalTime()),
                 DaysPerWeek = medSchedules.Select(s => s.Day).Distinct().Count(),
                 TimesOfDay = medSchedules.Select(s => s.Time).Distinct().OrderBy(t => t).ToList(),
                 ScheduledCount = scheduled,
@@ -248,7 +256,7 @@ public class VetReportDataBuilder
     /// The day's mood readings as qualitative observations. The stored level is 1–5
     /// (see <c>MoodLevel</c>) which is exactly what <see cref="ReportObservation"/>
     /// wants: a row index, never a value to be averaged or trended. Days with no mood
-    /// recorded are absent rather than zero — a gap is a gap, not a bad day.
+    /// recorded are absent rather than zero: a gap is a gap, not a bad day.
     /// </summary>
     private static ReportMood BuildMood(IReadOnlyList<PetEntry> petEntries) => new()
     {
@@ -269,11 +277,11 @@ public class VetReportDataBuilder
     {
         var trends = new List<ReportSeries>();
 
-        // One reading is enough to be worth stating. It can't be plotted — a one-point
-        // line says nothing — so TrendsSection prints it as a dated value instead. The
+        // One reading is enough to be worth stating. It can't be plotted: a one-point
+        // line says nothing, so TrendsSection prints it as a dated value instead. The
         // old >= 2 threshold dropped it entirely, which is how an owner with a single
         // weigh-in was told nothing had been written down.
-        // Series labels are printed on the page, so they are localized here — the same
+        // Series labels are printed on the page, so they are localized here: the same
         // place Species and the condition names are already resolved to display words.
         if (weightPoints.Count >= 1)
             trends.Add(new ReportSeries { Label = VetReportStrings.SeriesWeight, Unit = "kg", Points = weightPoints });
@@ -308,7 +316,7 @@ public class VetReportDataBuilder
     /// start).
     ///
     /// <para>Lived in <c>VetReportSampleData</c> until the demo pets replaced that
-    /// fixture's larger half — an odd home for it, since the REAL report was always its
+    /// fixture's larger half: an odd home for it, since the REAL report was always its
     /// only caller.</para></summary>
     private static IReadOnlyList<ReportPoint> BuildWeeklyCounts(
         IEnumerable<DateTime> occurrences, DateTime from, DateTime to)
@@ -336,7 +344,7 @@ public class VetReportDataBuilder
         {
             // Objective measurements. Exact readings are additive, so a day's value is
             // the SUM of that day's readings (four 100 mL logs and one 400 mL log both
-            // read 400 mL for the day) — one point per day. This is aggregation of like
+            // read 400 mL for the day): one point per day. This is aggregation of like
             // measurements, not a trend or a judgement.
             var points = (await _water.GetAmountsForRangeAsync(petId, from, to))
                 .Where(w => w.AmountMl > 0)
@@ -351,7 +359,7 @@ public class VetReportDataBuilder
         IReadOnlyList<ReportObservation> observations = Array.Empty<ReportObservation>();
         if (includeObservations)
         {
-            // Subjective owner observations — the relative reading as-logged. Passed
+            // Subjective owner observations: the relative reading as-logged. Passed
             // through verbatim (date + level); the document renders them on a word
             // axis. Never converted to a number, never averaged, never trended.
             observations = (await _water.GetLevelsForRangeAsync(petId, from, to))
@@ -364,7 +372,7 @@ public class VetReportDataBuilder
         return new ReportWater { Measured = measured, Observations = observations };
     }
 
-    // Appetite — the same communication-not-interpretation stance as water, plus the
+    // Appetite: the same communication-not-interpretation stance as water, plus the
     // diet list. Measured grams, qualitative observations and the recorded foods are
     // built independently; nothing is merged, numbered from a word, or trended.
     // <paramref name="levelEntries"/> is the already-fetched qualitative range.
@@ -378,7 +386,7 @@ public class VetReportDataBuilder
         if (includeMeasured)
         {
             // Objective grams. Additive, so a day's value is the SUM of that day's
-            // measured meals — one point per day. Aggregation, not a trend.
+            // measured meals: one point per day. Aggregation, not a trend.
             var points = amountEntries
                 .Where(a => a.Grams > 0)
                 .GroupBy(a => a.Date.Date)
@@ -400,7 +408,7 @@ public class VetReportDataBuilder
         }
 
         // Diet list: the distinct foods recorded across both stores in the range,
-        // most-recent first. A plain factual list — the range is the only context.
+        // most-recent first. A plain factual list: the range is the only context.
         var foods = levelEntries.Select(a => new { a.Food, a.Date, a.Time })
             .Concat(amountEntries.Select(a => new { a.Food, a.Date, a.Time }))
             .Where(x => !string.IsNullOrWhiteSpace(x.Food))
@@ -427,13 +435,13 @@ public class VetReportDataBuilder
         }));
 
         // Vomiting has no logging UI right now, so no producer adds
-        // ReportEventKind.Vomiting here — the kind stays (rendered by
+        // ReportEventKind.Vomiting here: the kind stays (rendered by
         // EventsSection, used by the sample harness) for when a sheet exists.
         //
         // Appetite is NO LONGER surfaced as "low appetite" events. It now has its own
         // measured-vs-observed section (BuildAppetiteAsync / AppetiteSection): the
         // qualitative reading is shown as-logged on its own graph, not re-labelled
-        // "low" — the report records, it does not flag. ReportEventKind.LowAppetite
+        // "low": the report records, it does not flag. ReportEventKind.LowAppetite
         // stays for the sample harness / back-compat but has no real producer.
 
         return events
@@ -447,7 +455,7 @@ public class VetReportDataBuilder
     // Only trackers whose IncludeInReport switch is on, because only the owner can know
     // whether a thing is clinical: a walk is noise for one household and the whole point
     // for another whose dog has a limp. Filtering HERE means nothing downstream has to
-    // remember to — a tracker that is off simply never reaches VetReportData.
+    // remember to: a tracker that is off simply never reaches VetReportData.
     //
     // ARCHIVED trackers are included. Retiring one means "stop asking me", not "pretend
     // the last three months didn't happen", and an owner who stopped recording something

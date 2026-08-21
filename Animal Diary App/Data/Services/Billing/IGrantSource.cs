@@ -2,7 +2,7 @@ namespace Animal_Diary_App.Data.Services.Billing;
 
 /// <summary>
 /// The third access source: full access <i>granted</i> by a redeemed access code,
-/// running until a date. Not a purchase and not a trial — nothing is charged,
+/// running until a date. Not a purchase and not a trial: nothing is charged,
 /// nothing auto-renews, and there is nothing to cancel. Redeeming a second code
 /// renews the window from that moment rather than queueing behind the first
 /// (the arithmetic lives server-side, in <c>redeem_access_code</c>).
@@ -22,7 +22,7 @@ public interface IGrantSource
 {
     /// <summary>False ONLY while a signed-in device still owes its first grant fetch.
     /// Signed out, cloud disabled, or already fetched (even to "no grant") must report
-    /// <c>true</c> — "nothing to wait for" — exactly as
+    /// <c>true</c> ("nothing to wait for") exactly as
     /// <see cref="IPetAccessSource.AccessKnown"/> and <see cref="IStoreBilling.EntitlementKnown"/>
     /// do. Reporting false where there is nothing to wait for holds the gate permanently
     /// open and the read-only state never engages.</summary>
@@ -31,10 +31,10 @@ public interface IGrantSource
     /// <summary>Whether a redeemed grant is currently running. Pure, synchronous and
     /// local: read from a cached absolute instant, never a network call. Because the
     /// instant is absolute, a grant needs <b>no offline grace window</b> the way
-    /// sponsorship does — it expires by itself, on the device. Never throws.</summary>
+    /// sponsorship does: it expires by itself, on the device. Never throws.</summary>
     bool IsGranted { get; }
 
-    /// <summary>When the running grant ends, for copy only (never as the gate — read
+    /// <summary>When the running grant ends, for copy only (never as the gate: read
     /// <see cref="IsGranted"/> for that). Null when there is no grant.</summary>
     DateTime? GrantedUntilUtc { get; }
 

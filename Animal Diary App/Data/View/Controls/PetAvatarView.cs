@@ -6,13 +6,13 @@ using Microsoft.Maui.Graphics;
 /// <summary>
 /// The pet's circular avatar, shared by every surface that shows a pet (Today,
 /// Pets, Manage, the details/preview page). It renders the profile photo when one
-/// is set AND its file exists on this device, otherwise a fallback glyph — the type
+/// is set AND its file exists on this device, otherwise a fallback glyph: the type
 /// emoji, or a name initial. One control keeps all avatar sites visually identical
 /// and gives photos a single place to appear.
 ///
 /// A <see cref="PhotoPath"/> that names a file this device doesn't have (e.g. a row
 /// synced from another device, which carries the file name but not the image) falls
-/// back to the glyph automatically — the File.Exists guard handles it.
+/// back to the glyph automatically: the File.Exists guard handles it.
 /// </summary>
 public sealed class PetAvatarView : ContentView
 {
@@ -37,7 +37,7 @@ public sealed class PetAvatarView : ContentView
         };
 
         // Background gradient + stroke come from the shared palette (resolved from
-        // app resources — the accepted convention for presentation tokens) so the
+        // app resources: the accepted convention for presentation tokens) so the
         // avatar matches the app's other rounded surfaces.
         if (TryColor("SeaHi", out var hi) && TryColor("SeaMid", out var mid))
             _frame.Background = new LinearGradientBrush(
@@ -70,7 +70,7 @@ public sealed class PetAvatarView : ContentView
         nameof(FallbackText), typeof(string), typeof(PetAvatarView), "🐾",
         propertyChanged: (b, _, _) => ((PetAvatarView)b).ApplyFallback());
 
-    /// <summary>Glyph shown when there is no photo — the pet's type emoji or a name
+    /// <summary>Glyph shown when there is no photo: the pet's type emoji or a name
     /// initial, chosen by the host.</summary>
     public string FallbackText
     {

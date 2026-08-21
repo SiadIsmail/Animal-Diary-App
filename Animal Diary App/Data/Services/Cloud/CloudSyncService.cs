@@ -10,7 +10,7 @@ using Animal_Diary_App.Helpers;
 public enum SyncOutcome
 {
     Success,
-    Offline,        // network unavailable — normal, retried on the next trigger
+    Offline,        // network unavailable: normal, retried on the next trigger
     NotSignedIn,
     BackupDisabled, // signed in but the owner hasn't enabled backup
     AuthExpired,    // session died; UI shows signed-out
@@ -29,14 +29,14 @@ public interface ICloudSyncService
     bool IsBackupEnabled { get; }
     DateTime? LastSyncedUtc { get; }
 
-    /// <summary>Raised after every completed run and on enable/disable — the
+    /// <summary>Raised after every completed run and on enable/disable: the
     /// Settings surface re-renders on it.</summary>
     event Action? StateChanged;
 
     /// <summary>Raised after a sync that actually CHANGED local data (applied
     /// remote rows or purged a revoked pet). The visible page re-runs its normal
     /// OnAppearing load on this, so another caregiver's entries show up without
-    /// tab-switching. Raised from a background thread — subscribers marshal.</summary>
+    /// tab-switching. Raised from a background thread: subscribers marshal.</summary>
     event Action? RemoteChangesApplied;
 
     /// <summary>Load persisted flags (called once at startup, off the UI path).</summary>
@@ -49,7 +49,7 @@ public interface ICloudSyncService
     void RequestSyncSoon();
 
     /// <summary>App lifecycle hook (resume/sleep). Foreground gates the periodic
-    /// pull — a backgrounded app must not keep polling the network.</summary>
+    /// pull: a backgrounded app must not keep polling the network.</summary>
     void NotifyAppState(bool foreground);
 
     /// <summary>Opt this device's data into the account: marks everything dirty
@@ -58,7 +58,7 @@ public interface ICloudSyncService
     Task<SyncOutcome> EnableBackupAsync();
 
     /// <summary>Stop syncing (local-only again). Cloud data stays; sign-out separate.
-    /// <b>Local data stays too</b> — this is the reversible exit ("these are still my pets,
+    /// <b>Local data stays too</b>: this is the reversible exit ("these are still my pets,
     /// this device just stops syncing"). Do not collapse it into sign-out, which is the
     /// exit that removes them.</summary>
     Task DisableBackupAsync();
@@ -73,7 +73,7 @@ public interface ICloudSyncService
     /// <summary>
     /// Step 2 of signing out: remove every pet belonging to the account being left and clear
     /// all account-scoped sync state. Call <b>before</b> <c>ICloudAuthService.SignOutAsync</c>
-    /// — this needs the membership map that signing out invalidates.
+    /// this needs the membership map that signing out invalidates.
     ///
     /// <para>Only ever for a <b>deliberate</b> sign-out. An expired refresh token also clears
     /// the session, but that is the same account involuntarily: the cursors are still valid,
@@ -81,7 +81,7 @@ public interface ICloudSyncService
     /// their token aged out.</para>
     /// </summary>
     /// <returns>How many pets remain on the device afterwards. Zero means the app has
-    /// nothing left to show and belongs back in onboarding — the same routing the owner's
+    /// nothing left to show and belongs back in onboarding: the same routing the owner's
     /// last-pet deletion already does.</returns>
     Task<int> SignOutTeardownAsync();
 
@@ -93,7 +93,7 @@ public interface ICloudSyncService
     /// <summary>True when this user owns at least one pet that someone else is caring for.</summary>
     bool OwnsASharedPet { get; }
 
-    /// <summary>Raised when a pet's SPONSORSHIP changed between two syncs — the owner
+    /// <summary>Raised when a pet's SPONSORSHIP changed between two syncs: the owner
     /// subscribed, lapsed, or their redeemed code ran out. Carries the pets that just lost
     /// sponsored access, so the UI can say so once rather than letting the app quietly
     /// go read-only. Raised from a background thread; subscribers marshal.
@@ -118,12 +118,12 @@ public sealed record PetAccessRow(string Role, bool OwnerAccess, int CarerCount,
 
 public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSource
 {
-    // SyncState keys — the engine owns this vocabulary (see SyncStateStore).
+    // SyncState keys: the engine owns this vocabulary (see SyncStateStore).
     //
     // INVARIANT: every key below is account-scoped and MUST carry this prefix, so
     // SignOutTeardownAsync's single ClearPrefixAsync can never miss one. Anything that must
     // survive a sign-out (language, preferences) belongs in AppSettings,
-    // which is device-scoped — not here.
+    // which is device-scoped, not here.
     private const string CloudStatePrefix = "cloud:";
 
     private const string KeyEnabled = "cloud:backupEnabled";
@@ -149,7 +149,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
 
     // Foreground polling cadence: another caregiver's entries should surface
     // while the owner sits on a page, without real-time infrastructure. A no-op
-    // cycle is ~a dozen tiny range GETs — cheap at this interval.
+    // cycle is ~a dozen tiny range GETs: cheap at this interval.
     private static readonly TimeSpan ForegroundPoll = TimeSpan.FromMinutes(3);
 
     private readonly AppDatabase _db;
@@ -167,7 +167,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
 
     // One run at a time; a request during a run coalesces into one follow-up run.
     // _runQueued is written by callers that lost the gate and read by the holder, so it
-    // crosses threads without the gate protecting it — volatile, or a coalesced request
+    // crosses threads without the gate protecting it: volatile, or a coalesced request
     // can be dropped and its write sits unsynced until the next trigger.
     private readonly SemaphoreSlim _runGate = new(1, 1);
     private volatile bool _runQueued;
@@ -182,13 +182,13 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     private DateTime? _lastSynced;
 
     // Swapped whole from the sync thread, read from the UI thread (GetPetRole feeds
-    // PetDeletionService.DetermineKind — owner-deletes-for-everyone vs caregiver-leaves).
+    // PetDeletionService.DetermineKind: owner-deletes-for-everyone vs caregiver-leaves).
     // Same treatment as _petAccess below, for the same reason.
     private volatile Dictionary<string, string> _petRoles = new();
 
     // Sponsorship cache (pet SyncId → role + whether that pet's owner had access when we
     // last asked). Read synchronously by the billing gate on the UI thread, rewritten by
-    // reference from the sync thread — so it is swapped whole, never mutated in place.
+    // reference from the sync thread, so it is swapped whole, never mutated in place.
     private volatile Dictionary<string, PetAccessRow> _petAccess = new();
     private volatile bool _accessLoaded;
 
@@ -211,7 +211,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         _analytics = analytics;
         _grants = grants;
 
-        // Every repository write funnels through SyncStamp — that one hook is the
+        // Every repository write funnels through SyncStamp, that one hook is the
         // whole "detect local changes" mechanism (see coding-standards.md).
         SyncStamp.RowTouched += RequestSyncSoon;
 
@@ -277,7 +277,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     // ── IPetAccessSource: what the billing gate reads ───────────────────────
 
     /// <summary>Unknown ONLY while a signed-in, backup-on device still owes its first
-    /// access fetch. Every other configuration has nothing to wait for and reports true —
+    /// access fetch. Every other configuration has nothing to wait for and reports true,
     /// reporting false when signed out would hold the read-only gate permanently open.</summary>
     public bool AccessKnown => _accessLoaded || !_enabled || !_auth.IsSignedIn;
 
@@ -296,7 +296,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         if (!_enabled || !_auth.IsSignedIn)
             return;
 
-        // A window is already open — let it run out rather than restarting it. This is
+        // A window is already open: let it run out rather than restarting it. This is
         // called from SyncStamp.RowTouched, i.e. once per stamped row, so deleting a pet
         // with a year of history used to cancel and re-create thousands of token sources
         // and delay tasks in a tight loop. Coalescing on the existing window costs at
@@ -363,7 +363,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     /// earns. It is a hard stop, not a counter: the refresh can keep succeeding while
     /// the data call keeps returning 401 (a revoked role, a skewed clock, or a plain
     /// 401 that <c>CloudHttp.Classify</c> buckets as AuthExpired), and without this the
-    /// method recursed forever — unbounded requests and stack growth on a phone.</param>
+    /// method recursed forever: unbounded requests and stack growth on a phone.</param>
     private async Task<SyncOutcome> RunOnceAsync(bool retriedAfterRefresh = false)
     {
         var session = await _auth.GetSessionAsync();
@@ -374,7 +374,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         {
             // Belt and braces for A3: if state from a DIFFERENT account is still here, every
             // cursor sits ahead of this account's rows and the pull would silently return
-            // nothing — permanently. A proper sign-out has already torn this down; this
+            // nothing: permanently. A proper sign-out has already torn this down; this
             // catches devices that got into the state before the teardown existed, and any
             // path that clears the session without going through it.
             await DiscardOtherAccountStateAsync(session);
@@ -382,7 +382,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
             var ctx = new SyncRunContext(_db.Connection);
 
             // Membership first: it drives the shared-pet roles AND the purge of
-            // pets whose access was revoked — RLS makes those invisible, so their
+            // pets whose access was revoked: RLS makes those invisible, so their
             // tombstones can never arrive; this explicit diff is the only signal.
             var changed = await SyncMembershipsAsync(session);
 
@@ -392,7 +392,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
                 changed += await PullTableAsync(table, ctx, session);
 
             // Remote schedule/dose changes must re-materialize this device's own
-            // reminder instances — reuse the idempotent scheduler path.
+            // reminder instances: reuse the idempotent scheduler path.
             foreach (var medId in ctx.AffectedMedications)
             {
                 try { await _reminders.SyncMedicationAsync(medId); }
@@ -411,7 +411,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
                 _analytics.Track(AnalyticsEvents.CloudBackupCompleted);
             }
 
-            // Only when local data actually changed — pushes and no-op cycles
+            // Only when local data actually changed: pushes and no-op cycles
             // must not cause pointless page reloads.
             if (changed > 0)
             {
@@ -439,7 +439,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
                 return await RunOnceAsync(retriedAfterRefresh: true);
 
             CloudDiagnostics.Record(retriedAfterRefresh
-                ? "[Cloud] sync: auth expired again immediately after a successful refresh — giving up this cycle"
+                ? "[Cloud] sync: auth expired again immediately after a successful refresh: giving up this cycle"
                 : "[Cloud] sync: auth expired, session could not be refreshed");
             return SyncOutcome.AuthExpired;
         }
@@ -455,7 +455,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     }
 
     /// <summary>Fetch the caller's membership list (pet uuid → role), cache it for
-    /// the sharing UI, and purge local pets whose membership is gone — the user
+    /// the sharing UI, and purge local pets whose membership is gone: the user
     /// left, was removed, or the owner deleted the pet elsewhere. Only pets that
     /// were previously pushed are candidates: a dirty pet may simply be new and
     /// gets its owner membership by being pushed later this same cycle.
@@ -477,26 +477,26 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
 
         // ── newly granted access needs a FULL pull, not an incremental one ──────
         // The pull is incremental (updated_at > cursor). Joining a pet changes what this
-        // user may SEE, but it does not touch a single updated_at — every row of that pet
+        // user may SEE, but it does not touch a single updated_at: every row of that pet
         // was written before we got here, so an incremental pull will never ask for any of
         // them and the caregiver ends up a member with no data.
         //
         // Resetting the cursors makes the pull that follows (same cycle, right after this
-        // method) fetch everything. Occasionally redundant — pushing your own new pet also
-        // looks like a gained membership — but a re-pull is idempotent (apply is LWW plus
+        // method) fetch everything. Occasionally redundant: pushing your own new pet also
+        // looks like a gained membership, but a re-pull is idempotent (apply is LWW plus
         // natural-key matching) and a caregiver silently seeing nothing is not a failure
         // worth optimising a few requests for.
         var gained = roles.Keys.Where(k => !_petRoles.ContainsKey(k)).ToList();
         if (gained.Count > 0)
         {
-            Debug.WriteLine($"[Cloud] {gained.Count} newly accessible pet(s) — resetting cursors for a full pull");
+            Debug.WriteLine($"[Cloud] {gained.Count} newly accessible pet(s): resetting cursors for a full pull");
             foreach (var table in _tables)
                 await _state.RemoveAsync(KeyCursorPrefix + table.CloudTable);
         }
 
-        // Pets this user was being sponsored for a moment ago and no longer is — the owner
+        // Pets this user was being sponsored for a moment ago and no longer is: the owner
         // lapsed, or their grant ran out. Membership is intact, so the pet stays; only the
-        // paid, pet-scoped surfaces go away. Nobody subscribes to this today (see App) —
+        // paid, pet-scoped surfaces go away. Nobody subscribes to this today (see App),
         // with logging free, there is nothing yet for a caregiver to lose.
         var previous = _petAccess;
         var lostSponsorship = access
@@ -522,7 +522,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         {
             // IsDemo is named explicitly rather than leaning on the empty-SyncId arm above.
             // Both are true of a seeded pet today, but one is a fact about what it IS and
-            // the other is a consequence of how it was written — and a creator's demo pets
+            // the other is a consequence of how it was written, and a creator's demo pets
             // vanishing mid-shoot, on a sync they didn't ask for, is the kind of failure
             // that only ever shows up in front of an audience.
             if (pet.IsDemo || string.IsNullOrEmpty(pet.SyncId) || pet.IsDirty || roles.ContainsKey(pet.SyncId))
@@ -533,7 +533,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         return purged;
     }
 
-    // PurgePetAsync moved to PetPurgeService — leaving demo mode needs the identical
+    // PurgePetAsync moved to PetPurgeService: leaving demo mode needs the identical
     // three steps (rows, reminders, active-pet repair), and "delete a pet locally" was
     // never a cloud concept in the first place.
 
@@ -569,7 +569,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         var pending = await table.CollectDirtyAsync(ctx);
         for (int i = 0; i < pending.Count; i += PushBatchSize)
         {
-            // GetRange, not Skip().Take() — the latter re-walks the list from the head
+            // GetRange, not Skip().Take(): the latter re-walks the list from the head
             // on every batch, which is quadratic across a first full backup.
             var batch = pending.GetRange(i, Math.Min(PushBatchSize, pending.Count - i));
             await _http.RpcAsync("push_rows", new
@@ -592,7 +592,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
             return SyncOutcome.NotSignedIn;
 
         // A device that previously synced to a DIFFERENT account must not push
-        // rows whose ids exist under that other account — re-mint every identity
+        // rows whose ids exist under that other account: re-mint every identity
         // and start over as fresh uploads.
         var lastAccount = await _state.GetAsync(KeyAccount);
         if (lastAccount != null && lastAccount != session.UserId)
@@ -635,15 +635,15 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         await DisableBackupAsync();
 
         // Start a fresh anonymous analytics identity, exactly as the data reset does
-        // (AppResetService). Not strictly required — events never carry an account,
-        // an email, or anything personal, so there is nothing here to erase — but
+        // (AppResetService). Not strictly required: events never carry an account,
+        // an email, or anything personal, so there is nothing here to erase, but
         // without it this install's event stream runs unbroken across the deletion,
         // visible as one device whose account_state was signed_in and then wasn't.
         // Rotating makes "we keep nothing tied to you" true without qualification.
         //
         // Last, deliberately: SignOutAsync above flips AnalyticsContext to anonymous,
         // so the new id is never stamped signed_in. Already-queued events keep the old
-        // id baked into their payloads and still send — they are anonymous and they
+        // id baked into their payloads and still send: they are anonymous and they
         // genuinely happened, so dropping them would cost telemetry for no privacy gain.
         try { Analytics.AnalyticsIdentity.Rotate(); }
         catch (Exception ex) { Debug.WriteLine($"[Cloud] analytics id rotate failed: {ex.Message}"); }
@@ -654,7 +654,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     ///
     /// <para>Cursors are a high-water mark for ONE account (<c>updated_at=gt.{cursor}</c>).
     /// Left in place across an account change they sit ahead of every row the other account
-    /// owns, so the pull returns nothing and stays that way — the device holds no data and
+    /// owns, so the pull returns nothing and stays that way: the device holds no data and
     /// will never ask for any. Sign-out teardown normally prevents this; this repairs it.</para>
     ///
     /// <para>Deliberately does NOT re-mint <c>SyncId</c>s. That belongs to the intentional
@@ -669,7 +669,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
 
         if (lastAccount != null)
         {
-            Debug.WriteLine($"[Cloud] account changed since last sync — discarding stale cursors/caches");
+            Debug.WriteLine($"[Cloud] account changed since last sync: discarding stale cursors/caches");
             foreach (var table in _tables)
                 await _state.RemoveAsync(KeyCursorPrefix + table.CloudTable);
             await _state.RemoveAsync(KeyMemberships);
@@ -692,7 +692,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
             catch (Exception ex) { Debug.WriteLine($"[Cloud] final push before sign-out failed: {ex.Message}"); }
         }
 
-        // Count what would ACTUALLY upload, by asking the same collector the push uses —
+        // Count what would ACTUALLY upload, by asking the same collector the push uses,
         // not raw IsDirty flags. The two differ: a row whose parent no longer exists is
         // permanently unpushable, and counting it reports "N changes not yet saved" forever,
         // on a device where nothing is pending and another sync would not help. Warning
@@ -711,7 +711,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
         }
 
         // Only pets this account actually holds. A pet created locally and never pushed is
-        // not in the membership map, is not this account's, and is not removed — it is
+        // not in the membership map, is not this account's, and is not removed: it is
         // counted above instead, because it exists nowhere else.
         var names = new List<string>();
         foreach (var pet in await _db.Connection.QueryAsync<Pet>("select * from \"Pet\""))
@@ -731,11 +731,11 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     {
         // Data follows access. Signing out of an account is losing access to its pets, and
         // the app already commits to "medical data for a pet you no longer care for never
-        // stays behind" for revoked caregivers — same rule, same mechanism (reminders
+        // stays behind" for revoked caregivers: same rule, same mechanism (reminders
         // cancelled, active-pet selection repaired).
         foreach (var pet in await _db.Connection.QueryAsync<Pet>("select * from \"Pet\""))
         {
-            // A demo pet has no SyncId and no membership, so it already fails this test —
+            // A demo pet has no SyncId and no membership, so it already fails this test,
             // which is the wanted outcome. Signing out must not take a creator's seeded
             // pets with it: they were never part of the account being left.
             if (!string.IsNullOrEmpty(pet.SyncId) && _petRoles.ContainsKey(pet.SyncId))
@@ -778,7 +778,7 @@ public sealed class CloudSyncService : ICloudSyncService, Billing.IPetAccessSour
     ///
     /// <para>Demo rows keep the empty SyncId they were seeded with. Minting one would give
     /// them a cloud identity they must never have, and an empty SyncId is separately what
-    /// keeps a demo pet out of the membership purge (see <c>ApplyMembershipAsync</c>) — so a
+    /// keeps a demo pet out of the membership purge (see <c>ApplyMembershipAsync</c>), so a
     /// signed-in creator's demo pets survive a sync instead of vanishing mid-shoot.</para></summary>
     private async Task ResetSyncIdentityAsync()
     {

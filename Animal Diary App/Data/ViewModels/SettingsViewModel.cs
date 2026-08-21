@@ -9,7 +9,7 @@ using Animal_Diary_App.Helpers;
 using System.Windows.Input;
 
 /// <summary>What a signed-in "Delete all data" should destroy. Signed out there
-/// is no choice — the device is all there is.</summary>
+/// is no choice: the device is all there is.</summary>
 public enum ResetScope
 {
     /// <summary>Wipe the device, keep the cloud backup (signs out).</summary>
@@ -32,7 +32,7 @@ public class SettingsViewModel : BaseViewModel
 
     /// <summary>"Version 1.3.2 (7)" for the foot of the settings panel. Read from
     /// <see cref="AppInfo"/>, which surfaces the csproj's ApplicationDisplayVersion and
-    /// ApplicationVersion — so a version bump needs no change here. Resolved per read
+    /// ApplicationVersion, so a version bump needs no change here. Resolved per read
     /// so a live language switch re-translates it (this VM is a singleton).</summary>
     public string AppVersion => LocalizationManager.Instance.Format(
         "Settings_VersionFormat", AppInfo.Current.VersionString, AppInfo.Current.BuildString);
@@ -44,7 +44,7 @@ public class SettingsViewModel : BaseViewModel
     public Func<Task<bool>>? ConfirmDeleteAllData { get; set; }
 
     /// <summary>
-    /// Set by the active page — the signed-in reset choice ("this device only —
+    /// Set by the active page: the signed-in reset choice ("this device only,
     /// keep my backup" vs "everything, including my backup"). Null = cancelled.
     /// </summary>
     public Func<Task<ResetScope?>>? ConfirmDeleteAllDataCloud { get; set; }
@@ -75,7 +75,7 @@ public class SettingsViewModel : BaseViewModel
     ///
     /// <para><b>Every state is named, and the fallback arm says nothing about a plan.</b>
     /// This row is the classic place for an unnamed state to be described as something it
-    /// is not — it used to end in the trial format, so any state without a case here read
+    /// is not: it used to end in the trial format, so any state without a case here read
     /// as "Free trial (0 minutes left)". The fallback now covers only <c>Unknown</c>, the
     /// sub-second window before the store answers, and it says the plainly true thing.</para>
     ///
@@ -137,7 +137,7 @@ public class SettingsViewModel : BaseViewModel
         }
     }
 
-    /// <summary>Whether a cloud account is signed in — pages pick the reset-confirm
+    /// <summary>Whether a cloud account is signed in: pages pick the reset-confirm
     /// message with it (the cloud variant explains the ownership rule).</summary>
     public bool IsCloudSignedIn => _cloudAuth.IsSignedIn;
 
@@ -218,7 +218,7 @@ public class SettingsViewModel : BaseViewModel
         }
         catch
         {
-            // Ignore — no browser available or the launch was cancelled.
+            // Ignore, no browser available or the launch was cancelled.
         }
     }
 
@@ -244,7 +244,7 @@ public class SettingsViewModel : BaseViewModel
 
     /// <summary>
     /// Turning the reminder on is an opt-in to notifications, so ask for the permission
-    /// here — it was previously only ever requested when saving a medication, which
+    /// here: it was previously only ever requested when saving a medication, which
     /// meant a carer who enabled this without medications got a switch that said "on"
     /// and a reminder the OS would never deliver. A refusal doesn't undo the toggle:
     /// the setting is the carer's intent, and the Today page tells them delivery is
@@ -308,7 +308,7 @@ public class SettingsViewModel : BaseViewModel
         if (_cloudAuth.IsSignedIn)
         {
             // Signed in, the reset is a CHOICE (the owner was surprised when the
-            // backup vanished — the two consequences must be picked explicitly):
+            // backup vanished: the two consequences must be picked explicitly):
             //   DeviceOnly  → wipe device, keep backup, sign out.
             //   Everything  → also tombstone owned pets cloud-wide + leave shared
             //                 pets (the ownership rule, docs/history/CLOUD_SYNC_PLAN.md §7).
@@ -320,7 +320,7 @@ public class SettingsViewModel : BaseViewModel
 
             if (scope == ResetScope.Everything)
             {
-                // Best-effort: an offline reset still wipes the device — the one
+                // Best-effort: an offline reset still wipes the device: the one
                 // gap is that the cloud copy survives until the next sign-in.
                 try
                 {

@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.Services.Notifications;
+namespace Animal_Diary_App.Data.Services.Notifications;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
@@ -12,15 +12,15 @@ using Microsoft.Maui.Storage;
 ///   • Recurrence rules ("Mon &amp; Thu at 09:00") live only in the data layer
 ///     (<see cref="MedicationSchedule"/>).
 ///   • At runtime those rules are *expanded* into independent, single-shot
-///     <see cref="ReminderInstance"/> occurrences over a bounded horizon — never
+///     <see cref="ReminderInstance"/> occurrences over a bounded horizon, never
 ///     an infinite OS recurrence (which Android throttles/drops).
 ///   • Each occurrence is scheduled as a one-shot notification.
 ///   • On every app launch and device boot we run <see cref="CatchUpAndRefreshAsync"/>,
 ///     which re-arms future occurrences AND re-sends doses that were missed while
-///     the device was off — critical for medication.
+///     the device was off: critical for medication.
 ///
 /// Invariant this class exists to maintain: <b>a stored Pending instance means the OS
-/// actually accepted that notification.</b> Anything else makes the catch-up lie — it
+/// actually accepted that notification.</b> Anything else makes the catch-up lie: it
 /// would resolve a never-armed occurrence to <see cref="ReminderStatus.Fired"/> and
 /// suppress the boot re-send that is the app's last line of defence.
 /// </summary>
@@ -50,7 +50,7 @@ public class MedicationReminderScheduler
 
     // Android caps an app at ~500 scheduled alarms; beyond it scheduling silently
     // fails or throws depending on the OS. Keep total pending instances under
-    // this budget — meds synced later in a pass get fewer occurrences, and the
+    // this budget: meds synced later in a pass get fewer occurrences, and the
     // horizon is re-extended on the next launch/boot anyway.
     private const int GlobalPendingBudget = 400;
 #endif
@@ -128,7 +128,7 @@ public class MedicationReminderScheduler
         return granted;
     }
 
-    /// <summary>Whether the OS will actually deliver a reminder right now. A live check —
+    /// <summary>Whether the OS will actually deliver a reminder right now. A live check,
     /// the permission can be revoked in system settings at any time.</summary>
     public Task<bool> AreRemindersDeliverableAsync() => _notifications.AreNotificationsEnabledAsync();
 
@@ -165,7 +165,7 @@ public class MedicationReminderScheduler
     {
         // The running count of pending occurrences per medication, used for the global
         // alarm budget below. Declared up here because EVERY exit path has to write this
-        // medication's new contribution back — the cancel/clear paths leave it at zero,
+        // medication's new contribution back: the cancel/clear paths leave it at zero,
         // and a batch caller budgets the next medication against these numbers.
         var pendingCounts = pendingByMedication ?? await CountPendingByMedicationAsync();
         void RecordPending(int count) => pendingCounts[medicationId] = count;
@@ -179,7 +179,7 @@ public class MedicationReminderScheduler
         }
 
         // Paused on this device (AI/app-voice.md §15): stop arming reminders and clear
-        // any already-armed ones. Nothing must fire for a paused pet — a reminder naming
+        // any already-armed ones. Nothing must fire for a paused pet: a reminder naming
         // a pet who died is the worst string this product can show. The record is
         // untouched; resuming re-arms from the saved schedule rules.
         if (_pause.IsPaused(medication.PetId))
@@ -221,7 +221,7 @@ public class MedicationReminderScheduler
         //
         // A batch caller passes its own running count: the catch-up syncs every
         // medication in a loop, and reading the whole instance table per medication made
-        // a launch/boot pass O(meds x instances) — up to 400 pending rows re-materialized
+        // a launch/boot pass O(meds x instances): up to 400 pending rows re-materialized
         // once per medication, inside the job budget a reboot recovery has to fit in.
         var pendingOthers = pendingCounts
             .Where(kv => kv.Key != medicationId)
@@ -289,7 +289,7 @@ public class MedicationReminderScheduler
                 Channel = NotificationChannelKind.Medication,
             });
 
-            // The OS refused it — drop the row rather than let the catch-up later
+            // The OS refused it: drop the row rather than let the catch-up later
             // report it as delivered.
             if (!accepted)
                 rejected.Add(instance);
@@ -306,7 +306,7 @@ public class MedicationReminderScheduler
     /// <summary>
     /// Cancel every armed reminder for one pet's medications, without deleting any
     /// data. Called when the pet is paused on this device. The paused flag itself is
-    /// owned by <see cref="PetPauseService"/> — the caller sets it before calling here,
+    /// owned by <see cref="PetPauseService"/>: the caller sets it before calling here,
     /// so the launch/boot catch-up also skips this pet.
     /// </summary>
     public async Task CancelPetAsync(int petId)
@@ -385,7 +385,7 @@ public class MedicationReminderScheduler
     /// Drop this medication's <b>future</b> pending occurrences and their OS alarms.
     ///
     /// Deliberately time-filtered. A past-due Pending row is evidence that a
-    /// notification was armed and has since come due — the catch-up needs it to decide
+    /// notification was armed and has since come due: the catch-up needs it to decide
     /// whether the dose was missed while the device was off. Deleting those here let
     /// any re-sync (a cloud pull, a medication edit) racing the launch catch-up erase
     /// the missed-dose evidence before it was read. Cancelling them also had a second
@@ -417,7 +417,7 @@ public class MedicationReminderScheduler
     /// only. On a reboot, doses scheduled during the off period never fired and
     /// must be re-sent (medication safety). On a normal app launch it is
     /// <c>false</c>: the device was on, so the OS already delivered those
-    /// notifications — re-sending would spam duplicates every time the app opens.
+    /// notifications: re-sending would spam duplicates every time the app opens.
     /// </summary>
     public async Task CatchUpAndRefreshAsync(bool resendMissed = true)
     {
@@ -437,9 +437,9 @@ public class MedicationReminderScheduler
         var now = DateTime.Now;
         var lastSeen = GetLastSeen(now);
 
-        // A boot triggers BOTH the boot receiver's catch-up (resendMissed: true) and —
+        // A boot triggers BOTH the boot receiver's catch-up (resendMissed: true) and,
         // because starting the process constructs the MAUI Application, which runs the
-        // normal startup path — the launch catch-up (resendMissed: false). They
+        // normal startup path: the launch catch-up (resendMissed: false). They
         // serialize on _gate, but nothing orders them: if the launch pass won, it
         // resolved every past-due occurrence to Fired and the boot pass then had
         // nothing left to re-send. The doses missed while the phone was off vanished.
@@ -463,11 +463,11 @@ public class MedicationReminderScheduler
         foreach (var inst in pendingPast)
         {
             // On boot: anything scheduled within the off window (after the app was
-            // last confirmed alive) could not have fired — re-send it. Otherwise
+            // last confirmed alive) could not have fired: re-send it. Otherwise
             // assume the OS delivered it and just mark it handled.
             var missed = resend && inst.ScheduledTime > lastSeen;
 
-            // ...unless the carer already logged this dose as taken or skipped —
+            // ...unless the carer already logged this dose as taken or skipped,
             // then there's nothing to chase, so suppress the re-send.
             if (missed)
             {
@@ -484,7 +484,7 @@ public class MedicationReminderScheduler
             resolved.Add(inst);
         }
 
-        // One transaction instead of one round trip per instance — this loop runs
+        // One transaction instead of one round trip per instance: this loop runs
         // inside the boot receiver's very limited time budget.
         await _instances.UpdateAllAsync(resolved);
 
@@ -497,7 +497,7 @@ public class MedicationReminderScheduler
             Preferences.Default.Remove(BootRecoveryPendingKey);
 
         // Re-materialize + re-arm every medication; cancel archived ones.
-        // (Core variants — the gate is already held.) One medication failing must not
+        // (Core variants: the gate is already held.) One medication failing must not
         // leave every later medication un-armed.
         //
         // `all` was just read and its statuses resolved above, so it is the current
@@ -523,7 +523,7 @@ public class MedicationReminderScheduler
         await SafeAsync(() => _doseReconciler.ReconcileMissedAsync(now), "reconcile");
 
         // `all` was mutated in place above (statuses resolved), so it's still an
-        // accurate view for pruning — no second full-table scan needed. Instances
+        // accurate view for pruning, no second full-table scan needed. Instances
         // materialized by the re-arm loop are all Pending and never prunable.
         await PruneHistoryAsync(all, now);
         SetLastSeen(now);
@@ -580,7 +580,7 @@ public class MedicationReminderScheduler
                 // Read the clock HERE, not once at the top of the catch-up. The plugin
                 // drops any notify time older than ~1 minute, and everything between
                 // the start of the pass and this point (resolving a long backlog on a
-                // cold boot) is exactly what pushes it past that — silently losing the
+                // cold boot) is exactly what pushes it past that: silently losing the
                 // missed-dose alert on the slow boots it exists for.
                 NotifyTime = DateTime.Now.AddSeconds(2),
                 Recurrence = NotificationRecurrence.Once,
@@ -662,7 +662,7 @@ public class MedicationReminderScheduler
     /// Record that the app was alive just now. Called when the app goes to the
     /// background, which is the last moment we can be sure of it.
     ///
-    /// Without this the marker only moved during a catch-up, i.e. at cold start — so a
+    /// Without this the marker only moved during a catch-up, i.e. at cold start, so a
     /// carer who used the app all week and then rebooted got a "device was off for six
     /// days" window, and every unlogged dose in it was re-sent as missed.
     ///

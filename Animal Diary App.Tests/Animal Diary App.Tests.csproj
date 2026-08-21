@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Unit tests over the app's PURE logic. Targets plain net10.0 — no platform suffix,
+  <!-- Unit tests over the app's PURE logic. Targets plain net10.0, no platform suffix,
        so no MAUI and no SQLite, while still being the same runtime and language version
        the app ships on. (It was net9.0, which meant the linked sources were compiled
        against a different BCL from the one they run on.)
@@ -23,14 +23,14 @@
     <IsPackable>false</IsPackable>
     <RootNamespace>Animal_Diary_App.Tests</RootNamespace>
     <!-- CS0162: same const feature switches as the app (BillingConfig.Enabled and
-         friends) — the unreachable branch is the point of a compile-time switch.
+         friends): the unreachable branch is the point of a compile-time switch.
          NU1903: sqlite-net-pcl drags in SQLitePCLRaw, which has an open advisory in
          every release to date. It comes along only for the [Table]/[Indexed] attributes
          on the linked models; this project never opens a connection, so no SQLite code
          executes here at all. The app pins the newest available build and documents the
          same advisory in its csproj. -->
     <!-- NETSDK1206 comes from the same transitive SQLitePCLRaw: it ships alpine-specific
-         RIDs that .NET 8+ no longer resolves. Irrelevant here — no native SQLite is ever
+         RIDs that .NET 8+ no longer resolves. Irrelevant here, no native SQLite is ever
          loaded. -->
     <NoWarn>$(NoWarn);CS0162;NU1903;NETSDK1206</NoWarn>
   </PropertyGroup>
@@ -55,9 +55,9 @@
     <Compile Include="..\Animal Diary App\Data\Services\Billing\BillingConfig.cs" Link="Billing\BillingConfig.cs" />
   </ItemGroup>
 
-  <!-- Pure (MAUI-free) analytics sources under test. The MAUI-bound pieces —
+  <!-- Pure (MAUI-free) analytics sources under test. The MAUI-bound pieces,
        AnalyticsIdentity (Preferences), FileAnalyticsQueueStore (FileSystem) and
-       PostHogAnalyticsService (HttpClient/AppInfo) — are deliberately NOT linked; the
+       PostHogAnalyticsService (HttpClient/AppInfo): are deliberately NOT linked; the
        decisions worth testing were kept out of them. -->
   <ItemGroup>
     <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsSession.cs" Link="Analytics\AnalyticsSession.cs" />
@@ -68,7 +68,7 @@
   </ItemGroup>
 
   <!-- The care logic: what is still due today, and when a schedule rule actually fires.
-       Both are pure by design and both were untested — the two most safety-relevant
+       Both are pure by design and both were untested: the two most safety-relevant
        algorithms in the app had no coverage while billing had thirty tests.
 
        PendingEngine reads Tracker/TrackerId from Data/Models, which carry sqlite-net
@@ -90,7 +90,7 @@
   <!-- Today's two stat cards: which pair a pet starts with, and the rule that the same
        record can never sit on both. Pure table + value type. TrackerVisuals and
        LocalizationManager come along because the card table resolves its icons and label
-       KEYS through them — both are plain strings and reflection-free resource lookup, no
+       KEYS through them: both are plain strings and reflection-free resource lookup, no
        MAUI. Nothing here reads a translated string, so no resx is needed at run time. -->
   <ItemGroup>
     <Compile Include="..\Animal Diary App\Data\Models\TodayCards.cs" Link="Today\TodayCards.cs" />
@@ -100,7 +100,7 @@
 
   <!-- The Journal's typed entries, linked for one reason: SeizureType's stored numbers and
        its member names are BOTH persistence formats (int locally, text in the cloud) that
-       nothing else can catch — no compiler error, no failing sync, just a type that quietly
+       nothing else can catch, no compiler error, no failing sync, just a type that quietly
        reads back as the wrong one or as nothing. Plain attributes and enums; the only
        dependency is LocalizationManager, already linked above. -->
   <ItemGroup>
@@ -111,7 +111,7 @@
        are kept off the wire by a WHERE fragment; if that fragment is wrong, a creator's
        invented medical history uploads to their account and nothing anywhere complains.
        PetScopeSql was split out of SyncedTables precisely so the fragment could be linked
-       here on its own — SyncedTables names all fifteen entity types and would drag the whole
+       here on its own: SyncedTables names all fifteen entity types and would drag the whole
        model layer in. Plain strings and an enum. -->
   <ItemGroup>
     <Compile Include="..\Animal Diary App\Data\Services\Data\PetScopeSql.cs" Link="Sync\PetScopeSql.cs" />
@@ -119,7 +119,7 @@
 
   <!-- The seeded demo pets. The generator is pure by design and linked here because the
        structures it plants are the entire point of the feature and are ALL invisible until
-       someone opens a lens and finds nothing in it — on camera. A uniformly-random seizure
+       someone opens a lens and finds nothing in it: on camera. A uniformly-random seizure
        hour (which is what the old dev fixture had) still produces a plausible-looking sky;
        it just folds to noise at every period, and no build, test or review catches that.
        CustomTrackerPresets comes along because the profiles build their owner-defined
@@ -138,7 +138,7 @@
   <!-- The AI import bridge. Everything that DECIDES anything is here: what a file may
        contain, what rejects it, what is written and what is skipped. All of it is pure by
        construction (ImportValidator takes an ImportSnapshot and a "today" rather than a
-       database and a clock) precisely so it could be linked here — the alternative is a
+       database and a clock) precisely so it could be linked here: the alternative is a
        feature whose entire safety model is only exercised by importing files by hand.
 
        ConditionCatalog/Condition and CustomTrackerVisuals come along because the format
@@ -170,7 +170,7 @@
 
   <!-- Facts about the record. The arithmetic is linked, the WORDING is not: RecordFactsText
        resolves AppStrings, and this project ships no resx. What is worth proving here is the
-       shape — the four day bands are half-open and total to the count, a one-per-day store
+       shape: the four day bands are half-open and total to the count, a one-per-day store
        counts DAYS rather than rows, an empty range is a zero-count snapshot rather than null,
        and nothing anywhere computes a mean. Every one of those is silent when wrong: the panel
        still renders, with numbers that quietly say something the owner never wrote down.
@@ -181,15 +181,15 @@
 
   <!-- The vet report's DTO, linked for one decision it carries: HasAnyData, which is what
        refuses to produce an empty document. It answers differently per ReportStyle, and both
-       arms fail silently when wrong — a blank plain log handed to a vet, or a free export
+       arms fail silently when wrong: a blank plain log handed to a vet, or a free export
        refused because the DESIGNED sections happened to be empty. Plain records and enums,
        no MAUI and no SQLite. -->
   <ItemGroup>
     <Compile Include="..\Animal Diary App\Data\Services\Reports\VetReportData.cs" Link="Reports\VetReportData.cs" />
   </ItemGroup>
 
-  <!-- The treatment ledger's diff: what a medication edit records, and — the half that
-       actually needed a test — what it must NOT record. "An unchanged save writes no row"
+  <!-- The treatment ledger's diff: what a medication edit records, and: the half that
+       actually needed a test: what it must NOT record. "An unchanged save writes no row"
        and "a rename plus a dose change writes two" are invisible failures on a device:
        nothing crashes, the history is just wrong forever afterwards, and it cannot be
        backfilled. MedicationLedger is pure for exactly that reason; the schedule wording

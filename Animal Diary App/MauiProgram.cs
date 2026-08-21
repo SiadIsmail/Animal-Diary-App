@@ -13,7 +13,7 @@ using Plugin.LocalNotification;
 
 // Plugin.LocalNotification also declares an INotificationService. Ours is the app's own
 // device boundary, so alias it rather than importing the folder and living with the
-// ambiguity — the plugin's type is never named here, only .UseLocalNotification().
+// ambiguity: the plugin's type is never named here, only .UseLocalNotification().
 using INotificationService = Animal_Diary_App.Data.Services.Data.Device.INotificationService;
 
 namespace Animal_Diary_App;
@@ -117,7 +117,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PendingItemsService>();
 		builder.Services.AddSingleton<TodayCardService>();
 		builder.Services.AddSingleton<ConstellationService>();
-		// Facts about the record — one computation, three surfaces (Today's card
+		// Facts about the record: one computation, three surfaces (Today's card
 		// sheet, the Constellation legend, the appointment summary).
 		builder.Services.AddSingleton<RecordFactsService>();
 		builder.Services.AddSingleton<VetQuestionService>();
@@ -141,7 +141,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ReportLibraryService>();
 		builder.Services.AddSingleton<IVetReportService, VetReportService>();
 		// Preview rasterizer: each platform uses its OS PDF renderer (no native library).
-		// iOS/macOS fall back to the no-op — the PDF still generates, just without previews.
+		// iOS/macOS fall back to the no-op: the PDF still generates, just without previews.
 #if ANDROID
 		builder.Services.AddSingleton<IPdfPageRasterizer, AndroidPdfPageRasterizer>();
 #elif WINDOWS
@@ -165,12 +165,12 @@ public static class MauiProgram
 #endif
 		// ── Ad attribution boundary (mirrors the analytics/cloud/billing boundaries) ──
 		// Reports the install to Meta so an app-promotion campaign can attribute it, and
-		// nothing else — no events, no properties, no user or pet data ever reaches it (see
+		// nothing else, no events, no properties, no user or pet data ever reaches it (see
 		// AI/analytics.md for the boundary, which is a product rule, not a style choice).
 		//
 		// Two conditions, both required: an Android build with the SDK binding, AND Meta
 		// enabled with credentials present. Anything else resolves the no-op, which also
-		// hides the Settings toggle. iOS is deliberately on the no-op for now — the app
+		// hides the Settings toggle. iOS is deliberately on the no-op for now: the app
 		// isn't on the App Store yet and Meta's iOS SDK is a separate binding.
 #if ANDROID
 		if (MetaAdsConfig.Enabled && MetaAdsConfig.IsConfigured)
@@ -213,7 +213,7 @@ public static class MauiProgram
 
 		// ── Cloud boundary (mirrors the analytics boundary) ──────────────────
 		// The real sync engine when cloud features are compiled in, else a no-op.
-		// Everything holds ICloudSyncService / ICloudAuthService only — no Supabase
+		// Everything holds ICloudSyncService / ICloudAuthService only, no Supabase
 		// types escape Data/Services/Cloud/.
 		builder.Services.AddSingleton<CloudHttp>();
 		builder.Services.AddSingleton<SyncStateStore>();
@@ -236,7 +236,7 @@ public static class MauiProgram
 		}
 
 		// Billing reads sponsorship through the cloud engine, but only ever as the pure
-		// IPetAccessSource — the Billing folder must not learn about Supabase. Both sync
+		// IPetAccessSource: the Billing folder must not learn about Supabase. Both sync
 		// implementations provide it, so this resolves in either branch above.
 		builder.Services.AddSingleton<IPetAccessSource>(sp =>
 			(IPetAccessSource)sp.GetRequiredService<ICloudSyncService>());
@@ -269,7 +269,7 @@ public static class MauiProgram
 		// Desktop normally gets the no-op so development can never be locked out. That also
 		// makes a desktop useless as a caregiver TEST device: NullEntitlementService reports
 		// Subscribed for every account, so every gate check passes without exercising one.
-		// This opt-in runs the real gate over a no-op store — access from sponsorship or a
+		// This opt-in runs the real gate over a no-op store: access from sponsorship or a
 		// redeemed code only, purchases unavailable.
 		if (BillingConfig.ForceGateOnDesktop)
 		{
@@ -287,7 +287,7 @@ public static class MauiProgram
 		// ── Shell + its three tab pages ──────────────────────────────────────
 		// Transient so a post-reset relaunch builds a fresh Shell (with fresh page
 		// instances); within one Shell each page is still constructed once and reused
-		// across tab switches. Pushed and onboarding pages are NOT registered — they are
+		// across tab switches. Pushed and onboarding pages are NOT registered: they are
 		// constructed directly with the shared MainViewModel (see AI/architecture.md).
 		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<CalendarPage>();

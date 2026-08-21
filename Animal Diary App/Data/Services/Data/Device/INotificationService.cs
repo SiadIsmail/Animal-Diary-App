@@ -15,7 +15,7 @@ namespace Animal_Diary_App.Data.Services.Data.Device
     /// <summary>
     /// Which OS notification channel a message belongs to. Channels are the only
     /// per-category control the user has (Android settings lists one row per channel),
-    /// so every distinct kind of reminder gets its own — a carer who wants to silence
+    /// so every distinct kind of reminder gets its own: a carer who wants to silence
     /// the daily nudge must not have to silence medication reminders too.
     /// Ignored on platforms without channels.
     /// </summary>
@@ -73,7 +73,7 @@ namespace Animal_Diary_App.Data.Services.Data.Device
         Task<bool> RequestNotificationPermissionAsync(bool requestExactAlarm = false);
 
         /// <summary>
-        /// Whether the OS will actually deliver anything we post right now — i.e. the
+        /// Whether the OS will actually deliver anything we post right now: i.e. the
         /// runtime notification permission is granted AND the user hasn't switched the
         /// app's notifications off in system settings. Both can change at any time
         /// without the app being involved, so this is a live check, never a cached
@@ -90,7 +90,7 @@ namespace Animal_Diary_App.Data.Services.Data.Device
 
         /// <summary>
         /// Hand one notification to the OS.
-        /// <para><b>Returns false when the OS did not accept it</b> — notifications
+        /// <para><b>Returns false when the OS did not accept it</b>: notifications
         /// disabled, permission missing, or the notify time already stale. Callers must
         /// not record a reminder as armed on a false return: the whole reliability model
         /// depends on the app's idea of what is scheduled matching the OS's.</para>
@@ -100,7 +100,7 @@ namespace Animal_Diary_App.Data.Services.Data.Device
         Task CancelNotification(int id);
         Task CancelNotifications(IEnumerable<int> ids);
 
-        /// <summary>Cancel every notification this app has scheduled — the "delete
+        /// <summary>Cancel every notification this app has scheduled: the "delete
         /// all data" path, where nothing armed with the OS may survive the wipe.</summary>
         Task CancelAllNotifications();
     }

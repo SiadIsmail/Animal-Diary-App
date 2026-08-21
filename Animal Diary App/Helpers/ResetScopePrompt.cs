@@ -4,7 +4,7 @@ using Animal_Diary_App.Data.ViewModels;
 
 /// <summary>
 /// "Delete all data" for a signed-in owner: device only, or the cloud backup too.
-/// Extracted for the reason <see cref="SignOutPrompt"/> was — Today and Care each held
+/// Extracted for the reason <see cref="SignOutPrompt"/> was: Today and Care each held
 /// a byte-identical copy, and this is wording nobody wants to see drift.
 ///
 /// Three outcomes, so it uses <see cref="ConfirmSheetViewModel"/> rather than the native

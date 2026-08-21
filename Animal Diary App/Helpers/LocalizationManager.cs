@@ -12,7 +12,7 @@ using System.Resources;
 ///
 /// Switching the language raises <see cref="PropertyChanged"/> with a null/empty
 /// property name, which tells every active binding sourced from this manager to
-/// refresh — so the whole UI re-translates without an app restart.
+/// refresh, so the whole UI re-translates without an app restart.
 /// </summary>
 public sealed class LocalizationManager : INotifyPropertyChanged
 {

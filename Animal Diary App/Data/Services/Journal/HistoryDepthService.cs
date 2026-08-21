@@ -7,25 +7,25 @@ using Animal_Diary_App.Data.Services.Analytics;
 /// How long this pet's record has been accumulating: days since its first entry, as the
 /// coarse bucket <see cref="AnalyticsHistory"/> defines.
 ///
-/// <para>It exists for exactly one caller — the <c>days_of_history</c> property on the
+/// <para>It exists for exactly one caller: the <c>days_of_history</c> property on the
 /// paywall and purchase events, which is the only measurement that can test whether the
 /// paid boundary's central claim is true. Nothing about access reads it, and nothing may
 /// start to: it is telemetry, and a gate that depended on how much someone had written
 /// down would be the app charging by the weight of their animal's illness.</para>
 ///
 /// <para><b>Cached for the session, and deliberately.</b> Finding the first entry means
-/// one all-of-history read per record kind — the same walk
+/// one all-of-history read per record kind: the same walk
 /// <c>AppointmentSummaryService</c> already does when a pet has never had a visit. That is
 /// affordable once; it is not affordable every time a sheet opens. The answer moves by one
 /// day at midnight and by nothing else, so a stale value costs a bucket boundary at worst.</para>
 ///
 /// <para>It reuses <c>RecordFactsService</c> over <c>TodayCardCatalog</c>'s kinds plus the
 /// pet's own trackers rather than querying tables directly, so a new loggable is counted
-/// here the moment it reaches Today's cards — no second list to keep in step.</para>
+/// here the moment it reaches Today's cards, no second list to keep in step.</para>
 /// </summary>
 public class HistoryDepthService
 {
-    /// <summary>Everything, with no floor of our own — the same sentinel-free rule
+    /// <summary>Everything, with no floor of our own: the same sentinel-free rule
     /// <c>AppointmentSummaryService</c> uses, and for the same reason: a floor would
     /// silently hide entries imported from before it.</summary>
     private static readonly DateTime Everything = DateTime.MinValue;

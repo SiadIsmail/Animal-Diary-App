@@ -4,7 +4,7 @@
     ─────────────────────────────────────────────────────────
     The Journal's sheet for a tracker the owner defined: a time, an optional number
     (only when that tracker records one) and an optional note. ONE sheet serves every
-    custom tracker — its title is the owner's own name for the thing.
+    custom tracker: its title is the owner's own name for the thing.
     BindingContext is a CustomEntrySheetViewModel; open it via that VM's OpenAsync.
 -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -68,7 +68,7 @@
                                    PlaceholderColor="{StaticResource InkTertiary}"/>
                         </Border>
                         <!-- The owner's own unit, beside the field rather than inside a
-                             sentence — it is their word, in their language. -->
+                             sentence: it is their word, in their language. -->
                         <Label Grid.Column="1"
                                Text="{Binding Unit}"
                                IsVisible="{Binding HasUnit}"
@@ -102,7 +102,7 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding DismissCommand}"/>
                         </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Common_NotNow}"
+                        <Label Text="{loc:Translate Common_Cancel}"
                                FontFamily="{StaticResource FontSans}"
                                FontSize="14"
                                FontAttributes="Bold"

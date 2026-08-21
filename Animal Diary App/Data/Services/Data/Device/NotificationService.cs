@@ -121,8 +121,8 @@ public class NotificationService : INotificationService
     public async Task<bool> ScheduleNotification(NotificationContent content)
     {
         // Register before the first post, whatever the call order. The plugin creates
-        // any channel id it doesn't recognise itself — at DEFAULT importance, with its
-        // own generic name — and a channel's importance can never be raised afterwards.
+        // any channel id it doesn't recognise itself: at DEFAULT importance, with its
+        // own generic name, and a channel's importance can never be raised afterwards.
         // Losing that race once would permanently demote medication reminders on that
         // install, so this must not depend on startup having got there first.
         if (!_channelsRegistered)

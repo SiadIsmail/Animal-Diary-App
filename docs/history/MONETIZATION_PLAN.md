@@ -1,4 +1,4 @@
-# Monetization — Free Trial + RevenueCat Subscription
+# Monetization: Free Trial + RevenueCat Subscription
 
 > ## SUPERSEDED, 2026-08-21, by the inverted paid boundary.
 >
@@ -24,14 +24,14 @@
 >
 > Status: **BUILT, then superseded.** This is the original design document, kept as the record of
 > *why* the billing layer has the shape it has. It is **not** a description of the
-> current implementation — for that see [AI/architecture.md](../../AI/architecture.md) §6,
+> current implementation: for that see [AI/architecture.md](../../AI/architecture.md) §6,
 > [AI/domain.md](../../AI/domain.md) (the access rules) and `Data/Services/Billing/`.
 >
 > Shipped: the app-side trial (`TrialService`), the composed gate
 > (`EntitlementService.HasFullAccess` / `CanEditPet`), the RevenueCat store seam
 > (`RevenueCatStoreBilling`), the subscribe + trial-message surfaces, and sponsored
 > caregivers (migration 0010 + the `revenuecat-webhook` edge function). Live config
-> is in `BillingConfig` — **it, not this document, is the source of truth for trial
+> is in `BillingConfig`: **it, not this document, is the source of truth for trial
 > length and entitlement ids.** The post-build review is in
 > [BILLING_AUDIT.md](BILLING_AUDIT.md).
 >
@@ -47,7 +47,7 @@
 
 ---
 
-## 1. Philosophy (read first — it governs every other section)
+## 1. Philosophy (read first: it governs every other section)
 
 Felova is a safety net for a sick animal's medication routine. The README and
 [AI/app-voice.md](../../AI/app-voice.md) build the whole product around one promise:
@@ -75,7 +75,7 @@ Three things are therefore **never** gated, on any plan, at any time:
    trapped behind the wall. They can always take what they already logged.
 
 What the trial gate *does* restrict, after expiry, is **new creation and new
-logging** — the growth of the record, not the maintenance of it.
+logging**: the growth of the record, not the maintenance of it.
 
 **Voice rule for the paywall.** The paywall is the most marketing-adjacent
 surface in a product whose voice doc bans marketing. It stays plain and honest:
@@ -86,8 +86,8 @@ the pet is at risk. See §6.
 
 ## 2. What RevenueCat does and does not do here
 
-RevenueCat manages **store subscriptions and entitlements** — "is this user's
-purchase currently active?" — by wrapping StoreKit (iOS) and Play Billing
+RevenueCat manages **store subscriptions and entitlements**: "is this user's
+purchase currently active?": by wrapping StoreKit (iOS) and Play Billing
 (Android). It does **not** provide the "24 free days" timer. That trial window is
 an **app-level concept Felova owns**.
 
@@ -122,7 +122,7 @@ and gets a spike before anything else is built (§8, slice 1), exactly as
 - **Accepted limitation (owner, 2026-07-25):** a reinstall / clear-data resets
   the anchor and hands out a fresh 24 days. This is deliberately **not** hardened.
   A reinstall wipes all of the user's local pet data too, so restarting the trial
-  costs a serious owner everything they logged — the abuse path is self-defeating.
+  costs a serious owner everything they logged: the abuse path is self-defeating.
   Server-side anchoring (Supabase `profiles.created_at`, or RevenueCat first-seen)
   stays available as a future hardening if data ever shows it is needed.
 
@@ -135,7 +135,7 @@ expired and not subscribed), the app is in **care-only** state.
 
 **Always free (never gated, any state):**
 
-- Viewing everything — calendar, timeline, pet profiles, full history.
+- Viewing everything: calendar, timeline, pet profiles, full history.
 - **Marking an already-scheduled dose given / skipped** (the adherence loop).
 - **Medication reminders firing** (never cancelled).
 - **Vet PDF export** of already-logged data.
@@ -150,7 +150,7 @@ expired and not subscribed), the app is in **care-only** state.
   appetite, seizure, water, notes.
 - Adding or editing a condition, care plan, or tracker.
 - Editing an existing pet's profile.
-- Inviting a caregiver / creating an invite code (a structural change — *confirm
+- Inviting a caregiver / creating an invite code (a structural change: *confirm
   with owner*; sharing is arguably part of "adding more").
 
 **The clean line:** the scheduled-dose logging path (`MedicationDoseLog`, the
@@ -162,7 +162,7 @@ check, not a per-field one.
 
 ---
 
-## 5. Architecture — mirror the cloud boundary
+## 5. Architecture: mirror the cloud boundary
 
 New folder `Data/Services/Billing/`, following the
 `ICloudSyncService` / `NullCloudSyncService` pattern the README calls out. No
@@ -199,7 +199,7 @@ public interface IEntitlementService
   `NullCloudSyncService`.
 - Registered per-platform in `MauiProgram`, like the cloud services.
 - `InitializeAsync` / `RefreshAsync` run off the UI path from `App.StartAsync`
-  and `OnResume`, alongside the existing reminder catch-up and cloud sync —
+  and `OnResume`, alongside the existing reminder catch-up and cloud sync,
   quiet, defensive, never blocking startup (same wrapping those already use).
 
 **The gate binding.** Writes are not funnelled through one chokepoint (each
@@ -212,29 +212,29 @@ check per entry point.
 
 ---
 
-## 6. Paywall UI — a `FelovaBottomSheet`, not RevenueCat's native paywall
+## 6. Paywall UI: a `FelovaBottomSheet`, not RevenueCat's native paywall
 
 RevenueCat's drag-and-drop paywall templates are native views that MAUI bindings
 expose poorly and that would clash with the design system. The README rule is
-absolute: **every in-app surface is the shared `FelovaBottomSheet`** — no modals,
+absolute: **every in-app surface is the shared `FelovaBottomSheet`**, no modals,
 no third-party popups.
 
 - Build **`PaywallSheetView` + `PaywallSheetViewModel`** on `FelovaBottomSheet`,
   styled like `CloudSheetView` / `KeepSafePage`.
-- Prices and product titles come from RevenueCat `Offerings` (store-localized) —
+- Prices and product titles come from RevenueCat `Offerings` (store-localized),
   **never hardcode a price** into a string.
 - **Restore purchases** is present (required for store approval).
 
 **Two placements (both requested):**
 
-1. **Gently, once, after onboarding.** `KeepSafePage.HandOff()` is the seam — it
+1. **Gently, once, after onboarding.** `KeepSafePage.HandOff()` is the seam: it
    already runs the "gentle and skippable" post-onboarding offer and calls
    `SwitchToMainApp()`. During the trial the paywall shows here as a soft,
    fully skippable sheet ("Not now"), informational rather than a wall. app-voice
    §17 wants onboarding cut to the bone and bans warm asides there, so this sheet
-   stays plain and dismissible — never a wall while the trial is still running.
+   stays plain and dismissible, never a wall while the trial is still running.
 2. **A settings row.** A "Felova subscription" row (final wording per §6.1 word
-   bans) in `SettingsPanelView` / `SettingsViewModel`, opening the same sheet —
+   bans) in `SettingsPanelView` / `SettingsViewModel`, opening the same sheet,
    mirrors the existing `OpenCloudCommand` wiring.
 
 **On expiry**, the paywall is where every gated edit attempt routes. The user can
@@ -246,7 +246,7 @@ exclamation points / emoji / em dashes (§5), no fabricated user counts or
 testimonials (§16), **no handcrafted lines** (§4.3 bans them on transactional
 paths). The lock state never guilts, never uses red, never implies the pet is at
 risk. All strings in **both** `AppStrings.resx` and `AppStrings.de.resx`; German
-written native, not translated (§19). Paywall copy gets owner sign-off — it is
+written native, not translated (§19). Paywall copy gets owner sign-off: it is
 the single hardest screen on which to hold the voice.
 
 ---
@@ -254,33 +254,33 @@ the single hardest screen on which to hold the voice.
 ## 7. Analytics
 
 Coarse, anonymous events matching the existing `AnalyticsEvents` style (no PII,
-no prices, no ids — README rule): `paywall_shown`, `trial_expired`,
+no prices, no ids: README rule): `paywall_shown`, `trial_expired`,
 `purchase_started`, `purchase_completed`, `purchase_restored`.
 
 ---
 
 ## 8. Phased slices (owner test-pause between each, per the cloud-plan rhythm)
 
-### Slice 1 — Spike the binding *(the real risk)*
+### Slice 1: Spike the binding *(the real risk)*
 - Evaluate a MAUI RevenueCat binding (community `Plugin.Maui.RevenueCat`, or a
   thin binding over `purchases-hybrid-common`) on Android with a **real sandbox
   purchase and restore**. Decide the dependency. Nothing else starts until this
   is known-good, exactly as `supabase-csharp` was proven on Android first.
 
-### Slice 2 — Boundary + trial logic, no UI
+### Slice 2: Boundary + trial logic, no UI
 - `IEntitlementService`, `RevenueCat…` + `Null…` impls, `BillingConfig`.
 - `TrialStartUtc` in `SettingsService`; `HasFullAccess` / `State` / `TrialDaysLeft`.
 - Init/refresh wired off the UI path in `App`. Windows/macOS dev unaffected.
 - Ship and soak. No visible change while the trial is active.
 
-### Slice 3 — Paywall sheet + the gate
+### Slice 3: Paywall sheet + the gate
 - `PaywallSheetView` / VM on `FelovaBottomSheet`.
 - `CanEdit` bindings on every add/create/edit control; gated commands route to
   the paywall. Care-only state enforced per §4 (dose loop, reminders, export
   stay free).
 - Post-onboarding placement in `KeepSafePage`; settings row.
 
-### Slice 4 — Store config + copy + docs
+### Slice 4: Store config + copy + docs
 - RevenueCat dashboard: entitlement `premium`, offerings, products.
 - App Store Connect + Play Console subscription products.
 - EN/DE strings, restore flow, the §7 analytics events.
@@ -291,17 +291,17 @@ no prices, no ids — README rule): `paywall_shown`, `trial_expired`,
 ## RevenueCat wired (2026-07-27)
 
 - **Binding:** `Kebechet.Maui.RevenueCat.InAppBilling` 7.1.0 (Android/iOS-only
-  `PackageReference`), which bundles native RevenueCat Android 10.1.2 — recent enough
+  `PackageReference`), which bundles native RevenueCat Android 10.1.2: recent enough
   to support the **Test Store** (`test_`) key. Chosen over hand-binding the Gradle AAR
   (Kotlin binding pain for a solo maintainer). All RC types are confined to
   `RevenueCatStoreBilling.cs` (behind `IStoreBilling`).
 - **Key:** a RevenueCat **Test Store** key (`test_…`) in the git-ignored
   `BillingConfig.Secret.cs` (verified ignored). Test Store simulates purchases from the
-  RevenueCat dashboard — no Play Console products needed to test on-device. Swap to
+  RevenueCat dashboard, no Play Console products needed to test on-device. Swap to
   `goog_…`/`appl_…` public keys for production.
 - **`BillingConfig.Enabled = true`** → on Android/iOS the real `EntitlementService` +
   `RevenueCatStoreBilling` are live; Windows/macOS still get the no-op.
-- **Verified:** Windows build 0 errors. **Not yet verified:** the Android build — this
+- **Verified:** Windows build 0 errors. **Not yet verified:** the Android build: this
   sandbox has **.NET 10-band MAUI workloads but the project targets net9.0-android**, so
   restore can't produce the `net9.0-android` target here (fails before compiling any
   code; unrelated to the RC changes). The code is written against the binding's actual
@@ -309,7 +309,7 @@ no prices, no ids — README rule): `paywall_shown`, `trial_expired`,
 - **minSdk raised 21 → 24** (`SupportedOSPlatformVersion` android): the RevenueCat SDK
   and its Play Billing / AndroidX dependencies declare minSdk 23-24 and fail the manifest
   merge below that. Drops pre-Android-7.0 devices (negligible by 2026).
-- **Watch:** restore emits `NU1608` — the binding pins older `Xamarin.AndroidX.Lifecycle`
+- **Watch:** restore emits `NU1608`: the binding pins older `Xamarin.AndroidX.Lifecycle`
   than MAUI 9; NuGet resolves the higher version. Usually benign, but if the Android
   build/run misbehaves around AndroidX, that's the first suspect.
 
@@ -329,7 +329,7 @@ Shipped and Windows-clean (0 errors):
 - EN/DE copy for all of it.
 
 **Still not wired (small follow-up):**
-- **Pre-end nudge** — needs the real dose/history counts; the VM (`ShowNudge`) and copy
+- **Pre-end nudge**: needs the real dose/history counts; the VM (`ShowNudge`) and copy
   exist, only the launch/resume trigger + count queries remain.
 - **Gates on the Manage/Medications pages:** adding/editing a **medication** or schedule,
   editing a **pet profile**, and **condition/care-plan setup**. These pages don't host
@@ -344,16 +344,16 @@ Owner confirmed all recommendations; extra caregivers are gated. Implemented and
 **verified compiling on Windows (0 errors)**, currently inert because
 `BillingConfig.Enabled = false` (Null boundary → app behaves exactly as before):
 
-**Done — the reversible logic layer (no keys needed):**
+**Done: the reversible logic layer (no keys needed):**
 - `Data/Services/Billing/`: `IEntitlementService` (the single `HasFullAccess` gate),
   `EntitlementService` (composes trial + store), `NullEntitlementService`,
   `TrialService` (app-side 14-day clock, `BillingConfig.TrialLength`), `IStoreBilling`
-  + `NullStoreBilling` (the RevenueCat seam — all RC code will live behind this only).
+  + `NullStoreBilling` (the RevenueCat seam: all RC code will live behind this only).
 - `BillingConfig` with the key supplied by an **untracked** `BillingConfig.Secret.cs`
-  (git-ignored; `.example` committed) via an optional partial — compiles with or
+  (git-ignored; `.example` committed) via an optional partial: compiles with or
   without it.
 - `SettingsService`: `TrialStartUtc` + one-shot flags (`SettingsFlags`).
-- DI in `MauiProgram` (real on Android/iOS **and** `Enabled`; Null otherwise — Windows/
+- DI in `MauiProgram` (real on Android/iOS **and** `Enabled`; Null otherwise: Windows/
   macOS dev never locks). Analytics funnel constants in `AnalyticsEvents`.
 - `SubscribeSheetViewModel` (yearly-first offers, purchase, restore, source-tagged
   analytics) and `TrialMessageViewModel` (explainer / pre-end nudge / read-only
@@ -363,7 +363,7 @@ Owner confirmed all recommendations; extra caregivers are gated. Implemented and
   `trial_started` fires once.
 - EN + DE copy for every new string (native German; app-voice compliant).
 
-**Remaining — the view + enforcement slice (do with the key + binding + a design pass,
+**Remaining: the view + enforcement slice (do with the key + binding + a design pass,
 ideally runnable):**
 1. **Slice 1 spike:** pick a MAUI RevenueCat binding on a real Android sandbox purchase;
    implement `RevenueCatStoreBilling : IStoreBilling`; swap it in the `MauiProgram`
@@ -386,11 +386,11 @@ plural rule before wider release.
 1. Copy `Animal Diary App/Data/Services/Billing/BillingConfig.Secret.cs.example` to
    `BillingConfig.Secret.cs` (same folder). It is already git-ignored.
 2. Paste the RevenueCat **public** SDK keys (`goog_…`, `appl_…`) into it. Never the
-   RevenueCat **secret** API key — that is server-side only and never ships in the app.
+   RevenueCat **secret** API key, that is server-side only and never ships in the app.
 3. After slice-1's binding is wired, set `BillingConfig.Enabled = true`.
 4. In RevenueCat/Play: entitlement `premium`, offering `default` with a **yearly** and
    **monthly** base plan, each **with no store-side free-trial offer** (the app-side
-   trial is the only trial — see the stacking guard in §Point 1 / above).
+   trial is the only trial: see the stacking guard in §Point 1 / above).
 
 ## Resolved decisions (owner, 2026-07-25)
 
@@ -400,7 +400,7 @@ plural rule before wider release.
    medications, and all new/edited journal & symptom entries are gated. "You can
    keep caring for the pet you set up; you pay to add more."
 3. **Trial anchor:** local `TrialStartUtc`. Reinstall-reset accepted and not
-   hardened — a reinstall wipes the owner's data too, so the abuse path is
+   hardened: a reinstall wipes the owner's data too, so the abuse path is
    self-defeating for any serious owner.
 4. **Export while locked:** always free. Users can take out what they already
    logged; they just cannot log or create anything new.
@@ -417,19 +417,19 @@ their pets. Implemented; Windows build clean, unit tests green.
 has access)`. Sponsorship never covers a pet you own.
 
 Owner decisions behind it:
-1. **Trial sponsors too**, not only a paid subscription — so the anchor moved server-side
+1. **Trial sponsors too**, not only a paid subscription, so the anchor moved server-side
    (`profiles.trial_started_at`, reconciled set-if-earlier).
 2. **Caps:** 5 caregivers per pet, 10 sponsored caregivers per owner. Enforced at *both*
-   mint and redeem, so the owner — the only person who can free a slot — hears about it.
+   mint and redeem, so the owner (the only person who can free a slot) hears about it.
 3. **Sponsored caregivers get logging parity**, including medications and the care plan.
    Genuinely owner-only actions (invite, remove member, delete cloud-wide) are already
    role-enforced server-side and carry no billing gate.
 4. **The end of cover is announced**, once per transition, with copy that names the real
-   reason — a caregiver never had a trial, so "your trial ended" would be false. The owner
+   reason: a caregiver never had a trial, so "your trial ended" would be false. The owner
    is told too, in their read-only sheet, when they have carers.
 5. **Redeeming an invite stays free** while locked. Minting one does not.
 6. **The trial starts with your first OWN pet.** A caregiver-only user never starts one.
-7. **No "covered by your subscription" badge** in the member list — caregivers are family.
+7. **No "covered by your subscription" badge** in the member list: caregivers are family.
 
 Also fixed here: a caregiver joining through the Welcome door used to land in read-only
 until the app was relaunched (the trial only started at launch when pets already existed).
@@ -441,7 +441,7 @@ M6).
 
 ## Open questions
 
-- **Sharing/invites while locked** — resolved: redeem free, mint gated (§Sponsored above).
-- **Price point and subscription cadence** (monthly / annual / both) — set on the
+- **Sharing/invites while locked**: resolved: redeem free, mint gated (§Sponsored above).
+- **Price point and subscription cadence** (monthly / annual / both): set on the
   RevenueCat dashboard, surfaced from `Offerings`, never hardcoded.
-- **Binding choice** — resolved by slice 1's spike.
+- **Binding choice**: resolved by slice 1's spike.

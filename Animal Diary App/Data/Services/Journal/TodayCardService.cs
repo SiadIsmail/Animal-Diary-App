@@ -10,17 +10,17 @@ using Animal_Diary_App.Helpers;
 /// yesterday") happens at display time, because a singleton holding those strings
 /// would survive a live language switch in the old language.
 /// </summary>
-/// <param name="On">The day the record belongs to; null means nothing recorded yet —
+/// <param name="On">The day the record belongs to; null means nothing recorded yet,
 /// that is the single "has data" test for every card.</param>
 /// <param name="At">Time of day, when the entry carries one (legacy rows may not).</param>
 /// <param name="Number">A measured value: kg, mmol/L, ml, grams. Null for the rest.</param>
 /// <param name="Mood">The recorded mood (mood card only).</param>
-/// <param name="Level">A stored 1–5 relative reading — appetite/water observations.
+/// <param name="Level">A stored 1–5 relative reading: appetite/water observations.
 /// Shown as its word, never as a number.</param>
 /// <param name="Text">Verbatim user data (the medication's name); never translated.</param>
 /// <param name="Label">An owner-defined tracker's own name; empty for the shipped cards,
 /// whose label is a localization key in <see cref="TodayCardCatalog"/>. Verbatim user
-/// data, in the same category as <paramref name="Text"/> — never translated.</param>
+/// data, in the same category as <paramref name="Text"/>, never translated.</param>
 /// <param name="Icon">That tracker's emoji; empty for the shipped cards.</param>
 /// <param name="Unit">That tracker's own unit ("min", "bowls"); empty otherwise.</param>
 public sealed record TodayCardReading(
@@ -46,7 +46,7 @@ public sealed record TodayCardReading(
 /// pet, and what that record currently says.
 ///
 /// <para><b>Nothing new is stored about health here.</b> Every reading is fetched from
-/// the entry store that already owns it — this service only chooses which one to ask.
+/// the entry store that already owns it: this service only chooses which one to ask.
 /// Adding a card type is one row in <see cref="TodayCardCatalog.Cards"/> plus one
 /// branch in <see cref="GetReadingAsync"/>.</para>
 ///
@@ -54,7 +54,7 @@ public sealed record TodayCardReading(
 /// device-scoped <c>AppSettings</c> key/value table as the language and the one-shot
 /// flags rather than in a synced table: it needs no cloud migration, survives a sign
 /// out, and is wiped by a data reset like everything else. It is keyed per pet because
-/// the useful pair follows the pet's conditions — a household with a diabetic cat and
+/// the useful pair follows the pet's conditions: a household with a diabetic cat and
 /// a healthy dog wants different cards.</para>
 /// </summary>
 public class TodayCardService
@@ -122,7 +122,7 @@ public class TodayCardService
     }
 
     /// <summary>Put a card in a slot and remember it. Returns the resulting pair, which
-    /// may have swapped the two cards — see <see cref="TodayCardConfig.With"/>.</summary>
+    /// may have swapped the two cards: see <see cref="TodayCardConfig.With"/>.</summary>
     public async Task<TodayCardConfig> SetCardAsync(Pet? pet, TodayCardSlot slot, TodayCardKey card)
     {
         var current = await GetConfigAsync(pet);
@@ -215,7 +215,7 @@ public class TodayCardService
     }
 
     // Appetite and water each have two stores (measured / observed). The card shows
-    // whichever was written LAST, in its own form — a bowl of "About half" is never
+    // whichever was written LAST, in its own form: a bowl of "About half" is never
     // turned into grams, and grams are never re-labelled as a word. Two shapes, shown
     // one at a time, never merged (AI/design-decisions.md).
     private async Task<TodayCardReading> AppetiteAsync(int petId)
@@ -259,13 +259,13 @@ public class TodayCardService
             return TodayCardReading.Empty(TodayCardId.Medication);
 
         // The log carries only the medication's id; the name lives on the med row, and
-        // a deleted medication leaves the card with nothing to name — its empty state.
+        // a deleted medication leaves the card with nothing to name: its empty state.
         var med = await _medications.GetMedicationByIdAsync(log.MedicationId);
         if (med is null)
             return TodayCardReading.Empty(TodayCardId.Medication);
 
         // The recorded moment is when the owner tapped it, falling back to the dose's
-        // scheduled slot — the same rule the Journal timeline places doses by, so a dose
+        // scheduled slot: the same rule the Journal timeline places doses by, so a dose
         // caught up the next morning reads as recorded that morning.
         var recorded = log.ResolvedAt ?? log.ScheduledDate + log.ScheduledTime;
         return new TodayCardReading(TodayCardId.Medication, recorded.Date, recorded.TimeOfDay, Text: med.Name);
@@ -273,7 +273,7 @@ public class TodayCardService
 
     // An owner-defined tracker. The definition is read from the ARCHIVED-inclusive list:
     // a card pointing at a tracker the owner has since retired must still name it and show
-    // its last reading rather than going blank — retiring means "stop asking", not "forget".
+    // its last reading rather than going blank: retiring means "stop asking", not "forget".
     //
     // A definition that cannot be found at all (its row hard-purged with revoked cloud
     // access) yields an empty card with no name, which the card renders as its neutral

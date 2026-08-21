@@ -3,14 +3,14 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 /// <summary>
 /// The one piece of coarse, ambient context the payload builder needs but can't read
 /// from itself: whether this install is currently signed in to cloud. It is a tiny
-/// static flag — deliberately NOT an injected dependency — so the analytics subsystem
+/// static flag (deliberately NOT an injected dependency) so the analytics subsystem
 /// stays free of any Cloud type and the Cloud subsystem stays free of analytics beyond
 /// its <see cref="IAnalyticsService"/> calls (the two worlds never reference each
 /// other's classes, mirroring how <see cref="AnalyticsIdentity"/> is a leaf static).
 ///
 /// <b>Privacy boundary (hard rule):</b> the only thing that may ever be stored here is a
 /// boolean signed-in/anonymous state. No user id, email, token, or any account
-/// identifier is kept — this class exists so the payload can carry
+/// identifier is kept: this class exists so the payload can carry
 /// <c>account_state = anonymous | signed_in</c> and nothing finer. It never links the
 /// analytics <c>distinct_id</c> to a real account; the two identities stay separate by
 /// construction.
@@ -26,7 +26,7 @@ public static class AnalyticsContext
     private static volatile bool _isSignedIn;
 
     /// <summary>Whether this install is currently signed in to a cloud account. Set by
-    /// the Cloud auth layer; read by the analytics payload builder. A plain flag — it
+    /// the Cloud auth layer; read by the analytics payload builder. A plain flag: it
     /// holds no identity.</summary>
     public static bool IsSignedIn
     {
@@ -39,7 +39,7 @@ public static class AnalyticsContext
         _isSignedIn ? AnalyticsEvents.AccountStateSignedIn : AnalyticsEvents.AccountStateAnonymous;
 
     // Backed by device Preferences rather than the app's SQLite settings, and lazily loaded
-    // on first read. That is not an optimization — it is what makes the value correct on the
+    // on first read. That is not an optimization: it is what makes the value correct on the
     // FIRST event of a cold launch.
     //
     // app_opened fires from CreateWindow, which by documented design can run before startup
@@ -58,13 +58,13 @@ public static class AnalyticsContext
     /// channel without a second event stream.
     ///
     /// <para><b>This is a CHANNEL, not a person.</b> It answers "how was Felova found",
-    /// which is the same character of fact as the platform or the language — never who the
+    /// which is the same character of fact as the platform or the language, never who the
     /// user is, and never the code they typed (a code is closer to a token than a label).
     /// The privacy boundary above is unchanged: no id, no email, no account identifier, and
     /// events still carry <c>$process_person_profile = false</c>, so nothing here can be
     /// joined into a person profile.</para>
     ///
-    /// <para>Deliberately coarse and never null — an unset value reports <c>none</c>, so
+    /// <para>Deliberately coarse and never null: an unset value reports <c>none</c>, so
     /// "organic" is a filterable bucket rather than a missing property.</para></summary>
     public static string ReferralSource
     {
@@ -94,7 +94,7 @@ public static class AnalyticsContext
     /// would be the one thread still tying the two together.
     ///
     /// <para>Needed explicitly because this lives in <c>Preferences</c>, which the reset's
-    /// table sweep does not reach — the SQLite copy in <c>AppSettings</c> goes with
+    /// table sweep does not reach: the SQLite copy in <c>AppSettings</c> goes with
     /// everything else.</para></summary>
     public static void ClearReferral()
     {

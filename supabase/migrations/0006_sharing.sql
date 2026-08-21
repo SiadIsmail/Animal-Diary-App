@@ -1,13 +1,13 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0006 — Phase 2: multi-caregiver sharing.
+--  0006: Phase 2: multi-caregiver sharing.
 --
 --  Invite codes (ABCD-1234 shape): owner mints one per pet, another account
 --  redeems it and becomes a caregiver; the next sync downloads the pet through
---  the existing RLS scoping — no new data paths. All access goes through
+--  the existing RLS scoping, no new data paths. All access goes through
 --  SECURITY DEFINER RPCs with named errors (per the debugging philosophy);
 --  the invites table has RLS enabled with NO policies and NO role grants, so
 --  codes are unreadable outside the RPCs. Redemption is rate-limited with a
---  simple attempts table — deliberately nothing fancier.
+--  simple attempts table: deliberately nothing fancier.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 create table public.pet_invites (
@@ -36,7 +36,7 @@ create index pet_invite_attempts_user_time
 
 -- ── owner mints an invite ───────────────────────────────────────────────────
 -- Returns the code. 7-day expiry, single-use. Codes avoid confusable glyphs
--- (no I/O/0/1). Max 10 mints per owner per hour — enough for any real use.
+-- (no I/O/0/1). Max 10 mints per owner per hour: enough for any real use.
 
 create function public.create_pet_invite(p_pet uuid)
 returns text
@@ -163,7 +163,7 @@ end $$;
 
 -- ── leave / remove ──────────────────────────────────────────────────────────
 -- A caregiver may remove THEMSELF (leave); the owner may remove any caregiver.
--- The owner can never be removed — ownership transfer is a later feature.
+-- The owner can never be removed: ownership transfer is a later feature.
 
 create function public.remove_pet_member(p_pet uuid, p_user uuid)
 returns void

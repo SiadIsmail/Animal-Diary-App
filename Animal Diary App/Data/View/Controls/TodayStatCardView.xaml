@@ -3,7 +3,7 @@
     TodayStatCardView
     ─────────────────────────────────────────────────────────
     One of Today's two stat cards. It shows the pet's LAST record of whatever the
-    owner put here — the value and when it was written down, nothing else. No
+    owner put here: the value and when it was written down, nothing else. No
     streaks, no scores, no "N days since" (see Data/Models/TodayCards.cs).
 
     THE WHOLE CARD IS THE BUTTON. The pencil in the corner is a cue, not the target:
@@ -94,7 +94,7 @@
                 </Label>
             </HorizontalStackLayout>
 
-            <!-- When it was recorded. States the date, never a judgement on the value —
+            <!-- When it was recorded. States the date, never a judgement on the value,
                  the app cannot know what a change means. -->
             <Border BackgroundColor="{StaticResource TealTint}"
                     Padding="9,4"

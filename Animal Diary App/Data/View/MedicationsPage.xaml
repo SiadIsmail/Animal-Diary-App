@@ -27,7 +27,7 @@
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Water background — bottom layer, spans the whole page -->
+        <!-- Water background: bottom layer, spans the whole page -->
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ══════════ MAIN CONTENT ══════════ -->

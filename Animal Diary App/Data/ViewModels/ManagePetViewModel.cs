@@ -11,7 +11,7 @@ using Animal_Diary_App.Helpers;
 
 // ── Small display records for the page's bindable lists ──────────────────────────
 
-/// <summary>Common type for anything the Conditions section's FlexLayout can render —
+/// <summary>Common type for anything the Conditions section's FlexLayout can render,
 /// a condition chip, the trailing Add chip, and (later) things like a loading or
 /// recommendation chip. Add a new item type + template + selector case to extend.</summary>
 public interface IConditionChipItem
@@ -36,7 +36,7 @@ public class AddConditionChipItem : IConditionChipItem
 /// breadcrumb of the condition that introduced it.</summary>
 public class CarePlanRow
 {
-    /// <summary>Which tracker this row edits — a shipped one or one the owner made up.</summary>
+    /// <summary>Which tracker this row edits: a shipped one or one the owner made up.</summary>
     public TrackerKey Key { get; init; }
     public string? FromCondition { get; init; }
     public string Icon { get; init; } = string.Empty;
@@ -61,7 +61,7 @@ public class ManageMedRow
 /// "Add a tracker" sheet.</summary>
 public class AddTrackerOption
 {
-    /// <summary>Which shipped tracker this offers, or null for the "add your own" row —
+    /// <summary>Which shipped tracker this offers, or null for the "add your own" row,
     /// the one option that opens the custom sheet instead of adding a tracker outright.</summary>
     public TrackerId? TrackerId { get; init; }
     public string Name { get; init; } = string.Empty;
@@ -114,7 +114,7 @@ public class AdjustOption : BaseViewModel
 /// (add condition, remove condition, adjust a default tracker). The three condition
 /// SETUP sheets are separate reusable VMs on <see cref="MainViewModel"/>; this VM asks
 /// the page to open them via <see cref="RequestConditionSetup"/> ("one menu, two
-/// doors"). New functionality, so it's a new VM — the CalendarViewModel is untouched.
+/// doors"). New functionality, so it's a new VM: the CalendarViewModel is untouched.
 /// </summary>
 public class ManagePetViewModel : BaseViewModel
 {
@@ -188,11 +188,11 @@ public class ManagePetViewModel : BaseViewModel
 
     /// <summary>Open a tracker's own editor (Glucose, Seizure). Distinct from
     /// <see cref="RequestConditionSetup"/> because it reuses the same sheets WITHOUT
-    /// linking their condition — editing a target range must not record a diagnosis.</summary>
+    /// linking their condition: editing a target range must not record a diagnosis.</summary>
     public event Action<TrackerId>? RequestTrackerSetup;
 
     /// <summary>Open the owner's own tracker sheet: the row to edit, or null to create
-    /// one. The single door to every custom tracker — there is no per-tracker editor.</summary>
+    /// one. The single door to every custom tracker: there is no per-tracker editor.</summary>
     public event Action<CustomTracker?>? RequestCustomTracker;
 
     /// <summary>Open the edit-pet door (prefilled CreatePetPage).</summary>
@@ -248,7 +248,7 @@ public class ManagePetViewModel : BaseViewModel
     public string PetName => _activePet.ActivePet?.Name ?? string.Empty;
     public string PetInitial => string.IsNullOrEmpty(PetName) ? "·" : PetName.Substring(0, 1).ToUpperInvariant();
     // Age is dropped when unknown so the subtitle never reads "· yrs" with no number
-    // (see PetViewModel.ActivePetSubtitle — same rule).
+    // (see PetViewModel.ActivePetSubtitle: same rule).
     public string PetSubtitle => _activePet.ActivePet is { } p
         ? (p.AgeYears is int years
             ? Loc.Format("Pet_SubtitleFormat", PetTypeNames.Localize(p.Type), years)
@@ -266,7 +266,7 @@ public class ManagePetViewModel : BaseViewModel
 
     /// <summary>Tapping a condition chip's name reopens that condition's setup, so it
     /// can be reconfigured from the condition itself. Conditions with nothing to
-    /// configure (no setup sheet) do nothing — there is no screen to show.</summary>
+    /// configure (no setup sheet) do nothing: there is no screen to show.</summary>
     public ICommand OpenConditionCommand { get; }
     public ICommand AddTrackerCommand { get; }
     public ICommand PickAddTrackerCommand { get; }
@@ -292,7 +292,7 @@ public class ManagePetViewModel : BaseViewModel
     /// Label for the destructive remove row. It must say what the action ACTUALLY does for
     /// this viewer: an owner deletes the pet, a caregiver only leaves it. The dialogs behind
     /// the row already branch on role, but the row itself used to read "Remove Charly from
-    /// Felova" for everyone — telling a caregiver they were about to delete someone else's
+    /// Felova" for everyone: telling a caregiver they were about to delete someone else's
     /// animal, which is both false and frightening.
     /// </summary>
     public string RemovePetLabel => IsCaregiverRemoval
@@ -301,7 +301,7 @@ public class ManagePetViewModel : BaseViewModel
 
     /// <summary>
     /// The row's second line: what removal actually costs this viewer. It branches on the
-    /// same role as the label, because the two answers are not softenings of each other —
+    /// same role as the label, because the two answers are not softenings of each other,
     /// an owner loses the record, a caregiver only loses their view of it. Saying "can't be
     /// undone" to someone who is merely stepping away would be a lie in the frightening
     /// direction (§14: no hierarchy theatre, so neither line names a role).
@@ -322,7 +322,7 @@ public class ManagePetViewModel : BaseViewModel
 
     // ── Pause everything (AI/app-voice.md §15) ───────────────────────────────────
     // Per-device (PetPauseService): pausing stops every reminder for this pet on this
-    // device and keeps the whole record. It never touches data and never syncs — one
+    // device and keeps the whole record. It never touches data and never syncs: one
     // carer stepping back doesn't silence the other's reminders.
     private bool _isPaused;
     public bool IsPaused
@@ -336,7 +336,7 @@ public class ManagePetViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Row label, fixed: "Pause everything for Charly". It does NOT flip to "Resume…" —
+    /// Row label, fixed: "Pause everything for Charly". It does NOT flip to "Resume…",
     /// the row carries a Switch bound to <see cref="IsPaused"/>, and a switch labelled with
     /// the opposite of its own state is unreadable ("Resume everything", on). The label names
     /// the thing being switched; the switch says whether it's on.
@@ -368,7 +368,7 @@ public class ManagePetViewModel : BaseViewModel
 
         // Reflect this device's pause state for the active pet. The setter only fires when
         // the state actually changed, so the label and subtitle are raised unconditionally
-        // below — both carry the pet's name, which changes when the active pet does.
+        // below: both carry the pet's name, which changes when the active pet does.
         IsPaused = pet != null && pet.Id != 0 && _pause.IsPaused(pet.Id);
         OnPropertyChanged(nameof(PauseRowLabel));
         OnPropertyChanged(nameof(PauseRowSubtitle));
@@ -383,7 +383,7 @@ public class ManagePetViewModel : BaseViewModel
         var conditionIds = await _conditions.GetConditionIdsAsync(pet);
         var plan = (await _carePlan.GetPlanAsync(pet)).ToList();
         // The owner's own definitions, so a custom row can render its name, emoji and
-        // colour. The plan carries only cadence — the identity lives on the row.
+        // colour. The plan carries only cadence: the identity lives on the row.
         _customById = (await _custom.GetForPetAsync(pet.Id)).ToDictionary(c => c.Id);
         var meds = (await _medications.GetMedicationsByPetIdAsync(pet.Id))
             .Where(m => !m.IsArchived).ToList();
@@ -401,7 +401,7 @@ public class ManagePetViewModel : BaseViewModel
         foreach (var t in plan)
             CarePlanRows.Add(BuildRow(t));
 
-        // The row stays while there is anything left to add — a shipped tracker not yet
+        // The row stays while there is anything left to add: a shipped tracker not yet
         // in the plan, OR room for one more of the owner's own. Counting only the shipped
         // ones would hide "add your own" the moment a pet used all six.
         CanAddTracker = CarePlanRows.Count(r => !r.Key.IsCustom) < System.Enum.GetValues<TrackerId>().Length
@@ -425,7 +425,7 @@ public class ManagePetViewModel : BaseViewModel
         Conditions.Clear();
         RebuildConditionItems();
         CarePlanRows.Clear();
-        // The definitions belong to the pet that just went away — keeping them would let
+        // The definitions belong to the pet that just went away: keeping them would let
         // the "add your own" cap be judged against another pet's trackers.
         _customById = new Dictionary<int, CustomTracker>();
         Medications.Clear();
@@ -459,7 +459,7 @@ public class ManagePetViewModel : BaseViewModel
             : PetRemovalFlowResult.Cancel;
 
         // Cancelled, or the owner chose to save a copy first (the page opened the
-        // export sheet) — either way there is nothing to remove right now.
+        // export sheet): either way there is nothing to remove right now.
         if (flow != PetRemovalFlowResult.Proceed)
             return;
 
@@ -492,7 +492,7 @@ public class ManagePetViewModel : BaseViewModel
         }
 
         // Pause: set the flag first so any concurrent catch-up already skips this pet,
-        // then cancel everything already armed. §15.1 — one tap stops everything.
+        // then cancel everything already armed. §15.1: one tap stops everything.
         _pause.Pause(pet.Id);
         IsPaused = true;
         await _reminders.CancelPetAsync(pet.Id);
@@ -510,7 +510,7 @@ public class ManagePetViewModel : BaseViewModel
     private CarePlanRow BuildRow(CarePlanItem t)
     {
         // A custom line takes its name, emoji and colour from the owner's own row; a
-        // shipped one from the static table. The name is USER TEXT — shown verbatim,
+        // shipped one from the static table. The name is USER TEXT: shown verbatim,
         // never passed through the localizer.
         if (t.Key.IsCustom)
         {
@@ -578,13 +578,13 @@ public class ManagePetViewModel : BaseViewModel
             return;
 
         // Glucose and Seizure always open their own editor, condition or not. Both hold
-        // settings the plain cadence picker can't express — a target range, and "as it
-        // happens" — and both are properties of the measurement rather than of a
+        // settings the plain cadence picker can't express: a target range, and "as it
+        // happens", and both are properties of the measurement rather than of a
         // diagnosis. Routing on the tracker instead of on FromCondition also means a
         // hand-added Glucose can no longer land in a picker that offers neither its
         // per-day frequency nor its range, and silently overwrite both on save.
         // The sheets are opened WITHOUT linking their condition: see LinkCondition.
-        // A custom tracker has no shipped editor and no condition behind it — the one
+        // A custom tracker has no shipped editor and no condition behind it: the one
         // custom sheet owns its name, look, shape and cadence together, so it is checked
         // before everything else.
         if (row.Key.IsCustom)
@@ -614,7 +614,7 @@ public class ManagePetViewModel : BaseViewModel
 
     private void OnOpenCondition(ManageConditionChip? chip)
     {
-        // Reconfiguring here DOES link the condition (it is already linked — this is the
+        // Reconfiguring here DOES link the condition (it is already linked: this is the
         // condition's own door), unlike the tracker-row door which must not.
         if (chip != null && ConditionSetup.HasSheet(chip.Id))
             RequestConditionSetup?.Invoke(chip.Id);
@@ -654,7 +654,7 @@ public class ManagePetViewModel : BaseViewModel
         await _conditions.AddAsync(pet.Id, option.Id);
         await _trackers.EnsureSeededAsync(pet.Id, System.Array.Empty<string>());
         foreach (var seed in CarePlanCatalog.ForCondition(option.Id))
-            // isNew — see ConditionPickerViewModel: a tracker the owner added on their
+            // isNew: see ConditionPickerViewModel: a tracker the owner added on their
             // own is never claimed by a condition added afterwards.
             await _trackers.UpsertAsync(pet.Id, seed.TrackerId, (t, isNew) =>
             {
@@ -679,7 +679,7 @@ public class ManagePetViewModel : BaseViewModel
     // The deliberate half of the pair the Journal's "+" completes. There, picking a
     // log type outside the plan records it once and commits to nothing; here, the
     // owner is saying "keep asking me about this", so it joins the care plan and the
-    // "still to do" row. Conditions were only ever a shortcut for filling this in —
+    // "still to do" row. Conditions were only ever a shortcut for filling this in,
     // wanting to note water shouldn't require claiming a kidney diagnosis.
     private void OpenAddTrackerSheet()
     {
@@ -715,7 +715,7 @@ public class ManagePetViewModel : BaseViewModel
 
         IsAddTrackerSheetVisible = false;
 
-        // "Something else" hands straight over to the custom sheet — nothing is created
+        // "Something else" hands straight over to the custom sheet: nothing is created
         // until the owner has named it, so backing out of that sheet leaves no trace.
         if (option.TrackerId is not TrackerId trackerId)
         {
@@ -855,7 +855,7 @@ public class ManagePetViewModel : BaseViewModel
         var currentKind = current?.Kind ?? defaults.Kind;
         var currentPerDay = current?.PerDayCount ?? defaults.PerDayCount;
 
-        // Fresh list (not in-place mutation) — see the AdjustOptions field note.
+        // Fresh list (not in-place mutation): see the AdjustOptions field note.
         // A PerDay rung has to match on the COUNT too, or "3× daily" and "2× daily"
         // would both light up for the same tracker.
         var options = OptionsFor(trackerId)
@@ -872,7 +872,7 @@ public class ManagePetViewModel : BaseViewModel
         // The tracker's CURRENT cadence is always offered, even if the ladder above
         // wouldn't propose it. Without this the sheet can open with nothing selected,
         // and then any save silently rewrites the tracker to a cadence the owner never
-        // had — which is how a seizure log could become a daily chore. The invariant
+        // had, which is how a seizure log could become a daily chore. The invariant
         // to keep: every setting reachable by SaveAdjustAsync is one the sheet showed.
         if (options.All(o => !o.IsSelected))
         {
@@ -950,7 +950,7 @@ public class ManagePetViewModel : BaseViewModel
 
     // ── Static maps ──────────────────────────────────────────────────────────────
     /// <summary>Cadence for a tracker with no stored row yet. Delegates to the catalog
-    /// so this can't drift from what a bare add or a condition seed would produce —
+    /// so this can't drift from what a bare add or a condition seed would produce,
     /// the local copy used to answer "Daily" for Seizure, which is an Event.</summary>
     private static TrackerKind DefaultKind(TrackerId id) => CarePlanCatalog.DefaultFor(id).Kind;
 
@@ -958,7 +958,7 @@ public class ManagePetViewModel : BaseViewModel
     //
     // Every rung the pending engine actually understands is on offer here: several
     // times a day, once a day, a couple of times a week, weekly, or never asked for.
-    // Rungs are only withheld where they'd be meaningless for that particular thing —
+    // Rungs are only withheld where they'd be meaningless for that particular thing,
     // weighing a pet three times a day isn't a routine, it's a fixation, and mood is
     // one reading of a day rather than a series of them.
     //
@@ -1000,12 +1000,12 @@ public class ManagePetViewModel : BaseViewModel
             });
 
     // Nullable, because a care-plan line may be a custom tracker, which has no entry in
-    // the shipped table — those fall to TrackerVisuals.Fallback until Phase 2 builds a
+    // the shipped table: those fall to TrackerVisuals.Fallback until Phase 2 builds a
     // visual from the owner's own row.
     private static string LabelKey(TrackerId? id) => TrackerVisuals.For(id).LabelKey;
 
     // Rockpool icon + row tint/ink per tracker, from the shared TrackerVisuals table
-    // and resolved against Colors.xaml — never hex literals, which no theme can reach.
+    // and resolved against Colors.xaml, never hex literals, which no theme can reach.
     private static (string icon, Color bg, Color fg) Visual(TrackerId? id)
     {
         var v = TrackerVisuals.For(id);

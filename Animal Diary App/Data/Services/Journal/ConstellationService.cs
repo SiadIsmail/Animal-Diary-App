@@ -12,7 +12,7 @@ using Animal_Diary_App.Helpers;
 //  wide instead of deep: same stores, same "one list, sorted purely by time" rule,
 //  a range instead of a day. It is a separate service rather than another method on
 //  that ViewModel because the two answer different questions and would otherwise
-//  share nothing but their table names — and because a range read has to be issued
+//  share nothing but their table names, and because a range read has to be issued
 //  as ONE round of parallel queries or a year of history becomes ten sequential
 //  scans (AI/coding-standards.md).
 //
@@ -69,7 +69,7 @@ public class ConstellationService
         // not: sqlite-net's async API queues every call to the thread pool and then
         // serializes them on the one shared connection, so ten concurrent range scans
         // meant ten pooled threads and nine of them blocked on a lock. The scans ran in
-        // sequence regardless. Each is covered by a composite (PetId, Date) index — if
+        // sequence regardless. Each is covered by a composite (PetId, Date) index: if
         // this page ever needs fewer round trips, the answer is a wider query.
         var entries = await _petEntries.GetPetEntriesByPetIdAndRangeAsync(petId, from, to);
         var glucoseEntries = await _glucose.GetForRangeAsync(petId, from, to);
@@ -78,7 +78,7 @@ public class ConstellationService
         var waterAmounts = await _water.GetAmountsForRangeAsync(petId, from, to);
         var waterLevels = await _water.GetLevelsForRangeAsync(petId, from, to);
         var seizureEntries = await _seizures.GetForRangeAsync(petId, from, to);
-        // One query for every owner-defined tracker there is, grouped in memory —
+        // One query for every owner-defined tracker there is, grouped in memory,
         // the same thing that makes "as many as you like" affordable in the Journal.
         var customEntries = await _custom.GetForRangeAsync(petId, from, to);
         var customDefs = await _custom.GetAllForPetAsync(petId);
@@ -86,7 +86,7 @@ public class ConstellationService
 
         // ── Mood + weight: two independent readings sharing the day's PetEntry row,
         //    each with its own recorded time. A legacy row without one sits at the
-        //    start of its day rather than being dropped — it still happened.
+        //    start of its day rather than being dropped: it still happened.
         foreach (var entry in entries)
         {
             if (entry.MoodLevel > 0)
@@ -105,7 +105,7 @@ public class ConstellationService
                     At(entry.Date, entry.WeightTimeTicks),
                     CelestialCategory.Weight,
                     Loc.GetString("Journal_WeighIn"),
-                    entry.Weight.ToString(CultureInfo.CurrentCulture) + Loc.GetString("Common_KgSuffix")));
+                    WeightText.WithUnit(entry.Weight)));
             }
         }
 
@@ -118,7 +118,7 @@ public class ConstellationService
                 Loc.Format("Journal_GlucoseTimeline", g.Value.ToString("0.0", CultureInfo.CurrentCulture))));
         }
 
-        // Appetite and water each arrive in two shapes — a measured amount and a
+        // Appetite and water each arrive in two shapes: a measured amount and a
         // relative word. They stay ONE symbol here and are never merged into one
         // value: the two kinds sit side by side in the detail line exactly as they
         // sit in separate graphs in the vet report (AI/design-decisions.md).
@@ -186,13 +186,13 @@ public class ConstellationService
         events.AddRange(await GatherDosesAsync(meds, from, to));
 
         // The one ordering: everything, purely by time. Same rule as the Journal's
-        // day timeline — there are no per-kind lanes here and there must never be.
+        // day timeline: there are no per-kind lanes here and there must never be.
         events.Sort((a, b) => a.When.CompareTo(b.When));
         return events;
     }
 
     /// <summary>
-    /// The doses the OWNER recorded — taken or skipped — placed at the moment they
+    /// The doses the OWNER recorded (taken or skipped) placed at the moment they
     /// tapped, falling back to the scheduled time (the same rule the Journal timeline
     /// uses for a dose card).
     ///
@@ -200,7 +200,7 @@ public class ConstellationService
     /// down: <c>MedicationDoseReconciler</c> stamps it automatically for any scheduled
     /// dose with no log, so it is the app's inference, not the owner's record. Density
     /// here means "how much was recorded", and letting an unopened app fill the sky
-    /// would break that — as well as scattering absences across a surface someone
+    /// would break that: as well as scattering absences across a surface someone
     /// opens to look at their animal's life. The vet report is where a missed dose is
     /// counted, and it says so in words (AI/known-constraints.md).</para>
     /// </summary>

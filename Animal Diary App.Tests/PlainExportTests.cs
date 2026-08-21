@@ -12,7 +12,7 @@ using Xunit;
 /// one decision the DTO carries and both of its arms fail <i>silently</i>. Get it wrong
 /// one way and a free owner is handed a PDF with a title and no rows; get it wrong the
 /// other and their export is refused as empty because the <b>designed</b> sections had
-/// nothing in them — which would break the promise that getting your data out is never
+/// nothing in them, which would break the promise that getting your data out is never
 /// blocked, in the exact case where someone is trying to use it.</para>
 /// </summary>
 public class PlainExportTests
@@ -46,7 +46,7 @@ public class PlainExportTests
     [Fact]
     public void A_plain_export_with_nothing_written_down_is_refused()
     {
-        // No empty documents are ever produced — the same rule the designed report follows.
+        // No empty documents are ever produced: the same rule the designed report follows.
         Assert.False(Build(ReportStyle.Plain).HasAnyData);
     }
 
@@ -54,7 +54,7 @@ public class PlainExportTests
     public void A_plain_export_ignores_the_designed_sections_entirely()
     {
         // The load-bearing one. If HasAnyData still consulted Notes/Medications/Trends here,
-        // a plain export would be refused whenever the designed sections were empty — and
+        // a plain export would be refused whenever the designed sections were empty, and
         // the free export exists precisely for people who are not making a designed report.
         var noLogButNotes = Build(
             ReportStyle.Plain,

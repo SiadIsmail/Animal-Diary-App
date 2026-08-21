@@ -24,7 +24,7 @@ public partial class PetDetailsPage : ContentPage
 
     async void OnBackClicked(object? sender, EventArgs args)
     {
-        // Back keeps the draft — the user is stepping back to edit the name, not
+        // Back keeps the draft: the user is stepping back to edit the name, not
         // cancelling. Step 1 does not re-reset the draft (guarded there).
         await Navigation.PopAsync();
     }
@@ -35,7 +35,7 @@ public partial class PetDetailsPage : ContentPage
         {
             // Edit-pet door: save in place and return to the Manage page. The stack is
             // [Manage, CreatePetPage(step 1), PetDetailsPage(this)]. Remove step 1 from
-            // underneath, then pop this page so we land straight back on Manage — no
+            // underneath, then pop this page so we land straight back on Manage, no
             // condition picker.
             if (await vm.PetVM.SaveEditedPetAsync())
             {

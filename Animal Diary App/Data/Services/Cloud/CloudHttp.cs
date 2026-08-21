@@ -8,7 +8,7 @@ using System.Text.Json;
 /// goes to debug logs, never to the owner.</summary>
 public enum CloudErrorKind
 {
-    Network,            // offline / DNS / timeout — quiet, expected, retry later
+    Network,            // offline / DNS / timeout: quiet, expected, retry later
     InvalidCredentials, // wrong email/password
     EmailTaken,         // sign-up with an existing address
     EmailNotConfirmed,  // signed in before entering the code
@@ -39,7 +39,7 @@ public sealed class CloudException : Exception
 }
 
 /// <summary>
-/// The one type that speaks HTTP to Supabase (GoTrue auth + PostgREST data) —
+/// The one type that speaks HTTP to Supabase (GoTrue auth + PostgREST data),
 /// hand-built over <see cref="HttpClient"/>, mirroring the PostHog decision:
 /// the tiny API surface we use (a handful of auth endpoints, range selects, one
 /// RPC) isn't worth a client SDK dependency, and building the requests by hand
@@ -69,7 +69,7 @@ public sealed class CloudHttp
 
     // ── The "a body is required" variants ────────────────────────────────────────
     // A 2xx with an empty body is a real outcome of SendAsync, so every caller that
-    // then reads .RootElement had to write `doc!` — turning that case into a
+    // then reads .RootElement had to write `doc!`: turning that case into a
     // NullReferenceException instead of the CloudException this whole layer exists to
     // produce. It surfaced as "Object reference not set" in the diagnostics log, which
     // is exactly the unnamed failure the "cloud failures must name themselves" decision
@@ -88,7 +88,7 @@ public sealed class CloudHttp
         doc ?? throw new CloudException(
             CloudErrorKind.Other, 0, $"{what}: server returned success with an empty body");
 
-    /// <summary>Endpoint name without its query string — enough to locate the call,
+    /// <summary>Endpoint name without its query string: enough to locate the call,
     /// and it cannot carry a value from the row being synced.</summary>
     private static string Trim(string pathAndQuery)
     {
@@ -127,7 +127,7 @@ public sealed class CloudHttp
 
         if (status is < 200 or > 299)
         {
-            // Single choke point for every server error — trimmed body, no tokens.
+            // Single choke point for every server error: trimmed body, no tokens.
             var trimmed = text.Length > 300 ? text[..300] : text;
             CloudDiagnostics.Record($"[Cloud] {method} {Endpoint(url)} → {status}: {trimmed}");
             throw Classify(status, text);
@@ -146,7 +146,7 @@ public sealed class CloudHttp
     }
 
     /// <summary>Map a Supabase error body onto the coarse kinds the UI knows. The
-    /// matching is heuristic on purpose — unknown errors fall through to Other and
+    /// matching is heuristic on purpose: unknown errors fall through to Other and
     /// show a generic message rather than leaking server text to the owner.</summary>
     private static CloudException Classify(int status, string body)
     {

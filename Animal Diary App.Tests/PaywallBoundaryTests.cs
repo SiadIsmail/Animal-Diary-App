@@ -7,7 +7,7 @@ using Animal_Diary_App.Data.Services.Billing;
 using Xunit;
 
 /// <summary>
-/// Where the paywall is, and — much more importantly — where it is not.
+/// Where the paywall is, and (much more importantly) where it is not.
 ///
 /// <para><b>Why several of these are source scans rather than ordinary unit tests.</b> The
 /// enforcement sites are page code-behind and MAUI ViewModels: they cannot be constructed
@@ -182,10 +182,36 @@ public class PaywallBoundaryTests
     [Fact]
     public void A_lapsed_subscriber_keeps_the_pets_they_have_and_is_only_stopped_at_the_door()
     {
-        // Three animals, subscription gone. The rule answers ONE question — may a NEW pet be
-        // created — and it is the only question it may ever answer. Nothing anywhere hides,
+        // Three animals, subscription gone. The rule answers ONE question: may a NEW pet be
+        // created, and it is the only question it may ever answer. Nothing anywhere hides,
         // locks or read-onlys an animal that already exists to enforce a plan limit.
         Assert.True(PetLimit.BlocksAnotherPet(hasFullAccess: false, livePetCount: 3));
+    }
+
+    [Fact]
+    public void The_shared_view_model_exposes_no_pet_gate_for_a_logging_path_to_find()
+    {
+        // CanEditActivePet was the pet-scoped gate for the three write paths, and those
+        // writes are free now. A dead entitlement seam on the view model EVERY page binds
+        // to is one autocomplete away from the logging path, which is how a paywall
+        // creeps back into it. The paid surfaces ask Entitlements.CanEditPet themselves,
+        // per action and per pet, which is the only correct way to ask: the active pet
+        // changes under a page and sponsorship can end mid-session.
+        //
+        // A source scan, because MainViewModel cannot be constructed here.
+        var source = File.ReadAllText(
+            Path.Combine(AppFolder(), "Data", "ViewModels", "MainViewModel.cs"));
+
+        var offenders = source
+            .Split('\n')
+            .Select(line => line.TrimStart())
+            .Where(line => !line.StartsWith("//") && !line.StartsWith("///"))
+            .Where(line => line.Contains("CanEditActivePet", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.True(offenders.Count == 0,
+            "MainViewModel must not expose a pet-scoped entitlement gate. Found:\n  "
+            + string.Join("\n  ", offenders));
     }
 
     // ── the pieces that never gate anything ──────────────────────────────────
@@ -193,7 +219,7 @@ public class PaywallBoundaryTests
     [Fact]
     public void The_gate_exposes_nothing_a_logging_path_could_be_tempted_by()
     {
-        // No trial clock, no days-left, no "has it started" — the members that used to make
+        // No trial clock, no days-left, no "has it started": the members that used to make
         // a countdown possible are gone from the boundary entirely, so no surface can build
         // one out of them.
         var members = typeof(IEntitlementService).GetMembers().Select(m => m.Name).ToArray();

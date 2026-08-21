@@ -11,7 +11,7 @@ using Animal_Diary_App.Helpers;
 /// <summary>
 /// The subscribe sheet: the dignified, respectful ask. One <c>FelovaBottomSheet</c>
 /// showing the yearly (emphasized) and monthly options from the store, plus Restore.
-/// It is never a "SUBSCRIBE NOW to unlock" wall — the copy treats the person as the
+/// It is never a "SUBSCRIBE NOW to unlock" wall: the copy treats the person as the
 /// real user they already are.
 ///
 /// <para>It sells the payoff, never the labour: what it offers is the assembled
@@ -23,7 +23,7 @@ using Animal_Diary_App.Helpers;
 ///
 /// <para>All money goes through <see cref="IEntitlementService"/>; this VM only holds
 /// sheet state. Under the Null boundary (dev, or before the store is wired) there are
-/// no offers and purchase reports unavailable — the sheet still renders its message.</para>
+/// no offers and purchase reports unavailable: the sheet still renders its message.</para>
 /// </summary>
 public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
 {
@@ -35,7 +35,7 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
     private string _source = AnalyticsEvents.SubscribeSourceSettings;
 
     /// <summary>The history bucket as of this opening. Resolved when the sheet opens so the
-    /// purchase event carries the same value the paywall event did — the two are read as
+    /// purchase event carries the same value the paywall event did: the two are read as
     /// one funnel, and a boundary crossed between them would split a person across two
     /// cohorts. Empty until the first open.</summary>
     private string _historyBucket = AnalyticsHistory.None;
@@ -58,7 +58,7 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         RetryCommand = new Command(async () => await LoadOffersAsync());
 
         // The entitlement can change under the sheet (a restore completes, a purchase
-        // lands) — reflect it. Marshalled to the UI thread by the raiser's callers.
+        // lands): reflect it. Marshalled to the UI thread by the raiser's callers.
         _entitlements.StateChanged += () => MainThread.BeginInvokeOnMainThread(RefreshMode);
     }
 
@@ -71,14 +71,14 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         set => SetProperty(ref _isPresented, value);
     }
 
-    /// <summary>True once a subscription is active — the sheet then shows the quiet
+    /// <summary>True once a subscription is active: the sheet then shows the quiet
     /// thank-you / subscribed view instead of the purchase offers (so re-opening it from
     /// Settings, or landing here right after buying, never re-pitches the sale).</summary>
     public bool IsSubscribed => _entitlements.State == AccessState.Subscribed;
 
     /// <summary>Full access from a redeemed access code. Shares the quiet "you're covered"
-    /// face with <see cref="IsSubscribed"/> for the same reason — re-pitching a sale to
-    /// someone who already has access is the thing that face exists to prevent — but says
+    /// face with <see cref="IsSubscribed"/> for the same reason: re-pitching a sale to
+    /// someone who already has access is the thing that face exists to prevent, but says
     /// something different on it: they did not buy anything, so the copy names the end date
     /// and never thanks them for subscribing.</summary>
     public bool IsGranted => _entitlements.State == AccessState.Granted;
@@ -112,7 +112,7 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
     public ObservableCollection<SubscriptionOfferItem> Offers { get; } = new();
 
     private bool _isLoadingOffers;
-    /// <summary>True while the offerings are being (re)fetched on open — shows a spinner
+    /// <summary>True while the offerings are being (re)fetched on open: shows a spinner
     /// instead of prematurely deciding the offers are missing.</summary>
     public bool IsLoadingOffers
     {
@@ -145,7 +145,7 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         Microsoft.Maui.Networking.Connectivity.Current.NetworkAccess != Microsoft.Maui.Networking.NetworkAccess.Internet;
 
     private string _statusText = string.Empty;
-    /// <summary>Transient line under the buttons — a restore result, or a purchase error.
+    /// <summary>Transient line under the buttons: a restore result, or a purchase error.
     /// Never a price and never blame.</summary>
     public string StatusText { get => _statusText; private set => SetProperty(ref _statusText, value); }
 
@@ -265,7 +265,7 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
         var url = await _entitlements.GetManagementUrlAsync()
                   ?? "https://play.google.com/store/account/subscriptions";
         try { await Launcher.OpenAsync(url); }
-        catch { /* no store app / cancelled — nothing to do */ }
+        catch { /* no store app / cancelled: nothing to do */ }
     }
 
     private async Task PurchaseAsync(SubscriptionOfferItem? item)
@@ -291,14 +291,14 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
                         // events are one funnel and must land in the same cohort.
                         [AnalyticsEvents.PropDaysOfHistory] = _historyBucket,
                     });
-                    // Don't just vanish — flip to the thank-you / subscribed view so the
+                    // Don't just vanish: flip to the thank-you / subscribed view so the
                     // purchase is confirmed. RefreshMode also runs via StateChanged, but
                     // call it directly so the transition is immediate.
                     StatusText = string.Empty;
                     RefreshMode();
                     break;
                 case PurchaseOutcome.AlreadySubscribed:
-                    // Nothing was bought — the store account already had it and it belongs to
+                    // Nothing was bought: the store account already had it and it belongs to
                     // this account. Access is on, so flip to the subscribed view, but never
                     // claim a purchase just happened: that reads as a second charge.
                     StatusText = Loc("Subscribe_AlreadySubscribed");
@@ -315,10 +315,10 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
                     });
                     break;
                 case PurchaseOutcome.Cancelled:
-                    // The user backed out of the store sheet — not an error, say nothing.
+                    // The user backed out of the store sheet, not an error, say nothing.
                     break;
                 case PurchaseOutcome.Pending:
-                    // Deferred payment / entitlement not surfaced yet — NOT a failure. Say
+                    // Deferred payment / entitlement not surfaced yet, NOT a failure. Say
                     // it's processing and leave it; a resume/refresh will unlock it.
                     StatusText = Loc("Subscribe_PurchasePending");
                     break;

@@ -8,25 +8,25 @@ using Microsoft.Maui.Graphics;
 // ─────────────────────────────────────────────────────────────────────────────
 //  The sky.
 //
-//  Pure Microsoft.Maui.Graphics, like every other chart in this app — no charting
+//  Pure Microsoft.Maui.Graphics, like every other chart in this app, no charting
 //  package, because nothing on the drawing path may drag in a native library
 //  (AI/known-constraints.md, and the two times this repo has already paid for it).
 //
 //  ── BORING AT REST, ALIVE WHEN TOUCHED ──
 //
 //  The resting picture is deliberately plain: the hours, the dates, and one symbol
-//  per entry. An earlier version filled a meaningless vertical axis with ornament —
+//  per entry. An earlier version filled a meaningless vertical axis with ornament,
 //  a wandering path, hairlines between entries, a figure of joined stars, drifting
-//  bubbles, a field of dust — and it was pretty and unreadable. The lesson was not
+//  bubbles, a field of dust, and it was pretty and unreadable. The lesson was not
 //  "no beauty"; it was that ornament competing with data AT REST costs comprehension
 //  and buys nothing.
 //
 //  So everything expressive here happens in RESPONSE TO THE READER, where the only
 //  cost is delight and the payload is usually information:
 //
-//    • the sky writes itself left to right on load — which teaches the date axis
-//    • tapping a star lights its whole day — which IS the "Also that day" list
-//    • focusing a kind blooms it and chains it — which makes the intervals visible
+//    • the sky writes itself left to right on load, which teaches the date axis
+//    • tapping a star lights its whole day, which IS the "Also that day" list
+//    • focusing a kind blooms it and chains it, which makes the intervals visible
 //
 //  ── Marks vs fields ──
 //  What may sit on the canvas at rest is decided by one test: could a reader mistake
@@ -41,7 +41,7 @@ using Microsoft.Maui.Graphics;
 /// <param name="X">On the History lens this is a WORLD x and the camera applies to
 /// it; on the Cycle ring it is a canvas position, because a ring does not pan.</param>
 /// <param name="Y">Canvas y.</param>
-/// <param name="Pinned">Stays put while the content scrolls under it — the hours in
+/// <param name="Pinned">Stays put while the content scrolls under it: the hours in
 /// the left gutter belong to the card, the dates belong to the timeline.</param>
 public readonly record struct SkyTick(double X, double Y, string Label, bool Pinned = false);
 
@@ -64,7 +64,7 @@ public sealed class ConstellationDrawable : IDrawable
 
     private SkySignature _signature = SkySignature.Default;
 
-    // ── The camera (History only — a ring is not panned) ─────────────────────────
+    // ── The camera (History only: a ring is not panned) ─────────────────────────
     public double ScrollX { get; set; }
     public double Zoom { get; set; } = 1;
 
@@ -73,7 +73,7 @@ public sealed class ConstellationDrawable : IDrawable
     public double WorldWidth { get; set; }
 
     /// <summary>The tapped star, or -1. The only thing on this canvas that is
-    /// emphasised, and it is emphasised because a finger chose it — never because of
+    /// emphasised, and it is emphasised because a finger chose it, never because of
     /// what it holds.</summary>
     public int SelectedIndex { get; set; } = -1;
 
@@ -83,7 +83,7 @@ public sealed class ConstellationDrawable : IDrawable
     // ── The three moments (all 1 at rest; the page animates them) ────────────────
 
     /// <summary>The load. Stars arrive staggered along the date axis, so the history
-    /// visibly writes itself left to right — which is the axis explaining itself
+    /// visibly writes itself left to right, which is the axis explaining itself
     /// before anyone has read the caption.</summary>
     public double Reveal { get; set; } = 1;
 
@@ -97,7 +97,7 @@ public sealed class ConstellationDrawable : IDrawable
     /// <summary>The day the selected entry belongs to, for lighting its siblings.</summary>
     public DateTime? HighlightDay { get; set; }
 
-    /// <summary>That day's span in WORLD units (History only — a ring has no columns).</summary>
+    /// <summary>That day's span in WORLD units (History only: a ring has no columns).</summary>
     public double HighlightFromX { get; set; }
     public double HighlightToX { get; set; }
 
@@ -182,7 +182,7 @@ public sealed class ConstellationDrawable : IDrawable
     }
 
     /// <summary>
-    /// The dark ground and one broad glow — both FIELD-like, so neither can be read as
+    /// The dark ground and one broad glow: both FIELD-like, so neither can be read as
     /// an entry. This is the whole of the resting atmosphere, and it is what stops the
     /// card being a flat rectangle without putting a single ambiguous mark on it.
     /// </summary>
@@ -207,7 +207,7 @@ public sealed class ConstellationDrawable : IDrawable
         canvas.RestoreState();
 
         // The pet's own colour, once, very softly, anchored to the card rather than to
-        // time — an atmosphere that scrolled would start to look like it meant something.
+        // time: an atmosphere that scrolled would start to look like it meant something.
         var radius = rect.Width * 0.8f;
         var bounds = new RectF(
             rect.X + rect.Width * 0.18f - radius,
@@ -227,7 +227,7 @@ public sealed class ConstellationDrawable : IDrawable
     }
 
     /// <summary>The corners darkened, so the card reads as a window onto a night rather
-    /// than a rectangle painted dark — and so a bright star at the edge is not cut in
+    /// than a rectangle painted dark, and so a bright star at the edge is not cut in
     /// half by the rounded corner.</summary>
     private void DrawVignette(ICanvas canvas, RectF rect)
     {
@@ -260,14 +260,14 @@ public sealed class ConstellationDrawable : IDrawable
     ///
     /// <para><b>The band is the axis and the atmosphere at once.</b> With the middle of
     /// the day lit and the small hours left dark, "these keep happening in the middle
-    /// of the night" is visible before a single label has been read — and it is drawn
+    /// of the night" is visible before a single label has been read, and it is drawn
     /// from clock time alone, so it asserts nothing. A gradient rather than two hard
     /// edges, because dawn is not a boundary.</para>
     ///
     /// <para>The rules are the one place this app draws gridlines, and the exception is
     /// principled: the ban exists so a VALUE axis can never imply a good or bad
     /// direction. Both axes here are time. An unlabelled time axis is not restraint,
-    /// it is a puzzle. They densify as you zoom in — six hours, then three, then one —
+    /// it is a puzzle. They densify as you zoom in: six hours, then three, then one,
     /// which is the picture telling you more the closer you look.</para>
     /// </summary>
     private void DrawHours(ICanvas canvas, RectF rect, float alpha)
@@ -337,7 +337,7 @@ public sealed class ConstellationDrawable : IDrawable
     ///
     /// <para>The inner circle is drawn on purpose. The distance out from the centre is
     /// how far through the stretch an entry was, and a radius with no visible start is
-    /// the question "what does the middle mean?" — the ring shows where the scale
+    /// the question "what does the middle mean?": the ring shows where the scale
     /// begins, and the caption under the sky says which way it runs.</para>
     /// </summary>
     private void DrawRing(ICanvas canvas, RectF rect, float alpha)
@@ -374,7 +374,7 @@ public sealed class ConstellationDrawable : IDrawable
     /// <summary>
     /// The leading edge of the load, sweeping left to right.
     ///
-    /// <para>A per-star fade is invisible on a busy timeline — three-pixel symbols
+    /// <para>A per-star fade is invisible on a busy timeline: three-pixel symbols
     /// fading up among thousands of others is not an animation anyone sees. This is a
     /// FIELD (a soft vertical gradient, never a mark), so it reads at any density and
     /// cannot be mistaken for an entry, and it makes the point the stagger is there to
@@ -471,7 +471,7 @@ public sealed class ConstellationDrawable : IDrawable
     /// <para>Connections were removed from the resting picture because unexplained
     /// hairlines between unrelated entries were ornament that looked like data. These
     /// are the opposite: they exist only for a kind the reader deliberately picked, and
-    /// they mean exactly one thing — <b>the next one of these</b>. The length of a link
+    /// they mean exactly one thing: <b>the next one of these</b>. The length of a link
     /// is the interval, so "the gaps are getting shorter" becomes something seen rather
     /// than computed, and because y is the time of day the chain zig-zags and can never
     /// be misread as a fitted trend line.</para>
@@ -523,7 +523,7 @@ public sealed class ConstellationDrawable : IDrawable
         if (Stars.Count == 0)
             return;
 
-        // Glow needs ROOM, not just size — see GlowRadiusFloor.
+        // Glow needs ROOM, not just size: see GlowRadiusFloor.
         var spacing = Events.Count > 0 ? screenWidth / Events.Count : double.MaxValue;
         var ambientGlow = radius >= GlowRadiusFloor && spacing > radius * 3.0;
         var margin = radius * 4f + 8f;
@@ -557,7 +557,7 @@ public sealed class ConstellationDrawable : IDrawable
             var category = i < Events.Count ? Events[i].Category : CelestialCategory.Custom;
             var color = ColorFor(category);
 
-            // Out of focus: recedes rather than merely fading — smaller and quieter, so
+            // Out of focus: recedes rather than merely fading: smaller and quieter, so
             // the focused kind reads as brought forward instead of the rest being
             // switched off. Nothing is hidden; the context is the point.
             var scale = dimmed ? Lerp(1f, 0.74f, bloom) : 1f;
@@ -578,10 +578,10 @@ public sealed class ConstellationDrawable : IDrawable
                 radius * scale,
                 color.WithAlpha(alpha),
                 // Focus buys the halo back for the kind that was chosen, however busy
-                // the sky is — that is the bloom. So does ARRIVING: a star sparks as it
+                // the sky is, that is the bloom. So does ARRIVING: a star sparks as it
                 // lands and settles afterwards, which is what makes the reveal visible
                 // in a sky too dense for an ambient glow. Suppressing the halo while a
-                // star arrived — the first version did — left the animation as a fade
+                // star arrived (the first version did) left the animation as a fade
                 // of three-pixel dots, which on a busy timeline is no animation at all.
                 arriving || ambientGlow || selected || sibling || (!dimmed && Focus.Count > 0));
 
@@ -610,7 +610,7 @@ public sealed class ConstellationDrawable : IDrawable
     }
 
     /// <summary>How far into its own arrival a star is. The stagger itself lives in
-    /// <c>ConstellationLayout</c> — it is the one ornament that teaches something, so it
+    /// <c>ConstellationLayout</c>: it is the one ornament that teaches something, so it
     /// is pinned by a test rather than left in the painter. On the ring, where
     /// left-to-right means nothing, they simply arrive together.</summary>
     private float ArrivalOf(int index)
@@ -623,7 +623,7 @@ public sealed class ConstellationDrawable : IDrawable
     }
 
     /// <summary>Mid-flight: every star between where it was and where it is going.
-    /// Nothing else is drawn — the only thing worth watching during a lens change is
+    /// Nothing else is drawn: the only thing worth watching during a lens change is
     /// the entries themselves moving.</summary>
     private void DrawStarsInFlight(ICanvas canvas, RectF rect, float t, float radius)
     {

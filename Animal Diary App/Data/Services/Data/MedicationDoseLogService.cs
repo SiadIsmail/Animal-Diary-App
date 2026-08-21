@@ -8,7 +8,7 @@ using SQLite;
 /// keyed by (medication, date, time); setting a status is an upsert on that key,
 /// clearing it soft-deletes the row (the "undo" path). A cleared key's tombstone
 /// is revived by the next SetStatus for the same key, so one dose can never map
-/// to two rows — the cloud keys dose logs by (medication, date, time).
+/// to two rows: the cloud keys dose logs by (medication, date, time).
 /// </summary>
 public class MedicationDoseLogService
 {
@@ -20,7 +20,7 @@ public class MedicationDoseLogService
     }
 
     /// <summary>How many doses this pet has recorded as given (Taken). Used only for the
-    /// record's own facts panel — a count of what was written down, never a judgement.</summary>
+    /// record's own facts panel: a count of what was written down, never a judgement.</summary>
     public Task<int> GetGivenCountAsync(int petId)
         => _db.Table<MedicationDoseLog>()
             .Where(l => l.PetId == petId && l.IsDeleted == false && l.Status == DoseStatus.Taken)
@@ -59,12 +59,12 @@ public class MedicationDoseLogService
             .ToListAsync();
     }
 
-    /// <summary>The last dose this pet's owner actually recorded — Taken or Skipped,
-    /// newest first — or null if none. Feeds the Today "Last medication" card.
+    /// <summary>The last dose this pet's owner actually recorded: Taken or Skipped,
+    /// newest first, or null if none. Feeds the Today "Last medication" card.
     ///
     /// <para><see cref="DoseStatus.Missed"/> is excluded on purpose: those rows are
     /// written by the reconciler, not by a person, so surfacing one as "recorded" would
-    /// report the app's own bookkeeping back as the owner's act — and would put a card
+    /// report the app's own bookkeeping back as the owner's act, and would put a card
     /// that exists to say "this was taken care of" on a dose nobody touched.</para></summary>
     public async Task<MedicationDoseLog?> GetMostRecentRecordedAsync(int petId)
     {
@@ -119,7 +119,7 @@ public class MedicationDoseLogService
         }
     }
 
-    /// <summary>Remove the outcome for a single dose (undo). Soft delete — the row
+    /// <summary>Remove the outcome for a single dose (undo). Soft delete: the row
     /// stays as a tombstone so the undo can sync; SetStatus revives it.</summary>
     public async Task ClearStatusAsync(int medicationId, DateTime date, TimeSpan time)
     {

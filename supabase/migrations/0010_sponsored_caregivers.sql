@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0010 — Sponsored caregiver access.
+--  0010: Sponsored caregiver access.
 --
 --  Assumption this migration fixes: 0001 shipped `profiles.plan` as a
 --  placeholder for a future paid tier, and nothing ever read it. Billing lived
@@ -24,8 +24,8 @@
 
 -- ── 1. the owner-side access facts ──────────────────────────────────────────
 -- Two independent sources, exactly mirroring the client's own gate:
---   trial_started_at   — the app-side trial, claimed from the device (below)
---   entitlement_active — the store subscription, written ONLY by the RevenueCat
+--   trial_started_at  : the app-side trial, claimed from the device (below)
+--   entitlement_active: the store subscription, written ONLY by the RevenueCat
 --                        webhook (service role). Never written by the client:
 --                        a client-asserted entitlement would let a patched app
 --                        sponsor an unlimited number of caregivers.
@@ -47,7 +47,7 @@ as $$ select interval '14 days' $$;
 
 -- ── 2. does this user currently have access? ────────────────────────────────
 -- SECURITY DEFINER because callers ask about OTHER users (a caregiver asking
--- about their pet's owner). It returns a bare boolean and nothing else — never
+-- about their pet's owner). It returns a bare boolean and nothing else, never
 -- the plan, the expiry, or the email. That is the whole privacy contract of
 -- this feature; do not widen the return type.
 
@@ -76,7 +76,7 @@ $$;
 
 -- carer_count is the number of CAREGIVERS on the pet (the owner is not counted). The
 -- client uses it for one thing only: when an owner's own access ends, telling them that
--- the people helping with this pet just went read-only too. No membership detail leaks —
+-- the people helping with this pet just went read-only too. No membership detail leaks,
 -- any member can already list the others via list_pet_members.
 
 create or replace function public.list_my_pet_access()
@@ -111,7 +111,7 @@ end $$;
 --
 -- Monotone by construction: coalesce never overwrites an existing anchor, so a
 -- second device, a reinstall, or a fresh sign-in can only ever CONFIRM the
--- account's trial start — never push it later and mint a new sponsorship window.
+-- account's trial start, never push it later and mint a new sponsorship window.
 -- A null argument claims nothing (someone who has never started a trial).
 
 create or replace function public.claim_trial_anchor(p_started timestamptz)
@@ -148,7 +148,7 @@ end $$;
 -- Checked in BOTH invite RPCs on purpose. redeem_invite is the real enforcement
 -- (a slot can fill between minting and redeeming), but a failure there surfaces
 -- to the CAREGIVER, who can do nothing about it. Checking at mint time too means
--- the owner — the only person who can act — hears about it first.
+-- the owner (the only person who can act) hears about it first.
 --
 -- Never retroactive: an owner already over a cap keeps everyone they have.
 

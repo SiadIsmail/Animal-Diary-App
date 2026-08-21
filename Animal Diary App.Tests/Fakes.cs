@@ -2,7 +2,7 @@ namespace Animal_Diary_App.Tests;
 
 using Animal_Diary_App.Data.Services.Billing;
 
-/// <summary>Scriptable store double — set entitlement/known/offers and the outcomes each
+/// <summary>Scriptable store double: set entitlement/known/offers and the outcomes each
 /// call should return.</summary>
 internal sealed class FakeStore : IStoreBilling
 {
@@ -51,7 +51,7 @@ internal sealed class FakeStore : IStoreBilling
         return Task.CompletedTask;
     }
 
-    /// <summary>The creator code last written onto the store identity. Attribution only —
+    /// <summary>The creator code last written onto the store identity. Attribution only,
     /// nothing in the gate reads it, and the tests assert exactly that.</summary>
     public string? AttributedTo { get; private set; }
     public Task SetAttributionAsync(string? creatorCode)
@@ -61,7 +61,7 @@ internal sealed class FakeStore : IStoreBilling
     }
 }
 
-/// <summary>Scriptable sponsorship cache — stands in for the cloud sync engine.</summary>
+/// <summary>Scriptable sponsorship cache: stands in for the cloud sync engine.</summary>
 internal sealed class FakePetAccess : IPetAccessSource
 {
     public bool AccessKnown { get; set; } = true;
@@ -93,7 +93,7 @@ internal sealed class FakePetAccess : IPetAccessSource
     }
 }
 
-/// <summary>Scriptable access-code grant — stands in for CloudAccessCodeService.</summary>
+/// <summary>Scriptable access-code grant: stands in for CloudAccessCodeService.</summary>
 internal sealed class FakeGrants : IGrantSource
 {
     public bool GrantKnown { get; set; } = true;

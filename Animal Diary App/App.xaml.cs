@@ -48,17 +48,17 @@ public partial class App : Application
 		_referrals = referrals;
 		_services = services;
 
-		// "Has anything changed since this page last loaded?" — subscribed here so it
+		// "Has anything changed since this page last loaded?": subscribed here so it
 		// is live before the first write, and before any page can ask.
 		DataVersion.Initialize();
 
 		// Keep the store identity on the signed-in account, so one subscription follows the
 		// person across devices instead of being stranded on the install that bought it.
-		// Signing in is never required to buy or to keep access — with no account the store
+		// Signing in is never required to buy or to keep access: with no account the store
 		// simply stays anonymous, exactly as before.
 		_cloudAuth.SessionChanged += OnCloudSessionChanged;
 
-		// SponsorshipRevoked is deliberately not subscribed to — see the note below.
+		// SponsorshipRevoked is deliberately not subscribed to: see the note below.
 
 		// Re-engagement signal: the app was foregrounded by tapping a medication
 		// reminder. This is the ONLY place the notification-tap hook is used for
@@ -69,7 +69,7 @@ public partial class App : Application
 	}
 
 	/// <summary>Sign-in/out: alias the store identity onto the account, or back off it.
-	/// Fire-and-forget — nothing about signing in should wait on the store.</summary>
+	/// Fire-and-forget: nothing about signing in should wait on the store.</summary>
 	private void OnCloudSessionChanged() => Task.Run(async () =>
 	{
 		try { await _entitlements.IdentifyAsync(_cloudAuth.UserId); }
@@ -77,7 +77,7 @@ public partial class App : Application
 	}).Forget();
 
 	// ── Sponsorship changes are no longer announced. ─────────────────────────────
-	// ICloudSyncService.SponsorshipRevoked still fires — the server still reports whether
+	// ICloudSyncService.SponsorshipRevoked still fires: the server still reports whether
 	// a pet's owner has access, and Phase 3's appointment summary is the surface that will
 	// need it. Nothing subscribes to it right now, and that is the honest state of things:
 	// with logging free on every tier, a caregiver whose owner is on the free tier loses
@@ -103,11 +103,11 @@ public partial class App : Application
 	//
 	// A factory, not a Page: MAUI recreates the Activity (and calls CreateWindow
 	// again) on memory pressure, on "don't keep activities", and on config changes
-	// this app doesn't declare — and a Page instance can only belong to one Window.
+	// this app doesn't declare, and a Page instance can only belong to one Window.
 
 	// The factory is a mutable field and the TCS only signals "startup has decided",
 	// because the root changes again afterwards (the language picker hands over to the
-	// real root). A TaskCompletionSource<Func<Page>> cannot express that — TrySetResult
+	// real root). A TaskCompletionSource<Func<Page>> cannot express that: TrySetResult
 	// on an already-completed source is a silent no-op, which would send a recreated
 	// window back to the language picker forever.
 	private Func<Page>? _rootFactory;
@@ -120,7 +120,7 @@ public partial class App : Application
 	/// <summary>Whether onboarding is behind us, read by <see cref="BuildRootPage"/>.
 	/// A field rather than a captured local: <see cref="CreateWindow"/> can run hours
 	/// after startup, and by then "did this user have pets at launch" is the wrong
-	/// question — a pet added during the session, or a data reset, moves this.</summary>
+	/// question: a pet added during the session, or a data reset, moves this.</summary>
 	private bool _hasPets;
 
 	/// <summary>The window to navigate. Deliberately not <c>Windows[0]</c>: Android can
@@ -177,15 +177,15 @@ public partial class App : Application
 	/// <summary>
 	/// Record <c>app_opened</c> if this appearance begins a new session.
 	///
-	/// <para>Called only from touchpoints that <b>require a real Activity</b> — window
+	/// <para>Called only from touchpoints that <b>require a real Activity</b>: window
 	/// creation and resume. That is the fix for the headless launch: a reboot or a Play
 	/// Store update starts the process through the boot receiver (it resolves services,
 	/// which constructs <c>App</c> and runs <c>StartAsync</c>) with no window and nobody
 	/// looking at it, and those were being counted as launches.</para>
 	///
 	/// <para>The session gate then handles the other direction. Firing on every one of
-	/// these touchpoints would over-count — Android recreates the Activity on memory
-	/// pressure and configuration changes, and resume fires on every app-switch — while
+	/// these touchpoints would over-count: Android recreates the Activity on memory
+	/// pressure and configuration changes, and resume fires on every app-switch, while
 	/// firing once per process under-counts, because a process can survive a week of daily
 	/// use. An idle window (<see cref="AnalyticsSession.IdleTimeout"/>) counts one open per
 	/// visit, which is what the funnel's "came back later" step reads.</para>
@@ -218,10 +218,10 @@ public partial class App : Application
 			$"[Startup] CreateWindow #{++_windowsCreated}, root ready: {_rootReady.Task.IsCompleted}");
 
 		// Startup already finished. App is a singleton, so StartAsync will NOT run
-		// again to navigate away from a loading screen — build the real root now.
+		// again to navigate away from a loading screen: build the real root now.
 		if (_rootReady.Task.IsCompletedSuccessfully)
 		{
-			// A window exists and the language is applied, so this is a countable open —
+			// A window exists and the language is applied, so this is a countable open,
 			// unless the session gate says we're still inside the previous one, which is
 			// what makes an Activity recreation free.
 			TrackSessionStart();
@@ -238,7 +238,7 @@ public partial class App : Application
 		}
 
 		// First launch. Show the loading screen and apply the root the moment startup
-		// publishes it — whichever of the two gets there first.
+		// publishes it: whichever of the two gets there first.
 		var loadingWindow = new Window(new LoadingPage());
 		_rootReady.Task.ContinueWith(
 			_ => MainThread.BeginInvokeOnMainThread(() =>
@@ -255,7 +255,7 @@ public partial class App : Application
 
 				// Counted here rather than beside the loading window: startup has now
 				// chosen and applied the language, so app_opened carries the real one.
-				// Fired even if the root failed — the user did open the app, and hiding
+				// Fired even if the root failed: the user did open the app, and hiding
 				// broken launches from the funnel would hide the breakage with them.
 				TrackSessionStart();
 			}),
@@ -270,7 +270,7 @@ public partial class App : Application
 
 		// The return path into the app. Only counts when the user has been away longer
 		// than the session window, so an app-switch to read a text stays one visit while
-		// coming back tomorrow is a new open — the event the funnel's "came back later"
+		// coming back tomorrow is a new open: the event the funnel's "came back later"
 		// step reads.
 		TrackSessionStart();
 
@@ -289,7 +289,7 @@ public partial class App : Application
 		{
 			// Re-assert the store identity before re-checking. IdentifyAsync only fires on
 			// SessionChanged, so if it failed (offline at sign-up, store unreachable) the
-			// purchase would stay stranded on the anonymous id forever — the user keeps
+			// purchase would stay stranded on the anonymous id forever: the user keeps
 			// access on THIS device but never on a second one, and the server never learns
 			// they pay, so they silently cannot sponsor caregivers. Idempotent: it returns
 			// immediately when the id already matches.
@@ -303,7 +303,7 @@ public partial class App : Application
 	/// <summary>Once, a few days before a redeemed access code's year runs out. The only
 	/// end-date notice left in the app: there is no trial, and the free tier never ends, so
 	/// nothing else has a date to warn about. Its copy is its own because a grant is not a
-	/// subscription — nothing was charged and there is nothing to cancel. No-op under the
+	/// subscription: nothing was charged and there is nothing to cancel. No-op under the
 	/// Null boundary.</summary>
 	private async Task MaybeShowGrantEndingNudgeAsync()
 	{
@@ -339,7 +339,7 @@ public partial class App : Application
 	///
 	/// <para>It replaces the old read-only reassurance, which existed because the trial's
 	/// end took writing away. Nothing takes writing away any more, so the ONLY person with
-	/// something to hear here is someone whose grant ended — <c>EverGranted</c> is the
+	/// something to hear here is someone whose grant ended: <c>EverGranted</c> is the
 	/// guard, exactly as the access-code rules require. Everyone else on the free tier is
 	/// simply on the free tier and is told nothing, because nothing happened to
 	/// them.</para>
@@ -372,7 +372,7 @@ public partial class App : Application
 		base.OnSleep();
 
 		// Start the analytics idle clock from the moment the user actually left, not from
-		// whenever the last event happened — otherwise a long read-only session would age
+		// whenever the last event happened, otherwise a long read-only session would age
 		// out while still on screen and count the next glance as a new open. Distinct from
 		// MedicationReminderScheduler.MarkSeen below: same instant, unrelated purpose.
 		try { AnalyticsIdentity.TouchActivity(); }
@@ -440,10 +440,10 @@ public partial class App : Application
 			_rootReady.TrySetResult();
 
 			// Analytics: prepare the anonymous id and flush anything the last session
-			// couldn't deliver. Deliberately does NOT record the launch — see
+			// couldn't deliver. Deliberately does NOT record the launch: see
 			// TrackSessionStart: this method also runs in the headless process a reboot or
 			// an app update starts, where there is no window and no user to count. Wrapped
-			// defensively — telemetry must never affect startup.
+			// defensively: telemetry must never affect startup.
 			try
 			{
 				await _analytics.InitializeAsync();
@@ -453,7 +453,7 @@ public partial class App : Application
 				System.Diagnostics.Debug.WriteLine($"[Analytics] init failed: {ex.Message}");
 			}
 
-			// Re-arm all future reminders on launch. resendMissed:false — the
+			// Re-arm all future reminders on launch. resendMissed:false: the
 			// device was on, so the OS already delivered any past reminders;
 			// re-sending here would duplicate them. A genuine device-off gap comes
 			// back through the boot receiver, which records that intent durably, so
@@ -472,7 +472,7 @@ public partial class App : Application
 					// Arm/refresh today's daily care reminder for each pet (no-op when off).
 					await _dailyReminderScheduler.RefreshAsync();
 					// One notification the evening before a vet visit. A one-shot, so it
-					// is re-armed here like everything else — never a recurrence rule
+					// is re-armed here like everything else, never a recurrence rule
 					// handed to the OS (AI/design-decisions.md).
 					await _appointmentReminderScheduler.RefreshAsync();
 				}
@@ -482,7 +482,7 @@ public partial class App : Application
 				}
 			}).Forget();
 
-			// Cloud: load persisted state, then run the launch sync — both off the
+			// Cloud: load persisted state, then run the launch sync. Both off the
 			// UI path, both quiet no-ops when signed out / backup disabled / offline.
 			Task.Run(async () =>
 			{
@@ -498,7 +498,7 @@ public partial class App : Application
 			}).Forget();
 
 			// Billing: initialize the entitlement boundary. All off the UI path and a quiet
-			// no-op under the Null boundary. There is no trial clock to start any more —
+			// no-op under the Null boundary. There is no trial clock to start any more,
 			// the free tier is permanent, so there is nothing to begin and nothing to run
 			// out.
 			Task.Run(async () =>

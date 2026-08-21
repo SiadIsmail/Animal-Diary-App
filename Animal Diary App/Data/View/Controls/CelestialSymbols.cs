@@ -6,14 +6,14 @@ using Microsoft.Maui.Graphics;
 // ─────────────────────────────────────────────────────────────────────────────
 //  The eight symbols.
 //
-//  Shape carries the meaning, and colour only reinforces it — a circle is a mood
+//  Shape carries the meaning, and colour only reinforces it: a circle is a mood
 //  whether or not the person looking can tell teal from blue, and whether or not
 //  the phone is in direct sun. That is why these are drawn geometry rather than the
 //  emoji the Journal chips wear: an emoji is a bitmap the platform picks, it renders
 //  differently on every OS, and at five pixels across it is a smudge.
 //
 //  One drawing routine, two callers: the sky (thousands of them, tiny) and the
-//  legend (eight of them, large). Neither may drift from the other — a legend that
+//  legend (eight of them, large). Neither may drift from the other: a legend that
 //  disagreed with the sky would be worse than no legend.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ public static class CelestialSymbols
     /// Draw one symbol centred on (<paramref name="cx"/>, <paramref name="cy"/>).
     /// </summary>
     /// <param name="radius">Half the symbol's nominal size, in canvas units.</param>
-    /// <param name="glow">Whether to lay a soft halo behind it. Off in a dense sky —
+    /// <param name="glow">Whether to lay a soft halo behind it. Off in a dense sky,
     /// three fills per star is what turns five thousand entries into a slideshow.</param>
     public static void Draw(
         ICanvas canvas, CelestialCategory category, float cx, float cy, float radius, Color color, bool glow)
@@ -32,7 +32,7 @@ public static class CelestialSymbols
             return;
 
         // Every symbol upright, always. The app tilts its icon tiles a degree or two on
-        // its lists — imperfection on the frame — but a symbol here is the READOUT: the
+        // its lists (imperfection on the frame) but a symbol here is the READOUT: the
         // same kind has to look identical everywhere it appears, or the legend stops
         // being a promise and the reader has to re-learn the shape on every screen.
         const float up = -MathF.PI / 2f;
@@ -51,7 +51,7 @@ public static class CelestialSymbols
         switch (category)
         {
             // A mood is the plainest thing recorded here, and it gets the plainest
-            // shape — a soft orb.
+            // shape: a soft orb.
             case CelestialCategory.Mood:
                 canvas.FillCircle(cx, cy, radius * 0.78f);
                 break;
@@ -132,7 +132,7 @@ public static class CelestialSymbols
     }
 
     /// <summary>A moon. Built as one closed shape (an outer bulge and a concave back)
-    /// rather than as a circle with a bite taken out of it — punching a hole would
+    /// rather than as a circle with a bite taken out of it: punching a hole would
     /// need the background colour, and there isn't one: the sky behind it is a
     /// gradient.</summary>
     private static PathF Crescent(float cx, float cy, float radius)
@@ -153,7 +153,7 @@ public static class CelestialSymbols
 }
 
 /// <summary>
-/// One symbol on its own, centred and filled — the legend's cell. Eight tiny
+/// One symbol on its own, centred and filled: the legend's cell. Eight tiny
 /// GraphicsViews rather than eight images, so the legend can never fall out of step
 /// with the sky and no asset has to be redrawn when a symbol changes.
 /// </summary>

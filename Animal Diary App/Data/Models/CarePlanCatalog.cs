@@ -2,7 +2,7 @@ namespace Animal_Diary_App.Data.Models;
 
 /// <summary>
 /// Builds the DEFAULT care plan for a pet: the always-on trackers every pet starts
-/// with, plus the extra trackers a condition introduces. This is the seed only —
+/// with, plus the extra trackers a condition introduces. This is the seed only,
 /// once persisted, a pet's <see cref="Tracker"/> rows are the source of truth and
 /// the (later) pet page tunes them.
 ///
@@ -71,7 +71,7 @@ public static class CarePlanCatalog
 
     /// <summary>
     /// The sensible starting shape for a tracker added on its own, with no condition
-    /// behind it — the owner who just wants to keep an eye on water without claiming
+    /// behind it: the owner who just wants to keep an eye on water without claiming
     /// their pet has kidney disease.
     ///
     /// Deliberately the SAME cadences the conditions seed above, so a tracker added by

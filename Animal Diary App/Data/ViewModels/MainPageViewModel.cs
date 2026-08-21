@@ -47,9 +47,9 @@ public class MainPageViewModel : BaseViewModel
         _customTrackers = customTrackers;
         _vetVisits = vetVisits;
 
-        OpenAppointmentCommand = new Command(() => AppointmentRequested?.Invoke());
+        OpenAppointmentCommand = new Command(OpenNearVisit);
 
-        // The two stat cards are stable instances refreshed in place — see TodayCardItem
+        // The two stat cards are stable instances refreshed in place: see TodayCardItem
         // for why they are not rebuilt per load.
         PrimaryCard = new TodayCardItem(TodayCardSlot.Primary, OnCardTapped);
         SecondaryCard = new TodayCardItem(TodayCardSlot.Secondary, OnCardTapped);
@@ -69,13 +69,17 @@ public class MainPageViewModel : BaseViewModel
         {
             OnPropertyChanged(nameof(Greeting));
             OnPropertyChanged(nameof(CardHintText));
+            // Carries the localized unit now, so it follows the language too.
+            OnPropertyChanged(nameof(LatestWeightText));
+            // Rebuilt on the next care load; until then it is stale in the old language,
+            // which is the same trade every formatted string on this page makes.
             // The cards resolve every string per read; they just need to be told.
             PrimaryCard.RefreshLocalized();
             SecondaryCard.RefreshLocalized();
         };
     }
 
-    /// <summary>Time-of-day greeting on the Today header. Resolved per read — the
+    /// <summary>Time-of-day greeting on the Today header. Resolved per read: the
     /// hour can roll over while the page is alive, and the string must follow the
     /// active language. Refreshed on every appearance via <see cref="LoadTodayCareAsync"/>.</summary>
     public string Greeting => LocalizationManager.Instance.GetString(
@@ -90,8 +94,18 @@ public class MainPageViewModel : BaseViewModel
     public decimal LatestWeight
     {
         get => latestWeight;
-        set => SetProperty(ref latestWeight, value);
+        set
+        {
+            if (SetProperty(ref latestWeight, value))
+                OnPropertyChanged(nameof(LatestWeightText));
+        }
     }
+
+    /// <summary>The meta line's weight, through the ONE weight formatter. Binding the
+    /// decimal itself printed the raw invariant number beside a stat card that had
+    /// rounded the same weigh-in: 5.19 kg and 5.2 kg, one screen apart
+    /// (<see cref="WeightText"/>).</summary>
+    public string LatestWeightText => WeightText.WithUnit(LatestWeight);
 
     private PetEntry? EntryToday;
 
@@ -107,13 +121,13 @@ public class MainPageViewModel : BaseViewModel
     // ── The two customizable stat cards ──────────────────────────────────────
     //
     // Today shows exactly two records and the owner picks which. Each card states the
-    // pet's LAST value for its record and when it was written down — no streaks, no
+    // pet's LAST value for its record and when it was written down, no streaks, no
     // scores, no "N days since" (see Data/Models/TodayCards.cs and AI/domain.md).
     //
     // The pair defaults from the pet's conditions and is remembered per pet the moment
     // the owner chooses; TodayCardService owns both halves.
 
-    /// <summary>Which stat-card load is the current one — the pair is keyed to the
+    /// <summary>Which stat-card load is the current one: the pair is keyed to the
     /// active pet, so a slow load for the previous pet must not paint over this one.</summary>
     private int _cardGeneration;
 
@@ -160,7 +174,7 @@ public class MainPageViewModel : BaseViewModel
         ShowCardHint = !discovered && !_cardsDiscovered;
     }
 
-    /// <summary>A card was tapped — anywhere on it. Opens the picker for that slot and
+    /// <summary>A card was tapped: anywhere on it. Opens the picker for that slot and
     /// retires the first-run hint: finding the picker once is what it was there for,
     /// whether or not the owner ends up changing anything.</summary>
     private void OnCardTapped(TodayCardItem card)
@@ -181,7 +195,7 @@ public class MainPageViewModel : BaseViewModel
 
     // ── Today's care: the avatar ring + next-up card ─────────────────────
     // Both are derived from the SAME PendingEngine snapshot the Journal's
-    // "Still to do" chips use — always evaluated for TODAY and the active pet,
+    // "Still to do" chips use: always evaluated for TODAY and the active pet,
     // never for the Journal's parked date selection.
 
     private double careProgress;
@@ -193,8 +207,37 @@ public class MainPageViewModel : BaseViewModel
         set => SetProperty(ref careProgress, value);
     }
 
-    /// <summary>The single next thing to do today — pending med doses first
-    /// (soonest due), then care-plan trackers — or null when everything's done.
+    private string _careRemaining = string.Empty;
+
+    /// <summary>
+    /// What the ring is counting, in words: "Still to do: 3 little things".
+    ///
+    /// <para>The ring is the largest element on Today and nothing said what it was. It is
+    /// labelled with WHAT REMAINS and never with a score, no fraction, no percentage, no
+    /// count of what is done, and nothing at all once the day is clear.
+    /// AI/app-voice.md §10 bans "progress rings that imply a target was hit or missed",
+    /// and "6 of 9 done" under a ring is exactly that: a grade. "3 still to do" is a fact
+    /// about the day, and it reads the same on a good day as on a terrible one.</para>
+    ///
+    /// <para>It borrows the Journal's <b>keys</b>, not just its wording, so the two
+    /// surfaces cannot drift into two vocabularies for one idea.</para>
+    /// </summary>
+    public string CareRemaining
+    {
+        get => _careRemaining;
+        private set
+        {
+            if (SetProperty(ref _careRemaining, value))
+                OnPropertyChanged(nameof(HasCareRemaining));
+        }
+    }
+
+    /// <summary>False when the day is clear, or when nothing was asked for in the first
+    /// place. An empty day is a day where nothing was needed, never an achievement.</summary>
+    public bool HasCareRemaining => CareRemaining.Length > 0;
+
+    /// <summary>The single next thing to do today: pending med doses first
+    /// (soonest due), then care-plan trackers, or null when everything's done.
     /// Consumed by MainPage's next-up card from code-behind.</summary>
     public PendingItem? NextUpItem { get; private set; }
 
@@ -206,7 +249,7 @@ public class MainPageViewModel : BaseViewModel
     ///
     /// <para>Resolved HERE because the card's name and emoji live on a database row, and
     /// the page reads no store. Without it the card falls to TrackerVisuals.Fallback,
-    /// whose label key is the mood one — a walk would show up on Today as "Mood".</para></summary>
+    /// whose label key is the mood one: a walk would show up on Today as "Mood".</para></summary>
     public CustomTracker? NextUpCustom { get; private set; }
 
     /// <summary>Re-read everything on this page that comes from the clock rather than
@@ -216,13 +259,14 @@ public class MainPageViewModel : BaseViewModel
 
     public async Task LoadTodayCareAsync()
     {
-        // Cheap, and this runs on every appearance — so a page left open across
+        // Cheap, and this runs on every appearance, so a page left open across
         // noon or 6pm picks up the right greeting when it comes back.
         RefreshClockDerived();
 
         if (ActivePet == null)
         {
             CareProgress = 0;
+            CareRemaining = string.Empty;
             NextUpItem = null;
             NextUpDetail = string.Empty;
             return;
@@ -230,6 +274,14 @@ public class MainPageViewModel : BaseViewModel
 
         var care = await _pendingItems.GetTodayCareAsync(ActivePet, DateTime.Now.Date);
         CareProgress = care.Progress.Total == 0 ? 0 : (double)care.Progress.Done / care.Progress.Total;
+
+        // From the SAME numbers the ring is drawn from, so the words and the arc can
+        // never disagree.
+        var remaining = Math.Max(0, care.Progress.Total - care.Progress.Done);
+        CareRemaining = remaining == 0
+            ? string.Empty
+            : LocalizationManager.Instance.Format(
+                remaining == 1 ? "Journal_StillToDoOne" : "Journal_StillToDoMany", remaining);
         NextUpItem = care.Pending.FirstOrDefault();
 
         // The pending item carries only the med's identity; the card also shows
@@ -253,7 +305,7 @@ public class MainPageViewModel : BaseViewModel
     // The runtime notification permission can be declined at the prompt or switched
     // off in system settings months later, and the OS then simply refuses everything
     // the app schedules. Without this the carer's reminders just stop, silently and
-    // permanently — the worst failure this product has. So the Today page states the
+    // permanently: the worst failure this product has. So the Today page states the
     // fact, once, wherever it's true, and offers the one action that fixes it.
     //
     // Only surfaced when the carer actually has reminders set up: telling someone
@@ -268,7 +320,7 @@ public class MainPageViewModel : BaseViewModel
         private set => SetProperty(ref _remindersBlocked, value);
     }
 
-    /// <summary>Opens this app's system notification settings — the only place the
+    /// <summary>Opens this app's system notification settings: the only place the
     /// carer can undo a denial, since Android stops showing the prompt after two.</summary>
     public ICommand OpenNotificationSettingsCommand { get; } = new Command(() =>
     {
@@ -280,14 +332,26 @@ public class MainPageViewModel : BaseViewModel
     //
     // The appointment is a STATE, not a destination (see Data/Models/VetVisit.cs):
     // it lives on the Care page and only reaches Today when it is close. Seven days,
-    // fixed — near enough to be worth saying, far enough to still be useful.
+    // fixed: near enough to be worth saying, far enough to still be useful.
+    //
+    // AND THAT STATE DOES NOT END WHEN THE VISIT DOES. The day after, the band asks for
+    // the note instead: what the vet said is the highest-value thing this app captures
+    // and it decays within hours of leaving the practice, so the ask has to reach the
+    // owner where they already are rather than waiting on the Care page for them to come
+    // looking. It is offered plainly, it never repeats, it never colours, and it never
+    // mentions the subscription.
 
     /// <summary>How close a visit has to be before Today says anything about it.</summary>
     private const int NearVisitDays = 7;
 
+    /// <summary>How long after a visit Today still asks for the note: yesterday or
+    /// today. Past that the memory is no longer fresh and the ask becomes a nag.</summary>
+    private const int NoteBandDays = 1;
+
     private bool _hasNearVisit;
 
-    /// <summary>A visit is scheduled within the next week.</summary>
+    /// <summary>A visit is scheduled within the next week, or one just happened and
+    /// nothing has been written down about it.</summary>
     public bool HasNearVisit
     {
         get => _hasNearVisit;
@@ -296,52 +360,136 @@ public class MainPageViewModel : BaseViewModel
 
     private string _nearVisitLine = string.Empty;
 
-    /// <summary>"Charly sees Dr. Weiss on Thursday, 15:30" — or without the vet, or
+    /// <summary>"Charly sees Dr. Weiss on Thursday, 15:30", or without the vet, or
     /// without the time, depending on what the owner actually told the app. It states
     /// the fact and stops: no countdown, no "in 2 days", nothing that grows louder as
-    /// the date approaches.</summary>
+    /// the date approaches. After the visit it becomes "You saw Dr. Weiss yesterday."</summary>
     public string NearVisitLine
     {
         get => _nearVisitLine;
         private set => SetProperty(ref _nearVisitLine, value);
     }
 
+    private string _nearVisitSubline = string.Empty;
+
+    /// <summary>The second line: what the band is offering. Held here rather than fixed
+    /// in the XAML because the band now has two things to offer.</summary>
+    public string NearVisitSubline
+    {
+        get => _nearVisitSubline;
+        private set => SetProperty(ref _nearVisitSubline, value);
+    }
+
+    /// <summary>The visit the band is asking for a note about, or null when the band is
+    /// about an upcoming one.</summary>
+    private Data.Models.VetVisit? _noteVisit;
+
     /// <summary>The band is a door. The page owns navigation, so the VM raises and the
-    /// code-behind pushes — the same split every other pushed page here uses.</summary>
+    /// code-behind pushes: the same split every other pushed page here uses.</summary>
     public event Action? AppointmentRequested;
 
+    /// <summary>The band is asking for the note: the page opens the visit sheet straight
+    /// on "what the vet said". Same split: the VM raises, the page hosts.</summary>
+    public event Action<Data.Models.VetVisit>? VisitNoteRequested;
+
+    /// <summary>Tapping the band. One command, because there is one band; where it leads
+    /// depends on which of the two things it is currently saying.</summary>
     public ICommand OpenAppointmentCommand { get; }
 
+    private void OpenNearVisit()
+    {
+        if (_noteVisit is { } visit)
+            VisitNoteRequested?.Invoke(visit);
+        else
+            AppointmentRequested?.Invoke();
+    }
+
     /// <summary>
-    /// Re-read the active pet's next visit. Cheap — one indexed range query — and run on
-    /// every appearance, because "within seven days" changes by itself at midnight.
+    /// Re-read the active pet's visits. Cheap: two indexed lookups, and run on every
+    /// appearance, because both "within seven days" and "yesterday" change by themselves
+    /// at midnight.
+    ///
+    /// <para>The note ask WINS when both are true. A visit yesterday and another booked
+    /// for Friday is a real situation, and of the two only one of them expires.</para>
     /// </summary>
     public async Task RefreshNearVisitAsync()
     {
         try
         {
             var pet = ActivePet;
-            var next = pet is null || pet.Id == 0 ? null : await _vetVisits.GetNextAsync(pet.Id);
-
-            if (next is null || (next.Date.Date - DateTime.Today).TotalDays > NearVisitDays)
+            if (pet is null || pet.Id == 0)
             {
-                HasNearVisit = false;
-                NearVisitLine = string.Empty;
+                ClearNearVisit();
                 return;
             }
 
-            NearVisitLine = BuildNearVisitLine(pet!.Name, next);
+            var recent = await _vetVisits.GetMostRecentPastAsync(pet.Id);
+            if (recent is not null && NeedsNoteBand(recent))
+            {
+                _noteVisit = recent;
+                NearVisitLine = BuildNoteLine(pet.Name, recent);
+                NearVisitSubline = LocalizationManager.Instance.GetString("Today_VisitNotePrompt");
+                HasNearVisit = true;
+                return;
+            }
+
+            var next = await _vetVisits.GetNextAsync(pet.Id);
+            if (next is null || (next.Date.Date - DateTime.Today).TotalDays > NearVisitDays)
+            {
+                ClearNearVisit();
+                return;
+            }
+
+            _noteVisit = null;
+            NearVisitLine = BuildNearVisitLine(pet.Name, next);
+            NearVisitSubline = LocalizationManager.Instance.GetString("Today_VisitSummaryReady");
             HasNearVisit = true;
         }
         catch (Exception ex)
         {
             // A failed read must never light the band falsely.
             System.Diagnostics.Debug.WriteLine($"[MainPage] next visit check failed: {ex.Message}");
-            HasNearVisit = false;
+            ClearNearVisit();
         }
     }
 
-    /// <summary>Whatever the owner did not give is simply absent — never a placeholder
+    private void ClearNearVisit()
+    {
+        _noteVisit = null;
+        HasNearVisit = false;
+        NearVisitLine = string.Empty;
+        NearVisitSubline = string.Empty;
+    }
+
+    /// <summary>A visit that happened yesterday or today with nothing written down about
+    /// it yet. Date-based rather than <c>NeedsNote</c>: a visit THIS MORNING is not
+    /// "past" by the day rule, and it is the freshest note there is.</summary>
+    private static bool NeedsNoteBand(Data.Models.VetVisit visit)
+    {
+        var age = (DateTime.Today - visit.Date.Date).TotalDays;
+        return age >= 0 && age <= NoteBandDays
+            && string.IsNullOrWhiteSpace(visit.VisitNote);
+    }
+
+    /// <summary>"You saw Dr. Weiss yesterday.", or the pet's name when the owner never
+    /// said who. Four whole sentences rather than a day word slotted into one: the
+    /// adverb sits in a different place in German (AI/app-voice.md §20).</summary>
+    private static string BuildNoteLine(string petName, Data.Models.VetVisit visit)
+    {
+        var loc = LocalizationManager.Instance;
+        var yesterday = visit.Date.Date < DateTime.Today;
+
+        var who = !string.IsNullOrWhiteSpace(visit.VetName) ? visit.VetName.Trim()
+            : !string.IsNullOrWhiteSpace(visit.Practice) ? visit.Practice.Trim()
+            : string.Empty;
+
+        if (who.Length > 0)
+            return loc.Format(yesterday ? "Today_VisitNoteWhoYesterday" : "Today_VisitNoteWhoToday", who);
+
+        return loc.Format(yesterday ? "Today_VisitNoteYesterday" : "Today_VisitNoteToday", petName);
+    }
+
+    /// <summary>Whatever the owner did not give is simply absent, never a placeholder
     /// and never a guessed hour (the same rule as an unknown birth month).</summary>
     private static string BuildNearVisitLine(string petName, Data.Models.VetVisit visit)
     {
@@ -360,7 +508,7 @@ public class MainPageViewModel : BaseViewModel
 
     /// <summary>
     /// Re-check whether the OS will deliver reminders. A live check on every
-    /// appearance and resume, never a cached setup flag — the permission can be
+    /// appearance and resume, never a cached setup flag: the permission can be
     /// revoked without the app running.
     /// </summary>
     public async Task RefreshReminderHealthAsync()
@@ -368,7 +516,7 @@ public class MainPageViewModel : BaseViewModel
         try
         {
             // Short-circuits before touching the database when the daily reminder is on,
-            // and asks for a COUNT rather than every medication row when it isn't — this
+            // and asks for a COUNT rather than every medication row when it isn't: this
             // runs on every appearance, including the ones that skip the rest of the load.
             var hasReminders = DailyCareReminderSettings.Enabled
                 || await _medicationService.AnyActiveMedicationsAsync();

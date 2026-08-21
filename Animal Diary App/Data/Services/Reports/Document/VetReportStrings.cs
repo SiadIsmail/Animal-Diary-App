@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.Services.Reports.Document;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
-/// Every word the vet report prints, pulled from the localized resources — the same
+/// Every word the vet report prints, pulled from the localized resources: the same
 /// arrangement <see cref="Animal_Diary_App.Data.Services.Notifications.NotificationMessages"/>
 /// uses for notification copy, and for the same reason: a section should compose a
 /// layout, not carry copy.
@@ -18,8 +18,8 @@ using Animal_Diary_App.Helpers;
 ///   that asks <see cref="LocalizationManager"/> at render time. A
 ///   <c>static readonly</c> array of row labels would freeze the language the app
 ///   happened to start in, and the app switches language live.</item>
-/// <item><b>Structural labels only.</b> Stored data — pet names, medication names,
-///   foods, the owner's notes — is printed exactly as it was entered and is never
+/// <item><b>Structural labels only.</b> Stored data (pet names, medication names,
+///   foods, the owner's notes) is printed exactly as it was entered and is never
 ///   translated. The scale labels below are the app's own vocabulary for a level, not
 ///   owner text, which is why water and appetite reuse the journal's existing keys
 ///   rather than introducing a second translation of the same five words. Mood is the
@@ -40,7 +40,7 @@ public static class VetReportStrings
     // ── Plain export ──────────────────────────────────────────────────────────
     // The free, portable copy: everything written down, in order. Its own three column
     // labels rather than reuse of the designed report's, because it answers a different
-    // question — not "what does the vet need" but "what did I record, and when".
+    // question, not "what does the vet need" but "what did I record, and when".
     public static string SectionPlainLog => L.GetString("Report_SectionPlainLog");
     public static string PlainLogIntro => L.GetString("Report_PlainLogIntro");
     public static string ColWhen => L.GetString("Report_ColWhen");
@@ -91,7 +91,7 @@ public static class VetReportStrings
     /// <summary>Mood chart rows, level 1 (bottom) → 5 (top). The one scale with its own
     /// report keys instead of the journal's: the app's Mood_* words are adjectives meant
     /// to sit inside a sentence, so German writes them lowercase ("war heute gedämpft").
-    /// A chart axis is not a sentence — same five levels, cased to stand alone.</summary>
+    /// A chart axis is not a sentence: same five levels, cased to stand alone.</summary>
     public static string[] MoodRows => LevelRows("Report_MoodLevel");
 
     /// <summary>Water observation rows, level 1 → 5. Same keys the water sheet uses.</summary>
@@ -104,7 +104,7 @@ public static class VetReportStrings
     public static string SectionEvents => L.GetString("Report_SectionEvents");
     public static string SectionCustom => L.GetString("Report_CustomSection");
 
-    /// <summary>"4×" — a count of rows, which is a fact. Localized because the
+    /// <summary>"4×": a count of rows, which is a fact. Localized because the
     /// multiplication sign and its spacing are not universal.</summary>
     public static string CustomTimes(int count) => L.Format("Report_CustomTimes", count);
     public static string ColDate => L.GetString("Report_ColDate");
@@ -128,9 +128,9 @@ public static class VetReportStrings
     public static string SectionNotes => L.GetString("Report_SectionNotes");
     public static string MoreNotes(int count) => L.Format("Report_MoreNotes", count);
 
-    /// <summary>Placeholder for a cell with nothing recorded. Not a localized word —
+    /// <summary>Placeholder for a cell with nothing recorded. Not a localized word,
     /// an em dash reads the same in every language the app ships.</summary>
-    public const string Empty = "—";
+    public const string Empty = "-";
 
     private static string[] LevelRows(string keyPrefix) => new[]
     {

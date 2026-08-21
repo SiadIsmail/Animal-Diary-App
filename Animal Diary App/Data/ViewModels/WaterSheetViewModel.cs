@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -14,13 +14,13 @@ public class WaterOption : BaseViewModel
 {
     public required int Level { get; init; }
 
-    /// <summary>The localized level word, resolved LIVE on every read — never cached.
+    /// <summary>The localized level word, resolved LIVE on every read, never cached.
     /// The sheet VM is a singleton, so a cached word would freeze in the language
     /// active when it was constructed (e.g. German tiles on the English app). Re-raised
     /// via <see cref="RefreshWord"/> on a live language switch (see coding-standards).</summary>
     public string Word => ((WaterLevel)Level).GetDisplayName();
 
-    /// <summary>Height (px) of the glass's filled portion — a visual level, no digits.</summary>
+    /// <summary>Height (px) of the glass's filled portion: a visual level, no digits.</summary>
     public required double FillHeight { get; init; }
 
     private bool _isSelected;
@@ -31,19 +31,19 @@ public class WaterOption : BaseViewModel
 }
 
 /// <summary>
-/// Backs the Journal's water sheet — the shared <c>FelovaBottomSheet</c>
+/// Backs the Journal's water sheet: the shared <c>FelovaBottomSheet</c>
 /// with TWO modes the owner flips between with an "Exact measurement" toggle at the top:
 /// <list type="bullet">
-/// <item><b>off (default)</b> — five relative word-tiles (Barely … A lot) with a
+/// <item><b>off (default)</b>: five relative word-tiles (Barely … A lot) with a
 ///   progressively-filled glass. This is ONE reading per day: saving replaces the
 ///   day's <see cref="WaterLevelEntry"/> (undo restores the previous, or removes it).</item>
-/// <item><b>on</b> — the tiles are replaced by a single millilitre entry field, for
+/// <item><b>on</b>: the tiles are replaced by a single millilitre entry field, for
 ///   owners who measure the bowl. This is ADDITIVE: each save inserts a new
 ///   <see cref="WaterAmountEntry"/> event (undo removes just that one), so four
-///   100 ml logs and one 400 ml log are the owner's choice — the report sums the day.</item>
+///   100 ml logs and one 400 ml log are the owner's choice: the report sums the day.</item>
 /// </list>
 /// The two coexist: a day can hold one relative reading and any number of exact ones.
-/// Nothing here is judged — a low reading is a neutral fact.
+/// Nothing here is judged: a low reading is a neutral fact.
 /// </summary>
 public class WaterSheetViewModel : BaseViewModel
 {
@@ -57,7 +57,7 @@ public class WaterSheetViewModel : BaseViewModel
 
     // Remembers the mode the owner last logged in, so the sheet reopens the way they
     // left it (a measurer keeps measuring; a quick-tapper keeps tapping). Session-
-    // level — a singleton VM, so it survives tab switches and re-opens.
+    // level: a singleton VM, so it survives tab switches and re-opens.
     private bool _lastExactMode;
 
     public WaterSheetViewModel(WaterEntryService service)
@@ -113,10 +113,10 @@ public class WaterSheetViewModel : BaseViewModel
         }
     }
 
-    /// <summary>Relative tiles visible — the default mode (toggle off).</summary>
+    /// <summary>Relative tiles visible: the default mode (toggle off).</summary>
     public bool ShowLevels => !ExactMode;
 
-    /// <summary>The millilitre entry field visible — toggle on.</summary>
+    /// <summary>The millilitre entry field visible: toggle on.</summary>
     public bool ShowExact => ExactMode;
 
     private int _selectedLevel;
@@ -141,7 +141,7 @@ public class WaterSheetViewModel : BaseViewModel
         _date = date.Date;
 
         // Reopen in the mode the owner last logged in. The exact field always starts
-        // blank (it's additive — opening it is "add a measurement", never "edit the
+        // blank (it's additive: opening it is "add a measurement", never "edit the
         // last one"); the relative tiles pre-select the day's reading if there is one.
         ExactMode = _lastExactMode;
         AmountText = string.Empty;

@@ -5,7 +5,7 @@ using Animal_Diary_App.Data.Services;
 using SQLite;
 
 /// <summary>
-/// Repository for materialized <see cref="ReminderInstance"/> rows — the concrete
+/// Repository for materialized <see cref="ReminderInstance"/> rows: the concrete
 /// reminder occurrences expanded from recurring medication rules.
 /// Filtering by status is done in memory by callers; the table is kept small by
 /// pruning resolved (fired/missed) rows during catch-up.

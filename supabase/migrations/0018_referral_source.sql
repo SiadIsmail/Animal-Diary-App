@@ -1,8 +1,8 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0018 — Where a creator code came from: typed, or carried by the install.
+--  0018: Where a creator code came from: typed, or carried by the install.
 --
 --  0016 assumed one way in: the user opens Settings and types the code. That is
---  the weak half of the funnel — most of a creator's audience never types
+--  the weak half of the funnel: most of a creator's audience never types
 --  anything. Google Play preserves a `referrer` value through an install, so a
 --  link like
 --
@@ -13,13 +13,13 @@
 --  by the app, so on iOS the typed code stays the only in-app path.
 --
 --  What changes here is ONE COLUMN. The install referrer is a new *input* to the
---  pipeline 0016 already built — same creator_codes, same entries, same
---  last-touch pointer, same webhook attribution — so nothing downstream moves.
+--  pipeline 0016 already built: same creator_codes, same entries, same
+--  last-touch pointer, same webhook attribution, so nothing downstream moves.
 --
 --  Why the source is recorded rather than inferred: the two arrivals answer
 --  different questions and will diverge. An install referrer is FIRST touch
 --  (how they found the app, weeks before they cared) and is unambiguous. A typed
---  code is LAST touch and is deliberate — someone chose to credit that person.
+--  code is LAST touch and is deliberate: someone chose to credit that person.
 --  Keeping both as rows means the attribution rule stays a query, which is the
 --  rule 0016 exists to preserve.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -37,7 +37,7 @@ alter table public.creator_code_entries
   add column if not exists source text not null default 'typed';
 
 comment on column public.creator_code_entries.source is
-  'How the code arrived: typed | install_referrer. Recorded, never inferred — an '
+  'How the code arrived: typed | install_referrer. Recorded, never inferred: an '
   'install referrer is first-touch and automatic, a typed code is last-touch and '
   'deliberate.';
 
@@ -115,7 +115,7 @@ end $$;
 -- number hides both.
 --
 -- DROP then CREATE, not CREATE OR REPLACE. Replacing a view may only APPEND
--- columns — it cannot rename, reorder, or insert one — and the new columns belong
+-- columns (it cannot rename, reorder, or insert one) and the new columns belong
 -- next to accounts_entered rather than tacked on after last_purchase, where they
 -- would read as an afterthought. CREATE OR REPLACE fails outright here:
 --     cannot change name of view column "purchases" to "from_link"

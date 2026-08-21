@@ -6,17 +6,17 @@ using SQLite;
 //  The Care Plan.
 //
 //  A pet's care plan is the list of things the Journal will gently ask for. It is
-//  the ONLY thing the Journal knows about — the Journal never sees a condition
+//  the ONLY thing the Journal knows about: the Journal never sees a condition
 //  name. Conditions (Diabetes, CKD…) are just the reason a tracker was added; once
 //  added, a tracker stands on its own (see Tracker.FromCondition, which is only a
 //  breadcrumb back to the condition that introduced it).
 //
 //  Medications are NOT trackers. Scheduled doses live entirely in the existing
 //  Medication / MedicationSchedule / MedicationDoseLog model; the pending engine
-//  reads them from there. Insulin is a medication like any other — never special.
+//  reads them from there. Insulin is a medication like any other, never special.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// <summary>Which loggable thing a <see cref="Tracker"/> represents. A closed set —
+/// <summary>Which loggable thing a <see cref="Tracker"/> represents. A closed set,
 /// the Journal renders one input sheet per value here. Stored as text so the enum
 /// can be reordered/extended without rewriting existing rows.</summary>
 [StoreAsText]
@@ -30,7 +30,7 @@ public enum TrackerId
     Seizure
 }
 
-/// <summary>How often a tracker is expected — its cadence. Drives the pending
+/// <summary>How often a tracker is expected: its cadence. Drives the pending
 /// engine's "is this due today?" logic (see the PendingItems service, Step 2).</summary>
 [StoreAsText]
 public enum TrackerKind
@@ -43,14 +43,14 @@ public enum TrackerKind
     Weekly,
     /// <summary>Once in a rolling 3-day window.</summary>
     TwiceWeekly,
-    /// <summary>Logged only when the owner feels like it — never appears in "Still to do".</summary>
+    /// <summary>Logged only when the owner feels like it, never appears in "Still to do".</summary>
     AsNeeded,
-    /// <summary>Logged as it happens, e.g. a seizure — never appears in "Still to do".</summary>
+    /// <summary>Logged as it happens, e.g. a seizure, never appears in "Still to do".</summary>
     Event
 }
 
 /// <summary>An inclusive low–high band, e.g. a vet's target glucose range. Pure
-/// value type; precise decimals in, precise decimals out — never rounded.</summary>
+/// value type; precise decimals in, precise decimals out, never rounded.</summary>
 public readonly record struct TargetRange(decimal Lo, decimal Hi)
 {
     public bool Contains(decimal value) => value >= Lo && value <= Hi;
@@ -82,7 +82,7 @@ public class Tracker : ISyncable
     /// <summary>Which value this tracker records.</summary>
     public TrackerId TrackerId { get; set; }
 
-    /// <summary>The cadence — how the pending engine decides if it's due.</summary>
+    /// <summary>The cadence: how the pending engine decides if it's due.</summary>
     public TrackerKind Kind { get; set; }
 
     /// <summary>Checks expected per day when <see cref="Kind"/> is
@@ -90,7 +90,7 @@ public class Tracker : ISyncable
     public int PerDayCount { get; set; }
 
     /// <summary>Target-range low bound. Only meaningful for glucose. Null (together
-    /// with <see cref="TargetHi"/>) means "no range yet" — readings are simply
+    /// with <see cref="TargetHi"/>) means "no range yet": readings are simply
     /// recorded, without judgement, until a range is added.</summary>
     public decimal? TargetLo { get; set; }
     public decimal? TargetHi { get; set; }
@@ -101,7 +101,7 @@ public class Tracker : ISyncable
     public string Unit { get; set; } = string.Empty;
 
     /// <summary>Id of the <see cref="Condition"/> that introduced this tracker, or
-    /// null for the always-on defaults (Mood, Weight). A breadcrumb only — the
+    /// null for the always-on defaults (Mood, Weight). A breadcrumb only: the
     /// Journal never reads it.</summary>
     public string? FromCondition { get; set; }
 
@@ -115,7 +115,7 @@ public class Tracker : ISyncable
 }
 
 /// <summary>
-/// One line of a pet's care plan, whatever produced it — a shipped <see cref="Tracker"/>
+/// One line of a pet's care plan, whatever produced it: a shipped <see cref="Tracker"/>
 /// row or a tracker the owner made up themselves.
 ///
 /// <para><b>Why this exists rather than everything being a <see cref="Tracker"/>:</b> a
@@ -130,7 +130,7 @@ public class Tracker : ISyncable
 /// </summary>
 public sealed record CarePlanItem
 {
-    /// <summary>Which tracker this line is for — the identity every other subsystem
+    /// <summary>Which tracker this line is for: the identity every other subsystem
     /// keys on.</summary>
     public required TrackerKey Key { get; init; }
 
@@ -141,7 +141,7 @@ public sealed record CarePlanItem
     /// <see cref="TrackerKind.PerDay"/>; 0 otherwise.</summary>
     public int PerDayCount { get; init; }
 
-    /// <summary>The glucose target band, or null. Only ever set for glucose — a custom
+    /// <summary>The glucose target band, or null. Only ever set for glucose: a custom
     /// tracker never carries one, because a range is a clinical judgement the app has no
     /// business inventing for a value the owner defined.</summary>
     public TargetRange? TargetRange { get; init; }

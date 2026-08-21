@@ -6,9 +6,9 @@ using SQLite;
 /// <summary>Reads and writes the two appetite stores behind one seam (mirrors
 /// <see cref="WaterEntryService"/>):
 /// <list type="bullet">
-/// <item><see cref="AppetiteEntry"/> — the qualitative reading, one per day
+/// <item><see cref="AppetiteEntry"/>: the qualitative reading, one per day
 ///   (re-logging replaces the day's row; a tombstone is revived, not duplicated).</item>
-/// <item><see cref="AppetiteAmountEntry"/> — exact measured grams, additive like
+/// <item><see cref="AppetiteAmountEntry"/>: exact measured grams, additive like
 ///   glucose (many per day, never upserted; the report sums them per day).</item>
 /// </list>
 /// Both carry an optional free-text <c>Food</c> label.</summary>
@@ -28,7 +28,7 @@ public class AppetiteEntryService
         entry.Date = entry.Date.Date;
 
         // One-per-day meets sync: if the day's row was soft-deleted (an undone log),
-        // revive it in place instead of inserting a sibling — the cloud keys appetite
+        // revive it in place instead of inserting a sibling: the cloud keys appetite
         // by (pet, day), so a day must stay a single row.
         var day = entry.Date;
         var tombstone = (await _db.Table<AppetiteEntry>()
@@ -52,7 +52,7 @@ public class AppetiteEntryService
     /// <summary>Overwrite an existing reading in place (the one-per-day replace path).</summary>
     public Task UpdateAsync(AppetiteEntry entry) => _db.UpdateAsync(SyncStamp.Touch(entry));
 
-    /// <summary>Soft delete (the undo path) — the row becomes a tombstone so the
+    /// <summary>Soft delete (the undo path): the row becomes a tombstone so the
     /// deletion can sync; a later re-log of the same day revives it (see InsertAsync).</summary>
     public async Task DeleteAsync(int id)
     {
@@ -157,7 +157,7 @@ public class AppetiteEntryService
 
     /// <summary>The pet's most recently logged non-empty food label (across both
     /// stores), for pre-filling the sheet. Empty when the pet has never named a food.
-    /// Not food-change tracking — just "remember what I last typed".</summary>
+    /// Not food-change tracking: just "remember what I last typed".</summary>
     public async Task<string> GetLastFoodAsync(int petId)
     {
         var lastLevel = (await _db.Table<AppetiteEntry>()
@@ -179,7 +179,7 @@ public class AppetiteEntryService
         return amountKey >= levelKey ? lastAmount.Food : lastLevel.Food;
     }
 
-    /// <summary>Whether the pet has ever logged any appetite (either store) — the
+    /// <summary>Whether the pet has ever logged any appetite (either store): the
     /// export sheet's appetite toggles only show when there's data to include.</summary>
     public async Task<bool> HasAnyAsync(int petId)
     {

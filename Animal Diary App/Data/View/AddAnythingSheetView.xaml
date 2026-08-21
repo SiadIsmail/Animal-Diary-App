@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- AddAnythingSheetView — the "+" sheet listing this pet's log types. BindingContext
+<!-- AddAnythingSheetView: the "+" sheet listing this pet's log types. BindingContext
      is the JournalLogViewModel; picking a row raises RequestOpenSheet, which the page
      turns into the matching sheet sliding up in its place. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -18,12 +18,12 @@
                                 DismissCommand="{Binding CloseAddSheetCommand}">
         <controls:FelovaBottomSheet.SheetContent>
             <!-- The body owns its scroller, as FelovaBottomSheet requires: this list is
-                 unbounded — every custom tracker the owner defines adds a row — so past
+                 unbounded (every custom tracker the owner defines adds a row) so past
                  a certain count it outgrows the sheet's 90%-of-screen cap, and the cap
                  only clips. Sized by MaximumHeightRequest from the code-behind rather
                  than left to fill: VerticalOptions="Start" plus a ceiling makes the sheet
                  hug three rows and scroll at fifteen. A plain filling ScrollView is the
-                 regression FelovaBottomSheet.xaml warns about — on Android it measures to
+                 regression FelovaBottomSheet.xaml warns about: on Android it measures to
                  FILL in this star row and stretches even a short sheet to full height.
 
                  BindableLayout, not CollectionView: CollectionView's RecyclerView wouldn't
@@ -123,7 +123,7 @@
                      A question for the vet records nothing about the animal, so it
                      sits apart from both lists above. Dropping it into "everything
                      else the app can record" would make it read as a tracker, which
-                     is the one thing it must never become — it never reaches the
+                     is the one thing it must never become: it never reaches the
                      timeline, the chips or the care plan (Data/Models/VetQuestion.cs).
                      Its own heading names the occasion rather than the person. -->
                 <VerticalStackLayout Spacing="6" Margin="0,10,0,0">

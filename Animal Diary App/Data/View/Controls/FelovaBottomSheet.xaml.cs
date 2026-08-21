@@ -11,8 +11,8 @@ using View = Microsoft.Maui.Controls.View;
 /// scrim + slide/fade motion and hosts arbitrary <see cref="SheetContent"/>.
 /// Used by both the medication add/edit form and the Journal input sheets so the
 /// person never feels they "left" the page to log something.
-/// Hidden sheets stay in the visual tree — translated below the screen and
-/// InputTransparent, never IsVisible=false — so Android keeps the body realised;
+/// Hidden sheets stay in the visual tree: translated below the screen and
+/// InputTransparent, never IsVisible=false, so Android keeps the body realised;
 /// collapsing it left on-open-populated content empty on first show.
 /// </summary>
 public partial class FelovaBottomSheet : ContentView
@@ -39,7 +39,7 @@ public partial class FelovaBottomSheet : ContentView
     // subtitle), the row spacing under it, and the container's bottom padding.
     private const double ChromeHeight = 130;
     // Below this a "scrollable" body is more cramped than useful, so let the sheet
-    // overflow the cap instead — only reachable on a very short screen.
+    // overflow the cap instead: only reachable on a very short screen.
     private const double MinBodyHeight = 220;
 
     private bool isAnimating;
@@ -139,14 +139,14 @@ public partial class FelovaBottomSheet : ContentView
     /// </summary>
     /// <remarks>
     /// This loops rather than running one animation because the flag can flip *during*
-    /// an animation — a dismiss tapped inside the 420ms open slide, an Android back
+    /// an animation: a dismiss tapped inside the 420ms open slide, an Android back
     /// press, or one sheet closing as another opens. The old code returned early in
     /// that case and the new state was simply dropped, which desynchronized the two
     /// halves of "open":
     ///
-    ///   • input — the host ContentView's InputTransparent is bound to the inverse of
+    ///   • input: the host ContentView's InputTransparent is bound to the inverse of
     ///     the same VM flag, so it follows the flip immediately and unconditionally;
-    ///   • visual — TranslationY and the scrim only move if an animation actually runs.
+    ///   • visual: TranslationY and the scrim only move if an animation actually runs.
     ///
     /// Dropping the transition left those permanently disagreeing: a sheet fully
     /// visible and dimming the screen while every touch passed through to the page
@@ -210,8 +210,8 @@ public partial class FelovaBottomSheet : ContentView
     /// i.e. the cap above minus the sheet's own chrome.
     /// </summary>
     /// <remarks>
-    /// For the bodies that are a plain list rather than a form with pinned actions —
-    /// the Journal's "+" sheet, Manage's "add a tracker" — whose length the owner
+    /// For the bodies that are a plain list rather than a form with pinned actions,
+    /// the Journal's "+" sheet, Manage's "add a tracker", whose length the owner
     /// controls and so can outgrow the cap. Those set it as the MaximumHeightRequest
     /// of a <c>VerticalOptions="Start"</c> ScrollView: hugging when the list is short,
     /// scrolling once it isn't. They can't just let the ScrollView fill, which is the
@@ -228,8 +228,8 @@ public partial class FelovaBottomSheet : ContentView
     {
         var reduce = ReducedMotion.IsEnabled;
 
-        // A sheet built on demand has never been laid out, so the container's height —
-        // and with it HiddenOffset, i.e. where "just below the screen" actually is — is
+        // A sheet built on demand has never been laid out, so the container's height,
+        // and with it HiddenOffset, i.e. where "just below the screen" actually is: is
         // not known yet, and the slide would start from the 2000 fallback and whip in
         // faster than every later open. Give Android one layout pass first. Same beat,
         // for the same reason, as SettingsPanelView takes before its panel slides.

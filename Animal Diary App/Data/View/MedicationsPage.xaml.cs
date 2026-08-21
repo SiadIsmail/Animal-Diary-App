@@ -25,7 +25,7 @@ public partial class MedicationsPage : ContentPage
         }
         catch (Exception ex)
         {
-            // async void — an escaping exception here would crash the app.
+            // async void: an escaping exception here would crash the app.
             System.Diagnostics.Debug.WriteLine($"[MedicationsPage] OnAppearing failed: {ex}");
         }
     }

@@ -13,7 +13,7 @@ namespace Animal_Diary_App;
 /// these system broadcasts re-materializes every reminder against the new local
 /// time immediately, instead of waiting for the next app launch or reboot.
 ///
-/// <c>resendMissed: false</c> — a clock change is not a device-off gap, so nothing
+/// <c>resendMissed: false</c>: a clock change is not a device-off gap, so nothing
 /// was actually missed; we only need to re-arm future occurrences.
 ///
 /// TIME_SET / TIMEZONE_CHANGED / DATE_CHANGED are exempt from Android's implicit

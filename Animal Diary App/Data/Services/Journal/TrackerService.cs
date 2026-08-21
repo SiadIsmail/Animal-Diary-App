@@ -38,8 +38,8 @@ public class TrackerService
     }
 
     /// <summary>Delete one tracker row (its logged history in the typed entry tables
-    /// is intentionally left untouched — turning a tracker off never deletes data).
-    /// Soft delete — the row becomes a tombstone so the removal can sync.</summary>
+    /// is intentionally left untouched: turning a tracker off never deletes data).
+    /// Soft delete: the row becomes a tombstone so the removal can sync.</summary>
     public Task DeleteAsync(Tracker tracker) => _db.UpdateAsync(SyncStamp.MarkDeleted(tracker));
 
     /// <summary>The pet's tracker of a given kind, or null. Filtered in memory rather
@@ -63,7 +63,7 @@ public class TrackerService
     ///
     /// That distinction matters for <see cref="Tracker.FromCondition"/>. The breadcrumb
     /// is what condition removal keys on, so stamping it onto a tracker the owner added
-    /// themselves would hand their choice to a condition — and then quietly delete it,
+    /// themselves would hand their choice to a condition, and then quietly delete it,
     /// with its history, when that condition is removed. Only a newly created tracker
     /// may be claimed by a condition.
     /// </summary>
@@ -103,7 +103,7 @@ public class TrackerService
         await _seedLock.WaitAsync();
         try
         {
-            // Re-check inside the lock — another reload may have seeded while we waited.
+            // Re-check inside the lock: another reload may have seeded while we waited.
             existing = await GetForPetAsync(petId);
             if (existing.Count > 0)
                 return existing;

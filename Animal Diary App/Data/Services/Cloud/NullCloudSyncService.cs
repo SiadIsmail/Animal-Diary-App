@@ -1,6 +1,6 @@
 namespace Animal_Diary_App.Data.Services.Cloud;
 
-/// <summary>Registered when <see cref="CloudConfig.Enabled"/> is false — the app
+/// <summary>Registered when <see cref="CloudConfig.Enabled"/> is false: the app
 /// carries zero cloud behaviour, mirroring <c>NullAnalyticsService</c>.</summary>
 public sealed class NullCloudSyncService : ICloudSyncService, Billing.IPetAccessSource
 {

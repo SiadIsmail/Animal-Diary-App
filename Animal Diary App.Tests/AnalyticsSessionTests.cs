@@ -5,7 +5,7 @@ using Xunit;
 
 /// <summary>The gate that decides whether an appearance counts as a new <c>app_opened</c>.
 /// These cases are the difference between counting Activity recreations as launches and
-/// missing a genuine next-day return — both of which corrupt the funnel's entry step.</summary>
+/// missing a genuine next-day return: both of which corrupt the funnel's entry step.</summary>
 public class AnalyticsSessionTests
 {
     private static readonly DateTime T0 = new(2026, 3, 10, 9, 0, 0, DateTimeKind.Utc);
@@ -60,7 +60,7 @@ public class AnalyticsSessionTests
     }
 }
 
-/// <summary>The <c>days_since_install</c> bucket — the property that turns "return on a
+/// <summary>The <c>days_since_install</c> bucket: the property that turns "return on a
 /// later day" from an inexpressible funnel constraint into a filter.</summary>
 public class AnalyticsTenureTests
 {
@@ -91,7 +91,7 @@ public class AnalyticsTenureTests
     [Fact]
     public void CountsCalendarDays_NotElapsedHours()
     {
-        // Installed 23:00, returned 01:00 — two hours later, but the next UTC day, which
+        // Installed 23:00, returned 01:00: two hours later, but the next UTC day, which
         // is the D1 convention the buckets are documented to follow.
         Assert.Equal(AnalyticsTenure.BucketDay1, AnalyticsTenure.Bucket(Install, Install.AddHours(2)));
     }

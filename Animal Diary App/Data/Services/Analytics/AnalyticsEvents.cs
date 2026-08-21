@@ -15,7 +15,7 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 ///
 /// PRIVACY RULE: no value placed under these keys may identify a person or reveal a
 /// pet's care situation. Property values are coarse, non-free-text descriptors
-/// (species bucket, entry type, day counts) — see the analytics docs.
+/// (species bucket, entry type, day counts): see the analytics docs.
 /// </summary>
 public static class AnalyticsEvents
 {
@@ -25,7 +25,7 @@ public static class AnalyticsEvents
     ///
     /// <para>NOT "the process started". It fires from window creation and resume, never
     /// from <c>App.StartAsync</c>, because a reboot or a Play Store update starts the
-    /// process headlessly with no window and no user — those were being counted as
+    /// process headlessly with no window and no user: those were being counted as
     /// launches. And it is session-gated rather than once-per-process, because a process
     /// that survives a week of daily use would otherwise report a single open. Both
     /// corrections matter for the "came back later" funnel step, which reads this event
@@ -46,18 +46,18 @@ public static class AnalyticsEvents
     public const string ConditionSetupCompleted = "condition_setup_completed";
     /// <summary>On the onboarding condition picker's Continue, the pet had no condition
     /// (the user chose "None / Not sure" or skipped past). Never says <i>which</i>
-    /// condition — only that setup was or wasn't done.</summary>
+    /// condition: only that setup was or wasn't done.</summary>
     public const string ConditionSetupSkipped = "condition_setup_skipped";
     /// <summary>First-launch onboarding finished (handed off into the tabbed app).</summary>
     public const string OnboardingCompleted = "onboarding_completed";
 
     // ── Account lifecycle ─────────────────────────────────────────────────────
-    // These measure WHERE account creation drops off — they never identify the user.
+    // These measure WHERE account creation drops off: they never identify the user.
     // No email, no user id, no code is ever attached (see the account_state note below).
     /// <summary>Sign-up was submitted and the account was created server-side (awaiting
     /// the emailed verification code).</summary>
     public const string SignUpStarted = "sign_up_started";
-    /// <summary>The emailed sign-up code was verified — account creation completed. The
+    /// <summary>The emailed sign-up code was verified: account creation completed. The
     /// gap from <see cref="SignUpStarted"/> is the email-verification drop-off.</summary>
     public const string SignUpVerified = "sign_up_verified";
     /// <summary>An email + password sign-in succeeded.</summary>
@@ -67,11 +67,11 @@ public static class AnalyticsEvents
     public const string GoogleSignIn = "google_sign_in";
 
     // ── Sharing ───────────────────────────────────────────────────────────────
-    /// <summary>An owner minted a caregiver invite code. The fact only — never the
+    /// <summary>An owner minted a caregiver invite code. The fact only, never the
     /// code, the pet, or any id.</summary>
     public const string PetShareInvited = "pet_share_invited";
     /// <summary>A caregiver redeemed an invite code and joined a shared pet. The fact
-    /// only — never the code, the pet, or any id.</summary>
+    /// only, never the code, the pet, or any id.</summary>
     public const string PetShareJoined = "pet_share_joined";
 
     // ── Pet management ────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ public static class AnalyticsEvents
     /// One unified event covers all sheet types so "which logging features are used"
     /// is a single breakdown with no double-counting.</summary>
     public const string JournalEntryCreated = "journal_entry_created";
-    /// <summary>The owner recorded an outcome for a scheduled dose — the app's core daily
+    /// <summary>The owner recorded an outcome for a scheduled dose: the app's core daily
     /// action. Property: <see cref="PropDoseStatus"/>.
     ///
     /// <para>Fires on all three user gestures (one-tap chip, "Mark as given", "Mark as
@@ -118,17 +118,17 @@ public static class AnalyticsEvents
     public const string ReportExported = "report_exported";
 
     /// <summary>The Constellation (the pet's history as a night sky) was opened.
-    /// Property: <see cref="PropRangeDays"/> — which stretch of time was being looked
+    /// Property: <see cref="PropRangeDays"/>, which stretch of time was being looked
     /// at, never how much is in it. Feature-discovery signal for a surface reachable
     /// only from Quick management.</summary>
     public const string ConstellationOpened = "constellation_opened";
 
     /// <summary>A picture of the Constellation reached the OS share sheet. Property:
     /// <see cref="PropRangeDays"/>. Never the pet, the name, or anything in the
-    /// picture — this counts that a share happened, nothing about what was shared.</summary>
+    /// picture: this counts that a share happened, nothing about what was shared.</summary>
     public const string ConstellationShared = "constellation_shared";
 
-    /// <summary>The owner enabled cloud backup (account + opt-in). No properties —
+    /// <summary>The owner enabled cloud backup (account + opt-in). No properties,
     /// never the email or any account identifier.</summary>
     public const string CloudEnabled = "cloud_enabled";
 
@@ -146,7 +146,7 @@ public static class AnalyticsEvents
     /// <summary>The user completed their first real log (dose given or journal entry).
     /// The first-value milestone the whole funnel is measured against.</summary>
     public const string FirstLogCompleted = "first_log_completed";
-    /// <summary>The owner USED their one free "since your last visit" summary — read it to
+    /// <summary>The owner USED their one free "since your last visit" summary: read it to
     /// the end, or exported it. No properties.
     ///
     /// <para>It is the step the whole paid tier is built on: nobody converts on a
@@ -159,24 +159,24 @@ public static class AnalyticsEvents
     /// tapped in and left, and would flatter the number that matters most.</para></summary>
     public const string FirstSummaryUsed = "first_summary_used";
     /// <summary>The subscribe sheet was viewed. Property: <see cref="PropSubscribeSource"/>
-    /// — this is the "where were they when they considered paying" signal.</summary>
+    /// this is the "where were they when they considered paying" signal.</summary>
     public const string SubscribeScreenViewed = "subscribe_screen_viewed";
     /// <summary>A subscription was purchased. Properties: <see cref="PropPlan"/>,
     /// <see cref="PropPrice"/>, <see cref="PropSubscribeSource"/>.</summary>
     public const string SubscriptionPurchased = "subscription_purchased";
     /// <summary>A purchase attempt did not complete. Property: <see cref="PropReason"/>
-    /// (coarse bucket — never a store message). This is how purchase friction is visible
+    /// (coarse bucket, never a store message). This is how purchase friction is visible
     /// in production, where debug logs aren't.</summary>
     public const string PurchaseFailed = "purchase_failed";
     /// <summary>A restore attempt failed (not "nothing to restore"). Property:
     /// <see cref="PropReason"/>.</summary>
     public const string RestoreFailed = "restore_failed";
     /// <summary>The subscribe sheet finished loading with no offers to show. Property:
-    /// <see cref="PropReason"/> (offline vs empty) — surfaces store/config/connectivity
+    /// <see cref="PropReason"/> (offline vs empty): surfaces store/config/connectivity
     /// friction that would otherwise be invisible.</summary>
     public const string OffersLoadFailed = "offers_load_failed";
     /// <summary>An access code was typed in and submitted. Property:
-    /// <see cref="PropOutcome"/> — redeemed / invalid / already_used / rate_limited /
+    /// <see cref="PropOutcome"/>: redeemed / invalid / already_used / rate_limited /
     /// offline / failed.
     ///
     /// <para><b>Never carries the code, the campaign, the grant length, or the resulting
@@ -186,7 +186,7 @@ public static class AnalyticsEvents
     /// number bought with a weaker posture. This event measures friction only: are people
     /// mistyping codes, hitting the attempt cap, or bouncing off the account requirement.</para></summary>
     public const string AccessCodeRedeemed = "access_code_redeemed";
-    /// <summary>A creator's code was entered (migration 0016). <b>No properties, ever</b> —
+    /// <summary>A creator's code was entered (migration 0016). <b>No properties, ever</b>,
     /// not even the creator. Which creator someone came through is answered by
     /// <c>creator_code_stats</c> in Postgres, where it is exact and joined to real purchases;
     /// putting it on an anonymous event would be a worse number bought with a weaker posture,
@@ -197,7 +197,7 @@ public static class AnalyticsEvents
     /// its "day" would be the grant length, which identifies the campaign.</summary>
     public const string GrantEndingShown = "grant_ending_shown";
     /// <summary>A redeemed access code's grant ran out and the account is back on the free
-    /// tier. The only "your access changed" event left — everyone else on the free tier
+    /// tier. The only "your access changed" event left: everyone else on the free tier
     /// arrived there without anything being taken away, so there is nothing to record.</summary>
     public const string GrantEnded = "grant_ended";
 
@@ -208,8 +208,8 @@ public static class AnalyticsEvents
     public const string PropLanguage = "language";
     /// <summary>OS platform bucket, "Android" / "iOS" / "WinUI" / "macOS".</summary>
     public const string PropPlatform = "platform";
-    /// <summary>Coarse account state — <see cref="AccountStateAnonymous"/> /
-    /// <see cref="AccountStateSignedIn"/> — attached to EVERY event by the central
+    /// <summary>Coarse account state: <see cref="AccountStateAnonymous"/> /
+    /// <see cref="AccountStateSignedIn"/>: attached to EVERY event by the central
     /// payload builder. It reports only <i>whether</i> an anonymous install is signed
     /// in to cloud, so signed-in vs anonymous behaviour, cloud adoption, and retention
     /// can be segmented. It is NOT an identity: no user id, email, or account link is
@@ -217,24 +217,24 @@ public static class AnalyticsEvents
     /// rotatable GUID unrelated to the Supabase user.</summary>
     public const string PropAccountState = "account_state";
     /// <summary>Which creator this install came through, or <see cref="ReferralSourceNone"/>
-    /// — attached to EVERY event by the central payload builder, exactly like
+    /// attached to EVERY event by the central payload builder, exactly like
     /// <see cref="PropAccountState"/>, so any existing funnel can be split by channel
     /// without a second event stream or a single new event.
     ///
     /// <para>It carries the creator's <b>display name</b>, never the code. A channel label
     /// is the same character of fact as the platform or the language: it says how the app
     /// was found, not who found it. The code is closer to a token and stays out of
-    /// analytics entirely, as does the account — events keep
+    /// analytics entirely, as does the account: events keep
     /// <c>$process_person_profile = false</c>, so nothing here can be joined into a person
     /// profile.</para>
     ///
     /// <para>Exact per-creator <i>revenue</i> attribution is still answered in Postgres by
     /// <c>creator_code_stats</c>, which joins to real purchases. This property answers the
     /// different question those tables cannot: how people who arrived through a creator
-    /// <i>behave</i> — do they onboard, log, come back.</para></summary>
+    /// <i>behave</i>: do they onboard, log, come back.</para></summary>
     public const string PropReferralSource = "referral_source";
     /// <summary>Coarse age of the install in UTC calendar days, as a bucket
-    /// (<c>0</c>/<c>1</c>/<c>2-3</c>/<c>4-7</c>/<c>8-14</c>/<c>15+</c> — see
+    /// (<c>0</c>/<c>1</c>/<c>2-3</c>/<c>4-7</c>/<c>8-14</c>/<c>15+</c>: see
     /// <see cref="AnalyticsTenure"/>). Attached to EVERY event by the central payload
     /// builder. It exists because a PostHog funnel has only a <i>maximum</i> conversion
     /// window and cannot require that a step happen a day or more after the previous one;
@@ -244,7 +244,7 @@ public static class AnalyticsEvents
     /// value answers every question we actually ask of it.</summary>
     public const string PropDaysSinceInstall = "days_since_install";
     /// <summary>How long the active pet's record has been accumulating, as a coarse
-    /// bucket (<c>0</c>/<c>1-7</c>/<c>8-30</c>/<c>31-90</c>/<c>91-180</c>/<c>181+</c> —
+    /// bucket (<c>0</c>/<c>1-7</c>/<c>8-30</c>/<c>31-90</c>/<c>91-180</c>/<c>181+</c>,
     /// see <see cref="AnalyticsHistory"/>). Carried by the paywall and purchase events.
     ///
     /// <para><b>It is the one number that can falsify the paid boundary.</b> The whole
@@ -256,15 +256,15 @@ public static class AnalyticsEvents
     ///
     /// <para>Same shape and the same rules as <see cref="PropDaysSinceInstall"/>: bucketed
     /// rather than exact, and it describes the EVENT, never the user. It carries no pet, no
-    /// condition, no medical detail, and no count of anything logged — only how long the
+    /// condition, no medical detail, and no count of anything logged: only how long the
     /// record has existed.</para></summary>
     public const string PropDaysOfHistory = "days_of_history";
-    /// <summary>Coarse species bucket (dog/cat/bird/rabbit/fish/other) — NEVER the
+    /// <summary>Coarse species bucket (dog/cat/bird/rabbit/fish/other), NEVER the
     /// free-text custom type a user might enter, which could be identifying.</summary>
     public const string PropSpecies = "species";
     /// <summary>Journal entry kind: mood/weight/glucose/appetite/seizure/water.</summary>
     public const string PropEntryType = "entry_type";
-    /// <summary>What the owner recorded for a dose — <see cref="DoseStatusTaken"/> /
+    /// <summary>What the owner recorded for a dose: <see cref="DoseStatusTaken"/> /
     /// <see cref="DoseStatusSkipped"/>. Deliberately the only property on
     /// <see cref="DoseLogged"/>: whether it was logged from the chip or after the fact
     /// from the timeline would be interesting, but it is not needed to answer "did they
@@ -277,26 +277,26 @@ public static class AnalyticsEvents
     public const string PropDaysPerWeek = "days_per_week";
     /// <summary>Report look-back window in days (30/90/180).</summary>
     public const string PropRangeDays = "range_days";
-    /// <summary>Which of the two documents was produced — <see cref="ReportKindDesigned"/>
+    /// <summary>Which of the two documents was produced: <see cref="ReportKindDesigned"/>
     /// / <see cref="ReportKindPlain"/>. Both ride the ONE report_exported event on purpose:
     /// the question is whether people get their data out at all, and two events would make
     /// the free half look like a second-class feature in the numbers as well as on the
     /// sheet. As a property it still splits cleanly when that is the question.</summary>
     public const string PropReportKind = "report_kind";
     /// <summary>Which door the subscribe sheet was opened from. The values are the real
-    /// upgrade doors and nothing else — see the <c>SubscribeSource*</c> constants. This is
+    /// upgrade doors and nothing else: see the <c>SubscribeSource*</c> constants. This is
     /// the property that says where someone was standing when they considered paying, so a
     /// door that cannot be told apart from another is a door you cannot learn from.</summary>
     public const string PropSubscribeSource = "source";
-    /// <summary>Subscription cadence — <see cref="PlanYearly"/> / <see cref="PlanMonthly"/>.</summary>
+    /// <summary>Subscription cadence: <see cref="PlanYearly"/> / <see cref="PlanMonthly"/>.</summary>
     public const string PropPlan = "plan";
     /// <summary>Store-formatted price string (e.g. "€24.99"). Not personal.</summary>
     public const string PropPrice = "price";
-    /// <summary>Coarse failure bucket for billing events — <see cref="ReasonFailed"/> /
+    /// <summary>Coarse failure bucket for billing events: <see cref="ReasonFailed"/> /
     /// <see cref="ReasonUnavailable"/> / <see cref="ReasonOffline"/> / <see cref="ReasonEmpty"/>.
     /// Never a raw store message.</summary>
     public const string PropReason = "reason";
-    /// <summary>How an attempt ended, success included — distinct from
+    /// <summary>How an attempt ended, success included: distinct from
     /// <see cref="PropReason"/>, which only ever describes a failure. Used by
     /// <see cref="AccessCodeRedeemed"/>. Coarse buckets only; never server text.</summary>
     public const string PropOutcome = "outcome";
@@ -317,7 +317,7 @@ public static class AnalyticsEvents
     public const string SpeciesOther = "other";
 
     // Dose outcomes the owner can record. A skip is a first-class fact here exactly as it
-    // is in the vet report — non-adherence is still the owner tending to the pet, and both
+    // is in the vet report: non-adherence is still the owner tending to the pet, and both
     // values count as engagement for retention.
     public const string DoseStatusTaken = "taken";
     public const string DoseStatusSkipped = "skipped";
@@ -343,7 +343,7 @@ public static class AnalyticsEvents
     /// chronological export sits beside it, free, and produces no event.</summary>
     public const string SubscribeSourceReport = "report";
     /// <summary>The one heads-up before a redeemed access code's grant runs out, and the
-    /// notice once it has. Not a gate — nothing was withheld to produce it — but it is a
+    /// notice once it has. Not a gate (nothing was withheld to produce it) but it is a
     /// place someone can decide to pay from, so it needs telling apart from the rest.</summary>
     public const string SubscribeSourceGrantEnding = "grant_ending";
     // Subscription plans.
@@ -359,12 +359,12 @@ public static class AnalyticsEvents
     public const string ReasonOwnedByOtherAccount = "owned_by_other_account";
     public const string ReasonEmpty = "empty";
 
-    /// <summary>Not signed in to cloud — the default state of every install.</summary>
+    /// <summary>Not signed in to cloud: the default state of every install.</summary>
     public const string AccountStateAnonymous = "anonymous";
     /// <summary>Signed in to a cloud account. Says nothing about <i>who</i>.</summary>
     public const string AccountStateSignedIn = "signed_in";
 
-    /// <summary>No creator attached to this install — organic, or a link/code that was never
+    /// <summary>No creator attached to this install: organic, or a link/code that was never
     /// used. An explicit bucket rather than a missing property, so "organic" is filterable
     /// and comparable instead of being an absence.</summary>
     public const string ReferralSourceNone = "none";

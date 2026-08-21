@@ -1,33 +1,33 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0020 — the appointment layer: a treatment ledger, vet visits, and the
+--  0020: the appointment layer: a treatment ledger, vet visits, and the
 --         questions an owner means to ask at one.
 --
 --  Three tables, one migration, because they are one feature and migrations are
---  append-only once applied — splitting them would mean editing this file later,
+--  append-only once applied: splitting them would mean editing this file later,
 --  which is the one thing a numbered migration may never do. The client ships them
 --  in phases; a table that exists ahead of the code that writes to it is inert.
 --
---    • medication_changes — what a medication USED TO BE. Until it existed, an edit
+--    • medication_changes: what a medication USED TO BE. Until it existed, an edit
 --      overwrote `dosage` in place and destroyed the answer to the one question a vet
 --      asks about a treatment ("what was he on in March?"). It cannot be backfilled,
 --      so every day without it lost history on every device.
---    • vet_visits         — the appointment as a thing the app knows about.
---    • vet_questions      — a running list between visits, in the owner's own words.
+--    • vet_visits        : the appointment as a thing the app knows about.
+--    • vet_questions     : a running list between visits, in the owner's own words.
 --
 --  All three mirror the 0007 / 0008 / 0013 setup: updated_at trigger + pull-cursor
 --  index, member-scoped RLS through the pet, and the GRANT that 0009 exists to
---  remind us about — RLS gates which ROWS, the GRANT gates whether the role may
+--  remind us about: RLS gates which ROWS, the GRANT gates whether the role may
 --  touch the table at all, and omitting it fails the pull with 42501 and aborts the
 --  caller's entire sync, every table included.
 --
 --  Every one of them cascades from public.pets, so hard account deletion reaches
---  them through the two deletes in delete_my_account() — the omission migration 0012
+--  them through the two deletes in delete_my_account(): the omission migration 0012
 --  had to fix.
 --
 --  Column-naming note: `created_at` and `updated_at` are SERVER-owned and excluded
 --  from push_rows' column list, so a client-owned timestamp can never take those
 --  names. Hence `changed_at`, `asked_at`, `answered_at` (and `med_created_at` before
---  them) — the client's clock, under a name of its own.
+--  them): the client's clock, under a name of its own.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ── 1. The treatment ledger ────────────────────────────────────────────────
@@ -38,7 +38,7 @@
 -- would order this table's pushes behind the medications table's for a pointer
 -- nothing reads. The row is self-contained instead: medication_name and summary
 -- are rendered at the moment of the change and stored as text, so it stays
--- readable after a rename, an archive, or a delete — the same reasoning behind a
+-- readable after a rename, an archive, or a delete: the same reasoning behind a
 -- custom tracker's stored unit, and behind the vet report counting scheduled
 -- doses from dose logs rather than from current schedule rows.
 --
@@ -71,11 +71,11 @@ comment on column public.medication_changes.medication_id is
 -- ── 2. Vet visits ──────────────────────────────────────────────────────────
 --
 -- No `status` column: a visit is past if its date is in the past, derived the way
--- Pet.AgeYears is. No practice or vet entity either — these are free-text labels
+-- Pet.AgeYears is. No practice or vet entity either: these are free-text labels
 -- for context, exactly like appetite_entries.food.
 --
 -- time_ticks is NULLABLE and has no default. Owners often know the day and not
--- the slot, and this app never fabricates an unknown part of a date — the same
+-- the slot, and this app never fabricates an unknown part of a date: the same
 -- rule that leaves pets.birth_month null rather than inventing January.
 create table public.vet_visits (
   id                uuid primary key,
@@ -100,7 +100,7 @@ comment on column public.vet_visits.time_ticks is
 -- No link to a visit. A question is open or answered; that is the whole state
 -- machine, and tying it to a visit would need a cross-table reference for one bit
 -- of information nobody has asked for. question_text is the owner's words, verbatim
--- — named that way rather than `text` because a bare column called `text` is a type
+-- named that way rather than `text` because a bare column called `text` is a type
 -- name everywhere else and push_rows builds its column list as SQL text.
 create table public.vet_questions (
   id                uuid primary key,
@@ -117,7 +117,7 @@ create table public.vet_questions (
 comment on column public.vet_questions.answered_at is
   'NULL = still open. The entire state machine.';
 
--- ── Trigger, pull-cursor index, RLS and GRANT — one loop, as 0007/0013 did ──
+-- ── Trigger, pull-cursor index, RLS and GRANT: one loop, as 0007/0013 did ──
 do $do$
 declare t text;
 begin
@@ -139,14 +139,14 @@ begin
       'create policy "members update"  on public.%I for update using (public.is_pet_member(pet_id))', t);
 
     -- RLS decides which ROWS; the GRANT decides whether the role may touch the
-    -- table at all. Both required — see 0002 / 0009.
+    -- table at all. Both required: see 0002 / 0009.
     execute format('grant select, insert, update on public.%I to authenticated', t);
   end loop;
 end $do$;
 
 -- ── push_rows: add the three tables' natural keys ──────────────────────────
--- All three converge on id. Every row is a distinct moment — a change that
--- happened, a visit that was booked, a question that was written down — appended
+-- All three converge on id. Every row is a distinct moment: a change that
+-- happened, a visit that was booked, a question that was written down: appended
 -- and never merged with a sibling. Byte-for-byte 0013 (the current definition)
 -- apart from the three new conflict_cols branches; all three carry pet_id, so the
 -- generic authorization branch below already covers them.
@@ -192,7 +192,7 @@ begin
     raise exception 'push_rows: table % is not syncable', p_table;
   end if;
 
-  -- Authorization — explicit because this function bypasses table RLS. All three
+  -- Authorization: explicit because this function bypasses table RLS. All three
   -- new tables carry pet_id, so the generic branch below covers them.
   if p_table = 'pets' then
     execute

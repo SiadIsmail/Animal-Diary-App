@@ -491,7 +491,7 @@
                      Both of these used to be centred grey Labels with a tap recogniser:
                      the only two actions on the page that didn't look like the card rows
                      around them, and the two that matter most. §15.1 requires the pause be
-                     "clear, findable, one-tap" — grey text under the fold is none of those.
+                     "clear, findable, one-tap": grey text under the fold is none of those.
                      They now use the two idioms this app already has, and the difference in
                      weight IS the design: the reversible one reads as an ordinary setting,
                      the irreversible one wears the Clay destructive card (the same one
@@ -550,7 +550,7 @@
                 </Border>
 
                 <!-- Remove pet: the owner deletes, a caregiver leaves. The Clay card is
-                     louder than the old grey text but still not a red button — deletion is
+                     louder than the old grey text but still not a red button: deletion is
                      never casual, never punishing. Both lines branch on the viewer's role. -->
                 <Border BackgroundColor="{StaticResource ClayTint}"
                         Stroke="#EFD3CE"
@@ -596,7 +596,7 @@
         </ScrollView>
 
         <!-- ── Sheet overlays (last children render on top) ── -->
-        <!-- Reusable condition setup sheets — the SAME instances onboarding uses -->
+        <!-- Reusable condition setup sheets: the SAME instances onboarding uses -->
         <views:DiabetesSetupSheetView BindingContext="{Binding DiabetesSetupVM}"/>
         <views:CkdSetupSheetView BindingContext="{Binding CkdSetupVM}"/>
         <views:EpilepsySetupSheetView BindingContext="{Binding EpilepsySetupVM}"/>

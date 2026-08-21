@@ -7,7 +7,7 @@ namespace Animal_Diary_App.Data.Models;
 //  point is personalization, not a dashboard: two slots, one record each, no
 //  layout to arrange and nothing to switch off.
 //
-//  Every card states the LAST RECORDED value and when it was taken — never a
+//  Every card states the LAST RECORDED value and when it was taken, never a
 //  score, a streak, or a count of days without something (see the seizure rule in
 //  AI/design-decisions.md → "Felova records; it never judges"). "Seizure free for
 //  12 days" is a streak the owner can break by writing down the truth, so it does
@@ -19,7 +19,7 @@ namespace Animal_Diary_App.Data.Models;
 
 /// <summary>Which record a Today stat card shows. Six of these are the pet's own
 /// <see cref="Models.TrackerId"/> values; <see cref="Medication"/> is the odd one out
-/// because doses are not trackers (see <see cref="Tracker"/>) — they live in the
+/// because doses are not trackers (see <see cref="Tracker"/>): they live in the
 /// medication model and are read from the dose log.</summary>
 public enum TodayCardId
 {
@@ -37,7 +37,7 @@ public enum TodayCardId
 /// <see cref="TodayCardId"/> values, or a tracker the owner defined.
 ///
 /// <para>The same tagged union <see cref="TrackerKey"/> is for the care plan, and for the
-/// same reason — a single <c>TodayCardId.Custom</c> member would make every owner-defined
+/// same reason: a single <c>TodayCardId.Custom</c> member would make every owner-defined
 /// tracker the same card, so picking "Walk" for the left card would light up "Vomiting"
 /// as already chosen and the swap rule would fire between two unrelated records.</para>
 ///
@@ -59,8 +59,8 @@ public readonly record struct TodayCardKey(TodayCardId? BuiltIn, int CustomId)
     ///
     /// <para>The two unions overlap but are not the same set: a care plan holds
     /// trackers, and <see cref="TodayCardId.Medication"/> is not one (doses are not a
-    /// tracker — see <see cref="TodayCardCatalog"/>). So this converts one way only, and
-    /// an unmapped tracker returns null rather than guessing — the same posture as
+    /// tracker: see <see cref="TodayCardCatalog"/>). So this converts one way only, and
+    /// an unmapped tracker returns null rather than guessing: the same posture as
     /// <see cref="TryParse"/>, where a record a later version dropped must fail loudly
     /// rather than silently become weight.</para>
     /// </summary>
@@ -88,7 +88,7 @@ public readonly record struct TodayCardKey(TodayCardId? BuiltIn, int CustomId)
     /// still parses as the built-in it always was.</summary>
     public override string ToString() => IsCustom ? $"custom:{CustomId}" : BuiltIn!.ToString()!;
 
-    /// <summary>Parse a stored key. Anything unrecognised fails rather than guessing —
+    /// <summary>Parse a stored key. Anything unrecognised fails rather than guessing,
     /// the caller falls back to the pet's defaults, which is what a card removed in a
     /// later version should do.</summary>
     public static bool TryParse(string? stored, out TodayCardKey key)
@@ -113,7 +113,7 @@ public readonly record struct TodayCardKey(TodayCardId? BuiltIn, int CustomId)
     }
 }
 
-/// <summary>Which of the two cards is being talked about. Left and right, nothing more —
+/// <summary>Which of the two cards is being talked about. Left and right, nothing more,
 /// there is deliberately no third slot and no ordering to manage.</summary>
 public enum TodayCardSlot
 {
@@ -132,7 +132,7 @@ public readonly record struct TodayCardConfig(TodayCardKey Primary, TodayCardKey
     /// <summary>Put <paramref name="card"/> in <paramref name="slot"/>.
     ///
     /// <para>If the other slot already holds it the two <b>swap</b> rather than
-    /// duplicate — the same record must never occupy both cards, and refusing the pick
+    /// duplicate: the same record must never occupy both cards, and refusing the pick
     /// instead would leave an owner unable to reorder the pair at all.</para></summary>
     public TodayCardConfig With(TodayCardSlot slot, TodayCardKey card)
     {
@@ -151,7 +151,7 @@ public readonly record struct TodayCardConfig(TodayCardKey Primary, TodayCardKey
 /// reads, and which pair a pet starts with.
 ///
 /// <para>Adding a card type is one row in <see cref="Cards"/> plus one branch in
-/// <c>TodayCardService.GetReadingAsync</c> — nothing in the page, the sheet or the
+/// <c>TodayCardService.GetReadingAsync</c>: nothing in the page, the sheet or the
 /// persistence has to change.</para>
 /// </summary>
 public static class TodayCardCatalog
@@ -159,10 +159,10 @@ public static class TodayCardCatalog
     /// <summary>One card type. <paramref name="Tracker"/> is null only for
     /// <see cref="TodayCardId.Medication"/>, which is not a tracker.</summary>
     /// <param name="LabelKey">AppStrings key for the card's name. Every one of them is
-    /// framed as "Last …" — the card reports a record, never a running total.</param>
+    /// framed as "Last …": the card reports a record, never a running total.</param>
     /// <param name="EmptyKey">AppStrings key for "nothing recorded yet". Weight and mood
     /// keep the lines those two cards already shipped with; the rest follow the same
-    /// shape — state the absence, name where to write one, judge nothing. A seizure card
+    /// shape: state the absence, name where to write one, judge nothing. A seizure card
     /// with no entries must never read as an achievement.</param>
     /// <param name="RecordKey">AppStrings key for the record's NAME on its own
     /// ("Glucose"), as opposed to <paramref name="LabelKey"/>'s "Last glucose". The card
@@ -192,14 +192,14 @@ public static class TodayCardCatalog
         new("💊", "Today_CardMedication", "HoneyWarmTint", "HoneyWarmTint", "HoneyDeep");
 
     /// <summary>The card's "nothing recorded yet" line, resolved now, never cached. A
-    /// custom tracker has no catalog row, so it gets the one generic line — its NAME
+    /// custom tracker has no catalog row, so it gets the one generic line: its NAME
     /// carries the identity, and that is owner text the catalog must never hold.</summary>
     public static string EmptyText(TodayCardKey card) =>
         Helpers.LocalizationManager.Instance.GetString(
             card.IsCustom ? "Today_EmptyCustom" : Meta(card.BuiltIn!.Value).EmptyKey);
 
     /// <summary>A card's row. An id with no row falls back to the first card rather
-    /// than throwing — the same posture as <see cref="TrackerVisuals.Fallback"/>.</summary>
+    /// than throwing: the same posture as <see cref="TrackerVisuals.Fallback"/>.</summary>
     public static TodayCardMeta Meta(TodayCardId card)
     {
         foreach (var meta in Cards)
@@ -220,7 +220,7 @@ public static class TodayCardCatalog
     public static string Label(TodayCardId card) =>
         Helpers.LocalizationManager.Instance.GetString(Meta(card).LabelKey);
 
-    /// <summary>The record's name on its own ("Seizures") — what a stretch of history is
+    /// <summary>The record's name on its own ("Seizures"): what a stretch of history is
     /// headed with, where "Last seizure" would be a claim about the wrong thing.</summary>
     public static string RecordName(TodayCardId card) =>
         Helpers.LocalizationManager.Instance.GetString(Meta(card).RecordKey);
@@ -230,7 +230,7 @@ public static class TodayCardCatalog
     /// <see cref="Cards"/>, then the owner's own trackers in the order they created them.
     ///
     /// <para>It lives here because the order is a property of the catalog, not of any
-    /// surface that walks it — a screen that sorted differently would be that screen
+    /// surface that walks it: a screen that sorted differently would be that screen
     /// deciding which record matters. A key with no row sorts last rather than throwing,
     /// the same posture as <see cref="Meta"/>: a record dropped in a later version should
     /// look unfinished, not take somebody else's place.</para>
@@ -251,7 +251,7 @@ public static class TodayCardCatalog
 
     // ── Defaults ──────────────────────────────────────────────────────────────
     //
-    // The pair a pet starts with, chosen from its conditions — the same idea as
+    // The pair a pet starts with, chosen from its conditions: the same idea as
     // CarePlanCatalog seeding trackers from a condition, and the same vocabulary.
     // These are NOT persisted on first read: leaving them live means adding a
     // condition later improves the cards, while the first deliberate pick freezes

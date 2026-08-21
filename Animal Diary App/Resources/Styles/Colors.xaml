@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
@@ -52,19 +52,19 @@
     <Color x:Key="Line">#B3FFFFFF</Color>      <!-- hairline borders (white stroke) -->
 
     <!-- Ink / text -->
-    <Color x:Key="Ink">#0D3A3C</Color>         <!-- primary text — blue-green ink -->
+    <Color x:Key="Ink">#0D3A3C</Color>         <!-- primary text: blue-green ink -->
     <Color x:Key="InkSecondary">#3A6A6B</Color><!-- secondary text               -->
     <Color x:Key="InkTertiary">#7CA2A1</Color> <!-- tertiary / metadata          -->
 
-    <!-- Rockpool — brand accent (teal/blue-green) -->
+    <!-- Rockpool: brand accent (teal/blue-green) -->
 
-    <!-- Honey — medication / attention -->
+    <!-- Honey: medication / attention -->
     <Color x:Key="Honey">#D99A3E</Color>
     <Color x:Key="HoneyDeep">#8A5D14</Color>
 
-    <!-- Sage — stable / given / good -->
+    <!-- Sage: stable / given / good -->
 
-    <!-- Clay — alerts, used sparingly -->
+    <!-- Clay: alerts, used sparingly -->
     <Color x:Key="Clay">#C05F5F</Color>
     <Color x:Key="ClayTint">#F7E5E2</Color>
 
@@ -78,7 +78,7 @@
     <SolidColorBrush x:Key="ClayBrush" Color="{StaticResource Clay}"/>
 
     <!-- =================================================================== -->
-    <!-- ROCKPOOL · WARM  (Journal reskin — Designs/felova-journal-rockpool-warm.html) -->
+    <!-- ROCKPOOL · WARM  (Journal reskin: Designs/felova-journal-rockpool-warm.html) -->
     <!-- Additive tokens: do NOT reuse the older redesign keys above so the   -->
     <!-- MainPage / PetsPage / MedicationsPage visuals stay unchanged.        -->
     <!-- Alpha hexes are #AARRGGBB (e.g. 13% => 0x21).                        -->
@@ -92,7 +92,7 @@
     <Color x:Key="SeaGradTop">#DDF2EC</Color>  <!-- linear top                -->
 
     <!-- Ink reuses the shared Ink / InkSecondary / InkTertiary (#0D3A3C /
-         #3A6A6B / #7CA2A1) — identical values, no new keys needed. -->
+         #3A6A6B / #7CA2A1): identical values, no new keys needed. -->
 
     <!-- Teal accent (translucent, glass-friendly) -->
     <Color x:Key="Teal">#149081</Color>
@@ -100,23 +100,23 @@
     <Color x:Key="TealTint">#21149081</Color>   <!-- 13% -->
     <Color x:Key="TealLine">#47149081</Color>   <!-- 28% -->
 
-    <!-- Blue — weigh-in accent -->
+    <!-- Blue: weigh-in accent -->
     <Color x:Key="Blue">#3E8FB0</Color>
     <Color x:Key="BlueTint">#243E8FB0</Color>   <!-- 14% -->
     <Color x:Key="BlueInk">#2A6E8C</Color>      <!-- weigh-in icon fg -->
 
-    <!-- Rose — glucose accent (the design system's rose / rose-tint / rose-deep;
+    <!-- Rose: glucose accent (the design system's rose / rose-tint / rose-deep;
          glucose is new, so these join the warm palette now). -->
     <Color x:Key="Rose">#BE5F76</Color>
     <Color x:Key="RoseTint">#24BE5F76</Color>   <!-- 14% -->
     <Color x:Key="RoseDeep">#8C3B50</Color>
 
-    <!-- Honey — medication (warm variant, distinct from shared Honey) -->
+    <!-- Honey: medication (warm variant, distinct from shared Honey) -->
     <Color x:Key="HoneyWarm">#D9973C</Color>
     <Color x:Key="HoneyWarmTint">#29D9973C</Color> <!-- 16% -->
     <Color x:Key="HoneyWarmDeep">#8A5A12</Color>
 
-    <!-- Violet — seizure accent (timeline icon tile) -->
+    <!-- Violet: seizure accent (timeline icon tile) -->
     <Color x:Key="Violet">#584A8A</Color>
     <Color x:Key="VioletTint">#26584A8A</Color> <!-- 15% -->
     <Color x:Key="VioletSoftTint">#267B6BAE</Color> <!-- 15% of a lighter violet;
@@ -139,7 +139,7 @@
          seed of one: these are the rockpool tokens after sundown, mixed to sit under the
          same ink (#0D3A3C is the daylight text colour and the night ground's own hue).
 
-         The Star* set is the daylight tracker accents lifted to read on that ground — a
+         The Star* set is the daylight tracker accents lifted to read on that ground: a
          weigh-in is blue in both places, a seizure violet in both. They are LIGHTER than
          their daytime siblings for contrast, never a different hue, so nothing changes
          identity between the Journal and the sky. None of them encodes a value; a colour
@@ -153,18 +153,18 @@
 
     <!-- The two ambient glows WaterBackground already uses, at night strength: a mint
          one up top and the warm SAND one rising off the bottom edge. The sand is the
-         signature — it is what makes this the WARM rockpool rather than a cold one. -->
+         signature: it is what makes this the WARM rockpool rather than a cold one. -->
     <Color x:Key="NightGlowMint">#8FE3D2</Color>
     <Color x:Key="NightGlowSand">#EDDFC0</Color>
 
     <Color x:Key="StarDust">#C4E6E3</Color>     <!-- distant, data-free specks -->
     <!-- The pet's own figure. A shade brighter than the dust so it reads as drawn
-         rather than scattered, and still well below every event symbol — it must never
+         rather than scattered, and still well below every event symbol: it must never
          compete with something that actually happened. -->
     <Color x:Key="NightAsterism">#D8EFE6</Color>
     <Color x:Key="SkyPath">#7FD4C4</Color>      <!-- the timeline's thin glow  -->
 
-    <!-- The five hues one pet's atmosphere may lean towards (SkySignature.Accents) —
+    <!-- The five hues one pet's atmosphere may lean towards (SkySignature.Accents),
          the app's own five accents, one step further muted for a night ground.
 
          DELIBERATELY NOT the Star* set below. Those say which KIND of thing was
@@ -187,8 +187,8 @@
          the fold dial's label, and the peek that opens when a star is tapped. Ink for a
          heading, SkyInk for everything secondary.
 
-         Everything else on the page — the page heading, the range tabs, the legend, the
-         hints — is ordinary daylight Ink, because the page is a daylight page. The
+         Everything else on the page: the page heading, the range tabs, the legend, the
+         hints: is ordinary daylight Ink, because the page is a daylight page. The
          all-dark version's chrome tokens (SkyGlass/SkyWell/SkyLine) stayed deleted with
          it; don't reintroduce those without reintroducing the mistake. -->
     <Color x:Key="SkyText">#EAF6F2</Color>
@@ -202,10 +202,10 @@
     <Color x:Key="StarAppetite">#F0BE72</Color>   <!-- honey  -->
     <Color x:Key="StarWater">#8FD8F0</Color>      <!-- water blue, lighter than weight -->
     <Color x:Key="StarSeizure">#AC9DE8</Color>    <!-- violet -->
-    <Color x:Key="StarMedication">#FFE1A8</Color> <!-- warm cream — doses are the app's own ask -->
-    <Color x:Key="StarCustom">#CFE9DF</Color>     <!-- pale mint — the owner's own trackers -->
+    <Color x:Key="StarMedication">#FFE1A8</Color> <!-- warm cream: doses are the app's own ask -->
+    <Color x:Key="StarCustom">#CFE9DF</Color>     <!-- pale mint: the owner's own trackers -->
 
-    <!-- Mood scale (warm variant — matches HTML m-great..m-unwell) -->
+    <!-- Mood scale (warm variant: matches HTML m-great..m-unwell) -->
     <Color x:Key="MGreat">#FF2BBC89</Color>
     <Color x:Key="MGood">#FF89E166</Color>
     <Color x:Key="MOkay">#FFE2F250</Color>

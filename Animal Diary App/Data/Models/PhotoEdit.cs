@@ -8,7 +8,7 @@ namespace Animal_Diary_App.Data.Models;
 /// only through the draft bookkeeping in <c>PetViewModel</c>).
 ///
 /// <para>The size is carried rather than re-read per surface because the preview and the
-/// encoder must agree on it exactly — the crop window is expressed relative to these
+/// encoder must agree on it exactly: the crop window is expressed relative to these
 /// numbers, so two different readings of "how big is this photo" would show one crop and
 /// write another.</para>
 /// </summary>
@@ -16,7 +16,7 @@ public sealed record PhotoEditSource(string Path, int Width, int Height, bool Is
 
 /// <summary>
 /// Everything the photo editor produces: a quarter-turn count and a square crop window.
-/// Deliberately nothing but numbers — the editor ViewModel holds one of these and never
+/// Deliberately nothing but numbers: the editor ViewModel holds one of these and never
 /// a bitmap, so the live preview (a <c>GraphicsView</c> drawable) and the final write
 /// (SkiaSharp, off the UI thread) are driven from the same values and agree by
 /// construction rather than by two implementations being kept in step by hand.
@@ -24,7 +24,7 @@ public sealed record PhotoEditSource(string Path, int Width, int Height, bool Is
 public readonly record struct PhotoTransform
 {
     /// <summary>Clockwise quarter turns, 0..3. Clockwise because that is what a positive
-    /// angle already means to both canvases this rides on — Android's
+    /// angle already means to both canvases this rides on: Android's
     /// <c>Matrix.PostRotate</c>, which <c>PetPhotoService</c>'s EXIF path relies on, and
     /// SkiaSharp's <c>RotateDegrees</c>.</summary>
     public int QuarterTurns { get; init; }
@@ -43,7 +43,7 @@ public readonly record struct PhotoTransform
     /// <inheritdoc cref="OffsetX"/>
     public float OffsetY { get; init; }
 
-    /// <summary>Unrotated, un-zoomed, centred — what the editor opens on.</summary>
+    /// <summary>Unrotated, un-zoomed, centred: what the editor opens on.</summary>
     public static PhotoTransform Identity => new() { Zoom = 1f };
 }
 
@@ -67,7 +67,7 @@ public static class PhotoCrop
     /// a pixel per output pixel. Past it the owner would only be enlarging blur.</summary>
     public const float MaxZoom = 4f;
 
-    /// <summary>The photo's size after its quarter turns — width and height swap on the
+    /// <summary>The photo's size after its quarter turns: width and height swap on the
     /// odd ones.</summary>
     public static (int Width, int Height) RotatedSize(int width, int height, int quarterTurns)
         => (quarterTurns & 1) == 1 ? (height, width) : (width, height);
@@ -94,7 +94,7 @@ public static class PhotoCrop
 
     /// <summary>Pull a transform back into range: zoom into [1, <see cref="MaxZoom"/>] and
     /// the offsets far enough in that the crop square stays completely covered by photo.
-    /// The single place either rule is written — a gesture, a quarter turn and the encoder
+    /// The single place either rule is written: a gesture, a quarter turn and the encoder
     /// all come through here, so none of them can invent an empty corner.</summary>
     public static PhotoTransform Clamp(int width, int height, PhotoTransform transform)
     {
@@ -112,7 +112,7 @@ public static class PhotoCrop
     }
 
     /// <summary>The scale that takes source pixels to output units, for a crop square of
-    /// <paramref name="side"/> units — screen units in the preview, output pixels in the
+    /// <paramref name="side"/> units: screen units in the preview, output pixels in the
     /// file. Same function, two unit systems, which is what makes the preview honest.</summary>
     public static float Scale(int width, int height, PhotoTransform transform, float side)
     {
@@ -125,7 +125,7 @@ public static class PhotoCrop
     /// <para>Rotating the offset vector by the same quarter turn keeps EXACTLY the same
     /// content inside the mask, because the mask is a circle and a circle is unchanged by
     /// rotation. So "turn right" reads as the photo spinning under a fixed window rather
-    /// than as the crop jumping somewhere else — which is what re-centring would do, and
+    /// than as the crop jumping somewhere else, which is what re-centring would do, and
     /// it would undo the owner's positioning every time they fixed the orientation.</para></summary>
     public static PhotoTransform TurnClockwise(int width, int height, PhotoTransform transform) =>
         Clamp(width, height, transform with

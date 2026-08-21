@@ -1,7 +1,7 @@
 namespace Animal_Diary_App.Data.Models;
 
 /// <summary>
-/// How one owner-created tracker looks — the custom counterpart to
+/// How one owner-created tracker looks: the custom counterpart to
 /// <see cref="TrackerVisuals"/>.
 ///
 /// <para><b>There is no label key here, deliberately.</b> A shipped tracker's name is a
@@ -28,13 +28,13 @@ public readonly record struct CustomVisual(
 /// <para><b>Why fixed:</b> the colours are the SAME five token pairs the shipped trackers
 /// already wear (<see cref="TrackerVisuals"/>), so an owner's walk tracker sits beside the
 /// weigh-in without either looking out of place, and every one of them follows a theme
-/// change. A free colour picker would put hex literals in the database — unreachable by
+/// change. A free colour picker would put hex literals in the database: unreachable by
 /// any theme, and the exact debt AI/known-constraints.md is still paying off elsewhere.</para>
 /// </summary>
 public static class CustomTrackerVisuals
 {
     /// <summary>One choosable colour. <see cref="Key"/> is what persists in
-    /// <see cref="CustomTracker.ColorKey"/> — a short stable id, never a token name and
+    /// <see cref="CustomTracker.ColorKey"/>: a short stable id, never a token name and
     /// never a hex, so the palette can be re-pointed without rewriting rows.</summary>
     public readonly record struct Swatch(string Key, string TintKey, string RowTintKey, string RowInkKey);
 
@@ -52,8 +52,8 @@ public static class CustomTrackerVisuals
     /// <summary>The colour a tracker gets when the owner never chose one.</summary>
     public const string DefaultColorKey = "teal";
 
-    /// <summary>The emoji offered by the picker. A deliberately small, concrete set —
-    /// the things people actually write down about an animal — rather than a system
+    /// <summary>The emoji offered by the picker. A deliberately small, concrete set,
+    /// the things people actually write down about an animal, rather than a system
     /// keyboard, which on Android hands back anything at all (including multi-codepoint
     /// sequences that render as a box on the chip row).</summary>
     public static IReadOnlyList<string> Icons { get; } = new[]
@@ -65,7 +65,7 @@ public static class CustomTrackerVisuals
     /// <summary>The icon a tracker gets when the owner never chose one.</summary>
     public const string DefaultIcon = "🐾";
 
-    /// <summary>Anything unrecognised falls to the default swatch rather than throwing —
+    /// <summary>Anything unrecognised falls to the default swatch rather than throwing,
     /// same posture as <see cref="TrackerVisuals.Fallback"/>. A row written by a newer
     /// build with a colour this one doesn't know must still render.</summary>
     public static Swatch SwatchFor(string? colorKey)
@@ -76,7 +76,7 @@ public static class CustomTrackerVisuals
         return Palette[0];
     }
 
-    /// <summary>The look of a tracker whose definition could not be found — an entry
+    /// <summary>The look of a tracker whose definition could not be found: an entry
     /// outliving its row, which a hard purge (revoked cloud access) can produce. Neutral
     /// well colours, like <see cref="TrackerVisuals.Fallback"/>.
     ///
@@ -85,7 +85,7 @@ public static class CustomTrackerVisuals
     /// <c>AppColors.Resolve</c> and a <c>Label.Text</c>.</para></summary>
     public static readonly CustomVisual Fallback = new(DefaultIcon, "Well", "Well", "Ink");
 
-    /// <summary>Icon + colour tokens for one definition. Null-tolerant on purpose — see
+    /// <summary>Icon + colour tokens for one definition. Null-tolerant on purpose: see
     /// <see cref="Fallback"/>.</summary>
     public static CustomVisual For(CustomTracker? tracker)
     {

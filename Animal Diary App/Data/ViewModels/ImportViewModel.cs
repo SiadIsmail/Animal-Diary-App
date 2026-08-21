@@ -9,7 +9,7 @@ using Animal_Diary_App.Data.Services.Import;
 /// <summary>
 /// The importer screen: pick a file, look at what it will do, confirm.
 ///
-/// <para><b>English-only by intent</b>, like <see cref="DevSheetViewModel"/> — this is an
+/// <para><b>English-only by intent</b>, like <see cref="DevSheetViewModel"/>: this is an
 /// internal tool reached by a code, not a shipped feature, and localizing a surface that
 /// exists to be replaced would be work spent on the wrong thing. Every user-facing string
 /// in the app proper is still localized; this one is deliberately outside that rule and
@@ -91,7 +91,7 @@ public sealed class ImportViewModel : BaseViewModel, IResettableDraft
     /// <summary>The one line at the top of whichever state is showing.</summary>
     public string Headline { get => _headline; private set => SetProperty(ref _headline, value); }
 
-    /// <summary>Per-pet summaries — the preview's body.</summary>
+    /// <summary>Per-pet summaries: the preview's body.</summary>
     public ObservableCollection<string> Summaries { get; } = new();
 
     /// <summary>Errors when rejected; notices when previewing. Both answer "what should I
@@ -123,7 +123,7 @@ public sealed class ImportViewModel : BaseViewModel, IResettableDraft
         {
             // No custom file type is declared. Android's picker is inconsistent about
             // application/json for a file the user saved from a chat app, and a wrong
-            // filter shows an empty folder with nothing to explain it — the parser rejects
+            // filter shows an empty folder with nothing to explain it: the parser rejects
             // anything that is not an import file a moment later anyway, with a message
             // that says so.
             var picked = await FilePicker.Default.PickAsync(new PickOptions
@@ -178,7 +178,7 @@ public sealed class ImportViewModel : BaseViewModel, IResettableDraft
         OnPropertyChanged(nameof(HasProblems));
 
         Headline = plan.IsEmpty
-            ? "Nothing new to import — everything in this file is already recorded."
+            ? "Nothing new to import: everything in this file is already recorded."
             : $"{plan.TotalEntryCount} " + (plan.TotalEntryCount == 1 ? "entry" : "entries") +
               $" across {plan.Pets.Count} " + (plan.Pets.Count == 1 ? "pet" : "pets") +
               (plan.TotalSkippedCount > 0 ? $" · {plan.TotalSkippedCount} skipped" : string.Empty);
@@ -223,7 +223,7 @@ public sealed class ImportViewModel : BaseViewModel, IResettableDraft
 
         Headline = lines.Count == 1
             ? "This file cannot be imported."
-            : $"This file cannot be imported — {lines.Count} problems.";
+            : $"This file cannot be imported: {lines.Count} problems.";
 
         _plan = null;
         Stage = ImportStage.Rejected;
@@ -243,7 +243,7 @@ public sealed class ImportViewModel : BaseViewModel, IResettableDraft
 
             // A newly created pet the owner cannot find is indistinguishable from a
             // failed import, so the importer makes it the active one. Appending to an
-            // existing pet deliberately does NOT switch — the owner was already looking
+            // existing pet deliberately does NOT switch: the owner was already looking
             // at whichever pet they meant.
             if (result.FirstNewPetId != 0)
             {
@@ -269,7 +269,7 @@ public sealed class ImportViewModel : BaseViewModel, IResettableDraft
         catch (Exception ex)
         {
             // The write is one transaction, so a failure here left nothing behind. Say so
-            // plainly — "it half worked" is the fear this message exists to answer.
+            // plainly: "it half worked" is the fear this message exists to answer.
             Debug.WriteLine($"[Import] commit failed: {ex}");
             ShowRejection(new[] { $"The import failed and nothing was written: {ex.Message}" });
         }

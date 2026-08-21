@@ -4,14 +4,14 @@ using MigraDoc.DocumentObjectModel;
 
 /// <summary>
 /// One independent block of the report. Sections know nothing about each other,
-/// about the database, or about their position in the document — each takes the
+/// about the database, or about their position in the document: each takes the
 /// full DTO and appends only its own slice to the shared MigraDoc <see cref="Section"/>.
 /// Reorder / remove / rewrite one without touching the rest (the order lives in
 /// <see cref="VetReportDocument"/>).
 /// </summary>
 public interface IVetReportSection
 {
-    /// <summary>False = the section is omitted entirely — no empty boxes, no
+    /// <summary>False = the section is omitted entirely, no empty boxes, no
     /// headings over nothing. This is how the document degrades gracefully.</summary>
     bool HasContent(VetReportData data);
 

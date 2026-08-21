@@ -6,7 +6,7 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 ///
 /// <para><b>Why it exists.</b> The funnel needs a "did they come back on a later day"
 /// step, and a PostHog funnel cannot express "this step must happen at least a day after
-/// the previous one" — it only has a <i>maximum</i> conversion window. Carrying tenure on
+/// the previous one": it only has a <i>maximum</i> conversion window. Carrying tenure on
 /// the event turns that impossible time constraint into an ordinary property filter:
 /// <c>app_opened where days_since_install != 0</c>.</para>
 ///
@@ -14,17 +14,17 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 /// non-identifying descriptors. An exact install age plus a timestamp is a much narrower
 /// fingerprint than a six-way bucket, and the product questions ("day 1 return?", "still
 /// here in week 2?") are answered by the bucket. Days are counted on <b>UTC calendar
-/// dates</b>, not elapsed hours, matching the usual D1/D7 convention — so an install at
+/// dates</b>, not elapsed hours, matching the usual D1/D7 convention, so an install at
 /// 23:00 UTC and a return at 01:00 UTC reads as day 1.</para>
 ///
-/// <para>Deliberately pure — no MAUI, no clock of its own — so it is unit-testable. The
+/// <para>Deliberately pure (no MAUI, no clock of its own) so it is unit-testable. The
 /// install instant is persisted by <see cref="AnalyticsIdentity"/>.</para>
 /// </summary>
 public static class AnalyticsTenure
 {
-    /// <summary>Same UTC day as the install — the acquisition session.</summary>
+    /// <summary>Same UTC day as the install: the acquisition session.</summary>
     public const string BucketDay0 = "0";
-    /// <summary>The next UTC day — the classic D1 return.</summary>
+    /// <summary>The next UTC day: the classic D1 return.</summary>
     public const string BucketDay1 = "1";
     public const string BucketDays2To3 = "2-3";
     public const string BucketDays4To7 = "4-7";

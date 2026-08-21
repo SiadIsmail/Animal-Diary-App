@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- AddTrackerSheetView — the log types this pet's care plan doesn't cover yet.
+<!-- AddTrackerSheetView: the log types this pet's care plan doesn't cover yet.
      Picking one adds it to the plan, so the Journal starts asking for it. (Logging
      something once needs none of this: the Journal's "+" offers every type outright.)
      BindingContext is the ManagePetViewModel. -->
@@ -21,7 +21,7 @@
 
             <!-- Scrolls under its own ceiling, the same shape as the Journal's "+" sheet
                  and for the same reason: the catalog this offers is not fixed, so the
-                 rows can outgrow the sheet's cap — which clips rather than scrolls.
+                 rows can outgrow the sheet's cap, which clips rather than scrolls.
                  VerticalOptions="Start" + MaximumHeightRequest (set in the code-behind)
                  keeps a short list hugging; a filling ScrollView would stretch it to full
                  height on Android, the regression FelovaBottomSheet.xaml describes.

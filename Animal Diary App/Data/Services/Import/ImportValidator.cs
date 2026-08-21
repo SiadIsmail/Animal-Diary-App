@@ -6,7 +6,7 @@ using Animal_Diary_App.Data.Models;
 // ─────────────────────────────────────────────────────────────────────────────
 //  The whole file, judged before anything is written.
 //
-//  PURE by construction — no SQLite, no MAUI, no clock. Everything it needs about the
+//  PURE by construction, no SQLite, no MAUI, no clock. Everything it needs about the
 //  device arrives as an ImportSnapshot and "today" is a parameter, so the decisions
 //  that matter (what gets written, what gets skipped, what rejects the file) are
 //  testable without a database. That is the same reason PendingEngine and
@@ -19,7 +19,7 @@ using Animal_Diary_App.Data.Models;
 //
 //   2. A single error rejects the ENTIRE file. Validation still runs to completion (for
 //      property 1), but nothing is committed. There is no "import the valid rows" path
-//      — the rows came from one transcription pass, so a demonstrably wrong one is
+//      the rows came from one transcription pass, so a demonstrably wrong one is
 //      evidence about the rest.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -42,7 +42,7 @@ public static class ImportValidator
         // ── Version first, and alone ────────────────────────────────────────────
         //
         // A version this build does not know makes every other check meaningless: the
-        // fields may mean something else, and — worse — a field this build does not read
+        // fields may mean something else, and (worse) a field this build does not read
         // is indistinguishable from one the owner never recorded. So this returns rather
         // than accumulating, and it is the only check that does.
         if (file.Version is null)
@@ -134,7 +134,7 @@ public static class ImportValidator
                     : $"Unknown match \"{block.Match}\". Use \"existing\" or \"new\"."));
         }
 
-        // Resolve the target before anything else needs it — the entry rules below key
+        // Resolve the target before anything else needs it: the entry rules below key
         // their collision checks off the pet id. Skipped when the block has not said
         // enough to have a target at all; the entry pass still runs, so a file with a
         // missing name still reports everything else wrong with it in one go.
@@ -173,7 +173,7 @@ public static class ImportValidator
             if (claimedNewNames.TryGetValue(newPet.Name, out var firstBlock))
             {
                 errors.Add(new ImportError(ImportLocation.Pet(index),
-                    $"A second new pet named \"{newPet.Name}\" — pets[{firstBlock}] already creates one. Put all of one animal's entries in a single pet block."));
+                    $"A second new pet named \"{newPet.Name}\": pets[{firstBlock}] already creates one. Put all of one animal's entries in a single pet block."));
             }
             else
             {
@@ -213,7 +213,7 @@ public static class ImportValidator
             .Where(p => string.Equals(p.Name.Trim(), name, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        // A species, when the file supplies one, is only ever a tie-breaker — never a
+        // A species, when the file supplies one, is only ever a tie-breaker, never a
         // filter that could reduce a correct single match to none.
         var species = ImportFormat.NormalizeSpecies(block.Species);
         if (matches.Count > 1 && species.Length > 0)
@@ -232,7 +232,7 @@ public static class ImportValidator
         {
             errors.Add(new ImportError(ImportLocation.PetField(index, "name"),
                 snapshot.Pets.Count == 0
-                    ? $"No pet named \"{name}\" — this device has no pets yet. Use \"match\": \"new\" to create one."
+                    ? $"No pet named \"{name}\": this device has no pets yet. Use \"match\": \"new\" to create one."
                     : $"No pet named \"{name}\". Pets on this device: {string.Join(", ", snapshot.Pets.Select(p => p.Name))}. Use \"match\": \"new\" to create one."));
             return 0;
         }
@@ -257,7 +257,7 @@ public static class ImportValidator
         if (species.Length == 0)
         {
             errors.Add(new ImportError(ImportLocation.PetField(index, "species"),
-                $"A new pet needs a species. Use one of: {string.Join(", ", ImportFormat.CanonicalSpecies)} — or any word if none fit."));
+                $"A new pet needs a species. Use one of: {string.Join(", ", ImportFormat.CanonicalSpecies)}, or any word if none fit."));
             ok = false;
         }
 
@@ -266,7 +266,7 @@ public static class ImportValidator
         if (block.BirthYear is not int year)
         {
             errors.Add(new ImportError(ImportLocation.PetField(index, "birth_year"),
-                "A new pet needs a birth_year. If the owner only knows roughly, use their best year and leave birth_month and birth_day out — Felova never invents them."));
+                "A new pet needs a birth_year. If the owner only knows roughly, use their best year and leave birth_month and birth_day out: Felova never invents them."));
             ok = false;
         }
         else if (year < EarliestDate.Year || year > today.Year)
@@ -329,8 +329,8 @@ public static class ImportValidator
                 conditions.Add(normalized);
         }
 
-        // Creating a second animal with a name the device already uses is legal — people
-        // do re-use names — but it is also exactly what a wrong "new" looks like, so the
+        // Creating a second animal with a name the device already uses is legal: people
+        // do re-use names, but it is also exactly what a wrong "new" looks like, so the
         // owner is told before they confirm rather than after.
         if (name.Length > 0 && snapshot.Pets.Any(p => string.Equals(p.Name.Trim(), name, StringComparison.OrdinalIgnoreCase)))
         {
@@ -373,19 +373,19 @@ public static class ImportValidator
 
             if (handle.Length == 0)
             {
-                errors.Add(new ImportError(where, "A custom tracker needs a \"ref\" — a short handle its entries point at."));
+                errors.Add(new ImportError(where, "A custom tracker needs a \"ref\": a short handle its entries point at."));
                 continue;
             }
 
             if (byRef.ContainsKey(handle))
             {
-                errors.Add(new ImportError(where, $"Duplicate tracker ref \"{handle}\" — each ref must be unique within a pet."));
+                errors.Add(new ImportError(where, $"Duplicate tracker ref \"{handle}\": each ref must be unique within a pet."));
                 continue;
             }
 
             if (name.Length == 0)
             {
-                errors.Add(new ImportError(where, "A custom tracker needs a \"name\" — what the owner calls it."));
+                errors.Add(new ImportError(where, "A custom tracker needs a \"name\": what the owner calls it."));
                 continue;
             }
 
@@ -402,7 +402,7 @@ public static class ImportValidator
             if (shape == CustomShape.Amount && unit.Length == 0)
             {
                 errors.Add(new ImportError(where,
-                    "An \"amount\" tracker needs a \"unit\" — the owner's own word for what the number counts (\"min\", \"km\", \"bowls\")."));
+                    "An \"amount\" tracker needs a \"unit\": the owner's own word for what the number counts (\"min\", \"km\", \"bowls\")."));
                 continue;
             }
 
@@ -449,7 +449,7 @@ public static class ImportValidator
                 if (!ImportFormat.TryParseCadence(def.Cadence, out kind))
                 {
                     errors.Add(new ImportError(where,
-                        $"Unknown cadence \"{def.Cadence}\". Use per_day, daily, weekly, twice_weekly, as_needed or event — or leave it out to record without ever being asked for it."));
+                        $"Unknown cadence \"{def.Cadence}\". Use per_day, daily, weekly, twice_weekly, as_needed or event, or leave it out to record without ever being asked for it."));
                     continue;
                 }
             }
@@ -639,7 +639,7 @@ public static class ImportValidator
         if (string.IsNullOrWhiteSpace(raw))
         {
             errors.Add(new ImportError(where,
-                $"An entry needs a \"date\" in {ImportFormat.DateFormat} form. Never guess one — leave the entry out instead."));
+                $"An entry needs a \"date\" in {ImportFormat.DateFormat} form. Never guess one: leave the entry out instead."));
             return false;
         }
 
@@ -662,7 +662,7 @@ public static class ImportValidator
         if (parsed.Date < EarliestDate)
         {
             errors.Add(new ImportError(where,
-                $"{raw} is implausibly early — check the year was transcribed correctly."));
+                $"{raw} is implausibly early: check the year was transcribed correctly."));
             return false;
         }
 
@@ -671,7 +671,7 @@ public static class ImportValidator
     }
 
     /// <summary>An absent time is legitimate and common: notes rarely say when. It comes
-    /// back as null, and each store decides how to hold that — see the callers.</summary>
+    /// back as null, and each store decides how to hold that: see the callers.</summary>
     private static bool TryReadTime(
         string? raw, int petIndex, int entryIndex, List<ImportError> errors, out TimeSpan? time)
     {
@@ -781,7 +781,7 @@ public static class ImportValidator
         if (!claimed.Add(date))
         {
             errors.Add(new ImportError(ImportLocation.Entry(i, e),
-                $"A second weight for {date:yyyy-MM-dd}. Felova keeps one weight per day — decide which reading is right."));
+                $"A second weight for {date:yyyy-MM-dd}. Felova keeps one weight per day: decide which reading is right."));
             return;
         }
 
@@ -812,7 +812,7 @@ public static class ImportValidator
         if (!claimed.Add(date))
         {
             errors.Add(new ImportError(ImportLocation.Entry(i, e),
-                $"A second mood for {date:yyyy-MM-dd}. Felova keeps one mood per day — decide which reading is right."));
+                $"A second mood for {date:yyyy-MM-dd}. Felova keeps one mood per day: decide which reading is right."));
             return;
         }
 
@@ -839,7 +839,7 @@ public static class ImportValidator
             return;
 
         // The one bit of context that decides how a reading is read. Required, because a
-        // glucose number without it is genuinely ambiguous to a vet — and guessing would
+        // glucose number without it is genuinely ambiguous to a vet, and guessing would
         // be the app inventing clinical context.
         if (!ImportFormat.TryParseFoodContext(entry.Context, out var context))
         {
@@ -879,7 +879,7 @@ public static class ImportValidator
         if (!claimed.Add((ImportEntryType.AppetiteLevel, date)))
         {
             errors.Add(new ImportError(ImportLocation.Entry(i, e),
-                $"A second appetite reading for {date:yyyy-MM-dd}. Felova keeps one per day — use appetite_amount for individual meals."));
+                $"A second appetite reading for {date:yyyy-MM-dd}. Felova keeps one per day: use appetite_amount for individual meals."));
             return;
         }
 
@@ -944,7 +944,7 @@ public static class ImportValidator
         if (!claimed.Add((ImportEntryType.WaterLevel, date)))
         {
             errors.Add(new ImportError(ImportLocation.Entry(i, e),
-                $"A second water reading for {date:yyyy-MM-dd}. Felova keeps one per day — use water_amount for individual drinks."));
+                $"A second water reading for {date:yyyy-MM-dd}. Felova keeps one per day: use water_amount for individual drinks."));
             return;
         }
 
@@ -1018,7 +1018,7 @@ public static class ImportValidator
             if (!ImportFormat.TryParseSeizureType(entry.SeizureType, out var parsed))
             {
                 errors.Add(new ImportError(ImportLocation.EntryField(i, e, "seizure_type"),
-                    $"Unknown seizure_type \"{entry.SeizureType}\". Use generalized, focal or focal_to_generalized — or leave it out, which is a normal answer and not a missing field."));
+                    $"Unknown seizure_type \"{entry.SeizureType}\". Use generalized, focal or focal_to_generalized, or leave it out, which is a normal answer and not a missing field."));
                 return;
             }
             seizureType = parsed;
@@ -1075,7 +1075,7 @@ public static class ImportValidator
         else if (entry.Amount is not null)
         {
             errors.Add(new ImportError(ImportLocation.EntryField(i, e, "amount"),
-                $"\"{handle}\" is a tick tracker — it records that something happened, not how much. Put the detail in the note, or declare the tracker as \"amount\" with a unit."));
+                $"\"{handle}\" is a tick tracker: it records that something happened, not how much. Put the detail in the note, or declare the tracker as \"amount\" with a unit."));
             return;
         }
 
@@ -1084,7 +1084,7 @@ public static class ImportValidator
         // Custom events fingerprint on the tracker too: two different trackers ticked at
         // the same minute are two different facts. An existing tracker uses its real row
         // id; one being created cannot collide with anything stored, so its negated
-        // ordinal stands in — stable within the run, and never equal to a real id.
+        // ordinal stands in: stable within the run, and never equal to a real id.
         var trackerKey = tracker.ExistingId != 0 ? tracker.ExistingId : -(tracker.Ordinal + 1);
         if (!stored.Add((ImportEntryType.Custom, date, at, amount ?? 0m, trackerKey)))
         {

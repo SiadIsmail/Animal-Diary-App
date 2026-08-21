@@ -4,7 +4,7 @@ using Animal_Diary_App.Data.Models;
 using SQLite;
 
 /// <summary>Reads and writes <see cref="SeizureEntry"/> rows. Seizures are an Event
-/// tracker — never pending — logged from the "+" sheet. Mirrors the other Journal
+/// tracker (never pending) logged from the "+" sheet. Mirrors the other Journal
 /// entry services.</summary>
 public class SeizureEntryService
 {
@@ -22,7 +22,7 @@ public class SeizureEntryService
         return entry.Id;
     }
 
-    /// <summary>Soft delete (the undo path) — the row becomes a tombstone so the
+    /// <summary>Soft delete (the undo path): the row becomes a tombstone so the
     /// deletion can sync (see <see cref="ISyncable"/>).</summary>
     public async Task DeleteAsync(int id)
     {
@@ -44,7 +44,7 @@ public class SeizureEntryService
 
     /// <summary>The most recent seizure for a pet (any day), or null if none has ever
     /// been written down. Feeds the Today card, which states when the last one happened
-    /// — a history entry, never a count of days since (see AI/domain.md → Today cards).
+    /// a history entry, never a count of days since (see AI/domain.md → Today cards).
     /// Same shape as <see cref="GlucoseEntryService.GetMostRecentAsync"/>: the ordering
     /// runs in SQL and only the newest day's few rows are tie-broken in memory.</summary>
     public async Task<SeizureEntry?> GetMostRecentAsync(int petId)

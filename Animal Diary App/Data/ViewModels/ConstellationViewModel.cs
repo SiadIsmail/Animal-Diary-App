@@ -14,7 +14,7 @@ using Animal_Diary_App.Helpers;
 //  It owns the stretch of time being looked at, the events in it, the legend, and
 //  whichever star was tapped. It owns NO geometry: where a star lands is
 //  ConstellationLayout's answer and the page asks for it, because only the page
-//  knows how big the canvas is (same split as the photo cropper — four numbers here,
+//  knows how big the canvas is (same split as the photo cropper: four numbers here,
 //  pixels there).
 //
 //  Nothing in this class ranks, totals, averages or compares. The only number it
@@ -22,7 +22,7 @@ using Animal_Diary_App.Helpers;
 //  rather than a claim about the animal.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// <summary>One row of the legend: a symbol, its colour, its name — and, since the
+/// <summary>One row of the legend: a symbol, its colour, its name, and, since the
 /// legend is also how a kind is brought into focus, whether it is the chosen one.</summary>
 public class CelestialLegendItem : BaseViewModel
 {
@@ -40,12 +40,12 @@ public class CelestialLegendItem : BaseViewModel
         set => SetProperty(ref _isFocused, value);
     }
 
-    /// <summary>The very same drawing routine the sky uses, at legend size — a legend
+    /// <summary>The very same drawing routine the sky uses, at legend size: a legend
     /// that could drift from the thing it explains would be worse than none.</summary>
     public IDrawable Symbol { get; init; } = new View.Controls.CelestialSymbolDrawable();
 
     /// <summary>The alternating degree-or-two tilt every icon tile in this app wears
-    /// (see <c>TimelineItem.IconRotation</c>) — imperfection on the frame.</summary>
+    /// (see <c>TimelineItem.IconRotation</c>): imperfection on the frame.</summary>
     public double Tilt { get; init; }
 }
 
@@ -53,13 +53,13 @@ public class CelestialLegendItem : BaseViewModel
 /// What the owner wrote down about one kind they brought into focus: how much of it,
 /// and how it fell across the four fixed bands of a day.
 ///
-/// <para>It appears only for a focused kind, and only ever states counts — a fact about
+/// <para>It appears only for a focused kind, and only ever states counts: a fact about
 /// the diary, in the same neutral weight as everything else on the page. All four bands
 /// are always listed, in fixed order, zeros included: naming a "peak" would be the app
 /// choosing the finding, where four plain numbers let the owner see it themselves
 /// (Data/Models/RecordFacts.cs).</para>
 ///
-/// <para>Computed from the events already in memory — the same
+/// <para>Computed from the events already in memory: the same
 /// <see cref="DayPartCounts"/> arithmetic <c>RecordFactsService</c> uses, so the sky and
 /// the appointment summary can never disagree about a band. No query, no reload, and
 /// nothing here touches the arrangement.</para>
@@ -73,7 +73,7 @@ public class ConstellationViewModel : BaseViewModel
     private readonly PetConditionService _conditions;
     private readonly IAnalyticsService _analytics;
 
-    /// <summary>The offered stretches. Presets only, like the vet report's look-backs —
+    /// <summary>The offered stretches. Presets only, like the vet report's look-backs,
     /// a date-range picker is a form, and this is a thing to look at.</summary>
     public static readonly int[] RangeOptions = { 7, 30, 90, 365 };
 
@@ -84,12 +84,12 @@ public class ConstellationViewModel : BaseViewModel
     private SkyLens _lens = SkyLens.History;
     private readonly List<CelestialCategory> _focus = new();
 
-    /// <summary>Past three, "focused" stops meaning anything — it is just the sky
+    /// <summary>Past three, "focused" stops meaning anything: it is just the sky
     /// again with two kinds missing.</summary>
     private const int MaxFocus = 3;
 
     /// <summary>The owner has picked a focus themselves, so stop deriving one. Same
-    /// "seeded once, then owned" shape the care plan and Today's cards use — a derived
+    /// "seeded once, then owned" shape the care plan and Today's cards use: a derived
     /// default is only a default until there is an intent to protect.</summary>
     private bool _focusChosen;
     private double _periodDays = 1;
@@ -113,7 +113,7 @@ public class ConstellationViewModel : BaseViewModel
 
     private static LocalizationManager Loc => LocalizationManager.Instance;
 
-    /// <summary>Raised once a load has replaced <see cref="Events"/> — the page
+    /// <summary>Raised once a load has replaced <see cref="Events"/>: the page
     /// re-places the sky and invalidates. An event rather than a bound collection
     /// because the canvas is not a list and has nothing to bind to.</summary>
     public event Action? SkyChanged;
@@ -123,12 +123,12 @@ public class ConstellationViewModel : BaseViewModel
     public ICommand SetLensCommand { get; }
     public ICommand ToggleFocusCommand { get; }
 
-    /// <summary>Raised when the ARRANGEMENT changed but the data did not — a lens or a
+    /// <summary>Raised when the ARRANGEMENT changed but the data did not: a lens or a
     /// fold. The page re-places and flies the stars to their new positions without
     /// going near the database.</summary>
     public event Action? ViewChanged;
 
-    /// <summary>Raised when only the PAINTING changed — the focus. Deliberately not
+    /// <summary>Raised when only the PAINTING changed: the focus. Deliberately not
     /// <see cref="ViewChanged"/>: re-placing for a focus is both wasted work and, worse,
     /// it used to reset the camera, so tapping a legend key threw the wall of nights
     /// back to its bottom and lost the Timeline's zoom. Nobody moved; someone got
@@ -158,7 +158,7 @@ public class ConstellationViewModel : BaseViewModel
     public bool IsCycle => Lens == SkyLens.Cycle;
 
     /// <summary>How far the Cycle ring folds time, in days. <b>The owner sets this and
-    /// the app never does</b> — Felova offers a dial and says nothing whatsoever about
+    /// the app never does</b>: Felova offers a dial and says nothing whatsoever about
     /// what lines up on it. Suggesting a period would be the app claiming a pattern,
     /// which is exactly the claim it cannot support.</summary>
     public double PeriodDays
@@ -180,7 +180,7 @@ public class ConstellationViewModel : BaseViewModel
     /// The longest fold worth offering: <b>half the stretch on screen</b>.
     ///
     /// <para>You cannot see a repeat in a window that does not hold at least two of
-    /// them, so beyond this the lens has nothing to show — and folding a seven-day
+    /// them, so beyond this the lens has nothing to show, and folding a seven-day
     /// range at sixty days crammed every entry into the leftmost tenth of the card and
     /// simply looked broken. This is a mechanical bound, not the app choosing a period:
     /// it says what the picture is capable of showing, never what the answer is.</para>
@@ -188,7 +188,7 @@ public class ConstellationViewModel : BaseViewModel
     public double MaxPeriodDays => Math.Max(2, Math.Min(60, RangeDays / 2));
 
     /// <summary>What the fold is, said the way a person would say it. "Every 1 days" is
-    /// nobody's sentence — a one-day fold is a clock face and a seven-day fold is a
+    /// nobody's sentence: a one-day fold is a clock face and a seven-day fold is a
     /// week, and both deserve their own words.</summary>
     public string PeriodLabel => (int)PeriodDays switch
     {
@@ -208,15 +208,15 @@ public class ConstellationViewModel : BaseViewModel
     /// Shown alongside the lens hint whenever there is more than one kind to choose
     /// between.
     ///
-    /// <para>Not a retiring hint. The Constellation is not a daily surface — someone
-    /// opens it before an appointment, which might be twice a year — so "they will have
+    /// <para>Not a retiring hint. The Constellation is not a daily surface: someone
+    /// opens it before an appointment, which might be twice a year, so "they will have
     /// learned it by now" is an assumption about a habit nobody has. Both lines stay,
     /// and they sit at the top where they are read before the picture rather than
     /// explaining it afterwards.</para>
     /// </summary>
     public bool ShowFocusHint => Legend.Count > 1;
 
-    /// <summary>What the canvas is, for a screen reader — which cannot see a sky. It
+    /// <summary>What the canvas is, for a screen reader, which cannot see a sky. It
     /// names the arrangement and how much is in it, which is everything the picture
     /// itself claims.</summary>
     public string LensDescription => Loc.Format(Lens switch
@@ -235,7 +235,7 @@ public class ConstellationViewModel : BaseViewModel
     /// the crowd.
     ///
     /// <para><b>Up to three at once</b>, because the question an owner actually has is
-    /// usually about two things — the nights he seized, against the nights the evening
+    /// usually about two things: the nights he seized, against the nights the evening
     /// dose went in. Both are drawn at their real times and nothing is overlaid or
     /// computed; the conclusion is the owner's to draw, exactly as it would be turning
     /// the pages of a paper diary.</para>
@@ -249,7 +249,7 @@ public class ConstellationViewModel : BaseViewModel
 
         if (!_focus.Remove(item.Category))
         {
-            // At the cap, the oldest choice makes way — so a tap always does something
+            // At the cap, the oldest choice makes way, so a tap always does something
             // rather than silently refusing.
             if (_focus.Count >= MaxFocus)
                 _focus.RemoveAt(0);
@@ -269,7 +269,7 @@ public class ConstellationViewModel : BaseViewModel
     }
 
     /// <summary>Counts for whichever kinds are in focus, in legend order. Empty when
-    /// nothing is focused — the whole sky is on show and a count of everything is
+    /// nothing is focused: the whole sky is on show and a count of everything is
     /// already in <see cref="CountLine"/>.</summary>
     public RangeObservableCollection<CelestialFacts> FocusFacts { get; } = new();
 
@@ -286,7 +286,7 @@ public class ConstellationViewModel : BaseViewModel
     {
         var rows = new List<CelestialFacts>(_focus.Count);
 
-        // Legend order, not the order they were tapped — the block reads as a caption
+        // Legend order, not the order they were tapped: the block reads as a caption
         // for the legend above it, and a list that reshuffles itself as kinds go in and
         // out of focus is a list that looks ranked.
         foreach (var category in CelestialVisuals.All)
@@ -344,12 +344,12 @@ public class ConstellationViewModel : BaseViewModel
     /// <summary>The title on a shared picture.</summary>
     public string ShareTitle => Loc.Format("Sky_ShareTitle", PetName);
 
-    /// <summary>The line under it — the stretch, and how much is in it. Both facts
+    /// <summary>The line under it: the stretch, and how much is in it. Both facts
     /// about the records; nothing about the animal.</summary>
     public string ShareSubtitle => $"{Loc.Format("Sky_ShareRange", RangeDays)} · {CountLine}";
 
     /// <summary>How much is in the sky. A count of records is a fact about the diary,
-    /// not a reading of the animal — the same footing the vet report's counts stand on
+    /// not a reading of the animal: the same footing the vet report's counts stand on
     /// (AI/domain.md).</summary>
     public string CountLine => Events.Count == 1
         ? Loc.GetString("Sky_CountOne")
@@ -386,7 +386,7 @@ public class ConstellationViewModel : BaseViewModel
         _selectedIndex >= 0 && _selectedIndex < Events.Count ? Events[_selectedIndex] : null;
 
     /// <summary>What it was. For an owner-defined tracker this is the owner's own name
-    /// for it, shown verbatim — never translated, never fitted into a sentence.</summary>
+    /// for it, shown verbatim, never translated, never fitted into a sentence.</summary>
     public string SelectedTitle => Selected?.Title ?? string.Empty;
 
     /// <summary>The reading exactly as it was written down, or empty. This is the one
@@ -405,14 +405,14 @@ public class ConstellationViewModel : BaseViewModel
 
     /// <summary>
     /// How long after the previous entry <b>of the same kind</b> this one was written
-    /// down — "18 days after the last one".
+    /// down: "18 days after the last one".
     ///
     /// <para>It is the answer to "does this come round?" delivered with no chart at
     /// all, and it is the one number on this surface that could have been a streak. It
     /// is not, and the reason is that it applies to <b>every kind equally</b>: a mood, a
     /// weigh-in and a seizure all get the same sentence. A counter that appeared only
     /// on seizures would be "days since", which is a thing the owner can break by
-    /// writing down the truth — the exact reason streaks are banned from Today's cards
+    /// writing down the truth: the exact reason streaks are banned from Today's cards
     /// (AI/domain.md). A gap between two entries that both already happened is a fact
     /// about the diary, and it reads as one because nothing about it is special.</para>
     ///
@@ -444,14 +444,14 @@ public class ConstellationViewModel : BaseViewModel
     /// <summary>
     /// What else was written down on the same day as the tapped entry.
     ///
-    /// <para>This is the useful half of "did anything go with it" — and it is useful
+    /// <para>This is the useful half of "did anything go with it", and it is useful
     /// precisely because it does <b>nothing</b> but recall. It lists the day's other
     /// entries at their own times and stops. No window, no overlay, no ordering by
     /// relevance, no suggestion that any of it is connected. An owner reading "the night
     /// he seized, he had eaten nothing since morning" has noticed something worth saying
     /// to a vet; Felova has only turned the page for them.</para>
     ///
-    /// <para>Capped, and the cap is not a summary — on a day with more entries than fit,
+    /// <para>Capped, and the cap is not a summary: on a day with more entries than fit,
     /// the line underneath says how many are not shown rather than choosing which
     /// matter.</para>
     /// </summary>
@@ -485,7 +485,7 @@ public class ConstellationViewModel : BaseViewModel
             }
         }
 
-        // Built first, then swapped in one synchronous block — never cleared across an
+        // Built first, then swapped in one synchronous block, never cleared across an
         // await (AI/coding-standards.md).
         SameDay.Clear();
         foreach (var line in lines)
@@ -498,7 +498,7 @@ public class ConstellationViewModel : BaseViewModel
         OnPropertyChanged(nameof(HasSameDayMore));
     }
 
-    /// <summary>Minutes, hours or days — whichever a person would actually say. Two
+    /// <summary>Minutes, hours or days: whichever a person would actually say. Two
     /// seizures twenty minutes apart is a very different sentence from two eighteen
     /// days apart, and rounding the first to "0 days" would throw away the thing worth
     /// noticing.</summary>
@@ -523,7 +523,7 @@ public class ConstellationViewModel : BaseViewModel
         return Loc.Format(days == 1 ? "Sky_GapDayOne" : "Sky_GapDays", days);
     }
 
-    /// <summary>The tapped star, redrawn at tile size on the sheet — so the thing being
+    /// <summary>The tapped star, redrawn at tile size on the sheet, so the thing being
     /// described is recognisably the thing that was touched.</summary>
     public IDrawable? SelectedSymbol => Selected is CelestialEvent e ? SymbolFor(e.Category) : null;
 
@@ -558,7 +558,7 @@ public class ConstellationViewModel : BaseViewModel
                 ? new List<CelestialEvent>()
                 : await _constellation.GetRangeAsync(pet.Id, from, to);
 
-            // A newer range (or a newer pet) owns the sky now — this result is history.
+            // A newer range (or a newer pet) owns the sky now: this result is history.
             if (generation != _loadGeneration)
                 return;
 
@@ -567,13 +567,13 @@ public class ConstellationViewModel : BaseViewModel
             Events = events;
             SelectedIndex = -1;
 
-            // Derived from who the pet IS, never from what is in the sky — so it is
+            // Derived from who the pet IS, never from what is in the sky, so it is
             // identical whether this is their first day or their fifth year.
             Signature = SkySignature.For(pet?.Name, pet?.BirthYear ?? 0);
 
             // Volume is not importance: a quarter of twice-daily doses is 180 entries
             // against six seizures. Opening on the kind the pet's conditions suggest is
-            // the honest way to keep the rare thing findable — see
+            // the honest way to keep the rare thing findable: see
             // CelestialVisuals.OpeningFocusFor.
             if (!_focusChosen)
             {
@@ -629,11 +629,11 @@ public class ConstellationViewModel : BaseViewModel
             });
         }
 
-        // A kind that is no longer in the sky cannot stay in focus — changing the range
+        // A kind that is no longer in the sky cannot stay in focus: changing the range
         // would otherwise leave the whole page dimmed for something with nothing in it.
         _focus.RemoveAll(kind => !present.Contains(kind));
 
-        // Built first, then swapped in one synchronous block — never cleared across an
+        // Built first, then swapped in one synchronous block, never cleared across an
         // await (AI/coding-standards.md).
         Legend.Clear();
         foreach (var item in items)
@@ -657,13 +657,13 @@ public class ConstellationViewModel : BaseViewModel
     /// The page has been left. Forget what this visit explored.
     ///
     /// <para>This ViewModel is a DI <b>singleton</b>, so without it a focus picked in
-    /// one visit is still there in the next — and worse, the "the owner has chosen"
+    /// one visit is still there in the next, and worse, the "the owner has chosen"
     /// flag stays set too, which permanently defeats the condition-derived opening
     /// focus for the rest of the process. Someone who once tapped Appetite would never
     /// again open on their dog's seizures.</para>
     ///
     /// <para>Focus is <b>exploration state, not a preference</b>: it is never persisted,
-    /// nothing writes it down, and every visit is meant to start from the same place —
+    /// nothing writes it down, and every visit is meant to start from the same place,
     /// the kind the pet's conditions suggest. Deliberately narrow: the range, the lens
     /// and the fold are left alone, because those are how the owner asked to look at the
     /// data rather than what the app decided to show them.</para>
@@ -689,7 +689,7 @@ public class ConstellationViewModel : BaseViewModel
         });
 
     /// <summary>A picture of the sky reached the share sheet. The one signal that says
-    /// whether this surface does the job it was built for — never the pet, the name, or
+    /// whether this surface does the job it was built for, never the pet, the name, or
     /// what is in the picture.</summary>
     public void TrackShared() =>
         _analytics.Track(AnalyticsEvents.ConstellationShared, new Dictionary<string, object?>

@@ -8,7 +8,7 @@ using System.Diagnostics;
 /// The formula lives here and nowhere else:
 /// <c>HasFullAccess = store entitlement active OR grant running</c>.
 ///
-/// <para>There is no trial term, and there is no free-tier term either — the free tier is
+/// <para>There is no trial term, and there is no free-tier term either: the free tier is
 /// simply the absence of both, and it gates nothing anyone writes down. See
 /// <see cref="IEntitlementService"/> for what this boundary does and does not sell.</para>
 /// </summary>
@@ -36,7 +36,7 @@ public sealed class EntitlementService : IEntitlementService
         _grants = grants;
         _utcNow = utcNow ?? (() => DateTime.UtcNow);
         // The store can change the entitlement underneath us (restore on another
-        // device, a renewal, an expiry push) — bubble it up as our own change.
+        // device, a renewal, an expiry push): bubble it up as our own change.
         _store.Changed += () => StateChanged?.Invoke();
     }
 
@@ -53,7 +53,7 @@ public sealed class EntitlementService : IEntitlementService
 
     // Ordering is deliberate and is the copy contract, not a preference: a subscriber who
     // also holds a code is a SUBSCRIBER (Settings must offer them store management), and a
-    // grant outranks nothing else, so it comes next. Everything else is Free — a tier, not
+    // grant outranks nothing else, so it comes next. Everything else is Free: a tier, not
     // an expiry, and copy must never describe it as one.
     public AccessState State =>
         !_store.EntitlementKnown || !_grants.GrantKnown ? AccessState.Unknown
@@ -67,7 +67,7 @@ public sealed class EntitlementService : IEntitlementService
 
     public bool CanEditPet(string? petSyncId)
     {
-        // Your own access first, and without touching cloud state at all — a local-only
+        // Your own access first, and without touching cloud state at all: a local-only
         // subscriber has no memberships, no session and no sync, and must never be routed
         // through anything that could throw or block.
         if (HasFullAccess)
@@ -83,7 +83,7 @@ public sealed class EntitlementService : IEntitlementService
             return false;
 
         // Sponsorship covers caregivers only. On a pet you OWN, your own (already-failed)
-        // access is the whole answer — otherwise a subscription could be laundered into
+        // access is the whole answer, otherwise a subscription could be laundered into
         // free access for the sponsor's own record.
         if (!info.IsCaregiver || !info.OwnerHasAccess)
             return false;

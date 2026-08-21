@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
-/// How a medication's schedule set reads as one line — "Mon, Wed · 08:00 · 20:00".
+/// How a medication's schedule set reads as one line: "Mon, Wed · 08:00 · 20:00".
 ///
 /// <para>Extracted from <c>MedicationViewModel</c> so the medication list and the
 /// treatment ledger cannot drift: a ledger row saying the schedule changed has to be
@@ -14,7 +14,7 @@ public static class MedicationScheduleText
 {
     /// <summary>
     /// The "when" tag: which days, then the times of day. Days are omitted when it's
-    /// every day, because the cadence tag beside it already says "daily" — otherwise
+    /// every day, because the cadence tag beside it already says "daily", otherwise
     /// "4× a week" leaves the owner with no way to know WHICH days.
     /// </summary>
     public static string Describe(IReadOnlyCollection<DayOfWeek> days, IReadOnlyCollection<TimeSpan> times)

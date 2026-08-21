@@ -5,13 +5,13 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 /// data directory.
 ///
 /// <para><b>Why a file and not the app database.</b> Analytics has no dependency on
-/// <c>AppDatabase</c> today, and that separation is worth keeping — a telemetry buffer has
+/// <c>AppDatabase</c> today, and that separation is worth keeping: a telemetry buffer has
 /// no business in the schema the owner's pet data lives in, and it would otherwise need a
 /// migration. It is also not <c>Preferences</c>: that store is for small scalar settings,
 /// and a queue of up to <see cref="AnalyticsEventQueue.MaxEvents"/> payloads is neither
 /// small nor scalar.</para>
 ///
-/// <para>The file holds only payloads that were already built for transmission — the same
+/// <para>The file holds only payloads that were already built for transmission: the same
 /// coarse, anonymous fields documented in the analytics contract. Nothing personal is
 /// written to disk here that was not already going to be sent. It lives in
 /// <see cref="FileSystem.AppDataDirectory"/>, which is private to the app and removed on
@@ -36,7 +36,7 @@ public sealed class FileAnalyticsQueueStore : IAnalyticsQueueStore
         }
         catch (Exception ex)
         {
-            // Unreadable buffer is not an error worth surfacing — telemetry degrades.
+            // Unreadable buffer is not an error worth surfacing: telemetry degrades.
             System.Diagnostics.Debug.WriteLine($"[Analytics] queue read failed: {ex.Message}");
             return null;
         }

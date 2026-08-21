@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="keystore.props" Condition="Exists('keystore.props')" />
 
 	<PropertyGroup>
@@ -66,21 +66,21 @@
 	     worth looking at. That only works if the permanently-accepted noise is
 	     suppressed HERE, with a reason each, instead of being carried as a number in a
 	     doc that nobody can verify. Never add a code below without a comment saying why
-	     it can never be fixed — "it's noisy" is not a reason.
+	     it can never be fixed: "it's noisy" is not a reason.
 
 	     Deliberately NOT suppressed anywhere: CS4014 (un-awaited Task), which
-	     .editorconfig promotes to an error — fire-and-forget goes through .Forget().
+	     .editorconfig promotes to an error: fire-and-forget goes through .Forget().
 	-->
 	<PropertyGroup>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
 		<!-- Suppressed, each permanently and for a stated reason:
-		       CS0618 — .NET 10 deprecated the non-Async animation + dialog helpers
+		       CS0618: .NET 10 deprecated the non-Async animation + dialog helpers
 		                (FadeTo/TranslateTo/DisplayAlert/DisplayActionSheet) in favour of
 		                the *Async forms. ~85 call sites; the migration is real debt,
 		                tracked in AI/known-constraints.md, not something to fix under a
 		                build flag.
-		       CS0162 — AnalyticsConfig.Enabled / CloudConfig.Enabled / BillingConfig.Enabled
+		       CS0162: AnalyticsConfig.Enabled / CloudConfig.Enabled / BillingConfig.Enabled
 		                are consts, so the null-service branch of each boundary is
 		                unreachable in any given build. That is the point of a
 		                compile-time feature switch.
@@ -89,8 +89,8 @@
 		<NoWarn>$(NoWarn);CS0618;CS0162</NoWarn>
 
 		<!-- Restore-time advisories that stay VISIBLE but must not fail the build:
-		       NU1608 — Xamarin.AndroidX transitive version constraint.
-		       NU1903 — CVE-2025-6965, present in every SQLitePCLRaw release to date
+		       NU1608: Xamarin.AndroidX transitive version constraint.
+		       NU1903: CVE-2025-6965, present in every SQLitePCLRaw release to date
 		                (see the package comment below). Re-check whenever SQLitePCLRaw
 		                ships a build bundling SQLite >= 3.50.2.
 		     WarningsNotAsErrors is the property NuGet documents for this, used together
@@ -100,7 +100,7 @@
 
 	<!-- Android target API level.
 	     Google Play requires apps to target Android 16 (API 36) or higher. Per the
-	     .NET docs, .NET 9 caps out at API 35 — API 36 is only supported on .NET 10,
+	     .NET docs, .NET 9 caps out at API 35: API 36 is only supported on .NET 10,
 	     where net10.0-android defaults to API 36. That is why this whole project was
 	     migrated from net9.0-* to net10.0-* rather than trying to bolt API 36 onto a
 	     .NET 9 runtime (an unsupported net9-runtime + net10-Android-SDK mix).
@@ -118,7 +118,7 @@
 		<!-- felova_splash.svg is Resources\Images\felova_rockpool_logo.svg with its two
 		     <text> runs converted to outlines. Resizetizer renders SVG text using fonts
 		     installed on the BUILD MACHINE, and Fraunces / Plus Jakarta Sans ship inside
-		     the app rather than being installed — so the live wordmark would fall back to
+		     the app rather than being installed, so the live wordmark would fall back to
 		     a substitute font and vary per machine. Outlines make it deterministic.
 		     Re-generate it if the logo changes; don't hand-edit the path data.
 		     Colour matches LoadingPage's background so the handoff is seamless. -->
@@ -137,7 +137,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<!-- Referenced unconditionally on purpose. MauiProgram only calls AddDebug()
-		     inside #if DEBUG, so it is dead weight in Release — but a PackageReference
+		     inside #if DEBUG, so it is dead weight in Release, but a PackageReference
 		     conditioned on $(Configuration) is worse: NuGet restores ONE configuration
 		     and writes a single project.assets.json, so a config-dependent package graph
 		     desyncs restore from build and surfaces as NETSDK1047 ("assets file has no
@@ -149,7 +149,7 @@
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 		<PackageReference Include="Plugin.LocalNotification" Version="12.0.2" />
 
-		<!-- Vet-report PDF export. PDFsharp + MigraDoc are pure-managed (MIT) — no native
+		<!-- Vet-report PDF export. PDFsharp + MigraDoc are pure-managed (MIT), no native
 		     libraries, so nothing here contributes to the 16 KB page-alignment problem.
 		     They REPLACED QuestPDF, which was pinned to 2023.12.6 (its last Android-capable
 		     release) and in turn pinned SkiaSharp to the 2.88.x line whose libSkiaSharp.so /
@@ -161,7 +161,7 @@
 		     ObservationChartRenderer): the charts render to an offscreen SKSurface → PNG
 		     that MigraDoc embeds. 3.116.1+ is the first line with 16 KB-aligned native
 		     binaries (2.88.x never was); 3.119.2 is the current stable 3.x. MIT-licensed,
-		     no revenue threshold. HarfBuzzSharp is gone with QuestPDF — the chart labels
+		     no revenue threshold. HarfBuzzSharp is gone with QuestPDF: the chart labels
 		     need no text shaping, so libHarfBuzzSharp.so no longer ships. -->
 		<PackageReference Include="SkiaSharp" Version="3.119.2" />
 
@@ -169,7 +169,7 @@
 		     (16 KB-aligned since 2.1.10), overriding the 4 KB 2.1.2 that sqlite-net-pcl
 		     pulls transitively.
 		     NOTE: restore reports NU1903 (CVE-2025-6965, SQLite < 3.50.2 aggregate memory
-		     corruption). It affects EVERY SQLitePCLRaw release to date (incl. 2.1.11) — no
+		     corruption). It affects EVERY SQLitePCLRaw release to date (incl. 2.1.11), no
 		     patched version exists yet, and the old 2.1.2 was equally affected. Exposure is
 		     low: all SQL is app-authored against a local DB (no untrusted SQL path).
 		     Revisit when SQLitePCLRaw ships a build bundling SQLite >= 3.50.2. -->
@@ -185,12 +185,12 @@
 	     (PetPhotoService). Google's maintained reader, and the one their own docs point
 	     at: the framework's android.media.ExifInterface is deprecated and handles fewer
 	     format quirks, which matters because the tag is the only thing standing between
-	     a camera shot and an avatar that arrives a quarter-turn wrong. Android-only —
+	     a camera shot and an avatar that arrives a quarter-turn wrong. Android-only,
 	     iOS applies orientation on UIImage and needs none of this. -->
 	<!-- Play Install Referrer, for creator-link attribution: Google Play preserves a
 	     `referrer` value through an install and the app reads it once on first run.
 	     Microsoft's binding (MIT) over com.android.installreferrer:installreferrer 2.2.
-	     Android-only by nature — Apple's campaign tokens reach App Store Connect
+	     Android-only by nature: Apple's campaign tokens reach App Store Connect
 	     analytics and are not readable by the app, so iOS gets the null source. -->
 	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 		<PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.4.2.3" />
@@ -203,7 +203,7 @@
 	     platform registers NullAdAttributionService and does nothing.
 
 	     A local binding project rather than a package, because no maintained NuGet binding
-	     exists — Microsoft's Xamarin.Facebook.Android stopped at 11.2.0.1 in 2021 and the
+	     exists: Microsoft's Xamarin.Facebook.Android stopped at 11.2.0.1 in 2021 and the
 	     native SDK is on 18.x. It stays a separate project so its ~400 unavoidable
 	     generated-code warnings never reach this csproj's TreatWarningsAsErrors. The AAR
 	     carries no .so of its own, so nothing here touches the 16 KB alignment constraint.

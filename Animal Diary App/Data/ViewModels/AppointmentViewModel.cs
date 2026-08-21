@@ -15,7 +15,7 @@ using Animal_Diary_App.Helpers;
 //  something used daily and a visit happens two to four times a year.
 //
 //  Everything below states facts about the record. Counts, dates, the owner's own
-//  numbers, and the words they typed themselves — computed identically for every
+//  numbers, and the words they typed themselves: computed identically for every
 //  record, including the ones with nothing interesting in them. There is no
 //  average, no direction word, no colour or weight that encodes a verdict, and no
 //  before/after juxtaposition of two counts around a treatment change. See the
@@ -24,7 +24,7 @@ using Animal_Diary_App.Helpers;
 
 /// <summary>One row of the treatment ledger, as the summary reads it: the date it
 /// happened, the medication's name as of then, and the rendered fact. All three come
-/// from the stored row — nothing is re-derived from the medication as it stands now,
+/// from the stored row: nothing is re-derived from the medication as it stands now,
 /// which is what makes it still correct after a rename or a delete.</summary>
 public sealed class LedgerLine
 {
@@ -43,7 +43,11 @@ public sealed class SummaryLine
 {
     public required string Name { get; init; }
     public required string Count { get; init; }
+
+    /// <summary>Empty for a one-per-day record: see Data/Models/RecordFacts.cs.</summary>
     public required string DayParts { get; init; }
+    public bool HasDayParts => DayParts.Length > 0;
+
     public string Values { get; init; } = string.Empty;
     public bool HasValues => Values.Length > 0;
     public string Doses { get; init; } = string.Empty;
@@ -115,7 +119,7 @@ public class AppointmentViewModel : BaseViewModel
         AddVisitCommand = new Command(async () => await OpenVisitAsync(null));
         OpenVisitCommand = new Command<VisitLine>(async line => await OpenVisitAsync(line?.Visit));
         EditNextCommand = new Command(async () => await OpenVisitAsync(_next));
-        WriteNoteCommand = new Command(async () => await OpenVisitAsync(_noteCandidate));
+        WriteNoteCommand = new Command(async () => await OpenNoteAsync());
         AddQuestionCommand = new Command(async () => await OpenQuestionSheetAsync());
         AnswerQuestionCommand = new Command<QuestionLine>(async line => await AnswerAsync(line));
         FullSummaryCommand = new Command(() => FullSummaryRequested?.Invoke(SummaryDays));
@@ -126,7 +130,7 @@ public class AppointmentViewModel : BaseViewModel
     private static LocalizationManager Loc => LocalizationManager.Instance;
 
     /// <summary>The page routes "Full summary" to the existing export sheet, pre-filled
-    /// with the since-last-visit stretch. There is deliberately no second PDF path —
+    /// with the since-last-visit stretch. There is deliberately no second PDF path,
     /// <c>IVetReportService.GenerateAsync</c> already takes dates.</summary>
     public event Action<int>? FullSummaryRequested;
 
@@ -147,8 +151,19 @@ public class AppointmentViewModel : BaseViewModel
     // ── State B: an upcoming visit ───────────────────────────────────────────
 
     private bool _hasNext;
-    /// <summary>An upcoming visit exists — the summary below is about it.</summary>
+    /// <summary>An upcoming visit exists. It names the summary's header: the pet, the
+    /// practice, the date and the time, and nothing else depends on it.</summary>
     public bool HasNext { get => _hasNext; private set => SetProperty(ref _hasNext, value); }
+
+    private bool _hasSummary;
+    /// <summary>There is something to say: a record with entries, a treatment change, or
+    /// a tracker that started inside the window. <b>Not</b> "an appointment is booked",
+    /// see the comment in <see cref="LoadAsync"/>.</summary>
+    public bool HasSummary { get => _hasSummary; private set => SetProperty(ref _hasSummary, value); }
+
+    /// <summary>The window's own line stands as the heading when no visit is coming up.
+    /// With one, the visit card above carries it instead.</summary>
+    public bool ShowSummaryWindow => HasSummary && !HasNext;
 
     // ── The one paid thing on this page ──────────────────────────────────────
     //
@@ -156,7 +171,7 @@ public class AppointmentViewModel : BaseViewModel
     //  tier, permanently: adding a visit, editing it, the question list, ticking a
     //  question answered, the "how did it go?" note, and the list of past visits.
     //  Someone must always be able to record that a visit is happening and what was said
-    //  at it — a paywall between an owner and the note they are writing in the car park
+    //  at it: a paywall between an owner and the note they are writing in the car park
     //  is exactly the inversion this whole boundary was moved to remove.
     //
     //  Nor does it appear on the Today band or in the day-before notification. Those are
@@ -165,7 +180,7 @@ public class AppointmentViewModel : BaseViewModel
     //
     //  THE FIRST SUMMARY IS FREE, IN FULL. Not a preview, not three of five sections, not
     //  a blur. Generated, readable, exportable. Nobody converts on a description of an
-    //  artifact; they convert on having held one — and an owner who has watched their vet
+    //  artifact; they convert on having held one, and an owner who has watched their vet
     //  read it knows exactly what the second one is worth.
 
     private bool _firstSummaryUsed;
@@ -175,9 +190,13 @@ public class AppointmentViewModel : BaseViewModel
     private bool _canSeeSummary = true;
     public bool CanSeeSummary { get => _canSeeSummary; private set => SetProperty(ref _canSeeSummary, value); }
 
+    /// <summary>The assembled summary renders: there is something to say and the owner
+    /// may see it.</summary>
+    public bool ShowSummary => HasSummary && CanSeeSummary;
+
     /// <summary>The upgrade card, shown in the summary's place once the free one has been
-    /// used. Mutually exclusive with <see cref="CanSeeSummary"/>.</summary>
-    public bool ShowSummaryOffer => HasNext && !CanSeeSummary;
+    /// used. Mutually exclusive with <see cref="ShowSummary"/>.</summary>
+    public bool ShowSummaryOffer => HasSummary && !CanSeeSummary;
 
     /// <summary>Offer copy, named for the pet.</summary>
     public string SummaryOfferTitle =>
@@ -190,7 +209,7 @@ public class AppointmentViewModel : BaseViewModel
     public string SummaryOfferPromise => Loc.GetString("Vet_SummaryOfferPromise");
 
     /// <summary>
-    /// The owner has now genuinely USED their free summary — read it to the end, or
+    /// The owner has now genuinely USED their free summary: read it to the end, or
     /// exported it. Idempotent, and deliberately NOT called when the page merely opens:
     /// someone who taps in, looks confused and leaves has not had their free one.
     ///
@@ -201,7 +220,7 @@ public class AppointmentViewModel : BaseViewModel
     /// </summary>
     public async Task MarkSummaryUsedAsync()
     {
-        if (_firstSummaryUsed || !HasNext || !CanSeeSummary)
+        if (_firstSummaryUsed || !HasSummary || !CanSeeSummary)
             return;
         try
         {
@@ -216,14 +235,14 @@ public class AppointmentViewModel : BaseViewModel
     }
 
     private string _nextHeadline = string.Empty;
-    /// <summary>"CHARLY · Dr. Weiss · Thursday, 15:30" — the pet, whoever the owner
+    /// <summary>"CHARLY · Dr. Weiss · Thursday, 15:30": the pet, whoever the owner
     /// named, and when. No countdown and no urgency: a visit does not get more important
     /// as it approaches, and colouring it as it does would be the app adding alarm the
     /// owner did not ask for.</summary>
     public string NextHeadline { get => _nextHeadline; private set => SetProperty(ref _nextHeadline, value); }
 
     private string _sinceLine = string.Empty;
-    /// <summary>"Since your last visit — 14 March, 159 days", or the "since you started
+    /// <summary>"Since your last visit: 14 March, 159 days", or the "since you started
     /// writing things down" wording when there was no previous visit. The app never
     /// invents one.</summary>
     public string SinceLine { get => _sinceLine; private set => SetProperty(ref _sinceLine, value); }
@@ -255,7 +274,7 @@ public class AppointmentViewModel : BaseViewModel
 
     private bool _showNotePrompt;
     /// <summary>The most recent visit has happened and nothing has been written down
-    /// about it. Offered once, plainly — never repeated, never nagged.</summary>
+    /// about it. Offered once, plainly, never repeated, never nagged.</summary>
     public bool ShowNotePrompt { get => _showNotePrompt; private set => SetProperty(ref _showNotePrompt, value); }
 
     private string _notePromptWhen = string.Empty;
@@ -285,10 +304,15 @@ public class AppointmentViewModel : BaseViewModel
         var next = all.FirstOrDefault(v => !v.IsPast);
         var past = all.Where(v => v.IsPast).Reverse().ToList();   // newest first
 
-        // The summary is only assembled when there is something to assemble it FOR.
-        // It is the most expensive read on the page and it answers a question nobody
-        // asked when the next visit does not exist yet.
-        var summary = next is null
+        // The summary is assembled whenever there is a pet, upcoming visit or not.
+        //
+        // It used to be built only when a FUTURE visit existed, which meant the single
+        // most valuable thing in the product was behind three steps: find "Vet visits"
+        // on Care, know to add a visit that has not happened yet, and have enough
+        // history. Step two kills it: owners do not schedule appointments in apps, they
+        // get a card from the practice. An upcoming visit changes the HEADER above the
+        // summary; it does not decide whether the summary exists.
+        var summary = pet is null || pet.Id == 0
             ? null
             : await _summaries.BuildAsync(pet);
 
@@ -312,7 +336,7 @@ public class AppointmentViewModel : BaseViewModel
 
         // ONLY the most recent past visit, never the first un-noted one found. Scanning
         // for any visit missing a note meant that if March's had one and January's did
-        // not, the page asked how January went — months later, about a visit the owner
+        // not, the page asked how January went: months later, about a visit the owner
         // had long since moved on from. "How did it go?" is about the one that just
         // happened or it is not asked at all.
         _noteCandidate = past.FirstOrDefault() is { NeedsNote: true } recent ? recent : null;
@@ -329,6 +353,13 @@ public class AppointmentViewModel : BaseViewModel
         BuildQuestions(questions);
         BuildPast(past);
 
+        // Something to say, whatever the calendar holds. Records is the usual answer;
+        // the other two are here so a window whose only content is a dose change or a
+        // newly started tracker still renders instead of falling to the empty state.
+        HasSummary = Records.Count > 0 || Changes.Count > 0 || NewRecords.Count > 0;
+
+        OnPropertyChanged(nameof(ShowSummary));
+        OnPropertyChanged(nameof(ShowSummaryWindow));
         OnPropertyChanged(nameof(ShowSummaryOffer));
         OnPropertyChanged(nameof(SummaryOfferTitle));
         OnPropertyChanged(nameof(SummaryOfferBody));
@@ -336,7 +367,12 @@ public class AppointmentViewModel : BaseViewModel
 
         ShowNotePrompt = _noteCandidate is not null;
         NotePromptWhen = _noteCandidate is null ? string.Empty : DayAndTime(_noteCandidate);
-        IsEmpty = next is null && past.Count == 0;
+
+        // The first-run state is "nothing here yet", and a page carrying a summary is
+        // not that: it now has the most useful thing on it. Without the third clause an
+        // owner who has never booked a visit would read "No visits yet" directly above a
+        // hundred and fifty days of their own record.
+        IsEmpty = next is null && past.Count == 0 && !HasSummary;
 
         RaiseAll();
     }
@@ -361,9 +397,9 @@ public class AppointmentViewModel : BaseViewModel
         Changes.ReplaceAll(summary.Changes.Select(change => new LedgerLine
         {
             // The ledger is stamped in UTC; the owner reads it in their own time.
-            Day = Day(change.ChangedAtUtc.ToLocalTime().Date),
+            Day = Day(LedgerText.LocalDate(change)),
             Name = change.MedicationName,
-            What = LedgerFact(change),
+            What = LedgerText.Fact(change),
         }));
 
         NewRecords.ReplaceAll(summary.NewRecords
@@ -372,35 +408,11 @@ public class AppointmentViewModel : BaseViewModel
         Records.ReplaceAll(summary.Records.Select(record => new SummaryLine
         {
             Name = record.Name,
-            Count = RecordFactsText.Count(record.Facts),
+            Count = RecordFactsText.Count(record.Facts, record.Name),
             DayParts = RecordFactsText.DayParts(record.Facts),
             Values = RecordFactsText.Values(record.Facts),
             Doses = RecordFactsText.Doses(record.Facts),
         }));
-    }
-
-    /// <summary>
-    /// One ledger row's fact. A dose or schedule change carries its own rendered summary
-    /// — captured when it happened, so it still reads correctly for a medication since
-    /// renamed or deleted; the kinds with no value to state get a word instead.
-    ///
-    /// <para>Chronological facts only. Nothing here says whether a change was an increase
-    /// worth noting, and nothing may put two counts either side of one.</para>
-    /// </summary>
-    private static string LedgerFact(MedicationChange change)
-    {
-        if (!string.IsNullOrWhiteSpace(change.Summary))
-            return change.Kind == MedicationChangeKind.Started
-                ? Loc.Format("Vet_LedgerStarted", change.Summary)
-                : change.Summary;
-
-        return Loc.GetString(change.Kind switch
-        {
-            MedicationChangeKind.Archived => "Vet_LedgerArchived",
-            MedicationChangeKind.Restored => "Vet_LedgerRestored",
-            MedicationChangeKind.Stopped => "Vet_LedgerStopped",
-            _ => "Vet_LedgerChanged",
-        });
     }
 
     private void BuildQuestions(IReadOnlyList<VetQuestion> questions) =>
@@ -435,6 +447,19 @@ public class AppointmentViewModel : BaseViewModel
         return _visitSheet.OpenAsync(pet?.Id ?? 0, pet?.Name ?? string.Empty, visit);
     }
 
+    /// <summary>"How did it go?" goes STRAIGHT to the note. Re-asking for the day, the
+    /// time, the practice and the vet: about a visit that has already happened, from
+    /// someone who gave all four when they entered it: is four screens of friction in
+    /// front of the one thing that decays within hours of leaving the practice.</summary>
+    private Task OpenNoteAsync()
+    {
+        if (_noteCandidate is null)
+            return Task.CompletedTask;
+
+        var pet = _activePet.ActivePet;
+        return _visitSheet.OpenForNoteAsync(pet?.Id ?? 0, pet?.Name ?? string.Empty, _noteCandidate);
+    }
+
     private Task OpenQuestionSheetAsync()
     {
         var pet = _activePet.ActivePet;
@@ -455,7 +480,7 @@ public class AppointmentViewModel : BaseViewModel
     // ── Wording ──────────────────────────────────────────────────────────────
 
     /// <summary>"CHARLY · Dr. Weiss · Thursday, 15:30". Whatever the owner did not give
-    /// is simply absent — never a placeholder, never "unknown".</summary>
+    /// is simply absent, never a placeholder, never "unknown".</summary>
     private static string Headline(Pet? pet, VetVisit visit)
     {
         var parts = new List<string>(3);
@@ -470,7 +495,7 @@ public class AppointmentViewModel : BaseViewModel
         return string.Join(" · ", parts);
     }
 
-    /// <summary>The vet's name, the practice, or both — whichever the owner typed.</summary>
+    /// <summary>The vet's name, the practice, or both: whichever the owner typed.</summary>
     private static string Where(VetVisit visit)
     {
         var parts = new List<string>(2);

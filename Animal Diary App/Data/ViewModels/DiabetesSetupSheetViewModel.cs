@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -7,8 +7,8 @@ using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
-/// The reusable Diabetes setup sheet. Answers one question — how often does the vet
-/// want glucose checked — plus an optional target range. Saving writes the pet's
+/// The reusable Diabetes setup sheet. Answers one question: how often does the vet
+/// want glucose checked: plus an optional target range. Saving writes the pet's
 /// Glucose <see cref="Tracker"/>; the word "Diabetes" never reaches the Journal.
 /// </summary>
 public class DiabetesSetupSheetViewModel : ConditionSetupSheetViewModel

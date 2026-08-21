@@ -5,7 +5,7 @@ using MigraDoc.DocumentObjectModel;
 /// <summary>
 /// One small labelled chart per series in <see cref="VetReportData.Trends"/>, in
 /// list order (the builder decides WHICH series exist; this section only draws).
-/// Charts are pure facts on axes — no target bands, no annotations, no verdicts.
+/// Charts are pure facts on axes, no target bands, no annotations, no verdicts.
 /// </summary>
 public class TrendsSection : IVetReportSection
 {
@@ -29,7 +29,7 @@ public class TrendsSection : IVetReportSection
             }
 
             // Otherwise just the caption, plus (for a single reading) the value stated
-            // in words — one point on axes would imply a flatness that isn't in the data.
+            // in words: one point on axes would imply a flatness that isn't in the data.
             var caption = section.AddParagraph();
             caption.Format.SpaceBefore = VetReportStyles.ChartSpacing;
             caption.Format.KeepWithNext = true;

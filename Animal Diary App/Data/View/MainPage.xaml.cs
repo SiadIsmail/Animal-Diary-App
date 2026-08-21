@@ -45,7 +45,7 @@ public partial class MainPage : ContentPage
     {
         base.OnAppearing();
 
-        // Only the visible tab animates its backdrop — all three pages stay alive for
+        // Only the visible tab animates its backdrop: all three pages stay alive for
         // the Shell's lifetime, so a self-starting background ran three copies forever.
         Backdrop.Start();
 
@@ -85,17 +85,19 @@ public partial class MainPage : ContentPage
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
         // Another caregiver's changes landing while this page is visible reload
-        // it in place — no tab-switching needed to see them.
+        // it in place, no tab-switching needed to see them.
         vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
         // The owner changed what a stat card shows: re-read both (a pick can swap
         // the pair, so neither card can be refreshed on its own).
         vm.TodayCardSheetVM.Changed += OnStatCardsChanged;
         vm.MainPageVM.AppointmentRequested += OnAppointmentRequested;
+        vm.MainPageVM.VisitNoteRequested += OnVisitNoteRequested;
+        vm.VetVisitSheetVM.Saved += OnVisitSaved;
 
         await ReloadDataAsync();
     }
 
-    /// <summary>The page's full data load — runs on every appearance AND when a
+    /// <summary>The page's full data load: runs on every appearance AND when a
     /// cloud sync applies remote changes while the page is visible.</summary>
     private async Task ReloadDataAsync()
     {
@@ -134,7 +136,7 @@ public partial class MainPage : ContentPage
 
             // One at a time, not Task.WhenAll. These all end in sqlite-net, whose async
             // API queues each query to the thread pool and then serializes them on the
-            // one shared connection — so fanning out occupied four pooled threads to run
+            // one shared connection, so fanning out occupied four pooled threads to run
             // one query and gained nothing. Same wall time, one thread.
             // One section now, reading the pet's care plan, where two hardcoded
             // surfaces (a mood ribbon and a weight chart) used to be.
@@ -150,7 +152,7 @@ public partial class MainPage : ContentPage
             RefreshNextUp();
 
             // The pet and the day are re-read (the load can switch the active pet); the
-            // version is the one captured before it started — see the field's note.
+            // version is the one captured before it started: see the field's note.
             _loaded = new PageLoadKey(
                 version, vm.MainPageVM.ActivePet?.Id ?? 0, DateTime.Now.Date);
             _loadedAtUtc = DateTime.UtcNow;
@@ -167,13 +169,13 @@ public partial class MainPage : ContentPage
         catch (Exception ex)
         {
             // A failed load must degrade to an empty page, never crash the app
-            // (async void callers — an escaping exception here kills the process).
+            // (async void callers: an escaping exception here kills the process).
             System.Diagnostics.Debug.WriteLine($"[MainPage] reload failed: {ex}");
         }
     }
 
     // Signing out removed this account's pets from the device. If nothing is left, the app
-    // has nothing to show — route to onboarding exactly as deleting the last pet does.
+    // has nothing to show: route to onboarding exactly as deleting the last pet does.
     // Otherwise reload in place; local-only pets can still be here.
     private async void OnSignedOut(bool anyPetsRemain)
     {
@@ -203,7 +205,7 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            // async void — an escaping exception here kills the process.
+            // async void: an escaping exception here kills the process.
             System.Diagnostics.Debug.WriteLine($"[MainPage] stat card reload failed: {ex}");
         }
     }
@@ -222,11 +224,13 @@ public partial class MainPage : ContentPage
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
         vm.TodayCardSheetVM.Changed -= OnStatCardsChanged;
         vm.MainPageVM.AppointmentRequested -= OnAppointmentRequested;
+        vm.MainPageVM.VisitNoteRequested -= OnVisitNoteRequested;
+        vm.VetVisitSheetVM.Saved -= OnVisitSaved;
         vm.DevVM.ImportRequested -= OnImportRequested;
     }
 
     // The band on Today is a door to the appointment page. The VM raises; the page
-    // pushes — the same split every other pushed page here uses.
+    // pushes: the same split every other pushed page here uses.
     private async void OnAppointmentRequested()
     {
         try
@@ -236,6 +240,37 @@ public partial class MainPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[MainPage] appointment push failed: {ex}");
+        }
+    }
+
+    // The band is asking for the note. Straight into the sheet, on "what the vet said"
+    // no page transition in front of the one capture that decays by the hour.
+    private void OnVisitNoteRequested(Data.Models.VetVisit visit)
+    {
+        try
+        {
+            var pet = vm.MainPageVM.ActivePet;
+            vm.VetVisitSheetVM
+                .OpenForNoteAsync(pet?.Id ?? 0, pet?.Name ?? string.Empty, visit)
+                .Forget();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainPage] note sheet open failed: {ex}");
+        }
+    }
+
+    // The note was written → the band has nothing left to ask for, so re-read it.
+    private async void OnVisitSaved(string message)
+    {
+        try
+        {
+            await vm.MainPageVM.RefreshNearVisitAsync();
+            ShowToast(message);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainPage] visit save refresh failed: {ex}");
         }
     }
 
@@ -259,7 +294,7 @@ public partial class MainPage : ContentPage
     }
 
     // ── Next-up card: the first thing still to do today ──
-    // Med doses first (soonest due), then care-plan trackers — the same
+    // Med doses first (soonest due), then care-plan trackers: the same
     // PendingEngine order the Journal's chips use (MainPageViewModel supplies it).
     private void RefreshNextUp()
     {
@@ -274,7 +309,7 @@ public partial class MainPage : ContentPage
             NextMedTime.Text = item.DoseTime?.ToString(@"hh\:mm") ?? string.Empty;
             NextMedTime.IsVisible = item.DoseTime.HasValue;
             NextMedAction.Text = loc.GetString("Journal_MarkGiven");
-            // You can't take a dose early — the action appears once it's due.
+            // You can't take a dose early: the action appears once it's due.
             NextMedAction.IsVisible = (item.DoseTime ?? TimeSpan.Zero) <= DateTime.Now.TimeOfDay;
         }
         else if (item is { Kind: PendingKind.Tracker })
@@ -300,7 +335,7 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Same icons + labels as the Journal's chips — literally the same table — so the
+    // Same icons + labels as the Journal's chips (literally the same table) so the
     // card reads as the first chip of the day. Tapping a tracker card routes to the
     // Journal, where every tracker (water included) now has its logging sheet.
     private (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc)
@@ -337,13 +372,13 @@ public partial class MainPage : ContentPage
             }
             else if (vm.MainPageVM.NextUpItem is { Kind: PendingKind.Tracker })
             {
-                // Logging sheets live on the Journal — take the person there.
+                // Logging sheets live on the Journal: take the person there.
                 await Shell.Current.GoToAsync("//JournalTab");
             }
         }
         catch (Exception ex)
         {
-            // async void — an escaping exception here kills the process.
+            // async void: an escaping exception here kills the process.
             System.Diagnostics.Debug.WriteLine($"[MainPage] Next-up action failed: {ex}");
         }
     }

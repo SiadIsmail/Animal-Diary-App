@@ -82,14 +82,14 @@ public partial class ConditionPickerPage : ContentPage
 
             // Did the user actually set up a condition, or continue past it? The row
             // states are current (SyncAsync ran on appear and after every sheet save).
-            // We record only whether setup happened — never which condition.
+            // We record only whether setup happened, never which condition.
             var configuredCondition = vm.ConditionVM.Conditions.Any(c => c.IsSelected && !c.IsNone);
             vm.Analytics.Track(configuredCondition
                 ? AnalyticsEvents.ConditionSetupCompleted
                 : AnalyticsEvents.ConditionSetupSkipped);
 
             // Now that the pet exists, offer backup + sharing once at this concrete-value
-            // moment — unless the owner already turned backup on (e.g. via the Welcome
+            // moment, unless the owner already turned backup on (e.g. via the Welcome
             // account door), in which case there's nothing to offer and we go straight in.
             // KeepSafePage fires OnboardingCompleted at its own handoff, so the funnel
             // still closes exactly once, on entering the app.

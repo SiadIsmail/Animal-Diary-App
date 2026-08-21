@@ -9,7 +9,7 @@ using System.Text.Json;
 /// - date-only values travel as "yyyy-MM-dd" (no timezone reinterpretation);
 /// - times of day travel as .NET TimeSpan ticks (bigint);
 /// - timestamps travel as ISO-8601. Local DateTimes with unspecified kind are
-///   serialized AS IF UTC — the round-trip is stable and identical on every
+///   serialized AS IF UTC: the round-trip is stable and identical on every
 ///   device, which matters more here than absolute-instant correctness.
 /// </summary>
 internal static class CloudJson
@@ -65,7 +65,7 @@ internal static class CloudJson
     public static TimeSpan GetTicksTime(JsonElement row, string name)
         => new(GetLongOrNull(row, name) ?? 0);
 
-    /// <summary>True when the row carries a non-null deleted_at — the cloud's
+    /// <summary>True when the row carries a non-null deleted_at: the cloud's
     /// soft-delete marker, mapped to the local IsDeleted flag.</summary>
     public static bool IsDeleted(JsonElement row)
         => row.TryGetProperty("deleted_at", out var p) && p.ValueKind == JsonValueKind.String;

@@ -5,7 +5,7 @@ using Xunit;
 
 /// <summary>
 /// The referrer string comes from Google Play, but its CONTENT comes from whoever built the
-/// link — anyone can craft one. These pin down what the parser does with real payloads and
+/// link: anyone can craft one. These pin down what the parser does with real payloads and
 /// with junk, since the alternative is finding out on someone's phone.
 /// </summary>
 public class InstallReferrerParserTests

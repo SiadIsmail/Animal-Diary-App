@@ -1,10 +1,11 @@
 namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
 
+using Animal_Diary_App.Helpers;
 using MigraDoc.DocumentObjectModel;
 
 /// <summary>
 /// Identification block: who the pet is, what it has, what period this covers.
-/// Two columns — pet facts left, report metadata right — over a rule line.
+/// Two columns (pet facts left, report metadata right) over a rule line.
 /// The optional photo renders only when the DTO carries a path (it never does today).
 /// </summary>
 public class HeaderSection : IVetReportSection
@@ -60,7 +61,8 @@ public class HeaderSection : IVetReportSection
         {
             var p = left.AddParagraph();
             p.AddFormattedText(VetReportStrings.Weight + " ", TextFormat.Bold);
-            p.AddText($"{w:0.0} kg");
+            // The one weight format, same as every other surface (Helpers/WeightText.cs).
+            p.AddText(WeightText.WithUnit(w));
             if (pet.WeightChangeKg is decimal change)
             {
                 var c = p.AddFormattedText("  " + VetReportStrings.WeightChange(FormatChange(change)));
@@ -81,7 +83,7 @@ public class HeaderSection : IVetReportSection
         meta.Format.SpaceAfter = 6;
 
         meta.AddParagraph().AddFormattedText(
-            $"{data.From.ToString(VetReportStyles.DateFormat)} – {data.To.ToString(VetReportStyles.DateFormat)}",
+            $"{data.From.ToString(VetReportStyles.DateFormat)}: {data.To.ToString(VetReportStyles.DateFormat)}",
             TextFormat.Bold);
         var gen = meta.AddParagraph().AddFormattedText(
             VetReportStrings.Generated(data.GeneratedAt.ToString(VetReportStyles.DateFormat)));

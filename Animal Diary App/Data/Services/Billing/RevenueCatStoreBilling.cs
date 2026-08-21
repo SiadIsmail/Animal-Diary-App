@@ -9,7 +9,7 @@ using Maui.RevenueCat.InAppBilling.Services;
 /// <summary>
 /// The real store seam, wrapping the community RevenueCat MAUI binding
 /// (<c>Kebechet.Maui.RevenueCat.InAppBilling</c>, which bundles the native RevenueCat
-/// SDK). This is the ONLY file that touches a RevenueCat type — everything above it
+/// SDK). This is the ONLY file that touches a RevenueCat type: everything above it
 /// sees the plain <see cref="IStoreBilling"/> / <see cref="IEntitlementService"/>.
 /// Android/iOS only; the whole file is compiled out elsewhere.
 ///
@@ -67,7 +67,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
             // The binding wants Initialize called after app start, on the main thread.
             await MainThread.InvokeOnMainThreadAsync(() => _rc.Initialize(key));
             _configured = true;
-            // The RevenueCat customer id — use it to find this device in the dashboard's
+            // The RevenueCat customer id: use it to find this device in the dashboard's
             // Customers list (e.g. to cancel a Test Store subscription while testing).
             Debug.WriteLine($"[Billing] RevenueCat app user id: {_rc.GetAppUserId()} (anonymous={_rc.IsAnonymous()})");
             await LoadOfferingsAsync();
@@ -93,7 +93,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
     {
         if (!_configured)
         {
-            // Not configured yet (init still running or failed) — running init also loads
+            // Not configured yet (init still running or failed): running init also loads
             // the offerings (and InitializeAsync is cached, so this is cheap/idempotent).
             await InitializeAsync();
             return;
@@ -111,7 +111,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
 
         try
         {
-            // Note: the purchase itself is NOT time-bounded — the user may be entering card
+            // Note: the purchase itself is NOT time-bounded: the user may be entering card
             // details in the store sheet; only our background fetches are.
             var result = await _rc.PurchaseProduct(package);
             if (result.IsSuccess)
@@ -125,7 +125,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
                 // The money went through but no active entitlement yet: either propagation
                 // lag, or a dashboard misconfig (the entitlement isn't attached to this
                 // product, or Sandbox Testing Access is restricting grants). It is NEVER a
-                // failure — surface it as pending and log the config hint.
+                // failure: surface it as pending and log the config hint.
                 Debug.WriteLine(
                     $"[Billing] purchase succeeded but entitlement '{BillingConfig.EntitlementId}' " +
                     "is not active yet. If this persists, check the RevenueCat dashboard: an " +
@@ -142,7 +142,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
                 // Already owned on this store account → work out whether it is ours.
                 PurchaseErrorStatus.ProductAlreadyPurchasedError => await ResolveAlreadyOwnedAsync(),
                 // The store account's receipt is held by a different app account. Not a
-                // failure they can retry — the store will never sell them a second one.
+                // failure they can retry: the store will never sell them a second one.
                 PurchaseErrorStatus.ReceiptAlreadyInUseError
                     or PurchaseErrorStatus.ReceiptInUseByOtherSubscriberError
                     or PurchaseErrorStatus.PurchaseBelongsToOtherUser => PurchaseOutcome.OwnedByAnotherAccount,
@@ -161,9 +161,9 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
     /// very different situations hide behind that one error, and they need opposite messages:
     ///
     /// <list type="bullet">
-    ///   <item><b>It's ours</b> — reinstall, or a second device on the same store account.
+    ///   <item><b>It's ours</b>: reinstall, or a second device on the same store account.
     ///   The entitlement resolves and access is already on: <see cref="PurchaseOutcome.AlreadySubscribed"/>.</item>
-    ///   <item><b>It belongs to another app account</b> — the store account bought it while
+    ///   <item><b>It belongs to another app account</b>: the store account bought it while
     ///   signed in as someone else, and RevenueCat is configured to keep purchases with the
     ///   account that made them. Nothing we can do here grants it, and the store will not
     ///   sell a second one, so saying "pending" or "failed" strands them:
@@ -189,7 +189,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         catch (Exception ex)
         {
             // The restore itself reports "this receipt is another user's" as an exception.
-            // That is the confirmation, not a failure — it tells us which of the two cases
+            // That is the confirmation, not a failure: it tells us which of the two cases
             // above we are in.
             Debug.WriteLine($"[Billing] already-owned restore failed: {ex.Message}");
             if (IsOwnedByAnotherAccount(ex))
@@ -202,7 +202,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         // Owned by the store account, not grantable here, and the restore did not say why.
         // Still the honest answer: they cannot buy it and cannot use it on this account.
         Debug.WriteLine(
-            "[Billing] product already owned by this store account but no entitlement resolved — " +
+            "[Billing] product already owned by this store account but no entitlement resolved: " +
             "most likely held by a different app account (RevenueCat transfer behaviour is " +
             "'keep with original App User ID').");
         return PurchaseOutcome.OwnedByAnotherAccount;
@@ -240,7 +240,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         {
             Debug.WriteLine($"[Billing] restore failed: {ex.Message}");
             // "Restore" on a store account whose purchase belongs to another app account is
-            // the single most likely way someone meets this state — they try Restore first.
+            // the single most likely way someone meets this state: they try Restore first.
             return IsOwnedByAnotherAccount(ex)
                 ? PurchaseOutcome.OwnedByAnotherAccount
                 : PurchaseOutcome.Failed;
@@ -279,12 +279,12 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
             {
                 var plan = MapPlan(package.Identifier);
                 if (plan is null)
-                    continue; // ignore weekly/lifetime/etc — we only sell yearly + monthly
+                    continue; // ignore weekly/lifetime/etc: we only sell yearly + monthly
                 packages[plan.Value] = package;
                 offers.Add(new SubscriptionOffer(plan.Value, package.Product.Pricing.PriceLocalized, package.Product.Sku));
             }
 
-            // Atomic snapshot swap — readers see either the old or the new list, never a
+            // Atomic snapshot swap: readers see either the old or the new list, never a
             // half-built one.
             _offers = offers.ToArray();
             _packages = packages;
@@ -303,10 +303,10 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
     ///
     /// <para><b>Login aliases the anonymous id onto the account id.</b> Whether the purchase
     /// travels with it is governed by the RevenueCat dashboard's <i>transfer behavior</i>
-    /// setting, not by this code — verify it in sandbox before release, because the failure
+    /// setting, not by this code: verify it in sandbox before release, because the failure
     /// mode is a paying customer silently losing access at the exact moment they sign in.</para>
     ///
-    /// <para>Logout on an already-anonymous user is an error in the SDK, not a problem —
+    /// <para>Logout on an already-anonymous user is an error in the SDK, not a problem,
     /// swallowed here, since "no account to leave" is the expected state for most users.</para>
     /// </summary>
     public async Task IdentifyAsync(string? accountId)
@@ -323,7 +323,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
             if (!string.IsNullOrEmpty(accountId))
             {
                 if (_rc.GetAppUserId() == accountId)
-                    return;   // already this account — Login again would be a no-op round trip
+                    return;   // already this account: Login again would be a no-op round trip
                 info = await WithTimeout(_rc.Login(accountId, CancellationToken.None),
                     StoreCallTimeoutSeconds, (CustomerInfoDto?)null);
             }
@@ -337,7 +337,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
 
             LogCustomerInfo(accountId is null ? "after logout" : "after login", info);
             if (info is null)
-                return;   // timed out — leave the entitlement as it was; resume will re-check
+                return;   // timed out: leave the entitlement as it was; resume will re-check
 
             SetEntitlement(IsPremiumActive(info));
             _entitlementKnown = true;
@@ -352,7 +352,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
 
     /// <summary>
     /// Write the creator code onto the RevenueCat identity as subscriber attributes, so it
-    /// rides along on every purchase event this install later produces — anonymous installs
+    /// rides along on every purchase event this install later produces: anonymous installs
     /// included, which is the entire reason this path exists alongside the server-side
     /// record.
     ///
@@ -394,7 +394,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         var info = await WithTimeout(_rc.GetCustomerInfo(), StoreCallTimeoutSeconds, (CustomerInfoDto?)null);
         LogCustomerInfo("customer info", info);
         if (info is null)
-            return; // timed out — leave the entitlement "unknown" so the gate stays optimistic
+            return; // timed out: leave the entitlement "unknown" so the gate stays optimistic
         SetEntitlement(IsPremiumActive(info));
         _entitlementKnown = true;
     }
@@ -414,7 +414,7 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         if (anyActive)
             Debug.WriteLine(
                 $"[Billing] entitlement '{BillingConfig.EntitlementId}' not found, but another " +
-                "entitlement is active — granting via fallback. Align BillingConfig.EntitlementId " +
+                "entitlement is active: granting via fallback. Align BillingConfig.EntitlementId " +
                 "with the dashboard identifier to remove this fallback.");
         return anyActive;
     }

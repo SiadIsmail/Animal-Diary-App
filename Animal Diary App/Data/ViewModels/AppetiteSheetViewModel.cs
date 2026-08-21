@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -13,13 +13,13 @@ public class AppetiteOption : BaseViewModel
 {
     public required int Level { get; init; }
 
-    /// <summary>The localized level word, resolved LIVE on every read — never cached.
+    /// <summary>The localized level word, resolved LIVE on every read, never cached.
     /// The sheet VM is a singleton, so a cached word would freeze in the language
     /// active at construction. Re-raised via <see cref="RefreshWord"/> on a live
     /// language switch (see coding-standards).</summary>
     public string Word => ((AppetiteLevel)Level).GetDisplayName();
 
-    /// <summary>Height (px) of the bowl's filled portion — a visual level, no digits.</summary>
+    /// <summary>Height (px) of the bowl's filled portion: a visual level, no digits.</summary>
     public required double FillHeight { get; init; }
 
     private bool _isSelected;
@@ -30,13 +30,13 @@ public class AppetiteOption : BaseViewModel
 }
 
 /// <summary>
-/// Backs the Journal's appetite sheet — the shared <c>FelovaBottomSheet</c>
+/// Backs the Journal's appetite sheet: the shared <c>FelovaBottomSheet</c>
 /// with TWO modes flipped by an "Exact measurement" toggle (mirrors the water sheet):
 /// <list type="bullet">
-/// <item><b>off (default)</b> — five word-tiles (Didn't eat … Everything) with a
+/// <item><b>off (default)</b>: five word-tiles (Didn't eat … Everything) with a
 ///   filling bowl. ONE reading per day: saving replaces the day's
 ///   <see cref="AppetiteEntry"/> (undo restores the previous, or removes it).</item>
-/// <item><b>on</b> — the tiles are replaced by a grams entry field. ADDITIVE: each
+/// <item><b>on</b>: the tiles are replaced by a grams entry field. ADDITIVE: each
 ///   save inserts a new <see cref="AppetiteAmountEntry"/> event (undo removes just it),
 ///   so several meals sum to the day's total in the report.</item>
 /// </list>
@@ -108,10 +108,10 @@ public class AppetiteSheetViewModel : BaseViewModel
         }
     }
 
-    /// <summary>Relative tiles visible — the default mode (toggle off).</summary>
+    /// <summary>Relative tiles visible: the default mode (toggle off).</summary>
     public bool ShowLevels => !ExactMode;
 
-    /// <summary>The grams entry field visible — toggle on.</summary>
+    /// <summary>The grams entry field visible: toggle on.</summary>
     public bool ShowExact => ExactMode;
 
     private int _selectedLevel;
@@ -142,7 +142,7 @@ public class AppetiteSheetViewModel : BaseViewModel
 
         // Reopen in the last-used mode; the grams field always starts blank (additive).
         // The tiles pre-select the day's reading; Food pre-fills from the last one the
-        // owner named, so a steady diet is one confirm — still editable/clearable.
+        // owner named, so a steady diet is one confirm: still editable/clearable.
         ExactMode = _lastExactMode;
         GramsText = string.Empty;
         var today = await _service.GetForDateAsync(petId, _date);

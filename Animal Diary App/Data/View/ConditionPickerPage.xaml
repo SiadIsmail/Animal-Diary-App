@@ -3,7 +3,7 @@
     ConditionPickerPage.xaml
     ─────────────────────────────────────────────────────────
     Shown right after a pet is created (onboarding, or "add pet" from Pets).
-    The owner picks one ongoing condition — or the gentle "None / Not sure" —
+    The owner picks one ongoing condition, or the gentle "None / Not sure",
     so the Calendar can offer the right tracking items. The choice is saved to
     Pet.ConditionId. Selection accent = teal tint + teal stroke, matching the
     LanguageSelectionPage pattern.
@@ -23,7 +23,7 @@
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Water background — bottom layer, spans the whole page -->
+        <!-- Water background: bottom layer, spans the whole page -->
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ── MAIN CONTENT ── -->
@@ -143,7 +143,7 @@
             </Border>
         </VerticalStackLayout>
 
-        <!-- ── Reusable condition setup sheets — the SAME instances Manage uses ── -->
+        <!-- ── Reusable condition setup sheets: the SAME instances Manage uses ── -->
         <views:DiabetesSetupSheetView Grid.RowSpan="2" BindingContext="{Binding DiabetesSetupVM}"/>
         <views:CkdSetupSheetView Grid.RowSpan="2" BindingContext="{Binding CkdSetupVM}"/>
         <views:EpilepsySetupSheetView Grid.RowSpan="2" BindingContext="{Binding EpilepsySetupVM}"/>
