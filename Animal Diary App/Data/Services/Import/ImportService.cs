@@ -11,12 +11,12 @@ using SQLite;
 
 /// <summary>
 /// The impure half of the importer: it reads what the device already holds, hands both to
-/// the pure <see cref="ImportValidator"/>, and — only if the owner confirms — writes the
+/// the pure <see cref="ImportValidator"/>, and (only if the owner confirms) writes the
 /// resulting plan in ONE transaction.
 ///
 /// <para><b>It creates no new kind of row.</b> An imported entry is an ordinary entry from
 /// the moment it lands: same tables, same <see cref="SyncStamp"/>, same undo, same vet
-/// report, same Constellation. There is deliberately no "imported" flag — a fact about
+/// report, same Constellation. There is deliberately no "imported" flag: a fact about
 /// where a weight came from is not a fact about the weight, and every surface in the app
 /// would have to learn to ignore it.</para>
 ///
@@ -26,7 +26,7 @@ using SQLite;
 /// That is why rows are stamped through <see cref="SyncStamp"/> here and inserted raw
 /// inside the transaction: <c>RunInTransactionAsync</c> hands out a SYNCHRONOUS connection,
 /// so the async entry services cannot be called from inside it. <c>DemoModeService</c> has
-/// the same shape and skips the stamping — deliberately, because demo rows must never sync.
+/// the same shape and skips the stamping: deliberately, because demo rows must never sync.
 /// Import is the opposite case.</para>
 /// </summary>
 public sealed class ImportService
@@ -74,7 +74,7 @@ public sealed class ImportService
         // The one thing the validator cannot know. It is a NOTICE, not a block: a repeat
         // import is legitimate (the owner may have deleted something and want it back),
         // and the content rules below already make it close to a no-op. Worth saying out
-        // loud all the same — "you have imported this exact file before" is usually the
+        // loud all the same: "you have imported this exact file before" is usually the
         // answer to "why did nothing happen?".
         if (plan.IsValid && await WasSeenBeforeAsync(text))
         {
@@ -134,7 +134,7 @@ public sealed class ImportService
             // Every other read in this app filters IsDeleted == false, and this is the
             // one place that must not. These three tables are one-row-per-day and the
             // cloud keys them by (pet, day), so a soft-deleted row has to be REVIVED by
-            // an import rather than joined by a sibling — and a sibling is invisible
+            // an import rather than joined by a sibling, and a sibling is invisible
             // locally right up until a second device pulls and the two collapse into one.
             // No repository exposes tombstones (deliberately), so the queries live here,
             // where the reason for them is written down.
@@ -193,7 +193,7 @@ public sealed class ImportService
         };
     }
 
-    /// <summary>The span the file covers, read leniently — an unreadable date is the
+    /// <summary>The span the file covers, read leniently: an unreadable date is the
     /// validator's problem to report, not a reason to fail to look anything up.</summary>
     private static (DateTime From, DateTime To)? DateRangeOf(List<ImportPet> blocks)
     {
@@ -291,7 +291,7 @@ public sealed class ImportService
         }
 
         // The care plan is NOT seeded here. CarePlanService seeds it once, lazily, on the
-        // first read for the pet — so an imported pet gets exactly the plan its conditions
+        // first read for the pet, so an imported pet gets exactly the plan its conditions
         // would have given it, through the same path every other pet uses.
 
         result.PetsCreated++;
@@ -326,7 +326,7 @@ public sealed class ImportService
     }
 
     /// <summary>
-    /// The day rows — mood and weight.
+    /// The day rows: mood and weight.
     ///
     /// <para>This is the only write here that is a MERGE rather than an insert. The row is
     /// one per pet per day and holds two independent halves, so only the halves this
@@ -346,7 +346,7 @@ public sealed class ImportService
             else if (day.ReviveTombstone)
             {
                 // Bring the soft-deleted row back rather than inserting a sibling beside
-                // it — the cloud keys this table by (pet, day).
+                // it: the cloud keys this table by (pet, day).
                 row.IsDeleted = false;
             }
 
@@ -455,7 +455,7 @@ public sealed class ImportService
         foreach (var entry in planned.CustomEntries)
         {
             // Every ref was resolved during validation, so a miss here is a bug rather
-            // than bad input — and silently dropping the entry would be the worst way to
+            // than bad input, and silently dropping the entry would be the worst way to
             // find out.
             if (!trackerIds.TryGetValue(entry.TrackerRef, out var trackerId))
                 throw new InvalidOperationException($"Import plan referenced an unresolved tracker \"{entry.TrackerRef}\".");
@@ -470,11 +470,11 @@ public sealed class ImportService
     // ── The repeat-file guard ───────────────────────────────────────────────────
     //
     // Device-scoped, in AppSettings, because it is a fact about this device's import
-    // history and nothing else — no medical content, nothing to sync, and a data reset
+    // history and nothing else, no medical content, nothing to sync, and a data reset
     // wipes it with everything else.
     //
     // It only catches a BYTE-IDENTICAL re-import. An AI asked the same question twice
-    // never produces identical bytes, so this is a convenience, not the defence — the
+    // never produces identical bytes, so this is a convenience, not the defence: the
     // defence is the content rules in ImportValidator, which make a regenerated file
     // land as a no-op.
 
@@ -515,7 +515,7 @@ public sealed class ImportService
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text.Trim()))).ToLowerInvariant();
 }
 
-/// <summary>What a committed import actually did — the numbers the success screen states.
+/// <summary>What a committed import actually did: the numbers the success screen states.
 /// Counted during the write rather than from the plan, so they describe what happened.</summary>
 public sealed class ImportResult
 {

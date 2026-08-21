@@ -13,11 +13,11 @@ using Microsoft.Maui.Controls.Xaml;
 /// It returns a <see cref="Binding"/> against the <see cref="LocalizationManager"/>
 /// singleton's string indexer. Because the manager raises a null-named
 /// PropertyChanged when the language changes, the binding re-reads the new
-/// translation instantly — giving live language switching with no restart.
+/// translation instantly: giving live language switching with no restart.
 /// </summary>
 // ProvideValue ignores the service provider entirely (it only ever returns a
 // Binding against the LocalizationManager singleton), so XamlC is told not to
-// build one per usage — otherwise every {loc:Translate} site warns XC0103.
+// build one per usage, otherwise every {loc:Translate} site warns XC0103.
 [ContentProperty(nameof(Key))]
 [AcceptEmptyServiceProvider]
 public class TranslateExtension : IMarkupExtension<BindingBase>

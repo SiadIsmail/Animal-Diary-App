@@ -27,7 +27,7 @@ public partial class DocumentsPage : ContentPage
         }
         catch (Exception ex)
         {
-            // A failed load degrades to the empty state — never crash the page.
+            // A failed load degrades to the empty state, never crash the page.
             System.Diagnostics.Debug.WriteLine($"[Documents] load failed: {ex}");
         }
     }
@@ -38,7 +38,7 @@ public partial class DocumentsPage : ContentPage
         vm.DocumentsVM.OpenRequested -= OnOpenRequested;
         vm.DocumentsVM.DeleteStaged -= OnDeleteStaged;
 
-        // Leaving the page commits a staged delete — the toast's Undo must not
+        // Leaving the page commits a staged delete: the toast's Undo must not
         // outlive the list it would restore into.
         vm.DocumentsVM.CommitPendingDeleteAsync().Forget();
     }

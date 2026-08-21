@@ -9,7 +9,7 @@ using Animal_Diary_App.Data.Services.Reports;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
-/// Backs the Pets page's "Export" sheet — pick a period (30/90/180 days),
+/// Backs the Pets page's "Export" sheet: pick a period (30/90/180 days),
 /// generate the vet PDF, then View / Share / Done, all inside the shared
 /// <c>FelovaBottomSheet</c> (never an alert). Not a Journal
 /// sheet, so there is no <c>Saved</c> event; instead <see cref="ViewRequested"/>
@@ -23,7 +23,7 @@ using Animal_Diary_App.Helpers;
 /// <para><b>Two documents, and the line between them.</b> The DESIGNED report is paid;
 /// the PLAIN log is free forever, on every tier, and is what keeps "getting your data out
 /// is never blocked". A free owner is shown both at equal weight
-/// (<see cref="ShowReportChoice"/>) — the plain export is never the small print under a
+/// (<see cref="ShowReportChoice"/>): the plain export is never the small print under a
 /// sale, because the point of it is that nobody is ever trapped.</para>
 /// </summary>
 public class ExportSheetViewModel : BaseViewModel
@@ -37,6 +37,8 @@ public class ExportSheetViewModel : BaseViewModel
     private readonly IAnalyticsService _analytics;
     private readonly Animal_Diary_App.Data.Services.Billing.IEntitlementService _entitlements;
     private readonly SubscribeSheetViewModel _subscribe;
+    private readonly SettingsService _settings;
+    private readonly VetVisitService _visits;
 
     private Pet _pet = new();
     private VetReportFile? _result;
@@ -45,7 +47,7 @@ public class ExportSheetViewModel : BaseViewModel
         WaterEntryService water, AppetiteEntryService appetite, PetEntryService petEntries,
         CustomTrackerService custom, IAnalyticsService analytics,
         Animal_Diary_App.Data.Services.Billing.IEntitlementService entitlements,
-        SubscribeSheetViewModel subscribe)
+        SubscribeSheetViewModel subscribe, SettingsService settings, VetVisitService visits)
     {
         _reports = reports;
         _activePetService = activePetService;
@@ -56,6 +58,8 @@ public class ExportSheetViewModel : BaseViewModel
         _analytics = analytics;
         _entitlements = entitlements;
         _subscribe = subscribe;
+        _settings = settings;
+        _visits = visits;
 
         OpenCommand = new Command(async () => await OpenAsync());
         DismissCommand = new Command(() => IsPresented = false);
@@ -81,11 +85,17 @@ public class ExportSheetViewModel : BaseViewModel
                 ViewRequested?.Invoke(_result);
         });
         ShareCommand = new Command(async () => await ShareAsync());
+        AddVisitCommand = new Command(async () => await AcceptVisitOfferAsync());
+        DeclineVisitCommand = new Command(async () => await DeclineVisitOfferAsync());
     }
 
-    /// <summary>Raised when the user taps "View" — the hosting page pushes the
+    /// <summary>Raised when the user taps "View": the hosting page pushes the
     /// preview page for this report (the VM never navigates).</summary>
     public event Action<VetReportFile>? ViewRequested;
+
+    /// <summary>The owner took the "was that for a visit?" offer. The hosting page opens
+    /// the visit sheet: same split as <see cref="ViewRequested"/>.</summary>
+    public event Action? AddVisitRequested;
 
     /// <summary>Save the plain chronological log. Free on every tier.</summary>
     public ICommand GeneratePlainCommand { get; }
@@ -96,7 +106,7 @@ public class ExportSheetViewModel : BaseViewModel
     private bool _isPresented;
     public bool IsPresented { get => _isPresented; set => SetProperty(ref _isPresented, value); }
 
-    // Localized per read — a singleton VM must survive a live language switch.
+    // Localized per read: a singleton VM must survive a live language switch.
     public string Title => LocalizationManager.Instance.GetString("Export_SheetTitle");
     public string Subtitle => LocalizationManager.Instance.Format("Export_SheetSubtitle", _pet.Name);
 
@@ -119,7 +129,7 @@ public class ExportSheetViewModel : BaseViewModel
     ///
     /// <para>It gets a chip of its OWN rather than silently selecting nothing. A
     /// hundred-and-fifty-nine-day window matches none of the three presets, and a sheet
-    /// that opens with no chip lit reads as broken — the same rule the care-plan adjust
+    /// that opens with no chip lit reads as broken: the same rule the care-plan adjust
     /// sheet follows: every rung the sheet can save is one it displayed
     /// (AI/adding-a-tracker.md).</para>
     /// </summary>
@@ -147,7 +157,7 @@ public class ExportSheetViewModel : BaseViewModel
     public string SinceVisitLabel =>
         LocalizationManager.Instance.Format("Export_SinceVisit", SinceVisitDays);
 
-    /// <summary>Whether the active pet actually has a photo file on this device — the
+    /// <summary>Whether the active pet actually has a photo file on this device: the
     /// "Include photo" toggle is only shown when true.</summary>
     private bool _hasPhoto;
     public bool HasPhoto { get => _hasPhoto; private set => SetProperty(ref _hasPhoto, value); }
@@ -157,13 +167,13 @@ public class ExportSheetViewModel : BaseViewModel
     private bool _includePhoto;
     public bool IncludePhoto { get => _includePhoto; set => SetProperty(ref _includePhoto, value); }
 
-    /// <summary>Whether the pet has ever logged any water — gates the two water
+    /// <summary>Whether the pet has ever logged any water: gates the two water
     /// toggles (only shown when there's water to include, mirroring HasPhoto).</summary>
     private bool _hasWater;
     public bool HasWater { get => _hasWater; private set => SetProperty(ref _hasWater, value); }
 
     /// <summary>Include the objective measured (mL) water graph. Default ON. Kept
-    /// separate from observations — the report never merges or interprets the two.</summary>
+    /// separate from observations: the report never merges or interprets the two.</summary>
     private bool _includeWaterMeasured = true;
     public bool IncludeWaterMeasured { get => _includeWaterMeasured; set => SetProperty(ref _includeWaterMeasured, value); }
 
@@ -171,7 +181,7 @@ public class ExportSheetViewModel : BaseViewModel
     private bool _includeWaterObservations = true;
     public bool IncludeWaterObservations { get => _includeWaterObservations; set => SetProperty(ref _includeWaterObservations, value); }
 
-    /// <summary>Whether the pet has ever logged any appetite — gates the appetite toggles.</summary>
+    /// <summary>Whether the pet has ever logged any appetite: gates the appetite toggles.</summary>
     private bool _hasAppetite;
     public bool HasAppetite { get => _hasAppetite; private set => SetProperty(ref _hasAppetite, value); }
 
@@ -183,18 +193,18 @@ public class ExportSheetViewModel : BaseViewModel
     private bool _includeAppetiteObservations = true;
     public bool IncludeAppetiteObservations { get => _includeAppetiteObservations; set => SetProperty(ref _includeAppetiteObservations, value); }
 
-    /// <summary>Whether the pet has ever logged a mood — gates the mood toggle.</summary>
+    /// <summary>Whether the pet has ever logged a mood: gates the mood toggle.</summary>
     private bool _hasMood;
     public bool HasMood { get => _hasMood; private set => SetProperty(ref _hasMood, value); }
 
     /// <summary>Include the daily mood graph. Default ON, like every other metric.
-    /// Mood is observations only — there is no measured counterpart, so it is a single
+    /// Mood is observations only: there is no measured counterpart, so it is a single
     /// toggle rather than the measured/observed pair water and appetite carry.</summary>
     private bool _includeMood = true;
     public bool IncludeMood { get => _includeMood; set => SetProperty(ref _includeMood, value); }
 
     /// <summary>Whether the pet has any owner-defined tracker that BOTH opted into the
-    /// report and has been logged — the gate on showing this toggle at all.</summary>
+    /// report and has been logged: the gate on showing this toggle at all.</summary>
     private bool _hasCustom;
     public bool HasCustom { get => _hasCustom; private set => SetProperty(ref _hasCustom, value); }
 
@@ -236,7 +246,27 @@ public class ExportSheetViewModel : BaseViewModel
     public ICommand ViewCommand { get; }
     public ICommand ShareCommand { get; }
 
-    /// <summary>Open pre-filled with a stretch the caller worked out — the appointment
+    // ── "Was that for a visit?" ──────────────────────────────────────────────
+    //
+    // Every future summary is anchored to a visit, and until one exists the most
+    // valuable thing in the product has no window to cover. Asking for that cold (on a
+    // page the owner has to find, for a benefit they have never seen) is how it stayed
+    // unreachable. Asking here converts something they ALREADY chose to do: nobody
+    // exports a vet report for fun.
+    //
+    // Offered ONCE, either answer, and never with a countdown, a colour or a price. It
+    // is a question about their week, not a sale.
+
+    private bool _showVisitOffer;
+
+    /// <summary>The one-shot offer, on the done face. Never shown when the app already
+    /// knows about an upcoming visit: the question would answer itself.</summary>
+    public bool ShowVisitOffer { get => _showVisitOffer; private set => SetProperty(ref _showVisitOffer, value); }
+
+    public ICommand AddVisitCommand { get; }
+    public ICommand DeclineVisitCommand { get; }
+
+    /// <summary>Open pre-filled with a stretch the caller worked out: the appointment
     /// page's "Full summary", which hands over exactly the window it just described.
     /// Nothing else about the sheet changes: same toggles, same one PDF path.</summary>
     public Task OpenForRangeAsync(int days) => OpenAsync(days > 0 ? days : null);
@@ -245,11 +275,12 @@ public class ExportSheetViewModel : BaseViewModel
     {
         _pet = _activePetService.ActivePet;
 
-        // Fresh interaction every time — a previous export's result must not leak.
+        // Fresh interaction every time: a previous export's result must not leak.
         _result = null;
         IsDone = false;
         IsGenerating = false;
         StatusMessage = string.Empty;
+        ShowVisitOffer = false;
 
         // A caller-supplied stretch brings its own chip; otherwise the extra chip is
         // cleared so a previous appointment's window can never linger into a plain open.
@@ -272,13 +303,13 @@ public class ExportSheetViewModel : BaseViewModel
         HasAppetite = _pet.Id != 0 && await _appetite.HasAnyAsync(_pet.Id);
 
         // Mood: same "on by default, hidden when never logged" rule. One reading is
-        // enough for the toggle to matter — an owner who logged a mood once and doesn't
+        // enough for the toggle to matter: an owner who logged a mood once and doesn't
         // want it in front of their vet can simply untick it.
         IncludeMood = true;
         HasMood = _pet.Id != 0 && await _petEntries.GetLatestMoodEntryAsync(_pet.Id) is not null;
 
         // Same "on by default, hidden when there is nothing to include" rule. Gated on a
-        // tracker that opted in AND has entries — a pet with only a Walk tracker (switched
+        // tracker that opted in AND has entries: a pet with only a Walk tracker (switched
         // off on the tracker) sees no toggle, because there would be nothing behind it.
         IncludeCustom = true;
         HasCustom = _pet.Id != 0 && await _custom.HasReportableEntriesAsync(_pet.Id);
@@ -308,7 +339,7 @@ public class ExportSheetViewModel : BaseViewModel
     public bool CanUseDesignedReport => _entitlements.CanEditPet(_pet.SyncId);
 
     /// <summary>Free owner: show both documents, at equal weight, and neither dressed as
-    /// the lesser one. Read fresh on every open — a purchase can land between two.</summary>
+    /// the lesser one. Read fresh on every open: a purchase can land between two.</summary>
     public bool ShowReportChoice => !CanUseDesignedReport;
 
     /// <summary>The per-section toggles configure the DESIGNED report only. Hiding them
@@ -349,6 +380,7 @@ public class ExportSheetViewModel : BaseViewModel
             OnPropertyChanged(nameof(DoneMessage));
             OnPropertyChanged(nameof(ResultFileName));
             IsDone = true;
+            await OfferVisitAsync();
 
             // Same event as the designed report, with the kind alongside the window. It is
             // one funnel: the question is whether people get their data out at all, and
@@ -407,8 +439,9 @@ public class ExportSheetViewModel : BaseViewModel
             OnPropertyChanged(nameof(DoneMessage));
             OnPropertyChanged(nameof(ResultFileName));
             IsDone = true;
+            await OfferVisitAsync();
 
-            // "Which features provide value?" — a vet report was actually produced. We
+            // "Which features provide value?": a vet report was actually produced. We
             // send only the chosen look-back window; nothing about the pet or its data.
             _analytics.Track(AnalyticsEvents.ReportExported, new Dictionary<string, object?>
             {
@@ -424,6 +457,51 @@ public class ExportSheetViewModel : BaseViewModel
         finally
         {
             IsGenerating = false;
+        }
+    }
+
+    /// <summary>Decide whether the offer appears, after a successful export of either
+    /// document. A read failure simply means no offer: this is a nicety, and it may
+    /// never be the reason an export looks like it went wrong.</summary>
+    private async Task OfferVisitAsync()
+    {
+        try
+        {
+            if (_pet.Id == 0 || await _settings.GetFlagAsync(SettingsFlags.ExportVisitOfferMade))
+                return;
+
+            ShowVisitOffer = await _visits.GetNextAsync(_pet.Id) is null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[VetReport] visit offer check failed: {ex.Message}");
+        }
+    }
+
+    private async Task AcceptVisitOfferAsync()
+    {
+        await MarkVisitOfferMadeAsync();
+        IsPresented = false;
+        AddVisitRequested?.Invoke();
+    }
+
+    /// <summary>"Not now" means not now, and it is not asked again. The flag is written
+    /// on BOTH answers: an offer made once is made once, whichever way it went.</summary>
+    private async Task DeclineVisitOfferAsync()
+    {
+        ShowVisitOffer = false;
+        await MarkVisitOfferMadeAsync();
+    }
+
+    private async Task MarkVisitOfferMadeAsync()
+    {
+        try
+        {
+            await _settings.SetFlagAsync(SettingsFlags.ExportVisitOfferMade, true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[VetReport] visit offer flag failed: {ex.Message}");
         }
     }
 

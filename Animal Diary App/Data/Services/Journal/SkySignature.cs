@@ -4,7 +4,7 @@ namespace Animal_Diary_App.Data.Services.Journal;
 //  The one decorative thing about a pet's sky: the colour its atmosphere leans
 //  towards, derived from the pet's name.
 //
-//  It used to carry far more — a wave shape, a starfield seed, a figure of joined
+//  It used to carry far more: a wave shape, a starfield seed, a figure of joined
 //  stars. All of that existed to give a MEANINGLESS y axis something to be, and it
 //  went when the axis got a meaning. What survives is the one piece that never
 //  competed with the data: a faint tint, so two pets' screenshots are not
@@ -20,7 +20,7 @@ namespace Animal_Diary_App.Data.Services.Journal;
 public readonly record struct SkySignature(string AccentKey)
 {
     /// <summary>
-    /// The five hues an atmosphere may lean towards — the app's own five accents, one
+    /// The five hues an atmosphere may lean towards: the app's own five accents, one
     /// step further muted for a night ground.
     ///
     /// <para><b>Deliberately their own tokens rather than the <c>Star*</c> set.</b> The
@@ -44,7 +44,7 @@ public readonly record struct SkySignature(string AccentKey)
 
     /// <summary>
     /// One pet's signature. Same name, same colour, on every device and after every
-    /// app update — which is why the hash is hand-rolled: <see cref="string.GetHashCode()"/>
+    /// app update, which is why the hash is hand-rolled: <see cref="string.GetHashCode()"/>
     /// is randomised per process in .NET, so every launch would be a different sky.
     /// </summary>
     public static SkySignature For(string? name, int birthYear = 0)

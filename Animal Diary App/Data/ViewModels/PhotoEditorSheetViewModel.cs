@@ -10,10 +10,10 @@ using Animal_Diary_App.Data.Models;
 /// <para>Rotation is the point of it. Camera photos still arrive a quarter-turn wrong on
 /// some devices (some camera apps rotate the pixels themselves AND leave a non-1 EXIF
 /// orientation tag, so applying the tag turns them a second time). Whatever the app gets
-/// wrong there, the owner now sees it in the preview and fixes it in one tap — which
+/// wrong there, the owner now sees it in the preview and fixes it in one tap, which
 /// turns a bug we cannot reproduce on demand into an inconvenience.</para>
 ///
-/// <para>This holds the transform and NOTHING ELSE — no bitmap, no stream, no file
+/// <para>This holds the transform and NOTHING ELSE, no bitmap, no stream, no file
 /// handle. The pixels stay with <c>PetPhotoService</c> on both ends: it stages the
 /// editable copy and it writes the result. What travels between them is four numbers.</para>
 ///
@@ -68,7 +68,7 @@ public sealed class PhotoEditorSheetViewModel : BaseViewModel
 
     /// <summary>
     /// Present the editor for a staged photo and wait for it. Returns the transform to
-    /// apply, or null if the owner backed out — backing out is always a valid answer, and
+    /// apply, or null if the owner backed out: backing out is always a valid answer, and
     /// it means the pet's photo does not change at all.
     /// </summary>
     public Task<PhotoTransform?> EditAsync(PhotoEditSource source)
@@ -93,7 +93,7 @@ public sealed class PhotoEditorSheetViewModel : BaseViewModel
         Transform = Clamped(Transform with { OffsetX = x, OffsetY = y });
 
     /// <summary>Pinch: multiply the zoom by the gesture's incremental factor. Clamped to
-    /// [1, <see cref="PhotoCrop.MaxZoom"/>] — and re-clamping the offsets with it, because
+    /// [1, <see cref="PhotoCrop.MaxZoom"/>], and re-clamping the offsets with it, because
     /// zooming back out shrinks how far the photo is allowed to be dragged.</summary>
     public void MultiplyZoom(float factor)
     {

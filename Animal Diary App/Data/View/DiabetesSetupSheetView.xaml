@@ -2,7 +2,7 @@
 <!--
     DiabetesSetupSheetView
     ─────────────────────────────────────────────────────────
-    The reusable "set up diabetes care" sheet — glucose-check frequency + an optional
+    The reusable "set up diabetes care" sheet: glucose-check frequency + an optional
     target range, in the shared FelovaBottomSheet. Hosted by BOTH the onboarding
     condition picker and the Manage Pet page ("one menu, two doors"). BindingContext
     is a DiabetesSetupSheetViewModel; open it via that VM's OpenAsync.

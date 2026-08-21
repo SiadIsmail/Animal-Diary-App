@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.Services.Cloud;
 /// <summary>
 /// Pulls a creator candidate out of Google Play's install referrer string.
 ///
-/// <para>Its own file, free of MAUI and SQLite, so the parsing decision can be unit-tested —
+/// <para>Its own file, free of MAUI and SQLite, so the parsing decision can be unit-tested,
 /// the same reason <see cref="SignOutImpact"/> is separated out of the service that uses it.
 /// The input is attacker-adjacent (anyone can craft a Play link with any referrer they
 /// like), so its behaviour on junk is worth pinning down in tests rather than discovering
@@ -21,7 +21,7 @@ public static class InstallReferrerParser
     ///
     /// <para><b>This decides nothing about whether the value is real.</b> Every organic Play
     /// install carries <c>utm_source=google-play&amp;utm_medium=organic</c>, so this returns
-    /// "google-play" for the majority of installs — which is correct and harmless, because
+    /// "google-play" for the majority of installs, which is correct and harmless, because
     /// the caller validates the candidate against the actual creator codes server-side and
     /// gets null back. Never treat a returned value as attribution on its own.</para>
     /// </summary>

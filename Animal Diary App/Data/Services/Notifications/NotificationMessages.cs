@@ -50,7 +50,7 @@ public static class NotificationMessages
         => L.Format("Notif_MissedTitle", SafePet(petName));
 
     /// <summary>
-    /// Body for a missed-dose catch-up. Kept gentle and reassuring — the goal is
+    /// Body for a missed-dose catch-up. Kept gentle and reassuring: the goal is
     /// to surface a missed medication without alarming the carer.
     /// </summary>
     public static string MedicationMissedBody(string petName, string medicationName, int count)
@@ -95,7 +95,7 @@ public static class NotificationMessages
     /// opens with a name.</summary>
     public static string AppointmentTitle() => L.GetString("Notif_AppointmentTitle");
 
-    /// <summary>"Charly, 9:30. Your summary is ready." — or without the time when the
+    /// <summary>"Charly, 9:30. Your summary is ready.", or without the time when the
     /// owner only knew the day. The app never fabricates the missing half.</summary>
     public static string AppointmentBody(string petName, TimeSpan? time)
         => time is TimeSpan t

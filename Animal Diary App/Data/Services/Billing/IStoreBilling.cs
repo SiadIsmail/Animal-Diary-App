@@ -2,7 +2,7 @@ namespace Animal_Diary_App.Data.Services.Billing;
 
 /// <summary>
 /// The thin seam over the native store / RevenueCat SDK. <b>All</b> RevenueCat
-/// awareness lives behind this — no RevenueCat type escapes the Billing folder, the
+/// awareness lives behind this, no RevenueCat type escapes the Billing folder, the
 /// same rule the cloud boundary follows for Supabase. <see cref="EntitlementService"/>
 /// composes this with a redeemed access code; swapping the real
 /// implementation in is the only place a purchase actually happens.
@@ -18,7 +18,7 @@ public interface IStoreBilling
     bool HasActiveEntitlement { get; }
 
     /// <summary>False until the store has answered "does this user have an entitlement?"
-    /// at least once. While false the entitlement is <i>unknown</i>, not <i>absent</i> —
+    /// at least once. While false the entitlement is <i>unknown</i>, not <i>absent</i>,
     /// the gate stays open so a paying user is never locked during the launch fetch.</summary>
     bool EntitlementKnown { get; }
 
@@ -53,7 +53,7 @@ public interface IStoreBilling
     /// person across their devices instead of being stranded on the install that bought it.
     /// Pass the account id on sign-in and null on sign-out. Non-throwing; idempotent.
     ///
-    /// <para><b>Purchasing never requires an account</b> — with no account the store stays on
+    /// <para><b>Purchasing never requires an account</b>: with no account the store stays on
     /// its anonymous per-install identity and everything works exactly as before. This only
     /// adds continuity for people who do sign in, including someone who paid first and
     /// created an account months later.</para></summary>
@@ -65,7 +65,7 @@ public interface IStoreBilling
     /// <para><b>This is the half of attribution that works without an account.</b> The
     /// server-side record (migration 0016) can only see people who signed in, because the
     /// webhook's app_user_id is a Supabase user id only after sign-in. The store identity
-    /// exists either way — anonymous or identified — so tagging it here is what covers
+    /// exists either way (anonymous or identified) so tagging it here is what covers
     /// someone who installs, types a creator's code, and buys without ever making an
     /// account. Neither half is complete alone; both are cheap.</para>
     ///

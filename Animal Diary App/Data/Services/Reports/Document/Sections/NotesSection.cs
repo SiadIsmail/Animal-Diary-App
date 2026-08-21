@@ -24,7 +24,7 @@ public class NotesSection : IVetReportSection
             p.Format.SpaceAfter = 2;
             var date = p.AddFormattedText(note.Date.ToString(VetReportStyles.DateFormat) + "  ", TextFormat.Bold);
             date.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
-            // The owner's own words, printed verbatim — never translated.
+            // The owner's own words, printed verbatim, never translated.
             p.AddText($"“{note.Text}”");
         }
 

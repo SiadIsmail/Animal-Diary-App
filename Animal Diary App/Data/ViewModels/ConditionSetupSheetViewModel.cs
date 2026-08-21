@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -8,10 +8,10 @@ using Animal_Diary_App.Data.Services.Journal;
 /// <summary>
 /// Shared base for the reusable condition-setup sheets (Diabetes, CKD, Epilepsy).
 /// Each is a <c>FelovaBottomSheet</c> body whose job is to answer
-/// "what will Felova add for this condition?" — configuration, not disease education.
+/// "what will Felova add for this condition?": configuration, not disease education.
 ///
 /// The SAME sheet instance is hosted by two doors: the onboarding condition picker
-/// and the Manage Pet page. Saving writes to the ACTIVE pet — it links the condition
+/// and the Manage Pet page. Saving writes to the ACTIVE pet: it links the condition
 /// (<see cref="PetConditionService"/>) and writes/updates the condition's trackers
 /// (<see cref="TrackerService"/>), then raises <see cref="Saved"/> so the host can
 /// mark the row configured / refresh. Presentation state only; the medical shape of
@@ -50,10 +50,10 @@ public abstract class ConditionSetupSheetViewModel : BaseViewModel
         set => SetProperty(ref _isPresented, value);
     }
 
-    /// <summary>Serif sheet title (localized) — the condition's name.</summary>
+    /// <summary>Serif sheet title (localized): the condition's name.</summary>
     public abstract string TitleText { get; }
 
-    /// <summary>Caveat subtitle (localized) — a short, action-oriented framing.</summary>
+    /// <summary>Caveat subtitle (localized): a short, action-oriented framing.</summary>
     public abstract string SubtitleText { get; }
 
     public ICommand SaveCommand { get; }
@@ -62,7 +62,7 @@ public abstract class ConditionSetupSheetViewModel : BaseViewModel
     /// <summary>
     /// Whether saving also LINKS the condition to the pet.
     ///
-    /// False when the sheet is opened as a plain tracker editor — tapping the Glucose
+    /// False when the sheet is opened as a plain tracker editor: tapping the Glucose
     /// row to set a target range must not quietly record that the pet has diabetes.
     /// Wanting to watch a number is not a diagnosis, and the app must never put words
     /// in an owner's mouth about their animal. Subclasses also read this to title

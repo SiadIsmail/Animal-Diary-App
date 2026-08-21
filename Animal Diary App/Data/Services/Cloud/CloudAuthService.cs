@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.Services.Cloud;
+namespace Animal_Diary_App.Data.Services.Cloud;
 
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -9,9 +9,9 @@ using Microsoft.Maui.Authentication;
 
 /// <summary>
 /// The only auth API the app uses (mirrors <c>IAnalyticsService</c> /
-/// <c>INotificationService</c> — nothing above this knows GoTrue exists).
+/// <c>INotificationService</c>: nothing above this knows GoTrue exists).
 /// Sign-up and password recovery verify with the 6-digit emailed code, not a
-/// link — there is no website to land on (see supabase/README.md).
+/// link: there is no website to land on (see supabase/README.md).
 /// </summary>
 public interface ICloudAuthService
 {
@@ -20,10 +20,10 @@ public interface ICloudAuthService
     bool IsSignedIn { get; }
     string? Email { get; }
     string? UserId { get; }
-    /// <summary>In-memory session expiry (no refresh/network) — for the dev panel.</summary>
+    /// <summary>In-memory session expiry (no refresh/network): for the dev panel.</summary>
     DateTime? SessionExpiresUtc { get; }
 
-    /// <summary>Raised on sign-in, sign-out, and expiry — Settings re-renders on it.</summary>
+    /// <summary>Raised on sign-in, sign-out, and expiry: Settings re-renders on it.</summary>
     event Action? SessionChanged;
 
     /// <summary>The current session with a fresh access token (refreshing if it is
@@ -39,7 +39,7 @@ public interface ICloudAuthService
     /// <summary>Sign in via Google in the system browser (Supabase OAuth + PKCE).
     /// Throws <see cref="OperationCanceledException"/> if the user backs out.
     /// Android-only in the UI (a social login on iOS would require Sign in with
-    /// Apple — deferred until iOS ships).</summary>
+    /// Apple: deferred until iOS ships).</summary>
     Task SignInWithGoogleAsync();
 
     Task SignOutAsync();
@@ -54,7 +54,7 @@ public sealed class CloudAuthService : ICloudAuthService
     private readonly CloudHttp _http;
     private readonly IAnalyticsService _analytics;
     // Serializes session load/refresh so parallel callers can't double-refresh
-    // (GoTrue rotates the refresh token — a stale second refresh would sign us out).
+    // (GoTrue rotates the refresh token: a stale second refresh would sign us out).
     private readonly SemaphoreSlim _gate = new(1, 1);
     private CloudSession? _session;
     private bool _loaded;
@@ -66,14 +66,14 @@ public sealed class CloudAuthService : ICloudAuthService
     }
 
     // The single place session state changes are mirrored to the analytics context so
-    // every event can carry a coarse account_state. Only the boolean is shared — no id,
+    // every event can carry a coarse account_state. Only the boolean is shared, no id,
     // email, or token ever crosses into analytics.
     private void SyncAnalyticsState() => AnalyticsContext.IsSignedIn = _session != null;
 
     public bool IsSignedIn => _session != null;
     public string? Email => _session?.Email;
     public string? UserId => _session?.UserId;
-    /// <summary>In-memory session expiry for the dev panel — a pure read, never
+    /// <summary>In-memory session expiry for the dev panel: a pure read, never
     /// triggers a refresh or network call.</summary>
     public DateTime? SessionExpiresUtc => _session?.ExpiresAtUtc;
     public event Action? SessionChanged;
@@ -105,15 +105,15 @@ public sealed class CloudAuthService : ICloudAuthService
                 }
                 catch (CloudException ex) when (ex.Kind == CloudErrorKind.Network)
                 {
-                    // Offline: hand back the stale session — data calls will fail
+                    // Offline: hand back the stale session: data calls will fail
                     // with Network too and the sync cycle reports "offline" cleanly.
                     CloudDiagnostics.Record("[Cloud] session refresh deferred (offline); keeping stale session");
                     return _session;
                 }
                 catch (CloudException ex)
                 {
-                    // The refresh token itself was rejected — we are signed out.
-                    CloudDiagnostics.Record($"[Cloud] SIGNED OUT — refresh rejected ({ex.Kind}, {ex.StatusCode})");
+                    // The refresh token itself was rejected: we are signed out.
+                    CloudDiagnostics.Record($"[Cloud] SIGNED OUT: refresh rejected ({ex.Kind}, {ex.StatusCode})");
                     ClearLocked();
                     return null;
                 }
@@ -128,7 +128,7 @@ public sealed class CloudAuthService : ICloudAuthService
 
     public async Task SignUpAsync(string email, string password)
     {
-        // With "Confirm email" ON this returns a user but NO session — the flow
+        // With "Confirm email" ON this returns a user but NO session: the flow
         // continues in VerifySignUpAsync with the emailed code.
         await _http.AuthPostAsync("signup", new { email, password });
         // The account now exists (awaiting verification). Fires only on success, so the
@@ -145,7 +145,7 @@ public sealed class CloudAuthService : ICloudAuthService
     {
         var doc = await _http.AuthPostRequiredAsync("verify", new { type = "signup", email, token = code });
         await StoreSessionAsync(ParseSession(doc));
-        // Account creation completed — the funnel's bottom. No email/id attached.
+        // Account creation completed: the funnel's bottom. No email/id attached.
         _analytics.Track(AnalyticsEvents.SignUpVerified);
     }
 
@@ -164,7 +164,7 @@ public sealed class CloudAuthService : ICloudAuthService
     public async Task SignInWithGoogleAsync()
     {
         // PKCE: send a challenge so GoTrue returns a one-time ?code= in the query
-        // (robust — unlike the implicit flow's #fragment, a query survives the
+        // (robust: unlike the implicit flow's #fragment, a query survives the
         // https→custom-scheme redirect) and never exposes tokens in the browser.
         var verifier = CreateCodeVerifier();
         var authorizeUrl =
@@ -186,7 +186,7 @@ public sealed class CloudAuthService : ICloudAuthService
         {
             // NOTE: WebAuthenticator raises this both on genuine user-dismiss AND
             // when the redirect fails to resume (e.g. app process recycled while
-            // the browser was foreground) — the two are indistinguishable here.
+            // the browser was foreground): the two are indistinguishable here.
             CloudDiagnostics.Record("[Cloud] Google sign-in: browser returned no result (cancelled or dropped)");
             throw;
         }
@@ -215,7 +215,7 @@ public sealed class CloudAuthService : ICloudAuthService
         _analytics.Track(AnalyticsEvents.GoogleSignIn);
         // No email here. CloudDiagnostics is a copyable buffer the dev panel shows and
         // people paste into support threads, and it promises coarse technical detail
-        // only — the fact of a successful sign-in and the expiry are what debugging a
+        // only: the fact of a successful sign-in and the expiry are what debugging a
         // dropped browser flow needs; who signed in is not.
         CloudDiagnostics.Record($"[Cloud] Google sign-in: SUCCESS; expiry {_session?.ExpiresAtUtc:HH:mm:ss}Z");
     }
@@ -234,7 +234,7 @@ public sealed class CloudAuthService : ICloudAuthService
         if (session != null)
         {
             try { await _http.AuthPostAsync("logout", new { }, session.AccessToken); }
-            catch (CloudException) { /* best effort — local sign-out always succeeds */ }
+            catch (CloudException) { /* best effort: local sign-out always succeeds */ }
         }
 
         await _gate.WaitAsync();

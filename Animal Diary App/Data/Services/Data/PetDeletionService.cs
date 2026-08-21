@@ -17,7 +17,7 @@ public enum PetRemovalKind
     /// delete propagates to the cloud and to everyone sharing the pet's care.</summary>
     OwnerBackedUp,
 
-    /// <summary>A caregiver on a shared pet. They can't delete it for everyone — their
+    /// <summary>A caregiver on a shared pet. They can't delete it for everyone: their
     /// exit is to leave; the next membership diff purges the pet from this device.</summary>
     Caregiver,
 }
@@ -30,13 +30,13 @@ public readonly record struct PetRemovalResult(bool AnyPetsRemain);
 /// Removes a pet and everything hanging off it. Two shapes:
 ///
 /// <list type="bullet">
-/// <item><see cref="DeletePetAsync"/> — the owner/local delete. Every synced row is
+/// <item><see cref="DeletePetAsync"/>: the owner/local delete. Every synced row is
 /// <b>soft-deleted</b> (tombstoned via <see cref="SyncStamp"/>) rather than dropped,
 /// so the removal reaches the cloud and other devices like any other change; the
 /// pet's reminders are cancelled and its local report files (never synced) are
 /// deleted outright. Mirrors <c>CloudSyncService.PurgePetAsync</c>'s cascade, but
 /// tombstoning instead of hard-deleting because this delete must propagate.</item>
-/// <item><see cref="LeaveSharedPetAsync"/> — a caregiver's exit. A membership call,
+/// <item><see cref="LeaveSharedPetAsync"/>: a caregiver's exit. A membership call,
 /// not a delete: the pet's data stays with the owner, and the next sync's membership
 /// diff purges it locally.</item>
 /// </list>
@@ -80,7 +80,7 @@ public class PetDeletionService
     }
 
     /// <summary>Decide, from the pet's cached cloud role, which removal applies. A pet
-    /// with no SyncId (or no known role yet) is treated as local — there is nothing to
+    /// with no SyncId (or no known role yet) is treated as local: there is nothing to
     /// delete cloud-side, and a not-yet-synced owner's tombstones still push later.</summary>
     public PetRemovalKind DetermineKind(Pet pet)
     {
@@ -111,7 +111,7 @@ public class PetDeletionService
 
         // Its vet visits too: each is a one-shot armed by the visit's local id, and
         // cancelling by id here is what stops one firing for a pet that no longer
-        // exists. The refresh below would not find them — by then they are tombstones.
+        // exists. The refresh below would not find them: by then they are tombstones.
         var visits = await conn.QueryAsync<VetVisit>(
             "select * from \"VetVisit\" where PetId = ? and IsDeleted = 0", pet.Id);
         foreach (var visit in visits)
@@ -127,7 +127,7 @@ public class PetDeletionService
         // Both the table list and the ordering come from SyncedTables: children before
         // parents, with the pet row itself last (its PetScope.Root predicate matches it,
         // so no separate case is needed). Loading happens outside the transaction and
-        // the writes inside it — Android process death mid-write is normal, and a torn
+        // the writes inside it: Android process death mid-write is normal, and a torn
         // cascade would leave a half-deleted pet.
         var toTombstone = new List<ISyncable>();
         foreach (var table in SyncedTables.InDeletionOrder)
@@ -149,7 +149,7 @@ public class PetDeletionService
         catch (Exception ex) { Debug.WriteLine($"[PetDelete] report cleanup failed: {ex.Message}"); }
 
         // The profile photo is local-only (the file is never synced), so delete it
-        // outright — the tombstoned row keeps the file name but the bytes are gone.
+        // outright: the tombstoned row keeps the file name but the bytes are gone.
         _photos.Delete(pet.PhotoFileName);
 
         // Never leave the UI pointing at a pet that's gone. Switch to another pet, or

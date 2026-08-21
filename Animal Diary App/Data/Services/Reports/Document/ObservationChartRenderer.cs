@@ -4,7 +4,7 @@ using SkiaSharp;
 
 /// <summary>
 /// Draws a QUALITATIVE observation chart: a dot per dated observation, sitting on a
-/// word-labelled category row. This is deliberately NOT the numeric line chart —
+/// word-labelled category row. This is deliberately NOT the numeric line chart,
 /// owner observations ("Normal", "More than usual") are subjective, so:
 /// <list type="bullet">
 /// <item>the y-axis shows WORDS, never numbers or a scale;</item>

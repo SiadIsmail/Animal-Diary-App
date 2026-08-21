@@ -7,8 +7,8 @@ using SQLite;
 /// Reads and writes the two custom-tracker stores behind one seam (mirroring
 /// <see cref="WaterEntryService"/>, which holds water's two):
 /// <list type="bullet">
-/// <item><see cref="CustomTracker"/> — the owner's definitions.</item>
-/// <item><see cref="CustomEntry"/> — their occurrences, event-shaped and append-only
+/// <item><see cref="CustomTracker"/>: the owner's definitions.</item>
+/// <item><see cref="CustomEntry"/>: their occurrences, event-shaped and append-only
 ///   like <see cref="GlucoseEntry"/>.</item>
 /// </list>
 ///
@@ -29,7 +29,7 @@ public class CustomTrackerService
 
     // ── Definitions ─────────────────────────────────────────────────────────────
 
-    /// <summary>The pet's live trackers — what the Journal asks for and offers. Ordered
+    /// <summary>The pet's live trackers: what the Journal asks for and offers. Ordered
     /// by creation so the chip row doesn't reshuffle itself.</summary>
     public async Task<List<CustomTracker>> GetForPetAsync(int petId)
     {
@@ -58,7 +58,7 @@ public class CustomTrackerService
             .Where(c => c.Id == id && c.IsDeleted == false)
             .FirstOrDefaultAsync()!;
 
-    /// <summary>How many live trackers the pet has — the gate on <see cref="CustomTracker.MaxPerPet"/>.</summary>
+    /// <summary>How many live trackers the pet has: the gate on <see cref="CustomTracker.MaxPerPet"/>.</summary>
     public async Task<int> CountForPetAsync(int petId) => (await GetForPetAsync(petId)).Count;
 
     /// <summary>Insert a new definition (Id == 0) or update one in place.</summary>
@@ -71,7 +71,7 @@ public class CustomTrackerService
         return tracker.Id;
     }
 
-    /// <summary>Retire a tracker (or bring it back). Its entries are never touched —
+    /// <summary>Retire a tracker (or bring it back). Its entries are never touched,
     /// see <see cref="CustomTracker.IsArchived"/>.</summary>
     public async Task SetArchivedAsync(int id, bool archived)
     {
@@ -82,7 +82,7 @@ public class CustomTrackerService
         await _db.UpdateAsync(SyncStamp.Touch(row));
     }
 
-    /// <summary>Soft delete a definition — a tombstone, so the removal syncs.
+    /// <summary>Soft delete a definition: a tombstone, so the removal syncs.
     ///
     /// <para>This is the "I made this by mistake" path, not the "I don't do this any
     /// more" one; that is <see cref="SetArchivedAsync"/>. Entries are deliberately left
@@ -104,7 +104,7 @@ public class CustomTrackerService
         return entry.Id;
     }
 
-    /// <summary>Soft delete one entry (the ✕ + undo path) — a tombstone, so it syncs.</summary>
+    /// <summary>Soft delete one entry (the ✕ + undo path): a tombstone, so it syncs.</summary>
     public async Task DeleteEntryAsync(int id)
     {
         var row = await _db.Table<CustomEntry>()
@@ -125,7 +125,7 @@ public class CustomTrackerService
         return rows.OrderBy(e => e.Time).ToList();
     }
 
-    /// <summary>Every custom entry in a date range, across ALL the pet's trackers — the
+    /// <summary>Every custom entry in a date range, across ALL the pet's trackers: the
     /// pending window and the vet report both read this one.</summary>
     public async Task<List<CustomEntry>> GetForRangeAsync(int petId, DateTime startDate, DateTime endDate)
     {
@@ -136,7 +136,7 @@ public class CustomTrackerService
             .ToListAsync();
     }
 
-    /// <summary>The most recent entry for one custom tracker, or null — the shape a
+    /// <summary>The most recent entry for one custom tracker, or null: the shape a
     /// Today stat card reads (a LAST RECORDED value, never a streak).</summary>
     public async Task<CustomEntry?> GetMostRecentAsync(int customTrackerId)
     {
@@ -152,7 +152,7 @@ public class CustomTrackerService
     }
 
     /// <summary>
-    /// Whether the pet has logged anything against a tracker that opted INTO the report —
+    /// Whether the pet has logged anything against a tracker that opted INTO the report,
     /// the gate on the export sheet's toggle.
     ///
     /// <para>Deliberately not "has any custom entry at all": a household whose only own
@@ -161,7 +161,7 @@ public class CustomTrackerService
     /// only when there is something for it to include.</para>
     ///
     /// <para>One small query per opted-in tracker, capped at
-    /// <see cref="CustomTracker.MaxPerPet"/> of them and run once when the sheet opens — cheaper than
+    /// <see cref="CustomTracker.MaxPerPet"/> of them and run once when the sheet opens: cheaper than
     /// pulling every entry the pet ever wrote to answer a yes/no.</para></summary>
     public async Task<bool> HasReportableEntriesAsync(int petId)
     {

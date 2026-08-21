@@ -14,7 +14,7 @@ public partial class ManagePetPage : ContentPage
 {
     private readonly MainViewModel vm;
 
-    // Feature-discovery counts "opened Manage" once per navigation into the page — the
+    // Feature-discovery counts "opened Manage" once per navigation into the page: the
     // guard stops OnAppearing re-firing it when returning from the edit-pet or
     // medications sub-pages (a new page instance is created per entry from the Care tab).
     private bool _openTracked;
@@ -47,7 +47,7 @@ public partial class ManagePetPage : ContentPage
         vm.ManageVM.RequestAddMedication += OnRequestAddMedication;
         vm.ManageVM.RequestOpenMedication += OnRequestOpenMedication;
 
-        // Leaving a shared pet purges it from this device — confirm natively
+        // Leaving a shared pet purges it from this device: confirm natively
         // (same accepted exception as delete-account), then pop back since the
         // page's pet is about to vanish.
         vm.SharingVM.ConfirmLeave = () =>
@@ -64,7 +64,7 @@ public partial class ManagePetPage : ContentPage
         // then name the consequence) and the after-removal navigation.
         vm.ManageVM.RequestRemoveFlow = OnRequestRemoveFlow;
         vm.ManageVM.PetRemoved += OnPetRemoved;
-        // Pausing a pet quietly offers the export once (§15.5) — the page owns the offer.
+        // Pausing a pet quietly offers the export once (§15.5): the page owns the offer.
         vm.ManageVM.RequestPauseExportOffer += OnPauseExportOffer;
         // The export sheet is hosted here too (the "save a copy first" offer opens it);
         // "View" on its done face pushes the preview, exactly as the Pets page does.
@@ -76,7 +76,7 @@ public partial class ManagePetPage : ContentPage
         vm.EpilepsySetupVM.Saved += OnSheetSaved;
         vm.CustomTrackerVM.Changed += OnSheetSaved;
         // Retiring an owner-defined tracker has no undo, so it asks first. The
-        // message leads with what is KEPT — nothing written down is affected.
+        // message leads with what is KEPT: nothing written down is affected.
         vm.CustomTrackerVM.ConfirmRetire = () =>
             DisplayAlert(
                 LocalizationManager.Instance.GetString("Custom_RetireConfirmTitle"),
@@ -90,7 +90,7 @@ public partial class ManagePetPage : ContentPage
         }
         catch (Exception ex)
         {
-            // async void — an escaping exception here would crash the app.
+            // async void: an escaping exception here would crash the app.
             System.Diagnostics.Debug.WriteLine($"[ManagePetPage] OnAppearing failed: {ex}");
         }
     }
@@ -215,7 +215,7 @@ public partial class ManagePetPage : ContentPage
         {
             if (!anyPetsRemain)
             {
-                // The owner deleted their last pet — back to onboarding, as after a
+                // The owner deleted their last pet: back to onboarding, as after a
                 // full reset (a freshly resolved page, no stale instances). Through App
                 // so the "no pets" state sticks for any window a recreation builds.
                 (Application.Current as App)?.SwitchToOnboarding();
@@ -231,7 +231,7 @@ public partial class ManagePetPage : ContentPage
         }
     }
 
-    /// <summary>The export sheet's "View" — push the in-app preview (navigation
+    /// <summary>The export sheet's "View": push the in-app preview (navigation
     /// belongs to pages, not VMs). Same handler the Pets page uses.</summary>
     private async void OnReportViewRequested(Data.Models.VetReportFile report)
     {
@@ -271,7 +271,7 @@ public partial class ManagePetPage : ContentPage
 
     /// <summary>A tracker's own editor, reached by tapping its care-plan row. Reuses the
     /// condition sheets because they already hold the right controls, but with
-    /// linkCondition:false — editing a glucose range must never record that the pet has
+    /// linkCondition:false: editing a glucose range must never record that the pet has
     /// diabetes, and a seizure log must never claim epilepsy.</summary>
     private async void OnRequestTrackerSetup(Data.Models.TrackerId trackerId)
     {
@@ -296,14 +296,14 @@ public partial class ManagePetPage : ContentPage
     // owner writes down, and writing things down is free forever on every tier. This page
     // used to route each of them to the subscribe sheet; that gate is exactly what the
     // monetization boundary was inverted to remove. The genuinely owner-only actions here
-    // — minting invites, removing members, deleting the pet cloud-wide — are enforced
+    // (minting invites, removing members, deleting the pet cloud-wide) are enforced
     // server-side by role, and minting an invite carries its own (unchanged) gate inside
     // SharingSheetViewModel.
 
     private async void OnSheetSaved() => await vm.ManageVM.LoadAsync();
 
     // Edit-pet door: prefill the create form from the active pet, then reuse it in edit
-    // mode (it saves in place and pops back — no condition picker).
+    // mode (it saves in place and pops back, no condition picker).
     private async void OnRequestEditPet()
     {
         vm.PetVM.LoadDraftFromActivePet();

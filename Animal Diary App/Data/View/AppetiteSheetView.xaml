@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- AppetiteSheetView — five word-tiles with a progressively-filled bowl (no numbers
+<!-- AppetiteSheetView: five word-tiles with a progressively-filled bowl (no numbers
      shown), in the shared FelovaBottomSheet. BindingContext is an AppetiteSheetViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -129,7 +129,7 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding DismissCommand}"/>
                         </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Common_NotNow}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                        <Label Text="{loc:Translate Common_Cancel}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
                                TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center" Padding="0,14"/>
                     </Border>
                     <Border Grid.Column="1" BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 13,16,15,14">

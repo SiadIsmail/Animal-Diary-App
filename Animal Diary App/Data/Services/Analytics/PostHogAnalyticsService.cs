@@ -9,27 +9,27 @@ using Animal_Diary_App.Helpers;
 /// <summary>
 /// The one and only PostHog-aware type in the app. It turns an explicit product
 /// event into a minimal PostHog "capture" payload and POSTs it to the EU ingestion
-/// endpoint. Nothing above this class knows PostHog exists — callers hold
+/// endpoint. Nothing above this class knows PostHog exists: callers hold
 /// <see cref="IAnalyticsService"/>.
 ///
 /// <b>Why a hand-rolled HTTP capture instead of a PostHog SDK?</b> It is the strongest
 /// possible privacy-by-design guarantee: the payload is built here, field by field, so
 /// autocapture, session recording, screen tracking, <c>$device_id</c>, OS/version
-/// fingerprinting, and IP geolocation don't have to be "turned off" — they cannot
+/// fingerprinting, and IP geolocation don't have to be "turned off": they cannot
 /// happen, because we never write them. Only the fields below are ever sent.
 ///
 /// Every event also carries two hard privacy switches:
 /// <list type="bullet">
-///   <item><c>$process_person_profile = false</c> — PostHog treats the event as
+///   <item><c>$process_person_profile = false</c>: PostHog treats the event as
 ///   anonymous and never builds or updates a person profile.</item>
-///   <item><c>$geoip_disable = true</c> — PostHog does not derive location/<c>$geoip_*</c>
+///   <item><c>$geoip_disable = true</c>: PostHog does not derive location/<c>$geoip_*</c>
 ///   from the request IP.</item>
 /// </list>
 ///
 /// <para><b>Delivery.</b> <see cref="Track"/> still returns instantly and never throws:
 /// the payload is built on the caller's thread (so no UI/MAUI singleton is touched
 /// off-thread) and the POST runs through <see cref="TaskExtensions.Forget"/>. What changed
-/// is what happens when that POST fails. A transient failure — offline, timeout, 5xx —
+/// is what happens when that POST fails. A transient failure: offline, timeout, 5xx,
 /// now parks the payload in <see cref="AnalyticsEventQueue"/> and it is retried on the
 /// next successful send, the next launch, or the next time connectivity returns. A
 /// permanent failure (4xx: wrong key, malformed body) is discarded, because retrying it
@@ -38,14 +38,14 @@ using Animal_Diary_App.Helpers;
 /// <para>Two fields exist to make that retry safe. <c>timestamp</c> is stamped when the
 /// event <i>happened</i> and <c>sent_at</c> when it was actually transmitted, so PostHog
 /// can correct for both the queue delay and a wrong device clock instead of filing a
-/// week-old event as if it just occurred — ordering matters when the data is read as a
+/// week-old event as if it just occurred: ordering matters when the data is read as a
 /// funnel. <c>uuid</c> is a fresh random GUID per event, so a payload that is retried
 /// after an ambiguous failure is deduplicated server-side rather than counted twice. It
 /// is per-<i>event</i>, not per-user: it identifies nothing and links to nothing.</para>
 /// </summary>
 public sealed class PostHogAnalyticsService : IAnalyticsService
 {
-    // One shared client for the app's lifetime with a short timeout — a slow network
+    // One shared client for the app's lifetime with a short timeout: a slow network
     // must not pile up connections or delay anything user-visible.
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
 
@@ -134,7 +134,7 @@ public sealed class PostHogAnalyticsService : IAnalyticsService
                 break;
 
             case AnalyticsSendOutcome.Sent:
-                // The network is up right now — the best moment to clear any backlog.
+                // The network is up right now: the best moment to clear any backlog.
                 await DrainAsync().ConfigureAwait(false);
                 break;
         }
@@ -164,7 +164,7 @@ public sealed class PostHogAnalyticsService : IAnalyticsService
     }
 
     // Build the exact JSON PostHog's /capture/ endpoint expects. Only these fields are
-    // ever transmitted — see the class summary for the privacy rationale.
+    // ever transmitted: see the class summary for the privacy rationale.
     private string BuildPayload(string eventName, IReadOnlyDictionary<string, object?>? properties)
     {
         var props = new Dictionary<string, object?>();
@@ -178,7 +178,7 @@ public sealed class PostHogAnalyticsService : IAnalyticsService
         props[AnalyticsEvents.PropAppVersion] = SafeAppVersion();
         props[AnalyticsEvents.PropPlatform] = SafePlatform();
         // Coarse signed-in/anonymous state on every event (see AnalyticsContext). This is
-        // NOT an identity — it links to no account, only reports whether cloud is on, so
+        // NOT an identity: it links to no account, only reports whether cloud is on, so
         // signed-in behaviour can be segmented without ever calling identify().
         props[AnalyticsEvents.PropAccountState] = AnalyticsContext.AccountState;
         // Which creator this install came through, on every event for the same reason as the
@@ -186,7 +186,7 @@ public sealed class PostHogAnalyticsService : IAnalyticsService
         // without a second event stream. A channel label, never the code and never a person.
         props[AnalyticsEvents.PropReferralSource] = AnalyticsContext.ReferralSource;
         // Coarse install age. Carried by every event because a funnel cannot express "this
-        // step must be at least a day after the previous one" — as a property it becomes an
+        // step must be at least a day after the previous one": as a property it becomes an
         // ordinary filter, which is what makes the "came back later" step measurable.
         props[AnalyticsEvents.PropDaysSinceInstall] = SafeTenureBucket();
         // Only set language if the caller didn't already (app_opened sends it explicitly).
@@ -236,7 +236,7 @@ public sealed class PostHogAnalyticsService : IAnalyticsService
         }
         catch (Exception ex)
         {
-            // Offline / timeout / DNS — the payload is fine, the network isn't.
+            // Offline / timeout / DNS: the payload is fine, the network isn't.
             System.Diagnostics.Debug.WriteLine($"[Analytics] send failed: {ex.Message}");
             return AnalyticsSendOutcome.Retry;
         }

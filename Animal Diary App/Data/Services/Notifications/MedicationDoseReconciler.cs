@@ -20,7 +20,7 @@ public class MedicationDoseReconciler
     // How far back a sweep will look for un-logged past doses.
     private const int BackfillDays = 14;
 
-    // A dose isn't "missed" until it's overdue by more than this — mirrors the
+    // A dose isn't "missed" until it's overdue by more than this: mirrors the
     // reminder grace window so a just-due dose isn't prematurely marked.
     private static readonly TimeSpan Grace = TimeSpan.FromHours(2);
 
@@ -53,7 +53,7 @@ public class MedicationDoseReconciler
             if (schedules.Count == 0)
                 continue;
 
-            // Existing logs in the window — any (date, time) here is already resolved.
+            // Existing logs in the window: any (date, time) here is already resolved.
             var existing = await _doseLogService.GetByMedicationAndRangeAsync(med.Id, medStart.Date, cutoff.Date);
             var resolved = new HashSet<(DateTime Date, TimeSpan Time)>(
                 existing.Select(l => (l.ScheduledDate.Date, l.ScheduledTime)));

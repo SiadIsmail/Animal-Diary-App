@@ -7,7 +7,7 @@ using Animal_Diary_App.Data.ViewModels;
 /// chronological timeline: Mood gets the warm-paper washi-note card, every other
 /// kind (Weight, Glucose, Appetite, Seizure, Dose) shares the standard title + sub
 /// card. Templates are declared in CalendarPage resources. The selector never
-/// affects ordering — that's purely by time in the ViewModel.
+/// affects ordering: that's purely by time in the ViewModel.
 /// </summary>
 public class TimelineTemplateSelector : DataTemplateSelector
 {

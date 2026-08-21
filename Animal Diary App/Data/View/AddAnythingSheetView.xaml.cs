@@ -14,7 +14,7 @@ public partial class AddAnythingSheetView : ContentView
     /// Give the body its scroll ceiling. This view fills the page, so its own height is
     /// the screen height the sheet sizes itself against. Without the ceiling the list
     /// hugs whatever it contains and a long one is clipped by the sheet's cap rather
-    /// than scrolled — the failure only a pet with many custom trackers reaches.
+    /// than scrolled: the failure only a pet with many custom trackers reaches.
     /// </summary>
     protected override void OnSizeAllocated(double width, double height)
     {

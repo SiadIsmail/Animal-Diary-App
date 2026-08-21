@@ -2,10 +2,10 @@ namespace Animal_Diary_App.Data.Services.Reports.Document;
 
 /// <summary>
 /// Every tunable of the report's look, in one place. Change the document's
-/// appearance here — never inside a section. All lengths are in points (1/72").
+/// appearance here, never inside a section. All lengths are in points (1/72").
 ///
 /// Print rule: the report must survive GRAYSCALE printing, so only black and
-/// greys appear here — meaning is never carried by colour.
+/// greys appear here: meaning is never carried by colour.
 /// </summary>
 public static class VetReportStyles
 {
@@ -23,7 +23,7 @@ public static class VetReportStyles
     public const float SmallSize = 7f;
     public const float LineHeight = 1.25f;
 
-    // ── Colours (greys only — see print rule above) ─────────────────────────
+    // ── Colours (greys only: see print rule above) ─────────────────────────
     public const string Ink = "#000000";
     public const string InkSecondary = "#444444";
     public const string InkTertiary = "#777777";

@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0019 — Stop a creator code and an access code sharing the same text.
+--  0019: Stop a creator code and an access code sharing the same text.
 --
 --  0015 and 0016 kept the two kinds of code in separate tables, which is right:
 --  one grants a year, the other grants nothing, and a routing bug between them

@@ -95,7 +95,7 @@ public partial class CreatePetPage : ContentPage
         PhotoChooser.IsPresented = false;
     }
 
-    // Crop/rotate the photo that is already on the draft — no picker involved. The way
+    // Crop/rotate the photo that is already on the draft, no picker involved. The way
     // back into the editor for a photo that turned out crooked, which on some devices is
     // still how camera shots arrive (see PetPhotoService's "[PetPhoto]" logging).
     async void OnAdjustPhoto(object? sender, EventArgs args)
@@ -123,7 +123,7 @@ public partial class CreatePetPage : ContentPage
     // Shared pick/capture path: run the media action, stage the result for the editor,
     // and let the owner square it up before it becomes the draft. A cancelled pick
     // returns null (no-op); a denied permission or any failure degrades to an inline
-    // message, never a crash — this is an async void handler, so an escaping exception
+    // message, never a crash: this is an async void handler, so an escaping exception
     // would kill the process.
     private async Task PickAsync(Func<Task<FileResult?>> pick)
     {
@@ -166,7 +166,7 @@ public partial class CreatePetPage : ContentPage
     }
 
     // Hand a staged photo to the editor sheet and wait. Null back means the owner backed
-    // out, and then nothing about their photo changes — that is the whole contract, and
+    // out, and then nothing about their photo changes, that is the whole contract, and
     // it is why the draft isn't touched until this returns.
     private async Task RunEditorAsync(Models.PhotoEditSource source)
     {
@@ -187,7 +187,7 @@ public partial class CreatePetPage : ContentPage
         PhotoErrorLabel.IsVisible = true;
 
         // This line lives inside the chooser, so bring the chooser back if the failure
-        // happened after it closed — otherwise the message would be shown to no one.
+        // happened after it closed, otherwise the message would be shown to no one.
         PhotoChooser.IsPresented = true;
     }
 }

@@ -25,7 +25,7 @@
             <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
 
                 <!-- BindableLayout on a wrapping FlexLayout: two-to-three fixed chips,
-                     no scrolling — BindableLayout's documented use case. Safe here
+                     no scrolling: BindableLayout's documented use case. Safe here
                      because FelovaBottomSheet keeps its body realised while hidden
                      (translated off-screen, never IsVisible=false). -->
                 <FlexLayout Wrap="Wrap" Direction="Row"

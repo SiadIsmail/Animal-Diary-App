@@ -20,11 +20,11 @@ public enum AnalyticsSendOutcome
 /// <para><b>Why it exists.</b> <c>Track</c> was fire-and-forget with no retry, so any
 /// event raised while offline vanished. For a single metric that costs one count; in an
 /// <i>ordered funnel</i> it is much worse, because a dropped middle step truncates that
-/// user at the previous step — dropped events are indistinguishable from drop-off. This is
+/// user at the previous step: dropped events are indistinguishable from drop-off. This is
 /// an offline-first app for people who log at vet visits and in waiting rooms, so that was
 /// the largest source of funnel error.</para>
 ///
-/// <para><b>Shape.</b> Payloads are stored exactly as they were built for transmission —
+/// <para><b>Shape.</b> Payloads are stored exactly as they were built for transmission,
 /// this class never inspects, enriches, or rewrites them, so it cannot widen what the
 /// analytics contract permits to be collected. Oldest first, capped at
 /// <see cref="MaxEvents"/>; when full the <i>oldest</i> are dropped, because a stale event
@@ -32,7 +32,7 @@ public enum AnalyticsSendOutcome
 ///
 /// <para><b>Delivery is at-least-once.</b> A send whose response never arrives is retried,
 /// so the same payload can reach PostHog twice. That is why every payload carries a
-/// per-event <c>uuid</c> (see <c>PostHogAnalyticsService</c>) — the server deduplicates on
+/// per-event <c>uuid</c> (see <c>PostHogAnalyticsService</c>): the server deduplicates on
 /// it, which is what keeps retries from inflating funnel counts.</para>
 ///
 /// <para>Holds no MAUI or file-system types (storage is behind
@@ -127,7 +127,7 @@ public sealed class AnalyticsEventQueue
             }
             catch (Exception ex)
             {
-                // A throwing sender is a bug, but the payload is not at fault — keep it.
+                // A throwing sender is a bug, but the payload is not at fault: keep it.
                 System.Diagnostics.Debug.WriteLine($"[Analytics] drain send threw: {ex.Message}");
                 outcome = AnalyticsSendOutcome.Retry;
             }

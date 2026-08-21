@@ -12,17 +12,17 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 /// boundary needs rethinking rather than repricing.</para>
 ///
 /// <para><b>Why its own buckets rather than <see cref="AnalyticsTenure"/>'s.</b> That one
-/// answers "is this install new", and tops out at 15+ days — every question here would
+/// answers "is this install new", and tops out at 15+ days: every question here would
 /// land in its last bucket. Chronic care runs on a three-to-six month appointment rhythm,
 /// so the boundaries that matter are months, not days.</para>
 ///
-/// <para><b>Bucketed, never exact</b> — the same rule and the same reason as
+/// <para><b>Bucketed, never exact</b>: the same rule and the same reason as
 /// <see cref="AnalyticsTenure"/>. A precise history length alongside a timestamp is a far
 /// narrower fingerprint than the question needs, and it says nothing about the animal:
 /// this is a number describing the <i>event</i>, not the user. It carries no pet, no
 /// condition, no medical detail and no count of anything logged.</para>
 ///
-/// <para>Pure and MAUI-free, so the boundaries are unit-testable — an off-by-one here is
+/// <para>Pure and MAUI-free, so the boundaries are unit-testable: an off-by-one here is
 /// invisible and would quietly move a cohort into the wrong column for months.</para>
 /// </summary>
 public static class AnalyticsHistory
@@ -33,9 +33,9 @@ public static class AnalyticsHistory
     public const string FirstWeek = "1-7";
     /// <summary>The first month.</summary>
     public const string FirstMonth = "8-30";
-    /// <summary>Months two and three — inside the first appointment cycle.</summary>
+    /// <summary>Months two and three: inside the first appointment cycle.</summary>
     public const string Months2To3 = "31-90";
-    /// <summary>Months four to six — the first owners to have crossed a full cycle
+    /// <summary>Months four to six: the first owners to have crossed a full cycle
     /// WITH a record behind them. The cohort the whole claim is about.</summary>
     public const string Months4To6 = "91-180";
     /// <summary>Past six months.</summary>
@@ -43,7 +43,7 @@ public static class AnalyticsHistory
 
     /// <summary>Days between the pet's first entry and today, as a bucket. A negative
     /// span (a device clock moved backwards) reads as <see cref="None"/> rather than
-    /// throwing — this is telemetry, and it may never be the thing that breaks a sheet.</summary>
+    /// throwing: this is telemetry, and it may never be the thing that breaks a sheet.</summary>
     public static string Bucket(int days) => days switch
     {
         <= 0 => None,

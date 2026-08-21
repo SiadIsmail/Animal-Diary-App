@@ -40,7 +40,7 @@ public class PresetChoice
 /// Create or edit a tracker the owner defines: a name, an emoji, a colour, whether it
 /// records a number, and how often the Journal should ask.
 ///
-/// <para>This is the <b>one</b> sheet behind every owner-created tracker — there is no
+/// <para>This is the <b>one</b> sheet behind every owner-created tracker: there is no
 /// per-tracker editor to write ever again. Its shipped counterparts are the condition
 /// setup sheets (<c>DiabetesSetupSheetViewModel</c> and friends), which configure the
 /// six trackers the app knows by name.</para>
@@ -57,7 +57,7 @@ public class CustomTrackerSheetViewModel : BaseViewModel
 
     /// <summary>The row being edited, or null when creating. Held rather than re-read on
     /// save so an edit can't silently resurrect a tracker deleted from another device
-    /// mid-sheet — <see cref="CustomTrackerService.SaveAsync"/> updates by id.</summary>
+    /// mid-sheet: <see cref="CustomTrackerService.SaveAsync"/> updates by id.</summary>
     private CustomTracker? _editing;
 
     public CustomTrackerSheetViewModel(ActivePetService activePet, CustomTrackerService custom)
@@ -79,14 +79,14 @@ public class CustomTrackerSheetViewModel : BaseViewModel
     /// <summary>Raised after a save or a retire, so the Manage page reloads its plan.</summary>
     public event Action? Changed;
 
-    /// <summary>Ask the page to confirm a retire (native alert — two outcomes, so not a
+    /// <summary>Ask the page to confirm a retire (native alert: two outcomes, so not a
     /// sheet; see AI/coding-standards.md).
     ///
     /// <para>It needs asking because there is no way back: retiring drops the tracker out
     /// of the plan and the "+" sheet, and nothing in the app lists retired ones to bring
     /// back. Every other removal in Felova is either undoable (the toast) or confirmed
     /// (removing a pet); this one cannot be the exception. What the confirm must say is
-    /// the reassuring half — the entries are all still there.</para></summary>
+    /// the reassuring half: the entries are all still there.</para></summary>
     public Func<Task<bool>>? ConfirmRetire;
 
     public ICommand SaveCommand { get; }
@@ -143,7 +143,7 @@ public class CustomTrackerSheetViewModel : BaseViewModel
 
     /// <summary>Length cap, enforced on save rather than by silently truncating.
     /// The name rides a chip and a care-plan row, and German runs 10–30% longer than
-    /// English (AI/app-voice.md §19) — so this is the layout's budget, not a data limit.</summary>
+    /// English (AI/app-voice.md §19), so this is the layout's budget, not a data limit.</summary>
     public const int MaxNameLength = 24;
 
     /// <summary>Empty until the owner has typed something unusable; bound through
@@ -172,7 +172,7 @@ public class CustomTrackerSheetViewModel : BaseViewModel
 
     public bool IsTick => !IsAmount;
 
-    /// <summary>The unit field belongs to the Amount shape only — a groom has no unit.</summary>
+    /// <summary>The unit field belongs to the Amount shape only: a groom has no unit.</summary>
     public bool ShowUnit => IsAmount;
 
     private string _unit = string.Empty;
@@ -182,7 +182,7 @@ public class CustomTrackerSheetViewModel : BaseViewModel
         set => SetProperty(ref _unit, value);
     }
 
-    /// <summary>Whether this tracker's entries reach the vet summary — see
+    /// <summary>Whether this tracker's entries reach the vet summary: see
     /// <see cref="CustomTracker.IncludeInReport"/> for why it is asked here, once, and
     /// why it starts on.</summary>
     private bool _inReport = true;
@@ -196,7 +196,7 @@ public class CustomTrackerSheetViewModel : BaseViewModel
     public ObservableCollection<ColorChoice> Colors { get; } = new();
     public ObservableCollection<PresetChoice> Presets { get; } = new();
 
-    /// <summary>The cadence ladder — the same rungs and the same chip control the shipped
+    /// <summary>The cadence ladder: the same rungs and the same chip control the shipped
     /// adjust sheet uses, so a custom tracker is scheduled in the app's existing
     /// vocabulary and the pending engine needs no new rule.</summary>
     public ObservableCollection<AdjustOption> Cadences { get; } = new();
@@ -269,7 +269,7 @@ public class CustomTrackerSheetViewModel : BaseViewModel
     }
 
     // The ladder a custom tracker may be set to. Every rung the pending engine
-    // understands is here, including the two that never nag — "whenever it happens"
+    // understands is here, including the two that never nag: "whenever it happens"
     // (Event) is the honest setting for a poop or a sick episode, and the app must never
     // put those on a to-do list.
     private static readonly (TrackerKind Kind, int PerDay)[] CadenceLadder =
@@ -319,7 +319,7 @@ public class CustomTrackerSheetViewModel : BaseViewModel
     };
 
     // ── Picks ───────────────────────────────────────────────────────────────────
-    // One pass that sets one and clears the rest — never "clear the old, set the new"
+    // One pass that sets one and clears the rest, never "clear the old, set the new"
     // in two places (AI/coding-standards.md).
 
     private void PickIcon(IconChoice? choice)
@@ -341,7 +341,7 @@ public class CustomTrackerSheetViewModel : BaseViewModel
     }
 
     /// <summary>Fill the form from a starting point. It writes into the SAME fields the
-    /// owner types into, so every part of it stays theirs to change — a preset is never
+    /// owner types into, so every part of it stays theirs to change: a preset is never
     /// saved as such and nothing downstream can tell one was used.</summary>
     private void ApplyPreset(PresetChoice? choice)
     {
@@ -409,7 +409,7 @@ public class CustomTrackerSheetViewModel : BaseViewModel
 
     /// <summary>Retire the tracker: it stops being asked for and leaves the "+" sheet,
     /// and every entry it collected stays exactly where it is. This is deliberately not
-    /// a delete — see <see cref="CustomTracker.IsArchived"/>.</summary>
+    /// a delete: see <see cref="CustomTracker.IsArchived"/>.</summary>
     private async Task RetireAsync()
     {
         if (_editing == null)

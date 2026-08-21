@@ -5,7 +5,7 @@ using Xunit;
 namespace Animal_Diary_App.Tests;
 
 /// <summary>
-/// "What is still to do for this pet today?" — the rules behind the Journal's chip row
+/// "What is still to do for this pet today?": the rules behind the Journal's chip row
 /// and the Today page's care ring.
 ///
 /// <para>Worth testing precisely because it is the app's one piece of care logic that

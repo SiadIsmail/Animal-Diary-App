@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
@@ -12,7 +12,7 @@
     <x:String x:Key="FontSerif">Fraunces</x:String>
     <x:String x:Key="FontSerifItalic">FrauncesItalic</x:String>
     <x:String x:Key="FontSans">PlusJakartaSans</x:String>
-    <x:String x:Key="FontHand">Caveat</x:String>   <!-- handwriting accents (.hand) — use sparingly -->
+    <x:String x:Key="FontHand">Caveat</x:String>   <!-- handwriting accents (.hand): use sparingly -->
 
     <!-- Corner radii (uniform, legacy) -->
     <x:Double x:Key="RadiusSm">12</x:Double>
@@ -22,7 +22,7 @@
     <x:Double x:Key="RadiusPill">999</x:Double>
 
     <!-- ================================================================= -->
-    <!-- Rockpool · Warm — asymmetric "handmade" corner radii                -->
+    <!-- Rockpool · Warm: asymmetric "handmade" corner radii                -->
     <!-- HTML/CSS order is TL TR BR BL; MAUI CornerRadius is TL TR BL BR,    -->
     <!-- so the last two values are swapped here to match the HTML visually. -->
     <!-- ================================================================= -->

@@ -9,8 +9,8 @@ using Xunit;
 ///
 /// <para>The most important property in this file is a negative one: <b>the free tier is
 /// not a locked state</b>. It has no clock, no expiry and nothing to run out, and it never
-/// stops anyone writing anything down. The tests that used to live here — a trial window,
-/// its boundary, the read-only state on the far side of it — are gone with the trial.</para>
+/// stops anyone writing anything down. The tests that used to live here: a trial window,
+/// its boundary, the read-only state on the far side of it: are gone with the trial.</para>
 /// </summary>
 public class EntitlementServiceTests
 {
@@ -131,7 +131,7 @@ public class EntitlementServiceTests
     public void Grant_ReachesYourOwnPets_UnlikeSponsorship()
     {
         // Sponsorship deliberately never covers a pet you own. A grant is YOUR OWN access,
-        // so it must — CanEditPet short-circuits on HasFullAccess before any cloud state.
+        // so it must: CanEditPet short-circuits on HasFullAccess before any cloud state.
         var grants = new FakeGrants(() => T0).Until(T0.AddDays(30));
         var (ent, _) = Build(grants: grants);
 

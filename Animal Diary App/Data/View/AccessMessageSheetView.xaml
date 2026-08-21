@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- AccessMessageSheetView — the two quiet grant moments (a redeemed code's year is
+<!-- AccessMessageSheetView: the two quiet grant moments (a redeemed code's year is
      nearly up / is up) on one reusable FelovaBottomSheet. Reassures first; "Continue
      with Felova" (→ subscribe) is offered, never insisted on. Replaces the old
      TrialMessageSheetView, whose three modes were all about a trial that no longer

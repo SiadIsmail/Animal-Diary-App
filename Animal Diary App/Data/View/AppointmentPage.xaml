@@ -5,14 +5,18 @@
     The vet visit as a thing the app knows about, reached from the Care page's
     "Vet visits" row and from the band on Today.
 
-    Three states, one scrolling page:
-      B  an upcoming visit  → the "since your last visit" summary
+    One scrolling page:
+      B  the "since your last visit" summary, whenever there is anything to say.
+         An upcoming visit heads it with the pet, the practice and the time; without
+         one the window's own line is the heading. The visit is NOT what makes the
+         summary exist.
       C  the last visit has happened and nothing was written down → "How did it go?"
-      A  neither            → the past list, or a first-run empty state
+      A  the past list, and a first-run empty state only when there is genuinely
+         nothing on the page yet
 
     EVERY NUMBER HERE IS A FACT ABOUT THE RECORD. Counts, dates, the owner's own
     values, and the words they typed. One weight, one colour, no arrows, no tints
-    that encode a verdict — and the four day-part bands always all four, in fixed
+    that encode a verdict, and the four day-part bands always all four, in fixed
     order, zeros included. There is deliberately no before/after pair of counts
     around a treatment change. See Data/Models/RecordFacts.cs.
 
@@ -107,7 +111,7 @@
 
                 <!-- ═══ STATE C ═══
                      The last visit happened and nothing has been written down about
-                     it. Offered plainly, once — no nagging, no repeat. -->
+                     it. Offered plainly, once, no nagging, no repeat. -->
                 <Border Style="{StaticResource Card}"
                         IsVisible="{Binding AppointmentVM.ShowNotePrompt}">
                     <Border.GestureRecognizers>
@@ -130,10 +134,17 @@
                     </Grid>
                 </Border>
 
-                <!-- ═══ STATE B ═══ the next visit, and the summary for it ═══ -->
-                <VerticalStackLayout Spacing="14" IsVisible="{Binding AppointmentVM.HasNext}">
+                <!-- ═══ STATE B ═══ the summary, and the visit it is headed by ═══
+                     The summary renders whenever there is something to say. An upcoming
+                     visit changes the HEADER: the pet, the practice, the date and the
+                     time, not whether the summary exists. Requiring one meant the most
+                     valuable thing in the product sat behind an act of data entry that
+                     owners do not perform: appointments arrive as a card from the
+                     practice, not as a form somebody fills in. -->
+                <VerticalStackLayout Spacing="14">
 
-                    <Border Style="{StaticResource Card}">
+                    <Border Style="{StaticResource Card}"
+                            IsVisible="{Binding AppointmentVM.HasNext}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding AppointmentVM.EditNextCommand}"/>
                         </Border.GestureRecognizers>
@@ -149,15 +160,27 @@
                         </VerticalStackLayout>
                     </Border>
 
-                    <!-- ═══ THE ASSEMBLED SUMMARY — the one paid thing on this page ═══
+                    <!-- No visit coming up: the window's own line IS the heading. It
+                         already says "since your last visit, 14 March" or "since you
+                         started writing things down": the app never invents a visit
+                         that did not happen, so there is nothing else to name it. -->
+                    <Border Style="{StaticResource Card}"
+                            IsVisible="{Binding AppointmentVM.ShowSummaryWindow}">
+                        <Label Text="{Binding AppointmentVM.SinceLine}"
+                               FontFamily="{StaticResource FontSerif}"
+                               FontSize="17"
+                               TextColor="{StaticResource Ink}"/>
+                    </Border>
+
+                    <!-- ═══ THE ASSEMBLED SUMMARY: the one paid thing on this page ═══
                          Everything OUTSIDE this block is free on every tier, permanently:
                          the visit card above, the question list, ticking one answered, the
                          "how did it go?" note, and the past-visit list. Someone must always
                          be able to record that a visit is happening and what was said at
                          it. Do not move anything else in here. -->
-                    <VerticalStackLayout Spacing="14" IsVisible="{Binding AppointmentVM.CanSeeSummary}">
+                    <VerticalStackLayout Spacing="14" IsVisible="{Binding AppointmentVM.ShowSummary}">
 
-                    <!-- WHAT CHANGED — the treatment ledger over the window,
+                    <!-- WHAT CHANGED: the treatment ledger over the window,
                          chronological. Each row is what the stored row said at the
                          time, so a since-renamed medication still reads correctly. -->
                     <VerticalStackLayout Spacing="8" IsVisible="{Binding AppointmentVM.HasChanges}">
@@ -191,7 +214,7 @@
                         </Border>
                     </VerticalStackLayout>
 
-                    <!-- NEW SINCE LAST TIME — a fact about the DIARY: these are the
+                    <!-- NEW SINCE LAST TIME: a fact about the DIARY: these are the
                          records whose first-ever entry falls inside the window. It is
                          never a claim about why the owner started writing them down. -->
                     <VerticalStackLayout Spacing="8" IsVisible="{Binding AppointmentVM.HasNewRecords}">
@@ -212,7 +235,7 @@
                         </Border>
                     </VerticalStackLayout>
 
-                    <!-- WHAT YOU WROTE DOWN — every record with data in the window,
+                    <!-- WHAT YOU WROTE DOWN: every record with data in the window,
                          same order, same three lines, every time. Including the ones
                          with nothing interesting in them: dropping the quiet ones
                          would be the app deciding which record matters. -->
@@ -234,6 +257,7 @@
                                                    FontSize="12.5"
                                                    TextColor="{StaticResource InkSecondary}"/>
                                             <Label Text="{Binding DayParts}"
+                                                   IsVisible="{Binding HasDayParts}"
                                                    FontFamily="{StaticResource FontSans}"
                                                    FontSize="12.5"
                                                    TextColor="{StaticResource InkSecondary}"/>
@@ -452,7 +476,7 @@
         </ScrollView>
 
         <!-- Shared confirmation/undo pill. Declared BEFORE the sheets so they render
-             above it — a toast raised while a sheet is open would otherwise sit behind
+             above it: a toast raised while a sheet is open would otherwise sit behind
              the scrim, which is why every mutation here closes its sheet first. -->
         <controls:UndoToast x:Name="Toast" Margin="0,0,0,28"/>
 
@@ -465,7 +489,7 @@
                             SheetTemplate="{DataTemplate views:VetQuestionSheetView}"/>
 
         <!-- The export sheet, hosted HERE rather than opened on the page below.
-             "Full summary" used to pop first and open it on whatever it landed on —
+             "Full summary" used to pop first and open it on whatever it landed on,
              which is the Care page when you arrive from there, and Today when you
              arrive from the band. Today does not host this sheet, so the flag went
              true with nothing to render it: an invisible sheet and a presented flag

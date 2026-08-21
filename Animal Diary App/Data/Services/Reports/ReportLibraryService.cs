@@ -6,7 +6,7 @@ using SQLite;
 /// <summary>
 /// Owns the report library: the <c>Reports/</c> folder inside app storage and the
 /// <see cref="VetReportFile"/> metadata table. Everything that touches report
-/// files on disk goes through here — the generator registers new exports, the
+/// files on disk goes through here: the generator registers new exports, the
 /// Documents page lists/deletes them, and the app reset wipes them. Rows and
 /// files live and die together; a row whose PDF has vanished is dropped on read.
 /// </summary>
@@ -85,7 +85,7 @@ public class ReportLibraryService
     }
 
     /// <summary>The app-reset path: wipe every row AND every file in the reports
-    /// folder (including strays with no row — reset must leave nothing behind).</summary>
+    /// folder (including strays with no row: reset must leave nothing behind).</summary>
     public async Task DeleteAllAsync()
     {
         await _db.DeleteAllAsync<VetReportFile>();

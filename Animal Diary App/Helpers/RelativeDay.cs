@@ -4,7 +4,7 @@ namespace Animal_Diary_App.Helpers;
 /// The app's one relative-day vocabulary: "today" / "yesterday" / "5 days ago" /
 /// "upcoming", and the "Recorded {…}" line the Today stat cards put under a reading.
 ///
-/// <para>Resolved per call, never cached — a singleton holding one of these strings
+/// <para>Resolved per call, never cached: a singleton holding one of these strings
 /// would survive a live language switch in the old language (see
 /// AI/coding-standards.md). The Journal's day heading and the Today cards used to
 /// spell the same four branches out separately.</para>
@@ -25,7 +25,7 @@ public static class RelativeDay
         };
     }
 
-    /// <summary>"Recorded today" — the chip under a Today stat card's reading. States
+    /// <summary>"Recorded today": the chip under a Today stat card's reading. States
     /// WHEN the reading was taken, never a verdict on what it says. Empty when nothing
     /// has been recorded.
     ///

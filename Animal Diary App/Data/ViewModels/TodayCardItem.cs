@@ -9,7 +9,7 @@ using Animal_Diary_App.Helpers;
 /// One of the two Today stat cards: which record it holds, what that record says, and
 /// the tap that changes it.
 ///
-/// <para><b>These two instances are stable</b> — <see cref="MainPageViewModel"/> owns
+/// <para><b>These two instances are stable</b>: <see cref="MainPageViewModel"/> owns
 /// one per slot for the app's lifetime and refreshes them in place with
 /// <see cref="Apply"/>. Rebuilding them per load would mean either a leaked
 /// <c>LocalizationManager</c> subscription per load or cards that keep the old language
@@ -17,7 +17,7 @@ using Animal_Diary_App.Helpers;
 /// instead, the same shape <c>DaySelectionItem</c> uses.</para>
 ///
 /// <para>Every string below is resolved <b>per read</b> from the raw
-/// <see cref="TodayCardReading"/> for exactly that reason — nothing localized or
+/// <see cref="TodayCardReading"/> for exactly that reason: nothing localized or
 /// culture-formatted is cached in a field.</para>
 /// </summary>
 public class TodayCardItem : BaseViewModel
@@ -36,10 +36,10 @@ public class TodayCardItem : BaseViewModel
         TapCommand = new Command(() => _onTap(this));
     }
 
-    /// <summary>Which of the two cards this is — the slot the picker writes back to.</summary>
+    /// <summary>Which of the two cards this is: the slot the picker writes back to.</summary>
     public TodayCardSlot Slot { get; }
 
-    /// <summary>Which record the card currently holds — shipped or owner-defined.</summary>
+    /// <summary>Which record the card currently holds: shipped or owner-defined.</summary>
     public TodayCardKey Card { get; private set; } = TodayCardId.Weight;
 
     /// <summary>The whole card is the target: tapping anywhere on it opens the picker.
@@ -56,7 +56,7 @@ public class TodayCardItem : BaseViewModel
     }
 
     /// <summary>Re-raise every displayed string. Called on a live language switch and
-    /// after <see cref="Apply"/> — the getters do the work, so there is nothing to
+    /// after <see cref="Apply"/>: the getters do the work, so there is nothing to
     /// recompute here.</summary>
     public void RefreshLocalized()
     {
@@ -76,11 +76,11 @@ public class TodayCardItem : BaseViewModel
 
     // ── What the card shows ───────────────────────────────────────────────────
 
-    /// <summary>"Last weigh-in", "Last seizure" — every card names a record, never a
+    /// <summary>"Last weigh-in", "Last seizure": every card names a record, never a
     /// running total. The wording rule that keeps a seizure card from ever reading as a
     /// streak lives in the catalog's strings, so no surface can reintroduce one.</summary>
     /// <para>An owner-defined tracker's label is its own NAME, carried on the reading as
-    /// verbatim user text — never a localization key. The fallback covers a tracker whose
+    /// verbatim user text, never a localization key. The fallback covers a tracker whose
     /// row has vanished (a hard purge), where there is genuinely nothing left to name.</para>
     public string Label => Card.IsCustom
         ? (_reading.Label.Length > 0 ? _reading.Label : LocalizationManager.Instance.GetString("Today_CardCustom"))
@@ -121,13 +121,18 @@ public class TodayCardItem : BaseViewModel
                 TodayCardId.Water => _reading.Number is decimal ml
                     ? ml.ToString("0.#")
                     : ((WaterLevel)_reading.Level).GetDisplayName(),
+                // Weight goes through the one weight formatter; everything else left in
+                // this arm carries one decimal of its own (Helpers/WeightText.cs).
+                TodayCardId.Weight => _reading.Number is decimal kg
+                    ? WeightText.Number(kg)
+                    : string.Empty,
                 _ => _reading.Number?.ToString("0.0") ?? string.Empty,
             };
         }
     }
 
     /// <summary>The unit beside a measured value (" kg", " ml"), empty for everything
-    /// else — including an appetite or water card currently showing an observation.</summary>
+    /// else: including an appetite or water card currently showing an observation.</summary>
     public string UnitText
     {
         get
@@ -135,13 +140,17 @@ public class TodayCardItem : BaseViewModel
             if (!HasData || _reading.Number is null)
                 return string.Empty;
 
-            // The owner's own unit, in their own words — printed, never looked up.
+            // The owner's own unit, in their own words: printed, never looked up.
             if (Card.IsCustom)
                 return _reading.Unit.Trim().Length > 0 ? " " + _reading.Unit.Trim() : string.Empty;
 
+            // Weight comes from the one weight formatter rather than a key of its own,
+            // the number above already does (Helpers/WeightText.cs).
+            if (Card.Is(TodayCardId.Weight))
+                return " " + WeightText.Unit.Trim();
+
             var key = Card.BuiltIn switch
             {
-                TodayCardId.Weight => "Common_KgSuffix",
                 TodayCardId.Glucose => "Common_MmolSuffix",
                 TodayCardId.Water => "Common_MlSuffix",
                 TodayCardId.Appetite => "Common_GramSuffix",
@@ -158,7 +167,7 @@ public class TodayCardItem : BaseViewModel
 
     /// <summary>A number gets the big serif treatment; a word or a name gets the smaller
     /// one so a long mood or medication still fits a half-width card. A presentation
-    /// hint held on the VM — the same accepted convention as <c>TimelineItem</c>'s tint.</summary>
+    /// hint held on the VM: the same accepted convention as <c>TimelineItem</c>'s tint.</summary>
     public double ValueFontSize => Card.IsCustom
         ? (_reading.Number is null ? 18 : 27)
         : Card.BuiltIn switch
@@ -177,14 +186,14 @@ public class TodayCardItem : BaseViewModel
 
     public Color MoodColor => _reading.Mood.GetColor();
 
-    /// <summary>"Recorded today" / "Recorded 3 days ago" — WHEN it was written down.
+    /// <summary>"Recorded today" / "Recorded 3 days ago": WHEN it was written down.
     /// Never a duration since, never a count, never a verdict on the value.</summary>
     public string RecordedLabel => RelativeDay.Recorded(_reading.On);
 
     /// <summary>The card's "nothing here yet" line, from the existing per-record copy.</summary>
     public string EmptyText => TodayCardCatalog.EmptyText(Card);
 
-    /// <summary>Screen-reader text: the record, its value, and that the card is tappable —
+    /// <summary>Screen-reader text: the record, its value, and that the card is tappable,
     /// the customization must not be visual-only.</summary>
     public string AccessibilityDescription
     {
@@ -196,7 +205,7 @@ public class TodayCardItem : BaseViewModel
         }
     }
 
-    /// <summary>"31 Jul · 14:20" for an event card — the moment it happened, stated as a
+    /// <summary>"31 Jul · 14:20" for an event card: the moment it happened, stated as a
     /// diary entry. Legacy rows without a time show the date alone.</summary>
     private string Stamp()
     {

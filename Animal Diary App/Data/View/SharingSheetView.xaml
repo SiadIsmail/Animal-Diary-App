@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- SharingSheetView — the Manage-pet "Pet sharing" sheet on the shared
+<!-- SharingSheetView: the Manage-pet "Pet sharing" sheet on the shared
      FelovaBottomSheet: member list; invite minting + share (owner); leave
      (caregiver). BindingContext is a SharingSheetViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"

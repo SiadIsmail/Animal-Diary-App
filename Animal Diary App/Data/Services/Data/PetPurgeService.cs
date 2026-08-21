@@ -5,7 +5,7 @@ using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services.Notifications;
 
 /// <summary>
-/// Removing a pet from THIS device only — a hard, local delete that leaves no tombstone
+/// Removing a pet from THIS device only: a hard, local delete that leaves no tombstone
 /// and pushes nothing.
 ///
 /// <para><b>This is not the ordinary delete.</b> <c>PetDeletionService</c> soft-deletes so
@@ -13,15 +13,15 @@ using Animal_Diary_App.Data.Services.Notifications;
 /// deletes their pet. This one is for rows that must disappear here and stay put everywhere
 /// else, and there are exactly two callers with that need:</para>
 /// <list type="bullet">
-/// <item><b>Revoked access</b> — a caregiver who lost membership must not keep another
+/// <item><b>Revoked access</b>: a caregiver who lost membership must not keep another
 /// household's medical records, and tombstoning would try to delete the owner's pet.</item>
-/// <item><b>Leaving demo mode</b> — seeded rows were never on an account, so there is
+/// <item><b>Leaving demo mode</b>: seeded rows were never on an account, so there is
 /// nothing to propagate and a tombstone would be a lie about data that never existed.</item>
 /// </list>
 ///
 /// <para>Extracted from <c>CloudSyncService</c>, where it was private: the cloud layer
 /// happened to be the first caller, but "delete a pet locally" is not a cloud concept and
-/// demo mode needed the identical three steps — rows, reminders, active-pet repair.</para>
+/// demo mode needed the identical three steps: rows, reminders, active-pet repair.</para>
 /// </summary>
 public sealed class PetPurgeService
 {
@@ -48,7 +48,7 @@ public sealed class PetPurgeService
         var meds = await _db.Connection.QueryAsync<Medication>(
             "select * from \"Medication\" where PetId = ?", pet.Id);
 
-        // Children before parents, straight off the registry — MedicationSchedule's
+        // Children before parents, straight off the registry: MedicationSchedule's
         // predicate is a subquery over Medication, so it must run while those rows
         // still exist, which InDeletionOrder guarantees. Hard deletes, not tombstones:
         // this removal is local-only and must never propagate (see PetDeletionService

@@ -11,7 +11,7 @@ public partial class VetQuestionSheetView : ContentView
     }
 
     /// <summary>
-    /// Give the body its scroll ceiling — same reason as the "+" sheet. This view fills
+    /// Give the body its scroll ceiling: same reason as the "+" sheet. This view fills
     /// the page, so its own height is what the sheet sizes itself against; without the
     /// ceiling a long list of open questions is clipped by the sheet's 90% cap rather
     /// than scrolled inside it, which puts the input field off-screen.

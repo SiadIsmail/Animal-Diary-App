@@ -9,14 +9,14 @@
 
     <Grid>
 
-        <!-- Water background — same rockpool wash as every other screen -->
+        <!-- Water background: same rockpool wash as every other screen -->
         <controls:WaterBackground/>
 
         <VerticalStackLayout VerticalOptions="Center"
                              HorizontalOptions="Center"
                              Spacing="18">
 
-            <!-- Felova wordmark (current brand mark — no separate logo asset) -->
+            <!-- Felova wordmark (current brand mark, no separate logo asset) -->
             <Label Text="Felova"
                    FontFamily="{StaticResource FontSerif}"
                    FontSize="{StaticResource TypeDisplay}"

@@ -7,8 +7,8 @@ using Xunit;
 /// The sponsorship rule: a caregiver reaches someone else's pet's PAID surfaces while THAT
 /// owner has access, and sponsorship never reaches a pet you own yourself.
 ///
-/// <para>The last property is the one holding the business model up — without it, one
-/// subscription plus invite codes becomes unlimited free accounts — so it is tested from
+/// <para>The last property is the one holding the business model up: without it, one
+/// subscription plus invite codes becomes unlimited free accounts, so it is tested from
 /// several directions rather than once.</para>
 ///
 /// <para><b>This is no longer a write gate.</b> Every write is free on every tier, so
@@ -21,7 +21,7 @@ public class SponsoredAccessTests
     private const string TheirPet = "pet-owned-by-someone-else";
     private const string MyPet = "pet-i-own";
 
-    /// <summary>Builds a service whose OWN access has run out — the only interesting
+    /// <summary>Builds a service whose OWN access has run out: the only interesting
     /// starting point, since anyone with their own access passes everything trivially.</summary>
     private static EntitlementService Locked(FakePetAccess access, out FakeStore store)
     {
@@ -130,7 +130,7 @@ public class SponsoredAccessTests
     public void The_gate_stays_open_until_the_first_access_fetch_lands()
     {
         // A caregiver who just redeemed an invite must not be refused in the seconds before
-        // the first sync — mirrors the EntitlementKnown grace on the store side.
+        // the first sync: mirrors the EntitlementKnown grace on the store side.
         var access = new FakePetAccess { AccessKnown = false };
         var gate = Locked(access, out _);
         Assert.True(gate.CanEditPet(TheirPet));

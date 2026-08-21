@@ -33,7 +33,7 @@ using Com.Facebook.Appevents;
 /// <para><b>Why the SDK cannot start on its own.</b> facebook-core ships a
 /// <c>FacebookInitProvider</c> ContentProvider that runs before any app code and calls
 /// <c>sdkInitialize</c> unconditionally. It finds no app id (the credentials live in code,
-/// not the manifest — see <see cref="MetaAdsConfig"/>), catches its own exception, logs,
+/// not the manifest: see <see cref="MetaAdsConfig"/>), catches its own exception, logs,
 /// and gives up. So the opt-out below is genuinely the first thing that decides, rather
 /// than racing a provider that already sent the event.</para>
 /// </summary>

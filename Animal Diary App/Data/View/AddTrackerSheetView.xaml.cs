@@ -7,7 +7,7 @@ public partial class AddTrackerSheetView : ContentView
     public AddTrackerSheetView() => InitializeComponent();
 
     /// <summary>
-    /// Give the body its scroll ceiling — see the note in the XAML. This view fills the
+    /// Give the body its scroll ceiling: see the note in the XAML. This view fills the
     /// page, so its own height is the screen height the sheet sizes itself against.
     /// </summary>
     protected override void OnSizeAllocated(double width, double height)

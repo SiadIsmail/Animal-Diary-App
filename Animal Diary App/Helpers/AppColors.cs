@@ -7,7 +7,7 @@ namespace Animal_Diary_App.Helpers;
 /// and hand-built controls can't, so they come through here. Three near-identical
 /// copies of this lookup used to exist and one of them used the raw indexer
 /// (<c>Resources["MGreat"]</c>), which throws <see cref="KeyNotFoundException"/> when a
-/// token is renamed — so the same rename degraded gracefully in two places and crashed
+/// token is renamed, so the same rename degraded gracefully in two places and crashed
 /// in the third. Always returns; never throws.</para>
 /// </summary>
 public static class AppColors

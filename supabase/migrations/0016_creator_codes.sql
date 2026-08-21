@@ -1,18 +1,18 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0016 — Creator codes: knowing which influencer a purchase came through.
+--  0016: Creator codes: knowing which influencer a purchase came through.
 --
 --  A DIFFERENT ANIMAL FROM 0015's ACCESS CODES, and the difference is the whole
 --  design. An access code is unique, single-use, and grants a year. A creator
 --  code is:
 --
---      public      — the creator says it out loud in a video
---      memorable   — "THETO", not FELOVA-K7M2-9XQP
---      reusable    — every one of their followers types the same one
---      inert       — it grants nothing at all (today)
+--      public     : the creator says it out loud in a video
+--      memorable  : "THETO", not FELOVA-K7M2-9XQP
+--      reusable   : every one of their followers types the same one
+--      inert      : it grants nothing at all (today)
 --
 --  Because it grants nothing, none of 0015's defences apply: there is no rate
 --  limit worth having on a code that hands out no value, and no reason to hide
---  which codes exist. That also means the two must NOT share a table — a bug
+--  which codes exist. That also means the two must NOT share a table: a bug
 --  that let a creator code through the access-code path would hand out a free
 --  year to an entire audience.
 --
@@ -89,7 +89,7 @@ comment on column public.profiles.referred_code is
 --
 -- user_id is ON DELETE SET NULL, not CASCADE, unlike the entries above. Deliberate
 -- and worth the inconsistency: once the id is gone the row identifies nobody (a
--- date, a product, a creator), so erasure is honoured — while a creator's earned
+-- date, a product, a creator), so erasure is honoured, while a creator's earned
 -- conversion count does not silently drop months later when an unrelated user
 -- deletes their account. Erasure is about the person, not about the fact that a
 -- sale happened.
@@ -143,7 +143,7 @@ as $$
 $$;
 
 -- ── 6. recording an entry (signed in) ───────────────────────────────────────
--- Returns the creator name, or null when the code is not a creator code — the
+-- Returns the creator name, or null when the code is not a creator code: the
 -- caller then tries the access-code path. Never raises for an unknown code: this
 -- is a lookup on a shared input box, not a failed redemption.
 

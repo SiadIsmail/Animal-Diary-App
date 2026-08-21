@@ -27,7 +27,7 @@ public partial class PetsPage : ContentPage
     {
         base.OnAppearing();
 
-        // Only the visible tab animates its backdrop — see MainPage for why.
+        // Only the visible tab animates its backdrop: see MainPage for why.
         Backdrop.Start();
 
         vm.DevVM.ImportRequested += OnImportRequested;
@@ -67,12 +67,13 @@ public partial class PetsPage : ContentPage
 
         vm.SettingsVM.ResetCompleted += OnResetCompleted;
         vm.ExportSheetVM.ViewRequested += OnReportViewRequested;
+        vm.ExportSheetVM.AddVisitRequested += OnAddVisitRequested;
         // Another caregiver's changes landing while this page is visible reload
         // it in place (e.g. a newly shared pet appearing in the list).
         vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
 
         // The sharing sheet is hosted here too now (the "Shared care" row). A caregiver
-        // leaving purges the pet from this device — confirm natively (same accepted
+        // leaving purges the pet from this device: confirm natively (same accepted
         // exception as delete-account), then reload the list once it's gone.
         vm.SharingVM.ConfirmLeave = () =>
             DisplayAlert(
@@ -100,7 +101,7 @@ public partial class PetsPage : ContentPage
         catch (Exception ex)
         {
             // A failed load must degrade to a card with no chips, never crash the app
-            // (async void — an escaping exception here kills the process).
+            // (async void: an escaping exception here kills the process).
             System.Diagnostics.Debug.WriteLine($"[PetsPage] OnAppearing failed: {ex}");
         }
     }
@@ -117,6 +118,7 @@ public partial class PetsPage : ContentPage
         vm.CloudVM.SignedOut -= OnSignedOut;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
         vm.ExportSheetVM.ViewRequested -= OnReportViewRequested;
+        vm.ExportSheetVM.AddVisitRequested -= OnAddVisitRequested;
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
         vm.SharingVM.ConfirmLeave = null;
         vm.SharingVM.LeftPet -= OnLeftPet;
@@ -124,7 +126,7 @@ public partial class PetsPage : ContentPage
     }
 
     // Shared care is a first-class action here. Sharing rides the cloud sync (the invite
-    // carries the pet's data), so it needs an account + backup — when that isn't set up
+    // carries the pet's data), so it needs an account + backup: when that isn't set up
     // yet, open the account door (the same one the Welcome screen uses) rather than a
     // sheet that can only say "not synced yet".
     void OnShareClicked(object? sender, EventArgs args)
@@ -160,7 +162,7 @@ public partial class PetsPage : ContentPage
     }
 
     // Signing out removed this account's pets from the device. If nothing is left, the app
-    // has nothing to show — route to onboarding exactly as deleting the last pet does.
+    // has nothing to show: route to onboarding exactly as deleting the last pet does.
     // Otherwise reload in place; local-only pets can still be here.
     private async void OnSignedOut(bool anyPetsRemain)
     {
@@ -186,7 +188,7 @@ public partial class PetsPage : ContentPage
             try
             {
                 // The pet list itself may have changed (joined/purged pets), not
-                // just the active pet's chips — reload both.
+                // just the active pet's chips: reload both.
                 await vm.LoadAsync();
                 await vm.PetVM.LoadActivePetTagsAsync();
             }
@@ -196,7 +198,7 @@ public partial class PetsPage : ContentPage
             }
         });
 
-    /// <summary>The export sheet's "View" button — push the in-app preview for the
+    /// <summary>The export sheet's "View" button: push the in-app preview for the
     /// report it just generated (navigation belongs to pages, not VMs).</summary>
     private async void OnReportViewRequested(Data.Models.VetReportFile report)
     {
@@ -230,7 +232,7 @@ public partial class PetsPage : ContentPage
     async void OnAddPetClicked(object? sender, EventArgs args)
     {
         // The free tier covers one animal; a SECOND is a paid surface. The rule itself
-        // lives in Billing.PetLimit — add-time only, demo pets excluded, and it never hides
+        // lives in Billing.PetLimit: add-time only, demo pets excluded, and it never hides
         // or locks a pet that already exists. Read the doc comment there before changing
         // anything here.
         if (Animal_Diary_App.Data.Services.Billing.PetLimit.BlocksAnotherPet(
@@ -248,7 +250,7 @@ public partial class PetsPage : ContentPage
     }
 
     // The "Medication" button on the active pet's card. Named for the page it opens
-    // (the medication list for this pet), not for adding — adding is one of the things
+    // (the medication list for this pet), not for adding: adding is one of the things
     // that page does, and it was the old row's misleading name.
     async void OnMedicationClicked(object? sender, EventArgs args)
     {
@@ -268,8 +270,26 @@ public partial class PetsPage : ContentPage
         await Navigation.PushAsync(new AppointmentPage(vm));
     }
 
+    // The export sheet's one-shot "was that for a visit?" offer. The visit sheet is
+    // hosted on this page for exactly this, so the visit is added where the owner already
+    // is rather than after a trip to the appointment page.
+    private void OnAddVisitRequested()
+    {
+        try
+        {
+            var pet = vm.MainPageVM.ActivePet;
+            vm.VetVisitSheetVM
+                .OpenAsync(pet?.Id ?? 0, pet?.Name ?? string.Empty, null)
+                .Forget();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Pets] add-visit open failed: {ex}");
+        }
+    }
+
     // The Constellation reads what is already there and writes nothing, so it is not
-    // gated by the entitlement — the read-only state keeps records readable.
+    // gated by the entitlement: the read-only state keeps records readable.
     async void OnConstellationClicked(object? sender, EventArgs args)
     {
         await Navigation.PushAsync(new ConstellationPage(vm));

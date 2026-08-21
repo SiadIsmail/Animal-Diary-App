@@ -13,14 +13,14 @@ namespace Animal_Diary_App.Data.Services.Attribution;
 ///
 /// <para><b>The credentials are not in this file.</b> The Meta App ID and Client Token are
 /// supplied by an untracked partial, <c>MetaAdsConfig.Secret.cs</c> (git-ignored), through
-/// <see cref="ApplySecrets"/> — the same arrangement as the RevenueCat keys. A fresh clone
+/// <see cref="ApplySecrets"/>: the same arrangement as the RevenueCat keys. A fresh clone
 /// with no secret file compiles fine (an unimplemented partial method is a legal no-op)
 /// and runs credential-less, which registers the null service and sends nothing.</para>
 ///
 /// <para><b>Keeping them out of the AndroidManifest is load-bearing, not just tidy.</b>
 /// The Meta SDK's usual setup puts both values in manifest meta-data, where its
 /// <c>FacebookInitProvider</c> ContentProvider reads them and initializes the SDK before
-/// any app code runs — which would defeat the opt-out entirely, since the first install
+/// any app code runs, which would defeat the opt-out entirely, since the first install
 /// event would be gone before anything could check a preference. With the values reaching
 /// the SDK only through <c>MetaAdAttributionService</c>, that provider finds no app id,
 /// logs a failure, and does nothing. The SDK <i>structurally cannot</i> start itself.

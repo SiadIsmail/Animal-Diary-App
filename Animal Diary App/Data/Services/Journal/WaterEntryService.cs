@@ -5,9 +5,9 @@ using SQLite;
 
 /// <summary>Reads and writes the two water stores behind one seam:
 /// <list type="bullet">
-/// <item><see cref="WaterAmountEntry"/> — exact millilitre readings, additive like
+/// <item><see cref="WaterAmountEntry"/>: exact millilitre readings, additive like
 ///   glucose (many per day, never upserted; the report sums them per day).</item>
-/// <item><see cref="WaterLevelEntry"/> — the relative reading, one per day like
+/// <item><see cref="WaterLevelEntry"/>: the relative reading, one per day like
 ///   appetite (re-logging replaces the day's row; a tombstone is revived, not
 ///   duplicated).</item>
 /// </list>
@@ -31,7 +31,7 @@ public class WaterEntryService
         return entry.Id;
     }
 
-    /// <summary>Soft delete an amount reading (the undo path) — the row becomes a
+    /// <summary>Soft delete an amount reading (the undo path): the row becomes a
     /// tombstone so the deletion can sync (see <see cref="ISyncable"/>).</summary>
     public async Task DeleteAmountAsync(int id)
     {
@@ -67,7 +67,7 @@ public class WaterEntryService
         entry.Date = entry.Date.Date;
 
         // One-per-day meets sync: if the day's row was soft-deleted (an undone log),
-        // revive it in place instead of inserting a sibling — the cloud keys the
+        // revive it in place instead of inserting a sibling: the cloud keys the
         // level by (pet, day), so a day must stay a single level row.
         var day = entry.Date;
         var tombstone = (await _db.Table<WaterLevelEntry>()
@@ -90,7 +90,7 @@ public class WaterEntryService
     /// <summary>Overwrite the day's level in place (the one-per-day replace path).</summary>
     public Task UpdateLevelAsync(WaterLevelEntry entry) => _db.UpdateAsync(SyncStamp.Touch(entry));
 
-    /// <summary>Soft delete the day's level reading (the undo path) — a tombstone so
+    /// <summary>Soft delete the day's level reading (the undo path): a tombstone so
     /// the deletion syncs; a later re-log of the same day revives it (see InsertLevelAsync).</summary>
     public async Task DeleteLevelAsync(int id)
     {
@@ -153,7 +153,7 @@ public class WaterEntryService
             .FirstOrDefault();
     }
 
-    /// <summary>Whether the pet has ever logged any water (either store) — cheap gate
+    /// <summary>Whether the pet has ever logged any water (either store): cheap gate
     /// for the export sheet's water toggles (only shown when there's water to include).</summary>
     public async Task<bool> HasAnyAsync(int petId)
     {

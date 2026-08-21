@@ -8,12 +8,12 @@ using Animal_Diary_App.Data.Services.Journal;
 /// <b>One</b> notification, the evening before a vet visit.
 ///
 /// <para>One. Not a series, not a same-day nudge, not a follow-up. It states the fact
-/// and stops — no urgency, no "don't forget", and nothing about the pet's condition
+/// and stops, no urgency, no "don't forget", and nothing about the pet's condition
 /// (AI/app-voice.md §8, whose approved patterns include this exact notification).
 /// It is silent, on its own channel, because §8.7 reserves sound for medication
 /// reminders alone.</para>
 ///
-/// <para><b>Concrete occurrences only, re-armed on launch and boot</b> — the same
+/// <para><b>Concrete occurrences only, re-armed on launch and boot</b>: the same
 /// reliability model as <see cref="MedicationReminderScheduler"/>. Never hand a
 /// recurrence rule to the OS (AI/design-decisions.md → "Notifications: bounded horizon
 /// of concrete instances"); a visit is a single moment anyway, so the horizon here is
@@ -48,7 +48,7 @@ public class AppointmentReminderScheduler
 
     /// <summary>
     /// Re-evaluate every pet's next visit and arm or cancel its one reminder. Safe to
-    /// call often — launch, boot, and after any visit is added, moved or deleted.
+    /// call often: launch, boot, and after any visit is added, moved or deleted.
     /// </summary>
     public async Task RefreshAsync()
     {
@@ -68,7 +68,7 @@ public class AppointmentReminderScheduler
     }
 
     /// <summary>Drop one visit's reminder outright. Called when a visit is deleted, so
-    /// the cancel does not have to wait for the next refresh to notice it is gone —
+    /// the cancel does not have to wait for the next refresh to notice it is gone,
     /// by then the row is a tombstone and the sweep below can no longer see its id.</summary>
     public async Task CancelAsync(int visitId)
     {
@@ -113,8 +113,8 @@ public class AppointmentReminderScheduler
             // Also covers a pet that has vanished from under us.
             if (pet is null || _pause.IsPaused(pet.Id) || fireAt <= now)
             {
-                // A fire time already behind us cannot be scheduled — the OS rejects a
-                // stale notify time — and there is deliberately no same-day fallback.
+                // A fire time already behind us cannot be scheduled: the OS rejects a
+                // stale notify time, and there is deliberately no same-day fallback.
                 // A visit booked this evening for tomorrow gets no reminder, which is
                 // the correct bias: better a missed nudge than one that arrives as the
                 // owner is already parking outside the practice.

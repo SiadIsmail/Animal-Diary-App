@@ -27,7 +27,7 @@ public class VetVisitTests
 
     /// <summary>A morning appointment must not read as past by lunchtime. Comparing the
     /// visit's moment against <c>DateTime.Now</c> instead of its date against today is
-    /// the obvious implementation and the wrong one — it would pull the summary out from
+    /// the obvious implementation and the wrong one: it would pull the summary out from
     /// under someone who is still sitting in the waiting room.</summary>
     [Fact]
     public void AVisitEarlierToday_IsNotPastYet()
@@ -95,7 +95,7 @@ public class VetVisitTests
 
     // ── The reminder ─────────────────────────────────────────────────────────
 
-    /// <summary>The evening before, whatever time of day the visit is at — including a
+    /// <summary>The evening before, whatever time of day the visit is at: including a
     /// visit with no time at all, which is exactly the case a "N hours before" rule
     /// could not answer.</summary>
     [Theory]
@@ -122,7 +122,7 @@ public class VetVisitTests
     ///
     /// <para>This is the guard the id scheme exists for: every type owns a range so a
     /// cancel can never hit another type's notification. The appointment id is
-    /// deliberately NOT multiplied by <c>SlotsPerEntity</c> — a visit has exactly one
+    /// deliberately NOT multiplied by <c>SlotsPerEntity</c>: a visit has exactly one
     /// reminder, and reserving ten slots each would spend the range ten times faster for
     /// headroom nothing can use.</para>
     /// </summary>

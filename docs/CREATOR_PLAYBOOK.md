@@ -1,4 +1,4 @@
-# Filming Felova — creator playbook
+# Filming Felova: creator playbook
 
 Everything below works on the normal store build. Nothing here is a special version of
 the app, and nothing you record is uploaded anywhere.
@@ -32,7 +32,7 @@ languages, remove the demo pets, change the language, and add them again.
 | Best for | **The Constellation** | **The vet report** |
 
 Both have a fortnight in the middle where nothing was written down, and both start the
-year logging sparsely and get more consistent. That's deliberate — the app never scolds
+year logging sparsely and get more consistent. That's deliberate: the app never scolds
 you for a gap, and it's worth saying out loud.
 
 ## 3. The four shots
@@ -43,7 +43,7 @@ Open Kira, then **Pets → Quick management → Constellation**.
 
 **2. Cycle, folded to a day.** Tap **Cycle**, leave the dial at one day. A year of
 seizures collapses into a wedge in the small hours, with the two dose times as clean
-spokes either side. Say what you're seeing — the app won't say it for you.
+spokes either side. Say what you're seeing: the app won't say it for you.
 
 **3. Cycle, dial out to about a fortnight.** The same stars fly into a different
 arrangement and gather at one angle. This is the "does it come round again" shot and it's
@@ -53,7 +53,7 @@ the most persuasive thing in the app. Works on the 30-day range you're already o
 vertical band, the clusters are evenly spaced crowded rows, and the wall gets denser
 towards the bottom as Kira's owner got into the habit of logging.
 
-**Bonus: tap two legend keys.** Seizures and Medication together — the nights she seized
+**Bonus: tap two legend keys.** Seizures and Medication together: the nights she seized
 against the nights the evening dose went in. Nothing is overlaid or calculated; both are
 just drawn at their real times.
 
@@ -61,7 +61,7 @@ just drawn at their real times.
 
 Switch to **Mira** (Pets tab), then **Pets → Export**. Pick 90 days and generate. You'll
 get her weight declining across the period, glucose readings, both water modes kept as
-separate graphs, and her medication adherence — the document an owner actually hands to
+separate graphs, and her medication adherence: the document an owner actually hands to
 a vet. **View** shows it in-app; **Share** hands the PDF to the OS.
 
 ## 5. Two things to say correctly
@@ -70,7 +70,7 @@ a vet. **View** shows it in-app; **Share** hands the PDF to the OS.
   A weight change is a neutral fact.
 - **The Constellation shows *when*, and nothing else.** Where a star sits is when it
   happened; the symbol is what it was. Nothing is sized or coloured by how bad anything
-  is, and the app never tells you what a pattern means — that's the owner's call, and
+  is, and the app never tells you what a pattern means: that's the owner's call, and
   their vet's.
 
 ## 6. Notes

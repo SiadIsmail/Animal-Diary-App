@@ -240,7 +240,7 @@
   <data name="Appetite_Level3" xml:space="preserve"><value>Etwa die Hälfte</value></data>
   <data name="Appetite_Level4" xml:space="preserve"><value>Das meiste</value></data>
   <data name="Appetite_Level5" xml:space="preserve"><value>Alles</value></data>
-  <!-- Wasser (Journal): zwei Modi — relative Stufen (Water_Level*) oder eine genaue ml-Menge -->
+  <!-- Wasser (Journal): zwei Modi: relative Stufen (Water_Level*) oder eine genaue ml-Menge -->
   <data name="Water_Level1" xml:space="preserve"><value>Kaum</value></data>
   <data name="Water_Level2" xml:space="preserve"><value>Ein wenig</value></data>
   <data name="Water_Level3" xml:space="preserve"><value>Normal</value></data>
@@ -256,7 +256,7 @@
   <data name="Journal_ToastWater" xml:space="preserve"><value>Notiert. {0} getrunken.</value></data>
   <data name="Common_MlSuffix" xml:space="preserve"><value>ml</value></data>
   <data name="Common_GramSuffix" xml:space="preserve"><value>g</value></data>
-  <!-- Appetit (Journal): zwei Modi — Stufen oder genaue Gramm; optionaler Futter-Kontext -->
+  <!-- Appetit (Journal): zwei Modi: Stufen oder genaue Gramm; optionaler Futter-Kontext -->
   <data name="Journal_AppetiteExactToggle" xml:space="preserve"><value>Genaue Menge</value></data>
   <data name="Journal_AppetiteGramsLabel" xml:space="preserve"><value>Menge</value></data>
   <data name="Journal_AppetiteGramsPlaceholder" xml:space="preserve"><value>z. B. 200</value></data>
@@ -820,7 +820,7 @@
   <!-- ── Die zwei frei wählbaren Karten auf „Heute" ──
        Jede Karte benennt einen EINTRAG, nie eine Serie: „Letzter Anfall", niemals
        „seit 12 Tagen anfallsfrei". Eine Serie kann man brechen, indem man die
-       Wahrheit aufschreibt — diesen Grund zum Zögern gibt Felova niemandem. -->
+       Wahrheit aufschreibt: diesen Grund zum Zögern gibt Felova niemandem. -->
   <data name="Today_CardWeight" xml:space="preserve"><value>Letztes Wiegen</value></data>
   <data name="Today_CardMood" xml:space="preserve"><value>Letzte Stimmung</value></data>
   <data name="Today_CardGlucose" xml:space="preserve"><value>Letzter Blutzucker</value></data>
@@ -899,7 +899,7 @@
   <!-- ══════════════ Das Sternbild ══════════════
        Die Geschichte eines Tieres als Nachthimmel, erreichbar über die Schnellverwaltung.
        Nur zum Anschauen: hier wird nichts abgefragt und deshalb auch zu nichts gedrängt.
-       Sky_TickDay / Sky_TickMonth / Sky_WhenFormat sind .NET-Datumsmuster, keine Sätze —
+       Sky_TickDay / Sky_TickMonth / Sky_WhenFormat sind .NET-Datumsmuster, keine Sätze,
        Reihenfolge und Satzzeichen anpassen, die Buchstaben (d, M, y, H, m) nie. -->
   <data name="Sky_Title" xml:space="preserve"><value>Sternbild</value></data>
   <data name="Sky_CountOne" xml:space="preserve"><value>1 Eintrag festgehalten</value></data>
@@ -922,7 +922,7 @@
   <data name="Sky_FoldDay" xml:space="preserve"><value>Tag {0}</value></data>
   <data name="Sky_DialHour" xml:space="preserve"><value>{0}:00</value></data>
   <!-- Wie lange nach dem vorherigen Eintrag DERSELBEN ART. Jede Art bekommt diese
-       Zeile — das macht sie zu einer Angabe über das Tagebuch und nicht zu einem
+       Zeile: das macht sie zu einer Angabe über das Tagebuch und nicht zu einem
        Zähler, der auf Anfälle zielt. -->
   <data name="Sky_GapMinuteOne" xml:space="preserve"><value>1 Minute nach dem letzten</value></data>
   <data name="Sky_GapMinutes" xml:space="preserve"><value>{0} Minuten nach dem letzten</value></data>
@@ -951,6 +951,17 @@
   <!-- Fakten über das Aufgeschriebene. Nie eine Richtung, nie ein Durchschnitt. -->
   <data name="Facts_CountOne" xml:space="preserve"><value>1 Eintrag festgehalten</value></data>
   <data name="Facts_CountMany" xml:space="preserve"><value>{0} Einträge festgehalten</value></data>
+  <data name="Facts_CountReadingOne" xml:space="preserve"><value>1 Messung</value></data>
+  <data name="Facts_CountReadingMany" xml:space="preserve"><value>{0} Messungen</value></data>
+  <data name="Facts_CountWeighInOne" xml:space="preserve"><value>1× gewogen</value></data>
+  <data name="Facts_CountWeighInMany" xml:space="preserve"><value>{0}× gewogen</value></data>
+  <data name="Facts_CountDayOne" xml:space="preserve"><value>1 Tag notiert</value></data>
+  <data name="Facts_CountDayMany" xml:space="preserve"><value>{0} Tage notiert</value></data>
+  <data name="Facts_CountSeizureOne" xml:space="preserve"><value>1 Anfall</value></data>
+  <data name="Facts_CountSeizureMany" xml:space="preserve"><value>{0} Anfälle</value></data>
+  <data name="Facts_CountEntryOne" xml:space="preserve"><value>1 Eintrag</value></data>
+  <data name="Facts_CountEntryMany" xml:space="preserve"><value>{0} Einträge</value></data>
+  <data name="Facts_CountCustom" xml:space="preserve"><value>{0} × {1}</value></data>
   <data name="Facts_DoseOne" xml:space="preserve"><value>1 Dosis</value></data>
   <data name="Facts_DoseMany" xml:space="preserve"><value>{0} Dosen</value></data>
   <data name="Facts_LastDays" xml:space="preserve"><value>letzte {0} Tage</value></data>
@@ -972,15 +983,17 @@
   <data name="Today_RecordWater" xml:space="preserve"><value>Wasser</value></data>
   <data name="Today_RecordSeizure" xml:space="preserve"><value>Anfälle</value></data>
   <data name="Today_RecordMedication" xml:space="preserve"><value>Dosen</value></data>
-  <data name="Today_PickerShowElse" xml:space="preserve"><value>Hier etwas anderes zeigen</value></data>
+  <data name="Today_PickerTitle" xml:space="preserve"><value>Was ist heute am wichtigsten?</value></data>
   <!-- Fragen für den Tierarztbesuch. Eine Notiz an sich selbst über ein Gespräch,
-       kein Eintrag über das Tier — also nirgends als Aufgabe für heute formuliert. -->
+       kein Eintrag über das Tier: also nirgends als Aufgabe für heute formuliert. -->
   <data name="Vet_QuestionSection" xml:space="preserve"><value>Für den nächsten Tierarztbesuch</value></data>
   <data name="Vet_QuestionRow" xml:space="preserve"><value>Frage für den Tierarztbesuch</value></data>
   <data name="Vet_QuestionTitle" xml:space="preserve"><value>Frage für den Tierarztbesuch</value></data>
   <data name="Vet_QuestionSub" xml:space="preserve"><value>Etwas, das du zu {0} fragen willst.</value></data>
   <data name="Vet_QuestionPlaceholder" xml:space="preserve"><value>Was möchtest du fragen?</value></data>
   <data name="Vet_QuestionOpenHeading" xml:space="preserve"><value>Steht schon auf deiner Liste</value></data>
+  <data name="Vet_QuestionAbout" xml:space="preserve"><value>Zu {0} am {1}: </value></data>
+  <data name="Vet_QuestionAsk" xml:space="preserve"><value>Danach fragen</value></data>
   <data name="Vet_QuestionSave" xml:space="preserve"><value>Notieren</value></data>
   <data name="Vet_QuestionToast" xml:space="preserve"><value>Für den nächsten Besuch notiert.</value></data>
   <!-- ── Tierarztbesuche. Nur Fakten: kein Countdown, keine Dringlichkeit,
@@ -990,6 +1003,11 @@
   <data name="Today_VisitLine" xml:space="preserve"><value>{0} hat am {1} einen Tierarzttermin</value></data>
   <data name="Today_VisitLineWho" xml:space="preserve"><value>{0} ist am {2} bei {1}</value></data>
   <data name="Today_VisitSummaryReady" xml:space="preserve"><value>Deine Zusammenfassung ist fertig.</value></data>
+  <data name="Today_VisitNotePrompt" xml:space="preserve"><value>Willst du aufschreiben, was gesagt wurde?</value></data>
+  <data name="Today_VisitNoteWhoYesterday" xml:space="preserve"><value>Du warst gestern bei {0}.</value></data>
+  <data name="Today_VisitNoteWhoToday" xml:space="preserve"><value>Du warst heute bei {0}.</value></data>
+  <data name="Today_VisitNoteYesterday" xml:space="preserve"><value>{0} war gestern beim Tierarzt.</value></data>
+  <data name="Today_VisitNoteToday" xml:space="preserve"><value>{0} war heute beim Tierarzt.</value></data>
   <data name="Vet_VisitsTitle" xml:space="preserve"><value>Tierarztbesuche</value></data>
   <data name="Vet_VisitsSub" xml:space="preserve"><value>Für {0}</value></data>
   <data name="Vet_EmptyTitle" xml:space="preserve"><value>Noch keine Besuche</value></data>
@@ -997,11 +1015,11 @@
   <data name="Vet_AddVisit" xml:space="preserve"><value>Besuch eintragen</value></data>
   <data name="Vet_PastVisits" xml:space="preserve"><value>FRÜHERE BESUCHE</value></data>
   <data name="Vet_HowDidItGo" xml:space="preserve"><value>Wie ist es gelaufen?</value></data>
-  <data name="Vet_SinceVisit" xml:space="preserve"><value>Seit dem letzten Besuch — {0}, {1} Tage</value></data>
-  <data name="Vet_SinceStart" xml:space="preserve"><value>Seit du angefangen hast, Dinge festzuhalten — {0}, {1} Tage</value></data>
+  <data name="Vet_SinceVisit" xml:space="preserve"><value>Seit dem letzten Besuch am {0}. {1} Tage</value></data>
+  <data name="Vet_SinceStart" xml:space="preserve"><value>Seit deinem ersten Eintrag am {0}. {1} Tage</value></data>
   <data name="Vet_WhatChanged" xml:space="preserve"><value>WAS SICH GEÄNDERT HAT</value></data>
   <data name="Vet_NewSince" xml:space="preserve"><value>NEU SEIT DEM LETZTEN MAL</value></data>
-  <data name="Vet_NewRecord" xml:space="preserve"><value>{0} — festgehalten seit dem {1}</value></data>
+  <data name="Vet_NewRecord" xml:space="preserve"><value>{0}. Festgehalten seit dem {1}</value></data>
   <data name="Vet_WhatYouWrote" xml:space="preserve"><value>WAS DU FESTGEHALTEN HAST</value></data>
   <data name="Vet_FullSummary" xml:space="preserve"><value>Vollständige Zusammenfassung</value></data>
   <!-- Das Angebot, nachdem die kostenlose Zusammenfassung genutzt wurde, an ihrer Stelle.
@@ -1014,7 +1032,7 @@
   <data name="Vet_QuestionsEmpty" xml:space="preserve"><value>Alles, was du fragen willst, steht dann hier.</value></data>
   <data name="Vet_QuestionAnswered" xml:space="preserve"><value>Als beantwortet markieren</value></data>
   <!-- Das Behandlungsprotokoll, wie die Zusammenfassung es liest. Alter Wert,
-       neuer Wert, Datum — nie eine Bewertung. -->
+       neuer Wert, Datum: nie eine Bewertung. -->
   <data name="Vet_LedgerStarted" xml:space="preserve"><value>Begonnen · {0}</value></data>
   <data name="Vet_LedgerArchived" xml:space="preserve"><value>Stillgelegt</value></data>
   <data name="Vet_LedgerRestored" xml:space="preserve"><value>Wieder in Gebrauch</value></data>
@@ -1035,14 +1053,20 @@
   <data name="Vet_VisitNoteLabel" xml:space="preserve"><value>WAS GESAGT WURDE</value></data>
   <data name="Vet_VisitNotePlaceholder" xml:space="preserve"><value>In deinen eigenen Worten</value></data>
   <data name="Vet_VisitDelete" xml:space="preserve"><value>Diesen Besuch entfernen</value></data>
+  <data name="Vet_VisitEditDetails" xml:space="preserve"><value>Details ändern</value></data>
+  <data name="Vet_VisitDayFormat" xml:space="preserve"><value>ddd, d. MMM</value></data>
   <data name="Vet_VisitToastSaved" xml:space="preserve"><value>Besuch gespeichert.</value></data>
   <data name="Vet_VisitToastDeleted" xml:space="preserve"><value>Besuch entfernt.</value></data>
   <data name="Export_SinceVisit" xml:space="preserve"><value>Seit dem letzten Besuch · {0} Tage</value></data>
+  <data name="Export_VisitOfferTitle" xml:space="preserve"><value>War das für einen Termin?</value></data>
+  <data name="Export_VisitOfferBody" xml:space="preserve"><value>Trag ihn ein, dann hat Felova die nächste Zusammenfassung parat.</value></data>
+  <data name="Export_VisitOfferAdd" xml:space="preserve"><value>Termin eintragen</value></data>
   <data name="Notif_ChannelAppointmentName" xml:space="preserve"><value>Tierarztbesuche</value></data>
   <data name="Notif_ChannelAppointmentDescription" xml:space="preserve"><value>Eine leise Erinnerung am Abend vor einem Besuch.</value></data>
   <data name="Notif_AppointmentBodyNoTime" xml:space="preserve"><value>{0}. Deine Zusammenfassung ist fertig.</value></data>
   <!-- Die Rückschau auf Heute: ein Block je Eintrag im Plan des Tieres. -->
   <data name="Today_LookingBack" xml:space="preserve"><value>Rückblick</value></data>
+  <data name="Today_WhatChanged" xml:space="preserve"><value>Was sich geändert hat</value></data>
   <data name="Today_Range2W" xml:space="preserve"><value>2W</value></data>
   <data name="Today_Range1M" xml:space="preserve"><value>1M</value></data>
   <data name="Today_Range3M" xml:space="preserve"><value>3M</value></data>

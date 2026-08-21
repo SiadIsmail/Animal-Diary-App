@@ -6,7 +6,7 @@ using Windows.Storage.Streams;
 namespace Animal_Diary_App;
 
 /// <summary>
-/// Windows (dev) preview rasterizer on the WinRT <see cref="PdfDocument"/> API — no extra
+/// Windows (dev) preview rasterizer on the WinRT <see cref="PdfDocument"/> API, no extra
 /// native library. Renders each page to a PNG stream and writes it out. Best-effort.
 /// </summary>
 public sealed class WindowsPdfPageRasterizer : IPdfPageRasterizer

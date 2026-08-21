@@ -10,7 +10,7 @@ using Xunit;
 /// invisible to the compiler: the build succeeds, and the page throws
 /// <c>XamlParseException</c> the instant someone opens it. It is a runtime crash on a
 /// screen that may not be on anyone's daily path, produced by an edit somewhere else
-/// entirely — deleting a colour token that looked unused is enough. This suite caught
+/// entirely: deleting a colour token that looked unused is enough. This suite caught
 /// exactly that: `SkyText` was removed when the Constellation had no text on its dark
 /// card, and putting text back there months later crashed the page on open.</para>
 ///
@@ -71,7 +71,7 @@ public class XamlResourceKeyTests
             into.Add(key.Groups[1].Value);
     }
 
-    /// <summary>The app project's folder, found by walking up from the test binary —
+    /// <summary>The app project's folder, found by walking up from the test binary,
     /// the test project deliberately has no reference to it.</summary>
     private static string AppFolder()
     {

@@ -7,7 +7,7 @@ using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
-/// Backs the Journal's sheet for a tracker the owner defined — a time, an optional
+/// Backs the Journal's sheet for a tracker the owner defined: a time, an optional
 /// number (only when the tracker records one) and an optional note, in the shared
 /// <c>FelovaBottomSheet</c>.
 ///
@@ -43,7 +43,7 @@ public class CustomEntrySheetViewModel : BaseViewModel
     public ICommand SaveCommand { get; }
     public ICommand DismissCommand { get; }
 
-    /// <summary>The owner's own name for this tracker — user text, shown verbatim and
+    /// <summary>The owner's own name for this tracker: user text, shown verbatim and
     /// never passed through the localizer.</summary>
     public string Title => _tracker?.Name ?? string.Empty;
 
@@ -53,12 +53,12 @@ public class CustomEntrySheetViewModel : BaseViewModel
     public TimeSpan Time { get => _time; set => SetProperty(ref _time, value); }
 
     /// <summary>Whether this tracker records a number at all. A Tick tracker's sheet is
-    /// just a time and a note — there is nothing to type, and asking for one would be
+    /// just a time and a note: there is nothing to type, and asking for one would be
     /// asking for a number the owner never said existed.</summary>
     public bool ShowAmount => _tracker?.Shape == CustomShape.Amount;
 
     /// <summary>The owner's own unit ("min", "bowls"), or empty. Shown beside the field
-    /// rather than folded into a sentence — it is their word, in their language.</summary>
+    /// rather than folded into a sentence: it is their word, in their language.</summary>
     public string Unit => _tracker?.Unit ?? string.Empty;
     public bool HasUnit => !string.IsNullOrWhiteSpace(Unit);
 
@@ -103,7 +103,7 @@ public class CustomEntrySheetViewModel : BaseViewModel
         if (_tracker == null)
             return;
 
-        // Every field is optional — including the number. "It happened" is the whole
+        // Every field is optional: including the number. "It happened" is the whole
         // point of a Tick tracker, and it is still worth writing down for an Amount one
         // when nobody counted. InputParser handles both decimal separators.
         decimal? amount = null;
@@ -121,7 +121,7 @@ public class CustomEntrySheetViewModel : BaseViewModel
         });
 
         // The tracker's own name carries the confirmation, through a template rather than
-        // concatenation — word order differs by language (AI/app-voice.md §20).
+        // concatenation: word order differs by language (AI/app-voice.md §20).
         var message = Loc.Format("Journal_ToastCustom", _tracker.Name);
 
         IsPresented = false;

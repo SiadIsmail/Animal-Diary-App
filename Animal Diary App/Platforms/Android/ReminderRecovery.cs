@@ -15,7 +15,7 @@ namespace Animal_Diary_App;
 ///
 /// The receivers do NOT do the work themselves. A broadcast receiver gets roughly ten
 /// seconds before the system treats it as unresponsive, and <c>goAsync()</c> does not
-/// extend that budget — it only moves the work off the main thread. Re-arming can mean
+/// extend that budget: it only moves the work off the main thread. Re-arming can mean
 /// resolving a backlog, re-materializing hundreds of occurrences, running the 14-day
 /// dose reconcile and refreshing every pet's daily reminder, which will overrun that
 /// window on a real device mid-boot. Being killed halfway is the worst possible outcome:
@@ -33,7 +33,7 @@ internal static class ReminderRecovery
 
     /// <summary>
     /// Hand recovery off to the job scheduler. <paramref name="isBootRecovery"/> records
-    /// — durably, before any async work — that doses missed while the device was off
+    /// (durably, before any async work) that doses missed while the device was off
     /// still need re-sending; the catch-up reads that flag rather than taking it as a
     /// parameter, so the intent survives whichever entry point ends up running first.
     /// </summary>
@@ -48,7 +48,7 @@ internal static class ReminderRecovery
         if (TrySchedule(context))
             return;
 
-        // Job scheduling unavailable — fall back to doing it inline, which is what the
+        // Job scheduling unavailable: fall back to doing it inline, which is what the
         // app did before. Better a pass that might be cut short than no pass at all.
         RunInline(receiver);
     }
@@ -98,7 +98,7 @@ internal static class ReminderRecovery
 
     /// <summary>
     /// The actual recovery pass. Safe to call from the job service or inline.
-    /// <c>resendMissed: false</c> is passed deliberately — the durable boot flag set in
+    /// <c>resendMissed: false</c> is passed deliberately: the durable boot flag set in
     /// <see cref="Enqueue"/> is what decides whether missed doses get re-sent.
     /// </summary>
     public static async Task RunWorkAsync()
@@ -131,7 +131,7 @@ internal static class ReminderRecovery
         if (dailyScheduler is not null)
             await dailyScheduler.RefreshAsync();
 
-        // And the one reminder before a vet visit — same reason: a reboot clears the
+        // And the one reminder before a vet visit: same reason: a reboot clears the
         // OS alarm, and this one-shot may be days out.
         var appointmentScheduler = services.GetService<AppointmentReminderScheduler>();
         if (appointmentScheduler is not null)

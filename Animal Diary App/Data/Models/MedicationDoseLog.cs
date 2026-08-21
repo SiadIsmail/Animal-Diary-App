@@ -11,7 +11,7 @@ public enum DoseStatus
 }
 
 /// <summary>
-/// A durable adherence record for one scheduled dose — the answer to "was this
+/// A durable adherence record for one scheduled dose: the answer to "was this
 /// dose taken?". Unlike <see cref="ReminderInstance"/> (ephemeral scheduling
 /// state, pruned after a week), dose logs are permanent history queryable for any
 /// date.

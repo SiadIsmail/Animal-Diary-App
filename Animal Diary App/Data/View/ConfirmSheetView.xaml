@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- ConfirmSheetView — the app's multi-choice confirmation, replacing DisplayActionSheet
+<!-- ConfirmSheetView: the app's multi-choice confirmation, replacing DisplayActionSheet
      wherever there are more than two outcomes. Every option is a real card, so the safe
      one can't end up looking like body text next to a styled destructive button (which
      is exactly what the native action sheet did). BindingContext is a
@@ -79,7 +79,7 @@
                 </VerticalStackLayout>
 
                 <!-- Cancel: the same quiet text link every other sheet closes with.
-                     Backing out needs no emphasis — it costs nothing. -->
+                     Backing out needs no emphasis: it costs nothing. -->
                 <Label Text="{Binding CancelLabel}"
                        Padding="0,4"
                        FontFamily="{StaticResource FontSans}"

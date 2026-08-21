@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- SubscribeSheetView — the dignified ask on the shared FelovaBottomSheet. Two faces:
+<!-- SubscribeSheetView: the dignified ask on the shared FelovaBottomSheet. Two faces:
      the OFFERS face (not subscribed: yearly emphasized + monthly + restore) and the
      SUBSCRIBED face (a quiet thank-you + change/cancel + done). A successful purchase
      lands on the subscribed face, so it doubles as the confirmation. Never a
@@ -19,135 +19,146 @@
                                 Subtitle="{Binding SheetSubtitle}"
                                 DismissCommand="{Binding DismissCommand}">
         <controls:FelovaBottomSheet.SheetContent>
-            <VerticalStackLayout Spacing="12" Padding="0,2,0,0">
+            <!-- Its own scroller, because this body can outgrow the sheet's 90% cap and
+                 the cap only clips. It carries what the tier includes, both promises, the
+                 offers and Restore, which on a short screen is already more than the cap.
+                 The pattern is FelovaBottomSheet's documented one (see its header, and
+                 VetVisitSheetView): VerticalOptions="Start" so a short body still hugs,
+                 plus a MaximumHeightRequest set from MaxBodyHeight in the code-behind.
+                 Both halves are needed; either alone is a different bug. -->
+            <ScrollView x:Name="Body"
+                        VerticalOptions="Start"
+                        VerticalScrollBarVisibility="Never">
+                <VerticalStackLayout Spacing="12" Padding="0,2,0,0">
 
-                <!-- ── OFFERS face (not subscribed) ── -->
-                <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowOffers}">
+                    <!-- ── OFFERS face (not subscribed) ── -->
+                    <VerticalStackLayout Spacing="12" IsVisible="{Binding ShowOffers}">
 
-                    <!-- What the paid tier actually is. It sells the payoff — the assembled
-                         summary, the designed report — never the labour of writing things
-                         down, which is free forever. -->
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="{loc:Translate Subscribe_IncludesHeader}" FontFamily="{StaticResource FontSans}"
-                               FontSize="12" FontAttributes="Bold" TextColor="{StaticResource InkSecondary}"/>
-                        <Label Text="{loc:Translate Subscribe_IncludesBody}" FontFamily="{StaticResource FontSans}"
-                               FontSize="13.5" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"/>
-                    </VerticalStackLayout>
+                        <!-- What the paid tier actually is. It sells the payoff: the assembled
+                             summary, the designed report, never the labour of writing things
+                             down, which is free forever. -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="{loc:Translate Subscribe_IncludesHeader}" FontFamily="{StaticResource FontSans}"
+                                   FontSize="12" FontAttributes="Bold" TextColor="{StaticResource InkSecondary}"/>
+                            <Label Text="{loc:Translate Subscribe_IncludesBody}" FontFamily="{StaticResource FontSans}"
+                                   FontSize="13.5" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
 
-                    <!-- The two promises, stated plainly and once. The second one is a
-                         promise being kept, not a feature being sold: the moment it reads
-                         as marketing it stops working, so it gets no emphasis, no icon and
-                         no heading of its own. -->
-                    <VerticalStackLayout Spacing="6" Margin="0,2,0,2">
-                        <Label Text="{loc:Translate Subscribe_PromiseKept}" FontFamily="{StaticResource FontSans}"
-                               FontSize="12.5" LineHeight="1.4" TextColor="{StaticResource InkTertiary}"/>
-                        <Label Text="{loc:Translate Subscribe_PromiseAfterLoss}" FontFamily="{StaticResource FontSans}"
-                               FontSize="12.5" LineHeight="1.4" TextColor="{StaticResource InkTertiary}"/>
-                    </VerticalStackLayout>
+                        <!-- The two promises, stated plainly and once. The second one is a
+                             promise being kept, not a feature being sold: the moment it reads
+                             as marketing it stops working, so it gets no emphasis, no icon and
+                             no heading of its own. -->
+                        <VerticalStackLayout Spacing="6" Margin="0,2,0,2">
+                            <Label Text="{loc:Translate Subscribe_PromiseKept}" FontFamily="{StaticResource FontSans}"
+                                   FontSize="12.5" LineHeight="1.4" TextColor="{StaticResource InkTertiary}"/>
+                            <Label Text="{loc:Translate Subscribe_PromiseAfterLoss}" FontFamily="{StaticResource FontSans}"
+                                   FontSize="12.5" LineHeight="1.4" TextColor="{StaticResource InkTertiary}"/>
+                        </VerticalStackLayout>
 
-                    <!-- The offers (yearly first, monthly below). Disabled (dimmed, no taps)
-                         while a purchase is in flight so a second tap can't double-fire. -->
-                    <VerticalStackLayout Spacing="10" IsVisible="{Binding ShowOfferList}"
-                                         IsEnabled="{Binding CanInteract}"
-                                         BindableLayout.ItemsSource="{Binding Offers}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="vms:SubscriptionOfferItem">
-                                <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 15,13,13,16" Padding="16,14">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding Source={x:Reference Root}, Path=BindingContext.PurchaseCommand}"
-                                            CommandParameter="{Binding}"/>
-                                    </Border.GestureRecognizers>
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                        <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                                            <Label Text="{Binding PlanLabel}" FontFamily="{StaticResource FontSans}"
-                                                   FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TealDeep}"/>
-                                            <Label Text="{loc:Translate Subscribe_BestValue}" FontFamily="{StaticResource FontSans}"
-                                                   FontSize="11.5" TextColor="{StaticResource InkSecondary}"
-                                                   IsVisible="{Binding IsBest}"/>
-                                        </VerticalStackLayout>
-                                        <Label Grid.Column="1" Text="{Binding PriceLabel}" VerticalOptions="Center"
-                                               FontFamily="{StaticResource FontSans}" FontSize="15" FontAttributes="Bold"
-                                               TextColor="{StaticResource TealDeep}"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
+                        <!-- The offers (yearly first, monthly below). Disabled (dimmed, no taps)
+                             while a purchase is in flight so a second tap can't double-fire. -->
+                        <VerticalStackLayout Spacing="10" IsVisible="{Binding ShowOfferList}"
+                                             IsEnabled="{Binding CanInteract}"
+                                             BindableLayout.ItemsSource="{Binding Offers}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vms:SubscriptionOfferItem">
+                                    <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 15,13,13,16" Padding="16,14">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={x:Reference Root}, Path=BindingContext.PurchaseCommand}"
+                                                CommandParameter="{Binding}"/>
+                                        </Border.GestureRecognizers>
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                            <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                                <Label Text="{Binding PlanLabel}" FontFamily="{StaticResource FontSans}"
+                                                       FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TealDeep}"/>
+                                                <Label Text="{loc:Translate Subscribe_BestValue}" FontFamily="{StaticResource FontSans}"
+                                                       FontSize="11.5" TextColor="{StaticResource InkSecondary}"
+                                                       IsVisible="{Binding IsBest}"/>
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="1" Text="{Binding PriceLabel}" VerticalOptions="Center"
+                                                   FontFamily="{StaticResource FontSans}" FontSize="15" FontAttributes="Bold"
+                                                   TextColor="{StaticResource TealDeep}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
 
-                    <!-- Fetching the offerings -->
-                    <ActivityIndicator IsVisible="{Binding ShowLoadingOffers}" IsRunning="{Binding ShowLoadingOffers}"
-                                       Color="{StaticResource Teal}" HeightRequest="24"/>
+                        <!-- Fetching the offerings -->
+                        <ActivityIndicator IsVisible="{Binding ShowLoadingOffers}" IsRunning="{Binding ShowLoadingOffers}"
+                                           Color="{StaticResource Teal}" HeightRequest="24"/>
 
-                    <!-- Loaded, but nothing to show → say WHY (offline vs our end) + Try again -->
-                    <VerticalStackLayout Spacing="8" IsVisible="{Binding ShowOffersProblem}">
-                        <Label Text="{Binding OffersProblemMessage}"
-                               FontFamily="{StaticResource FontSans}" FontSize="13" LineHeight="1.4"
-                               TextColor="{StaticResource InkSecondary}"/>
-                        <Label Text="{loc:Translate Subscribe_Retry}" Padding="0,2"
-                               FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
-                               TextColor="{StaticResource TealDeep}">
+                        <!-- Loaded, but nothing to show → say WHY (offline vs our end) + Try again -->
+                        <VerticalStackLayout Spacing="8" IsVisible="{Binding ShowOffersProblem}">
+                            <Label Text="{Binding OffersProblemMessage}"
+                                   FontFamily="{StaticResource FontSans}" FontSize="13" LineHeight="1.4"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                            <Label Text="{loc:Translate Subscribe_Retry}" Padding="0,2"
+                                   FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                   TextColor="{StaticResource TealDeep}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding RetryCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </VerticalStackLayout>
+
+                        <!-- Restore purchase (required by the stores) -->
+                        <Label Text="{loc:Translate Subscribe_Restore}" Padding="0,6"
+                               FontFamily="{StaticResource FontSans}" FontSize="12.5" FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center">
                             <Label.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding RetryCommand}"/>
+                                <TapGestureRecognizer Command="{Binding RestoreCommand}"/>
                             </Label.GestureRecognizers>
                         </Label>
                     </VerticalStackLayout>
 
-                    <!-- Restore purchase (required by the stores) -->
-                    <Label Text="{loc:Translate Subscribe_Restore}" Padding="0,6"
-                           FontFamily="{StaticResource FontSans}" FontSize="12.5" FontAttributes="Bold"
-                           TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding RestoreCommand}"/>
-                        </Label.GestureRecognizers>
-                    </Label>
+                    <!-- ── COVERED face (subscribed OR granted: thank-you + manage + done) ── -->
+                    <VerticalStackLayout Spacing="16" IsVisible="{Binding ShowSubscribed}">
+
+                        <Label Text="{loc:Translate Subscribe_ThanksBody}" FontFamily="{StaticResource FontSans}"
+                               FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"
+                               IsVisible="{Binding IsSubscribed}"/>
+
+                        <Label Text="{loc:Translate Subscribe_GrantedBody}" FontFamily="{StaticResource FontSans}"
+                               FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"
+                               IsVisible="{Binding IsGranted}"/>
+
+                        <!-- Change or cancel → the store's subscription page. Hidden for a grant:
+                             there is no store record behind it to manage. -->
+                        <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 15,13,13,16"
+                                IsVisible="{Binding ShowManage}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ManageCommand}"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{loc:Translate Subscribe_Manage}" FontFamily="{StaticResource FontSans}" FontSize="14"
+                                   FontAttributes="Bold" TextColor="{StaticResource TealDeep}"
+                                   HorizontalTextAlignment="Center" Padding="0,13"/>
+                        </Border>
+
+                        <!-- Done -->
+                        <Label Text="{loc:Translate Common_Done}" Padding="0,4"
+                               FontFamily="{StaticResource FontSans}" FontSize="12.5" FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </VerticalStackLayout>
+
+                    <!-- ── Shared: transient status + busy ── -->
+                    <Label Text="{Binding StatusText}"
+                           IsVisible="{Binding StatusText, Converter={StaticResource StringToBoolConverter}}"
+                           FontFamily="{StaticResource FontSans}" FontSize="12.5" HorizontalTextAlignment="Center"
+                           TextColor="{StaticResource InkSecondary}"/>
+
+                    <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                       Color="{StaticResource Teal}" HeightRequest="22"/>
+
                 </VerticalStackLayout>
-
-                <!-- ── COVERED face (subscribed OR granted: thank-you + manage + done) ── -->
-                <VerticalStackLayout Spacing="16" IsVisible="{Binding ShowSubscribed}">
-
-                    <Label Text="{loc:Translate Subscribe_ThanksBody}" FontFamily="{StaticResource FontSans}"
-                           FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"
-                           IsVisible="{Binding IsSubscribed}"/>
-
-                    <Label Text="{loc:Translate Subscribe_GrantedBody}" FontFamily="{StaticResource FontSans}"
-                           FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"
-                           IsVisible="{Binding IsGranted}"/>
-
-                    <!-- Change or cancel → the store's subscription page. Hidden for a grant:
-                         there is no store record behind it to manage. -->
-                    <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0"
-                            StrokeShape="RoundRectangle 15,13,13,16"
-                            IsVisible="{Binding ShowManage}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ManageCommand}"/>
-                        </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Subscribe_Manage}" FontFamily="{StaticResource FontSans}" FontSize="14"
-                               FontAttributes="Bold" TextColor="{StaticResource TealDeep}"
-                               HorizontalTextAlignment="Center" Padding="0,13"/>
-                    </Border>
-
-                    <!-- Done -->
-                    <Label Text="{loc:Translate Common_Done}" Padding="0,4"
-                           FontFamily="{StaticResource FontSans}" FontSize="12.5" FontAttributes="Bold"
-                           TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
-                        </Label.GestureRecognizers>
-                    </Label>
-                </VerticalStackLayout>
-
-                <!-- ── Shared: transient status + busy ── -->
-                <Label Text="{Binding StatusText}"
-                       IsVisible="{Binding StatusText, Converter={StaticResource StringToBoolConverter}}"
-                       FontFamily="{StaticResource FontSans}" FontSize="12.5" HorizontalTextAlignment="Center"
-                       TextColor="{StaticResource InkSecondary}"/>
-
-                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
-                                   Color="{StaticResource Teal}" HeightRequest="22"/>
-
-            </VerticalStackLayout>
+            </ScrollView>
         </controls:FelovaBottomSheet.SheetContent>
     </controls:FelovaBottomSheet>
 </ContentView>

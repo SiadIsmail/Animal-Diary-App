@@ -12,14 +12,14 @@ using Microsoft.Maui.Storage;
 ///
 /// This is deliberately NOT a re-engagement ping (app-voice.md §8.6 bans those): it is
 /// a reminder about owner-configured care tasks, the same category as a medication
-/// reminder. If the day is already handled — or the pet is paused on this device — it
+/// reminder. If the day is already handled (or the pet is paused on this device) it
 /// stays silent. Content comes straight from the same <see cref="PendingItemsService"/>
 /// snapshot the Journal chips use, so it can never disagree with what the app shows.
 ///
 /// Reliability model (see <see cref="MedicationReminderScheduler"/>): each occurrence is
 /// a one-shot armed for TODAY only, and re-evaluated on every launch/resume and after
-/// every logging write. We only ever arm today's still-future occurrence — never a
-/// future day whose state we haven't checked — so the app can't fire a reminder into a
+/// every logging write. We only ever arm today's still-future occurrence, never a
+/// future day whose state we haven't checked, so the app can't fire a reminder into a
 /// day the owner already handled. The cost is that a day with no app interaction before
 /// the chosen time gets no reminder, which is the correct bias: better a missed nudge
 /// than a wrong one (§8, §11).
@@ -97,7 +97,7 @@ public class DailyCareReminderScheduler
 
             // Only arm while today's chosen time is still ahead of us. A time already
             // past today can't be scheduled (and if it was armed earlier, it already
-            // fired) — the next launch before tomorrow's time re-arms tomorrow's.
+            // fired): the next launch before tomorrow's time re-arms tomorrow's.
             if (fireToday <= now)
             {
                 await _notifications.CancelNotification(id);
@@ -131,7 +131,7 @@ public class DailyCareReminderScheduler
 
 /// <summary>
 /// Per-device settings for the daily care reminder, stored in <see cref="Preferences"/>
-/// (device-local, like the medication catch-up marker and pause state — never synced,
+/// (device-local, like the medication catch-up marker and pause state, never synced,
 /// cleared by the full data reset). Off by default; the owner turns it on and picks a
 /// time in Settings.
 /// </summary>

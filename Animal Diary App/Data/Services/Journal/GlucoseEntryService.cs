@@ -4,7 +4,7 @@ using Animal_Diary_App.Data.Models;
 using SQLite;
 
 /// <summary>
-/// Reads and writes <see cref="GlucoseEntry"/> rows. These are never upserted —
+/// Reads and writes <see cref="GlucoseEntry"/> rows. These are never upserted,
 /// each reading is its own row, so a day can hold several. Mirrors the other data
 /// services' shape.
 /// </summary>
@@ -25,7 +25,7 @@ public class GlucoseEntryService
         return entry.Id;
     }
 
-    /// <summary>Remove one reading by id (the undo path). Soft delete — the row
+    /// <summary>Remove one reading by id (the undo path). Soft delete: the row
     /// becomes a tombstone so the deletion can sync (see <see cref="ISyncable"/>).</summary>
     public async Task DeleteAsync(int id)
     {
@@ -57,11 +57,11 @@ public class GlucoseEntryService
             .ToListAsync();
     }
 
-    /// <summary>The most recent reading for a pet (any day), or null if none — used
+    /// <summary>The most recent reading for a pet (any day), or null if none: used
     /// to pre-fill the stepper so the owner nudges from their last number.</summary>
     public async Task<GlucoseEntry?> GetMostRecentAsync(int petId)
     {
-        // Order by date in SQL and pull only a small slice — a long-lived diabetic
+        // Order by date in SQL and pull only a small slice: a long-lived diabetic
         // pet accumulates ~1,000 rows/year and this runs on every sheet open. The
         // slice comfortably covers the latest day's readings; the Time tie-break
         // happens in memory on those few rows.

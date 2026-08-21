@@ -9,7 +9,7 @@ using Xunit;
 ///
 /// <para>It used to carry a wave shape and a starfield seed as well. Those existed to
 /// give a meaningless y axis something to be, and they went when the axis got a
-/// meaning — so what is pinned here is only what survived, plus the rule that kept it
+/// meaning, so what is pinned here is only what survived, plus the rule that kept it
 /// safe: an ambient hue may never be one of the colours that says WHICH KIND of thing
 /// was recorded.</para>
 /// </summary>

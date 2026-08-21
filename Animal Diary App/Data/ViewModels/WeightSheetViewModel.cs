@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Globalization;
 using System.Windows.Input;
@@ -8,10 +8,10 @@ using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
-/// Backs the Journal's weight sheet — a value stepper (ported from the old inline
+/// Backs the Journal's weight sheet: a value stepper (ported from the old inline
 /// weigh-in editor) in the shared <c>FelovaBottomSheet</c>. Saves to
 /// the day's <see cref="PetEntry"/>; Save's undo restores the previous weight.
-/// The kilogram value is a precise readout — shown, never rounded away.
+/// The kilogram value is a precise readout: shown, never rounded away.
 /// </summary>
 public class WeightSheetViewModel : BaseViewModel
 {

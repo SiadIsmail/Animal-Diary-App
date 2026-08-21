@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.View.Controls;
 using Microsoft.Maui.Controls.Shapes;
 
 /// <summary>
-/// One Today stat card. Purely presentational — its <c>BindingContext</c> is a
+/// One Today stat card. Purely presentational: its <c>BindingContext</c> is a
 /// <c>TodayCardItem</c>, which owns both the reading and the tap that changes it.
 /// </summary>
 public partial class TodayStatCardView : ContentView
@@ -11,7 +11,7 @@ public partial class TodayStatCardView : ContentView
     public TodayStatCardView() => InitializeComponent();
 
     /// <summary>Mirrors the card's hand-drawn corner radii so the pair beside each other
-    /// reads as two torn-out notes rather than two identical boxes — the same
+    /// reads as two torn-out notes rather than two identical boxes: the same
     /// "imperfection on the frame, never on the readout" rule the rest of Today follows.
     /// A bool rather than a bindable <c>IShape</c>: there are exactly two cards, and the
     /// only question is which of them is the left one.</summary>

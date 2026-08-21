@@ -23,7 +23,7 @@ public class PetPhotoService
     private const float JpegQuality = 0.85f;
 
     // The editor works on a bigger copy than it writes. Cropping throws pixels away, so
-    // staging at the final 800px would mean a tight crop landing well under it — 1600
+    // staging at the final 800px would mean a tight crop landing well under it: 1600
     // leaves the whole zoom range (see PhotoCrop.MaxZoom) with a source pixel per output
     // pixel, and the copy is temporary so its extra bytes never accumulate.
     private const int EditEdgePixels = 1600;
@@ -77,7 +77,7 @@ public class PetPhotoService
     /// against.
     ///
     /// <para>Note this still BAKES the orientation into the pixels rather than writing an
-    /// EXIF tag. Everything downstream depends on that — the vet report embeds this same
+    /// EXIF tag. Everything downstream depends on that: the vet report embeds this same
     /// file through MigraDoc's <c>AddImage</c>, which does not apply EXIF, so a tag-only
     /// photo would look right in the avatar and sideways in the PDF.</para>
     /// </summary>
@@ -90,7 +90,7 @@ public class PetPhotoService
         return new PhotoEditSource(path, width, height, IsTemporary: true);
     }
 
-    /// <summary>Describe a photo that is already in app storage so it can be re-cropped —
+    /// <summary>Describe a photo that is already in app storage so it can be re-cropped,
     /// the "fix a bad photo without picking it again" path. Not temporary: this file is a
     /// pet's actual photo, and only the draft bookkeeping may delete it.</summary>
     public PhotoEditSource Describe(string fullPath)
@@ -120,7 +120,7 @@ public class PetPhotoService
         return fileName;
     }
 
-    /// <summary>Drop a staged edit copy. A no-op for anything that isn't temporary — a
+    /// <summary>Drop a staged edit copy. A no-op for anything that isn't temporary: a
     /// pet's real photo reaches here whenever a re-crop is cancelled, and deleting it
     /// would take the avatar with it.</summary>
     public void DiscardEditSource(PhotoEditSource? source)
@@ -147,7 +147,7 @@ public class PetPhotoService
     {
         try
         {
-            // Runs off the UI thread — decoding a large photo is heavy.
+            // Runs off the UI thread: decoding a large photo is heavy.
             await Task.Run(() => Encode(source, fullPath, maxEdge));
         }
         catch (Exception ex)
@@ -180,7 +180,7 @@ public class PetPhotoService
         var t = PhotoCrop.Clamp(source.Width, source.Height, transform);
 
         // SKImage rather than SKBitmap: only the image draw call takes SKSamplingOptions,
-        // and the sampling matters — a crop is nearly always a downscale, and Skia's
+        // and the sampling matters: a crop is nearly always a downscale, and Skia's
         // default (no filtering) is visibly gritty on a face.
         using var photo = SKImage.FromEncodedData(source.Path)
             ?? throw new InvalidOperationException($"[PetPhoto] could not decode '{source.Path}'.");
@@ -198,7 +198,7 @@ public class PetPhotoService
         canvas.RotateDegrees(90f * t.QuarterTurns);
         canvas.Scale(PhotoCrop.Scale(source.Width, source.Height, t, side));
 
-        // Positioned from the SOURCE size, not the decoded image's own — the same numbers
+        // Positioned from the SOURCE size, not the decoded image's own: the same numbers
         // the clamp and the preview used, so all three agree by construction instead of by
         // two decoders happening to report the same thing.
         canvas.DrawImage(photo, -source.Width / 2f, -source.Height / 2f, CropSampling);
@@ -210,7 +210,7 @@ public class PetPhotoService
     }
 
     /// <summary>A photo's pixel size without decoding it. Reads the header only, through
-    /// SkiaSharp's codec, which is the same decoder <see cref="Crop"/> will use — so the
+    /// SkiaSharp's codec, which is the same decoder <see cref="Crop"/> will use, so the
     /// numbers the crop window is expressed against are the ones that will actually be
     /// there.</summary>
     private static (int Width, int Height) ReadPixelSize(string fullPath)
@@ -234,7 +234,7 @@ public class PetPhotoService
     /// <c>Orientation</c> tag. Android's <c>BitmapFactory</c> (which is what
     /// <c>PlatformImage.FromStream</c> uses underneath) hands back those raw sensor
     /// pixels and never applies the tag, so every camera photo came out a quarter-turn
-    /// off — and re-encoding dropped the tag, baking the rotation in permanently.
+    /// off, and re-encoding dropped the tag, baking the rotation in permanently.
     /// iOS carries orientation on <c>UIImage</c> and applies it on draw, so it uses the
     /// cross-platform path below unchanged.
     /// </summary>
@@ -252,7 +252,7 @@ public class PetPhotoService
         {
             // We already hold the whole file, so fall back to the bytes we buffered
             // rather than letting SaveAsync's catch re-read a stream this method has
-            // already drained — a non-seekable source would leave a 0-byte photo.
+            // already drained: a non-seekable source would leave a 0-byte photo.
             // The owner keeps their picture; it just isn't downscaled or re-oriented.
             Debug.WriteLine($"[PetPhoto] encode failed, writing the original: {ex.Message}");
             File.WriteAllBytes(fullPath, bytes);
@@ -279,7 +279,7 @@ public class PetPhotoService
 
         // Paired with the tag log above. A quarter-turn tag (90/270) on a bitmap that is
         // ALREADY taller than wide means the camera app rotated the pixels itself and
-        // left the tag behind — rotating again is what puts the photo back on its side.
+        // left the tag behind: rotating again is what puts the photo back on its side.
         // A phone sensor frame is always landscape before rotation, so this is decidable.
         Debug.WriteLine(
             $"[PetPhoto] decoded {decoded.Width}x{decoded.Height}, applying {degrees}° mirror={mirrored}");
@@ -290,7 +290,7 @@ public class PetPhotoService
         // ROTATE THEN MIRROR, in that order. The two don't commute for the quarter-turn
         // orientations (5 transpose, 7 transverse), and doing it the other way around
         // reflects those across the wrong axis. It makes no difference to 2 and 4, whose
-        // rotation is 0° or 180° — those do commute with a horizontal flip.
+        // rotation is 0° or 180°: those do commute with a horizontal flip.
         var matrix = new Android.Graphics.Matrix();
         if (degrees != 0)
             matrix.PostRotate(degrees);
@@ -304,7 +304,7 @@ public class PetPhotoService
             matrix.PostScale(scale, scale);
         }
 
-        // Identity means nothing to do — reuse the decode rather than copy it, and then
+        // Identity means nothing to do: reuse the decode rather than copy it, and then
         // take care not to dispose the same bitmap twice.
         var upright = matrix.IsIdentity
             ? decoded
@@ -360,7 +360,7 @@ public class PetPhotoService
         }
         catch (Exception ex)
         {
-            // A photo with no or malformed EXIF is normal, not an error — treat it as
+            // A photo with no or malformed EXIF is normal, not an error: treat it as
             // already upright rather than failing the whole save.
             Debug.WriteLine($"[PetPhoto] EXIF read failed, assuming upright: {ex.Message}");
             return (0, false);
@@ -389,7 +389,7 @@ public class PetPhotoService
 #endif
 
     /// <summary>Delete a pet photo by its relative file name. Silent no-op when the name
-    /// is empty or the file is already gone — a missing photo is never an error.</summary>
+    /// is empty or the file is already gone: a missing photo is never an error.</summary>
     public void Delete(string? fileName)
     {
         if (string.IsNullOrEmpty(fileName))
@@ -407,7 +407,7 @@ public class PetPhotoService
         }
     }
 
-    /// <summary>Delete the entire photos folder — used by the app reset, which must
+    /// <summary>Delete the entire photos folder: used by the app reset, which must
     /// leave nothing behind. Recreated lazily on the next save. The editor's staging
     /// folder goes with it: a copy left there by a reset mid-edit is still a picture of
     /// the owner's pet, and "everything" has to mean everything.</summary>

@@ -9,7 +9,7 @@ public class DaySelectionItem : BaseViewModel
 
     /// <summary>AppStrings key for the day's short name (e.g. "Day_Mon"). The
     /// display name is resolved per read so a live language switch re-translates
-    /// the chips (the VM owning these is a singleton — a name cached at
+    /// the chips (the VM owning these is a singleton: a name cached at
     /// construction would stay in the old language).</summary>
     public string ResourceKey { get; set; } = string.Empty;
 

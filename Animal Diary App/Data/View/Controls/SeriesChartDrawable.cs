@@ -6,12 +6,26 @@ using Microsoft.Maui.Graphics;
 public readonly record struct SeriesPoint(double X, double Value);
 
 /// <summary>
+/// One drawn line: the readings that belong together, and how strongly it is inked.
+///
+/// <para>A record is usually ONE band holding everything. It becomes several when the
+/// readings cluster into the day-part bands the app already computes: see
+/// <see cref="SeriesChartDrawable"/>.</para>
+/// </summary>
+/// <param name="Part">The <c>DayPart</c> this line holds, or -1 for a record drawn
+/// whole.</param>
+/// <param name="Ink">How opaque this line's accent is. Taken from a FIXED table indexed
+/// by the band, identical for every record: it says which band, and nothing else. No
+/// band is ever inked by how many readings it holds or by what they read.</param>
+public sealed record SeriesBand(int Part, IReadOnlyList<SeriesPoint> Points, float Ink);
+
+/// <summary>
 /// A measured record over a stretch of time.
 ///
 /// <para><b>Straight segments, never a smooth curve.</b> This drew Catmull-Rom splines
 /// once, inherited from a weight chart where readings arrive one a day at similar
-/// values. Fed a glucose series — fifty readings at wildly different values, clustered
-/// twice a day — the same maths produced overshoot: little hooks and loops at every
+/// values. Fed a glucose series: fifty readings at wildly different values, clustered
+/// twice a day: the same maths produced overshoot: little hooks and loops at every
 /// sharp turn, curvature the owner never recorded. A chart of what someone wrote down
 /// may not invent the shape between two points.</para>
 ///
@@ -21,20 +35,43 @@ public readonly record struct SeriesPoint(double X, double Value);
 /// <para><b>The line is unbroken, and the dots are what say where the data is.</b> An
 /// earlier version cut the line across long gaps, on the reasoning that two readings a
 /// fortnight apart are not evidence of anything in between. True, but it read as broken
-/// rendering rather than as absence — a chart of two islands with white space between
+/// rendering rather than as absence: a chart of two islands with white space between
 /// them looks like a bug, and no chart anywhere behaves that way. A segment between two
 /// markers is universally understood as joining two measurements, not as claiming the
 /// ground between them; the markers carry the honesty.</para>
 ///
 /// <para>X is TIME, not the index of the reading: five weigh-ins across three months
 /// must not draw as if they were taken weekly. The accent is passed in, from the
-/// record's own <c>TrackerVisuals</c> entry — one colour per record and never a colour
+/// record's own <c>TrackerVisuals</c> entry: one colour per record and never a colour
 /// per VALUE, because a coloured reading is a verdict (AI/design-decisions.md →
 /// "Felova records; it never judges").</para>
+///
+/// <para><b>Several lines, grouped by day-part, when the readings cluster that way.</b>
+/// A 7am fasting reading and an 8pm post-meal reading are different measurements, and a
+/// straight segment between them asserts a continuous curve that does not exist: for a
+/// twice-daily insulin regimen the single zigzag is unreadable. So morning connects to
+/// morning and evening to evening, using the four fixed bands the facts panel already
+/// counts. This is not interpretation: it is grouping by something the owner recorded,
+/// with a vocabulary the app already has. The decision to split at all lives in the
+/// caller, which knows how many readings each band holds.</para>
+///
+/// <para><b>Vertical markers</b> sit at the dates a treatment changed. The app places
+/// the mark; the owner draws the conclusion. There is deliberately no shading of the
+/// regions either side, no count, no arrow and no delta: two counts either side of a
+/// dose change ARGUE, and whether Felova may argue is a decision nobody has made
+/// (AI/domain.md).</para>
 /// </summary>
 public sealed class SeriesChartDrawable : IDrawable
 {
-    public IReadOnlyList<SeriesPoint> Points { get; set; } = System.Array.Empty<SeriesPoint>();
+    /// <summary>The lines to draw. One entry for a record drawn whole, several when the
+    /// caller decided the readings cluster into bands.</summary>
+    public IReadOnlyList<SeriesBand> Series { get; set; } = System.Array.Empty<SeriesBand>();
+
+    /// <summary>Where a treatment changed, as fractions along the range (0..1). Position
+    /// only: the label is stated as text under the section, because a chart this size
+    /// cannot carry "22 May · Phenobarbital 30 mg → 45 mg" without shouting.</summary>
+    public IReadOnlyList<double> Markers { get; set; } = System.Array.Empty<double>();
+
     public double Min { get; set; }
     public double Max { get; set; }
 
@@ -45,9 +82,14 @@ public sealed class SeriesChartDrawable : IDrawable
 
     private static readonly Color GridColor = Color.FromArgb("#1A0D3A3C"); // ink @ ~10%
 
+    /// <summary>The treatment marker's rule. Ink at ~22%: findable when looked for,
+    /// invisible when not. Never the record's accent: a marker is not a reading, and
+    /// never red, which would make a dose change read as an alarm.</summary>
+    private static readonly Color MarkerColor = Color.FromArgb("#380D3A3C");
+
     public void Draw(ICanvas canvas, RectF rect)
     {
-        if (Points.Count == 0)
+        if (Series.Count == 0 || Series.All(s => s.Points.Count == 0))
             return;
 
         const float padL = 6, padR = 6, padT = 14, padB = 10;
@@ -75,57 +117,117 @@ public sealed class SeriesChartDrawable : IDrawable
             canvas.DrawLine(padL, gy, padL + w, gy);
         }
 
-        var pts = new List<PointF>(Points.Count);
-        foreach (var p in Points)
-            pts.Add(new PointF(X(p.X), Y(p.Value)));
-
-        if (pts.Count > 1)
+        // Treatment markers, UNDER everything: the readings are the subject and a rule
+        // drawn over them would compete with the line for attention.
+        canvas.StrokeColor = MarkerColor;
+        canvas.StrokeSize = 1;
+        foreach (var marker in Markers)
         {
-            var fill = new PathF();
-            fill.MoveTo(pts[0].X, bottom);
-            foreach (var pt in pts)
-                fill.LineTo(pt.X, pt.Y);
-            fill.LineTo(pts[^1].X, bottom);
-            fill.Close();
-
-            // Light: the fill is atmosphere, and on a sparse record a strong one reads
-            // as "this area is measured".
-            canvas.SetFillPaint(new LinearGradientPaint
-            {
-                StartColor = Accent.WithAlpha(0.13f),
-                EndColor = Accent.WithAlpha(0.02f),
-                StartPoint = new Point(0, 0),
-                EndPoint = new Point(0, 1)
-            }, fill.Bounds);
-            canvas.FillPath(fill);
-
-            var line = new PathF();
-            line.MoveTo(pts[0].X, pts[0].Y);
-            foreach (var pt in pts.Skip(1))
-                line.LineTo(pt.X, pt.Y);
-
-            canvas.StrokeColor = Accent;
-            canvas.StrokeSize = 2f;
-            canvas.StrokeLineJoin = LineJoin.Round;
-            canvas.StrokeLineCap = LineCap.Round;
-            canvas.DrawPath(line);
+            var mx = X(marker);
+            canvas.DrawLine(mx, padT, mx, bottom);
         }
 
-        // One dot per actual reading, drawn over the line. A dense series merges them
-        // back into the stroke; a sparse one shows plainly where the entries really are,
-        // which is what keeps a long segment from reading as continuous measurement.
-        canvas.FillColor = Accent;
-        foreach (var pt in pts)
-            canvas.FillCircle(pt.X, pt.Y, 2.2f);
+        // The single fill is only drawn for a record that IS one line. Four overlapping
+        // washes say nothing and read as a smudge.
+        var single = Series.Count == 1 ? Series[0] : null;
 
-        // The latest reading, ringed so it is findable without being emphasised — it is
-        // the newest, not the most important.
-        var last = pts[^1];
-        canvas.FillColor = Colors.White;
-        canvas.FillCircle(last.X, last.Y, 5.5f);
-        canvas.FillColor = Accent;
-        canvas.FillCircle(last.X, last.Y, 3.5f);
+        SeriesPoint? newest = null;
+        float newestInk = 1f;
+
+        foreach (var band in Series)
+        {
+            if (band.Points.Count == 0)
+                continue;
+
+            var pts = new List<PointF>(band.Points.Count);
+            foreach (var p in band.Points)
+                pts.Add(new PointF(X(p.X), Y(p.Value)));
+
+            if (single is not null && pts.Count > 1)
+            {
+                var fill = new PathF();
+                fill.MoveTo(pts[0].X, bottom);
+                foreach (var pt in pts)
+                    fill.LineTo(pt.X, pt.Y);
+                fill.LineTo(pts[^1].X, bottom);
+                fill.Close();
+
+                // Light: the fill is atmosphere, and on a sparse record a strong one
+                // reads as "this area is measured".
+                canvas.SetFillPaint(new LinearGradientPaint
+                {
+                    StartColor = Accent.WithAlpha(0.13f),
+                    EndColor = Accent.WithAlpha(0.02f),
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(0, 1)
+                }, fill.Bounds);
+                canvas.FillPath(fill);
+            }
+
+            var ink = Accent.WithAlpha(band.Ink);
+
+            if (pts.Count > 1)
+            {
+                var line = new PathF();
+                line.MoveTo(pts[0].X, pts[0].Y);
+                foreach (var pt in pts.Skip(1))
+                    line.LineTo(pt.X, pt.Y);
+
+                canvas.StrokeColor = ink;
+                canvas.StrokeSize = 2f;
+                canvas.StrokeLineJoin = LineJoin.Round;
+                canvas.StrokeLineCap = LineCap.Round;
+                canvas.DrawPath(line);
+            }
+
+            // One dot per actual reading, drawn over the line. A dense series merges them
+            // back into the stroke; a sparse one shows plainly where the entries really
+            // are, which is what keeps a long segment from reading as continuous
+            // measurement, and a band holding ONE reading is a dot and nothing else,
+            // rather than a point silently dropped for having no line to sit on.
+            canvas.FillColor = ink;
+            foreach (var pt in pts)
+                canvas.FillCircle(pt.X, pt.Y, 2.2f);
+
+            var bandNewest = band.Points[^1];
+            if (newest is null || bandNewest.X > newest.Value.X)
+            {
+                newest = bandNewest;
+                newestInk = band.Ink;
+            }
+        }
+
+        // The latest reading ACROSS every band, ringed so it is findable without being
+        // emphasised: it is the newest, not the most important.
+        if (newest is SeriesPoint tip)
+        {
+            var tx = X(tip.X);
+            var ty = Y(tip.Value);
+            canvas.FillColor = Colors.White;
+            canvas.FillCircle(tx, ty, 5.5f);
+            canvas.FillColor = Accent.WithAlpha(newestInk);
+            canvas.FillCircle(tx, ty, 3.5f);
+        }
     }
+
+    /// <summary>
+    /// How opaque each band's line is: a FIXED table in the fixed band order, the same
+    /// for every record on every screen.
+    ///
+    /// <para>It encodes WHICH BAND and nothing else, never how many readings a band
+    /// holds, never what they read, never which one the app finds interesting. That is
+    /// the same defence the four fixed day-part counts have: a fixed vocabulary rendered
+    /// in a fixed order is the owner seeing it, while anything computed from the data
+    /// would be the app selecting the finding.</para>
+    /// </summary>
+    public static float InkFor(int part) => part switch
+    {
+        0 => 0.95f,   // Night
+        1 => 0.78f,   // Morning
+        2 => 0.60f,   // Afternoon
+        3 => 0.44f,   // Evening
+        _ => 1f,      // drawn whole
+    };
 }
 
 /// <summary>One relative reading: where it sits along the range (0..1), which labelled
@@ -133,11 +235,11 @@ public sealed class SeriesChartDrawable : IDrawable
 public readonly record struct ObservationMark(double X, int Level, Color Fill);
 
 /// <summary>
-/// Relative readings over a stretch of time — a mood, "how much did they drink", "how
+/// Relative readings over a stretch of time: a mood, "how much did they drink", "how
 /// was the appetite".
 ///
 /// <para><b>Positioned by date, like everything else here.</b> This began as a row of
-/// stretched bars, one per entry, spread evenly across the width — so eleven water
+/// stretched bars, one per entry, spread evenly across the width, so eleven water
 /// observations across a month drew as eleven equal slabs, with the first and the
 /// thirtieth day sitting side by side. Position now means when it was written down.</para>
 ///
@@ -152,7 +254,7 @@ public sealed class ObservationStripDrawable : IDrawable
     public IReadOnlyList<ObservationMark> Marks { get; set; } = System.Array.Empty<ObservationMark>();
 
     /// <summary>Rows on the scale. Every relative reading in this app is 1–5 (mood,
-    /// water, appetite), so this is a constant rather than a setting no caller sets —
+    /// water, appetite), so this is a constant rather than a setting no caller sets,
     /// a second scale would need a labelled axis to go with it, which is a design
     /// decision and not a number.</summary>
     private const int Levels = 5;
@@ -193,7 +295,7 @@ public sealed class ObservationStripDrawable : IDrawable
 }
 
 /// <summary>
-/// A record that has no value at all — a seizure, a Tick tracker: one mark per
+/// A record that has no value at all: a seizure, a Tick tracker: one mark per
 /// occurrence, at the moment it happened.
 ///
 /// <para><b>Position is when, and nothing else is encoded.</b> Every mark is the same
@@ -229,7 +331,7 @@ public sealed class EventStripDrawable : IDrawable
             return;
 
         // Slightly translucent so a dense stretch reads as denser without any single
-        // mark being emphasised — density is a fact about the diary, and it is the only
+        // mark being emphasised: density is a fact about the diary, and it is the only
         // thing overlap is allowed to say.
         canvas.FillColor = Accent.WithAlpha(0.75f);
         foreach (var p in Positions)

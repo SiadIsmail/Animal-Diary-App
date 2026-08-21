@@ -6,7 +6,7 @@ using Animal_Diary_App.Data.Models;
 //  The demo pets, as data.
 //
 //  A profile is the whole description of one seeded animal: who they are, what they
-//  are treated for, and — the part that matters — the SHAPE of the history that gets
+//  are treated for, and (the part that matters) the SHAPE of the history that gets
 //  generated for them. Every knob the generator has is a field here, so the two pets
 //  can be read side by side and changed without opening DemoHistory.
 //
@@ -28,7 +28,7 @@ public readonly record struct Band(double Lo, double Hi);
 /// <summary>One medication on the demo pet, plus how reliably it actually gets given.</summary>
 /// <param name="Times">Reminder times; one <c>MedicationSchedule</c> row per (day, time).</param>
 /// <param name="Days">Which weekdays it is due.</param>
-/// <param name="UnloggedRate">Doses with no row at all — nobody touched the app.</param>
+/// <param name="UnloggedRate">Doses with no row at all: nobody touched the app.</param>
 /// <param name="SkipRate">Doses explicitly marked Skipped.</param>
 /// <param name="WeekendLateMultiplier">How much more often the LAST dose of the day runs
 /// late on Fri/Sat. This is the weekday-ring story: a fold at seven days turns a household
@@ -53,7 +53,7 @@ public sealed record DemoTracker(
     string? FromCondition = null);
 
 /// <summary>
-/// The seizure history's shape — the single most important thing in this file, because
+/// The seizure history's shape: the single most important thing in this file, because
 /// it is what makes the Constellation's lenses show anything at all.
 ///
 /// <para>The existing dev fixture placed seizures at a uniformly random hour, which folds
@@ -61,19 +61,19 @@ public sealed record DemoTracker(
 /// INDEPENDENT structures are planted here instead, and the pay-off is being able to turn
 /// one dial and watch the same stars rearrange into a different answer.</para>
 /// </summary>
-/// <param name="NightBand">Where most of them land — the wedge on a one-day fold, and the
+/// <param name="NightBand">Where most of them land: the wedge on a one-day fold, and the
 /// vertical band under the daylight wash in Nights.</param>
 /// <param name="NightShare">The rest are scattered across the clock, because a real diary
 /// is not tidy and a perfect band reads as fake.</param>
-/// <param name="ClusterSpacingDays">Roughly how far apart the clusters sit — the answer to
+/// <param name="ClusterSpacingDays">Roughly how far apart the clusters sit: the answer to
 /// "does it come round again", visible only when folded near this period. <b>This alone
 /// decides how many there are in a year</b>; there is deliberately no total, because a
 /// budget spent front-to-back empties the recent end of the history, which is the end
 /// every short range is looking at.</param>
 /// <param name="ClusterJitterDays">Load-bearing. An exact period looks synthetic and, worse,
-/// implies the app can detect periodicity — which is precisely the claim it must not make.</param>
+/// implies the app can detect periodicity, which is precisely the claim it must not make.</param>
 /// <param name="MultiShare">How often a night carries more than one. Most seizures are
-/// single events; a cluster of two or three inside an hour is the notable minority — and
+/// single events; a cluster of two or three inside an hour is the notable minority, and
 /// the threshold a lot of dogs' emergency plans hang on, so it has to be in there.</param>
 public sealed record DemoSeizurePattern(
     HourBand NightBand,
@@ -86,7 +86,7 @@ public sealed record DemoSeizurePattern(
 
 /// <summary>Glucose curve days: several readings in one stretch, at the hours a twice-daily
 /// insulin routine produces. Two windows, so a one-day fold shows two arcs bracketing the
-/// dose spokes — proof the Cycle lens is not an epilepsy-only trick.</summary>
+/// dose spokes: proof the Cycle lens is not an epilepsy-only trick.</summary>
 public sealed record DemoGlucoseHabit(
     double DayRate,
     HourBand MorningWindow,
@@ -94,21 +94,21 @@ public sealed record DemoGlucoseHabit(
     Band Readings,
     Band Value);
 
-/// <summary>A slow, signed weight change — the vet report's headline fact, stated
+/// <summary>A slow, signed weight change: the vet report's headline fact, stated
 /// neutrally and never coloured good or bad.</summary>
 public sealed record DemoWeightTrend(decimal StartKg, decimal EndKg, DayOfWeek OnDay, double Jitter);
 
 public sealed record DemoMoodHabit(double DayRate, HourBand Window, Band Level);
 
 /// <summary>Both appetite modes, as real use produces them: an exact weight of food some
-/// days, a word the rest. They are never merged — the report keeps two graphs.</summary>
+/// days, a word the rest. They are never merged: the report keeps two graphs.</summary>
 public sealed record DemoAppetiteHabit(double DayRate, double MeasuredShare, Band Grams, Band Level, string[] Foods);
 
 /// <summary>Both water modes, same reason as appetite.</summary>
 public sealed record DemoWaterHabit(double DayRate, double MeasuredShare, Band Ml, Band Level, Band PerDay);
 
 /// <summary>One owner-defined tracker and how often it gets logged. The preset carries the
-/// name key, icon, colour, shape and cadence — a demo pet's custom trackers are made the
+/// name key, icon, colour, shape and cadence: a demo pet's custom trackers are made the
 /// same way an owner makes theirs, so nothing about them is special-cased downstream.</summary>
 public sealed record DemoCustomHabit(
     CustomTrackerPresets.Preset Preset,
@@ -125,13 +125,13 @@ public sealed record DemoProfile
 {
     public required string Id { get; init; }
 
-    /// <summary>The pet's name. <b>No "(Demo)" marker</b> — deliberately, so a creator's
+    /// <summary>The pet's name. <b>No "(Demo)" marker</b>: deliberately, so a creator's
     /// footage looks like the product rather than a test build. The row's
     /// <c>Pet.IsDemo</c> flag is what the app keys on, and it is what tells support
     /// whether a reported oddity came from seeded data.</summary>
     public required string Name { get; init; }
 
-    /// <summary>A <c>PetTypeOption</c> key ("Dog", "Cat") — localized for display through
+    /// <summary>A <c>PetTypeOption</c> key ("Dog", "Cat"): localized for display through
     /// the same helper the real pets use.</summary>
     public required string Species { get; init; }
 
@@ -162,12 +162,12 @@ public sealed record DemoProfile
     /// as calm rather than broken.</summary>
     public double SilentDayRate { get; init; } = 0.06;
 
-    /// <summary>A stretch with nothing in it — life happens, and Felova never scolds.</summary>
+    /// <summary>A stretch with nothing in it: life happens, and Felova never scolds.</summary>
     public int QuietSpellStartDaysAgo { get; init; } = 96;
     public int QuietSpellLength { get; init; } = 14;
 
     /// <summary>How much thinner logging is at the START of the history than at the end.
-    /// A new owner records little and builds the habit — in Nights that reads as the wall
+    /// A new owner records little and builds the habit: in Nights that reads as the wall
     /// visibly thickening as the eye travels down, which is the lens's fourth question.</summary>
     public double EarlyDensityFloor { get; init; } = 0.35;
 
@@ -177,8 +177,8 @@ public sealed record DemoProfile
     // ── The two pets ─────────────────────────────────────────────────────────────
     //
     //  Built per language rather than held as constants. Medication names and the food
-    //  labels are stored as USER data — the app never re-translates them, exactly as it
-    //  never re-translates a pet's name — so the language has to be chosen at the moment
+    //  labels are stored as USER data: the app never re-translates them, exactly as it
+    //  never re-translates a pet's name, so the language has to be chosen at the moment
     //  the history is seeded. A German creator filming an English drug list would
     //  misrepresent the product to their audience. Same reasoning, and the same shape, as
     //  VetReportSampleData.SampleNotes.
@@ -192,7 +192,7 @@ public sealed record DemoProfile
         All(german).FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// <b>Kira — epilepsy, dog.</b> The Constellation showcase.
+    /// <b>Kira: epilepsy, dog.</b> The Constellation showcase.
     ///
     /// <para>Everything about this history exists to give the three lenses something true
     /// to reveal: a small-hours band (fold at a day), a Friday/Saturday dosing wobble
@@ -235,7 +235,7 @@ public sealed record DemoProfile
         CustomTrackers = new[]
         {
             new DemoCustomHabit(
-                CustomTrackerPresets.All[0],           // Walk — Amount, "min"
+                CustomTrackerPresets.All[0],           // Walk: Amount, "min"
                 DayRate: 0.72,
                 Window: new HourBand(7, 20),
                 Amount: new Band(15, 65),
@@ -248,21 +248,21 @@ public sealed record DemoProfile
 
         Seizures = new DemoSeizurePattern(
             NightBand: new HourBand(2, 5),
-            // Drawn per NIGHT, not per seizure — nominally 3 nights in 4 in the band and
+            // Drawn per NIGHT, not per seizure: nominally 3 nights in 4 in the band and
             // the rest anywhere. That asymmetry is wanted: the wedge has to be obvious at
             // arm's length on a phone, and it also has to have something outside it,
             // because a band with no exceptions reads as synthetic and quietly claims more
             // than a diary can.
             //
-            // Kira's seed happens to realize this HIGH — 23 of her 25 nights land in the
+            // Kira's seed happens to realize this HIGH: 23 of her 25 nights land in the
             // band rather than the ~19 the number implies. That is one seed's luck (p≈0.04)
             // and it is left alone deliberately: tuning the constant until one fixed seed
             // produced the textbook split would make it lie about intent to everyone who
-            // reads it afterwards. The tests assert the properties — a strong majority, and
-            // at least one exception — not a count.
+            // reads it afterwards. The tests assert the properties: a strong majority, and
+            // at least one exception, not a count.
             NightShare: 0.75,
             // A FORTNIGHT, not a month. Two reasons, and the first is the one that matters:
-            // at monthly spacing a 30-day range — the one the page opens on — held about
+            // at monthly spacing a 30-day range (the one the page opens on) held about
             // one seizure, so the story this pet exists to tell was invisible until someone
             // widened to a year, by which point the sky has ~1,700 stars in it. At a
             // fortnight, 30 days carries two or three nights and 90 days carries six.
@@ -286,12 +286,12 @@ public sealed record DemoProfile
     };
 
     /// <summary>
-    /// <b>Mira — diabetes, cat.</b> The vet-report showcase.
+    /// <b>Mira: diabetes, cat.</b> The vet-report showcase.
     ///
     /// <para>Deliberately has <b>no seizures at all</b>: the legend lists only what is
     /// present, and a cat that has never seized must never be given a seizure row to make
-    /// the demo look fuller. Her glucose curve days carry the Cycle story instead — two
-    /// arcs bracketing the insulin spokes — so the lens proves itself on a pet with a
+    /// the demo look fuller. Her glucose curve days carry the Cycle story instead: two
+    /// arcs bracketing the insulin spokes, so the lens proves itself on a pet with a
     /// completely different condition.</para>
     /// </summary>
     public static DemoProfile Mira(bool german) => new()
@@ -324,12 +324,12 @@ public sealed record DemoProfile
             new DemoTracker(TrackerId.Weight, TrackerKind.Weekly),
         },
 
-        // The Tick shape, and the one preset that ships with InReport ON — a sick episode
+        // The Tick shape, and the one preset that ships with InReport ON: a sick episode
         // belongs in front of a vet where a walk does not.
         CustomTrackers = new[]
         {
             new DemoCustomHabit(
-                CustomTrackerPresets.All[3],           // Sick — Tick, Event
+                CustomTrackerPresets.All[3],           // Sick: Tick, Event
                 DayRate: 0.022,
                 Window: new HourBand(6, 23),
                 Amount: default,

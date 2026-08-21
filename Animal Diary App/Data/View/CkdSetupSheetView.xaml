@@ -2,7 +2,7 @@
 <!--
     CkdSetupSheetView
     ─────────────────────────────────────────────────────────
-    The reusable "set up kidney care" sheet — weigh-in cadence + optional daily
+    The reusable "set up kidney care" sheet: weigh-in cadence + optional daily
     Appetite / Water tracking, in the shared FelovaBottomSheet. Hosted by BOTH the
     onboarding condition picker and the Manage Pet page. BindingContext is a
     CkdSetupSheetViewModel; open it via that VM's OpenAsync.

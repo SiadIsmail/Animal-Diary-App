@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Globalization;
 using System.Windows.Input;
@@ -91,7 +91,7 @@ public class GlucoseSheetViewModel : BaseViewModel
         var start = recent?.Value ?? 7.0m;
         ValueText = start.ToString("0.0", CultureInfo.CurrentCulture);
 
-        // Before food if early morning or late afternoon/evening, else after food —
+        // Before food if early morning or late afternoon/evening, else after food,
         // the same gentle rule the prototype uses.
         var hour = DateTime.Now.Hour;
         Context = (hour < 11 || hour >= 16) ? FoodContext.BeforeFood : FoodContext.AfterFood;

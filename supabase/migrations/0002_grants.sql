@@ -1,11 +1,11 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0002 — role grants. Newer Supabase projects no longer auto-grant table
+--  0002: role grants. Newer Supabase projects no longer auto-grant table
 --  privileges to the API roles for tables created in the SQL editor, so RLS
 --  policies alone yield "42501 permission denied". Grants say what a role MAY
---  attempt; RLS still decides which rows — both are required.
+--  attempt; RLS still decides which rows: both are required.
 --
 --  Only `authenticated` gets anything: every app call runs with a user token,
---  and signed-out devices make no data calls at all — `anon` stays at zero.
+--  and signed-out devices make no data calls at all: `anon` stays at zero.
 --  No DELETE grants anywhere: the app soft-deletes, and the hard-deleting RPCs
 --  are SECURITY DEFINER (they run as their owner, not the caller).
 -- ═══════════════════════════════════════════════════════════════════════════

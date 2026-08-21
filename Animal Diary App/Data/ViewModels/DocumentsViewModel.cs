@@ -12,7 +12,7 @@ using Animal_Diary_App.Helpers;
 /// first, with view / share / delete-with-undo. Deletion is deferred, matching
 /// the app's undo-toast pattern: the row leaves the list immediately, but the
 /// file+row are only deleted when the toast expires (or the page is left);
-/// Undo simply puts the row back. Only one delete is in flight at a time —
+/// Undo simply puts the row back. Only one delete is in flight at a time,
 /// staging a new one commits the previous first.
 /// </summary>
 public class DocumentsViewModel : BaseViewModel
@@ -32,10 +32,10 @@ public class DocumentsViewModel : BaseViewModel
         DeleteCommand = new Command<ReportListItem>(async item => await StageDeleteAsync(item));
     }
 
-    /// <summary>Row tapped — the hosting page pushes the preview (pages navigate, VMs don't).</summary>
+    /// <summary>Row tapped: the hosting page pushes the preview (pages navigate, VMs don't).</summary>
     public event Action<VetReportFile>? OpenRequested;
 
-    /// <summary>A delete was staged — the hosting page shows the undo toast with
+    /// <summary>A delete was staged: the hosting page shows the undo toast with
     /// <see cref="UndoDeleteAsync"/> / <see cref="CommitPendingDeleteAsync"/> as its callbacks.</summary>
     public event Action<string>? DeleteStaged;
 
@@ -44,7 +44,7 @@ public class DocumentsViewModel : BaseViewModel
     private bool _isEmpty;
     public bool IsEmpty { get => _isEmpty; set => SetProperty(ref _isEmpty, value); }
 
-    // Localized per read — a singleton VM must survive a live language switch.
+    // Localized per read: a singleton VM must survive a live language switch.
     public string Title => LocalizationManager.Instance.GetString("Docs_Title");
     public string Subtitle => LocalizationManager.Instance.Format("Docs_Subtitle", _activePetService.ActivePet.Name);
 
@@ -104,7 +104,7 @@ public class DocumentsViewModel : BaseViewModel
     }
 
     /// <summary>Actually delete the staged report (toast expired, page left, or a
-    /// new delete/reload superseded it). Idempotent — callers may overlap.</summary>
+    /// new delete/reload superseded it). Idempotent: callers may overlap.</summary>
     public async Task CommitPendingDeleteAsync()
     {
         if (_pendingDelete is not { } pending)
@@ -139,7 +139,7 @@ public class ReportListItem
     public string ThumbnailPath => ReportLibraryService.PreviewPathFor(Report, 1);
 
     public string PeriodDisplay =>
-        $"{Report.FromDate:dd MMM yyyy} – {Report.ToDate:dd MMM yyyy}";
+        $"{Report.FromDate:dd MMM yyyy}: {Report.ToDate:dd MMM yyyy}";
 
     public string CreatedDisplay => Report.CreatedAt.ToString("g");
 

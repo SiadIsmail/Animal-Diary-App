@@ -13,12 +13,12 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 /// single event. Both directions corrupt the "did they come back" step of the funnel.</para>
 ///
 /// <para>The fix is two gates. <i>Where</i> it fires moved to window/resume touchpoints
-/// (a real Activity exists by definition) — see <c>App.CreateWindow</c> /
+/// (a real Activity exists by definition): see <c>App.CreateWindow</c> /
 /// <c>App.OnResume</c>. <i>Whether</i> it fires is this class: a standard idle-timeout
 /// session window, so an Activity recreation or a quick app-switch continues the current
 /// session while a genuine return the next day starts a new one.</para>
 ///
-/// <para>Deliberately pure — no MAUI, no <c>Preferences</c>, no clock of its own — so the
+/// <para>Deliberately pure (no MAUI, no <c>Preferences</c>, no clock of its own) so the
 /// decision is unit-testable. Persistence of the last-activity stamp lives in
 /// <see cref="AnalyticsIdentity"/>, which already owns the analytics
 /// <c>Preferences</c> state.</para>
@@ -48,7 +48,7 @@ public static class AnalyticsSession
 
         // Clock moved backwards (timezone/manual change, or a restored backup). We cannot
         // reason about the gap, so start a fresh session rather than suppress events
-        // indefinitely — under-counting a return is worse than over-counting one.
+        // indefinitely: under-counting a return is worse than over-counting one.
         if (elapsed < TimeSpan.Zero)
             return true;
 

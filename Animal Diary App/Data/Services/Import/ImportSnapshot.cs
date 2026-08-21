@@ -5,14 +5,14 @@ using Animal_Diary_App.Data.Models;
 // ─────────────────────────────────────────────────────────────────────────────
 //  What the validator is allowed to know about the device.
 //
-//  The validator is PURE — no SQLite, no MAUI — so everything it needs about what is
+//  The validator is PURE (no SQLite, no MAUI) so everything it needs about what is
 //  already stored arrives as this snapshot, assembled by ImportService from ordinary
 //  repository reads. Same seam shape Billing uses for its cloud facts (IPetAccessSource
 //  and friends): the pure half declares what it needs, the impure half supplies it.
 //
 //  It is also why the validator can decide skips at all. "This day already has a
 //  weight" is a fact about the database, and the preview has to state it BEFORE the
-//  owner confirms — so the reads happen up front, once, over only the date range the
+//  owner confirms, so the reads happen up front, once, over only the date range the
 //  file actually covers.
 //
 //  Deliberately NOT modelled here: Pet itself. Pet.cs resolves a photo path through
@@ -21,7 +21,7 @@ using Animal_Diary_App.Data.Models;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// <summary>A pet already on the device that a file may append to. Demo pets are
-/// excluded by the caller — importing into a filming fixture would write rows that can
+/// excluded by the caller: importing into a filming fixture would write rows that can
 /// never sync and would pollute a pet the creator is about to delete.</summary>
 public sealed record ExistingPet(int Id, string Name, string Species);
 
@@ -40,11 +40,11 @@ public sealed record ExistingTracker(int Id, int PetId, string Name, CustomShape
 /// The pet's <c>PetEntry</c> row for one date, if it has one.
 ///
 /// <para>This one is shaped differently from the others because <c>PetEntry</c> is a
-/// single row per day holding TWO independent halves — mood and weight. A day can be
+/// single row per day holding TWO independent halves: mood and weight. A day can be
 /// half-full, and filling the empty half is additive rather than destructive, so the
 /// two are tracked separately.</para>
 /// </summary>
-/// <param name="RowId">The row to update. Never 0 — a day with no row produces no
+/// <param name="RowId">The row to update. Never 0: a day with no row produces no
 /// snapshot entry at all.</param>
 /// <param name="IsTombstone">The row was soft-deleted (an undone log). It must be
 /// REVIVED in place rather than joined by a sibling: the cloud keys this table by
@@ -57,7 +57,7 @@ public sealed record ExistingPetDay(
     bool HasWeight,
     bool IsTombstone);
 
-/// <summary>A one-per-day level row the pet already has — appetite_level or
+/// <summary>A one-per-day level row the pet already has: appetite_level or
 /// water_level. Same tombstone rule as <see cref="ExistingPetDay"/>, minus the
 /// two-halves complication (these rows carry a single value).</summary>
 public sealed record ExistingLevelDay(
@@ -72,7 +72,7 @@ public sealed record ExistingLevelDay(
 ///
 /// <para>Used for the "already present" skip: a seizure at 20:00 on the 10th lasting a
 /// minute, imported twice, is one seizure. This is what makes re-running a regenerated
-/// file safe — the hash guard only catches byte-identical re-imports, and an AI asked
+/// file safe: the hash guard only catches byte-identical re-imports, and an AI asked
 /// the same question twice never produces identical bytes.</para>
 ///
 /// <para>It can, in principle, drop a genuine second reading taken in the same minute
@@ -106,7 +106,7 @@ public sealed class ImportSnapshot
 
     public IReadOnlyList<ExistingEvent> Events { get; init; } = Array.Empty<ExistingEvent>();
 
-    /// <summary>A snapshot for a device with nothing on it — every pet block must say
+    /// <summary>A snapshot for a device with nothing on it: every pet block must say
     /// "new", and nothing can collide. The shape a first-run import sees.</summary>
     public static ImportSnapshot Empty { get; } = new() { Pets = Array.Empty<ExistingPet>() };
 }

@@ -1,4 +1,4 @@
-# Supabase setup — Felova cloud
+# Supabase setup: Felova cloud
 
 The app talks to Supabase project `pbwhusssrzavdgbvjtrv` (EU). These are the
 one-time dashboard steps the owner runs; the SQL lives in `migrations/` and is
@@ -8,7 +8,7 @@ the source of truth for the schema.
 
 Dashboard → **SQL Editor** → paste the whole of `migrations/0001_cloud_init.sql`
 → Run. Expect "Success. No rows returned". Run each migration file **once, in
-number order**; never edit an already-run file — later changes get a new
+number order**; never edit an already-run file: later changes get a new
 numbered file.
 
 ## 2. Auth settings
@@ -23,9 +23,9 @@ and password recovery with the **6-digit code**, not a link (there is no
 website to land on). Edit these two templates so the code is what the email
 shows:
 
-- **Confirm signup** — replace the `{{ .ConfirmationURL }}` link with:
+- **Confirm signup**: replace the `{{ .ConfirmationURL }}` link with:
   `Your Felova code: {{ .Token }}`
-- **Reset password** — same: `Your Felova code: {{ .Token }}`
+- **Reset password**: same: `Your Felova code: {{ .Token }}`
 
 ## 3. Google Sign-In (Android)
 
@@ -42,7 +42,7 @@ The app offers "Continue with Google" on Android via the system browser
    Copy the **Client ID** and **Client secret**.
 
 > A separate *Android* OAuth client (with the app's SHA-1) is **not** needed for
-> this browser flow — that is only for the native one-tap picker, which we
+> this browser flow, that is only for the native one-tap picker, which we
 > intentionally did not use. Just the Web client.
 
 **Supabase dashboard**:
@@ -53,14 +53,14 @@ The app offers "Continue with Google" on Android via the system browser
    deep-link `felova://auth-callback` (must match `CloudAuthService.OAuthCallback`
    and the Android `WebAuthenticationCallbackActivity` intent-filter).
 
-That's all — no client IDs or secrets live in the app; the secret stays in
+That's all, no client IDs or secrets live in the app; the secret stays in
 Supabase. Email+password sign-in needs none of this.
 
 ## 4. Rate limits / SMTP
 
-The built-in email sender is limited (a few emails per hour) — fine for
+The built-in email sender is limited (a few emails per hour): fine for
 development. Before launch, configure custom SMTP under
-**Authentication → Emails → SMTP settings** (e.g. Resend) — tracked as a
+**Authentication → Emails → SMTP settings** (e.g. Resend): tracked as a
 pre-launch task, nothing to do now.
 
 ## 5. RevenueCat webhook (sponsored caregivers)
@@ -118,7 +118,7 @@ The trial half needs no configuration: the app claims its own anchor through
 ## 6. Access codes (giveaways and comps)
 
 Migration `0015_access_codes.sql` adds one-time codes that grant a year of full access.
-A code is **given away, never sold** — selling access outside the store breaks App Store
+A code is **given away, never sold**: selling access outside the store breaks App Store
 3.1.1 and Play's Payments policy, and this path bypasses IAP by construction.
 
 Codes are minted and read here, from the SQL editor. There is no admin screen in the app,
@@ -147,7 +147,7 @@ Codes look like `FELOVA-K7M2-9XQP`, in migration 0010's alphabet (no `I`, `O`, `
 because they get read off a screenshot and typed by hand. They are compared upper-cased
 and trimmed, so a lowercase paste works.
 
-**Name campaigns with a date** — `reddit-2026-08`, not `reddit`. Reusing a name merges two
+**Name campaigns with a date**: `reddit-2026-08`, not `reddit`. Reusing a name merges two
 giveaways permanently in the stats below, and there is no way to unpick it afterwards.
 
 ### Reading the result
@@ -167,7 +167,7 @@ select r.campaign, r.code, r.redeemed_at, r.granted_until
  order by r.redeemed_at desc;
 
 -- Retire a campaign's leftovers. This also removes the denominator, so that campaign's
--- redemption rate jumps to 100% — read the rate you care about first.
+-- redemption rate jumps to 100%: read the rate you care about first.
 delete from public.access_codes where campaign = 'reddit-2026-08' and use_count = 0;
 ```
 
@@ -177,7 +177,7 @@ whole feature exists to produce.
 
 ### What a code is, and is not
 
-- It sets `profiles.granted_until`, a column separate from `entitlement_active` — which
+- It sets `profiles.granted_until`, a column separate from `entitlement_active`, which
   stays writable only by the RevenueCat webhook (§5). A grant is **not** a purchase and
   must never be counted as revenue.
 - Redeeming a second code **renews from that moment** rather than queueing: six months in,
@@ -229,7 +229,7 @@ also works as a fallback if they're pasting into a tool that builds UTM links, b
 `creator=` wins when both are present.
 
 **Android only.** Apple's campaign tokens reach App Store Connect analytics and are not
-readable by the app, so on iOS the typed code is the only route. Nothing to configure —
+readable by the app, so on iOS the typed code is the only route. Nothing to configure,
 the link just won't attribute there.
 
 Attribution from a link is recorded as `source = 'install_referrer'`; a typed code is
@@ -292,5 +292,5 @@ conversion into a recurring one.
 
 The app embeds the project URL + publishable key (`CloudConfig` in
 `Data/Services/Cloud/`). The **service-role key is never used by the app and
-never committed** — it stays in the dashboard. The edge function above receives it
+never committed**: it stays in the dashboard. The edge function above receives it
 from Supabase's own environment; it is not stored in this repo.

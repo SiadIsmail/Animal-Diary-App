@@ -5,13 +5,13 @@ namespace Animal_Diary_App.Data.Models;
 /// down most, already named, coloured and set to a sensible cadence.
 ///
 /// <para><b>These are presets, not built-in trackers.</b> Picking one fills the form in
-/// and nothing more — the owner can rename it, recolour it, change its cadence, or ignore
+/// and nothing more: the owner can rename it, recolour it, change its cadence, or ignore
 /// the row entirely and type their own. Nothing downstream knows a preset was used; there
 /// is no preset id on the saved row, and no code path anywhere asks "is this the walk
 /// one?". That is the whole point: discoverability without a closed set.</para>
 ///
 /// <para>The names are localization KEYS because a preset is app chrome until the moment
-/// it is accepted. From then on the stored name is the owner's — it does not re-translate
+/// it is accepted. From then on the stored name is the owner's: it does not re-translate
 /// when they switch language, exactly like a pet's name (see AI/coding-standards.md).</para>
 /// </summary>
 public static class CustomTrackerPresets
@@ -37,7 +37,7 @@ public static class CustomTrackerPresets
     ///
     /// <para>Cadences are chosen so nothing nags about something that isn't a routine.
     /// A walk is a daily habit; a groom is a weekly one; a poop and a sick episode are
-    /// <see cref="TrackerKind.Event"/> — they happen or they don't, and the app must
+    /// <see cref="TrackerKind.Event"/>: they happen or they don't, and the app must
     /// never put "sick yet?" on a to-do list.</para></summary>
     public static IReadOnlyList<Preset> All { get; } = new[]
     {
@@ -48,7 +48,7 @@ public static class CustomTrackerPresets
         new Preset("CustomPreset_Play", "🎾", "violet", CustomShape.Amount, "CustomPreset_PlayUnit", TrackerKind.Daily, 0, InReport: false),
     };
 
-    /// <summary>The preset's suggested name, resolved now — never cached, so a live
+    /// <summary>The preset's suggested name, resolved now, never cached, so a live
     /// language switch re-reads it (see AI/coding-standards.md on singleton VMs).</summary>
     public static string Name(Preset p) =>
         Helpers.LocalizationManager.Instance.GetString(p.NameKey);

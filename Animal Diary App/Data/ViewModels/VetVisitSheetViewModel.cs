@@ -10,7 +10,7 @@ using Animal_Diary_App.Helpers;
 /// Add or edit one vet visit, in the shared <c>FelovaBottomSheet</c>.
 ///
 /// <para>Four fields and a note, and the shape of them is the design. The <b>time is
-/// optional</b> — owners often know the day and not the slot, and the sheet has a
+/// optional</b>: owners often know the day and not the slot, and the sheet has a
 /// switch for that rather than a picker pre-set to some invented hour. Practice and vet
 /// name are free text: there is no directory, no lookup and no entity behind them, the
 /// same treatment <c>AppetiteEntry.Food</c> gets.</para>
@@ -18,6 +18,17 @@ using Animal_Diary_App.Helpers;
 /// <para>The note ("what the vet said") appears only once the visit is <b>past</b>. A
 /// note written before the appointment would be a prediction, and this app records
 /// rather than predicts.</para>
+///
+/// <para><b>Two ways in, one sheet.</b> <see cref="OpenAsync(int, string, VetVisit?)"/>
+/// is the form: four fields and, for a past visit, the note under them.
+/// <see cref="OpenForNoteAsync"/> opens straight to the note, with the day, the practice
+/// and the vet as a read-only line and "Edit details" for the rare correction. That path
+/// exists because the note is the highest-value capture in the whole loop: it is what
+/// makes Felova the record of the conversation rather than the owner's half of it, and
+/// it decays within hours of leaving the practice. Asking someone to re-confirm four
+/// fields they already gave, about a visit that has already happened, before reaching
+/// the field that matters is how that note gets lost. Still ONE sheet on the shared
+/// FelovaBottomSheet: two would be two places for the note to drift apart.</para>
 ///
 /// <para>Saving re-arms the reminder and deleting cancels it, both here rather than at
 /// the caller, so no future entry point can move a visit and leave the old evening's
@@ -31,6 +42,7 @@ public class VetVisitSheetViewModel : BaseViewModel
     private int _petId;
     private string _petName = string.Empty;
     private VetVisit? _editing;
+    private bool _detailsExpanded;
 
     public VetVisitSheetViewModel(VetVisitService visits, AppointmentReminderScheduler reminders)
     {
@@ -40,11 +52,12 @@ public class VetVisitSheetViewModel : BaseViewModel
         SaveCommand = new Command(async () => await SaveAsync());
         DeleteCommand = new Command(async () => await DeleteAsync());
         DismissCommand = new Command(() => IsPresented = false);
+        EditDetailsCommand = new Command(ExpandDetails);
     }
 
     /// <summary>A visit was written. Carries a confirmation line and <b>no undo</b>:
     /// this sheet IS the editor, so an edit is reversed by opening it again. Deliberately
-    /// not a <see cref="JournalSaveResult"/> — that type promises an undo, and the page's
+    /// not a <see cref="JournalSaveResult"/>, that type promises an undo, and the page's
     /// toast shows its button whenever one is present.</summary>
     public event Action<string>? Saved;
 
@@ -65,7 +78,7 @@ public class VetVisitSheetViewModel : BaseViewModel
     public DateTime Date { get => _date; set => SetProperty(ref _date, value); }
 
     /// <summary>Whether the owner knows the time. Off is the resting state for a new
-    /// visit — the app never fills in a half of the date it was not told.</summary>
+    /// visit: the app never fills in a half of the date it was not told.</summary>
     private bool _hasTime;
     public bool HasTime { get => _hasTime; set => SetProperty(ref _hasTime, value); }
 
@@ -88,19 +101,70 @@ public class VetVisitSheetViewModel : BaseViewModel
 
     /// <summary>Only an existing visit can be removed.</summary>
     private bool _canDelete;
-    public bool CanDelete { get => _canDelete; private set => SetProperty(ref _canDelete, value); }
+    public bool CanDelete
+    {
+        get => _canDelete;
+        private set
+        {
+            if (SetProperty(ref _canDelete, value))
+                OnPropertyChanged(nameof(ShowDelete));
+        }
+    }
+
+    // ── Note-first ───────────────────────────────────────────────────────────
+
+    private bool _noteFirst;
+
+    /// <summary>Opened straight to the note. The four detail fields collapse to one
+    /// read-only line until the owner asks for them.</summary>
+    public bool NoteFirst { get => _noteFirst; private set => SetProperty(ref _noteFirst, value); }
+
+    /// <summary>Whether the day / time / practice / vet fields render. Always true on the
+    /// form path; on the note path only once "Edit details" has been tapped.</summary>
+    public bool ShowDetails => !NoteFirst || _detailsExpanded;
+
+    /// <summary>The read-only line, and the "Edit details" link under it. Both retire the
+    /// moment the fields appear: the fields say the same thing, editably.</summary>
+    public bool ShowDetailsLine => NoteFirst && !_detailsExpanded;
+
+    /// <summary>"Wed, 19 Aug · 15:30 · Dr. Weiss · Riverside": whatever the owner
+    /// actually gave. Nothing is filled in for them and nothing reads "unknown".</summary>
+    private string _detailsLine = string.Empty;
+    public string DetailsLine { get => _detailsLine; private set => SetProperty(ref _detailsLine, value); }
+
+    /// <summary>Room to write. The note is the point of this path, so it opens with the
+    /// height a paragraph needs rather than the two lines it gets under a form.</summary>
+    public double NoteHeight => NoteFirst ? 210 : 86;
+
+    /// <summary>"Remove this visit" belongs with the details, not under the note. On the
+    /// note path the owner is writing down what a vet just told them, and a delete
+    /// affordance a thumb-width from that is a hazard rather than an option.</summary>
+    public bool ShowDelete => CanDelete && ShowDetails;
 
     public ICommand SaveCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand DismissCommand { get; }
 
+    /// <summary>Reveal the four detail fields on the note path.</summary>
+    public ICommand EditDetailsCommand { get; }
+
     /// <summary>Open for a new visit (<paramref name="visit"/> null) or an existing
     /// one.</summary>
-    public Task OpenAsync(int petId, string petName, VetVisit? visit)
+    public Task OpenAsync(int petId, string petName, VetVisit? visit) =>
+        OpenAsync(petId, petName, visit, noteFirst: false);
+
+    /// <summary>Open straight to "what the vet said", for a visit that has already
+    /// happened. Two taps from Today to a saved note. A visit still ahead of us falls
+    /// back to the form: there is nothing to write down about it yet.</summary>
+    public Task OpenForNoteAsync(int petId, string petName, VetVisit visit) =>
+        OpenAsync(petId, petName, visit, noteFirst: visit.IsPast);
+
+    private Task OpenAsync(int petId, string petName, VetVisit? visit, bool noteFirst)
     {
         _petId = petId;
         _petName = petName;
         _editing = visit;
+        _detailsExpanded = false;
 
         Date = visit?.Date.Date ?? DateTime.Today;
         HasTime = visit?.Time is not null;
@@ -111,10 +175,49 @@ public class VetVisitSheetViewModel : BaseViewModel
         ShowNote = visit?.IsPast == true;
         CanDelete = visit is not null;
 
+        NoteFirst = noteFirst;
+        DetailsLine = visit is null ? string.Empty : Details(visit);
+
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
+        OnPropertyChanged(nameof(ShowDetails));
+        OnPropertyChanged(nameof(ShowDetailsLine));
+        OnPropertyChanged(nameof(ShowDelete));
+        OnPropertyChanged(nameof(NoteHeight));
         IsPresented = true;
         return Task.CompletedTask;
+    }
+
+    /// <summary>The rare correction: reveal the four fields in place. One-way: there is
+    /// nothing to gain from folding them back up mid-edit.</summary>
+    private void ExpandDetails()
+    {
+        if (_detailsExpanded)
+            return;
+
+        _detailsExpanded = true;
+        OnPropertyChanged(nameof(ShowDetails));
+        OnPropertyChanged(nameof(ShowDetailsLine));
+        OnPropertyChanged(nameof(ShowDelete));
+    }
+
+    /// <summary>The read-only detail line. Same "whatever the owner gave, nothing
+    /// invented" rule the appointment headline follows.</summary>
+    private static string Details(VetVisit visit)
+    {
+        var parts = new List<string>(4)
+        {
+            visit.Date.ToString("ddd, d MMM", System.Globalization.CultureInfo.CurrentCulture),
+        };
+
+        if (visit.Time is TimeSpan t)
+            parts.Add(t.ToString("hh\\:mm"));
+        if (!string.IsNullOrWhiteSpace(visit.VetName))
+            parts.Add(visit.VetName.Trim());
+        if (!string.IsNullOrWhiteSpace(visit.Practice))
+            parts.Add(visit.Practice.Trim());
+
+        return string.Join(" · ", parts);
     }
 
     private async Task SaveAsync()
@@ -124,7 +227,7 @@ public class VetVisitSheetViewModel : BaseViewModel
 
         var visit = _editing ?? new VetVisit { PetId = _petId };
         visit.Date = Date.Date;
-        // Off means "I only know the day" — the stored value goes back to null rather
+        // Off means "I only know the day": the stored value goes back to null rather
         // than keeping whatever the picker last showed.
         visit.Time = HasTime ? Time : null;
         visit.Practice = Practice?.Trim() ?? string.Empty;
@@ -139,7 +242,7 @@ public class VetVisitSheetViewModel : BaseViewModel
         // into the past dropped it out of the sweep entirely and left its already-armed
         // notification to fire on the eve of a date that no longer exists. Cancelling by
         // id first means the only reminders that survive are the ones the refresh
-        // deliberately re-arms — and the refresh is idempotent, so a visit that is still
+        // deliberately re-arms, and the refresh is idempotent, so a visit that is still
         // the next one simply gets armed again.
         await _reminders.CancelAsync(visit.Id);
         await _reminders.RefreshAsync();

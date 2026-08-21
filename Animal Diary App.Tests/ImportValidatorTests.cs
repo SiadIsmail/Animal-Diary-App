@@ -90,8 +90,8 @@ public class ImportValidatorTests
         Assert.False(plan.IsValid);
         Assert.Empty(plan.Pets);
 
-        // Both problems in one pass — a bad date AND the glucose reading missing its
-        // food context — so the owner fixes the file once rather than three times.
+        // Both problems in one pass: a bad date AND the glucose reading missing its
+        // food context, so the owner fixes the file once rather than three times.
         Assert.Equal(2, plan.Errors.Count);
         Assert.Contains(plan.Errors, e => e.Message.Contains("not a date"));
         Assert.Contains(plan.Errors, e => e.Message.Contains("context"));
@@ -101,7 +101,7 @@ public class ImportValidatorTests
     public void UnknownEntryType_IsAnError_NotASilentSkip()
     {
         // Dropping it quietly would let the file claim to have imported something it did
-        // not — the owner would believe the vomiting was recorded.
+        // not: the owner would believe the vomiting was recorded.
         var plan = Validate(File(ExistingPetBlock("""
             { "type": "vomiting", "date": "2026-08-10" }
             """)), WithPet());
@@ -377,7 +377,7 @@ public class ImportValidatorTests
     [Fact]
     public void ANewPetWithAnExistingName_IsAllowedButFlagged()
     {
-        // People do reuse names, so this is not an error — but it is also exactly what a
+        // People do reuse names, so this is not an error, but it is also exactly what a
         // wrongly-chosen "new" looks like, so the owner is told before confirming.
         var plan = Validate(File("""
             { "match": "new", "name": "Charly", "species": "Dog", "birth_year": 2019, "entries": [] }
@@ -684,7 +684,7 @@ public class ImportValidatorTests
     public void ReimportingTheSameNotes_WritesNothingTheSecondTime()
     {
         // The property that matters most in practice: an AI asked the same question twice
-        // never produces identical bytes, so the file hash cannot catch this — the
+        // never produces identical bytes, so the file hash cannot catch this: the
         // content rules have to.
         var json = """
             { "felova_import_version": 1, "pets": [
@@ -735,7 +735,7 @@ public class ImportGuideTests
         throw new FileNotFoundException("AI/import-guide.md was not found above the test binary.");
     }
 
-    /// <summary>Every fenced json block in the guide that is a COMPLETE file — the
+    /// <summary>Every fenced json block in the guide that is a COMPLETE file: the
     /// fragments that illustrate one section are deliberately skipped.</summary>
     public static IEnumerable<object[]> Examples()
     {
@@ -782,7 +782,7 @@ public class ImportGuideTests
     }
 }
 
-/// <summary>The parser's own tolerances — presentation forgiven, data never.</summary>
+/// <summary>The parser's own tolerances: presentation forgiven, data never.</summary>
 public class ImportFileParserTests
 {
     [Fact]

@@ -1,27 +1,27 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0013 — trackers the owner defines themselves.
+--  0013: trackers the owner defines themselves.
 --
 --  The app ships six trackers, each of which earns a bespoke input sheet, a
 --  condition seed, or its own shape in the vet report. Everything else an owner
---  wants to write down — a walk, a groom, a poop — is the same thing wearing a
+--  wants to write down (a walk, a groom, a poop) is the same thing wearing a
 --  different name, so it becomes DATA instead of another pair of tables:
 --
---    • custom_trackers — the owner's definition (name, icon, colour token, shape,
+--    • custom_trackers: the owner's definition (name, icon, colour token, shape,
 --      unit, cadence). The cadence lives HERE, not in a sibling `trackers` row:
 --      that table converges on (pet_id, tracker_id), so every custom tracker would
 --      collapse onto one row the moment a second device pulled.
---    • custom_entries  — occurrences, ADDITIVE like glucose_entries: many per day,
+--    • custom_entries : occurrences, ADDITIVE like glucose_entries: many per day,
 --      keyed by id. One conflict key serves every custom tracker there will ever
 --      be, which is what makes "as many as you like" free on this side.
 --
 --  Both mirror the 0007 / 0008 setup (table shape, updated_at trigger + pull-cursor
---  index, member-scoped RLS, and the GRANT that 0009 exists to remind us about —
+--  index, member-scoped RLS, and the GRANT that 0009 exists to remind us about,
 --  RLS gates rows, the GRANT gates whether the role may touch the table at all, and
 --  omitting it fails the pull with 42501 and aborts the whole sync).
 --
 --  custom_entries cascades from pets (NOT only from custom_trackers), so hard
 --  account deletion reaches it through public.pets exactly like every other data
---  table — the omission migration 0012 had to fix.
+--  table: the omission migration 0012 had to fix.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- The owner's definition. `name` is user text: never interpreted, never matched on.
@@ -84,7 +84,7 @@ begin
       'create policy "members update"  on public.%I for update using (public.is_pet_member(pet_id))', t);
 
     -- RLS decides which ROWS; the GRANT decides whether the role may touch the
-    -- table at all. Both required — see 0002 / 0009.
+    -- table at all. Both required: see 0002 / 0009.
     execute format('grant select, insert, update on public.%I to authenticated', t);
   end loop;
 end $$;
@@ -93,7 +93,7 @@ end $$;
 -- Both converge on id: the definition because two devices' "Walk" are genuinely
 -- two different trackers until one syncs (identity is the SyncId, as for
 -- medications), and the entries because they are additive events. Everything else
--- is byte-for-byte 0008 (the current definition) — only conflict_cols gains two
+-- is byte-for-byte 0008 (the current definition): only conflict_cols gains two
 -- branches.
 create or replace function public.push_rows(p_table text, p_rows jsonb)
 returns void
@@ -134,7 +134,7 @@ begin
     raise exception 'push_rows: table % is not syncable', p_table;
   end if;
 
-  -- Authorization — explicit because this function bypasses table RLS. Both new
+  -- Authorization: explicit because this function bypasses table RLS. Both new
   -- tables carry pet_id, so the generic branch below covers them.
   if p_table = 'pets' then
     execute

@@ -38,7 +38,7 @@
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Water background — bottom layer, spans the whole page -->
+        <!-- Water background: bottom layer, spans the whole page -->
         <!-- Motion is driven by the page (OnAppearing / OnDisappearing) so only the
              visible tab ever animates. See WaterBackground.xaml.cs for why that is
              the page's job and not the control's. -->
@@ -160,7 +160,7 @@
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
 
-                            <!-- Avatar — profile photo, or the type emoji fallback -->
+                            <!-- Avatar: profile photo, or the type emoji fallback -->
                             <controls:PetAvatarView Grid.Column="0"
                                                     Diameter="60"
                                                     FallbackFontSize="30"
@@ -181,7 +181,7 @@
                                        FontSize="12.5"
                                        TextColor="{StaticResource InkSecondary}"/>
 
-                                <!-- Tags — the pet's real conditions, then its
+                                <!-- Tags: the pet's real conditions, then its
                                      medication count. Empty when it has neither. -->
                                 <FlexLayout Wrap="Wrap"
                                             Direction="Row"
@@ -192,7 +192,7 @@
                                         <DataTemplate x:DataType="vms:PetProfileTag">
                                             <!-- Shrink="0": a chip is sized by its text and must never be
                                                  compressed below it. FlexLayout defaults Shrink="1", so an
-                                                 overflowing row squeezes its items — and because this chip's
+                                                 overflowing row squeezes its items, and because this chip's
                                                  content is a bare Label (every other chip row in the app puts
                                                  a HorizontalStackLayout in between), the Label absorbed the
                                                  squeeze by word-wrapping to a second line that the one-line
@@ -236,7 +236,7 @@
                             </VerticalStackLayout>
                         </Grid>
 
-                        <!-- Actions — the two doors that CHANGE what Felova does for this
+                        <!-- Actions: the two doors that CHANGE what Felova does for this
                              pet, kept on the pet itself rather than in the row list below.
                              Both are pet-scoped, so the switcher above visibly governs
                              them; the rows below are the reading surfaces. Medication used
@@ -303,7 +303,7 @@
                         Padding="4">
                     <VerticalStackLayout>
 
-                        <!-- Vet visits — ABOVE the summary, because the summary is what
+                        <!-- Vet visits: ABOVE the summary, because the summary is what
                              you take TO one. Present always, whether or not a visit is
                              scheduled: it is where visits are added, and a door that
                              only appears once you are through it is no door. -->
@@ -337,7 +337,7 @@
 
                         <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}" Margin="14,0"/>
 
-                        <!-- Vet summary — the page you take to a visit. -->
+                        <!-- Vet summary: the page you take to a visit. -->
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="14"
                               Padding="14,15">
@@ -368,7 +368,7 @@
 
                         <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}" Margin="14,0"/>
 
-                        <!-- Documents — directly under Export, because it is where the
+                        <!-- Documents: directly under Export, because it is where the
                              summaries made by the row above end up. -->
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="14"
@@ -400,7 +400,7 @@
 
                         <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}" Margin="14,0"/>
 
-                        <!-- Constellation — everything already written down, laid out
+                        <!-- Constellation: everything already written down, laid out
                              over time. A way to LOOK at the diary rather than add to
                              it, so it sits with the other reading surfaces (Documents,
                              Export) and not with the logging ones. -->
@@ -449,7 +449,7 @@
                         Padding="4">
                     <VerticalStackLayout>
 
-                        <!-- Invite someone — first-class here, not buried in Manage. Opens
+                        <!-- Invite someone: first-class here, not buried in Manage. Opens
                              the sharing sheet when cloud is set up, otherwise the account
                              door (sharing rides the sync, so it needs an account + backup).
                              The sheet also lists who is already helping, which is what the
@@ -484,7 +484,7 @@
 
                         <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}" Margin="14,0"/>
 
-                        <!-- Use an invite code — the caregiver side of sharing, first-class
+                        <!-- Use an invite code: the caregiver side of sharing, first-class
                              here instead of buried in the cloud sheet. -->
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="14"
@@ -522,7 +522,7 @@
                      that asks the owner for something, and an understated row at the end of
                      a scroll gets ignored. It gets the page's group-heading treatment like
                      every other section, a teal stroke instead of the GlassLine every other
-                     card wears, and a filled button — so it reads as an invitation rather
+                     card wears, and a filled button, so it reads as an invitation rather
                      than a seventh destination.
                      The copy asks for the thing, not the channel: Discord and the direct
                      email are only named once the sheet is open. -->
@@ -590,6 +590,13 @@
                             Presented="{Binding IsPresented}"
                             SheetTemplate="{DataTemplate view:ExportSheetView}"/>
 
+        <!-- The vet visit sheet, hosted here for the export sheet's one-shot "was that
+             for a visit?" offer. A sheet VM is only usable on a page that hosts it. -->
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding VetVisitSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate view:VetVisitSheetView}"/>
+
         <!-- Cloud Features sheet (FelovaBottomSheet; click-through while closed) -->
         <controls:SheetHost Grid.RowSpan="2"
                             BindingContext="{Binding CloudVM}"
@@ -630,7 +637,7 @@
 
         <!-- Settings panel overlay. Its BindingContext stays the page's MainViewModel
              (the panel reads across several child VMs), and it binds its own
-             IsPanelOpen internally — see SettingsPanelView.xaml. -->
+             IsPanelOpen internally: see SettingsPanelView.xaml. -->
         <controls:SheetHost Grid.RowSpan="2"
                             Presented="{Binding SettingsVM.IsPanelOpen}"
                             SheetTemplate="{DataTemplate view:SettingsPanelView}"/>

@@ -2,7 +2,7 @@
 <!--
     UndoToast
     ─────────────────────────────────────────────────────────
-    The app's shared confirmation pill with the 6-second Undo safety net — the
+    The app's shared confirmation pill with the 6-second Undo safety net: the
     deliberate alternative to confirmation dialogs (see AI/design-decisions.md).
     Extracted from CalendarPage so every page shows the identical toast. Host it
     as an overlay child of the page's root Grid and call Show(...) from

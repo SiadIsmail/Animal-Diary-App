@@ -9,12 +9,12 @@ using Xunit;
 ///
 /// <para><b>Why these are tested at all:</b> every one of them is invisible until a creator
 /// opens a lens, on camera, and finds nothing in it. The fixture this replaces placed
-/// seizures at a uniformly random hour — which still produces a perfectly plausible-looking
+/// seizures at a uniformly random hour, which still produces a perfectly plausible-looking
 /// sky, and folds to noise at every period. No build, no review and no other test catches
 /// that. These assert the picture is actually there.</para>
 ///
 /// <para>Thresholds are stated as properties ("most land in the small hours") rather than
-/// pinned counts wherever sampling makes an exact number brittle — a test that breaks every
+/// pinned counts wherever sampling makes an exact number brittle: a test that breaks every
 /// time someone nudges a probability teaches people to delete tests.</para>
 /// </summary>
 public class DemoHistoryTests
@@ -35,7 +35,7 @@ public class DemoHistoryTests
     /// The headline: most seizures land in the small hours, so a one-day fold collapses a
     /// year into a wedge instead of scattering it round the ring.
     ///
-    /// <para>The bar is set against what UNIFORM would give — four hours out of twenty-four
+    /// <para>The bar is set against what UNIFORM would give: four hours out of twenty-four
     /// is ~17%. Anything near that is the old fixture's behaviour and a dead demo.</para>
     /// </summary>
     [Fact]
@@ -49,7 +49,7 @@ public class DemoHistoryTests
 
         Assert.True(share >= 0.5,
             $"only {inBand}/{seizures.Count} seizures fell in {band.From}:00–{band.To}:59 " +
-            "— a one-day fold would show no wedge (uniform would be ~0.17)");
+            "- a one-day fold would show no wedge (uniform would be ~0.17)");
     }
 
     /// <summary>...but not ALL of them. A perfect band reads as synthetic, and the honest
@@ -83,7 +83,7 @@ public class DemoHistoryTests
                 clusterStarts.Add(days[i]);
 
         Assert.True(clusterStarts.Count >= 4,
-            $"only {clusterStarts.Count} clusters — too few for a period to be visible");
+            $"only {clusterStarts.Count} clusters: too few for a period to be visible");
 
         var low = pattern.ClusterSpacingDays - pattern.ClusterJitterDays - 1;
         var high = pattern.ClusterSpacingDays + pattern.ClusterJitterDays + 1;
@@ -111,7 +111,7 @@ public class DemoHistoryTests
                 starts.Add(days[i]);
 
         var gaps = starts.Zip(starts.Skip(1), (a, b) => (int)(b - a).TotalDays).ToList();
-        Assert.True(gaps.Distinct().Count() > 1, "every cluster gap is identical — that reads as a metronome");
+        Assert.True(gaps.Distinct().Count() > 1, "every cluster gap is identical, that reads as a metronome");
     }
 
     /// <summary>
@@ -119,13 +119,13 @@ public class DemoHistoryTests
     ///
     /// <para>This is the test that should have existed from the start. An earlier version
     /// spent a fixed budget of fourteen seizures front-to-back across the year, which
-    /// emptied the most recent 180 days entirely — so the pet built to demonstrate seizures
+    /// emptied the most recent 180 days entirely, so the pet built to demonstrate seizures
     /// had none at 7, 30 or 90 days, and they showed up only on the 365-day view where
     /// ~1,700 other stars are already competing. Everything else passed: the band was
     /// there, the clusters were there, the count was right. Nothing looked wrong until you
     /// opened the page.</para>
     ///
-    /// <para>7 days is excluded on purpose — a fortnightly rhythm genuinely can miss a
+    /// <para>7 days is excluded on purpose: a fortnightly rhythm genuinely can miss a
     /// single week, and demanding otherwise would be asking the fixture to lie.</para>
     /// </summary>
     [Theory]
@@ -138,7 +138,7 @@ public class DemoHistoryTests
         var visible = Kira().Seizures.Count(s => s.Date >= since);
 
         Assert.True(visible >= 2,
-            $"only {visible} seizure(s) in the last {rangeDays} days — the range opens on an empty story");
+            $"only {visible} seizure(s) in the last {rangeDays} days: the range opens on an empty story");
     }
 
     /// <summary>Still the rarest thing in the sky by a distance. Density is what makes them
@@ -155,7 +155,7 @@ public class DemoHistoryTests
     }
 
     /// <summary>The fold dial only reaches half the range on screen, so a period longer than
-    /// that is unreachable. A rhythm the app cannot fold to is a rhythm nobody can find —
+    /// that is unreachable. A rhythm the app cannot fold to is a rhythm nobody can find,
     /// this pins it to the DEFAULT range rather than one two taps away.</summary>
     [Fact]
     public void KiraSeizureRhythm_IsFoldableAtTheDefaultRange()
@@ -173,7 +173,7 @@ public class DemoHistoryTests
     // ── Mira: a different condition, and no invented seizures ───────────────────
 
     /// <summary>A cat that has never seized must never be given a seizure row to make the
-    /// demo look fuller — the legend lists only what is present.</summary>
+    /// demo look fuller: the legend lists only what is present.</summary>
     [Fact]
     public void Mira_HasNoSeizuresAtAll()
     {
@@ -230,7 +230,7 @@ public class DemoHistoryTests
         var weekdayRate = (double)weekday.Count(Late) / weekday.Count;
 
         Assert.True(weekendRate > weekdayRate * 1.5,
-            $"late-dose rate Fri/Sat {weekendRate:P0} vs rest {weekdayRate:P0} — no weekday spoke to fold to");
+            $"late-dose rate Fri/Sat {weekendRate:P0} vs rest {weekdayRate:P0}, no weekday spoke to fold to");
     }
 
     // ── The Nights lens: the wall thickens ──────────────────────────────────────
@@ -249,13 +249,13 @@ public class DemoHistoryTests
         var late = CountEntriesBetween(seed, Today - window, Today);
 
         Assert.True(late > early * 1.3,
-            $"{early} entries in the first 45 days vs {late} in the last — the wall never thickens");
+            $"{early} entries in the first 45 days vs {late} in the last: the wall never thickens");
     }
 
     // ── The quiet spell ─────────────────────────────────────────────────────────
 
     /// <summary>Life happens, and the app never scolds. The gap must be genuinely empty
-    /// across EVERY signal — a fortnight that is blank for mood but full of doses reads as
+    /// across EVERY signal: a fortnight that is blank for mood but full of doses reads as
     /// a glitch rather than a fortnight the owner had other things on.</summary>
     [Fact]
     public void TheQuietSpell_IsEmptyAcrossEverySignal()
@@ -275,7 +275,7 @@ public class DemoHistoryTests
 
     // ── The vet report's headline ───────────────────────────────────────────────
 
-    /// <summary>Mira's weight declines across the year — a signed, neutral fact, and the
+    /// <summary>Mira's weight declines across the year: a signed, neutral fact, and the
     /// thing the report leads with. Compared as first-half against second-half average so a
     /// single jittered reading cannot flip the assertion.</summary>
     [Fact]
@@ -287,7 +287,7 @@ public class DemoHistoryTests
             .Select(e => e.Weight)
             .ToList();
 
-        Assert.True(weights.Count >= 20, $"only {weights.Count} weigh-ins — too few to read as a line");
+        Assert.True(weights.Count >= 20, $"only {weights.Count} weigh-ins: too few to read as a line");
 
         var half = weights.Count / 2;
         Assert.True(weights.Take(half).Average() > weights.Skip(half).Average(),
@@ -298,7 +298,7 @@ public class DemoHistoryTests
 
     /// <summary>Between them the two pets exercise both owner-defined shapes: an Amount with
     /// the owner's own unit, and a bare Tick. A demo that only ever showed one would leave
-    /// half the feature — and half the report's layout — unfilmed.</summary>
+    /// half the feature (and half the report's layout) unfilmed.</summary>
     [Fact]
     public void TheTwoProfiles_CoverBothCustomTrackerShapes()
     {
@@ -351,7 +351,7 @@ public class DemoHistoryTests
     /// take does not match the first.
     ///
     /// <para>This is also why the seed is FNV-1a over the profile id rather than
-    /// <c>string.GetHashCode</c>, which is randomized per process — that alone would make
+    /// <c>string.GetHashCode</c>, which is randomized per process, that alone would make
     /// every launch a different history while looking perfectly deterministic in a
     /// single-process test run.</para>
     /// </summary>
@@ -373,7 +373,7 @@ public class DemoHistoryTests
     [Fact]
     public void TheTwoProfiles_DoNotShareAHistory()
     {
-        // Same generator, same year, different seed — two pets in one household must not
+        // Same generator, same year, different seed: two pets in one household must not
         // have interchangeable diaries any more than they have interchangeable skies.
         Assert.NotEqual(Kira().RowCount, Mira().RowCount);
     }
@@ -393,7 +393,7 @@ public class DemoHistoryTests
     }
 
     /// <summary>Every dose log points at a real scheduled slot. A log whose time matches no
-    /// schedule row is a dose the app can never reconcile — it would sit in the Journal
+    /// schedule row is a dose the app can never reconcile: it would sit in the Journal
     /// forever as something that was neither given nor missed.</summary>
     [Theory]
     [InlineData("kira")]

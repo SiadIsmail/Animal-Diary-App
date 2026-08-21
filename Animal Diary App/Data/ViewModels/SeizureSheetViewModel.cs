@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.ViewModels;
+namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -12,7 +12,7 @@ public class SeizureTypeOption : BaseViewModel
 {
     public required SeizureType Type { get; init; }
 
-    /// <summary>The localized term, resolved LIVE on every read — never cached. The sheet
+    /// <summary>The localized term, resolved LIVE on every read, never cached. The sheet
     /// VM is a singleton, so a cached word would freeze in the language active at
     /// construction (see coding-standards).</summary>
     public string Word => Type.GetDisplayName();
@@ -25,7 +25,7 @@ public class SeizureTypeOption : BaseViewModel
 }
 
 /// <summary>
-/// Backs the Journal's seizure sheet — a time picker plus three optional fields
+/// Backs the Journal's seizure sheet: a time picker plus three optional fields
 /// (type, duration in minutes and a note), in the shared
 /// <c>FelovaBottomSheet</c>. Seizures are an Event tracker: logged
 /// as they happen from the "+" sheet, one <see cref="SeizureEntry"/> per occurrence
@@ -97,7 +97,7 @@ public class SeizureSheetViewModel : BaseViewModel
         _petName = petName;
         _date = date.Date;
 
-        // Seizures are logged as they happen, so default to now and start blank —
+        // Seizures are logged as they happen, so default to now and start blank,
         // including the type, which is never pre-selected from a previous entry.
         Time = DateTime.Now.TimeOfDay;
         SetSelectedType(null);
@@ -111,7 +111,7 @@ public class SeizureSheetViewModel : BaseViewModel
     }
 
     // Tapping the chosen tile again clears it. Without that, a mis-tap could only be
-    // corrected by choosing a different (wrong) answer — and "I don't actually know"
+    // corrected by choosing a different (wrong) answer, and "I don't actually know"
     // has to stay reachable after the first tap, not just before it.
     private void OnSelectType(SeizureTypeOption? option)
     {
@@ -131,7 +131,7 @@ public class SeizureSheetViewModel : BaseViewModel
 
     private async Task SaveAsync()
     {
-        // Every field but the time is optional — a seizure is worth logging even with
+        // Every field but the time is optional: a seizure is worth logging even with
         // just a time, and an unanswered type stays null rather than becoming a guess.
         int? duration = int.TryParse(DurationText?.Trim(), out var minutes) && minutes > 0
             ? minutes

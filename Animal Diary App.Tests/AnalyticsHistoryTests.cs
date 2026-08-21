@@ -5,12 +5,12 @@ using Animal_Diary_App.Data.Services.Analytics;
 using Xunit;
 
 /// <summary>
-/// The <c>days_of_history</c> buckets — the one measurement that can falsify the paid
+/// The <c>days_of_history</c> buckets: the one measurement that can falsify the paid
 /// boundary's central claim (willingness to pay rises with accumulated history).
 ///
 /// <para>Worth testing because an off-by-one here is completely invisible. Nothing
 /// crashes, no chart looks wrong, and a cohort simply sits in the neighbouring column for
-/// as long as nobody checks — which is exactly the kind of quiet error that leads to a
+/// as long as nobody checks, which is exactly the kind of quiet error that leads to a
 /// pricing decision made on a number that was never true.</para>
 /// </summary>
 public class AnalyticsHistoryTests
@@ -61,7 +61,7 @@ public class AnalyticsHistoryTests
     [Fact]
     public void DaysAreCountedByCalendarDayNotElapsedHours()
     {
-        // First entry late on the 1st, "today" early on the 3rd, is two days of history —
+        // First entry late on the 1st, "today" early on the 3rd, is two days of history,
         // not one, which is what an elapsed-hours subtraction would report.
         var first = new DateTime(2026, 5, 1, 23, 40, 0);
         var today = new DateTime(2026, 5, 3, 0, 10, 0);

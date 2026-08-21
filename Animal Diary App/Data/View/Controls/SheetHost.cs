@@ -10,30 +10,30 @@ using View = Microsoft.Maui.Controls.View;
 /// <para><b>Why this exists.</b> Every sheet a page can show was declared inline in
 /// that page's XAML, and the three tab pages are all constructed when the Shell is.
 /// That put roughly 2,240 XAML elements of export sheet, cloud sheet, subscribe
-/// sheet, dev panel, settings panel and seven Journal input sheets — about 75% of
-/// everything the app inflates — on the launch path, for surfaces a typical session
+/// sheet, dev panel, settings panel and seven Journal input sheets: about 75% of
+/// everything the app inflates: on the launch path, for surfaces a typical session
 /// opens zero times. Shell then creates the native views for a tab on first
 /// selection, so the same weight was paid again as a stutter on the first tap of
 /// Journal and of Pets.
 /// </para>
 ///
 /// <para><b>What it does not change.</b> Once realised, the body stays in the visual
-/// tree for good — translated off-screen by <see cref="FelovaBottomSheet"/>, never
+/// tree for good: translated off-screen by <see cref="FelovaBottomSheet"/>, never
 /// collapsed with <c>IsVisible</c>. That invariant is the one the sheet's own header
 /// warns about (content populated on open rendered empty on first show when the view
 /// had never been laid out), and lazy creation does not weaken it: a sheet is either
-/// absent entirely, or present and laid out — never present and collapsed.
+/// absent entirely, or present and laid out, never present and collapsed.
 /// </para>
 ///
 /// <para><b>Two triggers.</b> The host normally realises when the page calls
-/// <see cref="PreloadAll"/> after its data load has settled — deliberately after, so
+/// <see cref="PreloadAll"/> after its data load has settled: deliberately after, so
 /// the inflation never competes with the queries and list rebuilds the person is
 /// actually waiting for, and staggered through <see cref="SheetInflationQueue"/> so
 /// ten sheets don't land in one frame. <see cref="Presented"/> is the safety net for
 /// anyone who opens a sheet before its turn comes up.
 /// </para>
 ///
-/// <para>Usage — one line, and the body's type stays a compile-time reference:
+/// <para>Usage: one line, and the body's type stays a compile-time reference:
 /// <code>
 /// &lt;controls:SheetHost Grid.RowSpan="2"
 ///                     BindingContext="{Binding CloudVM}"
@@ -78,7 +78,7 @@ public sealed class SheetHost : ContentView
         });
 
     /// <summary>Bind to the sheet view model's own presented flag. Read only as a
-    /// build trigger — the sheet inside binds the same flag for its animation, so
+    /// build trigger: the sheet inside binds the same flag for its animation, so
     /// nothing here needs to pass it on.</summary>
     public bool Presented
     {
@@ -105,7 +105,7 @@ public sealed class SheetHost : ContentView
         catch (Exception ex)
         {
             // A sheet that fails to build must leave the page usable rather than take
-            // the app down — the person can still do everything except open this one.
+            // the app down: the person can still do everything except open this one.
             System.Diagnostics.Debug.WriteLine($"[SheetHost] sheet failed to build: {ex}");
         }
     }
@@ -165,7 +165,7 @@ internal static class SheetInflationQueue
     private static readonly Queue<Action> Pending = new();
     private static bool _draining;
 
-    /// <summary>Main thread only — the queue is unsynchronized because every caller is
+    /// <summary>Main thread only: the queue is unsynchronized because every caller is
     /// a page's post-load hook, which already runs there.</summary>
     public static void Enqueue(IDispatcher dispatcher, Action work)
     {

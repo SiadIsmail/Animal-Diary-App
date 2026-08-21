@@ -8,8 +8,8 @@ using MigraDoc.DocumentObjectModel.Tables;
 /// Whatever the owner tracks themselves and chose to show a vet: a one-line tally, then
 /// the same terse dated table <see cref="EventsSection"/> uses.
 ///
-/// <para><b>Every label in this section is the owner's own text</b> — the tracker's name
-/// and its unit — printed verbatim and never translated, exactly like a pet or medication
+/// <para><b>Every label in this section is the owner's own text</b>: the tracker's name
+/// and its unit: printed verbatim and never translated, exactly like a pet or medication
 /// name. That is the whole reason this is not folded into <c>EventsSection</c>, whose
 /// <c>ReportEventKind</c> is a closed set the document knows how to word.</para>
 ///
@@ -94,7 +94,7 @@ public class CustomSection : IVetReportSection
     }
 
     // The number with the owner's own unit, their note, or both. A Tick tracker has
-    // neither, and an entry that only says "it happened" is complete as it is — the date
+    // neither, and an entry that only says "it happened" is complete as it is: the date
     // and time in the same row already carry it.
     private static string Details(ReportCustomEntry e)
     {
@@ -107,7 +107,7 @@ public class CustomSection : IVetReportSection
             parts.Add(unit.Length > 0 ? $"{number} {unit}" : number);
         }
 
-        // The owner's own words, printed verbatim — never translated.
+        // The owner's own words, printed verbatim, never translated.
         if (e.Note != null)
             parts.Add($"“{e.Note}”");
 

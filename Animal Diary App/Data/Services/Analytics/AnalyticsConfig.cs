@@ -8,12 +8,12 @@ namespace Animal_Diary_App.Data.Services.Analytics;
 /// The <see cref="ProjectApiKey"/> is a PostHog <b>project</b> key (the "phc_…"
 /// write key). Unlike a personal API key it is designed to ship inside client apps:
 /// it can only <i>send</i> events, never read data, so embedding it here is the
-/// standard, intended usage — not a secret leak.
+/// standard, intended usage, not a secret leak.
 ///
 /// The region is deliberately EU (<c>eu.i.posthog.com</c>): a privacy-first,
 /// GDPR-friendly posture keeps event data inside the EU. Change the host only if the
 /// PostHog project itself lives in another region (the website and app must share the
-/// same project/region for future funnel analysis — see the analytics docs).
+/// same project/region for future funnel analysis: see the analytics docs).
 /// </summary>
 public static class AnalyticsConfig
 {
@@ -26,7 +26,7 @@ public static class AnalyticsConfig
     public const bool Enabled = true;
 
     /// <summary>PostHog project ("phc_…") key. If left blank, analytics self-disables
-    /// at runtime even when <see cref="Enabled"/> is true — no key, no traffic.</summary>
+    /// at runtime even when <see cref="Enabled"/> is true, no key, no traffic.</summary>
     public const string ProjectApiKey = "phc_AVyqnTNmajGz4mLXyETeaGkFGFJbxGg7WyAyzBJtaVYR";
 
     /// <summary>PostHog ingestion host. EU cloud by default for data residency.</summary>

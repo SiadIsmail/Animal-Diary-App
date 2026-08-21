@@ -3,7 +3,7 @@ using System.Globalization;
 using Microsoft.Maui.Controls;
 namespace Animal_Diary_App.Helpers;
 
-/// <summary>First letter of a string, upper-cased — for the pet-chip avatar
+/// <summary>First letter of a string, upper-cased: for the pet-chip avatar
 /// initial (serif italic) in the rockpool Journal.</summary>
 public class FirstLetterConverter : IValueConverter
 {
@@ -21,7 +21,7 @@ public class FirstLetterConverter : IValueConverter
 
 /// <summary>Localizes a stored pet-type key ("Dog", "Cat", …) for display via
 /// <see cref="PetTypeNames.Localize"/>. Used as a <see cref="IMultiValueConverter"/>
-/// so the second binding leg — sourced from <see cref="LocalizationManager"/> — makes
+/// so the second binding leg (sourced from <see cref="LocalizationManager"/>) makes
 /// the text re-translate live when the language changes, just like a
 /// <c>{loc:Translate}</c> span. The second value is only a refresh trigger and is
 /// otherwise ignored.</summary>
@@ -81,5 +81,5 @@ public class InvertedBoolConverter : IValueConverter
     }
 }
 
-// (The pre-GraphicsView weight-chart converters — WeightToHeight/Max/Mid/Min —
+// (The pre-GraphicsView weight-chart converters: WeightToHeight/Max/Mid/Min,
 // and the legacy placeholder converters were removed: no XAML referenced them.)

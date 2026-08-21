@@ -2,7 +2,7 @@
 <!--
     SeizureSheetView
     ─────────────────────────────────────────────────────────
-    The Journal's "log a seizure" sheet — a time picker plus two optional fields
+    The Journal's "log a seizure" sheet: a time picker plus two optional fields
     (duration in minutes and a note), rendered inside the shared FelovaBottomSheet.
     BindingContext is a SeizureSheetViewModel; open it via that VM's OpenAsync.
 -->
@@ -132,7 +132,7 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding DismissCommand}"/>
                         </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Common_NotNow}"
+                        <Label Text="{loc:Translate Common_Cancel}"
                                FontFamily="{StaticResource FontSans}"
                                FontSize="14"
                                FontAttributes="Bold"

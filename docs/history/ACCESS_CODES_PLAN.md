@@ -1,8 +1,8 @@
-# Access Codes — a one-time code that grants a year of full access
+# Access Codes: a one-time code that grants a year of full access
 
 > Status: **BUILT (client + SQL written 2026-08-06).** This is the original design
 > document, kept as the record of *why* access codes have the shape they have. It is
-> **not** a description of the current implementation — for that see
+> **not** a description of the current implementation: for that see
 > [AI/domain.md](../../AI/domain.md) (§Access codes),
 > [AI/architecture.md](../../AI/architecture.md) §6,
 > [AI/design-decisions.md](../../AI/design-decisions.md), and
@@ -116,7 +116,7 @@ Server-side the mirror is equally small, one clause in `owner_has_access`, and i
 is what makes a granted owner **sponsor their caregivers** exactly like a paying
 one. Without it a comped vet's assistant would still be locked out.
 
-## 4. Server — migration 0015
+## 4. Server: migration 0015
 
 Numbered, run once, never edited afterwards; a later fix is a new file whose
 header states which assumption it corrects (coding-standards §Cloud).
@@ -441,7 +441,7 @@ its cached grant until its own expiry date. Accepted: codes go to people we chos
 to trust, and the alternative is a heartbeat that punishes offline users, which
 this app refuses to do everywhere else.
 
-## 5. Client — the Billing seam
+## 5. Client: the Billing seam
 
 ### 5.1 The interface Billing declares
 
@@ -533,7 +533,7 @@ builder.Services.AddSingleton<IGrantSource>(sp => sp.GetRequiredService<CloudAcc
 
 with the `NullGrantSource` fallback on the `CloudConfig.Enabled == false` branch.
 
-## 6. `AccessState.Granted` — and the exhaustiveness audit that must come with it
+## 6. `AccessState.Granted`, and the exhaustiveness audit that must come with it
 
 `State` is documented as "copy/telemetry only, not the gate", and a grant needs
 its own value so no surface calls it a subscription. Adding the member is one
@@ -684,9 +684,9 @@ repeatable.
 
 ## 10. Slices (owner test-pause between each, per the cloud-plan rhythm)
 
-**Slice 0 — decisions.** Done: §12, owner, 2026-08-06. Nothing blocks slice 1.
+**Slice 0: decisions.** Done: §12, owner, 2026-08-06. Nothing blocks slice 1.
 
-**Slice 1 — migration 0015, no client.** Run it, then verify in the SQL editor:
+**Slice 1: migration 0015, no client.** Run it, then verify in the SQL editor:
 
 1. `select * from public.mint_access_codes('test-batch', 3)` returns three unique
    codes and three rows land in `access_codes` with the right campaign.
@@ -707,17 +707,17 @@ repeatable.
 
 *Pause.*
 
-**Slice 2 — Billing seam, no UI.** `IGrantSource`, `NullGrantSource`, the
+**Slice 2: Billing seam, no UI.** `IGrantSource`, `NullGrantSource`, the
 `HasFullAccess` line, `AccessState.Granted`, every consumer in the §6 table, the
 §6.1 copy split, and the tests. Desktop-verifiable end to end with a fake, which
 is the point of the seam. *Pause.*
 
-**Slice 3 — Cloud implementation.** `CloudAccessCodeService`, the `cloud:` cache,
+**Slice 3: Cloud implementation.** `CloudAccessCodeService`, the `cloud:` cache,
 the sign-out clear, the two new `CloudErrorKind`s and their mapping order, the
 `EntitlementService.RefreshAsync` hook, DI. Still no UI: exercise it from a debug
 command or a test hook. *Pause.*
 
-**Slice 4 — the sheet.** `RedeemCodeSheetView(Model)`, the Settings row +
+**Slice 4: the sheet.** `RedeemCodeSheetView(Model)`, the Settings row +
 `OpenRedeemCommand`, the signed-out hand-off, EN + DE copy, the analytics event,
 the sign-out confirm line. *Pause on a real device, walking the giveaway winner's
 actual path: install, no account, Settings → Redeem → "you'll need an account" →
@@ -726,7 +726,7 @@ confirm access holds; sign out, confirm it goes; sign back in, confirm it return
 redeem a second code and confirm the date moves to a year out, not eighteen
 months.*
 
-**Slice 5 — docs and the minting runbook.** §11.
+**Slice 5: docs and the minting runbook.** §11.
 
 ## 11. Documentation this must update (part of the work, not after it)
 

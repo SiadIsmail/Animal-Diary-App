@@ -15,7 +15,7 @@ public class MemberRow
         UserId = info.UserId;
         Email = info.Email;
         RoleDisplay = LocalizationManager.Instance.GetString(info.IsOwner ? "Cloud_RoleOwner" : "Cloud_RoleCaregiver");
-        // Only the owner removes people, never themselves here — their own exit
+        // Only the owner removes people, never themselves here: their own exit
         // is the pet-deletion path, and a caregiver's is the Leave button below.
         CanRemove = viewerIsOwner && !info.IsOwner && !info.IsMe;
         IsMe = info.IsMe;
@@ -30,7 +30,7 @@ public class MemberRow
 
 /// <summary>
 /// The Manage-pet "Pet sharing" sheet: member list plus, for the owner, invite
-/// minting/sharing — for a caregiver, the Leave action. All rules live
+/// minting/sharing: for a caregiver, the Leave action. All rules live
 /// server-side (0006's RPCs); this VM only renders outcomes. Operates on the
 /// ACTIVE pet, like the rest of the Manage page.
 /// </summary>
@@ -109,11 +109,11 @@ public class SharingSheetViewModel : BaseViewModel
     private bool _isBusy;
     public bool IsBusy { get => _isBusy; set => SetProperty(ref _isBusy, value); }
 
-    /// <summary>Set by the hosting page — native confirm before leaving (the leave
+    /// <summary>Set by the hosting page: native confirm before leaving (the leave
     /// purges the pet's data from this device; same pattern as delete-account).</summary>
     public Func<Task<bool>>? ConfirmLeave { get; set; }
 
-    /// <summary>Raised after this user left the pet — the page pops back (the pet
+    /// <summary>Raised after this user left the pet: the page pops back (the pet
     /// is about to vanish from the device).</summary>
     public event Action? LeftPet;
 
@@ -137,7 +137,7 @@ public class SharingSheetViewModel : BaseViewModel
         var role = pet == null || string.IsNullOrEmpty(pet.SyncId) ? null : _sync.GetPetRole(pet.SyncId);
 
         // No cloud role yet = the pet hasn't completed a sync (or backup just
-        // turned on) — surface that instead of a confusing server error.
+        // turned on): surface that instead of a confusing server error.
         NotSyncedYet = role == null;
         IsOwner = role == "owner";
         OnPropertyChanged(nameof(Subtitle));
@@ -171,7 +171,7 @@ public class SharingSheetViewModel : BaseViewModel
         // Minting an invite is paid; REDEEMING one is free and always will be. The
         // asymmetry is the whole point: the person being handed a code is usually the
         // second human keeping an animal alive, and charging them at the door is how
-        // shared care stops happening. Existing shared care keeps working either way —
+        // shared care stops happening. Existing shared care keeps working either way,
         // this gates the mint, nothing else.
         if (!_entitlements.HasFullAccess)
         {
@@ -242,8 +242,8 @@ public class SharingSheetViewModel : BaseViewModel
             {
                 CloudErrorKind.Network => "Cloud_ErrNetwork",
                 CloudErrorKind.RateLimited => "Cloud_ErrRateLimited",
-                // Surfaced at MINT time as well as redeem time, so the owner — the only
-                // person who can free a slot — is the one who hears about it.
+                // Surfaced at MINT time as well as redeem time, so the owner: the only
+                // person who can free a slot: is the one who hears about it.
                 CloudErrorKind.CarerLimitReached => "Cloud_ErrCarerLimit",
                 CloudErrorKind.AuthExpired => "Cloud_ErrGeneric",
                 _ => "Cloud_ErrGeneric",

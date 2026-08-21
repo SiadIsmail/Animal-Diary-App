@@ -6,7 +6,7 @@ using Animal_Diary_App.Data.Services.Reports;
 namespace Animal_Diary_App;
 
 /// <summary>
-/// Android preview rasterizer built on the OS <see cref="PdfRenderer"/> — no extra
+/// Android preview rasterizer built on the OS <see cref="PdfRenderer"/>, no extra
 /// native library, so it adds nothing to the 16 KB-alignment surface. Renders each PDF
 /// page to a white-backed PNG at the requested DPI. Best-effort per page.
 /// </summary>

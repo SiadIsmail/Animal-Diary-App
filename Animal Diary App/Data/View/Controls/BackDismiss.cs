@@ -7,7 +7,7 @@ using Animal_Diary_App.Data.View;
 ///
 /// A page hosts its sheets as overlay <c>ContentView</c>s that stay in the visual
 /// tree even while closed (a hidden <see cref="FelovaBottomSheet"/> is translated
-/// off-screen, never collapsed — see the sheet's own remarks). So "is something
+/// off-screen, never collapsed: see the sheet's own remarks). So "is something
 /// open?" can be answered by walking the page once and asking each overlay,
 /// instead of every page hand-listing its sheet ViewModels.
 ///
@@ -22,7 +22,7 @@ public static class BackDismiss
 {
     /// <summary>Closes the top-most open overlay inside <paramref name="root"/> and
     /// reports whether it closed anything. "Top-most" is the last one in visual-tree
-    /// order, which is also what renders on top — so the settings panel, declared
+    /// order, which is also what renders on top, so the settings panel, declared
     /// after the sheets, wins while it is open.</summary>
     public static bool TryCloseTopmostOverlay(Element root)
     {
@@ -33,7 +33,7 @@ public static class BackDismiss
             switch (element)
             {
                 // Dismiss through the sheet's own command when it has one, exactly as
-                // a scrim tap does — the VM may need to reset draft state, not just
+                // a scrim tap does: the VM may need to reset draft state, not just
                 // slide the sheet away.
                 case FelovaBottomSheet { IsPresented: true } sheet:
                     close = () =>

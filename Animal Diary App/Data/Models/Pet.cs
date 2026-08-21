@@ -19,13 +19,13 @@ public class Pet : INotifyPropertyChanged, ISyncable
     ///
     /// <para><b>It lives on the pet and nowhere else.</b> Demo-ness is a property of the
     /// animal, not of an individual weigh-in, so putting the flag on every row would create
-    /// a state that can disagree with itself — a demo pet holding a non-demo seizure — and
+    /// a state that can disagree with itself (a demo pet holding a non-demo seizure) and
     /// nothing would catch it. Child rows are reached through <c>PetScopeSql</c>
     /// instead, which derives them from this one column.</para>
     ///
     /// <para><b>What it guards:</b> demo rows must never reach an account. They are excluded
     /// at the push boundary (<c>TableSync.CollectDirtyAsync</c>) and from both of the bulk
-    /// dirty-marking sweeps in <c>CloudSyncService</c> — the push filter is the load-bearing
+    /// dirty-marking sweeps in <c>CloudSyncService</c>: the push filter is the load-bearing
     /// one, because a creator logging a live entry on a demo pet marks that row dirty through
     /// the ordinary write path like any other.</para>
     ///
@@ -45,21 +45,21 @@ public class Pet : INotifyPropertyChanged, ISyncable
     public string Name { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
 
-    /// <summary>LEGACY age-in-years column. Superseded by the birthday fields below —
+    /// <summary>LEGACY age-in-years column. Superseded by the birthday fields below,
     /// new code reads <see cref="AgeYears"/>, which derives the age from the birthday.
     /// Still written on save as a snapshot fallback, and still the only age source for
     /// pets created before the birthday system existed. Kept for back-compat (SQLite.NET
     /// never drops columns); don't key new logic off it.</summary>
     public int Age { get; set; }
 
-    /// <summary>Birth year — the one part of a pet's birthday we always require. Many
+    /// <summary>Birth year: the one part of a pet's birthday we always require. Many
     /// owners only know roughly when their pet was born, so month and day are optional
     /// (see below). 0 means "no birthday recorded" (only legacy pets).
     /// SQLite.NET adds this column automatically on the next CreateTableAsync.</summary>
     public int BirthYear { get; set; }
 
     /// <summary>Birth month (1–12) when the owner knows it; null = unknown. We never
-    /// fabricate it — an unknown month is stored as null, not "January".</summary>
+    /// fabricate it: an unknown month is stored as null, not "January".</summary>
     public int? BirthMonth { get; set; }
 
     /// <summary>Birth day of month (1–31) when known; null = unknown. Only meaningful
@@ -102,11 +102,11 @@ public class Pet : INotifyPropertyChanged, ISyncable
     }
 
     /// <summary>File name (relative to <see cref="Animal_Diary_App.Data.Services.PetPhotoService.PhotosDirectory"/>)
-    /// of the pet's profile photo, or null/empty when it has none. Stored relative —
-    /// never an absolute path — because the app-data root can move between installs
+    /// of the pet's profile photo, or null/empty when it has none. Stored relative,
+    /// never an absolute path: because the app-data root can move between installs
     /// (same reason the report library stores relative names). SQLite.NET adds this
     /// column automatically. NOTE: this column syncs, but the image file itself does
-    /// NOT — on another device the file is absent, so every avatar surface falls back
+    /// NOT: on another device the file is absent, so every avatar surface falls back
     /// to the type emoji (see <see cref="PhotoFullPath"/> and PetAvatarView).</summary>
     public string? PhotoFileName { get; set; }
 
@@ -121,7 +121,7 @@ public class Pet : INotifyPropertyChanged, ISyncable
     /// <summary>Id of the pet's ongoing condition (see ConditionCatalog); empty =
     /// "None / Not sure". Chosen in the condition picker after the pet is created
     /// and drives which tracking items the Calendar shows. SQLite.NET adds this
-    /// column automatically on the next CreateTableAsync — no manual migration.</summary>
+    /// column automatically on the next CreateTableAsync, no manual migration.</summary>
     public string ConditionId { get; set; } = string.Empty;
 
     /// <summary>Localized age label, e.g. "(3 yrs)" / "(3 J.)". Used by calendar chips.
@@ -131,7 +131,7 @@ public class Pet : INotifyPropertyChanged, ISyncable
         ? Animal_Diary_App.Helpers.LocalizationManager.Instance.Format("Common_AgeYearsShort", years)
         : string.Empty;
 
-    /// <summary>The pet's care plan — the trackers the Journal asks for. Not a column;
+    /// <summary>The pet's care plan: the trackers the Journal asks for. Not a column;
     /// <see cref="Tracker"/> rows are stored separately and loaded into this list by
     /// the care-plan service. New pets are seeded from <see cref="CarePlanCatalog"/>.</summary>
     [Ignore]
@@ -151,7 +151,7 @@ public class Pet : INotifyPropertyChanged, ISyncable
     }
 }
 
-// PetEntry moved to PetEntry.cs — it is a separate entity that only happened to share
+// PetEntry moved to PetEntry.cs: it is a separate entity that only happened to share
 // this file, and Pet's PhotoFullPath reaches into PetPhotoService, which made the whole
 // file unlinkable by the (MAUI-free) test project.
 

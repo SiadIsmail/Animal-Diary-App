@@ -11,7 +11,7 @@ public sealed class ConfirmOption
     public required string Id { get; init; }
     public required string Label { get; init; }
 
-    /// <summary>Optional second line — what this choice actually does. Empty hides it.</summary>
+    /// <summary>Optional second line: what this choice actually does. Empty hides it.</summary>
     public string Description { get; init; } = string.Empty;
     public bool HasDescription => !string.IsNullOrEmpty(Description);
 
@@ -24,14 +24,14 @@ public sealed class ConfirmOption
 ///
 /// Replaces <c>DisplayActionSheet</c> for anything with more than two outcomes.
 /// Android renders that API's <c>cancel</c> and <c>destruction</c> as real dialog
-/// buttons and everything else as list rows that read like body text — and in every
+/// buttons and everything else as list rows that read like body text, and in every
 /// one of this app's uses the "everything else" slot held the GENTLEST option
 /// ("Save a copy first", "Device only"). So the safe path looked like prose while
 /// destruction looked like the button, which is precisely backwards for a flow
 /// someone reaches while upset. Offering the export before a deletion is required
 /// (app-voice §13); offering it invisibly doesn't count.
 ///
-/// Two-outcome confirmations stay on the native <c>DisplayAlert</c> — those render
+/// Two-outcome confirmations stay on the native <c>DisplayAlert</c>: those render
 /// both choices as buttons and are not ambiguous. This is for real decisions, which
 /// are input, and input belongs in a sheet (coding-standards.md).
 /// </summary>
@@ -73,7 +73,7 @@ public sealed class ConfirmSheetViewModel : BaseViewModel
 
     /// <summary>
     /// Present the choice and wait for it. Returns the chosen <see cref="ConfirmOption.Id"/>,
-    /// or null if the owner backed out — cancelling is always a valid answer and never
+    /// or null if the owner backed out: cancelling is always a valid answer and never
     /// needs its own option in the list.
     /// </summary>
     public Task<string?> AskAsync(

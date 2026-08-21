@@ -7,7 +7,7 @@
     Its shipped counterparts are the condition setup sheets, which configure the six
     trackers the app knows by name. BindingContext is a CustomTrackerSheetViewModel.
 
-    Note the icon/colour/cadence rows are all the same shape — a wrapping FlexLayout of
+    Note the icon/colour/cadence rows are all the same shape: a wrapping FlexLayout of
     tappable chips over a BindableLayout, exactly as AdjustTrackerSheetView does it.
 -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -45,7 +45,7 @@
 
             <!-- Long form: the body scrolls and the actions stay pinned below it, the
                  shape AddEditMedicationsView established. The sheet itself never scrolls
-                 its own content — see the note in FelovaBottomSheet.xaml. -->
+                 its own content: see the note in FelovaBottomSheet.xaml. -->
             <Grid RowDefinitions="*,Auto" RowSpacing="14">
 
             <ScrollView Grid.Row="0" VerticalScrollBarVisibility="Never">
@@ -165,7 +165,7 @@
                                             CommandParameter="{Binding .}"/>
                                     </Border.GestureRecognizers>
                                     <!-- A dot in the row's own ink, so the swatch shows both
-                                         colours it will actually wear — and so the selected
+                                         colours it will actually wear, and so the selected
                                          state is never carried by hue alone (§21). -->
                                     <Label Text="●"
                                            FontSize="13"
@@ -270,7 +270,7 @@
                 </VerticalStackLayout>
 
                 <!-- In the vet summary. Asked here, once, because only the owner can
-                     know whether a thing is clinical — and asked with a concrete hint,
+                     know whether a thing is clinical, and asked with a concrete hint,
                      because "does this belong in front of a vet" is a genuinely hard
                      question about your own animal. -->
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">

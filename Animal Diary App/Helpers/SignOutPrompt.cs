@@ -15,21 +15,21 @@ public static class SignOutPrompt
     /// Ask whether to sign out, given what it costs. Returns true to proceed.
     /// </summary>
     /// <param name="page">The hosting page. A two-outcome confirm stays on the native
-    /// dialog — both choices render as buttons there, so nothing is ambiguous.</param>
+    /// dialog: both choices render as buttons there, so nothing is ambiguous.</param>
     /// <param name="impact">What leaves the device.</param>
     /// <param name="confirm">The shared confirm sheet, used when there are THREE outcomes.
     /// The native action sheet renders its extra option as plain text, which buried the
     /// "save a copy first" offer under the destructive button.</param>
     /// <param name="offerExport">Invoked if the user picks "save a copy first"; the sign-out
     /// is then abandoned (they can re-tap once the export is done). Pass null on pages that
-    /// do not host the export sheet — the option is simply not offered there.</param>
+    /// do not host the export sheet: the option is simply not offered there.</param>
     public static async Task<bool> AskAsync(
         Page page, SignOutImpact impact, ConfirmSheetViewModel? confirm, Action? offerExport)
     {
         var loc = LocalizationManager.Instance;
         var body = Describe(impact);
 
-        // "Always let people get their data out" (app-voice §13) — the same offer the
+        // "Always let people get their data out" (app-voice §13): the same offer the
         // pet-removal flow makes, on the same surface, for the same reason.
         if (offerExport != null && confirm != null)
         {
@@ -96,7 +96,7 @@ public static class SignOutPrompt
         return string.Join(" ", parts);
     }
 
-    /// <summary>"Bella", "Bella and Max", "Bella, Max and 2 others" — names the pets the
+    /// <summary>"Bella", "Bella and Max", "Bella, Max and 2 others": names the pets the
     /// owner actually recognises rather than showing a count.</summary>
     private static string NameList(IReadOnlyList<string> names)
     {

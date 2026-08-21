@@ -27,7 +27,7 @@ public static class MoodLevelExtensions
     }
 
     /// <summary>The mood's swatch from <c>Colors.xaml</c>. Resolved through
-    /// <see cref="AppColors"/>, which degrades to the fallback rather than throwing —
+    /// <see cref="AppColors"/>, which degrades to the fallback rather than throwing,
     /// the raw <c>Resources[key]</c> indexer this used to call throws
     /// <see cref="KeyNotFoundException"/> if a token is renamed, and it ran on the mood
     /// timeline where a crash is the worst possible outcome.</summary>

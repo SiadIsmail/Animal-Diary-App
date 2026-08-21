@@ -4,11 +4,11 @@ namespace Animal_Diary_App.Data.Services.Reports;
 //  DATA layer of the vet report.
 //
 //  A plain, presentation-free snapshot of everything the report MIGHT show for
-//  one pet over one date range. No formatting, no layout, no QuestPDF types —
+//  one pet over one date range. No formatting, no layout, no QuestPDF types,
 //  the document layer decides how (and whether) each piece is rendered.
 //
 //  Hard rule carried by this whole feature: the report REPORTS owner-logged
-//  facts. Nothing in here interprets, flags or judges — no severities we
+//  facts. Nothing in here interprets, flags or judges, no severities we
 //  invented, no trends we concluded. The vet does the medicine.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -18,7 +18,7 @@ namespace Animal_Diary_App.Data.Services.Reports;
 public sealed class VetReportData
 {
     /// <summary>Which of the two documents this snapshot is for. It selects the section
-    /// set in <c>VetReportDocument</c> and which half of this DTO is populated — the
+    /// set in <c>VetReportDocument</c> and which half of this DTO is populated: the
     /// designed sections below, or <see cref="PlainLog"/>. Never both.</summary>
     public ReportStyle Style { get; init; } = ReportStyle.Designed;
 
@@ -36,15 +36,15 @@ public sealed class VetReportData
     public IReadOnlyList<ReportSeries> Trends { get; init; } = Array.Empty<ReportSeries>();
 
     /// <summary>Water intake, kept as two DISTINCT data types that are never merged
-    /// or interpreted — see <see cref="ReportWater"/>. Felova is a communication
+    /// or interpreted: see <see cref="ReportWater"/>. Felova is a communication
     /// layer, not a medical-interpretation layer.</summary>
     public ReportWater Water { get; init; } = new();
 
     /// <summary>Appetite, the same measured-vs-observed shape as water plus the diet
-    /// list — see <see cref="ReportAppetite"/>. Never merged or interpreted.</summary>
+    /// list: see <see cref="ReportAppetite"/>. Never merged or interpreted.</summary>
     public ReportAppetite Appetite { get; init; } = new();
 
-    /// <summary>The owner's daily read on how the pet seemed — qualitative only, in the
+    /// <summary>The owner's daily read on how the pet seemed: qualitative only, in the
     /// same shape as the water/appetite observations. See <see cref="ReportMood"/>.</summary>
     public ReportMood Mood { get; init; } = new();
 
@@ -53,12 +53,12 @@ public sealed class VetReportData
     public IReadOnlyList<ReportEvent> Events { get; init; } = Array.Empty<ReportEvent>();
 
     /// <summary>Whatever the owner tracks themselves and chose to show a vet. Empty
-    /// unless they turned the switch on for at least one tracker — see
+    /// unless they turned the switch on for at least one tracker: see
     /// <see cref="ReportCustom"/>.</summary>
     public ReportCustom Custom { get; init; } = new();
 
     /// <summary>Free-text notes the owner wrote in the period, newest first.
-    /// (There is no separate "questions for the vet" concept yet — when one is
+    /// (There is no separate "questions for the vet" concept yet: when one is
     /// added, give it its own list here and its own section.)</summary>
     public IReadOnlyList<ReportNote> Notes { get; init; } = Array.Empty<ReportNote>();
 
@@ -81,12 +81,12 @@ public sealed class VetReportData
 /// <para><b>Portability is free; the artifact is the product.</b> AI/domain.md makes
 /// "getting your data out is never blocked" a promise, and <see cref="Plain"/> is what
 /// keeps it: everything logged, in order, with dates and times, on every tier forever.
-/// That fully satisfies it — you can take your data, always, in a form a vet can read.
+/// That fully satisfies it: you can take your data, always, in a form a vet can read.
 /// <see cref="Designed"/> is the work done ON that data: sections, charts, the
 /// measured-vs-observed separation, the treatment ledger, the front sheet. That is not
 /// your data, and it is the paid one.</para>
 ///
-/// <para>Both render through the SAME document layer and the same PDF stack — one
+/// <para>Both render through the SAME document layer and the same PDF stack: one
 /// <c>VetReportDocument</c>, one section interface, one renderer. There is deliberately
 /// no second PDF path: a parallel implementation is how the free export quietly rots
 /// while nobody is watching, and the PDF stack must stay free of native libraries
@@ -106,7 +106,7 @@ public enum ReportStyle
 /// <param name="When">Local date and time it was recorded at.</param>
 /// <param name="HasTime">False for a legacy mood/weight row saved before per-entry times
 /// existed. Those sit at the start of their day, and the export prints the date alone
-/// rather than claiming midnight — the app does not invent a moment it was never told.</param>
+/// rather than claiming midnight: the app does not invent a moment it was never told.</param>
 /// <param name="What">The kind, in the owner's language, or an owner-defined tracker's
 /// own name (verbatim user text, never translated).</param>
 /// <param name="Detail">The reading exactly as it was written down, or empty.</param>
@@ -114,7 +114,7 @@ public readonly record struct ReportLogLine(DateTime When, bool HasTime, string 
 
 /// <summary>
 /// The owner's daily read on how their pet seemed. Purely qualitative, and held the
-/// same way as water and appetite OBSERVATIONS — never a number, never averaged,
+/// same way as water and appetite OBSERVATIONS, never a number, never averaged,
 /// never trended. The level only picks which labelled row the dot sits on.
 ///
 /// Mood is one of the two trackers every pet gets by default, so leaving it out of
@@ -131,22 +131,22 @@ public sealed class ReportMood
 
 /// <summary>
 /// Water intake, held as TWO DISTINCT data types that the report keeps apart on
-/// purpose — Felova relays what the owner recorded, it does not interpret it:
+/// purpose: Felova relays what the owner recorded, it does not interpret it:
 /// <list type="bullet">
-/// <item><b>Measured</b> — objective millilitre readings (a day's total). A
+/// <item><b>Measured</b>: objective millilitre readings (a day's total). A
 ///   quantitative series, plotted as a graph.</item>
-/// <item><b>Observations</b> — subjective owner readings ("Normal", "More than
+/// <item><b>Observations</b>: subjective owner readings ("Normal", "More than
 ///   usual"). A qualitative series, plotted on its OWN graph.</item>
 /// </list>
 /// The two are NEVER merged into one visualization, observations are NEVER converted
 /// to numbers, and NO trend/verdict is computed from either. Mixing a subjective
 /// observation with a measurement, or drawing a conclusion, needs clinical context
-/// Felova doesn't have — the vet interprets; the report only records. Either type can
+/// Felova doesn't have: the vet interprets; the report only records. Either type can
 /// be turned off in the export sheet (both default on); an off type is simply null/empty.
 /// </summary>
 public sealed class ReportWater
 {
-    /// <summary>Objective measured intake — one point per day (that day's total mL).
+    /// <summary>Objective measured intake: one point per day (that day's total mL).
     /// Null when the owner logged no measurements, or unticked "measured values".</summary>
     public ReportSeries? Measured { get; init; }
 
@@ -158,21 +158,21 @@ public sealed class ReportWater
 }
 
 /// <summary>One owner observation on a date: a relative level (1..5). Used for both
-/// water and appetite. The document plots it on a category axis LABELLED WITH WORDS —
+/// water and appetite. The document plots it on a category axis LABELLED WITH WORDS,
 /// the number is never shown, averaged, or trended (it only picks which labelled row
 /// the dot sits on).</summary>
 public readonly record struct ReportObservation(DateTime Date, int Level);
 
 /// <summary>
-/// Appetite for the report — the same measured-vs-observed separation as
+/// Appetite for the report: the same measured-vs-observed separation as
 /// <see cref="ReportWater"/>, plus the diet list. All three parts are kept distinct
 /// and none is interpreted (no trend, no verdict, observations never numeric):
 /// <list type="bullet">
-/// <item><b>Measured</b> — objective grams eaten, one point per day (that day's
+/// <item><b>Measured</b>: objective grams eaten, one point per day (that day's
 ///   total). Null when none, or the owner unticked "measured values".</item>
-/// <item><b>Observations</b> — the qualitative reading (Didn't eat … Everything),
+/// <item><b>Observations</b>: the qualitative reading (Didn't eat … Everything),
 ///   one per day. Empty when none, or the owner unticked "observations".</item>
-/// <item><b>Foods</b> — the distinct free-text foods recorded in the range, as a
+/// <item><b>Foods</b>: the distinct free-text foods recorded in the range, as a
 ///   plain diet list. Not food-change tracking; the range itself is the context.</item>
 /// </list>
 /// </summary>
@@ -187,7 +187,7 @@ public sealed class ReportAppetite
 }
 
 /// <summary>Master data for the report header. Fields the app doesn't model yet
-/// (owner, breed, sex, photo) are nullable — the header simply omits them.</summary>
+/// (owner, breed, sex, photo) are nullable: the header simply omits them.</summary>
 public sealed class ReportPetInfo
 {
     public required string Name { get; init; }
@@ -216,8 +216,29 @@ public sealed class ReportPetInfo
 public sealed class ReportMedication
 {
     public required string Name { get; init; }
+
+    /// <summary>The dose as the medication row stands NOW. Kept because it is what a
+    /// report with no ledger behind it can honestly say, and it is the fallback
+    /// <see cref="DoseText"/> is rendered against.</summary>
     public decimal Dose { get; init; }
     public string Unit { get; init; } = string.Empty;
+
+    /// <summary>
+    /// The dose that was actually in force over the PERIOD, resolved from the treatment
+    /// ledger: <c>"30 mg"</c>, or <c>"30 mg → 45 mg"</c> when it changed inside it.
+    /// Empty when the ledger has nothing (pre-ledger history), and the renderer then
+    /// falls back to <see cref="Dose"/>.
+    ///
+    /// <para><b>Why this exists.</b> A report for March generated in August used to print
+    /// August's dose against March's counts. The report already counts scheduled doses
+    /// from the union of rules and logs precisely because "an edit would silently rewrite
+    /// history"; this is the other half of that same reasoning.</para>
+    ///
+    /// <para>The arrow states what changed and when the period was: it is not a
+    /// before/after pair of COUNTS around a change, which stays banned. Nothing here
+    /// compares the two sides or says which way they went.</para>
+    /// </summary>
+    public string DoseText { get; init; } = string.Empty;
 
     /// <summary>Distinct days of week the medication is scheduled on (0–7).</summary>
     public int DaysPerWeek { get; init; }
@@ -245,17 +266,17 @@ public sealed class ReportSeries
 public readonly record struct ReportPoint(DateTime Date, decimal Value);
 
 /// <summary>The kind of a notable event. A closed set the events table knows how
-/// to word — extend it here when a new loggable event should reach the report.</summary>
+/// to word: extend it here when a new loggable event should reach the report.</summary>
 public enum ReportEventKind
 {
     Seizure,
     Vomiting,
     /// <summary>An appetite reading of "None" or "Barely" (levels 0–1). Included as
-    /// the owner's own low reading — the report states the level, nothing more.</summary>
+    /// the owner's own low reading: the report states the level, nothing more.</summary>
     LowAppetite
 }
 
-/// <summary>One dated occurrence. Typed fields, no prose — the document words it.</summary>
+/// <summary>One dated occurrence. Typed fields, no prose: the document words it.</summary>
 public sealed class ReportEvent
 {
     public required ReportEventKind Kind { get; init; }
@@ -266,7 +287,7 @@ public sealed class ReportEvent
     public int? DurationMinutes { get; init; }
 
     /// <summary>What kind of seizure the owner said it was, or null when they didn't say.
-    /// Carried through verbatim — the report states the owner's own answer and never
+    /// Carried through verbatim: the report states the owner's own answer and never
     /// derives one from the duration or the note.</summary>
     public Models.SeizureType? SeizureType { get; init; }
 
@@ -287,7 +308,7 @@ public sealed record ReportNote(DateTime Date, string Text);
 /// <para>Deliberately NOT folded into <see cref="ReportEvent"/>: that is a closed
 /// <see cref="ReportEventKind"/> the document knows how to word, and these are named by
 /// the owner. A custom tracker carries its own label, printed verbatim like a pet or
-/// medication name — the document translates nothing here.</para>
+/// medication name: the document translates nothing here.</para>
 ///
 /// <para>Trackers whose switch is off never reach this object at all, so nothing
 /// downstream has to remember to filter. See <see cref="Models.CustomTracker.IncludeInReport"/>.</para>
@@ -296,7 +317,7 @@ public sealed class ReportCustom
 {
     public IReadOnlyList<ReportCustomTracker> Trackers { get; init; } = Array.Empty<ReportCustomTracker>();
 
-    /// <summary>Every entry across those trackers, newest first — the section prints one
+    /// <summary>Every entry across those trackers, newest first: the section prints one
     /// dated table rather than a block per tracker, so a vet reads them in the order they
     /// happened.</summary>
     public IReadOnlyList<ReportCustomEntry> Entries { get; init; } = Array.Empty<ReportCustomEntry>();

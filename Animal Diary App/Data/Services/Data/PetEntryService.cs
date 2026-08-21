@@ -33,7 +33,7 @@ public class PetEntryService
             .FirstOrDefaultAsync();
     }
     /// <summary>Most recent mood entry for a pet, or null if it has none. Mirrors
-    /// <see cref="GetLatestWeightEntryAsync"/> — the ordering runs in SQL rather than
+    /// <see cref="GetLatestWeightEntryAsync"/>: the ordering runs in SQL rather than
     /// loading the table and sorting in memory.</summary>
     public async Task<PetEntry?> GetLatestMoodEntryAsync(int petId)
     {

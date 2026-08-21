@@ -4,7 +4,7 @@ namespace Animal_Diary_App.Data.Models;
 /// <b>Which tracker</b>, when "which" is no longer answerable by an enum alone.
 ///
 /// <para>A tracker is either one of the six the app ships with (<see cref="TrackerId"/>)
-/// or one the owner made up — a walk, a groom, a poop. Both kinds have to be a
+/// or one the owner made up: a walk, a groom, a poop. Both kinds have to be a
 /// dictionary key in the pending engine, so the two identities need one type. That is
 /// all this is: a tagged union of "built-in X" and "the owner's custom tracker #N".</para>
 ///
@@ -37,7 +37,7 @@ public readonly record struct TrackerKey(TrackerId? BuiltIn, int CustomId)
     /// comparing against a converted key, and is null-safe on the custom side.</summary>
     public bool Is(TrackerId id) => BuiltIn == id;
 
-    // default(TrackerKey) is (null, 0) — a custom tracker with no row, which cannot
+    // default(TrackerKey) is (null, 0): a custom tracker with no row, which cannot
     // exist. That is deliberate: an accidentally-defaulted key matches nothing rather
     // than quietly meaning "glucose", which is what a non-nullable BuiltIn would give.
     public override string ToString() => IsCustom ? $"custom:{CustomId}" : BuiltIn!.ToString()!;

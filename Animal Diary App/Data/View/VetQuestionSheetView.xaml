@@ -2,12 +2,12 @@
 <!--
     VetQuestionSheetView
     ─────────────────────────────────────────────────────────
-    "Question for the vet" — the one thing owners reliably forget, written down where
+    "Question for the vet": the one thing owners reliably forget, written down where
     they already are.
 
     Not a journal entry, and the sheet says so by what it does NOT have: no date, no
     time picker, no value, no tracker. Just what is already on the list, and a field.
-    The list above the field is read-only — ticking and deleting live on the
+    The list above the field is read-only: ticking and deleting live on the
     appointment page, where the list is actually read.
 
     BindingContext is a VetQuestionSheetViewModel; open it via that VM's OpenAsync.
@@ -31,7 +31,7 @@
             <!-- The body owns its scroller and pins the actions below it, as
                  FelovaBottomSheet requires: the list of open questions is unbounded.
                  VerticalOptions="Start" on the ScrollView plus the code-behind's
-                 ceiling makes the sheet hug two questions and scroll at twenty — a
+                 ceiling makes the sheet hug two questions and scroll at twenty: a
                  plain filling ScrollView stretches even a short sheet to full height
                  on Android (see AddAnythingSheetView). -->
             <Grid RowDefinitions="*,Auto" RowSpacing="16">
@@ -44,7 +44,7 @@
 
                         <!-- Already written down. Shown so adding a second question
                              doesn't feel like writing into the dark. Their words,
-                             verbatim, in one weight — nothing here is ranked, dated
+                             verbatim, in one weight: nothing here is ranked, dated
                              or counted. -->
                         <VerticalStackLayout Spacing="7" IsVisible="{Binding HasOpen}">
                             <Label Text="{Binding OpenHeading}"
@@ -103,7 +103,7 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding DismissCommand}"/>
                         </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Common_NotNow}"
+                        <Label Text="{loc:Translate Common_Cancel}"
                                FontFamily="{StaticResource FontSans}"
                                FontSize="14"
                                FontAttributes="Bold"

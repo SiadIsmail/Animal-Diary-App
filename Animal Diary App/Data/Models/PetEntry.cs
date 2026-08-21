@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.Models;
 using SQLite;
 
 /// <summary>
-/// The day's mood and weight for one pet — the two always-on trackers, sharing a row
+/// The day's mood and weight for one pet: the two always-on trackers, sharing a row
 /// because they share a day. Everything else the Journal records has its own table
 /// (see JournalEntries.cs).
 ///
@@ -35,14 +35,14 @@ public class PetEntry : ISyncable
 
     /// <summary>Optional free-text note the owner writes alongside the mood (the
     /// journal's washi-tape card shows it). Added when Notes was folded into the
-    /// Mood tracker. SQLite.NET adds this column automatically — no migration.</summary>
+    /// Mood tracker. SQLite.NET adds this column automatically, no migration.</summary>
     public string MoodNote { get; set; } = string.Empty;
 
     /// <summary>Whether the owner asked for this day's <see cref="MoodNote"/> to
     /// appear in the vet report's Owner's Notes section. Defaults to false, so
     /// notes are private to the app unless the owner opts in per note; legacy
     /// entries written before this column read as false. SQLite.NET adds the
-    /// column automatically — no migration.</summary>
+    /// column automatically, no migration.</summary>
     public bool IncludeInVetReport { get; set; }
     public decimal Weight { get; set; }
 

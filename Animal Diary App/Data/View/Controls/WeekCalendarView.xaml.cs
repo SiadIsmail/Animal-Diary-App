@@ -12,7 +12,7 @@ using Animal_Diary_App.Data.ViewModels;
 /// A lightweight 7-day week-strip calendar. Pure UI: it renders the week
 /// containing <see cref="SelectedDate"/> with prev/next navigation, today/
 /// selected highlighting, and activity dots. It owns no business logic and
-/// knows nothing about pets or medications — the ViewModel supplies
+/// knows nothing about pets or medications: the ViewModel supplies
 /// <see cref="Activities"/> and consumes <see cref="SelectedDate"/> through a
 /// bindable property. Weeks start on Monday.
 /// </summary>
@@ -205,10 +205,10 @@ public partial class WeekCalendarView : ContentView
     {
         var end = start.AddDays(6);
         if (start.Year != end.Year)
-            return $"{start:d MMM yyyy} – {end:d MMM yyyy}";
+            return $"{start:d MMM yyyy}: {end:d MMM yyyy}";
         if (start.Month != end.Month)
-            return $"{start:d MMM} – {end:d MMM yyyy}";
-        return $"{start.Day} – {end.Day} {start:MMM yyyy}";
+            return $"{start:d MMM}: {end:d MMM yyyy}";
+        return $"{start.Day}: {end.Day} {start:MMM yyyy}";
     }
 }
 

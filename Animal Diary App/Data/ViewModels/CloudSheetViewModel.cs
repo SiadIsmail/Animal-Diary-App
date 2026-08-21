@@ -55,7 +55,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         ContinueWithGoogleCommand = new Command(async () => await GoogleAsync());
 
         // Session/sync state can change underneath the sheet (expiry, background
-        // sync finishing) — re-render, marshalled to the UI thread.
+        // sync finishing): re-render, marshalled to the UI thread.
         _auth.SessionChanged += () => MainThread.BeginInvokeOnMainThread(RefreshStateFromServices);
         _sync.StateChanged += () => MainThread.BeginInvokeOnMainThread(RefreshStateFromServices);
         // A purchase can land while this sheet is open (it is one of the doors), and it
@@ -122,7 +122,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     public bool IsIntroVisible => _mode == Mode.Intro;
     public bool IsCredentialsVisible => _mode is Mode.SignIn or Mode.SignUp;
 
-    /// <summary>Google sign-in is offered on Android only — a social login on iOS
+    /// <summary>Google sign-in is offered on Android only: a social login on iOS
     /// obliges Sign in with Apple (App Store policy), deferred until iOS ships.
     /// Shown on the pre-account modes.</summary>
     public bool IsGoogleAvailable =>
@@ -152,7 +152,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     public bool IsBackupEnabled => _sync.IsBackupEnabled;
 
     /// <summary>Cloud backup is part of the paid tier. One exception, deliberate: someone
-    /// turning it on in order to REDEEM an invite is never stopped — see
+    /// turning it on in order to REDEEM an invite is never stopped: see
     /// <see cref="EnableBackupAsync"/>.</summary>
     public bool BackupNeedsSubscription => !_entitlements.HasFullAccess;
 
@@ -173,14 +173,14 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     /// structurally impossible for a payment ask to appear during onboarding.</summary>
     public Action? RequestSubscribe { get; set; }
 
-    /// <summary>Whether to show the "see the options" action at all — only where a host
+    /// <summary>Whether to show the "see the options" action at all: only where a host
     /// has offered somewhere for it to go.</summary>
     public bool CanRequestSubscribe => RequestSubscribe != null;
     public string LastSyncedDisplay => _sync.LastSyncedUtc is DateTime utc
         ? LocalizationManager.Instance.Format("Cloud_LastSynced", utc.ToLocalTime().ToString("g"))
         : Loc("Cloud_NeverSynced");
 
-    /// <summary>Set by the hosting page — native confirm before account deletion
+    /// <summary>Set by the hosting page: native confirm before account deletion
     /// (same pattern as <see cref="SettingsViewModel.ConfirmDeleteAllData"/>).</summary>
     public Func<Task<bool>>? ConfirmDeleteAccount { get; set; }
 
@@ -219,7 +219,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     }
 
     /// <summary>The Pets page "Join a pet" action. Joining pulls a shared pet down, which
-    /// needs an account AND backup (sync) on — so when the user isn't set up yet, route
+    /// needs an account AND backup (sync) on, so when the user isn't set up yet, route
     /// through the account door first and remember to land on the code input once they
     /// are. When already set up, go straight to the focused invite-code screen.</summary>
     private async Task OpenJoinAsync()
@@ -323,7 +323,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     {
         ErrorText = string.Empty;
 
-        // Backup is paid — EXCEPT when it is the last thing standing between someone and a
+        // Backup is paid: EXCEPT when it is the last thing standing between someone and a
         // pet they were invited to help care for. Redeeming an invite is free and stays
         // free, and redeeming needs sync on to pull the pet down; gating here would charge
         // the second person keeping an animal alive for the right to start. Minting the
@@ -343,7 +343,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
                 InfoText = Loc("Cloud_EnabledOffline");
         });
         RefreshStateFromServices();
-        // Turning backup on was the last thing blocking a pending join — surface the code input.
+        // Turning backup on was the last thing blocking a pending join: surface the code input.
         if (_pendingJoin && _sync.IsBackupEnabled)
         {
             _pendingJoin = false;
@@ -368,7 +368,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
     /// <summary>
     /// Sign out: push what we can, tell the user what leaves the device, then tear down.
     ///
-    /// <para>The pets are removed from the DEVICE, not from the account — signing back in
+    /// <para>The pets are removed from the DEVICE, not from the account: signing back in
     /// restores them, and <see cref="ConfirmSignOut"/>'s copy has to say so, or a reversible
     /// action reads as deletion. The removal itself is not optional: leaving one account's
     /// medical records on the device for whoever signs in next is the thing the caregiver
@@ -409,7 +409,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         SignedOut?.Invoke(remaining > 0);
     }
 
-    /// <summary>Set by the hosting page — native confirm before signing out, given what it
+    /// <summary>Set by the hosting page: native confirm before signing out, given what it
     /// will cost. Return true to proceed. A page that hosts the export sheet may instead open
     /// it and return false ("save a copy first"), mirroring the pet-deletion flow.</summary>
     public Func<SignOutImpact, Task<bool>>? ConfirmSignOut { get; set; }
@@ -434,7 +434,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
             JoinCode = string.Empty;
             InfoText = Loc("Cloud_JoinSuccess");
             // The membership exists server-side; the sync's membership+pull
-            // brings the pet's data down. Fire-and-forget — status shows in-sheet.
+            // brings the pet's data down. Fire-and-forget: status shows in-sheet.
             _sync.SyncNowAsync().Forget();
         }
     }
@@ -462,7 +462,7 @@ public class CloudSheetViewModel : BaseViewModel, IResettableDraft
         }
         catch (OperationCanceledException)
         {
-            // The user backed out of the Google browser flow — not an error.
+            // The user backed out of the Google browser flow, not an error.
             // (Also fires if the redirect failed to resume; the dev panel's
             // "cancelled or dropped" line disambiguates during debugging.)
             return false;

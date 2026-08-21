@@ -13,7 +13,7 @@ using Animal_Diary_App.Helpers;
 /// fingertip into a star. The ViewModel owns the range, the events and the selection.
 ///
 /// <para>The split is the same one the photo cropper draws: only the page knows how
-/// big the canvas is, so only the page can place anything on it — and keeping
+/// big the canvas is, so only the page can place anything on it, and keeping
 /// placement out of the ViewModel is what lets <c>ConstellationLayout</c> stay pure
 /// and testable.</para>
 /// </summary>
@@ -29,7 +29,7 @@ public partial class ConstellationPage : ContentPage
     private double _scrollX;
 
     /// <summary>Where the sky sat when the current drag began. A pan reports its total
-    /// travel since the finger went down, so the offset is always start + total — never
+    /// travel since the finger went down, so the offset is always start + total, never
     /// an accumulation, which drifts over a long drag.</summary>
     private double _panStartScroll;
     private double _panStartPeriod;
@@ -65,7 +65,7 @@ public partial class ConstellationPage : ContentPage
         };
     }
 
-    /// <summary>Android back clears the tapped entry before it navigates — the peek is
+    /// <summary>Android back clears the tapped entry before it navigates: the peek is
     /// in the card now rather than in an overlay, so nothing else would close it.</summary>
     protected override bool OnBackButtonPressed()
     {
@@ -75,8 +75,8 @@ public partial class ConstellationPage : ContentPage
             return true;
         }
 
-        // No BackDismiss walk: this page hosts no overlay any more — the peek is a card
-        // inside the sky — so there is nothing for it to find.
+        // No BackDismiss walk: this page hosts no overlay any more: the peek is a card
+        // inside the sky, so there is nothing for it to find.
         return base.OnBackButtonPressed();
     }
 
@@ -105,7 +105,7 @@ public partial class ConstellationPage : ContentPage
         }
         catch (Exception ex)
         {
-            // A failed load degrades to an empty sky — never crash the app (async void).
+            // A failed load degrades to an empty sky, never crash the app (async void).
             Debug.WriteLine($"[Constellation] load failed: {ex}");
         }
     }
@@ -124,7 +124,7 @@ public partial class ConstellationPage : ContentPage
         vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
 
         // The ViewModel is a singleton, so this visit's exploration would otherwise be
-        // waiting here next time — including the flag that suppresses the opening focus.
+        // waiting here next time: including the flag that suppresses the opening focus.
         vm.ConstellationVM.EndVisit();
     }
 
@@ -158,7 +158,7 @@ public partial class ConstellationPage : ContentPage
     ///
     /// <para>On the first visit the entries arrive before the card has been measured,
     /// so there is nothing placed to animate and the reveal was being spent on an empty
-    /// canvas — the one time it most wanted to be seen. It now waits for the first
+    /// canvas: the one time it most wanted to be seen. It now waits for the first
     /// layout that produces stars.</para></summary>
     private bool _revealPending;
 
@@ -195,7 +195,7 @@ public partial class ConstellationPage : ContentPage
     /// Open on where the entries actually are.
     ///
     /// <para>Sixty entries over ninety days, the first six weeks of it empty, gave a
-    /// card that was half dead space — honest, and a poor thing to look at or to
+    /// card that was half dead space: honest, and a poor thing to look at or to
     /// share. This moves the CAMERA rather than the range: nothing is hidden, the
     /// chosen stretch is still the chosen stretch, and pinching out reaches the empty
     /// weeks like any other part of the sky.</para>
@@ -230,7 +230,7 @@ public partial class ConstellationPage : ContentPage
     }
 
     /// <summary>A lens or a fold changed. Nothing was re-read; the same entries are
-    /// simply arranged another way — so the stars fly to their new places rather than
+    /// simply arranged another way, so the stars fly to their new places rather than
     /// cutting there.</summary>
     private void OnViewChanged()
     {
@@ -243,7 +243,7 @@ public partial class ConstellationPage : ContentPage
         FlyTo(before);
     }
 
-    /// <summary>Only the focus changed, which is a matter of who is bright — no entry
+    /// <summary>Only the focus changed, which is a matter of who is bright, no entry
     /// moved. Re-placing here is what used to throw the wall back to its bottom and
     /// reset the Timeline's zoom every time someone tapped a legend key.</summary>
     private void OnRepaintRequested()
@@ -281,7 +281,7 @@ public partial class ConstellationPage : ContentPage
     // Everything expressive on this surface is a RESPONSE, never wallpaper: the
     // resting picture stays plain enough to read, and the beauty is what arriving,
     // touching and focusing feel like. Each is skipped whole when the OS asks for
-    // reduced motion — the page background already pays that courtesy.
+    // reduced motion: the page background already pays that courtesy.
     private const uint RevealMilliseconds = 1150;
     private const uint SelectionMilliseconds = 430;
     private const uint BloomMilliseconds = 340;
@@ -290,7 +290,7 @@ public partial class ConstellationPage : ContentPage
     private const string BloomName = "sky.bloom";
 
     /// <summary>
-    /// Where every star is on the canvas <b>right now</b> — the "from" end of a
+    /// Where every star is on the canvas <b>right now</b>: the "from" end of a
     /// flight, taken before anything is re-placed.
     ///
     /// <para>If a flight is already in the air it reads the interpolated positions
@@ -327,7 +327,7 @@ public partial class ConstellationPage : ContentPage
     ///
     /// <para>The flight is skipped when there is nothing to compare (a different number
     /// of entries, i.e. this was a reload rather than a re-arrangement) and when the OS
-    /// has been asked to reduce motion — the same courtesy the page background
+    /// has been asked to reduce motion: the same courtesy the page background
     /// already pays.</para>
     /// </summary>
     private void FlyTo((PointF[] Points, SkyLens Lens) before)
@@ -342,7 +342,7 @@ public partial class ConstellationPage : ContentPage
         }
 
         // A lens change is a journey and gets the full arc. Turning the fold is a
-        // nudge — the same stars rearranging on the same ring — so it moves quickly
+        // nudge (the same stars rearranging on the same ring) so it moves quickly
         // enough to keep up with a thumb, and slowly enough to be followed.
         var length = before.Lens == _drawable.Lens ? FoldMilliseconds : FlightMilliseconds;
 
@@ -396,7 +396,7 @@ public partial class ConstellationPage : ContentPage
     /// Which slice of time the open sheet is talking about.
     ///
     /// <para>The column and the brightened siblings are "Also that day" drawn on the
-    /// canvas — the same entries the sheet lists, shown where they happened. The span
+    /// canvas: the same entries the sheet lists, shown where they happened. The span
     /// is computed here because the page is what knows the range.</para>
     /// </summary>
     private void MarkSelectedDay()
@@ -453,7 +453,7 @@ public partial class ConstellationPage : ContentPage
     // ── Placement ────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Place every star, once, in world units — the canvas's own width at zoom 1.
+    /// Place every star, once, in world units: the canvas's own width at zoom 1.
     /// Runs on layout and on a new range, and <b>never on a zoom step</b>: the whole
     /// point of the camera is that the constellation keeps its shape while it is
     /// magnified. Re-placing here would put the stars back where the old version had
@@ -475,10 +475,10 @@ public partial class ConstellationPage : ContentPage
         _drawable.Focus = sky.Focus;
         _drawable.SelectedIndex = sky.SelectedIndex;
 
-        // The lens decides what the axis means. Only the Timeline keeps a camera —
+        // The lens decides what the axis means. Only the Timeline keeps a camera,
         // a clock is not panned, and a fold is exactly one turn wide.
         // The plot sits past the hour gutter, so the world is that much narrower than
-        // the card — the gutter is screen furniture and must not scroll with the dates.
+        // the card: the gutter is screen furniture and must not scroll with the dates.
         var world = Math.Max(1, width - ConstellationLayout.HourGutter);
         _drawable.WorldWidth = world;
 
@@ -496,7 +496,7 @@ public partial class ConstellationPage : ContentPage
     }
 
     /// <summary>Push the zoom and the scroll to the canvas and repaint. This is all a
-    /// zoom step does — no query, no re-place, no re-sort.</summary>
+    /// zoom step does, no query, no re-place, no re-sort.</summary>
     private void ApplyCamera()
     {
         var width = SkyHost.Width;
@@ -518,12 +518,12 @@ public partial class ConstellationPage : ContentPage
     }
 
     /// <summary>The sky can be dragged from its first moment to its last, and no
-    /// further — there is nothing either side of the range that was asked for.</summary>
+    /// further: there is nothing either side of the range that was asked for.</summary>
     private double ClampScroll(double scrollX, double viewportWidth) =>
         Math.Clamp(scrollX, 0, Math.Max(0, viewportWidth * _zoom - viewportWidth));
 
     /// <summary>The furthest in the sky may be zoomed. Tied to the stretch being looked
-    /// at, so a week and a year both bottom out with roughly a day across the canvas —
+    /// at, so a week and a year both bottom out with roughly a day across the canvas,
     /// past that there is nothing left to separate, only empty sky to pan through.</summary>
     private double MaxZoom() => Math.Clamp(vm.ConstellationVM.RangeDays / 1.5, 4.0, 240.0);
 
@@ -555,7 +555,7 @@ public partial class ConstellationPage : ContentPage
                 else
                 {
                     // Dragging right moves the sky right, so time runs backwards under
-                    // the finger — the direction people expect from every map.
+                    // the finger: the direction people expect from every map.
                     _scrollX = _panStartScroll - e.TotalX;
                     ApplyCamera();
                 }
@@ -602,7 +602,7 @@ public partial class ConstellationPage : ContentPage
         // world. The zoom rides along so "near enough to count" stays the same
         // distance under the fingertip however far in it is.
         // Back through the camera: the finger is on the screen, the stars live in the
-        // world — and on History the plot starts past the hour gutter.
+        // world, and on History the plot starts past the hour gutter.
         var worldX = vm.ConstellationVM.Lens == SkyLens.History
             ? (point.X - ConstellationLayout.HourGutter + _scrollX) / _zoom
             : point.X;
@@ -621,7 +621,7 @@ public partial class ConstellationPage : ContentPage
     /// hand it to the OS.
     ///
     /// <para>The card is captured rather than redrawn offscreen, so what gets shared is
-    /// pixel-for-pixel what was on screen — including wherever it happens to be zoomed
+    /// pixel-for-pixel what was on screen: including wherever it happens to be zoomed
     /// and panned to, which is what the owner chose to look at. Only the CARD is in
     /// frame; the legend, which names conditions out loud, deliberately is not (see
     /// <c>ConstellationShare</c>).</para>

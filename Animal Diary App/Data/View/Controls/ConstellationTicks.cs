@@ -9,7 +9,7 @@ using Animal_Diary_App.Helpers;
 /// foot, and the quarters around the ring.
 ///
 /// <para>Both axes are time and <b>both are labelled</b>. An earlier version labelled
-/// only the dates, because the other axis meant nothing — which is exactly why the
+/// only the dates, because the other axis meant nothing, which is exactly why the
 /// picture was unreadable. A label is not clutter when it is the difference between a
 /// coordinate and a decoration.</para>
 ///
@@ -22,7 +22,7 @@ public static class ConstellationTicks
     private const double MinimumSpacing = 82.0;
 
     /// <summary>Steps in days, coarsest last. A step is chosen, never computed, so the
-    /// dates land on units a person recognises — a week, a month, a year — instead of
+    /// dates land on units a person recognises (a week, a month, a year) instead of
     /// on "every 43 days".</summary>
     private static readonly int[] Steps = { 1, 2, 7, 14, 30, 91, 182, 365 };
 
@@ -33,7 +33,7 @@ public static class ConstellationTicks
     /// The History lens: hours pinned down the gutter, dates along the foot.
     /// </summary>
     /// <param name="worldWidth">The plot's width at zoom 1. Date positions come back in
-    /// these units — the camera is applied when they are drawn.</param>
+    /// these units: the camera is applied when they are drawn.</param>
     /// <param name="zoom">Only chooses how MANY dates fit: the step is picked against
     /// the zoomed width, so zooming in turns month names into weeks and then into
     /// individual days. The positions stay in world units, or the dates would drift
@@ -103,7 +103,7 @@ public static class ConstellationTicks
     /// The ring's four quarter marks: hours at a one-day fold, day numbers beyond it.
     ///
     /// <para>Four and no more. A ring of twenty-four numbers is instrumentation, and
-    /// this is a sky — the quarters are enough to read a wedge by, and enough to
+    /// this is a sky: the quarters are enough to read a wedge by, and enough to
     /// describe one out loud to a vet.</para>
     /// </summary>
     public static List<SkyTick> Ring(double periodDays, double width, double height)

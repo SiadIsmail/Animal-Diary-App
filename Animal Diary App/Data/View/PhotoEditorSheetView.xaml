@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- PhotoEditorSheetView — crop and rotate a photo before it becomes a pet's avatar.
+<!-- PhotoEditorSheetView: crop and rotate a photo before it becomes a pet's avatar.
      BindingContext is a PhotoEditorSheetViewModel.
 
      Three controls and no more: turn left, turn right, and a drag/pinch stage. No
-     filters, no aspect choices, no adjustments — this exists so a photo that arrived
+     filters, no aspect choices, no adjustments: this exists so a photo that arrived
      sideways can be put right, and so the owner can choose which part of it the circle
      holds.
 
@@ -99,7 +99,7 @@
                 </Border>
 
                 <!-- Cancel: the same quiet text link every other sheet closes with.
-                     Backing out costs nothing here — the photo is untouched. -->
+                     Backing out costs nothing here: the photo is untouched. -->
                 <Label Text="{loc:Translate Common_Cancel}"
                        Padding="0,4"
                        FontFamily="{StaticResource FontSans}"

@@ -3,7 +3,7 @@
 Point-in-time documents: the plans that shaped a subsystem before it was built,
 the audits that reviewed one afterwards, and one incident narrative.
 
-**None of these describes current behaviour.** They are kept for the *why* —
+**None of these describes current behaviour.** They are kept for the *why*,
 the constraint that forced a shape, the bug that motivated a rule, the option
 that was considered and rejected. When one of them disagrees with the code, the
 code is right.
@@ -23,7 +23,7 @@ conventions) and the code itself.
 ## Reading an audit
 
 The two audits are written against the **pre-fix** code and kept that way
-deliberately — the finding explains what was wrong, and the remediation table at
+deliberately: the finding explains what was wrong, and the remediation table at
 the top says what happened to it. A finding marked *Fixed* describes code that no
 longer exists; a finding marked *Won't fix* is a live, accepted trade-off and will
 also appear in `AI/known-constraints.md`.

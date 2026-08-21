@@ -1,15 +1,15 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0003 — fix the pets INSERT policy.
+--  0003: fix the pets INSERT policy.
 --
 --  The push RPC failed with `new row violates row-level security policy for
---  table "pets"` — the INSERT arm's WITH CHECK ((select auth.uid()) is not
+--  table "pets"`: the INSERT arm's WITH CHECK ((select auth.uid()) is not
 --  null) is the only check on that path. The auth.uid() test was redundant
 --  belt-and-braces anyway: since 0002, ONLY the `authenticated` role holds
 --  INSERT privilege on pets (anon has zero grants), so scoping the policy TO
---  authenticated with CHECK (true) enforces exactly the same rule — a signed-in
---  user may create pets — without consulting auth.uid() on this path at all.
+--  authenticated with CHECK (true) enforces exactly the same rule: a signed-in
+--  user may create pets: without consulting auth.uid() on this path at all.
 --
---  The ownership trigger keeps its auth.uid() dependency (it must — the owner
+--  The ownership trigger keeps its auth.uid() dependency (it must: the owner
 --  membership row needs the user id), but now fails LOUDLY with a named error
 --  if the auth context is ever genuinely missing, instead of surfacing as a
 --  cryptic constraint/RLS failure downstream.

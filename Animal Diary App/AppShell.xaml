@@ -11,7 +11,7 @@
     <!--
         The three primary destinations (Today / Journal / Pets) live as tabs so
         each page is constructed once and switched, not re-pushed. Both the Shell
-        nav bar and the tab bar are hidden — navigation is driven entirely by the
+        nav bar and the tab bar are hidden: navigation is driven entirely by the
         in-page buttons via GoToAsync("//<Route>"). Page instances are assigned in
         code-behind from DI so their MainViewModel constructor injection is kept.
     -->

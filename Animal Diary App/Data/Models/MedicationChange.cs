@@ -7,8 +7,8 @@ using SQLite;
 //
 //  Until this table existed, a medication edit DESTROYED the thing it changed:
 //  Dosage was overwritten in place, and MedicationDoseLog recorded that a dose was
-//  resolved but never WHICH dose it was. "What was he on in March?" — the single
-//  question a vet asks about a treatment — was unanswerable on every device, and
+//  resolved but never WHICH dose it was. "What was he on in March?": the single
+//  question a vet asks about a treatment: was unanswerable on every device, and
 //  it cannot be backfilled after the fact. So every change becomes a row.
 //
 //  Two properties are load-bearing and neither is an accident:
@@ -22,7 +22,7 @@ using SQLite;
 //
 //   • IT HANGS OFF THE PET, NOT THE MEDICATION (PetScope.ByPetId here; a cascade
 //     from `pets` in Postgres). A cascade from medications would delete the history
-//     of the very thing whose history this exists to preserve — the same note
+//     of the very thing whose history this exists to preserve: the same note
 //     migration 0013 leaves on custom_entries, for the same reason.
 //
 //  It states facts and never a direction. A row says a dose went from one number to
@@ -31,7 +31,7 @@ using SQLite;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// <summary>What happened to a medication. Stored as text (<c>[StoreAsText]</c> on
-/// the enum type — a 1.9.172 requirement), so appending a member is safe and
+/// the enum type: a 1.9.172 requirement), so appending a member is safe and
 /// renaming one orphans every row that carries it.</summary>
 [StoreAsText]
 public enum MedicationChangeKind
@@ -60,7 +60,7 @@ public enum MedicationChangeKind
 
 /// <summary>
 /// One durable entry in a pet's treatment ledger: what changed, when, and what it
-/// read before and after — in the words the app used at the time.
+/// read before and after: in the words the app used at the time.
 /// </summary>
 public class MedicationChange : ISyncable
 {
@@ -77,7 +77,7 @@ public class MedicationChange : ISyncable
     [Indexed]
     public int PetId { get; set; }
 
-    /// <summary>The medication this described, as a local id — a convenience, never a
+    /// <summary>The medication this described, as a local id: a convenience, never a
     /// dependency. It may point at a since-deleted (or, on a device that pulled the
     /// row before its medication, a never-present) medication, and every consumer must
     /// read <see cref="MedicationName"/> and <see cref="Summary"/> instead of joining.
@@ -90,12 +90,12 @@ public class MedicationChange : ISyncable
 
     public MedicationChangeKind Kind { get; set; }
 
-    /// <summary>The medication's name as of this change — denormalized on purpose
+    /// <summary>The medication's name as of this change: denormalized on purpose
     /// (see the file header). Verbatim user text; never translated.</summary>
     public string MedicationName { get; set; } = string.Empty;
 
     /// <summary>The fact, already rendered: <c>"30 mg → 45 mg"</c>. Empty where the
-    /// kind IS the whole fact (archived, restored, stopped) — there is no value to
+    /// kind IS the whole fact (archived, restored, stopped): there is no value to
     /// state and inventing one would pad the ledger with noise.</summary>
     public string Summary { get; set; } = string.Empty;
 

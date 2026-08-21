@@ -60,7 +60,7 @@
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Water background — bottom layer, spans the whole page -->
+        <!-- Water background: bottom layer, spans the whole page -->
         <!-- Motion is driven by the page (OnAppearing / OnDisappearing) so only the
              visible tab ever animates. See WaterBackground.xaml.cs for why that is
              the page's job and not the control's. -->
@@ -138,12 +138,16 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- 1c ── The visit that is near ──
+                <!-- 1c ── The visit, before and after ──
                      The appointment lives quietly on Care and takes over Today only
                      when it is close: same slot and same GlassCard as the notice above,
                      visible only inside the last seven days.
 
-                     No countdown, no urgency, and no colour change as it approaches —
+                     The DAY AFTER, the same band asks for the note instead: the visit
+                     is a state and that state does not end when the visit does. Both
+                     lines come from the VM, because the band now has two things to say.
+
+                     No countdown, no urgency, and no colour change as it approaches,
                      a visit does not become more important on the Tuesday than it was
                      on the Friday, and pretending otherwise would be the app adding
                      alarm the owner did not ask for (AI/app-voice.md §8). -->
@@ -156,7 +160,7 @@
                         <VerticalStackLayout Grid.Column="0" Spacing="4">
                             <Label Text="{Binding MainPageVM.NearVisitLine}"
                                    Style="{StaticResource SerifHeading}"/>
-                            <Label Text="{loc:Translate Today_VisitSummaryReady}"
+                            <Label Text="{Binding MainPageVM.NearVisitSubline}"
                                    FontFamily="{StaticResource FontSans}"
                                    FontSize="13"
                                    TextColor="{StaticResource InkSecondary}"/>
@@ -176,7 +180,7 @@
                           WidthRequest="132"
                           HeightRequest="132">
 
-                        <!-- Care-completion ring (DATA — precise, animated fill).
+                        <!-- Care-completion ring (DATA: precise, animated fill).
                              Progress = today's done/total from the same PendingEngine
                              snapshot the Journal's "Still to do" chips use. -->
                         <controls:ProgressRingView x:Name="CareRing"
@@ -187,7 +191,7 @@
                                                    TrackColor="{StaticResource TealLine}"
                                                    RingThickness="6"/>
 
-                        <!-- Avatar — profile photo, or the type emoji fallback -->
+                        <!-- Avatar: profile photo, or the type emoji fallback -->
                         <controls:PetAvatarView Diameter="108"
                                                 FallbackFontSize="48"
                                                 PhotoPath="{Binding MainPageVM.ActivePet.PhotoFullPath}"
@@ -195,6 +199,19 @@
                                                 HorizontalOptions="Center"
                                                 VerticalOptions="Center"/>
                     </Grid>
+
+                    <!-- What the ring is counting. WHAT REMAINS, never a score: no
+                         fraction, no percentage, no count of what is done, and nothing at
+                         all once the day is clear. AI/app-voice.md §10 bans progress rings
+                         that imply a target was hit or missed, and a tally under one is
+                         exactly that. Same strings as the Journal's chip row. -->
+                    <Label Text="{Binding MainPageVM.CareRemaining}"
+                           IsVisible="{Binding MainPageVM.HasCareRemaining}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12"
+                           TextColor="{StaticResource InkTertiary}"
+                           HorizontalOptions="Center"
+                           Margin="0,7,0,0"/>
 
                     <!-- Pet name -->
                     <Label Text="{Binding MainPageVM.ActivePet.Name}"
@@ -204,7 +221,7 @@
                            HorizontalOptions="Center"
                            Margin="0,10,0,0"/>
 
-                    <!-- Meta line: type · age · weight (DATA — precise) -->
+                    <!-- Meta line: type · age · weight (DATA: precise) -->
                     <Label HorizontalOptions="Center"
                            HorizontalTextAlignment="Center"
                            FontFamily="{StaticResource FontSans}"
@@ -223,8 +240,10 @@
                                 <Span Text=" · "/>
                                 <Span Text="{Binding MainPageVM.ActivePet.AgeYears}"/>
                                 <Span Text="{loc:Translate Common_YearsSeparator}"/>
-                                <Span Text="{Binding MainPageVM.LatestWeight}"/>
-                                <Span Text="{loc:Translate Common_KgSuffix}"/>
+                                <!-- Number AND unit from the one weight formatter, so
+                                     this line and the stat card beside it can never
+                                     render the same weigh-in two ways. -->
+                                <Span Text="{Binding MainPageVM.LatestWeightText}"/>
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>                    
@@ -328,7 +347,7 @@
                 </Grid>
 
                 <!-- 4 ── The two stat cards the owner chooses ──
-                     Each holds one record — the pet's latest value for it and when it
+                     Each holds one record: the pet's latest value for it and when it
                      was written down. Tapping ANYWHERE on a card opens the picker; the
                      pencil in its corner is only a cue. Defaults follow the pet's
                      conditions (see Data/Models/TodayCards.cs). -->
@@ -351,7 +370,7 @@
 
                         <!-- Left arrow: leaves the note, loops once, and drops toward the
                              left card. It hugs the text rather than reaching for the
-                             page edge — spread wide it stopped reading as one gesture.
+                             page edge: spread wide it stopped reading as one gesture.
                              Drawn, not an icon: same pen as the aside under the greeting. -->
                         <Path Grid.Column="0"
                               Data="M 30 5 C 22 2, 13 3.5, 10 9.5 C 8 13.5, 13 17, 15 13 C 17 9, 11.5 7, 8 11 C 4 15.5, 5 20.5, 7 24 M 7 24 L 2 21 M 7 24 L 7 18.5"
@@ -401,16 +420,16 @@
                      order, for every record that has anything in the range.
 
                      This replaced a hardcoded mood ribbon and a hardcoded weight
-                     chart. The top of this page already follows the pet — the ring,
+                     chart. The top of this page already follows the pet: the ring,
                      next-up and the two cards all derive from the plan or the pet's
-                     conditions — while the bottom drew the same two records for
+                     conditions, while the bottom drew the same two records for
                      everyone, so an owner managing a diabetic cat scrolled past a
                      glucose card into a weight chart and a mood ribbon.
 
                      It is NOT a dashboard and adds no knob: the care plan is the list
                      the owner already curated on Manage, and the single range selector
                      is the one the weight chart already had. Nothing here is ordered by
-                     volume and no record is dropped for being quiet — that would be the
+                     volume and no record is dropped for being quiet, that would be the
                      app deciding which one matters (Data/Models/RecordFacts.cs). -->
                 <VerticalStackLayout Spacing="12"
                                      IsVisible="{Binding LookBackVM.HasBlocks}">
@@ -510,6 +529,37 @@
                         </Border>
                     </Grid>
 
+                    <!-- What changed, and when. One quiet vertical mark sits at each of
+                         these dates on every chart below; the words are here, once,
+                         because a card-width chart cannot carry the label and repeating
+                         it under every block would be noise.
+
+                         WHAT CHANGED AND WHEN. NOTHING ELSE. No counts either side, no
+                         shading of the regions, no arrow, no delta, no wording that
+                         compares. The app places the mark; the owner draws the conclusion
+                         (AI/domain.md). -->
+                    <VerticalStackLayout Spacing="4"
+                                         IsVisible="{Binding LookBackVM.HasChanges}"
+                                         Margin="0,2,0,0">
+                        <Label Text="{Binding LookBackVM.ChangesHeading}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="10.5"
+                               FontAttributes="Bold"
+                               CharacterSpacing="1"
+                               TextColor="{StaticResource InkTertiary}"/>
+                        <VerticalStackLayout Spacing="3"
+                                             BindableLayout.ItemsSource="{Binding LookBackVM.Changes}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Label Text="{Binding .}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="12"
+                                           TextColor="{StaticResource InkSecondary}"/>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+
                     <VerticalStackLayout Spacing="12"
                                          BindableLayout.ItemsSource="{Binding LookBackVM.Blocks}">
                         <BindableLayout.ItemTemplate>
@@ -544,6 +594,32 @@
                                                       HorizontalOptions="Fill"
                                                       InputTransparent="True"/>
 
+                                        <!-- Which line is which, when the readings cluster
+                                             into day-part bands and the chart was drawn as
+                                             one line per band. It NAMES them and stops: no
+                                             counts, no ordering by size, nothing saying one
+                                             band matters more (Data/Models/RecordFacts.cs). -->
+                                        <FlexLayout Wrap="Wrap" Direction="Row"
+                                                    IsVisible="{Binding HasChartKey}"
+                                                    BindableLayout.ItemsSource="{Binding ChartKey}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="vms:SeriesKey">
+                                                    <HorizontalStackLayout Spacing="5" Margin="0,0,14,0">
+                                                        <BoxView WidthRequest="12"
+                                                                 HeightRequest="2"
+                                                                 CornerRadius="1"
+                                                                 Color="{Binding Ink}"
+                                                                 VerticalOptions="Center"/>
+                                                        <Label Text="{Binding Label}"
+                                                               FontFamily="{StaticResource FontSans}"
+                                                               FontSize="11"
+                                                               TextColor="{StaticResource InkTertiary}"
+                                                               VerticalOptions="Center"/>
+                                                    </HorizontalStackLayout>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </FlexLayout>
+
                                         <!-- Observed: one mark per reading, placed by date,
                                              heighted by the stored level. Named separately
                                              when a record holds both, because measurements
@@ -564,7 +640,7 @@
                                                       InputTransparent="True"/>
 
                                         <!-- Events: one mark per occurrence, at the moment
-                                             it happened. Same size, same colour, always —
+                                             it happened. Same size, same colour, always,
                                              nothing is encoded but when. -->
                                         <GraphicsView Drawable="{Binding Events}"
                                                       IsVisible="{Binding HasEvents}"
@@ -594,15 +670,22 @@
                                             </BindableLayout.ItemTemplate>
                                         </AbsoluteLayout>
 
-                                        <!-- The facts, in the same words the card sheet and
-                                             the appointment summary state them. One weight,
-                                             one colour: nothing here is emphasised. -->
+                                        <!-- The facts, in the same words the appointment
+                                             summary states them, and THE ONLY PLACE Today
+                                             states them. One weight, one colour: nothing
+                                             here is emphasised.
+
+                                             The day-part row is absent for a one-per-day
+                                             record (mood, weight): its entry times say when
+                                             the owner picked up the phone, not anything
+                                             about the pet. See Data/Models/RecordFacts.cs. -->
                                         <VerticalStackLayout Spacing="2">
                                             <Label Text="{Binding Count}"
                                                    FontFamily="{StaticResource FontSans}"
                                                    FontSize="12.5"
                                                    TextColor="{StaticResource InkSecondary}"/>
                                             <Label Text="{Binding DayParts}"
+                                                   IsVisible="{Binding HasDayParts}"
                                                    FontFamily="{StaticResource FontSans}"
                                                    FontSize="12.5"
                                                    TextColor="{StaticResource InkSecondary}"/>
@@ -701,6 +784,14 @@
                             Presented="{Binding IsPresented}"
                             SheetTemplate="{DataTemplate view:RedeemCodeSheetView}"/>
 
+        <!-- The vet visit sheet, hosted here so the band above can open it STRAIGHT on
+             "what the vet said". Pushing the appointment page first would put a page
+             transition in front of the one capture that decays by the hour. -->
+        <controls:SheetHost Grid.RowSpan="2"
+                            BindingContext="{Binding VetVisitSheetVM}"
+                            Presented="{Binding IsPresented}"
+                            SheetTemplate="{DataTemplate view:VetVisitSheetView}"/>
+
         <!-- Hidden developer diagnostics sheet -->
         <controls:SheetHost Grid.RowSpan="2"
                             BindingContext="{Binding DevVM}"
@@ -709,7 +800,7 @@
 
         <!-- Settings panel overlay. Its BindingContext stays the page's MainViewModel
              (the panel reads across several child VMs), and it binds its own
-             IsPanelOpen internally — see SettingsPanelView.xaml. -->
+             IsPanelOpen internally: see SettingsPanelView.xaml. -->
         <controls:SheetHost Grid.RowSpan="2"
                             Presented="{Binding SettingsVM.IsPanelOpen}"
                             SheetTemplate="{DataTemplate view:SettingsPanelView}"/>

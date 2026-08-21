@@ -8,8 +8,10 @@
     often know the day and not the slot, and this app never fills in the half of a
     date it was not told (the same rule as a pet's unknown birth month).
 
-    "What the vet said" appears only for a visit that has already happened — a note
-    written beforehand would be a prediction.
+    "What the vet said" appears only for a visit that has already happened: a note
+    written beforehand would be a prediction. When it exists it comes FIRST, and the
+    sheet can be opened straight to it (VetVisitSheetViewModel.OpenForNoteAsync), with
+    the day, the practice and the vet as a read-only line and "Edit details" behind it.
 
     BindingContext is a VetVisitSheetViewModel; open it via that VM's OpenAsync.
 -->
@@ -54,79 +56,38 @@
                             VerticalScrollBarVisibility="Never">
                     <VerticalStackLayout Spacing="14" Padding="0,2,0,0">
 
-                        <!-- Day -->
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="{loc:Translate Vet_VisitDayLabel}" Style="{StaticResource FieldLabel}"/>
-                            <Border Style="{StaticResource FieldBox}">
-                                <DatePicker Date="{Binding Date}"
-                                            FontFamily="{StaticResource FontSans}"
-                                            FontSize="15"
-                                            TextColor="{StaticResource Ink}"/>
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <!-- Time · optional. The switch is the answer to "do you know
-                             the time?", so OFF stores null rather than an invented hour. -->
-                        <VerticalStackLayout Spacing="8">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <Label Grid.Column="0"
-                                       Text="{loc:Translate Vet_VisitTimeLabel}"
-                                       Style="{StaticResource FieldLabel}"
-                                       VerticalOptions="Center"/>
-                                <Switch Grid.Column="1"
-                                        IsToggled="{Binding HasTime}"
-                                        OnColor="{StaticResource Teal}"
-                                        ThumbColor="{StaticResource White}"/>
-                            </Grid>
-                            <Border Style="{StaticResource FieldBox}"
-                                    IsVisible="{Binding HasTime}">
-                                <TimePicker Time="{Binding Time}"
-                                            Format="HH:mm"
-                                            FontFamily="{StaticResource FontSans}"
-                                            FontSize="15"
-                                            TextColor="{StaticResource Ink}"/>
-                            </Border>
-                            <Label Text="{loc:Translate Vet_VisitTimeHint}"
-                                   IsVisible="{Binding HasTime, Converter={StaticResource InvertedBoolConverter}}"
+                        <!-- The visit, read-only · shown when the sheet was opened
+                             STRAIGHT to the note. What the vet said decays within hours
+                             of leaving the practice, so that path reaches the field that
+                             matters first and states the four details it already has
+                             instead of asking for them again. "Edit details" is there for
+                             the rare correction. -->
+                        <VerticalStackLayout Spacing="4" IsVisible="{Binding ShowDetailsLine}">
+                            <Label Text="{Binding DetailsLine}"
                                    FontFamily="{StaticResource FontSans}"
-                                   FontSize="12"
-                                   TextColor="{StaticResource InkTertiary}"/>
+                                   FontSize="13.5"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                            <Label Text="{loc:Translate Vet_VisitEditDetails}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12.5"
+                                   TextColor="{StaticResource TealDeep}"
+                                   SemanticProperties.Description="{loc:Translate Vet_VisitEditDetails}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding EditDetailsCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
                         </VerticalStackLayout>
 
-                        <!-- Practice · free text, no directory and no lookup -->
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="{loc:Translate Vet_VisitPracticeLabel}" Style="{StaticResource FieldLabel}"/>
-                            <Border Style="{StaticResource FieldBox}">
-                                <Entry Text="{Binding Practice}"
-                                       Placeholder="{loc:Translate Vet_VisitPracticePlaceholder}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="15"
-                                       TextColor="{StaticResource Ink}"
-                                       PlaceholderColor="{StaticResource InkTertiary}"/>
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <!-- Vet · free text, same treatment -->
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="{loc:Translate Vet_VisitVetLabel}" Style="{StaticResource FieldLabel}"/>
-                            <Border Style="{StaticResource FieldBox}">
-                                <Entry Text="{Binding VetName}"
-                                       Placeholder="{loc:Translate Vet_VisitVetPlaceholder}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="15"
-                                       TextColor="{StaticResource Ink}"
-                                       PlaceholderColor="{StaticResource InkTertiary}"/>
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <!-- What the vet said · only once the visit has happened -->
+                        <!-- What the vet said · only once the visit has happened, and
+                             first on the page whenever it exists: it is the highest-value
+                             thing this sheet captures. -->
                         <VerticalStackLayout Spacing="8" IsVisible="{Binding ShowNote}">
                             <Label Text="{loc:Translate Vet_VisitNoteLabel}" Style="{StaticResource FieldLabel}"/>
                             <Border Style="{StaticResource FieldBox}">
                                 <Editor Text="{Binding VisitNote}"
                                         Placeholder="{loc:Translate Vet_VisitNotePlaceholder}"
                                         AutoSize="TextChanges"
-                                        HeightRequest="86"
+                                        HeightRequest="{Binding NoteHeight}"
                                         FontFamily="{StaticResource FontSans}"
                                         FontSize="15"
                                         TextColor="{StaticResource Ink}"
@@ -134,10 +95,84 @@
                             </Border>
                         </VerticalStackLayout>
 
+                        <!-- The four details. Always here on the form path; on the note
+                             path only once "Edit details" has been tapped. -->
+                        <VerticalStackLayout Spacing="14" IsVisible="{Binding ShowDetails}">
+
+                            <!-- Day -->
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{loc:Translate Vet_VisitDayLabel}" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource FieldBox}">
+                                    <DatePicker Date="{Binding Date}"
+                                                Format="{loc:Translate Vet_VisitDayFormat}"
+                                                FontFamily="{StaticResource FontSans}"
+                                                FontSize="15"
+                                                TextColor="{StaticResource Ink}"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <!-- Time · optional. The switch is the answer to "do you know
+                                 the time?", so OFF stores null rather than an invented hour. -->
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0"
+                                           Text="{loc:Translate Vet_VisitTimeLabel}"
+                                           Style="{StaticResource FieldLabel}"
+                                           VerticalOptions="Center"/>
+                                    <Switch Grid.Column="1"
+                                            IsToggled="{Binding HasTime}"
+                                            OnColor="{StaticResource Teal}"
+                                            ThumbColor="{StaticResource White}"/>
+                                </Grid>
+                                <Border Style="{StaticResource FieldBox}"
+                                        IsVisible="{Binding HasTime}">
+                                    <TimePicker Time="{Binding Time}"
+                                                Format="HH:mm"
+                                                FontFamily="{StaticResource FontSans}"
+                                                FontSize="15"
+                                                TextColor="{StaticResource Ink}"/>
+                                </Border>
+                                <Label Text="{loc:Translate Vet_VisitTimeHint}"
+                                       IsVisible="{Binding HasTime, Converter={StaticResource InvertedBoolConverter}}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource InkTertiary}"/>
+                            </VerticalStackLayout>
+
+                            <!-- Practice · free text, no directory and no lookup -->
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{loc:Translate Vet_VisitPracticeLabel}" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Text="{Binding Practice}"
+                                           Placeholder="{loc:Translate Vet_VisitPracticePlaceholder}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="15"
+                                           TextColor="{StaticResource Ink}"
+                                           PlaceholderColor="{StaticResource InkTertiary}"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <!-- Vet · free text, same treatment -->
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{loc:Translate Vet_VisitVetLabel}" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource FieldBox}">
+                                    <Entry Text="{Binding VetName}"
+                                           Placeholder="{loc:Translate Vet_VisitVetPlaceholder}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="15"
+                                           TextColor="{StaticResource Ink}"
+                                           PlaceholderColor="{StaticResource InkTertiary}"/>
+                                </Border>
+                            </VerticalStackLayout>
+
+                        </VerticalStackLayout>
+
                         <!-- Remove · no confirm dialog; the toast's Undo is the safety
-                             net (AI/design-decisions.md → "Deletion uses the undo toast"). -->
+                             net (AI/design-decisions.md → "Deletion uses the undo toast").
+                             It sits with the DETAILS, never under the note: on the note
+                             path the owner is writing down what a vet just told them. -->
                         <Label Text="{loc:Translate Vet_VisitDelete}"
-                               IsVisible="{Binding CanDelete}"
+                               IsVisible="{Binding ShowDelete}"
                                FontFamily="{StaticResource FontSans}"
                                FontSize="13"
                                TextColor="{StaticResource RoseDeep}"
@@ -158,7 +193,7 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding DismissCommand}"/>
                         </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Common_NotNow}"
+                        <Label Text="{loc:Translate Common_Cancel}"
                                FontFamily="{StaticResource FontSans}"
                                FontSize="14"
                                FontAttributes="Bold"

@@ -1,10 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0008 — appetite: exact grams + food context.
+--  0008: appetite: exact grams + food context.
 --
 --  Appetite gains the same two-mode shape as water (0007):
 --    • appetite_entries keeps the qualitative one-per-day reading and gains an
 --      optional `food` label.
---    • appetite_amount_entries is NEW — exact grams, ADDITIVE like glucose (keyed
+--    • appetite_amount_entries is NEW: exact grams, ADDITIVE like glucose (keyed
 --      by id, summed per day by the report), also with an optional `food` label.
 --
 --  Everything mirrors the water setup; push_rows gains one branch
@@ -42,7 +42,7 @@ create policy "members update"  on public.appetite_amount_entries for update usi
 
 -- ── push_rows: add appetite_amount_entries' natural key ─────────────────────
 -- Additive events converge on id. Everything else is byte-for-byte 0007 (the
--- current definition) — only conflict_cols gains one branch.
+-- current definition): only conflict_cols gains one branch.
 create or replace function public.push_rows(p_table text, p_rows jsonb)
 returns void
 language plpgsql
@@ -80,7 +80,7 @@ begin
     raise exception 'push_rows: table % is not syncable', p_table;
   end if;
 
-  -- Authorization — explicit because this function bypasses table RLS.
+  -- Authorization: explicit because this function bypasses table RLS.
   if p_table = 'pets' then
     execute
       'select exists (

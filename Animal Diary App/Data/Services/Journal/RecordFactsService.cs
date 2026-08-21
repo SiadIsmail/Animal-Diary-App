@@ -7,14 +7,14 @@ using Animal_Diary_App.Data.Services.Notifications;
 //  What the owner wrote down about one record, over one stretch of time.
 //
 //  A READ MODEL, not a screen. It introduces no table, stores nothing, and reads
-//  the entry stores that already own each record — the same posture as
+//  the entry stores that already own each record: the same posture as
 //  ConstellationService and TodayCardService.
 //
 //  Being one service consumed by three surfaces (Today's card sheet, the
 //  Constellation legend, the appointment summary) is what makes "computed
 //  identically for every kind" true by construction. A second copy of this
 //  arithmetic anywhere is how a statement that only appears for seizures, or only
-//  when the numbers are interesting, gets in — and that is exactly the line this
+//  when the numbers are interesting, gets in, and that is exactly the line this
 //  feature is not allowed to cross. The doctrine itself lives on RecordFacts.
 //
 //  What it deliberately does NOT compute: an average, a total across unlike
@@ -62,7 +62,7 @@ public class RecordFactsService
     /// <summary>
     /// The facts <b>and</b> the marks a surface can draw, from ONE pass over the store.
     ///
-    /// <para>The two were always the same read — the facts path was already gathering
+    /// <para>The two were always the same read: the facts path was already gathering
     /// exactly these moments and handing them to the builder. A caller that wants both
     /// (Today's look-back section) would otherwise scan every record twice.</para>
     ///
@@ -104,7 +104,7 @@ public class RecordFactsService
 
     // ── One-per-day stores: mood and weight share the day's PetEntry row ──────
     //
-    // Both count DAYS RECORDED, because that is what the store holds — one row per
+    // Both count DAYS RECORDED, because that is what the store holds: one row per
     // pet per day, re-logging replaces it. A legacy row with no recorded time sits at
     // the start of its day, exactly as the Constellation places it: it still happened.
 
@@ -128,7 +128,7 @@ public class RecordFactsService
         // No value: a mood is a word (see MoodLevel). Passing the stored 1–5 into a
         // RecordMoment would hand "Lowest 1 · Highest 4" to a surface that must never
         // turn an observation into a number (AI/design-decisions.md, "Communication
-        // layer") — which is why the level travels in a RecordObservation instead, where
+        // layer"), which is why the level travels in a RecordObservation instead, where
         // nothing can take its minimum.
         return new RecordSnapshot(
             RecordFactsBuilder.Build(kind, from, to,
@@ -168,11 +168,11 @@ public class RecordFactsService
 
     // ── The two-store records ────────────────────────────────────────────────
     //
-    // Water and appetite each have a MEASURED store (additive events — mL, grams) and
+    // Water and appetite each have a MEASURED store (additive events: mL, grams) and
     // an OBSERVED store (one relative word per day). The two are never merged into a
     // value or a chart, and an observation is never converted to a number: only the
     // measured side carries a Value here, so Lowest/Highest can only ever be mL or
-    // grams. What IS combined is the COUNT — and only because a count is a fact about
+    // grams. What IS combined is the COUNT, and only because a count is a fact about
     // the diary ("you wrote something down about water 40 times"), not about the
     // animal, and is reached the same way for every kind.
 
@@ -222,7 +222,7 @@ public class RecordFactsService
         // An Amount tracker's number is in the OWNER's unit, so lowest and highest are
         // theirs to read; a Tick tracker has no number at all and Amount is null, which
         // the builder simply leaves out. The split below is the same question asked of
-        // the data rather than of the definition — a tracker the owner declared as
+        // the data rather than of the definition: a tracker the owner declared as
         // Amount but only ever ticked draws as marks, which is what it actually is.
         var measured = rows.Where(m => m.Value is not null).ToList();
         var events = rows.Where(m => m.Value is null).ToList();
@@ -238,7 +238,7 @@ public class RecordFactsService
     /// The pet's doses over the range: given, skipped, not recorded.
     ///
     /// <para>The dose slots are the UNION of (a) the current schedule rules walked over
-    /// the period and (b) every dose log in it — the same rule the vet report follows,
+    /// the period and (b) every dose log in it: the same rule the vet report follows,
     /// and for the same reason: schedule rows describe only the CURRENT rules, so
     /// counting from them alone lets an edit silently rewrite history, while each log
     /// row proves a dose was scheduled then. Bounded below by each medication's creation
@@ -247,7 +247,7 @@ public class RecordFactsService
     /// </summary>
     private async Task<RecordSnapshot> MedicationAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
     {
-        // Archived medications are included when they were still dosed in the period —
+        // Archived medications are included when they were still dosed in the period,
         // a range of history needs the whole picture, exactly as the report does.
         var meds = await _medications.GetMedicationsByPetIdAsync(petId);
         var medIds = meds.Select(m => m.Id).ToList();
@@ -284,7 +284,7 @@ public class RecordFactsService
                 bySlot.TryGetValue(slot, out var log);
 
                 // A dose sits at the moment the owner tapped it, falling back to the
-                // slot it was scheduled for — the same rule the Journal timeline and
+                // slot it was scheduled for: the same rule the Journal timeline and
                 // Today's card already place doses by, so the bands agree with them.
                 moments.Add(new RecordMoment(log?.ResolvedAt ?? (slot.Date + slot.Time), null));
 
@@ -302,7 +302,7 @@ public class RecordFactsService
         }
 
         // Facts only, and no marks to draw. Three hundred doses over a quarter is a solid
-        // band on any axis — it would say "this pet is medicated", which the three counts
+        // band on any axis: it would say "this pet is medicated", which the three counts
         // below already say better.
         return RecordSnapshot.Empty(
             RecordFactsBuilder.Build(kind, from, to, moments, NoMoments,

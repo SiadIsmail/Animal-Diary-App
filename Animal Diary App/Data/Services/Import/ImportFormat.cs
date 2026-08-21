@@ -3,7 +3,7 @@ namespace Animal_Diary_App.Data.Services.Import;
 using Animal_Diary_App.Data.Models;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  The import format's VOCABULARY — the one place the wire strings live.
+//  The import format's VOCABULARY: the one place the wire strings live.
 //
 //  AI/import-guide.md is written from this file. If a value here changes, the guide
 //  is wrong until it is updated in the same change: the guide is the contract another
@@ -12,13 +12,13 @@ using Animal_Diary_App.Data.Models;
 //
 //  Wire strings are snake_case and deliberately NOT the C# enum member names. Those
 //  enums are storage formats (SeizureType's member names are the cloud wire format;
-//  renaming one orphans every synced row — see JournalEntries.cs), so pinning the
+//  renaming one orphans every synced row: see JournalEntries.cs), so pinning the
 //  import vocabulary separately means an import file can never become the reason a
 //  storage enum cannot be renamed.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// <summary>Which entry an import row describes. Each maps onto a store the app
-/// already has — this enum introduces no new kind of data.</summary>
+/// already has: this enum introduces no new kind of data.</summary>
 public enum ImportEntryType
 {
     Weight,
@@ -36,7 +36,7 @@ public enum ImportEntryType
 }
 
 /// <summary>Whether a pet block appends to a pet already on the device or creates one.
-/// Stated explicitly in the file and never inferred — see <see cref="ImportValidator"/>.</summary>
+/// Stated explicitly in the file and never inferred: see <see cref="ImportValidator"/>.</summary>
 public enum ImportPetMatch
 {
     Existing,
@@ -56,7 +56,7 @@ public static class ImportFormat
     public const string VersionKey = "felova_import_version";
 
     /// <summary>Weight is kilograms everywhere in this app (the vet report labels its
-    /// series "kg"), so the format names the unit in the field itself — value_kg —
+    /// series "kg"), so the format names the unit in the field itself: value_kg,
     /// rather than accepting a unit the importer would have to convert. A conversion is
     /// a place to be silently wrong about a medical number.</summary>
     public const string WeightUnit = "kg";
@@ -76,7 +76,7 @@ public static class ImportFormat
         ["custom"] = ImportEntryType.Custom,
     };
 
-    /// <summary>The wire name for a type — used in errors and in the preview, so the
+    /// <summary>The wire name for a type: used in errors and in the preview, so the
     /// owner reads the same word they would find in the file.</summary>
     public static string NameOf(ImportEntryType type) =>
         EntryTypes.First(kv => kv.Value == type).Key;
@@ -136,7 +136,7 @@ public static class ImportFormat
     }
 
     /// <summary>The cadence vocabulary, shared with the shipped trackers
-    /// (<see cref="TrackerKind"/>). Optional in a file — see
+    /// (<see cref="TrackerKind"/>). Optional in a file: see
     /// <see cref="DefaultCustomCadence"/>.</summary>
     public static bool TryParseCadence(string? value, out TrackerKind kind)
     {
@@ -158,7 +158,7 @@ public static class ImportFormat
     /// <para><see cref="TrackerKind.Event"/> because a cadence is how often the app
     /// ASKS, which is an owner's preference and not a fact anywhere in a pile of notes.
     /// Event never appears in "Still to do", so a guess can never put "sick yet?" on a
-    /// to-do list — and the owner changes it in one tap on the Manage page if they do
+    /// to-do list, and the owner changes it in one tap on the Manage page if they do
     /// want to be asked.</para>
     /// </summary>
     public const TrackerKind DefaultCustomCadence = TrackerKind.Event;
@@ -168,18 +168,18 @@ public static class ImportFormat
     // These mirror what the app's own input sheets accept, so an imported row can never
     // be a value the owner could not have typed. Where a sheet has no bound (glucose
     // and weight are only clamped to >= 0), the import applies a loose sanity ceiling
-    // instead — an AI transcribing "18.4kg" as 1840 is the failure this catches, and a
+    // instead: an AI transcribing "18.4kg" as 1840 is the failure this catches, and a
     // ceiling no real animal reaches costs nothing.
 
     /// <summary>Levels are 1..5 everywhere (mood, appetite, water). 0 is "None", which
-    /// is the app's way of saying "not recorded" — importing it would write an entry
+    /// is the app's way of saying "not recorded": importing it would write an entry
     /// that claims nothing.</summary>
     public const int MinLevel = 1;
     public const int MaxLevel = 5;
 
     /// <summary>Whole minutes, matching SeizureEntry.DurationMinutes. The sheet itself
     /// only keeps a parsed duration when minutes > 0, so 0 is not a value the app can
-    /// hold — a sub-minute seizure rounds up to 1 and the exact wording belongs in the
+    /// hold: a sub-minute seizure rounds up to 1 and the exact wording belongs in the
     /// note.</summary>
     public const int MinSeizureMinutes = 1;
     public const int MaxSeizureMinutes = 24 * 60;
@@ -198,11 +198,11 @@ public static class ImportFormat
     /// rejected. One day, not zero: the file may have been generated in a timezone
     /// ahead of this device, and a diary entry written "tonight" is legitimate. Anything
     /// further is a mis-transcribed year, which is the single most damaging mistake an
-    /// AI can make here — it buries entries decades away from the pet's history where no
+    /// AI can make here: it buries entries decades away from the pet's history where no
     /// owner will ever find them.</summary>
     public const int MaxFutureDays = 1;
 
-    /// <summary>Dates travel as this and nothing else — no locale ordering to guess at,
+    /// <summary>Dates travel as this and nothing else, no locale ordering to guess at,
     /// and the same shape the cloud layer already uses (see CloudJson).</summary>
     public const string DateFormat = "yyyy-MM-dd";
 

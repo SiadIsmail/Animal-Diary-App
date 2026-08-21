@@ -10,7 +10,7 @@ using Microsoft.Maui.Graphics.Platform;
 /// <summary>
 /// The photo editor's view half. It owns the one thing the ViewModel deliberately does
 /// not: the decoded bitmap. The ViewModel holds four numbers, this holds the pixels to
-/// preview them against, and the file on disk is owned by <c>PetPhotoService</c> — so
+/// preview them against, and the file on disk is owned by <c>PetPhotoService</c>, so
 /// nothing anywhere holds a photo it isn't the right layer to hold.
 /// </summary>
 public partial class PhotoEditorSheetView : ContentView
@@ -19,7 +19,7 @@ public partial class PhotoEditorSheetView : ContentView
     private PhotoEditorSheetViewModel? _vm;
 
     // Where the photo sat when the current drag began. A pan reports its total travel
-    // since the finger went down, so the offset is always start + total — never an
+    // since the finger went down, so the offset is always start + total, never an
     // accumulation, which would drift over a long drag.
     private (float X, float Y) _panStart;
 
@@ -85,7 +85,7 @@ public partial class PhotoEditorSheetView : ContentView
     }
 
     /// <summary>Decode the staged photo off the UI thread and hand it to the drawable. A
-    /// blank stage for a moment is the right failure mode here — the sheet is already
+    /// blank stage for a moment is the right failure mode here: the sheet is already
     /// sliding in, and blocking the slide to decode a 1600px JPEG would be worse.</summary>
     private async Task LoadSourceAsync()
     {
@@ -136,7 +136,7 @@ public partial class PhotoEditorSheetView : ContentView
             return;
 
         // The drag arrives in device-independent units and the transform speaks in
-        // fractions of the crop square's side, so every drag is divided by that side —
+        // fractions of the crop square's side, so every drag is divided by that side,
         // which is also what makes the same gesture mean the same thing on any screen.
         var side = CropSide();
         if (side <= 0)

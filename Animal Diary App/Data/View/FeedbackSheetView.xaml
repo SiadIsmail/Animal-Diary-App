@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- FeedbackSheetView — the two ways to reach us, on the shared FelovaBottomSheet.
+<!-- FeedbackSheetView: the two ways to reach us, on the shared FelovaBottomSheet.
      Discord (other owners see it too) or a direct email. No form, no ticket, no
      account. BindingContext is a FeedbackSheetViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"

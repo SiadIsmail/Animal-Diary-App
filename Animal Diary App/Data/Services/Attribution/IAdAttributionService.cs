@@ -2,7 +2,7 @@ namespace Animal_Diary_App.Data.Services.Attribution;
 
 /// <summary>
 /// The only ad-attribution API the app uses. Everything injects this and nothing above it
-/// names a Meta type — the same arrangement as <c>IAnalyticsService</c> and
+/// names a Meta type: the same arrangement as <c>IAnalyticsService</c> and
 /// <c>IInstallReferrerSource</c>. Exactly one implementation touches the SDK
 /// (<c>MetaAdAttributionService</c>, Android-only); every other platform and every
 /// disabled build gets <see cref="NullAdAttributionService"/>.
@@ -15,7 +15,7 @@ namespace Animal_Diary_App.Data.Services.Attribution;
 public interface IAdAttributionService
 {
     /// <summary>
-    /// True when this build and platform can actually report an install — Meta is enabled,
+    /// True when this build and platform can actually report an install: Meta is enabled,
     /// credentials are present, and we are on a platform with an SDK. The Settings toggle
     /// binds its visibility to this, so a switch never appears where it would do nothing.
     /// </summary>

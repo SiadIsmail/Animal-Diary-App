@@ -6,24 +6,24 @@
     Journal input). It owns the chrome + motion; callers supply arbitrary body via
     SheetContent, plus an optional serif Title and Caveat Subtitle.
 
-      IsPresented   bool   — flip to slide the sheet up / down (bind to a VM flag)
-      Title         string — centred Fraunces title (hidden when empty)
-      Subtitle      string — centred Caveat handwriting line (hidden when empty)
-      SheetContent  View   — the body (form, stepper, pickers…)
-      DismissCommand ICommand — invoked when the scrim is tapped; if unset, tapping
+      IsPresented   bool  : flip to slide the sheet up / down (bind to a VM flag)
+      Title         string: centred Fraunces title (hidden when empty)
+      Subtitle      string: centred Caveat handwriting line (hidden when empty)
+      SheetContent  View  : the body (form, stepper, pickers…)
+      DismissCommand ICommand: invoked when the scrim is tapped; if unset, tapping
                                 the scrim just sets IsPresented=false.
 
     Motion matches the prototype: ~420ms slide on cubic-bezier(.32,.72,.28,1) with a
     scrim fade, shortened when the OS asks for reduced motion. Keep the x:Named
-    Scrim / SheetContainer / BodyHost — the code-behind animates them.
+    Scrim / SheetContainer / BodyHost: the code-behind animates them.
 
     Hiding: the sheet is NEVER collapsed with IsVisible. It hides by translating the
     container below the screen with the whole control InputTransparent, so Android
-    keeps the body realised and laid out — content populated on-open (item lists
+    keeps the body realised and laid out: content populated on-open (item lists
     especially) stayed empty on first show when the view had never been laid out.
 
     Height: the sheet grows with its body, capped at 90% of the screen
-    (OnSizeAllocated). A body that can outgrow that owns its OWN scroller — see
+    (OnSizeAllocated). A body that can outgrow that owns its OWN scroller: see
     AddEditMedicationsView, the pattern to copy:
 
         <Grid RowDefinitions="*,Auto" RowSpacing="16">
@@ -31,15 +31,15 @@
             <Grid Grid.Row="1"> …actions, pinned… </Grid>
         </Grid>
 
-    A body that is a plain list rather than a form — the Journal's "+" sheet, Manage's
-    "add a tracker" — has no actions to pin and must still hug a short list, so it uses
+    A body that is a plain list rather than a form: the Journal's "+" sheet, Manage's
+    "add a tracker": has no actions to pin and must still hug a short list, so it uses
     the other shape: one ScrollView, VerticalOptions="Start", its MaximumHeightRequest
     set from MaxBodyHeight(screen height) in the code-behind. Both halves are load-
-    bearing — Start alone overflows the cap, the ceiling alone stretches to fill.
+    bearing: Start alone overflows the cap, the ceiling alone stretches to fill.
 
     Do NOT put a ScrollView here around BodyHost "so callers don't have to". That was
     tried: on Android a ScrollView in this star row measures to FILL, so every short
-    sheet — mood, weight, the pickers — stretched to the full 90% instead of hugging its
+    sheet (mood, weight, the pickers) stretched to the full 90% instead of hugging its
     content, and the medication form ended up with two nested scrollers. Pinning the
     actions in the caller is also the better shape: Save stays put while the body moves.
 -->
@@ -51,7 +51,7 @@
 
     <ContentView.Resources>
         <!-- Warm gradient sheet ground (prototype: mint → mint → sand), built from
-             existing rockpool tokens — no new colour keys. -->
+             existing rockpool tokens, no new colour keys. -->
         <LinearGradientBrush x:Key="SheetWarm" StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="{StaticResource SeaHi}" Offset="0"/>
             <GradientStop Color="{StaticResource SeaGradTop}" Offset="0.78"/>

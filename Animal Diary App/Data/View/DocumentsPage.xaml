@@ -4,7 +4,7 @@
     ─────────────────────────────────────────────────────────
     The active pet's generated vet reports (newest first), reached from the Pets
     page's Documents row. Row tap → in-app preview; icons → share / delete.
-    Delete is deferred behind the shared UndoToast (no confirm dialogs — see
+    Delete is deferred behind the shared UndoToast (no confirm dialogs: see
     AI/design-decisions.md); leaving the page commits a staged delete.
     BindingContext is the MainViewModel; content binds through DocumentsVM.
 -->

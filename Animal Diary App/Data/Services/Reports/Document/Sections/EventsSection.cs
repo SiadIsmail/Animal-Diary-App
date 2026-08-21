@@ -5,7 +5,7 @@ using MigraDoc.DocumentObjectModel.Tables;
 
 /// <summary>
 /// Terse dated table of notable occurrences, newest first. The wording per
-/// <see cref="ReportEventKind"/> lives here and states only what was logged —
+/// <see cref="ReportEventKind"/> lives here and states only what was logged,
 /// severity words, causes and conclusions are the vet's job, not ours.
 /// Capped at <see cref="VetReportStyles.MaxEventRows"/> rows to protect the
 /// one-page target; the cap is stated so nothing looks hidden.
@@ -87,14 +87,14 @@ public class EventsSection : IVetReportSection
     {
         var parts = new List<string>();
         // First: it is the most clinically legible thing in the row, and it is the
-        // owner's own answer — absent when they didn't give one.
+        // owner's own answer: absent when they didn't give one.
         if (e.SeizureType is not null)
             parts.Add(VetReportStrings.SeizureType(e.SeizureType));
         if (e.DurationMinutes is int min)
             parts.Add(VetReportStrings.EventDuration(min));
         if (e.Kind == ReportEventKind.LowAppetite && e.Value is int level)
             parts.Add(VetReportStrings.EventAppetiteLevel(level));
-        // The owner's own words, printed verbatim — never translated.
+        // The owner's own words, printed verbatim, never translated.
         if (e.Note != null)
             parts.Add($"“{e.Note}”");
         return parts.Count > 0 ? string.Join(" · ", parts) : VetReportStrings.Empty;

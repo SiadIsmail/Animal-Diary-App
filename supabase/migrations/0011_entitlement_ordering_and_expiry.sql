@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0011 — Make the server-side entitlement safe against lost and out-of-order
+--  0011: Make the server-side entitlement safe against lost and out-of-order
 --  webhooks.
 --
 --  Assumptions 0010 made that do not hold:
@@ -7,7 +7,7 @@
 --  1. "Webhooks arrive in order." They do not. RevenueCat retries with backoff
 --     and gives no ordering guarantee, so a retried EXPIRATION can land AFTER
 --     the RENEWAL that superseded it. The later write won, marking a paying
---     owner inactive — and because this column decides who may sponsor, every
+--     owner inactive, and because this column decides who may sponsor, every
 --     one of their caregivers silently dropped to read-only until the next
 --     renewal. Fixed with an event-time watermark (entitlement_event_at):
 --     the webhook ignores any event older than the one already applied. Same
@@ -27,7 +27,7 @@
 -- NOT NULL with '-infinity' rather than a nullable column, deliberately: it lets
 -- the webhook guard every write with one plain `.lte()` filter instead of an
 -- `or(is null, lte)`. PostgREST's or() takes a filter STRING in which '.' is
--- reserved, and every ISO timestamp contains dots — so the nullable version puts
+-- reserved, and every ISO timestamp contains dots, so the nullable version puts
 -- a parsing hazard on the one code path that must never quietly fail open.
 -- Existing rows start at '-infinity', so the first event of any age wins.
 

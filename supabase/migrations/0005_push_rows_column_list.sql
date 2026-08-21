@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0005 — push_rows: insert an explicit column list.
+--  0005: push_rows: insert an explicit column list.
 --
 --  `insert … select * from jsonb_populate_recordset(...)` writes EXPLICIT
 --  NULLs for columns the client never sends (created_at, updated_at), and an
@@ -43,7 +43,7 @@ begin
     raise exception 'push_rows: table % is not syncable', p_table;
   end if;
 
-  -- Authorization — explicit because this function bypasses table RLS.
+  -- Authorization: explicit because this function bypasses table RLS.
   if p_table = 'pets' then
     execute
       'select exists (

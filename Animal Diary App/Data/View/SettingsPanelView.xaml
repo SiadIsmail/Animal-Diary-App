@@ -37,7 +37,7 @@
     <Grid x:Name="RootOverlay"
           IsVisible="False">
 
-        <!-- Dimming overlay — tap to close -->
+        <!-- Dimming overlay: tap to close -->
         <BoxView x:Name="DimmingOverlay"
                  BackgroundColor="#0D3A3C"
                  Opacity="0"
@@ -48,7 +48,7 @@
             </BoxView.GestureRecognizers>
         </BoxView>
 
-        <!-- Settings panel — slides in from the right -->
+        <!-- Settings panel: slides in from the right -->
         <Border x:Name="SettingsPanel"
                 WidthRequest="290"
                 HorizontalOptions="End"

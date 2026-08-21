@@ -21,17 +21,17 @@
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Water background — bottom layer, spans the whole page -->
+        <!-- Water background: bottom layer, spans the whole page -->
         <controls:WaterBackground Grid.RowSpan="2"/>
 
-        <!-- ══════════ MAIN CONTENT — vertically centered ══════════ -->
+        <!-- ══════════ MAIN CONTENT: vertically centered ══════════ -->
         <VerticalStackLayout Grid.Row="0"
                              Spacing="0"
                              VerticalOptions="Center"
                              HorizontalOptions="Fill"
                              Padding="34,0">
 
-            <!-- Avatar cluster — three overlapping pet circles -->
+            <!-- Avatar cluster: three overlapping pet circles -->
             <Grid HeightRequest="130"
                   WidthRequest="210"
                   HorizontalOptions="Center"
@@ -134,7 +134,7 @@
                  (2/3, unchanged teal) for everyone starting fresh. -->
             <Grid ColumnDefinitions="1*,2*" ColumnSpacing="12">
 
-                <!-- Secondary: the one account door — sign in, create an account, or
+                <!-- Secondary: the one account door: sign in, create an account, or
                      (once signed in) redeem a code to become a caregiver. -->
                 <Border Grid.Column="0"
                         BackgroundColor="{StaticResource Glass}"
@@ -182,7 +182,7 @@
                    HorizontalTextAlignment="Center"/>
         </VerticalStackLayout>
 
-        <!-- Account sheet (sign in / create account / join with a code) — the shared
+        <!-- Account sheet (sign in / create account / join with a code): the shared
              FelovaBottomSheet; click-through while closed so the buttons stay live. -->
         <view:CloudSheetView Grid.RowSpan="2"
                              BindingContext="{Binding CloudVM}"/>

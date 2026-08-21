@@ -6,13 +6,13 @@ using Xunit;
 /// <summary>
 /// The WHERE fragment that keeps seeded demo data off the wire.
 ///
-/// <para>These are string assertions, which is usually a smell — here it is the point. The
+/// <para>These are string assertions, which is usually a smell: here it is the point. The
 /// fragment is interpolated into SQL at three places that can put a row on the wire
 /// (<c>TableSync.CollectDirtyAsync</c> and the two bulk sweeps in <c>CloudSyncService</c>),
 /// and a wrong fragment does not throw, fail a build, or break a sync: it uploads a
 /// creator's invented medical history to their real account, silently and permanently.
 /// SQLite is never opened in this project, so the shape of the clause is the part that can
-/// be proven here — and it is the part that was reasoned about.</para>
+/// be proven here, and it is the part that was reasoned about.</para>
 /// </summary>
 public class PetScopeSqlTests
 {
@@ -39,7 +39,7 @@ public class PetScopeSqlTests
     /// The NULL trap, stated as a test.
     ///
     /// <para><c>IsDemo</c> is an additive column, so every pet row written before demo mode
-    /// existed holds NULL — and <c>NULL = 0</c> is not true in SQL. Had the root arm been
+    /// existed holds NULL, and <c>NULL = 0</c> is not true in SQL. Had the root arm been
     /// spelled the obvious way, this clause would have quietly dropped every pre-existing
     /// pet out of the upload queue: the user's own data, silently unsynced, with no error
     /// anywhere. Phrased as set membership, an unknown flag simply fails to join the demo
@@ -56,7 +56,7 @@ public class PetScopeSqlTests
         }
     }
 
-    /// <summary>Every arm is the same shape — "not in the demo pet set" — which is what
+    /// <summary>Every arm is the same shape ("not in the demo pet set") which is what
     /// makes the NULL reading above uniform instead of a special case on one table.</summary>
     [Fact]
     public void ExcludesDemo_IsAlwaysASetMembershipTestAgainstTheDemoPets()
@@ -88,7 +88,7 @@ public class PetScopeSqlTests
     }
 
     /// <summary>The demo set selects a primary key. If it ever selected a nullable column,
-    /// <c>NOT IN</c> would collapse to "no rows at all" the moment one row held NULL — and
+    /// <c>NOT IN</c> would collapse to "no rows at all" the moment one row held NULL, and
     /// the symptom would be the whole upload queue silently emptying.</summary>
     [Fact]
     public void DemoPetIds_SelectsThePrimaryKey()
@@ -100,7 +100,7 @@ public class PetScopeSqlTests
 
     /// <summary>The guard takes no parameter: it is a standing condition, not a question
     /// about one animal. A stray <c>?</c> would bind against whatever the caller passed for
-    /// a different clause — the sweeps pass nothing at all.</summary>
+    /// a different clause: the sweeps pass nothing at all.</summary>
     [Fact]
     public void ExcludesDemo_BindsNoParameters()
     {

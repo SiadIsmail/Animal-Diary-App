@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0015 — Access codes: a one-time code that grants a year of full access.
+--  0015: Access codes: a one-time code that grants a year of full access.
 --
 --  Assumption this migration relaxes: 0010 shipped exactly two ways to have
 --  access, and both are things that happen TO an account rather than things the

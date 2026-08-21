@@ -21,7 +21,7 @@ public interface IInstallReferrerSource
     /// <summary>The raw referrer string Google Play recorded for this install, or null when
     /// there is none, the store is unavailable, or the platform has no such concept.
     ///
-    /// <para>Non-throwing and time-bounded — this runs on a launch path and must never be
+    /// <para>Non-throwing and time-bounded: this runs on a launch path and must never be
     /// able to hang it. Read <b>once</b> per install (Google's own guidance); the value is
     /// retained for 90 days and never changes short of a reinstall.</para>
     ///

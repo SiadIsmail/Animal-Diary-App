@@ -6,7 +6,7 @@ using System.Diagnostics;
 /// A tiny in-memory ring buffer of recent cloud events, so the hidden developer
 /// panel can surface the failures that are otherwise swallowed to
 /// <see cref="Debug"/> (a dropped Google sign-in, a silent session expiry, a
-/// sync error). <see cref="Record"/> is the single sink — it also mirrors to
+/// sync error). <see cref="Record"/> is the single sink: it also mirrors to
 /// <see cref="Debug"/>, so existing debug-console visibility is unchanged.
 ///
 /// Deliberately holds only coarse technical detail (event, HTTP status, trimmed
@@ -15,7 +15,7 @@ using System.Diagnostics;
 /// data reset via <see cref="Clear"/>.
 ///
 /// <para><b>Nor any personal detail.</b> The dev panel renders this buffer and offers
-/// a Copy button, so every line can end up pasted into a support thread — treat it as
+/// a Copy button, so every line can end up pasted into a support thread: treat it as
 /// publishable. Email addresses, user ids and pet names do not belong here even though
 /// they are not secrets; the sign-in path used to record the account's email and no
 /// longer does. If you need to correlate a log with an account, log the fact and let

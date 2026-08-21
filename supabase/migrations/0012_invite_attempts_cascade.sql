@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0012 — Make pet_invite_attempts erasable with the account that produced it.
+--  0012: Make pet_invite_attempts erasable with the account that produced it.
 --
 --  Corrects an omission in 0006. Every other table either hangs off public.pets
 --  or off auth.users with ON DELETE CASCADE, so delete_my_account() removes the
@@ -15,13 +15,13 @@
 --  rather than a delete inside the RPC: it holds for every future deletion path,
 --  including ones that bypass the RPC (a dashboard delete, a support action).
 --
---  Rate limiting is unaffected — the window it queries is an hour wide, and rows
+--  Rate limiting is unaffected: the window it queries is an hour wide, and rows
 --  only vanish when the account they belong to ceases to exist.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ── 1. clear the existing orphans ───────────────────────────────────────────
 -- Rows whose user is already gone. ADD CONSTRAINT validates existing rows and
--- would fail on any of these, so they must go first — and they are precisely the
+-- would fail on any of these, so they must go first, and they are precisely the
 -- residue this migration exists to remove.
 delete from public.pet_invite_attempts a
  where not exists (

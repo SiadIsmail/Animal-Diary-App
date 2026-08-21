@@ -1,12 +1,12 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0021 — Retire the trial.
+--  0021: Retire the trial.
 --
 --  The paid boundary was inverted: writing things down is free forever, and what
 --  is paid for is what the accumulated record is FOR (the assembled appointment
 --  summary, the designed vet report, backup, a second pet, minting an invite).
---  The 14-day trial is gone from the app entirely — TrialService, ITrialStore,
+--  The 14-day trial is gone from the app entirely: TrialService, ITrialStore,
 --  ITrialAnchor, BillingConfig.TrialLength and AccessState.Trial/TrialExpired all
---  deleted — so the server half has to go with it or it becomes a clause nobody
+--  deleted, so the server half has to go with it or it becomes a clause nobody
 --  can explain.
 --
 --  Server-side, owner_has_access answered:
@@ -17,7 +17,7 @@
 --  WHAT THIS TAKES AWAY, AND FROM WHOM. This function's only job is telling a
 --  caregiver whether the owner of a pet they help with is covered. Dropping the
 --  trial clause means every owner on the new free tier stops sponsoring. That is
---  intended — a free tier that sponsors unlimited caregivers is not a tier — and
+--  intended (a free tier that sponsors unlimited caregivers is not a tier) and
 --  it applies to everyone at once, including people already caregiving for a free
 --  owner. Nobody is grandfathered, deliberately.
 --

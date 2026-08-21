@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-    PetDetailsPage.xaml — onboarding step 2 of 2: TECHNICAL DETAILS
+    PetDetailsPage.xaml: onboarding step 2 of 2: TECHNICAL DETAILS
     ─────────────────────────────────────────────────────────
     Reached from CreatePetPage (step 1) via "Next". Collects the details that
     aren't part of the pet's identity: its species/type and its birthday.
@@ -59,7 +59,7 @@
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Water background — bottom layer, spans the whole page -->
+        <!-- Water background: bottom layer, spans the whole page -->
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ══════════ SCROLLABLE CONTENT ══════════ -->
@@ -83,7 +83,7 @@
                        IsVisible="{Binding PetVM.DetailsSubtitle, Converter={StaticResource StringToBoolConverter}}"
                        Margin="10,0"/>
 
-                <!-- Avatar preview — the chosen photo, or the species emoji fallback -->
+                <!-- Avatar preview: the chosen photo, or the species emoji fallback -->
                 <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
                     <controls:PetAvatarView Diameter="100"
                                             FallbackFontSize="52"

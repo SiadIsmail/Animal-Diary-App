@@ -6,7 +6,7 @@ using Xunit;
 /// <summary>
 /// <see cref="SignOutImpact"/> is what the sign-out confirmation is built from, so the
 /// "is there anything to warn about" decision is worth pinning: getting it wrong either
-/// asks a pointless question or — much worse — removes someone's pets silently.
+/// asks a pointless question or (much worse) removes someone's pets silently.
 ///
 /// <para>The sync engine itself is MAUI/SQLite-bound and unreachable from this assembly;
 /// the teardown behaviours are covered as device tests in ACCOUNT_LIFECYCLE_PLAN.md §6.</para>
@@ -16,7 +16,7 @@ public class SignOutImpactTests
     [Fact]
     public void Nothing_to_lose_asks_nothing()
     {
-        // Signed in but holding no synced pets and no pending writes — a confirm here would
+        // Signed in but holding no synced pets and no pending writes: a confirm here would
         // be noise.
         var impact = new SignOutImpact(Array.Empty<string>(), 0);
         Assert.False(impact.RemovesAnything);

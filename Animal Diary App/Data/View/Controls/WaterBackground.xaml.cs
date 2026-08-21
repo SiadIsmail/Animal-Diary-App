@@ -1,4 +1,4 @@
-﻿namespace Animal_Diary_App.Data.View.Controls;
+namespace Animal_Diary_App.Data.View.Controls;
 
 using Microsoft.Maui.Controls.Shapes;
 using Animal_Diary_App.Helpers;
@@ -15,8 +15,8 @@ using Animal_Diary_App.Helpers;
 /// <see cref="Start"/> from <c>OnAppearing</c> and <see cref="Stop"/> from
 /// <c>OnDisappearing</c>. This is load-bearing, not tidiness: the three tab pages
 /// are all alive at once for the Shell's lifetime, so a control that started its
-/// own loops in the constructor left <b>three</b> copies drifting forever — including
-/// on the two tabs nobody was looking at — and an Android Activity recreation added
+/// own loops in the constructor left <b>three</b> copies drifting forever: including
+/// on the two tabs nobody was looking at, and an Android Activity recreation added
 /// three more that nothing could ever stop. Every one of those ticks lands on the UI
 /// thread, competing with the tab switch the person is waiting for.</para>
 ///
@@ -44,7 +44,7 @@ public partial class WaterBackground : ContentView
     private VisualElement[] Bubbles =>
         new VisualElement[] { Bubble1, Bubble2, Bubble3, Bubble4, Bubble5, Bubble6, Bubble7, Bubble8 };
 
-    /// <summary>Begin (or resume) the bubble drift. Idempotent — a second call while
+    /// <summary>Begin (or resume) the bubble drift. Idempotent: a second call while
     /// already running does nothing, so a page that appears twice can't double up.</summary>
     public void Start()
     {
@@ -61,8 +61,8 @@ public partial class WaterBackground : ContentView
         // negative animation-delay stagger, since MAUI animations can't be scrubbed
         // to an arbitrary phase).
         //
-        // The prototype's second motion — a 5% "breathe" ScaleTo on its own shorter
-        // period — is deliberately NOT here. It doubled the number of live animations
+        // The prototype's second motion: a 5% "breathe" ScaleTo on its own shorter
+        // period: is deliberately NOT here. It doubled the number of live animations
         // for a swell too small to see on a soft radial gradient, and scaling a
         // gradient-filled shape is the more expensive of the two transforms.
         StartBubble(Bubble1, yOffset: -16, driftMs: 13000, token);
@@ -76,7 +76,7 @@ public partial class WaterBackground : ContentView
     }
 
     /// <summary>Stop every drift loop and release the frame callbacks. Idempotent.
-    /// Bubbles are left wherever they are — freezing mid-drift is invisible on a
+    /// Bubbles are left wherever they are: freezing mid-drift is invisible on a
     /// decorative blob, and snapping them home would read as a flicker on tab exit.</summary>
     public void Stop()
     {
@@ -89,7 +89,7 @@ public partial class WaterBackground : ContentView
 
         // Cancel the in-flight tweens too. The loops check the token after each await,
         // but an animation left running would keep the ticker alive until it finished
-        // its half-cycle — up to 14 seconds of frame callbacks after leaving the page.
+        // its half-cycle: up to 14 seconds of frame callbacks after leaving the page.
         foreach (var bubble in Bubbles)
             bubble.CancelAnimations();
     }

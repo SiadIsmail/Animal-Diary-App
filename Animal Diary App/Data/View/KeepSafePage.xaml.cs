@@ -14,7 +14,7 @@ public partial class KeepSafePage : ContentPage
 {
 	private readonly MainViewModel vm;
 
-	// Both exits (backup turned on, or "Maybe later") end onboarding — guard so they
+	// Both exits (backup turned on, or "Maybe later") end onboarding: guard so they
 	// can't both fire and hand off twice.
 	private bool _handedOff;
 
@@ -47,7 +47,7 @@ public partial class KeepSafePage : ContentPage
 
 		vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null, null);
 
-		// Turning backup on inside the sheet fulfils the offer — hand off to the app.
+		// Turning backup on inside the sheet fulfils the offer: hand off to the app.
 		vm.CloudSync.StateChanged += OnCloudStateChanged;
 	}
 
@@ -85,7 +85,7 @@ public partial class KeepSafePage : ContentPage
 		_handedOff = true;
 
 		// Close the sheet so it doesn't reappear on the next host (the VM is a singleton
-		// shared with MainPage / PetsPage), then finish onboarding into the app — the
+		// shared with MainPage / PetsPage), then finish onboarding into the app: the
 		// same handoff the condition picker and the Welcome restore path use.
 		vm.CloudVM.DismissCommand.Execute(null);
 		vm.Analytics.Track(AnalyticsEvents.OnboardingCompleted);
@@ -95,7 +95,7 @@ public partial class KeepSafePage : ContentPage
 		// install. There is no clock now, and app-voice §17 is explicit that onboarding is
 		// a cost to cut to the bone: asking for money before the product has said anything
 		// useful is the worst possible first sentence. The paywall never appears in
-		// onboarding — the CloudSheetViewModel.RequestSubscribe hook this page leaves null
+		// onboarding: the CloudSheetViewModel.RequestSubscribe hook this page leaves null
 		// is what enforces that structurally.
 		(Application.Current as App)?.SwitchToMainApp();
 	}

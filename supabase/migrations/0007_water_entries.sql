@@ -1,18 +1,18 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  0007 — water intake: two stores, one per mode.
+--  0007: water intake: two stores, one per mode.
 --
 --  Water has two independent shapes (and a table can carry only one push_rows
---  conflict key), so it is two tables — the same event-vs-one-per-day split the
+--  conflict key), so it is two tables: the same event-vs-one-per-day split the
 --  rest of the schema already uses:
 --
---    • water_amount_entries — exact millilitre readings, ADDITIVE like
+--    • water_amount_entries: exact millilitre readings, ADDITIVE like
 --      glucose_entries: many per day, keyed by id, summed per day by the report.
---    • water_level_entries  — the relative reading, ONE per day like
+--    • water_level_entries : the relative reading, ONE per day like
 --      appetite_entries: unique (pet_id, entry_date).
 --
 --  Both mirror the 0001 setup for their sibling (table shape, updated_at trigger
 --  + pull-cursor index, member-scoped RLS) and extend push_rows' natural-key map
---  — the only change to the write RPC from 0005.
+--  the only change to the write RPC from 0005.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- Exact ml, additive events (mirrors glucose_entries; keyed by id).
@@ -68,7 +68,7 @@ end $$;
 
 -- ── push_rows: add the two water tables' natural keys ───────────────────────
 -- Amounts converge on id (additive events); levels on (pet, day). Everything
--- else is byte-for-byte 0005 (the current definition) — only conflict_cols gains
+-- else is byte-for-byte 0005 (the current definition): only conflict_cols gains
 -- two branches.
 create or replace function public.push_rows(p_table text, p_rows jsonb)
 returns void
@@ -106,7 +106,7 @@ begin
     raise exception 'push_rows: table % is not syncable', p_table;
   end if;
 
-  -- Authorization — explicit because this function bypasses table RLS.
+  -- Authorization: explicit because this function bypasses table RLS.
   if p_table = 'pets' then
     execute
       'select exists (

@@ -7,24 +7,24 @@
     BOTH AXES ARE TIME, AND BOTH ARE LABELLED.
 
     On History, across is the date and down is the time of day; on Cycle the same
-    entries are folded onto a ring. Nothing else is encoded anywhere — no value axis,
+    entries are folded onto a ring. Nothing else is encoded anywhere, no value axis,
     no bar, no aggregate, nothing sized or coloured by a reading. This is the
     reading-only counterpart to the vet report: the same owner-logged facts, arranged
     so a quarter can be taken in at a glance without any of it being interpreted.
 
-    An earlier version left the vertical axis meaningless and filled it with ornament —
+    An earlier version left the vertical axis meaningless and filled it with ornament,
     a wandering path, hairlines between entries, a figure of stars, drifting bubbles.
     It was pretty and nobody could read it. Everything on the canvas now either IS the
     data or labels it.
 
-    THE PAGE IS NOT DARK — the sky is.
+    THE PAGE IS NOT DARK: the sky is.
 
     That is the whole of how this belongs to Felova. The first version painted the
     entire screen black and, however much of the app's furniture was added to it, it
     read as a different product wearing Felova's data. So the page is an ordinary
     rockpool morning like every other page here: the same water background, the same
     glass back button, the same serif heading, the same pill range selector, the same
-    warm sheet when a star is tapped. The night is CONTAINED — one card, taped to the
+    warm sheet when a star is tapped. The night is CONTAINED: one card, taped to the
     page like the mood note on the Journal, that you look through into the dark.
 
     Geometry lives in the code-behind (only the page knows how big the canvas is);
@@ -44,7 +44,7 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <!-- One range button — the same Well/Glass pill row the weight chart uses,
+            <!-- One range button: the same Well/Glass pill row the weight chart uses,
                  so the two range selectors in this app are one control in two places. -->
             <Style x:Key="SkyRangeTab" TargetType="Label">
                 <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
@@ -259,8 +259,8 @@
         <!-- ── How to read this ──
              Above the sky, not below it: these are read BEFORE the picture rather than
              explaining it afterwards. They never retire, either. The Constellation is
-             not a daily surface — someone opens it before an appointment, which might
-             be twice a year — so "they will have learned it by now" would be an
+             not a daily surface: someone opens it before an appointment, which might
+             be twice a year, so "they will have learned it by now" would be an
              assumption about a habit nobody has. -->
         <VerticalStackLayout Grid.Row="3"
                              Margin="22,0,22,8"
@@ -356,7 +356,7 @@
                          In the card, not in a bottom sheet. The sheet was the app's
                          standard overlay and it was the wrong one here: it drops a scrim
                          over everything and takes half the screen, so the column and the
-                         brightened siblings — the entire point of tapping a star — were
+                         brightened siblings (the entire point of tapping a star) were
                          hidden behind the thing describing them. The shared-sheet rule
                          governs INPUT; this is a read-only peek, so it can sit on the
                          night it belongs to.
@@ -416,7 +416,7 @@
                                    FontSize="11.5"
                                    TextColor="{StaticResource SkyInk}"/>
 
-                            <!-- What else was written down that day — the same entries the
+                            <!-- What else was written down that day: the same entries the
                                  lit column is pointing at. -->
                             <VerticalStackLayout IsVisible="{Binding ConstellationVM.HasSameDay}"
                                                  Spacing="2"
@@ -475,7 +475,7 @@
 
         <!-- ── Legend + how to read it ──
              Each key is a scrap of night at icon-tile size, tilted a degree or two
-             like every other tile in the app — which is also what lets a symbol drawn
+             like every other tile in the app, which is also what lets a symbol drawn
              for a dark sky read out here on the daylight page. Only the kinds actually
              present are listed (the ViewModel filters), so a pet that has never had a
              seizure is never shown a seizure symbol. -->
@@ -537,7 +537,7 @@
                  Only for the kinds the owner brought forward, and only ever counts:
                  how much of it there is, and how it fell across the four fixed bands
                  of a day. All four are always listed in the same order, zeros
-                 included — naming a busiest one would be the app choosing the finding
+                 included: naming a busiest one would be the app choosing the finding
                  (Data/Models/RecordFacts.cs). One weight, one colour, no emphasis on
                  any number, and nothing here is a claim about the animal. -->
             <VerticalStackLayout Spacing="7"
@@ -574,7 +574,7 @@
         <!-- ── One tapped star ──
              The app's own sheet, deliberately: it brings the scrim, the motion and the
              Android-back handling every other overlay here already has. It holds no
-             input — it reads back what was written down, and the value appears here
+             input: it reads back what was written down, and the value appears here
              rather than on the canvas, where it would become a second thing the picture
              encodes. IsPresented is OneWay: the selection is the ViewModel's, and the
              scrim's dismiss goes back through the command. -->

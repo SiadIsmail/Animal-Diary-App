@@ -6,7 +6,7 @@ using Animal_Diary_App.Data.Services;
 using Xunit;
 
 /// <summary>
-/// The treatment ledger's diff. Every failure this covers is silent on a device —
+/// The treatment ledger's diff. Every failure this covers is silent on a device,
 /// nothing crashes, the history is simply wrong from then on, and it cannot be
 /// reconstructed afterwards. That is the whole reason the diff was kept pure.
 /// </summary>
@@ -70,7 +70,7 @@ public class MedicationLedgerTests
         Assert.Equal(When, row.ChangedAtUtc);
     }
 
-    /// <summary>A unit change with the same number is still a different treatment —
+    /// <summary>A unit change with the same number is still a different treatment,
     /// 30 mg and 30 ml are not the same thing given twice.</summary>
     [Fact]
     public void UnitChangeAlone_IsADoseChange()
@@ -88,7 +88,7 @@ public class MedicationLedgerTests
     {
         var schedules = Schedule((DayOfWeek.Monday, 8), (DayOfWeek.Thursday, 20));
 
-        // A new list of equal rows, as the save path always produces — the schedule set
+        // A new list of equal rows, as the save path always produces: the schedule set
         // is replaced wholesale on every save, so comparing row identity rather than
         // (day, time) would mark every single save as a schedule change.
         var rows = Diff(Med(), schedules, Med(), Schedule((DayOfWeek.Monday, 8), (DayOfWeek.Thursday, 20)));
@@ -126,7 +126,7 @@ public class MedicationLedgerTests
         Assert.All(rows, r => Assert.Equal(When, r.ChangedAtUtc));
     }
 
-    /// <summary>Dropping a day is a schedule change even when the times are identical —
+    /// <summary>Dropping a day is a schedule change even when the times are identical,
     /// comparing the times alone missed it, which is the bug that made every weekly
     /// medication read as "once daily" in the list this formatter is shared with.</summary>
     [Fact]
@@ -180,7 +180,7 @@ public class MedicationLedgerTests
 
     /// <summary>Every row a save produces is filed under the pet and under the name the
     /// medication carries afterwards, so a rename does not split its own history in two.
-    /// The old name is not lost — the rename row's summary holds it.</summary>
+    /// The old name is not lost: the rename row's summary holds it.</summary>
     [Fact]
     public void EveryRow_CarriesThePetAndTheNameAsOfTheChange()
     {

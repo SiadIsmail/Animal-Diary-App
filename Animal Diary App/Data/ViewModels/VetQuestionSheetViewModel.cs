@@ -13,18 +13,18 @@ using Animal_Diary_App.Helpers;
 public sealed record VetQuestionLine(string Text);
 
 /// <summary>
-/// "Question for the vet" — the one thing an owner reliably forgets, written down
+/// "Question for the vet": the one thing an owner reliably forgets, written down
 /// where they already are.
 ///
 /// <para><b>It is not a journal entry, and the sheet is built so it cannot become
 /// one.</b> Nothing here touches a tracker, a care plan or <c>PendingEngine</c>; it
 /// never produces a "still to do" chip and it never reaches the timeline. It is a note
-/// to self about a conversation, not a record of the animal — so there is no date, no
+/// to self about a conversation, not a record of the animal, so there is no date, no
 /// time picker and no value. The date it was thought of is stamped by the service and
 /// never asked for.</para>
 ///
 /// <para>Follows the shared sheet contract in AI/coding-standards.md: it raises
-/// <c>Saved</c> with a <see cref="JournalSaveResult"/> — the warm line plus the undo —
+/// <c>Saved</c> with a <see cref="JournalSaveResult"/>: the warm line plus the undo,
 /// exactly like the input sheets, so the page's toast works unchanged. The page shows
 /// it through the quiet handler rather than the celebratory one: bubbles rising off a
 /// question would be the app congratulating someone for worrying.</para>
@@ -67,7 +67,7 @@ public class VetQuestionSheetViewModel : BaseViewModel
         }
     }
 
-    /// <summary>An empty question is not a question. No error label for it — the Save
+    /// <summary>An empty question is not a question. No error label for it: the Save
     /// button simply does nothing, the same as every other sheet here.</summary>
     public bool CanSave => !string.IsNullOrWhiteSpace(QuestionText);
 
@@ -84,15 +84,20 @@ public class VetQuestionSheetViewModel : BaseViewModel
 
     /// <summary>Open the sheet for one pet. Takes the same
     /// <c>(petId, petName, date)</c> shape as every Journal sheet so the page's one
-    /// funnel can route to it — the date is deliberately ignored, because a question is
+    /// funnel can route to it: the date is deliberately ignored, because a question is
     /// not about the day the owner happens to be looking at.</summary>
-    public async Task OpenAsync(int petId, string petName, DateTime date)
+    /// <param name="prefill">An opening the owner can type after, when the question was
+    /// raised FROM something: "About Mood on 19 Aug: ". It is ordinary editable text,
+    /// never a stored link to the entry: a question is a note to self about a
+    /// conversation, and giving it a foreign key would make it a record of the animal,
+    /// which this sheet is built so it cannot become.</param>
+    public async Task OpenAsync(int petId, string petName, DateTime date, string prefill = "")
     {
         _petId = petId;
         _petName = petName;
-        QuestionText = string.Empty;
+        QuestionText = prefill;
 
-        // Gathered before the collection is touched — the await is exactly the window a
+        // Gathered before the collection is touched: the await is exactly the window a
         // second open could clear inside (AI/coding-standards.md).
         var rows = petId == 0
             ? new List<VetQuestion>()

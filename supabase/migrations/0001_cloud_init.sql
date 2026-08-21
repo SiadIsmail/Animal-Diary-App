@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
---  Felova cloud schema — Phase 1 (accounts + backup + multi-device sync).
+--  Felova cloud schema: Phase 1 (accounts + backup + multi-device sync).
 --  Run this in the Supabase SQL editor (or `supabase db push`). Idempotent-ish:
 --  written to be run ONCE on a fresh project; see supabase/README.md.
 --
@@ -66,7 +66,7 @@ create table public.pet_members (
   primary key (pet_id, user_id)
 );
 
--- Exactly one owner per pet — the ownership model is structural.
+-- Exactly one owner per pet: the ownership model is structural.
 create unique index pet_members_one_owner on public.pet_members (pet_id)
   where role = 'owner';
 
@@ -115,7 +115,7 @@ create policy "pet_members: own rows" on public.pet_members
 -- ── data tables ─────────────────────────────────────────────────────────────
 -- Column names mirror the local SQLite entities (snake_case). Times of day are
 -- stored as their .NET TimeSpan tick counts (bigint) and date-only values as
--- `date` — no timezone reinterpretation on either side.
+-- `date`, no timezone reinterpretation on either side.
 
 create table public.pet_entries (
   id                    uuid primary key,
@@ -305,7 +305,7 @@ create policy "members update" on public.medication_schedules for update using (
           where m.id = medication_id and public.is_pet_member(m.pet_id)));
 
 -- ── push_rows: the one write RPC ────────────────────────────────────────────
--- Generic last-write-wins upsert. SECURITY INVOKER on purpose — RLS applies to
+-- Generic last-write-wins upsert. SECURITY INVOKER on purpose: RLS applies to
 -- the caller, so this grants nothing the policies don't. Each table upserts on
 -- its natural key (the same uniqueness the app enforces), so two devices that
 -- created "the same" row offline converge instead of erroring:
@@ -388,7 +388,7 @@ end $$;
 
 -- Account deletion (store policy requires it in-app): hard-delete the auth
 -- user; owned pets and all dependent rows go with it via ON DELETE CASCADE
--- (pets themselves cascade from pet_members? No — pets have no FK to users, so
+-- (pets themselves cascade from pet_members? No: pets have no FK to users, so
 -- delete them explicitly first, then the user row).
 create function public.delete_my_account()
 returns void
