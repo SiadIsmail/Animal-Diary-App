@@ -40,7 +40,7 @@ public static partial class BillingConfig
     /// with a desktop as the second device therefore passes every gate check without
     /// exercising a single one.</para>
     /// </summary>
-    public const bool ForceGateOnDesktop = false;
+    public const bool ForceGateOnDesktop = true;
 
     /// <summary>Show the one heads-up this many days before a redeemed access code's grant
     /// runs out. A grant is the only thing left in the app with an end date: there is no
