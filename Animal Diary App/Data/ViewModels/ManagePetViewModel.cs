@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -131,6 +131,13 @@ public class ManagePetViewModel : BaseViewModel
     private readonly PetPauseService _pause;
     private readonly MedicationReminderScheduler _reminders;
     private readonly DailyCareReminderScheduler _dailyReminders;
+    private readonly DisplayUnitService _displayUnits;
+
+    /// <summary>The unit this pet's glucose readings are shown in, refreshed by every
+    /// <see cref="LoadAsync"/>. The care-plan row's target band is converted into it, so
+    /// the band on this page reads in the same unit as the readings everywhere else.
+    /// Canonical until the first load answers.</summary>
+    private UnitDef _glucoseUnit = UnitCatalog.Canonical(UnitFamily.Glucose);
 
     public ManagePetViewModel(
         ActivePetService activePet,
@@ -142,7 +149,8 @@ public class ManagePetViewModel : BaseViewModel
         PetDeletionService deletion,
         PetPauseService pause,
         MedicationReminderScheduler reminders,
-        DailyCareReminderScheduler dailyReminders)
+        DailyCareReminderScheduler dailyReminders,
+        DisplayUnitService displayUnits)
     {
         _activePet = activePet;
         _conditions = conditions;
@@ -154,6 +162,7 @@ public class ManagePetViewModel : BaseViewModel
         _pause = pause;
         _reminders = reminders;
         _dailyReminders = dailyReminders;
+        _displayUnits = displayUnits;
 
         TapIdentityCommand = new Command(() => RequestEditPet?.Invoke());
         AddConditionCommand = new Command(OpenAddConditionSheet);
@@ -387,6 +396,8 @@ public class ManagePetViewModel : BaseViewModel
         _customById = (await _custom.GetForPetAsync(pet.Id)).ToDictionary(c => c.Id);
         var meds = (await _medications.GetMedicationsByPetIdAsync(pet.Id))
             .Where(m => !m.IsArchived).ToList();
+        // Resolved before the rows are built: BuildRow reads it to convert the band.
+        _glucoseUnit = await _displayUnits.ResolveAsync(pet.Id, UnitFamily.Glucose);
 
         // ── atomic fill ──
         Conditions.Clear();
@@ -542,7 +553,9 @@ public class ManagePetViewModel : BaseViewModel
         };
     }
 
-    private static string Describe(CarePlanItem t)
+    // Not static: the glucose row's target band has to be converted into the unit this
+    // pet's readings are shown in, which is a property of the pet rather than of the row.
+    private string Describe(CarePlanItem t)
     {
         string freq = t.Kind switch
         {
@@ -562,8 +575,12 @@ public class ManagePetViewModel : BaseViewModel
 
         if (t.Key.Is(TrackerId.Glucose) && t.Kind != TrackerKind.Event)
         {
+            // Converted out of the unit the band was ENTERED in and into the unit this
+            // pet's readings are shown in, through the one band renderer. A row that
+            // printed the stored bounds would state "4-8" on a page whose readings say
+            // 137, and the reader has no way to tell which of the two is lying.
             string target = t.TargetRange is { } r
-                ? Loc.Format("Manage_GlucoseTarget", r.Lo.ToString("0.0", Ci), r.Hi.ToString("0.0", Ci))
+                ? UnitText.Band(r, t.TargetUnit ?? _glucoseUnit, _glucoseUnit)
                 : Loc.GetString("Manage_NoTarget");
             freq = $"{freq} · {target}";
         }

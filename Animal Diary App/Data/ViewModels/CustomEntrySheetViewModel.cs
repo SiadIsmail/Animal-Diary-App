@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Globalization;
 using System.Windows.Input;
@@ -117,6 +117,12 @@ public class CustomEntrySheetViewModel : BaseViewModel
             Date = _date,
             Time = Time,
             Amount = amount,
+            // The definition's unit AS IT STANDS NOW, copied onto the row. Renaming the
+            // tracker's unit later ("min" -> "km") must not restate 35 minutes of walking
+            // as 35 kilometres: history is written at the moment it happened. Same
+            // reasoning as MedicationChange's stored name and summary. Only when there is
+            // a number for it to describe.
+            Unit = amount is null ? null : _tracker.Unit?.Trim(),
             Note = NoteText?.Trim() ?? string.Empty,
         });
 
@@ -138,7 +144,8 @@ public class CustomEntrySheetViewModel : BaseViewModel
         if (entry.Amount is decimal value)
         {
             var number = value.ToString("0.#", CultureInfo.CurrentCulture);
-            var unit = tracker?.Unit?.Trim() ?? string.Empty;
+            // The unit the ENTRY was written in, not the definition's current one.
+            var unit = entry.UnitFor(tracker);
             parts.Add(unit.Length > 0 ? $"{number} {unit}" : number);
         }
 

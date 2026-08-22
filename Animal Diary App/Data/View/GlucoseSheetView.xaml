@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <!--
     GlucoseSheetView
     ─────────────────────────────────────────────────────────
@@ -54,11 +54,15 @@
 
                 <!-- Value stepper -->
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="{loc:Translate Journal_GlucoseFieldLabel}" Style="{StaticResource FieldLabel}"/>
+                    <!-- The caption carries the unit ("Blood glucose · mg/dL"), so the
+                         number above the keyboard is never a bare figure. -->
+                    <Label Text="{Binding FieldLabel}" Style="{StaticResource FieldLabel}"/>
                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                         <Border Grid.Column="0" Style="{StaticResource StepButton}">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="-0.1"/>
+                                <!-- The DIRECTION, not the distance: how far one tap
+                                     moves is the unit's business (UnitCatalog.Step). -->
+                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="-1"/>
                             </Border.GestureRecognizers>
                             <Label Text="−"
                                    FontSize="24"
@@ -82,7 +86,7 @@
 
                         <Border Grid.Column="2" Style="{StaticResource StepButton}">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="0.1"/>
+                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="1"/>
                             </Border.GestureRecognizers>
                             <Label Text="+"
                                    FontSize="24"
@@ -92,6 +96,34 @@
                         </Border>
                     </Grid>
                 </VerticalStackLayout>
+
+                <!-- Unit picker: mmol/L · mg/dL. Tapping one re-expresses the number
+                     already on screen rather than reinterpreting it: the two differ by a
+                     factor of eighteen, so reinterpreting would turn a normal reading
+                     into a fatal-looking one with a single tap. -->
+                <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Units}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:UnitOption">
+                            <Border Style="{StaticResource SegButton}" WidthRequest="96">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                        <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectUnitCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding Label}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       HorizontalTextAlignment="Center"/>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
 
                 <!-- Before / After food -->
                 <VerticalStackLayout Spacing="8">

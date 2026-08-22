@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Journal;
+﻿namespace Animal_Diary_App.Data.Services.Journal;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Helpers;
@@ -23,6 +23,10 @@ using Animal_Diary_App.Helpers;
 /// data, in the same category as <paramref name="Text"/>, never translated.</param>
 /// <param name="Icon">That tracker's emoji; empty for the shipped cards.</param>
 /// <param name="Unit">That tracker's own unit ("min", "bowls"); empty otherwise.</param>
+/// <param name="DisplayUnit">The unit <paramref name="Number"/> is to be SHOWN in,
+/// resolved from the owner's own entries (AI/domain.md, Units). Null for a card whose
+/// number is not convertible: a custom tracker (free-text unit), or a card showing a
+/// word rather than a measurement. <paramref name="Number"/> itself stays canonical.</param>
 public sealed record TodayCardReading(
     TodayCardKey Card,
     DateTime? On = null,
@@ -33,7 +37,8 @@ public sealed record TodayCardReading(
     string Text = "",
     string Label = "",
     string Icon = "",
-    string Unit = "")
+    string Unit = "",
+    UnitDef? DisplayUnit = null)
 {
     public bool HasData => On is not null;
 
@@ -69,6 +74,7 @@ public class TodayCardService
     private readonly MedicationDoseLogService _doseLogs;
     private readonly MedicationService _medications;
     private readonly CustomTrackerService _custom;
+    private readonly DisplayUnitService _displayUnits;
 
     public TodayCardService(
         SettingsService settings,
@@ -80,7 +86,8 @@ public class TodayCardService
         SeizureEntryService seizures,
         MedicationDoseLogService doseLogs,
         MedicationService medications,
-        CustomTrackerService custom)
+        CustomTrackerService custom,
+        DisplayUnitService displayUnits)
     {
         _settings = settings;
         _conditions = conditions;
@@ -92,6 +99,7 @@ public class TodayCardService
         _doseLogs = doseLogs;
         _medications = medications;
         _custom = custom;
+        _displayUnits = displayUnits;
     }
 
     // ── The owner's choice ────────────────────────────────────────────────────
@@ -193,9 +201,16 @@ public class TodayCardService
     private async Task<TodayCardReading> WeightAsync(int petId)
     {
         var entry = await _petEntries.GetLatestWeightEntryAsync(petId);
-        return entry is null
-            ? TodayCardReading.Empty(TodayCardId.Weight)
-            : new TodayCardReading(TodayCardId.Weight, entry.Date, TimeFromTicks(entry.WeightTimeTicks), Number: entry.Weight);
+        if (entry is null)
+            return TodayCardReading.Empty(TodayCardId.Weight);
+
+        // The MAJORITY unit, not this entry's own: the card is a view onto the record,
+        // and a record shown in one unit on Today and another on the chart below it is
+        // the 5.19-versus-5.2 bug in a new costume.
+        var unit = await _displayUnits.ResolveAsync(petId, UnitFamily.Weight);
+        return new TodayCardReading(
+            TodayCardId.Weight, entry.Date, TimeFromTicks(entry.WeightTimeTicks),
+            Number: entry.Weight, DisplayUnit: unit);
     }
 
     private async Task<TodayCardReading> MoodAsync(int petId)
@@ -209,9 +224,16 @@ public class TodayCardService
     private async Task<TodayCardReading> GlucoseAsync(int petId)
     {
         var entry = await _glucose.GetMostRecentAsync(petId);
-        return entry is null
-            ? TodayCardReading.Empty(TodayCardId.Glucose)
-            : new TodayCardReading(TodayCardId.Glucose, entry.Date, entry.Time, Number: entry.Value);
+        if (entry is null)
+            return TodayCardReading.Empty(TodayCardId.Glucose);
+
+        // The MAJORITY unit, not this reading's own: 7.6 and 137 are the same reading and
+        // a card that alternated between them by whichever was logged last would be
+        // unreadable at exactly the glance it exists for.
+        var unit = await _displayUnits.ResolveAsync(petId, UnitFamily.Glucose);
+        return new TodayCardReading(
+            TodayCardId.Glucose, entry.Date, entry.Time,
+            Number: entry.Value, DisplayUnit: unit);
     }
 
     // Appetite and water each have two stores (measured / observed). The card shows
@@ -224,7 +246,9 @@ public class TodayCardService
         var level = await _appetite.GetMostRecentAsync(petId);
 
         if (Newer(amount?.Date, amount?.Time, level?.Date, level?.Time))
-            return new TodayCardReading(TodayCardId.Appetite, amount!.Date, amount.Time, Number: amount.Grams);
+            return new TodayCardReading(
+                TodayCardId.Appetite, amount!.Date, amount.Time, Number: amount.Grams,
+                DisplayUnit: await _displayUnits.ResolveAsync(petId, UnitFamily.FoodMass));
 
         return level is null
             ? TodayCardReading.Empty(TodayCardId.Appetite)
@@ -237,7 +261,9 @@ public class TodayCardService
         var level = await _water.GetMostRecentLevelAsync(petId);
 
         if (Newer(amount?.Date, amount?.Time, level?.Date, level?.Time))
-            return new TodayCardReading(TodayCardId.Water, amount!.Date, amount.Time, Number: amount.AmountMl);
+            return new TodayCardReading(
+                TodayCardId.Water, amount!.Date, amount.Time, Number: amount.AmountMl,
+                DisplayUnit: await _displayUnits.ResolveAsync(petId, UnitFamily.Volume));
 
         return level is null
             ? TodayCardReading.Empty(TodayCardId.Water)
@@ -297,7 +323,9 @@ public class TodayCardService
             Number: entry.Amount,
             Label: definition.Name,
             Icon: icon,
-            Unit: definition.Unit);
+            // The unit this ENTRY was written in: the card states one recorded reading,
+            // so it must read as that reading did, not as the definition reads today.
+            Unit: entry.UnitFor(definition));
     }
 
     /// <summary>True when the first (date, time) is the later of the two; a missing

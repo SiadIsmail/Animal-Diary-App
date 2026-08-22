@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
@@ -22,6 +22,7 @@ public class MainPageViewModel : BaseViewModel
     private readonly TodayCardSheetViewModel _cardPicker;
     private readonly CustomTrackerService _customTrackers;
     private readonly VetVisitService _vetVisits;
+    private readonly DisplayUnitService _displayUnits;
 
     public Pet ActivePet
     {
@@ -32,7 +33,8 @@ public class MainPageViewModel : BaseViewModel
     public MainPageViewModel(PetEntryService petEntryService, PetService petService, ActivePetService activePetService, SettingsService settingsService,
         PendingItemsService pendingItems, MedicationService medicationService, MedicationDoseLogService doseLogService, MedicationReminderScheduler reminderScheduler,
         TodayCardService todayCards, TodayCardSheetViewModel cardPicker,
-        CustomTrackerService customTrackers, VetVisitService vetVisits)
+        CustomTrackerService customTrackers, VetVisitService vetVisits,
+        DisplayUnitService displayUnits)
     {
         _petEntryService = petEntryService;
         _petService = petService;
@@ -46,6 +48,7 @@ public class MainPageViewModel : BaseViewModel
         _cardPicker = cardPicker;
         _customTrackers = customTrackers;
         _vetVisits = vetVisits;
+        _displayUnits = displayUnits;
 
         OpenAppointmentCommand = new Command(OpenNearVisit);
 
@@ -101,11 +104,16 @@ public class MainPageViewModel : BaseViewModel
         }
     }
 
-    /// <summary>The meta line's weight, through the ONE weight formatter. Binding the
-    /// decimal itself printed the raw invariant number beside a stat card that had
-    /// rounded the same weigh-in: 5.19 kg and 5.2 kg, one screen apart
-    /// (<see cref="WeightText"/>).</summary>
-    public string LatestWeightText => WeightText.WithUnit(LatestWeight);
+    /// <summary>The unit this pet's weigh-ins are shown in: the majority of what the
+    /// owner actually typed, resolved on every load and never stored (AI/domain.md).
+    /// Kilograms until the first load answers, which is what a pet with no history
+    /// resolves to anyway in most of the world.</summary>
+    private UnitDef _weightUnit = UnitCatalog.Canonical(UnitFamily.Weight);
+
+    /// <summary>The meta line's weight, through the ONE formatter. Binding the decimal
+    /// itself printed the raw invariant number beside a stat card that had rounded the
+    /// same weigh-in: 5.19 kg and 5.2 kg, one screen apart (<see cref="UnitText"/>).</summary>
+    public string LatestWeightText => UnitText.WithUnit(LatestWeight, _weightUnit);
 
     private PetEntry? EntryToday;
 
@@ -114,8 +122,14 @@ public class MainPageViewModel : BaseViewModel
         if (ActivePet == null) return;
 
         EntryToday = await _petEntryService.GetLatestWeightEntryAsync(ActivePet.Id);
+        // Resolved before the value is published: the setter raises LatestWeightText, and
+        // publishing the number first would paint it once in the previous pet's unit.
+        _weightUnit = await _displayUnits.ResolveAsync(ActivePet.Id, UnitFamily.Weight);
         // Clear on a pet with no weigh-ins too, or the previous pet's value lingers.
         LatestWeight = EntryToday?.Weight ?? 0;
+        // The setter only fires when the NUMBER changed; the unit can move on its own
+        // (a pet switch where both weigh 5.2), so raise it unconditionally too.
+        OnPropertyChanged(nameof(LatestWeightText));
     }
 
     // ── The two customizable stat cards ──────────────────────────────────────

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <!-- AppetiteSheetView: five word-tiles with a progressively-filled bowl (no numbers
      shown), in the shared FelovaBottomSheet. BindingContext is an AppetiteSheetViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -82,15 +82,17 @@
                     </BindableLayout.ItemTemplate>
                 </FlexLayout>
 
-                <!-- Exact mode: a grams entry field. -->
+                <!-- Exact mode: an amount, in grams or ounces. NO CUPS: a cup is a volume and
+                     this is a mass, so the factor depends on the food's density (see
+                     AppetiteSheetViewModel). -->
                 <VerticalStackLayout IsVisible="{Binding ShowExact}" Spacing="8">
-                    <Label Text="{loc:Translate Journal_AppetiteGramsLabel}"
+                    <Label Text="{Binding AmountLabel}"
                            FontFamily="{StaticResource FontSans}" FontSize="11" FontAttributes="Bold"
                            CharacterSpacing="1" TextColor="{StaticResource InkSecondary}"/>
                     <Border BackgroundColor="{StaticResource Glass}"
                             Stroke="{StaticResource GlassLine}" StrokeThickness="1"
                             StrokeShape="RoundRectangle 14" Padding="12,2">
-                        <Grid ColumnDefinitions="*,Auto">
+                        <Grid>
                             <Entry Text="{Binding GramsText}"
                                    Keyboard="Numeric"
                                    Placeholder="{loc:Translate Journal_AppetiteGramsPlaceholder}"
@@ -98,13 +100,36 @@
                                    FontSize="16"
                                    TextColor="{StaticResource Ink}"
                                    PlaceholderColor="{StaticResource InkTertiary}"/>
-                            <Label Grid.Column="1"
-                                   Text="{loc:Translate Common_GramSuffix}"
-                                   FontFamily="{StaticResource FontSans}" FontSize="14"
-                                   TextColor="{StaticResource InkSecondary}"
-                                   VerticalOptions="Center"/>
                         </Grid>
                     </Border>
+
+                    <!-- Tapping one re-expresses what is already typed rather than
+                         relabelling it. -->
+                    <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Units}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:UnitOption">
+                                <Border BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 12" Padding="0,9" WidthRequest="86">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectUnitCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding Label}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                           TextColor="{StaticResource TealDeep}"
+                                           HorizontalTextAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
                 </VerticalStackLayout>
 
                 <!-- Food context (optional, both modes; pre-filled with the last food). -->

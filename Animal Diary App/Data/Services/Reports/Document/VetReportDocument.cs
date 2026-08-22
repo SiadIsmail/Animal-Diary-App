@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Reports.Document;
+﻿namespace Animal_Diary_App.Data.Services.Reports.Document;
 
 using Animal_Diary_App.Data.Services.Reports.Document.Sections;
 using MigraDoc.DocumentObjectModel;
@@ -126,5 +126,18 @@ public sealed class VetReportDocument
         p.AddPageField();
         p.AddText(" " + VetReportStrings.PageOf + " ");
         p.AddNumPagesField();
+
+        // "Some values were recorded in kg and are shown converted to lb." Only present
+        // when a conversion actually happened, and on EVERY page for the same reason the
+        // disclaimer above it is: printed vet paperwork gets separated and refiled, and a
+        // converted number on page 3 needs the note on page 3. A silent unit conversion
+        // inside a medical document is exactly the kind of thing that should be stated.
+        foreach (var note in _data.UnitNotes)
+        {
+            var n = footer.AddParagraph();
+            n.Format.Font.Size = VetReportStyles.SmallSize;
+            n.Format.Font.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
+            n.AddText(note);
+        }
     }
 }

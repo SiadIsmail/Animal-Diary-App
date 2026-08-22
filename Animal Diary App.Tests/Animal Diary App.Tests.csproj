@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Unit tests over the app's PURE logic. Targets plain net10.0, no platform suffix,
        so no MAUI and no SQLite, while still being the same runtime and language version
@@ -166,6 +166,18 @@
   <ItemGroup>
     <Compile Include="..\Animal Diary App\Data\Models\VetVisit.cs" Link="Vet\VetVisit.cs" />
     <Compile Include="..\Animal Diary App\Data\Services\Notifications\NotificationIds.cs" Link="Vet\NotificationIds.cs" />
+  </ItemGroup>
+
+  <!-- Per-entry units. Both files are pure by construction and both are silent when
+       wrong in the worst possible way: a conversion that drifts corrupts a medical
+       number a little more on every edit, and a display unit that resolves differently
+       from surface to surface puts 14 mmol/L and 14 mg/dL on one screen. UnitCatalog
+       reaches LocalizationManager for LABELS only (already linked above); nothing here
+       resolves a translated string, so no resx is needed at run time. CarePlan.cs is
+       linked above and carries TrackerId, which UnitCatalog.FamilyFor maps. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\Units.cs" Link="Units\Units.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\DisplayUnitResolver.cs" Link="Units\DisplayUnitResolver.cs" />
   </ItemGroup>
 
   <!-- Facts about the record. The arithmetic is linked, the WORDING is not: RecordFactsText

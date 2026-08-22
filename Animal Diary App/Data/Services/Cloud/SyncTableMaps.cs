@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Cloud;
+﻿namespace Animal_Diary_App.Data.Services.Cloud;
 
 using System.Diagnostics;
 using System.Text.Json;
@@ -538,6 +538,8 @@ internal static class SyncTableMaps
                     ["weight"] = e.Weight,
                     ["mood_time_ticks"] = e.MoodTimeTicks,
                     ["weight_time_ticks"] = e.WeightTimeTicks,
+                    // Provenance, not the value: the weight itself is always kg.
+                    ["weight_unit"] = e.WeightUnit,
                     ["client_updated_at"] = CloudJson.ToIso(e.UpdatedAtUtc),
                     ["deleted_at"] = e.IsDeleted ? CloudJson.ToIso(e.UpdatedAtUtc) : null,
                 };
@@ -558,6 +560,7 @@ internal static class SyncTableMaps
                     Weight = CloudJson.GetDecimal(el, "weight"),
                     MoodTimeTicks = CloudJson.GetLongOrNull(el, "mood_time_ticks"),
                     WeightTimeTicks = CloudJson.GetLongOrNull(el, "weight_time_ticks"),
+                    WeightUnit = CloudJson.GetStringOrNull(el, "weight_unit"),
                     UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
                     IsDeleted = CloudJson.IsDeleted(el),
                 };
@@ -568,6 +571,7 @@ internal static class SyncTableMaps
                 local.MoodLevel = inc.MoodLevel; local.MoodNote = inc.MoodNote;
                 local.IncludeInVetReport = inc.IncludeInVetReport; local.Weight = inc.Weight;
                 local.MoodTimeTicks = inc.MoodTimeTicks; local.WeightTimeTicks = inc.WeightTimeTicks;
+                local.WeightUnit = inc.WeightUnit;
             },
             naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<PetEntry>(
                 "select * from \"PetEntry\" where PetId = ? and Date = ? order by IsDeleted asc limit 1",
@@ -587,6 +591,7 @@ internal static class SyncTableMaps
                     ["time_ticks"] = g.Time.Ticks,
                     ["value"] = g.Value,
                     ["food_context"] = g.Context.ToString(),
+                    ["unit"] = g.Unit,
                     ["client_updated_at"] = CloudJson.ToIso(g.UpdatedAtUtc),
                     ["deleted_at"] = g.IsDeleted ? CloudJson.ToIso(g.UpdatedAtUtc) : null,
                 };
@@ -603,6 +608,7 @@ internal static class SyncTableMaps
                     Time = CloudJson.GetTicksTime(el, "time_ticks"),
                     Value = CloudJson.GetDecimal(el, "value"),
                     Context = Enum.Parse<FoodContext>(CloudJson.GetString(el, "food_context")),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
                     UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
                     IsDeleted = CloudJson.IsDeleted(el),
                 };
@@ -610,7 +616,7 @@ internal static class SyncTableMaps
             copyPayload: (local, inc) =>
             {
                 local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
-                local.Value = inc.Value; local.Context = inc.Context;
+                local.Value = inc.Value; local.Context = inc.Context; local.Unit = inc.Unit;
             }),
 
         // ── appetite (one row per pet per day) ───────────────────────────────
@@ -670,6 +676,7 @@ internal static class SyncTableMaps
                     ["time_ticks"] = a.Time.Ticks,
                     ["grams"] = a.Grams,
                     ["food"] = a.Food,
+                    ["unit"] = a.Unit,
                     ["client_updated_at"] = CloudJson.ToIso(a.UpdatedAtUtc),
                     ["deleted_at"] = a.IsDeleted ? CloudJson.ToIso(a.UpdatedAtUtc) : null,
                 };
@@ -686,6 +693,7 @@ internal static class SyncTableMaps
                     Time = CloudJson.GetTicksTime(el, "time_ticks"),
                     Grams = CloudJson.GetDecimal(el, "grams"),
                     Food = CloudJson.GetString(el, "food"),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
                     UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
                     IsDeleted = CloudJson.IsDeleted(el),
                 };
@@ -693,7 +701,7 @@ internal static class SyncTableMaps
             copyPayload: (local, inc) =>
             {
                 local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
-                local.Grams = inc.Grams; local.Food = inc.Food;
+                local.Grams = inc.Grams; local.Food = inc.Food; local.Unit = inc.Unit;
             }),
 
         // ── water amounts (exact ml; additive events, keyed by id like glucose) ──
@@ -709,6 +717,7 @@ internal static class SyncTableMaps
                     ["entry_date"] = CloudJson.ToDateOnly(w.Date),
                     ["time_ticks"] = w.Time.Ticks,
                     ["amount_ml"] = w.AmountMl,
+                    ["unit"] = w.Unit,
                     ["client_updated_at"] = CloudJson.ToIso(w.UpdatedAtUtc),
                     ["deleted_at"] = w.IsDeleted ? CloudJson.ToIso(w.UpdatedAtUtc) : null,
                 };
@@ -724,6 +733,7 @@ internal static class SyncTableMaps
                     Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
                     Time = CloudJson.GetTicksTime(el, "time_ticks"),
                     AmountMl = CloudJson.GetDecimal(el, "amount_ml"),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
                     UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
                     IsDeleted = CloudJson.IsDeleted(el),
                 };
@@ -731,7 +741,7 @@ internal static class SyncTableMaps
             copyPayload: (local, inc) =>
             {
                 local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
-                local.AmountMl = inc.AmountMl;
+                local.AmountMl = inc.AmountMl; local.Unit = inc.Unit;
             }),
 
         // ── water level (relative; one row per pet per day, like appetite) ───
@@ -790,7 +800,13 @@ internal static class SyncTableMaps
                     // matches how Tracker.Kind and CustomTracker.Shape already travel, and
                     // keeps the cloud row readable. Null when the owner didn't say.
                     ["seizure_type"] = s.Type?.ToString(),
+                    // Seconds is the canonical duration (0023). duration_minutes is a
+                    // dead column and is deliberately still sent: it is always null on a
+                    // current client, and NOT sending it would leave a legacy value
+                    // standing on the server beside a seconds value that supersedes it.
+                    ["duration_seconds"] = s.DurationSeconds,
                     ["duration_minutes"] = s.DurationMinutes,
+                    ["unit"] = s.Unit,
                     ["note"] = s.Note,
                     ["client_updated_at"] = CloudJson.ToIso(s.UpdatedAtUtc),
                     ["deleted_at"] = s.IsDeleted ? CloudJson.ToIso(s.UpdatedAtUtc) : null,
@@ -812,7 +828,12 @@ internal static class SyncTableMaps
                     Type = Enum.TryParse<SeizureType>(CloudJson.GetStringOrNull(el, "seizure_type"), out var st)
                         ? st
                         : null,
+                    DurationSeconds = CloudJson.GetIntOrNull(el, "duration_seconds"),
+                    // Carried so a row pushed by a device on an older build still arrives
+                    // with its duration; AppDatabase's idempotent backfill converts it on
+                    // the next launch. Nothing reads this column directly.
                     DurationMinutes = CloudJson.GetIntOrNull(el, "duration_minutes"),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
                     Note = CloudJson.GetString(el, "note"),
                     UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
                     IsDeleted = CloudJson.IsDeleted(el),
@@ -822,7 +843,9 @@ internal static class SyncTableMaps
             {
                 local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
                 local.Type = inc.Type;
-                local.DurationMinutes = inc.DurationMinutes; local.Note = inc.Note;
+                local.DurationSeconds = inc.DurationSeconds;
+                local.DurationMinutes = inc.DurationMinutes; local.Unit = inc.Unit;
+                local.Note = inc.Note;
             }),
 
         // ── medication schedules (replace-set rows; keyed by id) ─────────────
@@ -990,6 +1013,10 @@ internal static class SyncTableMaps
                     ["entry_date"] = CloudJson.ToDateOnly(e.Date),
                     ["time_ticks"] = e.Time.Ticks,
                     ["amount"] = e.Amount,
+                    // The DEFINITION's unit as it stood when the entry was written, so a
+                    // later rename cannot retroactively relabel it. Free text, never
+                    // converted (see CustomEntry.Unit).
+                    ["unit"] = e.Unit,
                     ["note"] = e.Note,
                     ["client_updated_at"] = CloudJson.ToIso(e.UpdatedAtUtc),
                     ["deleted_at"] = e.IsDeleted ? CloudJson.ToIso(e.UpdatedAtUtc) : null,
@@ -1009,6 +1036,7 @@ internal static class SyncTableMaps
                     Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
                     Time = CloudJson.GetTicksTime(el, "time_ticks"),
                     Amount = CloudJson.GetDecimalOrNull(el, "amount"),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
                     Note = CloudJson.GetString(el, "note"),
                     UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
                     IsDeleted = CloudJson.IsDeleted(el),
@@ -1018,7 +1046,7 @@ internal static class SyncTableMaps
             {
                 local.PetId = inc.PetId; local.CustomTrackerId = inc.CustomTrackerId;
                 local.Date = inc.Date; local.Time = inc.Time;
-                local.Amount = inc.Amount; local.Note = inc.Note;
+                local.Amount = inc.Amount; local.Unit = inc.Unit; local.Note = inc.Note;
             }),
 
         // ── questions for the vet ────────────────────────────────────────────

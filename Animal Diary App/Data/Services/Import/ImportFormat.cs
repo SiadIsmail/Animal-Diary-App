@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Import;
+﻿namespace Animal_Diary_App.Data.Services.Import;
 
 using Animal_Diary_App.Data.Models;
 
@@ -163,6 +163,26 @@ public static class ImportFormat
     /// </summary>
     public const TrackerKind DefaultCustomCadence = TrackerKind.Event;
 
+    /// <summary>
+    /// The unit family an entry type's number belongs to, or null when the type carries
+    /// no convertible number: the observation levels (mood, appetite_level, water_level),
+    /// and a custom tracker, whose unit is the owner's own word and which nothing can
+    /// convert.
+    ///
+    /// <para>One table, read by the validator before it dispatches, so a type that gains
+    /// a unit does so in a single place and a type that has none cannot silently accept
+    /// one.</para>
+    /// </summary>
+    public static UnitFamily? UnitFamilyFor(ImportEntryType type) => type switch
+    {
+        ImportEntryType.Weight => UnitFamily.Weight,
+        ImportEntryType.Glucose => UnitFamily.Glucose,
+        ImportEntryType.WaterAmount => UnitFamily.Volume,
+        ImportEntryType.AppetiteAmount => UnitFamily.FoodMass,
+        ImportEntryType.Seizure => UnitFamily.Duration,
+        _ => null,
+    };
+
     // ── Bounds ──────────────────────────────────────────────────────────────────
     //
     // These mirror what the app's own input sheets accept, so an imported row can never
@@ -177,12 +197,16 @@ public static class ImportFormat
     public const int MinLevel = 1;
     public const int MaxLevel = 5;
 
-    /// <summary>Whole minutes, matching SeizureEntry.DurationMinutes. The sheet itself
-    /// only keeps a parsed duration when minutes > 0, so 0 is not a value the app can
-    /// hold: a sub-minute seizure rounds up to 1 and the exact wording belongs in the
-    /// note.</summary>
-    public const int MinSeizureMinutes = 1;
-    public const int MaxSeizureMinutes = 24 * 60;
+    /// <summary>
+    /// The longest seizure the format will accept, in SECONDS: a full day, which no real
+    /// occurrence reaches, so the ceiling only ever catches a transcription slip.
+    ///
+    /// <para>Seconds because the app's own store moved to seconds: an int of minutes
+    /// could not hold a 45-second seizure, and sub-minute events are common and
+    /// clinically relevant. A file may still say <c>duration_minutes</c>, which is read
+    /// as seconds with a minutes unit rather than as a separate path.</para>
+    /// </summary>
+    public const int MaxSeizureSeconds = 24 * 60 * 60;
 
     public const decimal MaxWeightKg = 500m;
     public const decimal MaxGlucose = 100m;

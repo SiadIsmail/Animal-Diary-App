@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
+﻿namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
 
 using Animal_Diary_App.Helpers;
 using MigraDoc.DocumentObjectModel;
@@ -61,11 +61,15 @@ public class HeaderSection : IVetReportSection
         {
             var p = left.AddParagraph();
             p.AddFormattedText(VetReportStrings.Weight + " ", TextFormat.Bold);
-            // The one weight format, same as every other surface (Helpers/WeightText.cs).
-            p.AddText(WeightText.WithUnit(w));
+            // The one formatter, same as every other surface, converted into the unit the
+            // owner's own weigh-ins resolved to (Helpers/UnitText.cs). The unit is always
+            // printed: with units chosen per entry a bare number is genuinely ambiguous,
+            // and this document is read by someone who was not there when it was typed.
+            p.AddText(UnitText.WithUnit(w, pet.WeightUnit));
             if (pet.WeightChangeKg is decimal change)
             {
-                var c = p.AddFormattedText("  " + VetReportStrings.WeightChange(FormatChange(change)));
+                var c = p.AddFormattedText(
+                    "  " + VetReportStrings.WeightChange(UnitText.Change(change, pet.WeightUnit)));
                 c.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
             }
         }
@@ -103,7 +107,4 @@ public class HeaderSection : IVetReportSection
         return "· " + string.Join(", ", parts);
     }
 
-    /// <summary>Explicit sign so gain and loss read unambiguously: "+0.4" / "−1.4".</summary>
-    private static string FormatChange(decimal change) =>
-        change < 0 ? $"−{Math.Abs(change):0.0}" : $"+{change:0.0}";
 }

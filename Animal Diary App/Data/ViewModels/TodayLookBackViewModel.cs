@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Globalization;
 using System.Windows.Input;
@@ -340,7 +340,7 @@ public class TodayLookBackViewModel : BaseViewModel
             Axis = BuildAxis(from, to),
             Count = RecordFactsText.CountAndRange(snapshot.Facts, name),
             DayParts = RecordFactsText.DayParts(snapshot.Facts),
-            Values = RecordFactsText.Values(snapshot.Facts, includeLatest: !onCard),
+            Values = RecordFactsText.Values(snapshot.Facts, snapshot.DisplayUnit, includeLatest: !onCard),
         };
     }
 

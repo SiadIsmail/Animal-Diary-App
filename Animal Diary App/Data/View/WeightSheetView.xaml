@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- WeightSheetView: value stepper in the shared FelovaBottomSheet. BindingContext
-     is a WeightSheetViewModel. -->
+<!-- WeightSheetView: value stepper + unit picker in the shared FelovaBottomSheet.
+     BindingContext is a WeightSheetViewModel.
+
+     The unit sits BESIDE the number, not behind a settings screen: it is chosen per
+     entry, it prefills from the last one, and every surface afterwards follows the
+     majority of what the owner actually used (AI/domain.md, Units). -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
@@ -20,6 +24,15 @@
             <Setter Property="StrokeThickness" Value="1"/>
             <Setter Property="StrokeShape" Value="RoundRectangle 15,13,14,16"/>
         </Style>
+        <!-- One unit chip; highlighted via a bound-bool DataTrigger, the same shape the
+             glucose sheet's Before/After segments use. -->
+        <Style x:Key="UnitChip" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource GlassSoft}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 12"/>
+            <Setter Property="Padding" Value="0,9"/>
+        </Style>
     </ContentView.Resources>
 
     <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
@@ -30,13 +43,17 @@
             <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
 
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="{loc:Translate Journal_WeightFieldLabel}"
+                    <!-- The caption carries the unit ("Weight · lb"), so the number above
+                         the keyboard is never a bare figure. -->
+                    <Label Text="{Binding FieldLabel}"
                            FontFamily="{StaticResource FontSans}" FontSize="11" FontAttributes="Bold"
                            CharacterSpacing="1" TextColor="{StaticResource InkSecondary}"/>
                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                         <Border Grid.Column="0" Style="{StaticResource StepButton}">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="-0.1"/>
+                                <!-- The DIRECTION, not the distance: how far one tap moves
+                                     is the unit's business (UnitCatalog.Step). -->
+                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="-1"/>
                             </Border.GestureRecognizers>
                             <Label Text="−" FontSize="24" TextColor="{StaticResource TealDeep}"
                                    HorizontalOptions="Center" VerticalOptions="Center"/>
@@ -48,13 +65,39 @@
                         </Border>
                         <Border Grid.Column="2" Style="{StaticResource StepButton}">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="0.1"/>
+                                <TapGestureRecognizer Command="{Binding StepCommand}" CommandParameter="1"/>
                             </Border.GestureRecognizers>
                             <Label Text="+" FontSize="24" TextColor="{StaticResource TealDeep}"
                                    HorizontalOptions="Center" VerticalOptions="Center"/>
                         </Border>
                     </Grid>
                 </VerticalStackLayout>
+
+                <!-- Unit picker: kg · lb · g. Tapping one re-expresses the number already
+                     on screen rather than reinterpreting it. -->
+                <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Units}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:UnitOption">
+                            <Border Style="{StaticResource UnitChip}" WidthRequest="72">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                        <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectUnitCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding Label}"
+                                       FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       HorizontalTextAlignment="Center"/>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
 
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,6,0,0">
                     <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0" StrokeShape="RoundRectangle 15,13,13,16">

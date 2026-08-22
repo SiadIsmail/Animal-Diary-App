@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Windows.Input;
 using Animal_Diary_App.Data.Models;
@@ -109,6 +109,16 @@ public class TodayCardItem : BaseViewModel
             if (Card.IsCustom)
                 return _reading.Number is decimal own ? own.ToString("0.#") : Stamp();
 
+            // A MEASURED reading whose unit the owner chose goes through the one
+            // formatter, converted into whichever unit their own entries resolved to.
+            // It sits above the switch because it answers for every such record
+            // identically, which is exactly the property that stopped one weigh-in being
+            // rendered two ways on one screen (Helpers/UnitText.cs). A record still
+            // showing a WORD (an appetite or water observation) has no Number and falls
+            // through untouched.
+            if (_reading.Number is decimal measured && _reading.DisplayUnit is UnitDef unit)
+                return Helpers.UnitText.Number(measured, unit);
+
             return Card.BuiltIn switch
             {
                 TodayCardId.Mood => _reading.Mood.GetDisplayName(),
@@ -121,12 +131,10 @@ public class TodayCardItem : BaseViewModel
                 TodayCardId.Water => _reading.Number is decimal ml
                     ? ml.ToString("0.#")
                     : ((WaterLevel)_reading.Level).GetDisplayName(),
-                // Weight goes through the one weight formatter; everything else left in
-                // this arm carries one decimal of its own (Helpers/WeightText.cs).
-                TodayCardId.Weight => _reading.Number is decimal kg
-                    ? WeightText.Number(kg)
-                    : string.Empty,
-                _ => _reading.Number?.ToString("0.0") ?? string.Empty,
+                // Unreachable in practice: every measured record was answered above. Kept
+                // as the raw number rather than blank so an unresolvable unit degrades to
+                // a card that shows the reading, not to one that looks broken.
+                _ => _reading.Number?.ToString("0.#") ?? string.Empty,
             };
         }
     }
@@ -144,24 +152,17 @@ public class TodayCardItem : BaseViewModel
             if (Card.IsCustom)
                 return _reading.Unit.Trim().Length > 0 ? " " + _reading.Unit.Trim() : string.Empty;
 
-            // Weight comes from the one weight formatter rather than a key of its own,
-            // the number above already does (Helpers/WeightText.cs).
-            if (Card.Is(TodayCardId.Weight))
-                return " " + WeightText.Unit.Trim();
+            // A record whose unit the owner chose names it from the resolved unit rather
+            // than from a key of its own: the number above already does the same
+            // (Helpers/UnitText.cs). The card owns the leading gap so every unit sits
+            // the same distance from its number.
+            if (_reading.DisplayUnit is UnitDef resolved)
+                return " " + Helpers.UnitText.Label(resolved);
 
-            var key = Card.BuiltIn switch
-            {
-                TodayCardId.Glucose => "Common_MmolSuffix",
-                TodayCardId.Water => "Common_MlSuffix",
-                TodayCardId.Appetite => "Common_GramSuffix",
-                _ => string.Empty,
-            };
-            if (key.Length == 0)
-                return string.Empty;
-
-            // The stored suffixes disagree about leading spaces (" kg" vs "ml"); the
-            // card owns the gap so every unit sits the same distance from its number.
-            return " " + LocalizationManager.Instance.GetString(key).Trim();
+            // Nothing reaches here with a number any more: every measured record's unit
+            // is the owner's own choice and was answered above. A card showing a WORD
+            // (an appetite or water observation) has no unit and never did.
+            return string.Empty;
         }
     }
 

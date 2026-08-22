@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Attribution;
@@ -114,6 +114,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<TrackerService>();
 		builder.Services.AddSingleton<PetConditionService>();
 		builder.Services.AddSingleton<CarePlanService>();
+		// Which unit an owner sees a record in: derived from their own entries on
+		// every call, never stored (see DisplayUnitResolver).
+		builder.Services.AddSingleton<DisplayUnitService>();
 		builder.Services.AddSingleton<PendingItemsService>();
 		builder.Services.AddSingleton<TodayCardService>();
 		builder.Services.AddSingleton<ConstellationService>();

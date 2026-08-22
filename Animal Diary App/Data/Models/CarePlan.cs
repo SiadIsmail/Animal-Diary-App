@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 using SQLite;
 
@@ -89,15 +89,29 @@ public class Tracker : ISyncable
     /// <see cref="TrackerKind.PerDay"/> (e.g. 3 for glucose 3× daily); 0 otherwise.</summary>
     public int PerDayCount { get; set; }
 
-    /// <summary>Target-range low bound. Only meaningful for glucose. Null (together
-    /// with <see cref="TargetHi"/>) means "no range yet": readings are simply
-    /// recorded, without judgement, until a range is added.</summary>
+    /// <summary>Target-range low bound, <b>in <see cref="Unit"/></b>, not in the app's
+    /// canonical unit. Only meaningful for glucose. Null (together with
+    /// <see cref="TargetHi"/>) means "no range yet": readings are simply recorded,
+    /// without judgement, until a range is added.</summary>
     public decimal? TargetLo { get; set; }
     public decimal? TargetHi { get; set; }
 
-    /// <summary>Unit the value is stored in, kept explicitly on the tracker so a
-    /// second unit (e.g. mg/dL) can be added later without touching stored readings.
-    /// "mmol/L" for glucose; empty for trackers that don't carry a unit.</summary>
+    /// <summary>
+    /// The unit the <b>target band</b> was entered in: a stable id from
+    /// <see cref="UnitCatalog"/> ("mmol_l", "mg_dl"), empty for a tracker with no band.
+    ///
+    /// <para>This is the one place a stored number is NOT canonical, and deliberately: a
+    /// band is a pair the owner typed once, quoting their vet, and it is never summed,
+    /// charted or compared across pets, so there is nothing for a canonical form to make
+    /// comparable. What matters is that it can be converted for display, which needs its
+    /// source unit recorded, which is exactly this column.</para>
+    ///
+    /// <para><b>Legacy rows hold the LABEL "mmol/L" rather than an id</b>, from before
+    /// units had ids. That is harmless and needs no migration: an unrecognised id
+    /// resolves to the family's canonical unit, and mmol/L <i>is</i> the canonical unit,
+    /// so those rows read back as exactly what they always meant. Use
+    /// <see cref="TargetUnit"/> rather than reading this string directly.</para>
+    /// </summary>
     public string Unit { get; set; } = string.Empty;
 
     /// <summary>Id of the <see cref="Condition"/> that introduced this tracker, or
@@ -106,12 +120,20 @@ public class Tracker : ISyncable
     public string? FromCondition { get; set; }
 
     /// <summary>The target band as a value, or null when no range is set. Convenience
-    /// over the two nullable columns.</summary>
+    /// over the two nullable columns. Stated in <see cref="TargetUnit"/>.</summary>
     [Ignore]
     public TargetRange? TargetRange =>
         TargetLo.HasValue && TargetHi.HasValue
             ? new TargetRange(TargetLo.Value, TargetHi.Value)
             : null;
+
+    /// <summary>The unit <see cref="TargetRange"/> is stated in, resolved through the
+    /// catalog so a legacy label and a missing value both land on the canonical unit.
+    /// Null for a tracker whose readings have no convertible unit at all.</summary>
+    [Ignore]
+    public UnitDef? TargetUnit => UnitCatalog.FamilyFor(TrackerId) is UnitFamily f
+        ? UnitCatalog.Get(f, Unit)
+        : null;
 }
 
 /// <summary>
@@ -141,13 +163,23 @@ public sealed record CarePlanItem
     /// <see cref="TrackerKind.PerDay"/>; 0 otherwise.</summary>
     public int PerDayCount { get; init; }
 
-    /// <summary>The glucose target band, or null. Only ever set for glucose: a custom
-    /// tracker never carries one, because a range is a clinical judgement the app has no
-    /// business inventing for a value the owner defined.</summary>
+    /// <summary>The glucose target band, or null, stated in <see cref="TargetUnit"/>
+    /// rather than in the canonical unit (see <see cref="Tracker.Unit"/>). Only ever set
+    /// for glucose: a custom tracker never carries one, because a range is a clinical
+    /// judgement the app has no business inventing for a value the owner defined.</summary>
     public TargetRange? TargetRange { get; init; }
 
-    /// <summary>Unit the value is recorded in, or empty.</summary>
+    /// <summary>For a shipped tracker, the stable unit id the target band was entered in;
+    /// for an owner-defined one, their own free text ("min", "km"), which nothing
+    /// converts. Empty when there is neither.</summary>
     public string Unit { get; init; } = string.Empty;
+
+    /// <summary>The unit <see cref="TargetRange"/> is stated in, or null for a record
+    /// with no convertible unit (including every custom tracker, whose unit is the
+    /// owner's own word).</summary>
+    public UnitDef? TargetUnit => !Key.IsCustom && UnitCatalog.FamilyFor(Key.BuiltIn!.Value) is UnitFamily f
+        ? UnitCatalog.Get(f, Unit)
+        : null;
 
     /// <summary>Id of the condition that introduced this line, or null. Always null for
     /// a custom tracker: no condition may ever claim one.</summary>

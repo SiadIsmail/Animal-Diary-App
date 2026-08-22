@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Import;
+﻿namespace Animal_Diary_App.Data.Services.Import;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -191,7 +191,13 @@ public sealed class ImportEntry
     [JsonPropertyName("food")]
     public string? Food { get; set; }
 
-    /// <summary>seizure</summary>
+    /// <summary>seizure: how long it lasted, in seconds. The canonical field.</summary>
+    [JsonPropertyName("duration_seconds")]
+    public int? DurationSeconds { get; set; }
+
+    /// <summary>seizure: how long it lasted, in whole minutes. <b>Legacy</b>, kept so
+    /// files written before seconds existed still import; exactly equivalent to
+    /// <c>duration_seconds</c> with <c>"unit": "min"</c>. Giving both is an error.</summary>
     [JsonPropertyName("duration_minutes")]
     public int? DurationMinutes { get; set; }
 
@@ -206,6 +212,25 @@ public sealed class ImportEntry
     /// <summary>custom: the number for an "amount" tracker.</summary>
     [JsonPropertyName("amount")]
     public decimal? Amount { get; set; }
+
+    /// <summary>
+    /// Optional, for the measured types (weight, glucose, appetite_amount, water_amount,
+    /// seizure): the unit the NUMBER above is stated in, as a stable id from
+    /// <c>UnitCatalog</c> ("lb", "mg_dl", "fl_oz", "oz", "min").
+    ///
+    /// <para><b>Omitted means the canonical unit</b>, which is what each value field's
+    /// own name already says (<c>value_kg</c>, <c>ml</c>, <c>grams</c>,
+    /// <c>duration_seconds</c>; glucose's <c>value</c> is mmol/L). So every file written
+    /// before this field existed still means exactly what it meant.</para>
+    ///
+    /// <para>Felova stores the canonical value and records this as PROVENANCE, so an
+    /// owner whose notes say "11.4 lb" gets a diary that says 11.4 lb back. It is never a
+    /// free-text unit: an unrecognised id rejects the file rather than being quietly
+    /// canonicalized, because silently reinterpreting 11.4 lb as 11.4 kg would fabricate
+    /// a reading.</para>
+    /// </summary>
+    [JsonPropertyName("unit")]
+    public string? Unit { get; set; }
 
     /// <summary>mood, seizure, custom: free text the owner wrote.</summary>
     [JsonPropertyName("note")]

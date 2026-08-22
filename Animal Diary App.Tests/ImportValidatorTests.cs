@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Tests;
+﻿namespace Animal_Diary_App.Tests;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services.Import;
@@ -254,7 +254,7 @@ public class ImportValidatorTests
     {
         var snapshot = WithPet(events: new[]
         {
-            new ExistingEvent(1, ImportEntryType.Seizure, new DateTime(2026, 8, 10), new TimeSpan(20, 0, 0), 1m),
+            new ExistingEvent(1, ImportEntryType.Seizure, new DateTime(2026, 8, 10), new TimeSpan(20, 0, 0), 60m),
         });
 
         var plan = Validate(File(ExistingPetBlock("""
@@ -625,19 +625,43 @@ public class ImportValidatorTests
 
         Assert.True(plan.IsValid);
         var seizure = Assert.Single(plan.Pets[0].Seizures);
-        Assert.Null(seizure.DurationMinutes);
+        Assert.Null(seizure.DurationSeconds);
         Assert.Null(seizure.Type);
     }
 
+    /// <summary>
+    /// A sub-minute seizure IMPORTS, and this test used to assert the opposite.
+    ///
+    /// <para>The format once stored whole minutes, so a 45-second seizure was rejected
+    /// with advice to "round a shorter one up to 1" and put the real wording in the note.
+    /// That was the file format faithfully mirroring a model that could not hold the
+    /// value: sub-minute seizures are common and clinically relevant, and rounding one to
+    /// a minute is the diary restating what the owner told it. The store moved to seconds
+    /// and this moved with it.</para>
+    /// </summary>
     [Fact]
-    public void ASubMinuteSeizureDuration_IsRejectedWithAdvice()
+    public void ASubMinuteSeizureDuration_IsImportedExactly()
     {
         var plan = Validate(File(ExistingPetBlock("""
-            { "type": "seizure", "date": "2026-08-10", "duration_minutes": 0 }
+            { "type": "seizure", "date": "2026-08-10", "duration_seconds": 45 }
+            """)), WithPet());
+
+        Assert.True(plan.IsValid);
+        var seizure = Assert.Single(plan.Pets[0].Seizures);
+        Assert.Equal(45, seizure.DurationSeconds);
+    }
+
+    /// <summary>Zero is still not a duration: a timed seizure lasted longer than nothing,
+    /// and "they did not time it" is spelled by leaving the field out.</summary>
+    [Fact]
+    public void AZeroSeizureDuration_IsRejected()
+    {
+        var plan = Validate(File(ExistingPetBlock("""
+            { "type": "seizure", "date": "2026-08-10", "duration_seconds": 0 }
             """)), WithPet());
 
         Assert.False(plan.IsValid);
-        Assert.Contains("Round a shorter one up to 1", plan.Errors[0].Message);
+        Assert.Contains("longer than nothing", plan.Errors[0].Message);
     }
 
     // ── The whole worked example from the brief ─────────────────────────────────
@@ -697,7 +721,7 @@ public class ImportValidatorTests
 
         var snapshot = WithPet(
             days: new[] { new ExistingPetDay(1, new DateTime(2026, 8, 11), 77, HasMood: true, HasWeight: false, IsTombstone: false) },
-            events: new[] { new ExistingEvent(1, ImportEntryType.Seizure, new DateTime(2026, 8, 10), new TimeSpan(20, 0, 0), 1m) });
+            events: new[] { new ExistingEvent(1, ImportEntryType.Seizure, new DateTime(2026, 8, 10), new TimeSpan(20, 0, 0), 60m) });
 
         var plan = Validate(json, snapshot);
 

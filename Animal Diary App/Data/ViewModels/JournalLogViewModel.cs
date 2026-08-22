@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -159,6 +159,7 @@ public class JournalLogViewModel : BaseViewModel
     private readonly SeizureEntryService _seizures;
     private readonly WaterEntryService _water;
     private readonly CustomTrackerService _custom;
+    private readonly DisplayUnitService _displayUnits;
     private readonly IAnalyticsService _analytics;
 
     private DateTime _date = DateTime.Now.Date;
@@ -188,6 +189,7 @@ public class JournalLogViewModel : BaseViewModel
         SeizureEntryService seizures,
         WaterEntryService water,
         CustomTrackerService custom,
+        DisplayUnitService displayUnits,
         IAnalyticsService analytics)
     {
         _pending = pending;
@@ -204,6 +206,7 @@ public class JournalLogViewModel : BaseViewModel
         _seizures = seizures;
         _water = water;
         _custom = custom;
+        _displayUnits = displayUnits;
         _analytics = analytics;
 
         OpenAddSheetCommand = new Command(async () => await OpenAddSheetAsync());
@@ -590,6 +593,15 @@ public class JournalLogViewModel : BaseViewModel
             : await _medications.GetChangesForRangeAsync(
                 pet.Id, DateTime.MinValue, _date.Date.AddDays(1).ToUniversalTime());
 
+        // Which units this pet's readings are shown in: derived from their own entries,
+        // over the whole history rather than this day, so the timeline does not relabel
+        // itself as the owner pages back through it.
+        var weightUnit = await _displayUnits.ResolveAsync(pet.Id, UnitFamily.Weight);
+        var glucoseUnit = await _displayUnits.ResolveAsync(pet.Id, UnitFamily.Glucose);
+        var durationUnit = await _displayUnits.ResolveAsync(pet.Id, UnitFamily.Duration);
+        var volumeUnit = await _displayUnits.ResolveAsync(pet.Id, UnitFamily.Volume);
+        var foodUnit = await _displayUnits.ResolveAsync(pet.Id, UnitFamily.FoodMass);
+
         // Mood + Weight (both live on the day's PetEntry, each with its own time).
         if (entry != null)
         {
@@ -616,7 +628,11 @@ public class JournalLogViewModel : BaseViewModel
 
             if (entry.Weight > 0)
             {
-                var weight = WeightText.WithUnit(entry.Weight);
+                // The MAJORITY unit, not this row's own: the timeline is a list of what
+                // happened, and a day logged in pounds sitting under a day logged in
+                // kilograms would make the two look like different animals. The row's own
+                // unit is still what the sheet reopens in.
+                var weight = UnitText.WithUnit(entry.Weight, weightUnit);
                 items.Add(new TimelineItem
                 {
                     Kind = TimelineKind.Weight,
@@ -631,8 +647,16 @@ public class JournalLogViewModel : BaseViewModel
         }
 
         // Glucose (rose): value is precise; range sentence only when a range exists.
-        var range = plan
-            .FirstOrDefault(t => t.Key.Is(TrackerId.Glucose))?.TargetRange;
+        //
+        // The band and the readings MUST be in the same unit. The band is stored in
+        // whatever the owner entered it in (Tracker.Unit) and the readings are canonical,
+        // so the two can genuinely disagree: mg/dL readings beside a band still reading
+        // "4-8" is a screen saying the animal is in a hypoglycaemic emergency. Both go
+        // into canonical space before anything is compared, and the sentence itself is
+        // built from the display unit.
+        var glucoseLine = plan.FirstOrDefault(t => t.Key.Is(TrackerId.Glucose));
+        var range = glucoseLine?.TargetRange;
+        var rangeUnit = glucoseLine?.TargetUnit ?? UnitCatalog.Canonical(UnitFamily.Glucose);
         foreach (var g in glucoseEntries)
         {
             items.Add(new TimelineItem
@@ -643,8 +667,8 @@ public class JournalLogViewModel : BaseViewModel
                 Time = g.Time,
                 Icon = TrackerVisuals.For(TrackerId.Glucose).Icon,
                 Tint = TrackerTint(TrackerId.Glucose),
-                Title = Loc.Format("Journal_GlucoseTimeline", g.Value.ToString("0.0", CultureInfo.CurrentCulture)),
-                Sub = GlucoseSub(g, range)
+                Title = Loc.Format("Journal_GlucoseTimeline", UnitText.WithUnit(g.Value, glucoseUnit)),
+                Sub = GlucoseSub(g, range, rangeUnit)
             });
         }
 
@@ -677,7 +701,7 @@ public class JournalLogViewModel : BaseViewModel
                 Icon = TrackerVisuals.For(TrackerId.Appetite).Icon,
                 Tint = TrackerTint(TrackerId.Appetite),
                 Title = Loc.GetString("Journal_Appetite"),
-                Sub = WithFood(Loc.Format("Journal_AppetiteGrams", a.Grams.ToString("0.#", CultureInfo.CurrentCulture)), a.Food)
+                Sub = WithFood(UnitText.WithUnit(a.Grams, foodUnit), a.Food)
             });
         }
 
@@ -696,7 +720,7 @@ public class JournalLogViewModel : BaseViewModel
                 Icon = TrackerVisuals.For(TrackerId.Water).Icon,
                 Tint = TrackerTint(TrackerId.Water),
                 Title = Loc.GetString("Journal_Water"),
-                Sub = Loc.Format("Journal_WaterMl", w.AmountMl.ToString("0.#", CultureInfo.CurrentCulture))
+                Sub = UnitText.WithUnit(w.AmountMl, volumeUnit)
             });
         }
         foreach (var w in waterLevels)
@@ -727,7 +751,7 @@ public class JournalLogViewModel : BaseViewModel
                 Icon = TrackerVisuals.For(TrackerId.Seizure).Icon,
                 Tint = TrackerTint(TrackerId.Seizure),
                 Title = Loc.GetString("Journal_Seizure"),
-                Sub = SeizureSub(s)
+                Sub = SeizureSub(s, durationUnit)
             });
         }
 
@@ -842,7 +866,8 @@ public class JournalLogViewModel : BaseViewModel
                 await _appetite.DeleteAmountAsync(row.Id);
                 undo = () => _appetite.InsertAmountAsync(new AppetiteAmountEntry
                 {
-                    PetId = row.PetId, Date = row.Date, Time = row.Time, Grams = row.Grams, Food = row.Food
+                    PetId = row.PetId, Date = row.Date, Time = row.Time,
+                    Grams = row.Grams, Unit = row.Unit, Food = row.Food
                 });
                 break;
             }
@@ -854,7 +879,8 @@ public class JournalLogViewModel : BaseViewModel
                 undo = () => _seizures.InsertAsync(new SeizureEntry
                 {
                     PetId = row.PetId, Date = row.Date, Time = row.Time,
-                    DurationMinutes = row.DurationMinutes, Note = row.Note
+                    Type = row.Type,
+                    DurationSeconds = row.DurationSeconds, Unit = row.Unit, Note = row.Note
                 });
                 break;
             }
@@ -865,7 +891,8 @@ public class JournalLogViewModel : BaseViewModel
                 await _water.DeleteAmountAsync(row.Id);
                 undo = () => _water.InsertAmountAsync(new WaterAmountEntry
                 {
-                    PetId = row.PetId, Date = row.Date, Time = row.Time, AmountMl = row.AmountMl
+                    PetId = row.PetId, Date = row.Date, Time = row.Time,
+                    AmountMl = row.AmountMl, Unit = row.Unit
                 });
                 break;
             }
@@ -888,7 +915,7 @@ public class JournalLogViewModel : BaseViewModel
                 undo = () => _custom.InsertAsync(new CustomEntry
                 {
                     PetId = row.PetId, CustomTrackerId = row.CustomTrackerId, Date = row.Date,
-                    Time = row.Time, Amount = row.Amount, Note = row.Note
+                    Time = row.Time, Amount = row.Amount, Unit = row.Unit, Note = row.Note
                 });
                 break;
             }
@@ -1128,13 +1155,14 @@ public class JournalLogViewModel : BaseViewModel
     // Duration and note are both optional; join whichever are present.
     // Type · duration · note, in that order, with whichever parts were answered. All three
     // are optional, so a seizure logged with only a time has an empty sub line.
-    private static string SeizureSub(SeizureEntry s)
+    private static string SeizureSub(SeizureEntry s, UnitDef durationUnit)
     {
         var parts = new List<string>(3);
         if (s.Type is SeizureType t)
             parts.Add(t.GetDisplayName());
-        if (s.DurationMinutes is int m)
-            parts.Add(Loc.Format("Journal_SeizureDuration", m));
+        if (s.DurationSeconds is int seconds)
+            parts.Add(Loc.Format(
+                "Journal_SeizureDuration", UnitText.WithUnit(seconds, durationUnit)));
         var note = s.Note?.Trim() ?? string.Empty;
         if (note.Length > 0)
             parts.Add(note);
@@ -1153,15 +1181,23 @@ public class JournalLogViewModel : BaseViewModel
 
     // "{Before|After} food": plus a gentle range sentence ONLY when a range exists.
     // The value itself is never coloured or altered by the range.
-    private static string GlucoseSub(GlucoseEntry g, TargetRange? range)
+    //
+    // THE COMPARISON HAPPENS IN CANONICAL SPACE. The reading is stored in mmol/L and the
+    // band in whatever unit it was typed in, so comparing them raw was already a latent
+    // bug: it was right only because every band in the world was mmol/L. With mg/dL
+    // offered, a 4-8 band read as 4-8 mmol/L against a reading of 7.6 says "in range",
+    // and the same band entered as 72-144 mg/dL would have said "low" about the identical
+    // reading. One of those two answers is a false statement about an animal.
+    private static string GlucoseSub(GlucoseEntry g, TargetRange? range, UnitDef rangeUnit)
     {
         var context = Loc.GetString(g.Context == FoodContext.BeforeFood ? "Journal_BeforeFood" : "Journal_AfterFood");
         if (range is not { } r)
             return context;
 
+        var canonical = UnitCatalog.CanonicalRange(r, rangeUnit);
         string sentence = Loc.GetString(
-            r.Contains(g.Value) ? "Journal_GlucoseInRange"
-            : g.Value > r.Hi ? "Journal_GlucoseHigh"
+            canonical.Contains(g.Value) ? "Journal_GlucoseInRange"
+            : g.Value > canonical.Hi ? "Journal_GlucoseHigh"
             : "Journal_GlucoseLow");
         return $"{context} · {sentence}";
     }

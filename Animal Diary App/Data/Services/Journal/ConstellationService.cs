@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Journal;
+﻿namespace Animal_Diary_App.Data.Services.Journal;
 
 using System.Globalization;
 using Animal_Diary_App.Data.Models;
@@ -31,6 +31,7 @@ public class ConstellationService
     private readonly CustomTrackerService _custom;
     private readonly MedicationService _medications;
     private readonly MedicationDoseLogService _doseLogs;
+    private readonly DisplayUnitService _displayUnits;
 
     public ConstellationService(
         PetEntryService petEntries,
@@ -40,7 +41,8 @@ public class ConstellationService
         SeizureEntryService seizures,
         CustomTrackerService custom,
         MedicationService medications,
-        MedicationDoseLogService doseLogs)
+        MedicationDoseLogService doseLogs,
+        DisplayUnitService displayUnits)
     {
         _petEntries = petEntries;
         _glucose = glucose;
@@ -50,6 +52,7 @@ public class ConstellationService
         _custom = custom;
         _medications = medications;
         _doseLogs = doseLogs;
+        _displayUnits = displayUnits;
     }
 
     private static LocalizationManager Loc => LocalizationManager.Instance;
@@ -84,6 +87,15 @@ public class ConstellationService
         var customDefs = await _custom.GetAllForPetAsync(petId);
         var meds = await _medications.GetMedicationsByPetIdAsync(petId);
 
+        // The units the owner's own entries resolved to. Read once for the whole range:
+        // this gather feeds BOTH the sky's tapped-entry detail and the free plain export,
+        // and neither may show one weigh-in in one unit and the next in another.
+        var weightUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Weight);
+        var glucoseUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Glucose);
+        var durationUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Duration);
+        var volumeUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Volume);
+        var foodUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.FoodMass);
+
         // ── Mood + weight: two independent readings sharing the day's PetEntry row,
         //    each with its own recorded time. A legacy row without one sits at the
         //    start of its day rather than being dropped: it still happened.
@@ -105,7 +117,7 @@ public class ConstellationService
                     At(entry.Date, entry.WeightTimeTicks),
                     CelestialCategory.Weight,
                     Loc.GetString("Journal_WeighIn"),
-                    WeightText.WithUnit(entry.Weight)));
+                    UnitText.WithUnit(entry.Weight, weightUnit)));
             }
         }
 
@@ -115,7 +127,7 @@ public class ConstellationService
                 At(g.Date, g.Time),
                 CelestialCategory.Glucose,
                 Loc.GetString("Journal_GlucoseCheck"),
-                Loc.Format("Journal_GlucoseTimeline", g.Value.ToString("0.0", CultureInfo.CurrentCulture))));
+                Loc.Format("Journal_GlucoseTimeline", UnitText.WithUnit(g.Value, glucoseUnit))));
         }
 
         // Appetite and water each arrive in two shapes: a measured amount and a
@@ -138,7 +150,7 @@ public class ConstellationService
                 At(a.Date, a.Time),
                 CelestialCategory.Appetite,
                 Loc.GetString("Journal_Appetite"),
-                WithFood(Loc.Format("Journal_AppetiteGrams", a.Grams.ToString("0.#", CultureInfo.CurrentCulture)), a.Food)));
+                WithFood(UnitText.WithUnit(a.Grams, foodUnit), a.Food)));
         }
 
         foreach (var w in waterAmounts)
@@ -147,7 +159,7 @@ public class ConstellationService
                 At(w.Date, w.Time),
                 CelestialCategory.Water,
                 Loc.GetString("Journal_Water"),
-                Loc.Format("Journal_WaterMl", w.AmountMl.ToString("0.#", CultureInfo.CurrentCulture))));
+                UnitText.WithUnit(w.AmountMl, volumeUnit)));
         }
 
         foreach (var w in waterLevels)
@@ -166,7 +178,7 @@ public class ConstellationService
                 At(s.Date, s.Time),
                 CelestialCategory.Seizure,
                 Loc.GetString("Journal_Seizure"),
-                SeizureDetail(s)));
+                SeizureDetail(s, durationUnit)));
         }
 
         // Owner-defined trackers, including RETIRED ones: an entry outlives the
@@ -232,7 +244,7 @@ public class ConstellationService
 
     // ── Detail lines (read out on tap only; never drawn into the sky) ─────────────
 
-    private static string SeizureDetail(SeizureEntry entry)
+    private static string SeizureDetail(SeizureEntry entry, UnitDef durationUnit)
     {
         var parts = new List<string>(3);
 
@@ -240,8 +252,9 @@ public class ConstellationService
         if (!string.IsNullOrEmpty(type))
             parts.Add(type);
 
-        if (entry.DurationMinutes is int minutes)
-            parts.Add(Loc.Format("Journal_SeizureDuration", minutes));
+        if (entry.DurationSeconds is int seconds)
+            parts.Add(Loc.Format(
+                "Journal_SeizureDuration", UnitText.WithUnit(seconds, durationUnit)));
 
         if (!string.IsNullOrWhiteSpace(entry.Note))
             parts.Add(entry.Note);
@@ -256,7 +269,11 @@ public class ConstellationService
         if (entry.Amount is decimal amount)
         {
             var value = amount.ToString("0.#", CultureInfo.CurrentCulture);
-            parts.Add(string.IsNullOrWhiteSpace(def?.Unit) ? value : $"{value} {def!.Unit}");
+            // The unit the ENTRY was written in (see CustomEntry.UnitFor): this gather
+            // also feeds the free plain export, which is the one document that promises
+            // to be exactly what the owner wrote down.
+            var unit = entry.UnitFor(def);
+            parts.Add(unit.Length == 0 ? value : $"{value} {unit}");
         }
 
         if (!string.IsNullOrWhiteSpace(entry.Note))

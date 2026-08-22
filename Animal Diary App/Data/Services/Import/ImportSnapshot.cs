@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Import;
+﻿namespace Animal_Diary_App.Data.Services.Import;
 
 using Animal_Diary_App.Data.Models;
 
@@ -83,8 +83,11 @@ public sealed record ExistingLevelDay(
 /// <param name="TrackerId">The custom tracker this belongs to, or 0 for a built-in
 /// type. Without it, two different custom trackers ticked at the same minute would
 /// fingerprint identically and the second would be skipped.</param>
-/// <param name="Value">The row's defining number, or 0 for the types that have none
-/// (a seizure with no recorded duration, a tick).</param>
+/// <param name="Value">The row's defining number <b>in the store's canonical unit</b>
+/// (kg, mmol/L, mL, g, seconds), or 0 for the types that have none (a seizure with no
+/// recorded duration, a tick). Canonical on both sides is what makes the fingerprint
+/// comparable at all: an incoming 11.4 lb and a stored 5.17 kg are the same reading, and
+/// comparing them as typed would import the duplicate every time.</param>
 public sealed record ExistingEvent(
     int PetId,
     ImportEntryType Type,

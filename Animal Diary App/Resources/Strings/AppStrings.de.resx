@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -65,7 +65,6 @@
   <data name="Common_Save" xml:space="preserve"><value>Speichern</value></data>
   <data name="Common_Delete" xml:space="preserve"><value>Löschen</value></data>
   <data name="Common_YearsSeparator" xml:space="preserve"><value> Jahre · </value></data>
-  <data name="Common_KgSuffix" xml:space="preserve"><value> kg</value></data>
   <data name="Common_AgeYearsShort" xml:space="preserve"><value>({0} J.)</value></data>
 
   <!-- ── Bottom navigation ── -->
@@ -204,7 +203,6 @@
   <data name="Journal_MarkSkipped" xml:space="preserve"><value>Als ausgelassen markieren</value></data>
   <data name="Journal_GlucoseTitle" xml:space="preserve"><value>{0}s Zucker-Check</value></data>
   <data name="Journal_GlucoseSub" xml:space="preserve"><value>{0:ddd, d. MMM}. Eine Zahl, und fertig.</value></data>
-  <data name="Journal_GlucoseFieldLabel" xml:space="preserve"><value>Blutzucker · mmol/L</value></data>
   <data name="Journal_WhenLabel" xml:space="preserve"><value>Wann</value></data>
   <data name="Journal_BeforeFood" xml:space="preserve"><value>Vor dem Fressen</value></data>
   <data name="Journal_AfterFood" xml:space="preserve"><value>Nach dem Fressen</value></data>
@@ -216,7 +214,6 @@
   <data name="Journal_SaveMood" xml:space="preserve"><value>Stimmung speichern</value></data>
   <data name="Journal_WeightTitle" xml:space="preserve"><value>{0}s Gewicht</value></data>
   <data name="Journal_WeightSub" xml:space="preserve"><value>{0:ddd, d. MMM}</value></data>
-  <data name="Journal_WeightFieldLabel" xml:space="preserve"><value>Gewicht · Kilogramm</value></data>
   <data name="Journal_SaveWeight" xml:space="preserve"><value>Gewicht speichern</value></data>
   <data name="Journal_AppetiteTitle" xml:space="preserve"><value>Wie hat {0} gefressen?</value></data>
   <data name="Journal_AppetiteSub" xml:space="preserve"><value>{0:ddd, d. MMM}</value></data>
@@ -230,8 +227,7 @@
   <data name="Journal_SeizureTypeGeneralized" xml:space="preserve"><value>Generalisiert</value></data>
   <data name="Journal_SeizureTypeFocal" xml:space="preserve"><value>Fokal</value></data>
   <data name="Journal_SeizureTypeFocalToGeneralized" xml:space="preserve"><value>Fokal → generalisiert</value></data>
-  <data name="Journal_SeizureDurationLabel" xml:space="preserve"><value>Dauer · optional</value></data>
-  <data name="Journal_SeizureDurationPlaceholder" xml:space="preserve"><value>Minuten</value></data>
+  <data name="Journal_SeizureDurationPlaceholder" xml:space="preserve"><value>Wie lange es dauerte</value></data>
   <data name="Journal_SeizureNoteLabel" xml:space="preserve"><value>Notizen · optional</value></data>
   <data name="Journal_SeizureNotePlaceholder" xml:space="preserve"><value>Was dir aufgefallen ist</value></data>
   <data name="Journal_SaveSeizure" xml:space="preserve"><value>Anfall speichern</value></data>
@@ -249,23 +245,17 @@
   <data name="Journal_WaterTitle" xml:space="preserve"><value>Wie viel hat {0} getrunken?</value></data>
   <data name="Journal_WaterSub" xml:space="preserve"><value>{0:ddd, d. MMM}</value></data>
   <data name="Journal_WaterExactToggle" xml:space="preserve"><value>Genaue Menge</value></data>
-  <data name="Journal_WaterAmountLabel" xml:space="preserve"><value>Menge</value></data>
   <data name="Journal_WaterAmountPlaceholder" xml:space="preserve"><value>z. B. 250</value></data>
-  <data name="Journal_WaterMl" xml:space="preserve"><value>{0} ml</value></data>
   <data name="Journal_DrankWord" xml:space="preserve"><value>{0} getrunken</value></data>
   <data name="Journal_ToastWater" xml:space="preserve"><value>Notiert. {0} getrunken.</value></data>
-  <data name="Common_MlSuffix" xml:space="preserve"><value>ml</value></data>
-  <data name="Common_GramSuffix" xml:space="preserve"><value>g</value></data>
   <!-- Appetit (Journal): zwei Modi: Stufen oder genaue Gramm; optionaler Futter-Kontext -->
   <data name="Journal_AppetiteExactToggle" xml:space="preserve"><value>Genaue Menge</value></data>
-  <data name="Journal_AppetiteGramsLabel" xml:space="preserve"><value>Menge</value></data>
   <data name="Journal_AppetiteGramsPlaceholder" xml:space="preserve"><value>z. B. 200</value></data>
-  <data name="Journal_AppetiteGrams" xml:space="preserve"><value>{0} g</value></data>
   <data name="Journal_FoodLabel" xml:space="preserve"><value>Futter (optional)</value></data>
   <data name="Journal_FoodPlaceholder" xml:space="preserve"><value>z. B. Hähnchen-Trockenfutter</value></data>
-  <data name="Journal_GlucoseTimeline" xml:space="preserve"><value>Zucker · {0} mmol/L</value></data>
+  <data name="Journal_GlucoseTimeline" xml:space="preserve"><value>Zucker · {0}</value></data>
   <data name="Journal_AteWord" xml:space="preserve"><value>{0} gefressen</value></data>
-  <data name="Journal_SeizureDuration" xml:space="preserve"><value>Dauerte {0} Min.</value></data>
+  <data name="Journal_SeizureDuration" xml:space="preserve"><value>Dauerte {0}</value></data>
   <!-- HINWEIS (§16-Prüfung): beschreibt einen Wert im Verhältnis zum selbst gesetzten Zielbereich. -->
   <data name="Journal_GlucoseInRange" xml:space="preserve"><value>Im Bereich, den du festgelegt hast</value></data>
   <data name="Journal_GlucoseHigh" xml:space="preserve"><value>Über dem Bereich, den du festgelegt hast</value></data>
@@ -286,7 +276,6 @@
   <data name="CondSetup_FreqTwice" xml:space="preserve"><value>Zweimal täglich</value></data>
   <data name="CondSetup_FreqThree" xml:space="preserve"><value>3× täglich</value></data>
   <data name="CondSetup_FreqAsNeeded" xml:space="preserve"><value>Nur bei Bedarf</value></data>
-  <data name="CondSetup_TargetRangeLabel" xml:space="preserve"><value>Zielbereich · optional</value></data>
   <data name="CondSetup_RangeHint" xml:space="preserve"><value>Noch kein Bereich? Lass es leer. Werte werden einfach festgehalten, ohne Wertung, bis du einen hinzufügst.</value></data>
   <data name="CondSetup_RangeError" xml:space="preserve"><value>Der Bereich braucht einen unteren und einen oberen Wert, den kleineren zuerst.</value></data>
   <data name="CondSetup_DiabetesSave" xml:space="preserve"><value>Diabetes-Betreuung einrichten</value></data>
@@ -350,7 +339,6 @@
   <data name="Manage_EmptyPlan" xml:space="preserve"><value>Noch nichts eingerichtet. Und das ist auch in Ordnung.</value></data>
   <data name="Manage_FreqPerDay" xml:space="preserve"><value>{0}× täglich</value></data>
   <data name="Manage_Event" xml:space="preserve"><value>wird festgehalten, wenn es passiert · wartet unter +</value></data>
-  <data name="Manage_GlucoseTarget" xml:space="preserve"><value>Ziel {0}–{1} mmol/L</value></data>
   <data name="Manage_NoTarget" xml:space="preserve"><value>Noch kein Zielbereich</value></data>
   <data name="Manage_AddConditionTitle" xml:space="preserve"><value>Erkrankung hinzufügen</value></data>
   <data name="Manage_AddConditionSub" xml:space="preserve"><value>Das richtet die passenden Tracker ein</value></data>
@@ -440,7 +428,7 @@
   <data name="Report_Weight" xml:space="preserve"><value>Gewicht:</value></data>
   <data name="Report_Owner" xml:space="preserve"><value>Besitzer:in:</value></data>
   <data name="Report_AgeYears" xml:space="preserve"><value>{0} J.</value></data>
-  <data name="Report_WeightChange" xml:space="preserve"><value>({0} kg im Zeitraum)</value></data>
+  <data name="Report_WeightChange" xml:space="preserve"><value>({0} im Zeitraum)</value></data>
   <data name="Report_SectionMedications" xml:space="preserve"><value>Medikamente</value></data>
   <data name="Report_ColMedication" xml:space="preserve"><value>Medikament</value></data>
   <data name="Report_ColDose" xml:space="preserve"><value>Dosis</value></data>
@@ -483,7 +471,7 @@
   <data name="Report_EventSeizure" xml:space="preserve"><value>Anfall</value></data>
   <data name="Report_EventVomiting" xml:space="preserve"><value>Erbrechen</value></data>
   <data name="Report_EventLowAppetite" xml:space="preserve"><value>Wenig Appetit</value></data>
-  <data name="Report_EventDuration" xml:space="preserve"><value>Dauer ≈ {0} Min.</value></data>
+  <data name="Report_EventDuration" xml:space="preserve"><value>Dauer ≈ {0}</value></data>
   <data name="Report_EventAppetiteLevel" xml:space="preserve"><value>Appetit mit Stufe {0} von 5 erfasst</value></data>
   <data name="Report_MoreEvents" xml:space="preserve"><value>+ {0} weitere Ereignisse im Zeitraum, hier nicht aufgeführt.</value></data>
   <data name="Report_SectionNotes" xml:space="preserve"><value>Eigene Notizen</value></data>
@@ -836,7 +824,6 @@
   <data name="Today_CardHint" xml:space="preserve"><value>Tipp auf eine Karte, um zu ändern, was hier steht</value></data>
   <data name="Today_CardChangeHint" xml:space="preserve"><value>Tippen, um zu ändern, was diese Karte zeigt</value></data>
   <data name="Today_PickerOnOtherCard" xml:space="preserve"><value>Steht auf der anderen Karte. Die beiden tauschen dann</value></data>
-  <data name="Common_MmolSuffix" xml:space="preserve"><value>mmol/l</value></data>
   <!-- ── Feedback-Sheet (unten auf der Pflege-Seite) ── -->
   <data name="Care_FeedbackSection" xml:space="preserve"><value>Feedback</value></data>
   <data name="Feedback_RowTitle" xml:space="preserve"><value>Erzähl uns, was du denkst</value></data>
@@ -1073,4 +1060,27 @@
   <data name="Today_Range1Y" xml:space="preserve"><value>1J</value></data>
   <data name="Today_Measured" xml:space="preserve"><value>GEMESSEN</value></data>
   <data name="Today_Observed" xml:space="preserve"><value>WIE ES WIRKTE</value></data>
+  <!-- ── Einheiten (AI/domain.md: die Einheit wird pro Eintrag gewählt; die
+       angezeigte Einheit ergibt sich aus den Einträgen der Halterin/des Halters).
+       NUR BESCHRIFTUNGEN: die gespeicherten Ids stehen in Data/Models/Units.cs und
+       werden nie übersetzt. ── -->
+  <data name="Unit_Kg" xml:space="preserve"><value>kg</value></data>
+  <data name="Unit_Lb" xml:space="preserve"><value>lb</value></data>
+  <data name="Unit_G" xml:space="preserve"><value>g</value></data>
+  <data name="Unit_MmolL" xml:space="preserve"><value>mmol/l</value></data>
+  <data name="Unit_MgDl" xml:space="preserve"><value>mg/dl</value></data>
+  <data name="Unit_Ml" xml:space="preserve"><value>ml</value></data>
+  <data name="Unit_FlOz" xml:space="preserve"><value>fl oz</value></data>
+  <data name="Unit_Cup" xml:space="preserve"><value>Tassen</value></data>
+  <data name="Unit_Oz" xml:space="preserve"><value>oz</value></data>
+  <data name="Unit_Sec" xml:space="preserve"><value>Sek.</value></data>
+  <data name="Unit_Min" xml:space="preserve"><value>Min.</value></data>
+  <data name="Journal_WeightFieldLabelUnit" xml:space="preserve"><value>Gewicht · {0}</value></data>
+  <data name="Report_UnitConverted" xml:space="preserve"><value>{0}: einige Werte wurden in {1} erfasst und werden hier in {2} angezeigt.</value></data>
+  <data name="Journal_GlucoseFieldLabelUnit" xml:space="preserve"><value>Blutzucker · {0}</value></data>
+  <data name="CondSetup_TargetRangeLabelUnit" xml:space="preserve"><value>Zielbereich · optional · {0}</value></data>
+  <data name="Common_TargetBand" xml:space="preserve"><value>Ziel {0}–{1} {2}</value></data>
+  <data name="Journal_SeizureDurationLabelUnit" xml:space="preserve"><value>Dauer · optional · {0}</value></data>
+  <data name="Journal_WaterAmountLabelUnit" xml:space="preserve"><value>Wie viel · {0}</value></data>
+  <data name="Journal_AppetiteGramsLabelUnit" xml:space="preserve"><value>Wie viel · {0}</value></data>
 </root>

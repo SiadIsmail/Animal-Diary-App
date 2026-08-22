@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services;
+﻿namespace Animal_Diary_App.Data.Services;
 
 using SQLite;
 using Animal_Diary_App.Data.Models;
@@ -59,6 +59,24 @@ public class AppDatabase
             // PetScopeSql.ExcludesDemo): this normalizes the column anyway, so that any
             // future reader is free to write the obvious `IsDemo = 0` and be right.
             conn.Execute("update \"Pet\" set IsDemo = 0 where IsDemo is null");
+
+            // A seizure's duration moved from whole MINUTES to seconds, because an int of
+            // minutes cannot hold a 45-second seizure and sub-minute events are common
+            // and clinically relevant: the owner typed 45 seconds and the record kept a 0.
+            // Existing values are carried across at x60.
+            //
+            // The WHERE clause IS the guard, and it is a better one than a run-once flag.
+            // It is idempotent by construction (a second pass matches nothing), and it
+            // keeps working for rows that arrive LATER: a household device still on an
+            // older build pushes duration_minutes and nothing else, and that value is
+            // converted on the next launch instead of silently reading as "not timed".
+            //
+            // Written raw rather than through SyncStamp, exactly like the backfills above:
+            // marking every historical seizure dirty would queue the whole diary for
+            // upload to restate a number the server converts for itself (migration 0023).
+            conn.Execute(
+                "update \"SeizureEntry\" set DurationSeconds = DurationMinutes * 60 "
+                + "where DurationSeconds is null and DurationMinutes is not null");
         });
     }
 }

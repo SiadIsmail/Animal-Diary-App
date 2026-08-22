@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Journal;
+﻿namespace Animal_Diary_App.Data.Services.Journal;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services.Notifications;
@@ -31,6 +31,7 @@ public class RecordFactsService
     private readonly CustomTrackerService _custom;
     private readonly MedicationService _medications;
     private readonly MedicationDoseLogService _doseLogs;
+    private readonly DisplayUnitService _displayUnits;
 
     public RecordFactsService(
         PetEntryService petEntries,
@@ -40,7 +41,8 @@ public class RecordFactsService
         SeizureEntryService seizures,
         CustomTrackerService custom,
         MedicationService medications,
-        MedicationDoseLogService doseLogs)
+        MedicationDoseLogService doseLogs,
+        DisplayUnitService displayUnits)
     {
         _petEntries = petEntries;
         _glucose = glucose;
@@ -50,6 +52,7 @@ public class RecordFactsService
         _custom = custom;
         _medications = medications;
         _doseLogs = doseLogs;
+        _displayUnits = displayUnits;
     }
 
     /// <summary>
@@ -115,9 +118,13 @@ public class RecordFactsService
             .Select(e => new RecordMoment(At(e.Date, e.WeightTimeTicks), e.Weight))
             .ToList();
 
+        // The values stay in kilograms. Only the unit to RENDER them in is resolved
+        // here, and it is resolved over the whole history rather than over this range:
+        // the axis under a chart must not change meaning when the range selector moves.
         return new RecordSnapshot(
             RecordFactsBuilder.Build(kind, from, to, NoMoments, measured),
-            measured, NoObservations, NoMoments);
+            measured, NoObservations, NoMoments,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.Weight));
     }
 
     private async Task<RecordSnapshot> MoodAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
@@ -146,9 +153,13 @@ public class RecordFactsService
         var rows = await _glucose.GetForRangeAsync(petId, from, to);
         var measured = rows.Select(g => new RecordMoment(g.Date.Date + g.Time, g.Value)).ToList();
 
+        // Canonical mmol/L in the moments; only the unit to RENDER them in is resolved,
+        // over the whole history, so the numbers under a chart do not change meaning when
+        // the range selector moves.
         return new RecordSnapshot(
             RecordFactsBuilder.Build(kind, from, to, measured, NoMoments),
-            measured, NoObservations, NoMoments);
+            measured, NoObservations, NoMoments,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.Glucose));
     }
 
     private async Task<RecordSnapshot> SeizureAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
@@ -191,7 +202,10 @@ public class RecordFactsService
                 levels.Select(l => new RecordMoment(l.Date.Date + l.Time, null))),
             measured,
             levels.Select(l => new RecordObservation(l.Date.Date + l.Time, l.Level)).ToList(),
-            NoMoments);
+            NoMoments,
+            // The MEASURED half's unit. The observations have none and never will: a
+            // stored 1-5 level is a word, not a quantity (AI/design-decisions.md).
+            await _displayUnits.ResolveAsync(petId, UnitFamily.FoodMass));
     }
 
     private async Task<RecordSnapshot> WaterAsync(int petId, TodayCardKey kind, DateTime from, DateTime to)
@@ -207,7 +221,8 @@ public class RecordFactsService
                 levels.Select(l => new RecordMoment(l.Date.Date + l.Time, null))),
             measured,
             levels.Select(l => new RecordObservation(l.Date.Date + l.Time, l.Level)).ToList(),
-            NoMoments);
+            NoMoments,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.Volume));
     }
 
     // ── Owner-defined trackers ───────────────────────────────────────────────

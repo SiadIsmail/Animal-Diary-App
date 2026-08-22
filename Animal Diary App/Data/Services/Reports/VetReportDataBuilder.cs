@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Reports;
+﻿namespace Animal_Diary_App.Data.Services.Reports;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
@@ -25,6 +25,7 @@ public class VetReportDataBuilder
     private readonly TrackerService _trackers;
     private readonly CustomTrackerService _custom;
     private readonly ConstellationService _everything;
+    private readonly DisplayUnitService _displayUnits;
 
     public VetReportDataBuilder(
         PetService pets,
@@ -38,7 +39,8 @@ public class VetReportDataBuilder
         WaterEntryService water,
         TrackerService trackers,
         CustomTrackerService custom,
-        ConstellationService everything)
+        ConstellationService everything,
+        DisplayUnitService displayUnits)
     {
         _pets = pets;
         _conditions = conditions;
@@ -52,6 +54,7 @@ public class VetReportDataBuilder
         _trackers = trackers;
         _custom = custom;
         _everything = everything;
+        _displayUnits = displayUnits;
     }
 
     /// <summary>
@@ -88,7 +91,13 @@ public class VetReportDataBuilder
             Style = ReportStyle.Plain,
             // No photo: the plain export is the portable copy of a record, not a document
             // designed to be handed over, and a face on it buys nothing.
-            Pet = await BuildPetInfoAsync(pet, conditionIds, weightPoints: new List<ReportPoint>(), includePhoto: false),
+            // The header prints the pet's current weight, so the plain export resolves the
+            // unit exactly as the designed one does: "everything you wrote down" must not
+            // be the one document that states a number in a unit the owner never used.
+            Pet = await BuildPetInfoAsync(
+                pet, conditionIds, weightPoints: new List<ReportPoint>(),
+                weightUnit: await _displayUnits.ResolveAsync(petId, UnitFamily.Weight),
+                includePhoto: false),
             From = from,
             To = to,
             GeneratedAt = DateTime.Now,
@@ -135,16 +144,23 @@ public class VetReportDataBuilder
             .Select(e => new ReportPoint(e.Date, e.Weight))
             .ToList();
 
-        var events = BuildEvents(seizureEntries);
+        // Resolved once and handed to every seizure row: the report must not state one
+        // occurrence in seconds and the next in minutes.
+        var durationUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Duration);
+        var events = BuildEvents(seizureEntries, durationUnit);
+
+        // The unit this pet's weights read in on this document: the majority of what the
+        // owner typed, over their whole history so it does not change with the range.
+        var weightUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Weight);
 
         return new VetReportData
         {
-            Pet = await BuildPetInfoAsync(pet, conditionIds, weightPoints, includePhoto),
+            Pet = await BuildPetInfoAsync(pet, conditionIds, weightPoints, weightUnit, includePhoto),
             From = from,
             To = to,
             GeneratedAt = DateTime.Now,
             Medications = await BuildMedicationsAsync(petId, from, to),
-            Trends = await BuildTrendsAsync(petId, weightPoints, glucoseEntries, events, from, to),
+            Trends = await BuildTrendsAsync(petId, weightPoints, weightUnit, glucoseEntries, events, from, to),
             Water = await BuildWaterAsync(petId, from, to, includeWaterMeasured, includeWaterObservations),
             Appetite = await BuildAppetiteAsync(petId, appetiteEntries, from, to, includeAppetiteMeasured, includeAppetiteObservations),
             Mood = includeMood ? BuildMood(petEntries) : new ReportMood(),
@@ -156,12 +172,63 @@ public class VetReportDataBuilder
                 .Where(e => e.IncludeInVetReport && !string.IsNullOrWhiteSpace(e.MoodNote))
                 .OrderByDescending(e => e.Date)
                 .Select(e => new ReportNote(e.Date, e.MoodNote.Trim()))
-                .ToList()
+                .ToList(),
+            UnitNotes = await BuildUnitNotesAsync(petId, from, to, weightUnit)
         };
     }
 
+    /// <summary>
+    /// The report's "some values were converted" footnotes: one per record whose entries
+    /// in this range were not all written in the unit the document shows.
+    ///
+    /// <para>Only stated when a conversion actually happened. Nothing here interprets: it
+    /// says what the record contains, which is the same standing every other line in the
+    /// document has.</para>
+    /// </summary>
+    private async Task<IReadOnlyList<string>> BuildUnitNotesAsync(
+        int petId, DateTime from, DateTime to, UnitDef weightUnit)
+    {
+        var notes = new List<string>();
+        await AddUnitNoteAsync(notes, petId, UnitFamily.Weight, weightUnit,
+            VetReportStrings.SeriesWeight, from, to);
+        await AddUnitNoteAsync(
+            notes, petId, UnitFamily.Glucose,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.Glucose),
+            VetReportStrings.SeriesGlucose, from, to);
+        await AddUnitNoteAsync(
+            notes, petId, UnitFamily.Volume,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.Volume),
+            VetReportStrings.SectionWater, from, to);
+        await AddUnitNoteAsync(
+            notes, petId, UnitFamily.FoodMass,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.FoodMass),
+            VetReportStrings.SectionAppetite, from, to);
+        await AddUnitNoteAsync(
+            notes, petId, UnitFamily.Duration,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.Duration),
+            VetReportStrings.SectionEvents, from, to);
+        return notes;
+    }
+
+    /// <summary>One record's note, or nothing at all. Shared so each record added in a
+    /// later phase is one call rather than a copy of this reasoning.</summary>
+    private async Task AddUnitNoteAsync(
+        List<string> notes, int petId, UnitFamily family, UnitDef shownIn,
+        string recordName, DateTime from, DateTime to)
+    {
+        var others = await _displayUnits.OtherUnitsInRangeAsync(petId, family, shownIn, from, to);
+        if (others.Count == 0)
+            return;
+
+        notes.Add(VetReportStrings.UnitConverted(
+            recordName,
+            string.Join(", ", others.Select(u => u.Label)),
+            shownIn.Label));
+    }
+
     private async Task<ReportPetInfo> BuildPetInfoAsync(
-        Pet pet, IReadOnlyList<string> conditionIds, List<ReportPoint> weightPoints, bool includePhoto)
+        Pet pet, IReadOnlyList<string> conditionIds, List<ReportPoint> weightPoints,
+        UnitDef weightUnit, bool includePhoto)
     {
         // Current weight: last reading in range, else the pet's latest ever (so the
         // header still identifies the pet). Change is only stated when the range
@@ -182,6 +249,7 @@ public class VetReportDataBuilder
             WeightChangeKg = weightPoints.Count >= 2
                 ? weightPoints[^1].Value - weightPoints[0].Value
                 : null,
+            WeightUnit = weightUnit,
             // Opt-in only, and only when the file is actually present on this device.
             PhotoPath = includePhoto && pet.PhotoFullPath is { } p && File.Exists(p) ? p : null,
         };
@@ -270,6 +338,7 @@ public class VetReportDataBuilder
     private async Task<List<ReportSeries>> BuildTrendsAsync(
         int petId,
         List<ReportPoint> weightPoints,
+        UnitDef weightUnit,
         List<GlucoseEntry> glucoseEntries,
         List<ReportEvent> events,
         DateTime from,
@@ -284,19 +353,33 @@ public class VetReportDataBuilder
         // Series labels are printed on the page, so they are localized here: the same
         // place Species and the condition names are already resolved to display words.
         if (weightPoints.Count >= 1)
-            trends.Add(new ReportSeries { Label = VetReportStrings.SeriesWeight, Unit = "kg", Points = weightPoints });
+            trends.Add(new ReportSeries
+            {
+                Label = VetReportStrings.SeriesWeight,
+                // ReportSeries.Points are stated in ReportSeries.Unit (see that type): a
+                // chart's axis labels are numbers drawn from the points, so the conversion
+                // has to happen before the renderer sees them, not in the caption.
+                Unit = weightUnit.Label,
+                Points = weightPoints
+                    .Select(p => new ReportPoint(p.Date, UnitCatalog.Display(p.Value, weightUnit)))
+                    .ToList(),
+            });
 
         if (glucoseEntries.Count >= 1)
         {
-            // The unit lives on the pet's glucose tracker ("mmol/L" today).
-            var tracker = await _trackers.GetByTrackerIdAsync(petId, TrackerId.Glucose);
+            // The unit the OWNER'S OWN READINGS resolved to, not the one their target band
+            // happens to be stored in. Tracker.Unit is the band's unit and nothing else;
+            // reading it as the series unit is how a chart of mmol/L numbers came to be
+            // captioned mg/dL, which is a factor of eighteen wrong in a medical document.
+            var glucoseUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Glucose);
             trends.Add(new ReportSeries
             {
                 Label = VetReportStrings.SeriesGlucose,
-                Unit = string.IsNullOrEmpty(tracker?.Unit) ? "mmol/L" : tracker!.Unit,
+                Unit = glucoseUnit.Label,
                 Points = glucoseEntries
                     .OrderBy(g => g.Date).ThenBy(g => g.Time)
-                    .Select(g => new ReportPoint(g.Date + g.Time, g.Value))
+                    .Select(g => new ReportPoint(
+                        g.Date + g.Time, UnitCatalog.Display(g.Value, glucoseUnit)))
                     .ToList()
             });
         }
@@ -353,7 +436,20 @@ public class VetReportDataBuilder
                 .Select(g => new ReportPoint(g.Key, g.Sum(w => w.AmountMl)))
                 .ToList();
             if (points.Count > 0)
-                measured = new ReportSeries { Label = "Measured", Unit = "mL", Points = points };
+            {
+                // Summed in canonical ml, then converted ONCE for the chart: converting
+                // each reading first and summing the rounded results would drift the
+                // daily total by a little more for every extra drink logged.
+                var unit = await _displayUnits.ResolveAsync(petId, UnitFamily.Volume);
+                measured = new ReportSeries
+                {
+                    Label = "Measured",
+                    Unit = unit.Label,
+                    Points = points
+                        .Select(pt => new ReportPoint(pt.Date, UnitCatalog.Display(pt.Value, unit)))
+                        .ToList(),
+                };
+            }
         }
 
         IReadOnlyList<ReportObservation> observations = Array.Empty<ReportObservation>();
@@ -394,7 +490,18 @@ public class VetReportDataBuilder
                 .Select(g => new ReportPoint(g.Key, g.Sum(a => a.Grams)))
                 .ToList();
             if (points.Count > 0)
-                measured = new ReportSeries { Label = "Measured", Unit = "g", Points = points };
+            {
+                // Summed in canonical grams, then converted once: see BuildWaterAsync.
+                var unit = await _displayUnits.ResolveAsync(petId, UnitFamily.FoodMass);
+                measured = new ReportSeries
+                {
+                    Label = "Measured",
+                    Unit = unit.Label,
+                    Points = points
+                        .Select(pt => new ReportPoint(pt.Date, UnitCatalog.Display(pt.Value, unit)))
+                        .ToList(),
+                };
+            }
         }
 
         IReadOnlyList<ReportObservation> observations = Array.Empty<ReportObservation>();
@@ -420,7 +527,8 @@ public class VetReportDataBuilder
         return new ReportAppetite { Measured = measured, Observations = observations, Foods = foods };
     }
 
-    private static List<ReportEvent> BuildEvents(List<SeizureEntry> seizureEntries)
+    private static List<ReportEvent> BuildEvents(
+        List<SeizureEntry> seizureEntries, UnitDef durationUnit)
     {
         var events = new List<ReportEvent>();
 
@@ -429,7 +537,8 @@ public class VetReportDataBuilder
             Kind = ReportEventKind.Seizure,
             Date = s.Date,
             Time = s.Time,
-            DurationMinutes = s.DurationMinutes,
+            DurationSeconds = s.DurationSeconds,
+            DurationUnit = durationUnit,
             SeizureType = s.Type,
             Note = string.IsNullOrWhiteSpace(s.Note) ? null : s.Note.Trim()
         }));
@@ -485,7 +594,9 @@ public class VetReportDataBuilder
                 var def = definitions[e.CustomTrackerId];
                 return new ReportCustomEntry(
                     def.Name,
-                    def.Unit,
+                    // The unit the entry was written in. A report is read months later,
+                    // which is exactly when a since-renamed unit does the damage.
+                    e.UnitFor(def),
                     e.Date,
                     e.Time,
                     e.Amount,

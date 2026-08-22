@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Import;
+﻿namespace Animal_Diary_App.Data.Services.Import;
 
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -171,7 +171,7 @@ public sealed class ImportService
                 events.Add(new ExistingEvent(pet.Id, ImportEntryType.Glucose, g.Date.Date, g.Time, g.Value));
 
             foreach (var s in await _seizures.GetForRangeAsync(pet.Id, from, to))
-                events.Add(new ExistingEvent(pet.Id, ImportEntryType.Seizure, s.Date.Date, s.Time, s.DurationMinutes ?? 0));
+                events.Add(new ExistingEvent(pet.Id, ImportEntryType.Seizure, s.Date.Date, s.Time, s.DurationSeconds ?? 0));
 
             foreach (var a in await _appetite.GetAmountsForRangeAsync(pet.Id, from, to))
                 events.Add(new ExistingEvent(pet.Id, ImportEntryType.AppetiteAmount, a.Date.Date, a.Time, a.Grams));
@@ -367,6 +367,7 @@ public sealed class ImportService
             if (day.HasWeight)
             {
                 row.Weight = day.Weight!.Value;
+                row.WeightUnit = day.WeightUnit;
                 row.WeightTimeTicks = day.WeightTimeTicks;
                 result.EntriesWritten++;
             }

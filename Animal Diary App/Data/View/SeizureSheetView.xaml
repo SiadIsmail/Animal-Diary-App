@@ -31,6 +31,15 @@
             <Setter Property="StrokeShape" Value="RoundRectangle 14"/>
             <Setter Property="Padding" Value="12,2"/>
         </Style>
+        <!-- One unit chip; highlighted via a bound-bool DataTrigger, the same shape the
+             other sheets' unit pickers use. -->
+        <Style x:Key="UnitChip" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource GlassSoft}"/>
+            <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="StrokeShape" Value="RoundRectangle 12"/>
+            <Setter Property="Padding" Value="0,9"/>
+        </Style>
     </ContentView.Resources>
 
     <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
@@ -95,9 +104,10 @@
                     </FlexLayout>
                 </VerticalStackLayout>
 
-                <!-- Duration · optional -->
+                <!-- Duration · optional. Seconds first, because that is how owners
+                     describe a seizure; minutes are there for the long ones. -->
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="{loc:Translate Journal_SeizureDurationLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Label Text="{Binding DurationLabel}" Style="{StaticResource FieldLabel}"/>
                     <Border Style="{StaticResource FieldBox}">
                         <Entry Text="{Binding DurationText}"
                                Keyboard="Numeric"
@@ -107,6 +117,32 @@
                                TextColor="{StaticResource Ink}"
                                PlaceholderColor="{StaticResource InkTertiary}"/>
                     </Border>
+
+                    <!-- Tapping one re-expresses what is already typed (90 seconds
+                         becomes 1.5 minutes) rather than relabelling it. -->
+                    <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Units}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:UnitOption">
+                                <Border Style="{StaticResource UnitChip}" WidthRequest="86">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectUnitCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding Label}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                           TextColor="{StaticResource TealDeep}"
+                                           HorizontalTextAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
                 </VerticalStackLayout>
 
                 <!-- Notes · optional -->

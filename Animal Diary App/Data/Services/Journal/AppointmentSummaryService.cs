@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Journal;
+﻿namespace Animal_Diary_App.Data.Services.Journal;
 
 using Animal_Diary_App.Data.Models;
 
@@ -32,7 +32,10 @@ public sealed record NewRecord(string Name, DateTime FirstOn);
 
 /// <summary>One record's facts, with the name to head them.</summary>
 /// <param name="Name">Localized for a shipped record, verbatim for a custom tracker.</param>
-public sealed record SummaryRecord(string Name, RecordFacts Facts);
+/// <param name="Unit">The unit the facts' numbers are to be shown in, resolved from the
+/// owner's own entries; null for a record with no convertible unit. The facts stay
+/// canonical (AI/domain.md, Units).</param>
+public sealed record SummaryRecord(string Name, RecordFacts Facts, UnitDef? Unit = null);
 
 /// <summary>
 /// Everything the "since your last visit" screen shows, assembled from the stores.
@@ -128,11 +131,15 @@ public class AppointmentSummaryService
 
         foreach (var (key, name) in kinds)
         {
-            var facts = await _facts.GetAsync(pet, key, from, today);
+            // The snapshot rather than the facts alone: it carries the unit the owner's
+            // own entries resolved to, and this document is read by a clinician, so
+            // every number in it has to name its unit (AI/domain.md, Units).
+            var snapshot = await _facts.GetSnapshotAsync(pet, key, from, today);
+            var facts = snapshot.Facts;
             if (!facts.HasAny)
                 continue;                       // nothing to state about it in this window
 
-            records.Add(new SummaryRecord(name, facts));
+            records.Add(new SummaryRecord(name, facts, snapshot.DisplayUnit));
 
             // "New since last time" needs a last time. It also needs a SECOND read,
             // "did this record exist before the window?", which is why it is asked
