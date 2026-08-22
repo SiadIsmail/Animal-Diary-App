@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 using SQLite;
 
@@ -176,7 +176,39 @@ public class CustomEntry : ISyncable
     /// exactly; null for a Tick (which records only that it happened).</summary>
     public decimal? Amount { get; set; }
 
+    /// <summary>
+    /// The definition's <see cref="CustomTracker.Unit"/> as it stood when this entry
+    /// was written ("min", "km", "poops"), or null for rows written before the column
+    /// existed, which read the definition's current unit instead.
+    ///
+    /// <para><b>No conversion, and none is possible.</b> A custom unit is free text the
+    /// owner invented; nothing can turn "poops" into anything else, so this is the one
+    /// place a per-entry unit is stored WITHOUT joining <see cref="UnitCatalog"/>'s
+    /// conversion machinery. It is stored for the other half of the reason: renaming a
+    /// tracker's unit ("min" → "km") used to retroactively relabel every entry already
+    /// written, restating 35 minutes of walking as 35 kilometres. Same reasoning as
+    /// <c>MedicationChange</c>'s stored name and summary: history is written at the
+    /// moment it happened and an edit today may not rewrite it.</para>
+    /// </summary>
+    public string? Unit { get; set; }
+
     /// <summary>Optional free text the owner added ("great walk, no limp"), or empty.
     /// Context only, never parsed, scored or turned into a category.</summary>
     public string Note { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The unit to PRINT beside this entry's <see cref="Amount"/>: the one it was written
+    /// in, falling back to the definition's current unit for rows written before
+    /// <see cref="Unit"/> existed.
+    ///
+    /// <para>Every surface that shows a custom amount goes through here, which is what
+    /// actually closes the relabelling bug: reading <c>definition.Unit</c> directly is a
+    /// one-word change that compiles, looks right, and silently restates every entry
+    /// already recorded. The fallback is honest rather than a guess: for a legacy row the
+    /// definition's unit IS the only unit that row ever had.</para>
+    /// </summary>
+    public string UnitFor(CustomTracker? definition) =>
+        !string.IsNullOrWhiteSpace(Unit)
+            ? Unit!.Trim()
+            : definition?.Unit?.Trim() ?? string.Empty;
 }

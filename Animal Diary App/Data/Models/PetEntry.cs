@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 using SQLite;
 
@@ -54,4 +54,20 @@ public class PetEntry : ISyncable
     /// <summary>Time-of-day (ticks) the weight was logged, or null for legacy entries.
     /// Weight and mood carry separate times because they're logged independently.</summary>
     public long? WeightTimeTicks { get; set; }
+
+    /// <summary>
+    /// The unit the owner typed <see cref="Weight"/> in ("kg", "lb", "g"): see
+    /// <see cref="UnitCatalog"/>. Named for the column it describes rather than plain
+    /// "Unit", because this row also carries a mood, which has no unit and never will.
+    ///
+    /// <para><b>The stored weight stays CANONICAL (kg); this is provenance.</b> It says
+    /// what the owner typed, so their entries can be counted and the majority shown
+    /// back to them, and so an edit reopens in the unit it was written in. Every
+    /// aggregate in the app keeps reading one comparable number.</para>
+    ///
+    /// <para><b>Null means kilograms</b>, which is true of every row written before
+    /// units existed: that is why this needs no backfill. SQLite.NET adds the column
+    /// automatically, no local migration.</para>
+    /// </summary>
+    public string? WeightUnit { get; set; }
 }

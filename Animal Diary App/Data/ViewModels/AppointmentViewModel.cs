@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Globalization;
 using System.Windows.Input;
@@ -410,7 +410,7 @@ public class AppointmentViewModel : BaseViewModel
             Name = record.Name,
             Count = RecordFactsText.Count(record.Facts, record.Name),
             DayParts = RecordFactsText.DayParts(record.Facts),
-            Values = RecordFactsText.Values(record.Facts),
+            Values = RecordFactsText.Values(record.Facts, record.Unit),
             Doses = RecordFactsText.Doses(record.Facts),
         }));
     }

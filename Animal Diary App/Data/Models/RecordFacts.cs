@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Facts about the record.
@@ -223,11 +223,22 @@ public sealed record RecordFacts(
 /// <param name="Observed">Relative readings, as labelled rows. Never numbers.</param>
 /// <param name="Events">Occurrences with no value at all: a seizure, a Tick tracker.
 /// Position is when it happened, and nothing else is encoded.</param>
+/// <param name="DisplayUnit">
+/// The unit this record's numbers are to be SHOWN in, resolved from the owner's own
+/// entries (AI/domain.md, Units). Null for a record with no convertible number: mood,
+/// medication, or an owner-defined tracker whose unit is free text.
+///
+/// <para><b>The values above stay canonical.</b> This is carried, not applied: the
+/// conversion happens once, in <c>RecordFactsText</c>, so <c>RecordFactsBuilder</c>'s
+/// arithmetic keeps operating on one comparable number. Converting here would mean
+/// every min/max and every chart scale depended on which unit happened to win.</para>
+/// </param>
 public sealed record RecordSnapshot(
     RecordFacts Facts,
     IReadOnlyList<RecordMoment> Measured,
     IReadOnlyList<RecordObservation> Observed,
-    IReadOnlyList<RecordMoment> Events)
+    IReadOnlyList<RecordMoment> Events,
+    UnitDef? DisplayUnit = null)
 {
     public bool HasMeasured => Measured.Count > 0;
     public bool HasObserved => Observed.Count > 0;

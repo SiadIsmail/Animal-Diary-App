@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Import;
+﻿namespace Animal_Diary_App.Data.Services.Import;
 
 using Animal_Diary_App.Data.Models;
 
@@ -81,8 +81,10 @@ public sealed class PlannedPetDay
     public bool IncludeNoteInVetReport { get; set; }
     public long? MoodTimeTicks { get; set; }
 
-    // Weight half.
+    // Weight half. Weight is CANONICAL kilograms; WeightUnit is provenance, the unit
+    // the file said the number was in (AI/domain.md, Units).
     public decimal? Weight { get; set; }
+    public string? WeightUnit { get; set; }
     public long? WeightTimeTicks { get; set; }
 
     public bool HasMood => MoodLevel is not null;

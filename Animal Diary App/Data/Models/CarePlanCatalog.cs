@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 /// <summary>
 /// Builds the DEFAULT care plan for a pet: the always-on trackers every pet starts
@@ -104,7 +104,10 @@ public static class CarePlanCatalog
         TrackerId = TrackerId.Glucose,
         Kind = TrackerKind.PerDay,
         PerDayCount = perDayCount,
-        Unit = "mmol/L",
+        // The unit a TARGET BAND would be entered in, seeded to the canonical one. The
+        // seed carries no band at all (TargetLo/Hi stay null), so this only decides which
+        // unit the setup sheet opens on before the owner has said anything.
+        Unit = UnitCatalog.MmolPerLitre,
         FromCondition = fromCondition
     };
 }

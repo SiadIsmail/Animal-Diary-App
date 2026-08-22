@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Demo;
+﻿namespace Animal_Diary_App.Data.Services.Demo;
 
 using Animal_Diary_App.Data.Models;
 
@@ -450,7 +450,9 @@ public static class DemoHistory
                     {
                         Date = at.Date,
                         Time = at.TimeOfDay,
-                        DurationMinutes = RandInt(rng, pattern.DurationMinutes),
+                        // The profile's band is in minutes (it reads as a human would
+                        // describe a seizure); the store is seconds.
+                        DurationSeconds = RandInt(rng, pattern.DurationMinutes) * 60,
                         // Left null often: not knowing is a normal answer, and the details
                         // column has to read properly both ways.
                         Type = rng.NextDouble() < 0.6

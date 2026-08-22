@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Reports;
+﻿namespace Animal_Diary_App.Data.Services.Reports;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services.Reports.Document;
@@ -101,8 +101,23 @@ public static class VetReportSampleData
             },
             Trends = new[]
             {
-                new ReportSeries { Label = VetReportStrings.SeriesWeight, Unit = "kg", Points = weight },
-                new ReportSeries { Label = VetReportStrings.SeriesGlucose, Unit = "mmol/L", Points = glucose }
+                new ReportSeries
+                {
+                    Label = VetReportStrings.SeriesWeight,
+                    // The sample is metric, so the label comes from the catalog rather
+                    // than a literal: a hand-typed "kg" here would survive a relabelling
+                    // and quietly disagree with the real report's caption.
+                    Unit = UnitCatalog.Canonical(UnitFamily.Weight).Label,
+                    Points = weight,
+                },
+                new ReportSeries
+                {
+                    Label = VetReportStrings.SeriesGlucose,
+                    // From the catalog, not a literal: a hand-typed unit here survives a
+                    // relabelling and quietly disagrees with the real report's caption.
+                    Unit = UnitCatalog.Canonical(UnitFamily.Glucose).Label,
+                    Points = glucose,
+                }
             },
             Water = new ReportWater
             {

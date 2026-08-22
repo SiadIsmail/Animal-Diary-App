@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
+﻿namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
 
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.DocumentObjectModel.Tables;
@@ -90,8 +90,9 @@ public class EventsSection : IVetReportSection
         // owner's own answer: absent when they didn't give one.
         if (e.SeizureType is not null)
             parts.Add(VetReportStrings.SeizureType(e.SeizureType));
-        if (e.DurationMinutes is int min)
-            parts.Add(VetReportStrings.EventDuration(min));
+        if (e.DurationSeconds is int seconds)
+            parts.Add(VetReportStrings.EventDuration(
+                Helpers.UnitText.WithUnit(seconds, e.DurationUnit)));
         if (e.Kind == ReportEventKind.LowAppetite && e.Value is int level)
             parts.Add(VetReportStrings.EventAppetiteLevel(level));
         // The owner's own words, printed verbatim, never translated.

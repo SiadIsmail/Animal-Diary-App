@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Import;
+﻿namespace Animal_Diary_App.Data.Services.Import;
 
 using System.Globalization;
 using Animal_Diary_App.Data.Models;
@@ -587,6 +587,14 @@ public static class ImportValidator
             if (!TryReadTime(entry.Time, index, e, errors, out var time))
                 continue;
 
+            // Checked ONCE here rather than in each branch that has no unit: a type added
+            // later cannot forget to refuse a field it has no meaning for, and silently
+            // ignoring one would break the format's promise that everything not written is
+            // stated before the owner confirms.
+            if (ImportFormat.UnitFamilyFor(type) is null
+                && !RejectUnit(entry, index, e, entry.Type ?? string.Empty, errors))
+                continue;
+
             switch (type)
             {
                 case ImportEntryType.Weight:
@@ -713,6 +721,87 @@ public static class ImportValidator
         return true;
     }
 
+    /// <summary>
+    /// Resolve an entry's <c>unit</c> against the family the entry type belongs to.
+    /// Omitted means the canonical unit, which is what every value field's name already
+    /// says, so a file written before the field existed still means what it meant.
+    ///
+    /// <para>An unrecognised id REJECTS the file. It is tempting to fall back to
+    /// canonical, the way a stored row does, but the two cases are opposites: a stored
+    /// row's number is already canonical whatever its label says, while an imported
+    /// number is whatever the file claims it is. Quietly canonicalizing "11.4" that was
+    /// meant as pounds writes 11.4 kg into a medical record, and nothing downstream can
+    /// ever tell.</para>
+    /// </summary>
+    private static bool TryReadUnit(
+        ImportEntry entry, UnitFamily family, int petIndex, int entryIndex,
+        List<ImportError> errors, out UnitDef unit)
+    {
+        unit = UnitCatalog.Canonical(family);
+
+        var raw = entry.Unit?.Trim();
+        if (string.IsNullOrEmpty(raw))
+            return true;
+
+        if (!UnitCatalog.IsKnown(family, raw))
+        {
+            var offered = string.Join(", ", UnitCatalog.ForFamily(family).Select(u => u.Id));
+            errors.Add(new ImportError(ImportLocation.EntryField(petIndex, entryIndex, "unit"),
+                $"Unknown unit \"{raw}\" for this entry type. Use one of: {offered}. "
+                + "Leave it out when the number is already in Felova's own unit."));
+            return false;
+        }
+
+        unit = UnitCatalog.Get(family, raw);
+        return true;
+    }
+
+    /// <summary>
+    /// A measured value: read it, convert it out of the entry's unit, and bound-check the
+    /// CANONICAL result.
+    ///
+    /// <para>Bounding the canonical value rather than the raw one is the whole point. The
+    /// ceilings exist to catch a transcription slip ("18.4kg" typed as 1840), and they are
+    /// stated in canonical units; checking the raw number would reject a legitimate
+    /// 1100 lb horse while waving through 400 cups of water.</para>
+    /// </summary>
+    private static bool TryReadMeasured(
+        decimal? raw, UnitDef unit, decimal maxCanonical, int petIndex, int entryIndex,
+        string field, List<ImportError> errors, out decimal canonical)
+    {
+        canonical = 0m;
+        if (!TryReadPositive(raw, decimal.MaxValue, petIndex, entryIndex, field, errors, out var number))
+            return false;
+
+        canonical = UnitCatalog.ToCanonicalValue(number, unit);
+        if (canonical > maxCanonical)
+        {
+            var canonicalUnit = UnitCatalog.Canonical(unit.Family);
+            errors.Add(new ImportError(ImportLocation.EntryField(petIndex, entryIndex, field),
+                $"\"{field}\" is {number} {unit.Id}, which is {UnitCatalog.Format(canonical, canonicalUnit)} "
+                + $"{canonicalUnit.Id}: beyond anything Felova expects (max {maxCanonical}). "
+                + "Check the units and the decimal point."));
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>An entry type that carries no convertible number may not name a unit.
+    /// Silently ignoring the field would break the format's own promise that everything
+    /// not written is stated before the owner confirms.</summary>
+    private static bool RejectUnit(
+        ImportEntry entry, int petIndex, int entryIndex, string type, List<ImportError> errors)
+    {
+        if (string.IsNullOrWhiteSpace(entry.Unit))
+            return true;
+
+        errors.Add(new ImportError(ImportLocation.EntryField(petIndex, entryIndex, "unit"),
+            $"A \"{type}\" entry has no unit to convert, so \"unit\" does not belong on it. "
+            + "Remove it."));
+        return false;
+    }
+
     private static bool TryReadPositive(
         decimal? raw, decimal max, int petIndex, int entryIndex, string field, List<ImportError> errors, out decimal value)
     {
@@ -775,7 +864,9 @@ public static class ImportValidator
         Dictionary<DateTime, PlannedPetDay> daysInFile,
         HashSet<DateTime> claimed)
     {
-        if (!TryReadPositive(entry.ValueKg, ImportFormat.MaxWeightKg, i, e, "value_kg", errors, out var kg))
+        if (!TryReadUnit(entry, UnitFamily.Weight, i, e, errors, out var unit))
+            return;
+        if (!TryReadMeasured(entry.ValueKg, unit, ImportFormat.MaxWeightKg, i, e, "value_kg", errors, out var kg))
             return;
 
         if (!claimed.Add(date))
@@ -796,6 +887,7 @@ public static class ImportValidator
 
         var day = DayFor(date, plan, petDays, daysInFile);
         day.Weight = kg;
+        day.WeightUnit = unit.Id;
         day.WeightTimeTicks = time?.Ticks;
     }
 
@@ -835,7 +927,9 @@ public static class ImportValidator
         List<ImportError> errors, PlannedPet plan,
         HashSet<(ImportEntryType, DateTime, TimeSpan, decimal, int)> stored)
     {
-        if (!TryReadPositive(entry.Value, ImportFormat.MaxGlucose, i, e, "value", errors, out var value))
+        if (!TryReadUnit(entry, UnitFamily.Glucose, i, e, errors, out var unit))
+            return;
+        if (!TryReadMeasured(entry.Value, unit, ImportFormat.MaxGlucose, i, e, "value", errors, out var value))
             return;
 
         // The one bit of context that decides how a reading is read. Required, because a
@@ -863,6 +957,7 @@ public static class ImportValidator
             Date = date,
             Time = at,
             Value = value,
+            Unit = unit.Id,
             Context = context,
         });
     }
@@ -912,7 +1007,9 @@ public static class ImportValidator
         List<ImportError> errors, PlannedPet plan,
         HashSet<(ImportEntryType, DateTime, TimeSpan, decimal, int)> stored)
     {
-        if (!TryReadPositive(entry.Grams, ImportFormat.MaxGrams, i, e, "grams", errors, out var grams))
+        if (!TryReadUnit(entry, UnitFamily.FoodMass, i, e, errors, out var unit))
+            return;
+        if (!TryReadMeasured(entry.Grams, unit, ImportFormat.MaxGrams, i, e, "grams", errors, out var grams))
             return;
 
         var at = time ?? TimeSpan.Zero;
@@ -928,6 +1025,7 @@ public static class ImportValidator
             Date = date,
             Time = at,
             Grams = grams,
+            Unit = unit.Id,
             Food = (entry.Food ?? string.Empty).Trim(),
         });
     }
@@ -976,7 +1074,9 @@ public static class ImportValidator
         List<ImportError> errors, PlannedPet plan,
         HashSet<(ImportEntryType, DateTime, TimeSpan, decimal, int)> stored)
     {
-        if (!TryReadPositive(entry.Ml, ImportFormat.MaxMilliliters, i, e, "ml", errors, out var ml))
+        if (!TryReadUnit(entry, UnitFamily.Volume, i, e, errors, out var unit))
+            return;
+        if (!TryReadMeasured(entry.Ml, unit, ImportFormat.MaxMilliliters, i, e, "ml", errors, out var ml))
             return;
 
         var at = time ?? TimeSpan.Zero;
@@ -992,6 +1092,7 @@ public static class ImportValidator
             Date = date,
             Time = at,
             AmountMl = ml,
+            Unit = unit.Id,
         });
     }
 
@@ -1000,16 +1101,58 @@ public static class ImportValidator
         List<ImportError> errors, PlannedPet plan,
         HashSet<(ImportEntryType, DateTime, TimeSpan, decimal, int)> stored)
     {
-        int? duration = null;
-        if (entry.DurationMinutes is int minutes)
+        // Two ways in, and giving both is an error rather than a precedence rule: a file
+        // that says 45 seconds AND 2 minutes is a transcription that went wrong, and
+        // picking a winner would import one of two contradictory claims about an animal.
+        if (entry.DurationSeconds is not null && entry.DurationMinutes is not null)
         {
-            if (minutes < ImportFormat.MinSeizureMinutes || minutes > ImportFormat.MaxSeizureMinutes)
+            errors.Add(new ImportError(ImportLocation.EntryField(i, e, "duration_seconds"),
+                "This entry gives both \"duration_seconds\" and \"duration_minutes\". "
+                + "Keep one: duration_seconds is the current field, and duration_minutes "
+                + "only still works so older files import."));
+            return;
+        }
+
+        if (!TryReadUnit(entry, UnitFamily.Duration, i, e, errors, out var unit))
+            return;
+
+        // duration_minutes is exactly duration_seconds + "unit": "min", so it is read as
+        // that rather than as a second code path.
+        var rawDuration = entry.DurationSeconds ?? entry.DurationMinutes;
+        var rawField = entry.DurationSeconds is not null ? "duration_seconds" : "duration_minutes";
+        if (entry.DurationMinutes is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(entry.Unit))
             {
-                errors.Add(new ImportError(ImportLocation.EntryField(i, e, "duration_minutes"),
-                    $"duration_minutes is {minutes}; Felova stores whole minutes from {ImportFormat.MinSeizureMinutes} to {ImportFormat.MaxSeizureMinutes}. Round a shorter one up to 1 and put the owner's exact wording in the note, or leave it out when they did not time it."));
+                errors.Add(new ImportError(ImportLocation.EntryField(i, e, "unit"),
+                    "\"duration_minutes\" already states its unit, so it cannot carry a "
+                    + "\"unit\" as well. Use duration_seconds with a unit instead."));
                 return;
             }
-            duration = minutes;
+            unit = UnitCatalog.Get(UnitFamily.Duration, UnitCatalog.Minutes);
+        }
+
+        int? duration = null;
+        if (rawDuration is int given)
+        {
+            if (given <= 0)
+            {
+                errors.Add(new ImportError(ImportLocation.EntryField(i, e, rawField),
+                    $"\"{rawField}\" is {given}; a timed seizure lasted longer than nothing. "
+                    + "Leave it out when the owner did not time it, which is a normal answer."));
+                return;
+            }
+
+            var seconds = UnitCatalog.ToCanonicalValue(given, unit);
+            if (seconds > ImportFormat.MaxSeizureSeconds)
+            {
+                errors.Add(new ImportError(ImportLocation.EntryField(i, e, rawField),
+                    $"\"{rawField}\" is {given} {unit.Id}, which is longer than "
+                    + $"{ImportFormat.MaxSeizureSeconds} seconds. Check the units and the "
+                    + "decimal point."));
+                return;
+            }
+            duration = (int)seconds;
         }
 
         SeizureType? seizureType = null;
@@ -1036,7 +1179,9 @@ public static class ImportValidator
         {
             Date = date,
             Time = at,
-            DurationMinutes = duration,
+            // Already canonical seconds (converted above); the unit column is provenance.
+            DurationSeconds = duration,
+            Unit = duration is null ? null : unit.Id,
             Type = seizureType,
             Note = (entry.Note ?? string.Empty).Trim(),
         });

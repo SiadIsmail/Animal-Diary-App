@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -50,6 +50,7 @@ public class WaterSheetViewModel : BaseViewModel
     private const double GlassMaxFill = 22; // px at "A lot"
 
     private readonly WaterEntryService _service;
+    private readonly DisplayUnitService _units;
 
     private int _petId;
     private string _petName = string.Empty;
@@ -60,9 +61,16 @@ public class WaterSheetViewModel : BaseViewModel
     // level: a singleton VM, so it survives tab switches and re-opens.
     private bool _lastExactMode;
 
-    public WaterSheetViewModel(WaterEntryService service)
+    public WaterSheetViewModel(WaterEntryService service, DisplayUnitService units)
     {
         _service = service;
+        _units = units;
+
+        // ml, fl oz and cups. Cups are safe HERE and only here: a cup is a volume, and
+        // water's density is the one that is constant enough for a fixed factor. The
+        // same chip on APPETITE would be wrong for most foods (see AppetiteSheetViewModel).
+        foreach (var unit in UnitCatalog.ForFamily(UnitFamily.Volume))
+            Units.Add(new UnitOption(unit));
 
         for (int level = 1; level <= 5; level++)
         {
@@ -78,9 +86,13 @@ public class WaterSheetViewModel : BaseViewModel
         {
             foreach (var o in Options)
                 o.RefreshWord();
+            foreach (var u in Units)
+                u.RefreshLocalized();
+            OnPropertyChanged(nameof(AmountLabel));
         };
 
         SelectCommand = new Command<WaterOption>(OnSelect);
+        SelectUnitCommand = new Command<UnitOption>(OnSelectUnit);
         ToggleExactCommand = new Command(() => ExactMode = !ExactMode);
         SaveCommand = new Command(async () => await SaveAsync());
         DismissCommand = new Command(() => IsPresented = false);
@@ -129,7 +141,20 @@ public class WaterSheetViewModel : BaseViewModel
     private string _amountText = string.Empty;
     public string AmountText { get => _amountText; set => SetProperty(ref _amountText, value); }
 
+    // ── The unit the measured amount is typed in ──
+
+    /// <summary>ml · fl oz · cups, in catalog order.</summary>
+    public ObservableCollection<UnitOption> Units { get; } = new();
+
+    private UnitDef _unit = UnitCatalog.Canonical(UnitFamily.Volume);
+
+    /// <summary>"How much · fl oz": the caption carries the unit, so the field is never
+    /// a bare number.</summary>
+    public string AmountLabel =>
+        LocalizationManager.Instance.Format("Journal_WaterAmountLabelUnit", _unit.Label);
+
     public ICommand SelectCommand { get; }
+    public ICommand SelectUnitCommand { get; }
     public ICommand ToggleExactCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand DismissCommand { get; }
@@ -145,12 +170,43 @@ public class WaterSheetViewModel : BaseViewModel
         // last one"); the relative tiles pre-select the day's reading if there is one.
         ExactMode = _lastExactMode;
         AmountText = string.Empty;
+        // The measured store is additive, so opening it means "add another": the unit
+        // comes from what this owner's own entries resolved to, not from any one row.
+        ApplyUnit(await _units.ResolveAsync(petId, UnitFamily.Volume));
         var todayLevel = (await _service.GetLevelsForDateAsync(petId, _date)).LastOrDefault();
         SetSelected(todayLevel?.Level ?? 0);
 
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
         IsPresented = true;
+    }
+
+    private void ApplyUnit(UnitDef unit)
+    {
+        _unit = unit;
+
+        // One pass that sets one and clears every other, matched by id.
+        foreach (var option in Units)
+            option.IsSelected = option.Unit.Id == unit.Id;
+
+        OnPropertyChanged(nameof(AmountLabel));
+    }
+
+    /// <summary>Switching unit re-expresses what is already typed (240 ml becomes
+    /// 8.1 fl oz) rather than relabelling it.</summary>
+    private void OnSelectUnit(UnitOption? option)
+    {
+        if (option is null || option.Unit.Id == _unit.Id)
+            return;
+
+        var canonical = InputParser.TryParsePositive(AmountText, out var typed)
+            ? UnitCatalog.ToCanonicalValue(typed, _unit)
+            : (decimal?)null;
+
+        ApplyUnit(option.Unit);
+
+        if (canonical is decimal value)
+            AmountText = UnitCatalog.Format(value, option.Unit);
     }
 
     private void OnSelect(WaterOption? option)
@@ -184,7 +240,7 @@ public class WaterSheetViewModel : BaseViewModel
     // Exact mode: additive. Each save inserts a new event; undo removes just that one.
     private async Task<(Func<Task>? Undo, string Readout)> SaveAmountAsync()
     {
-        if (!InputParser.TryParsePositive(AmountText, out var ml) || ml <= 0)
+        if (!InputParser.TryParsePositive(AmountText, out var typed) || typed <= 0)
             return (null, string.Empty);
 
         var id = await _service.InsertAmountAsync(new WaterAmountEntry
@@ -192,10 +248,16 @@ public class WaterSheetViewModel : BaseViewModel
             PetId = _petId,
             Date = _date,
             Time = DateTime.Now.TimeOfDay,
-            AmountMl = ml
+            // Stored canonical (ml) at full precision; the unit column is provenance.
+            AmountMl = UnitCatalog.ToCanonicalValue(typed, _unit),
+            Unit = _unit.Id,
         });
-        var readout = LocalizationManager.Instance.Format("Journal_WaterMl",
-            ml.ToString("0.#", CultureInfo.CurrentCulture));
+        await _units.RememberAsync(_unit);
+
+        // The toast quotes it back in the unit they just typed, which is the one moment
+        // where the entry's own unit outranks the majority: they are looking at what
+        // they wrote a second ago.
+        var readout = UnitText.WithUnit(UnitCatalog.ToCanonicalValue(typed, _unit), _unit);
         return (() => _service.DeleteAmountAsync(id), readout);
     }
 

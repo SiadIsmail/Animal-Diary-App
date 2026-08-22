@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.ViewModels;
+﻿namespace Animal_Diary_App.Data.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -48,6 +48,7 @@ public class AppetiteSheetViewModel : BaseViewModel
     private const double BowlMaxFill = 22; // px at "Everything"
 
     private readonly AppetiteEntryService _service;
+    private readonly DisplayUnitService _units;
 
     private int _petId;
     private string _petName = string.Empty;
@@ -57,9 +58,22 @@ public class AppetiteSheetViewModel : BaseViewModel
     // left it. Session-level (a singleton VM).
     private bool _lastExactMode;
 
-    public AppetiteSheetViewModel(AppetiteEntryService service)
+    public AppetiteSheetViewModel(AppetiteEntryService service, DisplayUnitService units)
     {
         _service = service;
+        _units = units;
+
+        // GRAMS AND OUNCES ONLY, and there will never be a third.
+        //
+        // Owners do measure dry food in cups, and adding a "cups" chip here is one of the
+        // most reasonable-sounding requests this sheet will ever get. It is wrong: a cup
+        // is a VOLUME and this is a MASS, so the conversion depends on the density of the
+        // particular food, and any single factor picked here is wrong for most of them.
+        // The app would be inventing a number and storing it as the owner's own reading.
+        // Cups for WATER are fine (see WaterSheetViewModel): water's density is the one
+        // that is safely constant.
+        foreach (var unit in UnitCatalog.ForFamily(UnitFamily.FoodMass))
+            Units.Add(new UnitOption(unit));
 
         for (int level = 1; level <= 5; level++)
         {
@@ -75,9 +89,13 @@ public class AppetiteSheetViewModel : BaseViewModel
         {
             foreach (var o in Options)
                 o.RefreshWord();
+            foreach (var u in Units)
+                u.RefreshLocalized();
+            OnPropertyChanged(nameof(AmountLabel));
         };
 
         SelectCommand = new Command<AppetiteOption>(OnSelect);
+        SelectUnitCommand = new Command<UnitOption>(OnSelectUnit);
         ToggleExactCommand = new Command(() => ExactMode = !ExactMode);
         SaveCommand = new Command(async () => await SaveAsync());
         DismissCommand = new Command(() => IsPresented = false);
@@ -129,7 +147,20 @@ public class AppetiteSheetViewModel : BaseViewModel
     private string _food = string.Empty;
     public string Food { get => _food; set => SetProperty(ref _food, value); }
 
+    // ── The unit the measured amount is typed in ──
+
+    /// <summary>g · oz, in catalog order. No cups: see the constructor.</summary>
+    public ObservableCollection<UnitOption> Units { get; } = new();
+
+    private UnitDef _unit = UnitCatalog.Canonical(UnitFamily.FoodMass);
+
+    /// <summary>"How much · oz": the caption carries the unit, so the field is never a
+    /// bare number.</summary>
+    public string AmountLabel =>
+        LocalizationManager.Instance.Format("Journal_AppetiteGramsLabelUnit", _unit.Label);
+
     public ICommand SelectCommand { get; }
+    public ICommand SelectUnitCommand { get; }
     public ICommand ToggleExactCommand { get; }
     public ICommand SaveCommand { get; }
     public ICommand DismissCommand { get; }
@@ -145,6 +176,9 @@ public class AppetiteSheetViewModel : BaseViewModel
         // owner named, so a steady diet is one confirm: still editable/clearable.
         ExactMode = _lastExactMode;
         GramsText = string.Empty;
+        // Additive store, so opening means "add another": the unit comes from what this
+        // owner's own entries resolved to, not from any one row.
+        ApplyUnit(await _units.ResolveAsync(petId, UnitFamily.FoodMass));
         var today = await _service.GetForDateAsync(petId, _date);
         SetSelected(today.LastOrDefault()?.Level ?? 0);
         Food = await _service.GetLastFoodAsync(petId);
@@ -182,10 +216,38 @@ public class AppetiteSheetViewModel : BaseViewModel
             undo));
     }
 
-    // Exact mode: additive. Each save inserts a new grams event; undo removes just it.
+    private void ApplyUnit(UnitDef unit)
+    {
+        _unit = unit;
+
+        // One pass that sets one and clears every other, matched by id.
+        foreach (var option in Units)
+            option.IsSelected = option.Unit.Id == unit.Id;
+
+        OnPropertyChanged(nameof(AmountLabel));
+    }
+
+    /// <summary>Switching unit re-expresses what is already typed (85 g becomes 3 oz)
+    /// rather than relabelling it.</summary>
+    private void OnSelectUnit(UnitOption? option)
+    {
+        if (option is null || option.Unit.Id == _unit.Id)
+            return;
+
+        var canonical = InputParser.TryParsePositive(GramsText, out var typed)
+            ? UnitCatalog.ToCanonicalValue(typed, _unit)
+            : (decimal?)null;
+
+        ApplyUnit(option.Unit);
+
+        if (canonical is decimal value)
+            GramsText = UnitCatalog.Format(value, option.Unit);
+    }
+
+    // Exact mode: additive. Each save inserts a new amount event; undo removes just it.
     private async Task<(Func<Task>? Undo, string Readout)> SaveAmountAsync()
     {
-        if (!InputParser.TryParsePositive(GramsText, out var grams) || grams <= 0)
+        if (!InputParser.TryParsePositive(GramsText, out var typed) || typed <= 0)
             return (null, string.Empty);
 
         var food = Food?.Trim() ?? string.Empty;
@@ -194,11 +256,16 @@ public class AppetiteSheetViewModel : BaseViewModel
             PetId = _petId,
             Date = _date,
             Time = DateTime.Now.TimeOfDay,
-            Grams = grams,
+            // Stored canonical (grams) at full precision; the unit column is provenance.
+            Grams = UnitCatalog.ToCanonicalValue(typed, _unit),
+            Unit = _unit.Id,
             Food = food
         });
-        var readout = LocalizationManager.Instance.Format("Journal_AppetiteGrams",
-            grams.ToString("0.#", CultureInfo.CurrentCulture));
+        await _units.RememberAsync(_unit);
+
+        // Quoted back in the unit they just typed: the one moment where the entry's own
+        // unit outranks the majority, because they are looking at what they wrote.
+        var readout = UnitText.WithUnit(UnitCatalog.ToCanonicalValue(typed, _unit), _unit);
         return (() => _service.DeleteAmountAsync(id), readout);
     }
 

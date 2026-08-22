@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 using SQLite;
 
@@ -54,9 +54,22 @@ public class GlucoseEntry : ISyncable
     /// <summary>Time of day the reading was taken; rendered exactly on the timeline.</summary>
     public TimeSpan Time { get; set; }
 
-    /// <summary>The reading, stored to its exact value (one decimal place in the UI).
-    /// The unit lives on the glucose <see cref="Tracker"/> (mmol/L today).</summary>
+    /// <summary>The reading, stored to its exact value in mmol/L whatever the owner
+    /// typed. What they typed is in <see cref="Unit"/>; the display unit is derived from
+    /// their entries and is neither of those (see <c>DisplayUnitResolver</c>).</summary>
     public decimal Value { get; set; }
+
+    /// <summary>
+    /// The unit the owner typed the reading in ("mmol_l", "mg_dl"): see
+    /// <see cref="UnitCatalog"/>. <b>The stored value stays CANONICAL (mmol/L);
+    /// this is provenance</b>, so the app can show the owner their own majority unit
+    /// back and reopen an edit in the unit it was written in, while every aggregate
+    /// keeps reading one comparable number.
+    ///
+    /// <para><b>Null means mmol/L</b>, true of every row written before units
+    /// existed: no backfill needed. SQLite.NET adds the column automatically.</para>
+    /// </summary>
+    public string? Unit { get; set; }
 
     public FoodContext Context { get; set; }
 }
@@ -132,6 +145,18 @@ public class AppetiteAmountEntry : ISyncable
     /// <summary>The amount eaten in grams, stored exactly.</summary>
     public decimal Grams { get; set; }
 
+    /// <summary>
+    /// The unit the owner typed the reading in ("g", "oz"): see
+    /// <see cref="UnitCatalog"/>. <b>The stored value stays CANONICAL (grams);
+    /// this is provenance</b>, so the app can show the owner their own majority unit
+    /// back and reopen an edit in the unit it was written in, while every aggregate
+    /// keeps reading one comparable number.
+    ///
+    /// <para><b>Null means grams</b>, true of every row written before units
+    /// existed: no backfill needed. SQLite.NET adds the column automatically.</para>
+    /// </summary>
+    public string? Unit { get; set; }
+
     /// <summary>Optional free-text food context ("chicken kibble"), or empty.</summary>
     public string Food { get; set; } = string.Empty;
 }
@@ -160,8 +185,47 @@ public class SeizureEntry : ISyncable
 
     public TimeSpan Time { get; set; }
 
-    /// <summary>How long it lasted, in minutes. Null when the owner didn't time it.</summary>
+    /// <summary>
+    /// <b>DEAD COLUMN. Never read, never written.</b> How long the seizure lasted, in
+    /// whole minutes: the original store, replaced by <see cref="DurationSeconds"/>.
+    ///
+    /// <para>An <c>int</c> of minutes cannot hold a 45-second seizure, and sub-minute
+    /// events are common and clinically relevant, so this was not a usability wrinkle but
+    /// data loss: the owner typed 45 seconds and the record kept "0" or "1". Existing
+    /// values were migrated (×60) by the idempotent backfill in
+    /// <c>AppDatabase.InitAsync</c>.</para>
+    ///
+    /// <para>It stays on the entity because sqlite-net never drops a column, and because
+    /// a device still running an older build pushes <c>duration_minutes</c> and nothing
+    /// else: keeping the property is what lets that value arrive and be backfilled on the
+    /// next launch rather than vanishing. See AI/known-constraints.md.</para>
+    /// </summary>
     public int? DurationMinutes { get; set; }
+
+    /// <summary>
+    /// How long it lasted, <b>in seconds</b>. Null when the owner didn't time it, which
+    /// is a normal answer and not a skipped field.
+    ///
+    /// <para>Seconds is the canonical unit because it is how owners describe seizures:
+    /// "about forty seconds", not "about 0.7 minutes". The sheet offers seconds and
+    /// minutes and defaults to seconds.</para>
+    /// </summary>
+    public int? DurationSeconds { get; set; }
+
+    /// <summary>
+    /// The unit the owner typed the duration in ("s", "min"): see
+    /// <see cref="UnitCatalog"/> and <see cref="UnitFamily.Duration"/>.
+    ///
+    /// <para><b>The stored value stays CANONICAL (seconds); this is provenance</b>, so
+    /// the app can show the owner their own majority unit back while every aggregate
+    /// keeps reading one comparable number.</para>
+    ///
+    /// <para><b>Null means seconds.</b> That is also true of every row the ×60 backfill
+    /// converted: a value recorded in minutes is now held in seconds, and the unit the
+    /// owner typed it in is genuinely unknown for those rows, so claiming "min" would be
+    /// inventing provenance the record never had.</para>
+    /// </summary>
+    public string? Unit { get; set; }
 
     /// <summary>What kind it was, or NULL when the owner didn't say, which is the
     /// resting state and a normal answer, not a skipped field. There is deliberately no
@@ -247,9 +311,20 @@ public class WaterAmountEntry : ISyncable
 
     public TimeSpan Time { get; set; }
 
-    /// <summary>The reading in millilitres, stored exactly. The unit ("ml") is
-    /// implicit; the water <see cref="Tracker"/> carries it for symmetry with glucose.</summary>
+    /// <summary>The reading in millilitres, stored exactly.</summary>
     public decimal AmountMl { get; set; }
+
+    /// <summary>
+    /// The unit the owner typed the reading in ("ml", "fl_oz", "cup"): see
+    /// <see cref="UnitCatalog"/>. <b>The stored value stays CANONICAL (millilitres);
+    /// this is provenance</b>, so the app can show the owner their own majority unit
+    /// back and reopen an edit in the unit it was written in, while every aggregate
+    /// keeps reading one comparable number.
+    ///
+    /// <para><b>Null means millilitres</b>, true of every row written before units
+    /// existed: no backfill needed. SQLite.NET adds the column automatically.</para>
+    /// </summary>
+    public string? Unit { get; set; }
 }
 
 /// <summary>The day's relative water reading: one per day (like Appetite + Mood +

@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Services.Reports.Document;
+﻿namespace Animal_Diary_App.Data.Services.Reports.Document;
 
 using Animal_Diary_App.Helpers;
 
@@ -52,7 +52,16 @@ public static class VetReportStrings
     public static string Weight => L.GetString("Report_Weight");
     public static string Owner => L.GetString("Report_Owner");
     public static string AgeYears(int years) => L.Format("Report_AgeYears", years);
-    public static string WeightChange(string signedKg) => L.Format("Report_WeightChange", signedKg);
+    /// <summary>"(+0.4 lb over period)". The signed value arrives WITH its unit from
+    /// <c>UnitText.Change</c>: the unit is per entry now, so the template cannot name
+    /// one.</summary>
+    public static string WeightChange(string signedChange) => L.Format("Report_WeightChange", signedChange);
+
+    /// <summary>"Weight: some values were recorded in kg and are shown converted to lb."
+    /// Stated only when a conversion actually happened (see
+    /// <c>VetReportData.UnitNotes</c>).</summary>
+    public static string UnitConverted(string record, string fromUnits, string toUnit) =>
+        L.Format("Report_UnitConverted", record, fromUnits, toUnit);
 
     // ── Medications ───────────────────────────────────────────────────────────
     public static string SectionMedications => L.GetString("Report_SectionMedications");
@@ -114,7 +123,9 @@ public static class VetReportStrings
     public static string EventSeizure => L.GetString("Report_EventSeizure");
     public static string EventVomiting => L.GetString("Report_EventVomiting");
     public static string EventLowAppetite => L.GetString("Report_EventLowAppetite");
-    public static string EventDuration(int minutes) => L.Format("Report_EventDuration", minutes);
+    /// <summary>"duration ~ 45 sec". The value arrives WITH its unit from
+    /// <c>UnitText</c>: durations are per entry now, so the template cannot name one.</summary>
+    public static string EventDuration(string duration) => L.Format("Report_EventDuration", duration);
 
     /// <summary>The seizure type the owner chose. Same keys the seizure sheet uses (like
     /// <see cref="AppetiteRows"/> above): the vet must read the same word the owner tapped,

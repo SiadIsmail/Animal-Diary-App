@@ -1,4 +1,4 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 using System.Globalization;
 using Animal_Diary_App.Helpers;
@@ -108,10 +108,15 @@ public static class RecordFactsText
     }
 
     /// <summary>
-    /// "Lowest 3.1 · Highest 22.4 · Latest 14.2 on 19 Aug", or empty for a record that
-    /// carries no numbers. Three recorded values and a date, never a mean, a spread, or
-    /// which way they went.
+    /// "Lowest 6.8 lb · Highest 11.4 lb · Latest 11.2 lb on 19 Aug", or empty for a
+    /// record that carries no numbers. Three recorded values and a date, never a mean, a
+    /// spread, or which way they went.
     /// </summary>
+    /// <param name="unit">The unit to render in, from the snapshot. <b>The facts are
+    /// canonical and the conversion happens HERE</b>, at the text layer, so one
+    /// conversion point exists and the arithmetic upstream keeps comparing one number.
+    /// Null for a record with no convertible unit (a custom tracker's free text), which
+    /// prints the stored number as-is.</param>
     /// <param name="includeLatest">
     /// False where something else on the same screen already states the last reading.
     /// Today's stat cards ARE "the last reading and when", and the owner put them there
@@ -120,19 +125,19 @@ public static class RecordFactsText
     /// and <b>Lowest and Highest stay on every record either way</b>, no card states
     /// those.
     /// </param>
-    public static string Values(RecordFacts facts, bool includeLatest = true)
+    public static string Values(RecordFacts facts, UnitDef? unit = null, bool includeLatest = true)
     {
         if (!facts.HasValues)
             return string.Empty;
 
         var parts = new List<string>(3)
         {
-            Loc.Format("Facts_Lowest", Number(facts, facts.Lowest!.Value)),
-            Loc.Format("Facts_Highest", Number(facts, facts.Highest!.Value)),
+            Loc.Format("Facts_Lowest", Number(facts, facts.Lowest!.Value, unit)),
+            Loc.Format("Facts_Highest", Number(facts, facts.Highest!.Value, unit)),
         };
 
         if (includeLatest && facts.Latest is decimal latest && facts.LatestOn is DateTime on)
-            parts.Add(Loc.Format("Facts_Latest", Number(facts, latest), Day(on)));
+            parts.Add(Loc.Format("Facts_Latest", Number(facts, latest, unit), Day(on)));
 
         return string.Join(Separator, parts);
     }
@@ -156,16 +161,24 @@ public static class RecordFactsText
     public static string Nothing(RecordFacts facts) =>
         Loc.Format("Facts_Nothing", Math.Max(1, (facts.To.Date - facts.From.Date).Days + 1));
 
-    /// <summary>One generic number format across mmol/L, mL, grams and whatever unit an
-    /// owner typed. Current culture, so a German reader sees 22,4.
+    /// <summary>
+    /// One number, with its unit when it has one.
     ///
-    /// <para>Weight is the exception and routes to <see cref="WeightText"/>: it is the one
-    /// reading rendered on four other surfaces, and it has to read identically on all of
-    /// them. That is a rule about weight, not about this panel, so it lives there.</para>
+    /// <para><b>The unit is stated, never assumed.</b> This panel used to print bare
+    /// figures because every record had exactly one unit; now that the owner picks, a
+    /// bare "14" beside a glucose record is genuinely ambiguous, and 14 mmol/L against
+    /// 14 mg/dL is not a rounding difference. The conversion and the precision both come
+    /// from the unit itself (<see cref="UnitText"/>), so this line and the stat card
+    /// above it can never render one weigh-in two ways.</para>
+    ///
+    /// <para>A record with no unit (a custom tracker's free text, whose label is the
+    /// owner's own word and belongs beside the tracker's name rather than repeated on
+    /// every figure) keeps the plain generic format, current culture, so a German reader
+    /// sees 22,4.</para>
     /// </summary>
-    private static string Number(RecordFacts facts, decimal value) =>
-        facts.Kind.Is(TodayCardId.Weight)
-            ? WeightText.Number(value)
+    private static string Number(RecordFacts facts, decimal value, UnitDef? unit) =>
+        unit is UnitDef u
+            ? UnitText.WithUnit(value, u)
             : value.ToString("0.###", CultureInfo.CurrentCulture);
 
     /// <summary>"19 Aug": the same short form Today's cards use.</summary>

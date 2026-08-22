@@ -1,4 +1,6 @@
-namespace Animal_Diary_App.Data.Services.Reports;
+﻿namespace Animal_Diary_App.Data.Services.Reports;
+
+using Animal_Diary_App.Data.Models;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  DATA layer of the vet report.
@@ -69,6 +71,23 @@ public sealed class VetReportData
 
     /// <summary>True when the range contains anything at all beyond the pet's
     /// master data. Used to refuse generating an empty document.</summary>
+    /// <summary>
+    /// One plain line per record whose values on this document were converted from a unit
+    /// the owner recorded them in: <i>"Some values were recorded in kg and are shown
+    /// converted to lb."</i> Empty when nothing was converted, which is the normal case.
+    ///
+    /// <para><b>Only when a conversion actually happened</b>, and only about values inside
+    /// this report's range. It is a fact about the record, so it sits inside the report's
+    /// owner-facts-only rule rather than against it: a silent unit conversion in a medical
+    /// document is exactly the kind of thing that should be stated out loud, and with
+    /// units chosen per entry a bare number now genuinely can come from either.</para>
+    ///
+    /// <para>Rendered in the page footer under the disclaimer, on every page, for the same
+    /// reason the disclaimer is: printed vet paperwork gets separated and refiled, and a
+    /// converted value on page 3 needs the note on page 3.</para>
+    /// </summary>
+    public IReadOnlyList<string> UnitNotes { get; init; } = Array.Empty<string>();
+
     public bool HasAnyData => Style == ReportStyle.Plain
         ? PlainLog.Count > 0
         : Medications.Count > 0 || Trends.Count > 0 || Water.HasContent || Appetite.HasContent
@@ -206,9 +225,15 @@ public sealed class ReportPetInfo
     public IReadOnlyList<string> Conditions { get; init; } = Array.Empty<string>();
 
     /// <summary>Most recent weight in the range (or before it), and the change
-    /// across the range. Null when the pet has no weight entries.</summary>
+    /// across the range, both in KILOGRAMS. Null when the pet has no weight entries.</summary>
     public decimal? CurrentWeightKg { get; init; }
     public decimal? WeightChangeKg { get; init; }
+
+    /// <summary>The unit the two above are to be SHOWN in: the majority of what the owner
+    /// actually typed (AI/domain.md, Units). The values stay canonical and the header
+    /// converts them through <c>UnitText</c>, which is the text layer and the one
+    /// conversion point. Never null: weight always has a resolvable unit.</summary>
+    public UnitDef WeightUnit { get; init; } = UnitCatalog.Canonical(UnitFamily.Weight);
 }
 
 /// <summary>One medication with its schedule shape and adherence counts over the
@@ -254,11 +279,24 @@ public sealed class ReportMedication
     public int MissedCount { get; init; }
 }
 
-/// <summary>A chartable time series: one measured value over time.</summary>
+/// <summary>
+/// A chartable time series: one measured value over time.
+///
+/// <para><b><see cref="Points"/> are stated in <see cref="Unit"/>, not in the app's
+/// canonical unit.</b> This is the one place a value is converted before it reaches the
+/// document layer, and deliberately: a chart's axis LABELS are numbers, drawn by the
+/// renderer from the point values, so a series whose points said one thing and whose
+/// caption said another would put an unlabelled wrong number in front of a vet. The
+/// glucose series has always worked this way; weight joined it when units became
+/// per-entry.</para>
+/// </summary>
 public sealed class ReportSeries
 {
     /// <summary>What the series is, e.g. "Weight", "Blood glucose", "Seizures per week".</summary>
     public required string Label { get; init; }
+
+    /// <summary>The unit <see cref="Points"/> are in, as a display label ("lb", "mg/dL").
+    /// Printed in the caption and beside a single stated value, so it is never absent.</summary>
     public string Unit { get; init; } = string.Empty;
     public required IReadOnlyList<ReportPoint> Points { get; init; }
 }
@@ -283,8 +321,15 @@ public sealed class ReportEvent
     public required DateTime Date { get; init; }
     public TimeSpan? Time { get; init; }
 
-    /// <summary>Seizure duration when the owner timed it.</summary>
-    public int? DurationMinutes { get; init; }
+    /// <summary>Seizure duration in SECONDS when the owner timed it, null when they
+    /// did not. Seconds because an int of minutes could not hold a 45-second seizure,
+    /// and sub-minute events are common and clinically relevant.</summary>
+    public int? DurationSeconds { get; init; }
+
+    /// <summary>The unit the duration is to be SHOWN in, resolved from the owner's own
+    /// entries. Never null for a seizure; the document converts through
+    /// <c>UnitText</c>.</summary>
+    public UnitDef DurationUnit { get; init; } = UnitCatalog.Canonical(UnitFamily.Duration);
 
     /// <summary>What kind of seizure the owner said it was, or null when they didn't say.
     /// Carried through verbatim: the report states the owner's own answer and never

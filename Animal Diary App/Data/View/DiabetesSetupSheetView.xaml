@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <!--
     DiabetesSetupSheetView
     ─────────────────────────────────────────────────────────
@@ -112,8 +112,10 @@
 
                 <!-- Optional target range -->
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="{loc:Translate CondSetup_TargetRangeLabel}" Style="{StaticResource FieldLabel}"/>
-                    <Grid ColumnDefinitions="*,Auto,*,Auto" ColumnSpacing="10" VerticalOptions="Center">
+                    <!-- The caption names the unit the bounds are being typed in, so
+                         neither figure is ever bare. -->
+                    <Label Text="{Binding RangeLabel}" Style="{StaticResource FieldLabel}"/>
+                    <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10" VerticalOptions="Center">
                         <Border Grid.Column="0" Style="{StaticResource RangeEntry}">
                             <Entry Text="{Binding LoText}"
                                    Keyboard="Numeric"
@@ -136,13 +138,33 @@
                                    FontSize="15"
                                    TextColor="{StaticResource Ink}"/>
                         </Border>
-                        <Label Grid.Column="3" Text="mmol/L"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="12"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource InkSecondary}"
-                               VerticalOptions="Center"/>
                     </Grid>
+
+                    <!-- Which unit the vet quoted the band in. Tapping one re-expresses
+                         the bounds already typed (4-8 becomes 72-144) rather than
+                         relabelling them, and the choice is stored on the tracker so
+                         every surface can convert the band into the unit the readings
+                         beside it are shown in. -->
+                    <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Units}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:UnitOption">
+                                <Border Style="{StaticResource SegButton}" WidthRequest="96">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectUnitCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding Label}" Style="{StaticResource SegLabel}"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
 
                     <Label Text="{Binding RangeError}"
                            IsVisible="{Binding HasRangeError}"
