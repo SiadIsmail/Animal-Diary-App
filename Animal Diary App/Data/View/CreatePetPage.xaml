@@ -53,7 +53,7 @@
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ══════════ SCROLLABLE CONTENT ══════════ -->
-        <ScrollView Grid.Row="0">
+        <ScrollView Grid.Row="0" SafeAreaEdges="Container">
             <VerticalStackLayout Padding="22,26,22,24"
                                  Spacing="22">
 
@@ -124,7 +124,7 @@
         </ScrollView>
 
         <!-- ══════════ BOTTOM ACTION BAR ══════════ -->
-        <Border Grid.Row="1"
+        <Border Grid.Row="1" SafeAreaEdges="Container"
                 BackgroundColor="{StaticResource Glass}"
                 Stroke="{StaticResource GlassLine}"
                 StrokeThickness="1"

@@ -72,12 +72,19 @@
 
         <!-- The sheet itself. Starts translated far below the screen; the code-behind
              re-pins the exact offset once the real height is known (SizeChanged). -->
+        <!-- SafeAreaEdges: the sheet's ground must still reach the physical bottom of the
+             screen (it is a gradient ending in Sand, and a gap would show the scrim
+             through it), while its CONTENT has to clear the home indicator. "Container"
+             is exactly that split: the border keeps its bounds, the body is inset. The
+             property is ignored on Android and Windows, so the 28pt bottom padding stays
+             the whole story there. See docs/history/IOS_PLAN.md B2. -->
         <Border x:Name="SheetContainer"
                 Background="{StaticResource SheetWarm}"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 30,26,0,0"
                 VerticalOptions="End"
                 TranslationY="2000"
+                SafeAreaEdges="Container"
                 Padding="20,0,20,28">
 
             

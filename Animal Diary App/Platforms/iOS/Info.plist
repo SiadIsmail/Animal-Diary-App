@@ -4,10 +4,17 @@
 <dict>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- iPhone only (family 1), deliberately. Every page in this app is a
+	     single-column phone layout on hardcoded horizontal padding, and iPad is a
+	     device Apple REVIEWS on: shipping family 2 means a layout pass over every
+	     page for a device with no evidence of demand. Dropping iPad also removes the
+	     UIPopoverPresentationController requirement from the share sheet (an iPad
+	     share with no source rect throws), though ReportActions/ConstellationShare
+	     supply the anchor anyway so this stays a one-line, fully reversible decision.
+	     Revisit once iOS is shipping and somebody asks. See docs/history/IOS_PLAN.md §5.1. -->
 	<key>UIDeviceFamily</key>
 	<array>
 		<integer>1</integer>
-		<integer>2</integer>
 	</array>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
@@ -19,12 +26,16 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
+	<!-- The app ships English and German and switches between them live at runtime.
+	     Without this key iOS reports the app as English-only, so the App Store listing
+	     and the per-app language row in Settings both hide German. CFBundleDevelopmentRegion
+	     names the fallback; the runtime switch is unaffected either way. -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleLocalizations</key>
 	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>en</string>
+		<string>de</string>
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>

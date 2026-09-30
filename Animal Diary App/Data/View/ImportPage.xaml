@@ -27,7 +27,7 @@
 
         <controls:WaterBackground/>
 
-        <ScrollView>
+        <ScrollView SafeAreaEdges="Container">
             <VerticalStackLayout Padding="22,20,22,40" Spacing="14">
 
                 <!-- Subhead: back + title -->

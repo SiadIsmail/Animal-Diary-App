@@ -1,15 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-This is the minimum required version of the Apple Privacy Manifest for .NET MAUI apps.
-The contents below are needed because of APIs that are used in the .NET framework and .NET MAUI SDK.
+Apple Privacy Manifest.
 
-You are responsible for adding extra entries as needed for your application.
+Started as the minimum template for .NET MAUI (the APIs the framework itself uses).
+Two things have been added on top of it, and neither is optional:
 
-More information: https://aka.ms/maui-privacy-manifest
+  1. NSPrivacyAccessedAPICategoryUserDefaults. The template ships this block
+     COMMENTED OUT with a note saying to enable it if the app uses Preferences.
+     This app uses MAUI Preferences in six files (the reminder last-seen marker, the
+     boot-recovery flag, per-device pet pause, settings flags, the analytics identity,
+     sync cursors), and MAUI Preferences IS NSUserDefaults on this platform. Leaving it
+     out fails at UPLOAD with ITMS-91053 ("Missing API declaration"), not at review, so
+     it blocks TestFlight rather than release.
+
+  2. NSPrivacyTracking / NSPrivacyTrackingDomains. Declared explicitly rather than
+     omitted, because on iOS this app does no tracking at all: Meta ad attribution is
+     Android-only (Felova.Meta.Binding wraps com.facebook.android:facebook-core, and iOS
+     registers NullAdAttributionService), so no advertising identifier is read and no
+     ATT prompt is shown. That is a real difference from the Play listing, where the
+     advertising ID IS collected and shared. The two stores' answers must not be copied
+     across. See AI/analytics.md -> "The advertising boundary".
+
+     Declaring tracking true with no ATT prompt is a rejection; shipping an ATT prompt
+     with nothing to track is worse. Both stay as they are here until Meta's iOS SDK is
+     actually bound.
+
+NOT declared here: NSPrivacyCollectedDataTypes. That is a deliberate hand-off, not an
+oversight. What this app collects is decided at RUNTIME by the owner (with cloud backup
+off, which is the default, nothing leaves the device at all), and the authoritative
+declaration surface for a first-party app is the App Privacy questionnaire in App Store
+Connect, which has to agree with the privacy policy at felova.app/privacy. Filling this
+array in from a guess would create a third answer that has to be kept in step with the
+other two.
+
+The mapping to use when answering the questionnaire, so the reasoning is not re-derived:
+  - Anonymous analytics -> "Product Interaction" (Usage Data), NOT linked to identity,
+    NOT used for tracking. The identity is a random GUID (AnalyticsIdentity.cs) and no
+    property may ever carry a name, note, or medical detail.
+  - Cloud account (opt-in only) -> "Email Address", linked to identity, not used for
+    tracking.
+  - Backed-up pet records (opt-in only) -> "Other User Content", linked to identity,
+    not used for tracking. These are animal records, not the user's own health data:
+    HealthKit is not involved anywhere in this app.
+See docs/history/IOS_PLAN.md Phase 5.2.
 -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
         <dict>
@@ -36,8 +77,9 @@ More information: https://aka.ms/maui-privacy-manifest
                 <string>E174.1</string>
             </array>
         </dict>
-        <!--
-            The entry below is only needed when you're using the Preferences API in your app.
+        <!-- CA92.1: "read and write information that is only accessible to the app
+             itself". Exactly what MAUI Preferences is used for here; nothing written
+             through it is shared with, or readable by, anything outside the app. -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
@@ -45,7 +87,7 @@ More information: https://aka.ms/maui-privacy-manifest
             <array>
                 <string>CA92.1</string>
             </array>
-        </dict> -->
+        </dict>
     </array>
 </dict>
 </plist>

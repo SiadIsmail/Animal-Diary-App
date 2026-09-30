@@ -91,7 +91,9 @@ public static class ConstellationShare
         Share.RequestAsync(new ShareFileRequest
         {
             Title = title,
-            File = new ShareFile(path)
+            File = new ShareFile(path),
+            // Required on iPad, ignored everywhere else: see Helpers/ShareAnchor.
+            PresentationSourceBounds = Helpers.ShareAnchor.Bounds()
         });
 
     // ── The frame ────────────────────────────────────────────────────────────────
