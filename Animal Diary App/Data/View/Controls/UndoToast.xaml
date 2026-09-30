@@ -15,6 +15,7 @@
              x:Class="Animal_Diary_App.Data.View.Controls.UndoToast"
              HorizontalOptions="Center"
              VerticalOptions="End"
+             SafeAreaEdges="Container"
              InputTransparent="True">
 
     <Border x:Name="ToastBorder"

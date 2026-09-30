@@ -58,7 +58,7 @@
 
         <!-- Named so the code-behind can tell when the owner reached the bottom, which
              is what "used their free summary" means. See AppointmentPage.OnScrolled. -->
-        <ScrollView x:Name="PageScroll" Scrolled="OnScrolled">
+        <ScrollView x:Name="PageScroll" Scrolled="OnScrolled" SafeAreaEdges="Container">
             <VerticalStackLayout Padding="22,20,22,44" Spacing="14">
 
                 <!-- Subhead: back + title -->

@@ -261,9 +261,15 @@ public sealed class SubscribeSheetViewModel : BaseViewModel, IResettableDraft
     private async Task OpenManageAsync()
     {
         // Prefer the store's per-platform management URL (deep-links to this subscription);
-        // fall back to the generic Play subscriptions page.
+        // fall back to that store's generic subscriptions page. The fallback is chosen at
+        // runtime rather than by #if, because this method compiles and runs on every
+        // platform (desktop resolves NullEntitlementService, which returns no URL at all).
+        // Sending an iPhone to play.google.com was the whole of the bug.
         var url = await _entitlements.GetManagementUrlAsync()
-                  ?? "https://play.google.com/store/account/subscriptions";
+                  ?? (DeviceInfo.Platform == DevicePlatform.iOS ||
+                      DeviceInfo.Platform == DevicePlatform.MacCatalyst
+                          ? "https://apps.apple.com/account/subscriptions"
+                          : "https://play.google.com/store/account/subscriptions");
         try { await Launcher.OpenAsync(url); }
         catch { /* no store app / cancelled: nothing to do */ }
     }

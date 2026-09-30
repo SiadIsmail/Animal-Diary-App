@@ -58,7 +58,7 @@
                 StrokeShape="RoundRectangle 24,0,0,24"
                 TranslationX="300">
 
-            <ScrollView VerticalScrollBarVisibility="Never">
+            <ScrollView VerticalScrollBarVisibility="Never" SafeAreaEdges="Container">
             <!-- Section order follows the usual settings convention: the account
                  rows first (the only ones carrying live state), then how the app
                  behaves, then the outbound links and legal text, then the
