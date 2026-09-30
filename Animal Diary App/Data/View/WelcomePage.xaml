@@ -25,7 +25,7 @@
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ══════════ MAIN CONTENT: vertically centered ══════════ -->
-        <VerticalStackLayout Grid.Row="0"
+        <VerticalStackLayout Grid.Row="0" SafeAreaEdges="Container"
                              Spacing="0"
                              VerticalOptions="Center"
                              HorizontalOptions="Fill"
@@ -125,7 +125,7 @@
         </VerticalStackLayout>
 
         <!-- ══════════ BOTTOM ACTION ══════════ -->
-        <VerticalStackLayout Grid.Row="1"
+        <VerticalStackLayout Grid.Row="1" SafeAreaEdges="Container"
                              Padding="24,16,24,34"
                              Spacing="14">
 

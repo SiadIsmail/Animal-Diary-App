@@ -84,6 +84,37 @@ public static partial class BillingConfig
     /// <summary>RevenueCat public SDK key for the App Store app (appl_…).</summary>
     public static string IosSdkKey { get; private set; } = string.Empty;
 
+    /// <summary>The key for the store this build can actually reach, or empty on a
+    /// platform with no store (Windows/macOS) or one not set up yet. Single source of
+    /// the platform switch: <c>RevenueCatStoreBilling.ApiKey</c> reads it too, so the
+    /// mapping is never written twice.</summary>
+    public static string PlatformSdkKey =>
+#if ANDROID
+        AndroidSdkKey;
+#elif IOS
+        IosSdkKey;
+#else
+        string.Empty;
+#endif
+
+    /// <summary>
+    /// True when this build has a store key AND the master switch is on: the condition
+    /// <see cref="MauiProgram"/> registers the real entitlement gate behind.
+    ///
+    /// <para><b>Why this is not just <see cref="Enabled"/>.</b> <c>Enabled</c> is a
+    /// single <c>const</c> for the whole app, but the keys are per-store, and a second
+    /// store arrives before its key does. iOS is exactly that case: the binding is
+    /// referenced and <c>Enabled</c> is already true, so without this check an iOS build
+    /// registers the REAL <c>EntitlementService</c> over a RevenueCat instance configured
+    /// with <c>""</c>. That gate cannot grant anything and cannot sell anything, so every
+    /// paid surface is withheld with no way to buy it: the precise state the comment on
+    /// <see cref="Enabled"/> exists to forbid ("a paid surface can never be withheld
+    /// before purchases work"). A key-less store must be a NULL store, exactly as the
+    /// analytics, cloud and ad-attribution boundaries each resolve a no-op when their
+    /// credentials are absent.</para>
+    /// </summary>
+    public static bool IsStoreAvailable => Enabled && !string.IsNullOrWhiteSpace(PlatformSdkKey);
+
     static BillingConfig() => ApplySecrets();
 
     /// <summary>Implemented only by the untracked <c>BillingConfig.Secret.cs</c>. With no

@@ -467,15 +467,9 @@ public sealed class RevenueCatStoreBilling : IStoreBilling
         _ => null,
     };
 
-    private static string ApiKey()
-    {
-#if ANDROID
-        return BillingConfig.AndroidSdkKey;
-#elif IOS
-        return BillingConfig.IosSdkKey;
-#else
-        return string.Empty;
-#endif
-    }
+    // The platform switch lives on BillingConfig now, because MauiProgram needs the same
+    // answer to decide whether to register this class at all (a key-less store must
+    // resolve the null gate, not a real gate over an unconfigured SDK).
+    private static string ApiKey() => BillingConfig.PlatformSdkKey;
 }
 #endif
