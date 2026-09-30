@@ -13,8 +13,8 @@ public readonly record struct DayDose(Medication Medication, TimeSpan ScheduledT
 
 /// <summary>
 /// The single place that expands a pet's medication schedules for ONE day and joins
-/// them with that day's dose logs. Every caller that needs the day's doses — the
-/// Journal timeline, the Calendar dose checklist and the pending engine — projects
+/// them with that day's dose logs. Every caller that needs the day's doses: the
+/// Journal timeline, the Calendar dose checklist and the pending engine: projects
 /// this into its own shape, so the meds → schedules → logs join lives here once
 /// instead of being copied into each. (Whole-WEEK expansion for the month dots is a
 /// different computation and stays in the CalendarViewModel.)
@@ -32,7 +32,7 @@ public class DayDoseService
 
     /// <summary>Every dose scheduled for the pet on <paramref name="date"/> (each
     /// non-archived medication's schedule rules for that weekday), joined with the
-    /// day's dose logs. Unordered — callers sort as they need.</summary>
+    /// day's dose logs. Unordered: callers sort as they need.</summary>
     public async Task<List<DayDose>> GetForDayAsync(int petId, DateTime date)
     {
         var result = new List<DayDose>();
@@ -41,7 +41,7 @@ public class DayDoseService
 
         var day = date.Date;
 
-        // Never surface doses for days before the medication existed — mirrors the
+        // Never surface doses for days before the medication existed: mirrors the
         // CreatedAt bound the week dots and the missed-dose reconciler already apply,
         // so a past day can't show phantom "not taken" doses. (Legacy rows default
         // CreatedAt to DateTime.MinValue, which passes for every day.)

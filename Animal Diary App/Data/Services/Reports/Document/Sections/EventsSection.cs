@@ -1,11 +1,11 @@
-namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
+﻿namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
 
-using QuestPDF.Fluent;
-using QuestPDF.Infrastructure;
+using MigraDoc.DocumentObjectModel;
+using MigraDoc.DocumentObjectModel.Tables;
 
 /// <summary>
 /// Terse dated table of notable occurrences, newest first. The wording per
-/// <see cref="ReportEventKind"/> lives here and states only what was logged —
+/// <see cref="ReportEventKind"/> lives here and states only what was logged,
 /// severity words, causes and conclusions are the vet's job, not ours.
 /// Capped at <see cref="VetReportStyles.MaxEventRows"/> rows to protect the
 /// one-page target; the cap is stated so nothing looks hidden.
@@ -14,65 +14,90 @@ public class EventsSection : IVetReportSection
 {
     public bool HasContent(VetReportData data) => data.Events.Count > 0;
 
-    public void Compose(IContainer container, VetReportData data)
+    public void Compose(Section section, VetReportData data, ReportContext ctx)
     {
         var shown = data.Events.Take(VetReportStyles.MaxEventRows).ToList();
         var older = data.Events.Count - shown.Count;
 
-        container.Column(col =>
+        SectionChrome.AddTitle(section, VetReportStrings.SectionEvents);
+
+        var table = section.AddTable();
+        table.Borders.Width = 0;
+
+        // date 64 · time 36 (fixed) · event 2 · details 5 (of the remaining width)
+        const double dateW = 64, timeW = 36;
+        var rest = ctx.ContentWidthPt - dateW - timeW;
+        table.AddColumn(Unit.FromPoint(dateW));
+        table.AddColumn(Unit.FromPoint(timeW));
+        table.AddColumn(Unit.FromPoint(rest * 2 / 7));
+        table.AddColumn(Unit.FromPoint(rest * 5 / 7));
+
+        var head = table.AddRow();
+        head.HeadingFormat = true;
+        HeaderCell(head, 0, VetReportStrings.ColDate);
+        HeaderCell(head, 1, VetReportStrings.ColTime);
+        HeaderCell(head, 2, VetReportStrings.ColEvent);
+        HeaderCell(head, 3, VetReportStrings.ColDetails);
+
+        foreach (var e in shown)
         {
-            col.Item().Element(SectionChrome.Title("Events"));
+            var row = table.AddRow();
+            BodyCell(row, 0, e.Date.ToString(VetReportStyles.DateFormat));
+            BodyCell(row, 1, e.Time?.ToString(VetReportStyles.TimeFormat) ?? VetReportStrings.Empty);
+            BodyCellBold(row, 2, Label(e));
+            BodyCell(row, 3, Details(e));
+        }
 
-            col.Item().Table(table =>
-            {
-                table.ColumnsDefinition(columns =>
-                {
-                    columns.ConstantColumn(64);  // date
-                    columns.ConstantColumn(36);  // time
-                    columns.RelativeColumn(2);   // event
-                    columns.RelativeColumn(5);   // details
-                });
+        if (older > 0)
+        {
+            var p = section.AddParagraph(VetReportStrings.MoreEvents(older));
+            p.Format.SpaceBefore = 2;
+            p.Format.Font.Size = VetReportStyles.SmallSize;
+            p.Format.Font.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
+        }
+    }
 
-                table.Header(header =>
-                {
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Date");
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Time");
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Event");
-                    header.Cell().Element(SectionChrome.HeaderCell).Text("Details (owner-reported)");
-                });
+    private static void HeaderCell(Row row, int i, string text)
+    {
+        SectionChrome.ConfigureHeaderCell(row.Cells[i]);
+        row.Cells[i].AddParagraph(text);
+    }
 
-                foreach (var e in shown)
-                {
-                    table.Cell().Element(SectionChrome.BodyCell).Text(e.Date.ToString(VetReportStyles.DateFormat));
-                    table.Cell().Element(SectionChrome.BodyCell).Text(e.Time?.ToString(VetReportStyles.TimeFormat) ?? "—");
-                    table.Cell().Element(SectionChrome.BodyCell).Text(Label(e)).SemiBold();
-                    table.Cell().Element(SectionChrome.BodyCell).Text(Details(e));
-                }
-            });
+    private static void BodyCell(Row row, int i, string text)
+    {
+        SectionChrome.ConfigureBodyCell(row.Cells[i]);
+        row.Cells[i].AddParagraph(text);
+    }
 
-            if (older > 0)
-                col.Item().PaddingTop(2).Text($"+ {older} earlier event(s) in the period not listed.")
-                    .FontSize(VetReportStyles.SmallSize).FontColor(VetReportStyles.InkSecondary);
-        });
+    private static void BodyCellBold(Row row, int i, string text)
+    {
+        SectionChrome.ConfigureBodyCell(row.Cells[i]);
+        row.Cells[i].AddParagraph().AddFormattedText(text, TextFormat.Bold);
     }
 
     private static string Label(ReportEvent e) => e.Kind switch
     {
-        ReportEventKind.Seizure => "Seizure",
-        ReportEventKind.Vomiting => "Vomiting",
-        ReportEventKind.LowAppetite => "Low appetite",
+        ReportEventKind.Seizure => VetReportStrings.EventSeizure,
+        ReportEventKind.Vomiting => VetReportStrings.EventVomiting,
+        ReportEventKind.LowAppetite => VetReportStrings.EventLowAppetite,
         _ => e.Kind.ToString()
     };
 
     private static string Details(ReportEvent e)
     {
         var parts = new List<string>();
-        if (e.DurationMinutes is int min)
-            parts.Add($"duration ≈ {min} min");
+        // First: it is the most clinically legible thing in the row, and it is the
+        // owner's own answer: absent when they didn't give one.
+        if (e.SeizureType is not null)
+            parts.Add(VetReportStrings.SeizureType(e.SeizureType));
+        if (e.DurationSeconds is int seconds)
+            parts.Add(VetReportStrings.EventDuration(
+                Helpers.UnitText.WithUnit(seconds, e.DurationUnit)));
         if (e.Kind == ReportEventKind.LowAppetite && e.Value is int level)
-            parts.Add($"owner logged appetite level {level} of 5");
+            parts.Add(VetReportStrings.EventAppetiteLevel(level));
+        // The owner's own words, printed verbatim, never translated.
         if (e.Note != null)
             parts.Add($"“{e.Note}”");
-        return parts.Count > 0 ? string.Join(" · ", parts) : "—";
+        return parts.Count > 0 ? string.Join(" · ", parts) : VetReportStrings.Empty;
     }
 }

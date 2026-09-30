@@ -4,7 +4,7 @@ using SQLite;
 
 /// <summary>
 /// One generated vet-report PDF in the app's report library (the Documents page).
-/// A row is metadata only — the PDF and its pre-rendered preview PNGs live in the
+/// A row is metadata only: the PDF and its pre-rendered preview PNGs live in the
 /// reports folder owned by <c>ReportLibraryService</c>, which derives their full
 /// paths from <see cref="FileName"/>. Rows and files are created/deleted together
 /// by that service; a row whose file has vanished is dropped on the next read.
@@ -17,7 +17,7 @@ public class VetReportFile
     [Indexed]
     public int PetId { get; set; }
 
-    /// <summary>PDF file name RELATIVE to the reports folder — never an absolute
+    /// <summary>PDF file name RELATIVE to the reports folder, never an absolute
     /// path, because the app-data root can move between installs/backups.</summary>
     public string FileName { get; set; } = string.Empty;
 

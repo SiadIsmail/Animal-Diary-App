@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- AccessMessageSheetView: the two quiet grant moments (a redeemed code's year is
+     nearly up / is up) on one reusable FelovaBottomSheet. Reassures first; "Continue
+     with Felova" (→ subscribe) is offered, never insisted on. Replaces the old
+     TrialMessageSheetView, whose three modes were all about a trial that no longer
+     exists. BindingContext is an AccessMessageViewModel. -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:AccessMessageViewModel"
+             x:Class="Animal_Diary_App.Data.View.AccessMessageSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+
+                <Label Text="{Binding Body}" FontFamily="{StaticResource FontSans}"
+                       FontSize="14" LineHeight="1.45" TextColor="{StaticResource InkSecondary}"/>
+
+                <!-- Continue with Felova (→ subscribe) -->
+                <Border BackgroundColor="{StaticResource Teal}" StrokeThickness="0"
+                        StrokeShape="RoundRectangle 13,16,15,14" IsVisible="{Binding ShowContinue}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ContinueCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{Binding ContinueLabel}" FontFamily="{StaticResource FontSans}" FontSize="14"
+                           FontAttributes="Bold" TextColor="{StaticResource White}"
+                           HorizontalTextAlignment="Center" Padding="0,14"/>
+                </Border>
+
+                <!-- Dismiss ("Not now" / "Okay") -->
+                <Label Text="{Binding DismissLabel}" Padding="0,4"
+                       FontFamily="{StaticResource FontSans}" FontSize="12.5" FontAttributes="Bold"
+                       TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                    </Label.GestureRecognizers>
+                </Label>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>

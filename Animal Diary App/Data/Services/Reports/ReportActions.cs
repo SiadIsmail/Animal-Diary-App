@@ -6,7 +6,7 @@ using Animal_Diary_App.Data.Models;
 /// The two ways a report leaves the app, shared by every surface that offers
 /// them (export sheet, preview page, Documents rows) so behaviour never drifts.
 /// Both hand the PDF to the OS via MAUI Essentials, whose bundled FileProvider
-/// makes private app-storage files shareable on Android — no permissions needed.
+/// makes private app-storage files shareable on Android, no permissions needed.
 /// </summary>
 public static class ReportActions
 {

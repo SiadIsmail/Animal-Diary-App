@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- WaterSheetView: the Journal's "log water" sheet, in the shared FelovaBottomSheet.
+     Two modes flipped by the "Exact measurement" toggle at the top:
+       • off (default) → five relative word-tiles with a progressively-filled glass;
+       • on           → a single millilitre entry field.
+     BindingContext is a WaterSheetViewModel. -->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
+             xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
+             x:DataType="vms:WaterSheetViewModel"
+             x:Class="Animal_Diary_App.Data.View.WaterSheetView"
+             x:Name="Root"
+             InputTransparent="{Binding IsPresented, Converter={StaticResource InvertedBoolConverter}}">
+
+    <controls:FelovaBottomSheet IsPresented="{Binding IsPresented}"
+                                Title="{Binding Title}"
+                                Subtitle="{Binding Subtitle}"
+                                DismissCommand="{Binding DismissCommand}">
+        <controls:FelovaBottomSheet.SheetContent>
+            <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
+
+                <!-- Exact-measurement toggle. Off by default (relative tiles); on swaps
+                     in the millilitre entry field. Light inline row: label left, switch
+                     pinned to the right edge. -->
+                <Grid ColumnDefinitions="*,Auto" Padding="4,0" VerticalOptions="Center">
+                    <Label Grid.Column="0"
+                           Text="{loc:Translate Journal_WaterExactToggle}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12.5"
+                           TextColor="{StaticResource InkSecondary}"
+                           VerticalOptions="Center"/>
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding ExactMode}"
+                            OnColor="{StaticResource Blue}"
+                            Scale="0.8"
+                            HorizontalOptions="End"
+                            VerticalOptions="Center"/>
+                </Grid>
+
+                <!-- Relative mode (default): five word-tiles with a filling glass. -->
+                <FlexLayout IsVisible="{Binding ShowLevels}"
+                            BindableLayout.ItemsSource="{Binding Options}"
+                            Wrap="NoWrap"
+                            JustifyContent="SpaceBetween">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:WaterOption">
+                            <Border FlexLayout.Basis="18.5%"
+                                    BackgroundColor="{StaticResource Glass}"
+                                    Stroke="{StaticResource GlassLine}"
+                                    StrokeThickness="1.5"
+                                    StrokeShape="RoundRectangle 14,11,13,12"
+                                    Padding="2,11">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource Ink}"/>
+                                        <Setter Property="BackgroundColor" Value="{StaticResource BlueTint}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={x:Reference Root}, Path=BindingContext.SelectCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                                    <!-- empty glass with a fill anchored to the bottom -->
+                                    <Border WidthRequest="26" HeightRequest="24"
+                                            BackgroundColor="{StaticResource Well}"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 5,5,9,9"
+                                            HorizontalOptions="Center">
+                                        <BoxView Color="{StaticResource Blue}"
+                                                 VerticalOptions="End"
+                                                 HeightRequest="{Binding FillHeight}"/>
+                                    </Border>
+                                    <Label Text="{Binding Word}"
+                                           FontFamily="{StaticResource FontSans}"
+                                           FontSize="10"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource InkSecondary}"
+                                           HorizontalTextAlignment="Center"
+                                           LineBreakMode="WordWrap"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+
+                <!-- Exact mode: an amount, in ml, fl oz or cups. Cups are safe here and only
+                     here: water's density is the one that is constant enough for a fixed
+                     factor (see AppetiteSheetViewModel for why food is not). -->
+                <VerticalStackLayout IsVisible="{Binding ShowExact}" Spacing="8">
+                    <Label Text="{Binding AmountLabel}"
+                           FontFamily="{StaticResource FontSans}" FontSize="11" FontAttributes="Bold"
+                           CharacterSpacing="1" TextColor="{StaticResource InkSecondary}"/>
+                    <Border BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                            StrokeShape="RoundRectangle 14" Padding="12,2">
+                        <Grid>
+                            <Entry Text="{Binding AmountText}"
+                                   Keyboard="Numeric"
+                                   Placeholder="{loc:Translate Journal_WaterAmountPlaceholder}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="16"
+                                   TextColor="{StaticResource Ink}"
+                                   PlaceholderColor="{StaticResource InkTertiary}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Tapping one re-expresses what is already typed rather than
+                         relabelling it. -->
+                    <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Units}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:UnitOption">
+                                <Border BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 12" Padding="0,9" WidthRequest="86">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectUnitCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding Label}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                           TextColor="{StaticResource TealDeep}"
+                                           HorizontalTextAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Actions -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,4,0,0">
+                    <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0" StrokeShape="RoundRectangle 15,13,13,16">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DismissCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_Cancel}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                    </Border>
+                    <Border Grid.Column="1" BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 13,16,15,14">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding SaveCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate Common_Save}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource White}" HorizontalTextAlignment="Center" Padding="0,14"/>
+                    </Border>
+                </Grid>
+
+            </VerticalStackLayout>
+        </controls:FelovaBottomSheet.SheetContent>
+    </controls:FelovaBottomSheet>
+</ContentView>

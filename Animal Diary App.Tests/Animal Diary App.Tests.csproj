@@ -1,0 +1,225 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Unit tests over the app's PURE logic. Targets plain net10.0, no platform suffix,
+       so no MAUI and no SQLite, while still being the same runtime and language version
+       the app ships on. (It was net9.0, which meant the linked sources were compiled
+       against a different BCL from the one they run on.)
+
+       Sources are compile-LINKED from the app project rather than referenced, because the
+       app only produces platform TFMs. Keep the link list to genuinely MAUI-free files;
+       anything needing Preferences, FileSystem or HttpClient belongs on the other side of
+       an interface instead.
+
+       Run with:  dotnet test "Animal Diary App.Tests/Animal Diary App.Tests.csproj"
+
+       NOT in Animal Diary App.sln, on purpose: `-f` on a solution is a global property
+       applied to every project, so a solution holding both this (net10.0) and the app
+       (net10.0-android/-ios/-maccatalyst/-windows) makes `dotnet build <sln> -f
+       net10.0-android` fail here with NETSDK1005. CI runs these by path instead. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Animal_Diary_App.Tests</RootNamespace>
+    <!-- CS0162: same const feature switches as the app (BillingConfig.Enabled and
+         friends): the unreachable branch is the point of a compile-time switch.
+         NU1903: sqlite-net-pcl drags in SQLitePCLRaw, which has an open advisory in
+         every release to date. It comes along only for the [Table]/[Indexed] attributes
+         on the linked models; this project never opens a connection, so no SQLite code
+         executes here at all. The app pins the newest available build and documents the
+         same advisory in its csproj. -->
+    <!-- NETSDK1206 comes from the same transitive SQLitePCLRaw: it ships alpine-specific
+         RIDs that .NET 8+ no longer resolves. Irrelevant here, no native SQLite is ever
+         loaded. -->
+    <NoWarn>$(NoWarn);CS0162;NU1903;NETSDK1206</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <!-- Pure (MAUI/SQLite-free) billing sources under test. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\IEntitlementService.cs" Link="Billing\IEntitlementService.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\EntitlementService.cs" Link="Billing\EntitlementService.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\NullEntitlementService.cs" Link="Billing\NullEntitlementService.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\PetLimit.cs" Link="Billing\PetLimit.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\IStoreBilling.cs" Link="Billing\IStoreBilling.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\IPetAccessSource.cs" Link="Billing\IPetAccessSource.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\IGrantSource.cs" Link="Billing\IGrantSource.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Cloud\SignOutImpact.cs" Link="Cloud\SignOutImpact.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Cloud\InstallReferrerParser.cs" Link="Cloud\InstallReferrerParser.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Billing\BillingConfig.cs" Link="Billing\BillingConfig.cs" />
+  </ItemGroup>
+
+  <!-- Pure (MAUI-free) analytics sources under test. The MAUI-bound pieces,
+       AnalyticsIdentity (Preferences), FileAnalyticsQueueStore (FileSystem) and
+       PostHogAnalyticsService (HttpClient/AppInfo): are deliberately NOT linked; the
+       decisions worth testing were kept out of them. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsSession.cs" Link="Analytics\AnalyticsSession.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsTenure.cs" Link="Analytics\AnalyticsTenure.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsHistory.cs" Link="Analytics\AnalyticsHistory.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\AnalyticsEventQueue.cs" Link="Analytics\AnalyticsEventQueue.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Analytics\IAnalyticsQueueStore.cs" Link="Analytics\IAnalyticsQueueStore.cs" />
+  </ItemGroup>
+
+  <!-- The care logic: what is still due today, and when a schedule rule actually fires.
+       Both are pure by design and both were untested: the two most safety-relevant
+       algorithms in the app had no coverage while billing had thirty tests.
+
+       PendingEngine reads Tracker/TrackerId from Data/Models, which carry sqlite-net
+       attributes, so the package comes along. It contributes attributes only; no
+       connection is ever opened here. -->
+  <ItemGroup>
+    <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Services\Notifications\MedicationScheduleExpander.cs" Link="Care\MedicationScheduleExpander.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\PendingEngine.cs" Link="Care\PendingEngine.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\PendingItem.cs" Link="Care\PendingItem.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\CarePlan.cs" Link="Care\CarePlan.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\TrackerKey.cs" Link="Care\TrackerKey.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\ISyncable.cs" Link="Care\ISyncable.cs" />
+  </ItemGroup>
+
+  <!-- Today's two stat cards: which pair a pet starts with, and the rule that the same
+       record can never sit on both. Pure table + value type. TrackerVisuals and
+       LocalizationManager come along because the card table resolves its icons and label
+       KEYS through them: both are plain strings and reflection-free resource lookup, no
+       MAUI. Nothing here reads a translated string, so no resx is needed at run time. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\TodayCards.cs" Link="Today\TodayCards.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\TrackerVisuals.cs" Link="Today\TrackerVisuals.cs" />
+    <Compile Include="..\Animal Diary App\Helpers\LocalizationManager.cs" Link="Today\LocalizationManager.cs" />
+  </ItemGroup>
+
+  <!-- The Journal's typed entries, linked for one reason: SeizureType's stored numbers and
+       its member names are BOTH persistence formats (int locally, text in the cloud) that
+       nothing else can catch, no compiler error, no failing sync, just a type that quietly
+       reads back as the wrong one or as nothing. Plain attributes and enums; the only
+       dependency is LocalizationManager, already linked above. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\JournalEntries.cs" Link="Journal\JournalEntries.cs" />
+  </ItemGroup>
+
+  <!-- The demo-data sync guard. Seeded demo pets live in the same tables as real ones and
+       are kept off the wire by a WHERE fragment; if that fragment is wrong, a creator's
+       invented medical history uploads to their account and nothing anywhere complains.
+       PetScopeSql was split out of SyncedTables precisely so the fragment could be linked
+       here on its own: SyncedTables names all fifteen entity types and would drag the whole
+       model layer in. Plain strings and an enum. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Services\Data\PetScopeSql.cs" Link="Sync\PetScopeSql.cs" />
+  </ItemGroup>
+
+  <!-- The seeded demo pets. The generator is pure by design and linked here because the
+       structures it plants are the entire point of the feature and are ALL invisible until
+       someone opens a lens and finds nothing in it: on camera. A uniformly-random seizure
+       hour (which is what the old dev fixture had) still produces a plausible-looking sky;
+       it just folds to noise at every period, and no build, test or review catches that.
+       CustomTrackerPresets comes along because the profiles build their owner-defined
+       trackers from the real presets rather than inventing parallel ones. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\CustomTracker.cs" Link="Demo\CustomTracker.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\CustomTrackerPresets.cs" Link="Demo\CustomTrackerPresets.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\PetEntry.cs" Link="Demo\PetEntry.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\PetCondition.cs" Link="Demo\PetCondition.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\Medication.cs" Link="Demo\Medication.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\MedicationDoseLog.cs" Link="Demo\MedicationDoseLog.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Demo\DemoProfile.cs" Link="Demo\DemoProfile.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Demo\DemoHistory.cs" Link="Demo\DemoHistory.cs" />
+  </ItemGroup>
+
+  <!-- The AI import bridge. Everything that DECIDES anything is here: what a file may
+       contain, what rejects it, what is written and what is skipped. All of it is pure by
+       construction (ImportValidator takes an ImportSnapshot and a "today" rather than a
+       database and a clock) precisely so it could be linked here: the alternative is a
+       feature whose entire safety model is only exercised by importing files by hand.
+
+       ConditionCatalog/Condition and CustomTrackerVisuals come along because the format
+       validates against the app's OWN vocabularies rather than copies of them: a condition
+       id or a tracker colour the app dropped must stop being importable in the same change,
+       and a duplicated list is how that quietly fails to happen. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\Condition.cs" Link="Import\Condition.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\ConditionCatalog.cs" Link="Import\ConditionCatalog.cs" />
+    <Compile Include="..\Animal Diary App\Data\Models\CustomTrackerVisuals.cs" Link="Import\CustomTrackerVisuals.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportFormat.cs" Link="Import\ImportFormat.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportFile.cs" Link="Import\ImportFile.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportDiagnostics.cs" Link="Import\ImportDiagnostics.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportSnapshot.cs" Link="Import\ImportSnapshot.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportPlan.cs" Link="Import\ImportPlan.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportFileParser.cs" Link="Import\ImportFileParser.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Import\ImportValidator.cs" Link="Import\ImportValidator.cs" />
+  </ItemGroup>
+
+  <!-- The vet visit's derived state and its notification id. Both are silent when
+       wrong: a visit that turns "past" at lunchtime hides the summary while the owner is
+       still in the waiting room, and an id that collides with another range cancels
+       somebody else's reminder. NotificationIds is plain arithmetic; VetVisit contributes
+       sqlite-net attributes only, like the other linked models. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\VetVisit.cs" Link="Vet\VetVisit.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Notifications\NotificationIds.cs" Link="Vet\NotificationIds.cs" />
+  </ItemGroup>
+
+  <!-- Per-entry units. Both files are pure by construction and both are silent when
+       wrong in the worst possible way: a conversion that drifts corrupts a medical
+       number a little more on every edit, and a display unit that resolves differently
+       from surface to surface puts 14 mmol/L and 14 mg/dL on one screen. UnitCatalog
+       reaches LocalizationManager for LABELS only (already linked above); nothing here
+       resolves a translated string, so no resx is needed at run time. CarePlan.cs is
+       linked above and carries TrackerId, which UnitCatalog.FamilyFor maps. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\Units.cs" Link="Units\Units.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\DisplayUnitResolver.cs" Link="Units\DisplayUnitResolver.cs" />
+  </ItemGroup>
+
+  <!-- Facts about the record. The arithmetic is linked, the WORDING is not: RecordFactsText
+       resolves AppStrings, and this project ships no resx. What is worth proving here is the
+       shape: the four day bands are half-open and total to the count, a one-per-day store
+       counts DAYS rather than rows, an empty range is a zero-count snapshot rather than null,
+       and nothing anywhere computes a mean. Every one of those is silent when wrong: the panel
+       still renders, with numbers that quietly say something the owner never wrote down.
+       TodayCards is already linked above and carries TodayCardKey. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\RecordFacts.cs" Link="Facts\RecordFacts.cs" />
+  </ItemGroup>
+
+  <!-- The vet report's DTO, linked for one decision it carries: HasAnyData, which is what
+       refuses to produce an empty document. It answers differently per ReportStyle, and both
+       arms fail silently when wrong: a blank plain log handed to a vet, or a free export
+       refused because the DESIGNED sections happened to be empty. Plain records and enums,
+       no MAUI and no SQLite. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Services\Reports\VetReportData.cs" Link="Reports\VetReportData.cs" />
+  </ItemGroup>
+
+  <!-- The treatment ledger's diff: what a medication edit records, and: the half that
+       actually needed a test: what it must NOT record. "An unchanged save writes no row"
+       and "a rename plus a dose change writes two" are invisible failures on a device:
+       nothing crashes, the history is just wrong forever afterwards, and it cannot be
+       backfilled. MedicationLedger is pure for exactly that reason; the schedule wording
+       arrives as a delegate, so no resx is needed here. MedicationChange comes along as
+       the type it returns. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\MedicationChange.cs" Link="Ledger\MedicationChange.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Data\MedicationLedger.cs" Link="Ledger\MedicationLedger.cs" />
+  </ItemGroup>
+
+  <!-- The Constellation's geometry. This is the surface's whole meaning ("position is
+       when it happened, and nothing else is encoded"), so it was deliberately kept out
+       of the drawable: the only MAUI thing about placing a star is the canvas it lands
+       on, and that belongs to the page. Plain doubles, no Microsoft.Maui.Graphics. -->
+  <ItemGroup>
+    <Compile Include="..\Animal Diary App\Data\Models\CelestialEvent.cs" Link="Sky\CelestialEvent.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\ConstellationLayout.cs" Link="Sky\ConstellationLayout.cs" />
+    <Compile Include="..\Animal Diary App\Data\Services\Journal\SkySignature.cs" Link="Sky\SkySignature.cs" />
+  </ItemGroup>
+
+</Project>

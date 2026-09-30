@@ -1,11 +1,18 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 using SQLite;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-public class Medication : INotifyPropertyChanged
+public class Medication : INotifyPropertyChanged, ISyncable
 {
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    [Indexed]
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
@@ -61,6 +68,17 @@ public class Medication : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// The dose unit ("mg", "IU", "ml", "tablets", "drops", "puffs"): free text, chosen
+    /// once, shown verbatim.
+    ///
+    /// <para><b>This is NOT a unit family and must never join <see cref="UnitCatalog"/>.</b>
+    /// It looks like the same problem the journal's per-entry units solve and it is not:
+    /// 2 IU of insulin cannot be converted into mg, because the ratio is specific to the
+    /// drug and the preparation, and a number the app invented here would be a dose. So
+    /// nothing converts it, nothing majority-resolves it, and no picker offers to change
+    /// it "into" anything. A dose is quoted back exactly as the prescription wrote it.</para>
+    /// </summary>
     private string unit = "mg";
     public string Unit
     {
@@ -85,7 +103,7 @@ public class Medication : INotifyPropertyChanged
     public DateTime CreatedAt { get; set; }
 }
 
-public class MedicationSchedule
+public class MedicationSchedule : ISyncable
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
@@ -94,7 +112,12 @@ public class MedicationSchedule
     public DayOfWeek Day { get; set; }
     public TimeSpan Time { get; set; }
 
-
+    // ── Sync tracking (see ISyncable; written only via SyncStamp) ──
+    [Indexed]
+    public string SyncId { get; set; } = string.Empty;
+    public DateTime UpdatedAtUtc { get; set; }
+    public bool IsDirty { get; set; }
+    public bool IsDeleted { get; set; }
 }
 
 public class FilteredMedication

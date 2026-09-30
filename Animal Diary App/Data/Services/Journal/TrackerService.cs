@@ -25,21 +25,22 @@ public class TrackerService
     /// <summary>All trackers stored for a pet.</summary>
     public Task<List<Tracker>> GetForPetAsync(int petId) =>
         _db.Table<Tracker>()
-            .Where(t => t.PetId == petId)
+            .Where(t => t.PetId == petId && t.IsDeleted == false)
             .ToListAsync();
 
     /// <summary>Insert a new tracker row (Id == 0) or update an existing one.</summary>
     public async Task SaveAsync(Tracker tracker)
     {
         if (tracker.Id == 0)
-            await _db.InsertAsync(tracker);
+            await _db.InsertAsync(SyncStamp.Touch(tracker));
         else
-            await _db.UpdateAsync(tracker);
+            await _db.UpdateAsync(SyncStamp.Touch(tracker));
     }
 
     /// <summary>Delete one tracker row (its logged history in the typed entry tables
-    /// is intentionally left untouched — turning a tracker off never deletes data).</summary>
-    public Task DeleteAsync(Tracker tracker) => _db.DeleteAsync(tracker);
+    /// is intentionally left untouched: turning a tracker off never deletes data).
+    /// Soft delete: the row becomes a tombstone so the removal can sync.</summary>
+    public Task DeleteAsync(Tracker tracker) => _db.UpdateAsync(SyncStamp.MarkDeleted(tracker));
 
     /// <summary>The pet's tracker of a given kind, or null. Filtered in memory rather
     /// than in SQL because <see cref="TrackerId"/> is a <c>[StoreAsText]</c> enum and
@@ -53,12 +54,25 @@ public class TrackerService
     /// <summary>Insert-or-update the single tracker of this kind for the pet, applying
     /// <paramref name="configure"/> to the row (existing row edited in place, else a
     /// new one created). This is how the condition setup sheets write their trackers.</summary>
-    public async Task UpsertAsync(int petId, TrackerId trackerId, Action<Tracker> configure)
-    {
-        var tracker = await GetByTrackerIdAsync(petId, trackerId)
-                      ?? new Tracker { PetId = petId, TrackerId = trackerId };
+    public Task UpsertAsync(int petId, TrackerId trackerId, Action<Tracker> configure) =>
+        UpsertAsync(petId, trackerId, (tracker, _) => configure(tracker));
 
-        configure(tracker);
+    /// <summary>
+    /// As above, but <paramref name="configure"/> is also told whether the row is being
+    /// CREATED (true) or edited in place (false).
+    ///
+    /// That distinction matters for <see cref="Tracker.FromCondition"/>. The breadcrumb
+    /// is what condition removal keys on, so stamping it onto a tracker the owner added
+    /// themselves would hand their choice to a condition, and then quietly delete it,
+    /// with its history, when that condition is removed. Only a newly created tracker
+    /// may be claimed by a condition.
+    /// </summary>
+    public async Task UpsertAsync(int petId, TrackerId trackerId, Action<Tracker, bool> configure)
+    {
+        var existing = await GetByTrackerIdAsync(petId, trackerId);
+        var tracker = existing ?? new Tracker { PetId = petId, TrackerId = trackerId };
+
+        configure(tracker, existing is null);
         tracker.PetId = petId;
         tracker.TrackerId = trackerId;
         await SaveAsync(tracker);
@@ -70,7 +84,7 @@ public class TrackerService
     {
         var existing = await GetByTrackerIdAsync(petId, trackerId);
         if (existing != null)
-            await _db.DeleteAsync(existing);
+            await _db.UpdateAsync(SyncStamp.MarkDeleted(existing));
     }
 
     /// <summary>
@@ -89,7 +103,7 @@ public class TrackerService
         await _seedLock.WaitAsync();
         try
         {
-            // Re-check inside the lock — another reload may have seeded while we waited.
+            // Re-check inside the lock: another reload may have seeded while we waited.
             existing = await GetForPetAsync(petId);
             if (existing.Count > 0)
                 return existing;
@@ -101,7 +115,7 @@ public class TrackerService
                 foreach (var t in CarePlanCatalog.BuildDefaultPlan(conditionIds))
                 {
                     t.PetId = petId;
-                    conn.Insert(t);
+                    conn.Insert(SyncStamp.Touch(t));
                 }
             });
 

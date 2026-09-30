@@ -5,7 +5,7 @@ namespace Animal_Diary_App.Data.View;
 /// <see cref="Controls.FelovaBottomSheet"/>; this view just wires the medication
 /// form into it. Presentation is driven by
 /// <see cref="ViewModels.MedicationViewModel.IsAddEditSheetVisible"/>, bound to the
-/// sheet's <c>IsPresented</c> in XAML — no per-view animation code needed.
+/// sheet's <c>IsPresented</c> in XAML, no per-view animation code needed.
 /// </summary>
 public partial class AddEditMedicationsView : ContentView
 {

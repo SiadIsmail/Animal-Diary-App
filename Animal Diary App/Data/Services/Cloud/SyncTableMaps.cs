@@ -1,0 +1,1152 @@
+﻿namespace Animal_Diary_App.Data.Services.Cloud;
+
+using System.Diagnostics;
+using System.Text.Json;
+using Animal_Diary_App.Data.Models;
+using SQLite;
+
+/// <summary>
+/// Everything the sync engine shares with one table's mapping while a run is in
+/// flight: the connection, the local↔cloud id caches (local FKs are ints, cloud
+/// FKs are the parents' SyncIds), and the set of medications whose reminders
+/// must re-materialize after the pull.
+/// </summary>
+internal sealed class SyncRunContext
+{
+    public SyncRunContext(SQLiteAsyncConnection db) { Db = db; }
+
+    public SQLiteAsyncConnection Db { get; }
+
+    /// <summary>Medication local ids touched by this run's pull: the engine runs
+    /// the idempotent reminder re-sync for each once the pull is applied.</summary>
+    public HashSet<int> AffectedMedications { get; } = new();
+
+    private readonly Dictionary<int, string?> _petUuid = new();
+    private readonly Dictionary<string, int?> _petLocal = new();
+    private readonly Dictionary<int, string?> _medUuid = new();
+    private readonly Dictionary<string, int?> _medLocal = new();
+
+    public async Task<string?> PetUuidAsync(int localId)
+    {
+        if (!_petUuid.TryGetValue(localId, out var v))
+            _petUuid[localId] = v = (await Db.QueryAsync<Pet>(
+                "select * from \"Pet\" where Id = ? limit 1", localId)).FirstOrDefault()?.SyncId;
+        return string.IsNullOrEmpty(v) ? null : v;
+    }
+
+    public async Task<int?> PetLocalIdAsync(string uuid)
+    {
+        if (!_petLocal.TryGetValue(uuid, out var v))
+            _petLocal[uuid] = v = (await Db.QueryAsync<Pet>(
+                "select * from \"Pet\" where SyncId = ? limit 1", uuid)).FirstOrDefault()?.Id;
+        return v;
+    }
+
+    public async Task<string?> MedicationUuidAsync(int localId)
+    {
+        if (!_medUuid.TryGetValue(localId, out var v))
+            _medUuid[localId] = v = (await Db.QueryAsync<Medication>(
+                "select * from \"Medication\" where Id = ? limit 1", localId)).FirstOrDefault()?.SyncId;
+        return string.IsNullOrEmpty(v) ? null : v;
+    }
+
+    public async Task<int?> MedicationLocalIdAsync(string uuid)
+    {
+        if (!_medLocal.TryGetValue(uuid, out var v))
+            _medLocal[uuid] = v = (await Db.QueryAsync<Medication>(
+                "select * from \"Medication\" where SyncId = ? limit 1", uuid)).FirstOrDefault()?.Id;
+        return v;
+    }
+
+    private readonly Dictionary<int, string?> _customUuid = new();
+    private readonly Dictionary<string, int?> _customLocal = new();
+
+    public async Task<string?> CustomTrackerUuidAsync(int localId)
+    {
+        if (!_customUuid.TryGetValue(localId, out var v))
+            _customUuid[localId] = v = (await Db.QueryAsync<CustomTracker>(
+                "select * from \"CustomTracker\" where Id = ? limit 1", localId)).FirstOrDefault()?.SyncId;
+        return string.IsNullOrEmpty(v) ? null : v;
+    }
+
+    public async Task<int?> CustomTrackerLocalIdAsync(string uuid)
+    {
+        if (!_customLocal.TryGetValue(uuid, out var v))
+            _customLocal[uuid] = v = (await Db.QueryAsync<CustomTracker>(
+                "select * from \"CustomTracker\" where SyncId = ? limit 1", uuid)).FirstOrDefault()?.Id;
+        return v;
+    }
+
+    /// <summary>A pet applied in this run may be looked up by children later in the
+    /// same run: prime the cache instead of re-querying.</summary>
+    public void NotePet(int localId, string uuid) { _petLocal[uuid] = localId; _petUuid[localId] = uuid; }
+    public void NoteMedication(int localId, string uuid) { _medLocal[uuid] = localId; _medUuid[localId] = uuid; }
+
+    /// <summary>Same, for a custom tracker: its entries arrive later in the same pull and
+    /// resolve their parent by uuid. Without this priming a first-ever sync applies the
+    /// definition and then drops every entry pointing at it, because the local row it
+    /// needs was written after the cache said "not here".</summary>
+    public void NoteCustomTracker(int localId, string uuid) { _customLocal[uuid] = localId; _customUuid[localId] = uuid; }
+}
+
+/// <summary>One row queued for upload; <c>ClearDirtyAsync</c> runs only after the
+/// server accepted the batch, and only clears the flag if the row wasn't written
+/// again mid-push (snapshot comparison).</summary>
+internal sealed record PendingPush(
+    Dictionary<string, object?> Payload,
+    Func<Task> ClearDirtyAsync);
+
+internal interface ITableSync
+{
+    string CloudTable { get; }
+
+    /// <summary>The local table this maps, so the mapping set can be checked against
+    /// <c>SyncedTables</c> (see <c>SyncTableMaps.Build</c>).</summary>
+    string LocalTable { get; }
+
+    Task<int> ApplyRowsAsync(SyncRunContext ctx, JsonElement rows);
+    Task<List<PendingPush>> CollectDirtyAsync(SyncRunContext ctx);
+}
+
+/// <summary>
+/// The generic pull-apply / collect-dirty machinery for one entity type; the
+/// per-table differences (column mapping, FK resolution, natural keys) are the
+/// delegates. Apply rules:
+/// - match local by SyncId, else by the table's natural key (that's how two
+///   devices' "same" row converges: the local row adopts the canonical id);
+/// - a locally-dirty row that is strictly newer wins and pushes later (LWW);
+/// - applied writes never mark dirty (they ARE the server state).
+/// </summary>
+internal sealed class TableSync<T> : ITableSync where T : class, ISyncable, new()
+{
+    private readonly string _localTable = typeof(T).Name;
+
+    /// <summary>Resolved once, at construction, from the one table registry, so a synced
+    /// table that was never registered fails loudly at startup rather than quietly pushing
+    /// demo rows forever.</summary>
+    private readonly string _excludesDemo = SyncedTables.For<T>().ExcludesDemoPredicate;
+
+    public string LocalTable => _localTable;
+    private readonly Func<T, SyncRunContext, Task<Dictionary<string, object?>?>> _toCloud;
+    private readonly Func<JsonElement, SyncRunContext, Task<T?>> _fromCloud;
+    private readonly Action<T, T> _copyPayload;
+    private readonly Func<SyncRunContext, T, Task<T?>>? _naturalKey;
+    private readonly Action<SyncRunContext, T>? _onApplied;
+
+    public string CloudTable { get; }
+
+    public TableSync(
+        string cloudTable,
+        Func<T, SyncRunContext, Task<Dictionary<string, object?>?>> toCloud,
+        Func<JsonElement, SyncRunContext, Task<T?>> fromCloud,
+        Action<T, T> copyPayload,
+        Func<SyncRunContext, T, Task<T?>>? naturalKey = null,
+        Action<SyncRunContext, T>? onApplied = null)
+    {
+        CloudTable = cloudTable;
+        _toCloud = toCloud;
+        _fromCloud = fromCloud;
+        _copyPayload = copyPayload;
+        _naturalKey = naturalKey;
+        _onApplied = onApplied;
+    }
+
+    public async Task<int> ApplyRowsAsync(SyncRunContext ctx, JsonElement rows)
+    {
+        int applied = 0;
+        foreach (var el in rows.EnumerateArray())
+        {
+            var incoming = await _fromCloud(el, ctx);
+            if (incoming == null)
+            {
+                // Unresolvable parent: parents sync first, so this is exceptional;
+                // the row returns when its updated_at moves. Log, don't crash.
+                Debug.WriteLine($"[Cloud] skipped {CloudTable} row with unresolved FK");
+                continue;
+            }
+
+            var local = (await ctx.Db.QueryAsync<T>(
+                $"select * from \"{_localTable}\" where SyncId = ? limit 1", incoming.SyncId)).FirstOrDefault();
+            if (local == null && _naturalKey != null)
+                local = await _naturalKey(ctx, incoming);
+
+            T persisted;
+            if (local == null)
+            {
+                if (incoming.IsDeleted)
+                    continue;                     // tombstone for a row this device never had
+                await ctx.Db.InsertAsync(incoming);
+                persisted = incoming;
+                applied++;
+            }
+            else
+            {
+                if (local.IsDirty && local.UpdatedAtUtc > incoming.UpdatedAtUtc)
+                    continue;                     // local edit is newer; it pushes next
+                if (!local.IsDirty && local.SyncId == incoming.SyncId &&
+                    local.UpdatedAtUtc == incoming.UpdatedAtUtc && local.IsDeleted == incoming.IsDeleted)
+                    continue;                     // echo of a row we already hold (our own push coming back)
+                _copyPayload(local, incoming);
+                local.SyncId = incoming.SyncId;   // natural-key merge adopts the canonical id
+                local.UpdatedAtUtc = incoming.UpdatedAtUtc;
+                local.IsDeleted = incoming.IsDeleted;
+                local.IsDirty = false;
+                await ctx.Db.UpdateAsync(local);
+                persisted = local;
+                applied++;
+            }
+            _onApplied?.Invoke(ctx, persisted);
+        }
+        return applied;
+    }
+
+    /// <summary>
+    /// The upload queue for this table: every dirty row, minus every demo row.
+    ///
+    /// <para><b>This is the guard that matters.</b> The bulk sweeps in
+    /// <c>CloudSyncService</c> exclude demo data too, but they are the secondary defence,
+    /// a creator who logs a live entry on a seeded demo pet goes through the ordinary write
+    /// path, and <c>SyncStamp.Touch</c> marks that row dirty exactly like any other, because
+    /// it stamps an <c>ISyncable</c> and has no idea which pet it belongs to. Filtering at
+    /// collection is what makes "seeded history never leaves the device" true for every
+    /// route into the queue rather than just the ones we thought of.</para>
+    /// </summary>
+    public async Task<List<PendingPush>> CollectDirtyAsync(SyncRunContext ctx)
+    {
+        var rows = await ctx.Db.QueryAsync<T>(
+            $"select * from \"{_localTable}\" where IsDirty = 1 and {_excludesDemo}");
+        var result = new List<PendingPush>();
+        foreach (var row in rows)
+        {
+            var payload = await _toCloud(row, ctx);
+            if (payload == null)
+            {
+                // The parent has no cloud identity. Local SyncIds are assigned on write and
+                // backfilled at startup, so in practice this means the parent row is GONE:
+                // an orphan that can never be pushed and stays IsDirty forever. It is
+                // invisible in the UI too (every read filters by parent id), so the only
+                // symptom is a "changes not yet saved" count that never goes down.
+                Debug.WriteLine(
+                    $"[Cloud] {_localTable} id={row.Id} is dirty but unpushable (orphaned parent): skipping");
+                continue;
+            }
+
+            var snapshotId = row.Id;
+            var snapshotStamp = row.UpdatedAtUtc;
+            result.Add(new PendingPush(payload, async () =>
+            {
+                var current = (await ctx.Db.QueryAsync<T>(
+                    $"select * from \"{_localTable}\" where Id = ? limit 1", snapshotId)).FirstOrDefault();
+                // Only clear if the row wasn't written again while the push flew.
+                if (current != null && current.IsDirty && current.UpdatedAtUtc == snapshotStamp)
+                {
+                    current.IsDirty = false;
+                    await ctx.Db.UpdateAsync(current);
+                }
+            }));
+        }
+        return result;
+    }
+}
+
+/// <summary>
+/// The cloud mapping for every synced table, in dependency order (parents before
+/// children: both pull and push walk this order so FKs always resolve).
+///
+/// <para>The <i>set</i> of tables is owned by <c>SyncedTables</c>; this file owns each
+/// one's cloud name and column translation, which is genuinely bespoke and can't be
+/// generated. <see cref="Build"/> checks the two agree, so adding a table to the
+/// registry without a mapping here fails immediately instead of silently never
+/// syncing that table's data.</para>
+/// </summary>
+internal static class SyncTableMaps
+{
+    public static IReadOnlyList<ITableSync> Build()
+    {
+        var maps = BuildMaps();
+
+        // A table in the registry with no mapping would pull and push nothing, forever,
+        // with no error: the owner's data would simply never leave the device. A mapping
+        // with no registry entry is the mirror image: it syncs, but is never created,
+        // backfilled, wiped on reset, or purged with its pet. Both are silent, so neither
+        // is allowed to compile-and-run.
+        var registry = SyncedTables.All.Select(t => t.LocalTable).ToHashSet(StringComparer.Ordinal);
+        var mapped = maps.Select(m => m.LocalTable).ToHashSet(StringComparer.Ordinal);
+
+        var unmapped = registry.Except(mapped).OrderBy(n => n, StringComparer.Ordinal).ToList();
+        var unregistered = mapped.Except(registry).OrderBy(n => n, StringComparer.Ordinal).ToList();
+        if (unmapped.Count > 0 || unregistered.Count > 0)
+        {
+            throw new InvalidOperationException(
+                "SyncTableMaps is out of step with SyncedTables. " +
+                $"In the registry but not mapped: [{string.Join(", ", unmapped)}]. " +
+                $"Mapped but not in the registry: [{string.Join(", ", unregistered)}]. " +
+                "Add the missing line to whichever list is short: see SyncedTables.");
+        }
+
+        return maps;
+    }
+
+    private static IReadOnlyList<ITableSync> BuildMaps() => new ITableSync[]
+    {
+        // ── pets (root) ──────────────────────────────────────────────────────
+        new TableSync<Pet>("pets",
+            toCloud: (p, _) => Task.FromResult<Dictionary<string, object?>?>(new()
+            {
+                ["id"] = p.SyncId,
+                ["name"] = p.Name,
+                ["type"] = p.Type,
+                ["age"] = p.Age,
+                ["birth_year"] = p.BirthYear,
+                ["birth_month"] = p.BirthMonth,
+                ["birth_day"] = p.BirthDay,
+                ["condition_id"] = p.ConditionId,
+                ["client_updated_at"] = CloudJson.ToIso(p.UpdatedAtUtc),
+                ["deleted_at"] = p.IsDeleted ? CloudJson.ToIso(p.UpdatedAtUtc) : null,
+            }),
+            fromCloud: (el, _) => Task.FromResult<Pet?>(new Pet
+            {
+                SyncId = CloudJson.GetString(el, "id"),
+                Name = CloudJson.GetString(el, "name"),
+                Type = CloudJson.GetString(el, "type"),
+                Age = CloudJson.GetInt(el, "age"),
+                BirthYear = CloudJson.GetInt(el, "birth_year"),
+                BirthMonth = CloudJson.GetIntOrNull(el, "birth_month"),
+                BirthDay = CloudJson.GetIntOrNull(el, "birth_day"),
+                ConditionId = CloudJson.GetString(el, "condition_id"),
+                UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                IsDeleted = CloudJson.IsDeleted(el),
+            }),
+            copyPayload: (local, inc) =>
+            {
+                local.Name = inc.Name; local.Type = inc.Type; local.Age = inc.Age;
+                local.BirthYear = inc.BirthYear; local.BirthMonth = inc.BirthMonth;
+                local.BirthDay = inc.BirthDay; local.ConditionId = inc.ConditionId;
+            },
+            onApplied: (ctx, p) => ctx.NotePet(p.Id, p.SyncId)),
+
+        // ── medications ──────────────────────────────────────────────────────
+        new TableSync<Medication>("medications",
+            toCloud: async (m, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(m.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = m.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["name"] = m.Name,
+                    ["dosage"] = m.Dosage,
+                    ["unit"] = m.Unit,
+                    ["notes"] = m.Notes,
+                    ["is_archived"] = m.IsArchived,
+                    ["med_created_at"] = CloudJson.ToIso(m.CreatedAt),
+                    ["client_updated_at"] = CloudJson.ToIso(m.UpdatedAtUtc),
+                    ["deleted_at"] = m.IsDeleted ? CloudJson.ToIso(m.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new Medication
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Name = CloudJson.GetString(el, "name"),
+                    Dosage = CloudJson.GetDecimal(el, "dosage"),
+                    Unit = CloudJson.GetString(el, "unit"),
+                    Notes = CloudJson.GetString(el, "notes"),
+                    IsArchived = CloudJson.GetBool(el, "is_archived"),
+                    CreatedAt = CloudJson.GetIsoDateTimeOrNull(el, "med_created_at") ?? DateTime.MinValue,
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Name = inc.Name; local.Dosage = inc.Dosage;
+                local.Unit = inc.Unit; local.Notes = inc.Notes; local.IsArchived = inc.IsArchived;
+                local.CreatedAt = inc.CreatedAt;
+            },
+            onApplied: (ctx, m) => { ctx.NoteMedication(m.Id, m.SyncId); ctx.AffectedMedications.Add(m.Id); }),
+
+        // ── treatment ledger (what a medication used to be) ──────────────────
+        // Keyed by id: every row is a distinct moment, appended and never edited.
+        //
+        // medication_id travels as a PLAIN uuid with no foreign key, and both
+        // directions tolerate it not resolving. The row is deliberately self-contained
+        // (name and summary are text captured at the change), so an unresolvable
+        // pointer costs nothing readable, whereas returning null from toCloud would
+        // strand the row as permanently dirty, and an FK with a cascade would delete
+        // the history of the thing whose history this exists to preserve.
+        new TableSync<MedicationChange>("medication_changes",
+            toCloud: async (c, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(c.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = c.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["medication_id"] = c.MedicationId == 0
+                        ? null
+                        : await ctx.MedicationUuidAsync(c.MedicationId),
+                    ["changed_at"] = CloudJson.ToIso(c.ChangedAtUtc),
+                    ["kind"] = c.Kind.ToString(),
+                    ["medication_name"] = c.MedicationName,
+                    ["summary"] = c.Summary,
+                    ["note"] = c.Note,
+                    ["client_updated_at"] = CloudJson.ToIso(c.UpdatedAtUtc),
+                    ["deleted_at"] = c.IsDeleted ? CloudJson.ToIso(c.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                var medUuid = CloudJson.GetStringOrNull(el, "medication_id");
+                return new MedicationChange
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    // 0 = "not resolvable here", which is a normal state on a device
+                    // that never held the medication. Never a reason to drop the row.
+                    MedicationId = medUuid == null
+                        ? 0
+                        : await ctx.MedicationLocalIdAsync(medUuid) ?? 0,
+                    ChangedAtUtc = CloudJson.GetIsoDateTime(el, "changed_at"),
+                    // TryParse, not Parse: a newer client's eighth kind must not abort
+                    // the whole pull for every other table in the batch. It reads back
+                    // as the kind whose summary already carries the fact.
+                    Kind = Enum.TryParse<MedicationChangeKind>(CloudJson.GetString(el, "kind"), out var k)
+                        ? k
+                        : MedicationChangeKind.DoseChanged,
+                    MedicationName = CloudJson.GetString(el, "medication_name"),
+                    Summary = CloudJson.GetString(el, "summary"),
+                    Note = CloudJson.GetString(el, "note"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.MedicationId = inc.MedicationId;
+                local.ChangedAtUtc = inc.ChangedAtUtc; local.Kind = inc.Kind;
+                local.MedicationName = inc.MedicationName; local.Summary = inc.Summary;
+                local.Note = inc.Note;
+            }),
+
+        // ── trackers (care plan; one per kind per pet) ───────────────────────
+        new TableSync<Tracker>("trackers",
+            toCloud: async (t, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(t.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = t.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["tracker_id"] = t.TrackerId.ToString(),
+                    ["kind"] = t.Kind.ToString(),
+                    ["per_day_count"] = t.PerDayCount,
+                    ["target_lo"] = t.TargetLo,
+                    ["target_hi"] = t.TargetHi,
+                    ["unit"] = t.Unit,
+                    ["from_condition"] = t.FromCondition,
+                    ["client_updated_at"] = CloudJson.ToIso(t.UpdatedAtUtc),
+                    ["deleted_at"] = t.IsDeleted ? CloudJson.ToIso(t.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new Tracker
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    TrackerId = Enum.Parse<TrackerId>(CloudJson.GetString(el, "tracker_id")),
+                    Kind = Enum.Parse<TrackerKind>(CloudJson.GetString(el, "kind")),
+                    PerDayCount = CloudJson.GetInt(el, "per_day_count"),
+                    TargetLo = CloudJson.GetDecimalOrNull(el, "target_lo"),
+                    TargetHi = CloudJson.GetDecimalOrNull(el, "target_hi"),
+                    Unit = CloudJson.GetString(el, "unit"),
+                    FromCondition = CloudJson.GetStringOrNull(el, "from_condition"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.TrackerId = inc.TrackerId; local.Kind = inc.Kind;
+                local.PerDayCount = inc.PerDayCount; local.TargetLo = inc.TargetLo;
+                local.TargetHi = inc.TargetHi; local.Unit = inc.Unit; local.FromCondition = inc.FromCondition;
+            },
+            naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<Tracker>(
+                "select * from \"Tracker\" where PetId = ? and TrackerId = ? order by IsDeleted asc limit 1",
+                inc.PetId, inc.TrackerId.ToString())).FirstOrDefault()),
+
+        // ── pet conditions ───────────────────────────────────────────────────
+        new TableSync<PetCondition>("pet_conditions",
+            toCloud: async (c, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(c.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = c.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["condition_id"] = c.ConditionId,
+                    ["client_updated_at"] = CloudJson.ToIso(c.UpdatedAtUtc),
+                    ["deleted_at"] = c.IsDeleted ? CloudJson.ToIso(c.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new PetCondition
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    ConditionId = CloudJson.GetString(el, "condition_id"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) => { local.PetId = inc.PetId; local.ConditionId = inc.ConditionId; },
+            naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<PetCondition>(
+                "select * from \"PetCondition\" where PetId = ? and ConditionId = ? order by IsDeleted asc limit 1",
+                inc.PetId, inc.ConditionId)).FirstOrDefault()),
+
+        // ── pet entries (mood + weight; one row per pet per day) ─────────────
+        new TableSync<PetEntry>("pet_entries",
+            toCloud: async (e, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(e.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = e.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(e.Date),
+                    ["mood"] = e.Mood,
+                    ["mood_level"] = e.MoodLevel,
+                    ["mood_note"] = e.MoodNote,
+                    ["include_in_vet_report"] = e.IncludeInVetReport,
+                    ["weight"] = e.Weight,
+                    ["mood_time_ticks"] = e.MoodTimeTicks,
+                    ["weight_time_ticks"] = e.WeightTimeTicks,
+                    // Provenance, not the value: the weight itself is always kg.
+                    ["weight_unit"] = e.WeightUnit,
+                    ["client_updated_at"] = CloudJson.ToIso(e.UpdatedAtUtc),
+                    ["deleted_at"] = e.IsDeleted ? CloudJson.ToIso(e.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new PetEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Mood = CloudJson.GetString(el, "mood"),
+                    MoodLevel = CloudJson.GetInt(el, "mood_level"),
+                    MoodNote = CloudJson.GetString(el, "mood_note"),
+                    IncludeInVetReport = CloudJson.GetBool(el, "include_in_vet_report"),
+                    Weight = CloudJson.GetDecimal(el, "weight"),
+                    MoodTimeTicks = CloudJson.GetLongOrNull(el, "mood_time_ticks"),
+                    WeightTimeTicks = CloudJson.GetLongOrNull(el, "weight_time_ticks"),
+                    WeightUnit = CloudJson.GetStringOrNull(el, "weight_unit"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Mood = inc.Mood;
+                local.MoodLevel = inc.MoodLevel; local.MoodNote = inc.MoodNote;
+                local.IncludeInVetReport = inc.IncludeInVetReport; local.Weight = inc.Weight;
+                local.MoodTimeTicks = inc.MoodTimeTicks; local.WeightTimeTicks = inc.WeightTimeTicks;
+                local.WeightUnit = inc.WeightUnit;
+            },
+            naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<PetEntry>(
+                "select * from \"PetEntry\" where PetId = ? and Date = ? order by IsDeleted asc limit 1",
+                inc.PetId, inc.Date)).FirstOrDefault()),
+
+        // ── glucose (append-only events) ─────────────────────────────────────
+        new TableSync<GlucoseEntry>("glucose_entries",
+            toCloud: async (g, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(g.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = g.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(g.Date),
+                    ["time_ticks"] = g.Time.Ticks,
+                    ["value"] = g.Value,
+                    ["food_context"] = g.Context.ToString(),
+                    ["unit"] = g.Unit,
+                    ["client_updated_at"] = CloudJson.ToIso(g.UpdatedAtUtc),
+                    ["deleted_at"] = g.IsDeleted ? CloudJson.ToIso(g.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new GlucoseEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    Value = CloudJson.GetDecimal(el, "value"),
+                    Context = Enum.Parse<FoodContext>(CloudJson.GetString(el, "food_context")),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.Value = inc.Value; local.Context = inc.Context; local.Unit = inc.Unit;
+            }),
+
+        // ── appetite (one row per pet per day) ───────────────────────────────
+        new TableSync<AppetiteEntry>("appetite_entries",
+            toCloud: async (a, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(a.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = a.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(a.Date),
+                    ["time_ticks"] = a.Time.Ticks,
+                    ["level"] = a.Level,
+                    ["food"] = a.Food,
+                    ["client_updated_at"] = CloudJson.ToIso(a.UpdatedAtUtc),
+                    ["deleted_at"] = a.IsDeleted ? CloudJson.ToIso(a.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new AppetiteEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    Level = CloudJson.GetInt(el, "level"),
+                    Food = CloudJson.GetString(el, "food"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.Level = inc.Level; local.Food = inc.Food;
+            },
+            naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<AppetiteEntry>(
+                "select * from \"AppetiteEntry\" where PetId = ? and Date = ? order by IsDeleted asc limit 1",
+                inc.PetId, inc.Date)).FirstOrDefault()),
+
+        // ── appetite amounts (exact grams; additive events, keyed by id) ─────
+        new TableSync<AppetiteAmountEntry>("appetite_amount_entries",
+            toCloud: async (a, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(a.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = a.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(a.Date),
+                    ["time_ticks"] = a.Time.Ticks,
+                    ["grams"] = a.Grams,
+                    ["food"] = a.Food,
+                    ["unit"] = a.Unit,
+                    ["client_updated_at"] = CloudJson.ToIso(a.UpdatedAtUtc),
+                    ["deleted_at"] = a.IsDeleted ? CloudJson.ToIso(a.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new AppetiteAmountEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    Grams = CloudJson.GetDecimal(el, "grams"),
+                    Food = CloudJson.GetString(el, "food"),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.Grams = inc.Grams; local.Food = inc.Food; local.Unit = inc.Unit;
+            }),
+
+        // ── water amounts (exact ml; additive events, keyed by id like glucose) ──
+        new TableSync<WaterAmountEntry>("water_amount_entries",
+            toCloud: async (w, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(w.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = w.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(w.Date),
+                    ["time_ticks"] = w.Time.Ticks,
+                    ["amount_ml"] = w.AmountMl,
+                    ["unit"] = w.Unit,
+                    ["client_updated_at"] = CloudJson.ToIso(w.UpdatedAtUtc),
+                    ["deleted_at"] = w.IsDeleted ? CloudJson.ToIso(w.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new WaterAmountEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    AmountMl = CloudJson.GetDecimal(el, "amount_ml"),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.AmountMl = inc.AmountMl; local.Unit = inc.Unit;
+            }),
+
+        // ── water level (relative; one row per pet per day, like appetite) ───
+        new TableSync<WaterLevelEntry>("water_level_entries",
+            toCloud: async (w, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(w.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = w.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(w.Date),
+                    ["time_ticks"] = w.Time.Ticks,
+                    ["level"] = w.Level,
+                    ["client_updated_at"] = CloudJson.ToIso(w.UpdatedAtUtc),
+                    ["deleted_at"] = w.IsDeleted ? CloudJson.ToIso(w.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new WaterLevelEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    Level = CloudJson.GetInt(el, "level"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time; local.Level = inc.Level;
+            },
+            naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<WaterLevelEntry>(
+                "select * from \"WaterLevelEntry\" where PetId = ? and Date = ? order by IsDeleted asc limit 1",
+                inc.PetId, inc.Date)).FirstOrDefault()),
+
+        // ── seizures (append-only events) ────────────────────────────────────
+        new TableSync<SeizureEntry>("seizure_entries",
+            toCloud: async (s, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(s.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = s.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(s.Date),
+                    ["time_ticks"] = s.Time.Ticks,
+                    // Text on the wire (the member name), unlike the local int column,
+                    // matches how Tracker.Kind and CustomTracker.Shape already travel, and
+                    // keeps the cloud row readable. Null when the owner didn't say.
+                    ["seizure_type"] = s.Type?.ToString(),
+                    // Seconds is the canonical duration (0023). duration_minutes is a
+                    // dead column and is deliberately still sent: it is always null on a
+                    // current client, and NOT sending it would leave a legacy value
+                    // standing on the server beside a seconds value that supersedes it.
+                    ["duration_seconds"] = s.DurationSeconds,
+                    ["duration_minutes"] = s.DurationMinutes,
+                    ["unit"] = s.Unit,
+                    ["note"] = s.Note,
+                    ["client_updated_at"] = CloudJson.ToIso(s.UpdatedAtUtc),
+                    ["deleted_at"] = s.IsDeleted ? CloudJson.ToIso(s.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new SeizureEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    // TryParse, not Parse: an unrecognised value (a newer client's fourth
+                    // type, a hand-edited row) becomes "not said" rather than throwing and
+                    // aborting the whole pull for everything else in the batch.
+                    Type = Enum.TryParse<SeizureType>(CloudJson.GetStringOrNull(el, "seizure_type"), out var st)
+                        ? st
+                        : null,
+                    DurationSeconds = CloudJson.GetIntOrNull(el, "duration_seconds"),
+                    // Carried so a row pushed by a device on an older build still arrives
+                    // with its duration; AppDatabase's idempotent backfill converts it on
+                    // the next launch. Nothing reads this column directly.
+                    DurationMinutes = CloudJson.GetIntOrNull(el, "duration_minutes"),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
+                    Note = CloudJson.GetString(el, "note"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.Type = inc.Type;
+                local.DurationSeconds = inc.DurationSeconds;
+                local.DurationMinutes = inc.DurationMinutes; local.Unit = inc.Unit;
+                local.Note = inc.Note;
+            }),
+
+        // ── medication schedules (replace-set rows; keyed by id) ─────────────
+        new TableSync<MedicationSchedule>("medication_schedules",
+            toCloud: async (s, ctx) =>
+            {
+                var medUuid = await ctx.MedicationUuidAsync(s.MedicationId);
+                if (medUuid == null) return null;
+                return new()
+                {
+                    ["id"] = s.SyncId,
+                    ["medication_id"] = medUuid,
+                    ["day_of_week"] = (int)s.Day,
+                    ["time_ticks"] = s.Time.Ticks,
+                    ["client_updated_at"] = CloudJson.ToIso(s.UpdatedAtUtc),
+                    ["deleted_at"] = s.IsDeleted ? CloudJson.ToIso(s.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var medId = await ctx.MedicationLocalIdAsync(CloudJson.GetString(el, "medication_id"));
+                if (medId == null) return null;
+                return new MedicationSchedule
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    MedicationId = medId.Value,
+                    Day = (DayOfWeek)CloudJson.GetInt(el, "day_of_week"),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.MedicationId = inc.MedicationId; local.Day = inc.Day; local.Time = inc.Time;
+            },
+            onApplied: (ctx, s) => ctx.AffectedMedications.Add(s.MedicationId)),
+
+        // ── dose logs (adherence; keyed by medication+date+time) ─────────────
+        new TableSync<MedicationDoseLog>("medication_dose_logs",
+            toCloud: async (l, ctx) =>
+            {
+                var medUuid = await ctx.MedicationUuidAsync(l.MedicationId);
+                var petUuid = await ctx.PetUuidAsync(l.PetId);
+                if (medUuid == null || petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = l.SyncId,
+                    ["medication_id"] = medUuid,
+                    ["pet_id"] = petUuid,
+                    ["scheduled_date"] = CloudJson.ToDateOnly(l.ScheduledDate),
+                    ["scheduled_time_ticks"] = l.ScheduledTime.Ticks,
+                    ["status"] = l.Status.ToString(),
+                    ["resolved_at"] = l.ResolvedAt is DateTime r ? CloudJson.ToIso(r) : null,
+                    ["client_updated_at"] = CloudJson.ToIso(l.UpdatedAtUtc),
+                    ["deleted_at"] = l.IsDeleted ? CloudJson.ToIso(l.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var medId = await ctx.MedicationLocalIdAsync(CloudJson.GetString(el, "medication_id"));
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (medId == null || petId == null) return null;
+                return new MedicationDoseLog
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    MedicationId = medId.Value,
+                    PetId = petId.Value,
+                    ScheduledDate = CloudJson.ParseDateOnly(CloudJson.GetString(el, "scheduled_date")),
+                    ScheduledTime = CloudJson.GetTicksTime(el, "scheduled_time_ticks"),
+                    Status = Enum.Parse<DoseStatus>(CloudJson.GetString(el, "status")),
+                    ResolvedAt = CloudJson.GetIsoDateTimeOrNull(el, "resolved_at"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.MedicationId = inc.MedicationId; local.PetId = inc.PetId;
+                local.ScheduledDate = inc.ScheduledDate; local.ScheduledTime = inc.ScheduledTime;
+                local.Status = inc.Status; local.ResolvedAt = inc.ResolvedAt;
+            },
+            naturalKey: async (ctx, inc) => (await ctx.Db.QueryAsync<MedicationDoseLog>(
+                "select * from \"MedicationDoseLog\" where MedicationId = ? and ScheduledDate = ? and ScheduledTime = ? order by IsDeleted asc limit 1",
+                inc.MedicationId, inc.ScheduledDate, inc.ScheduledTime)).FirstOrDefault(),
+            onApplied: (ctx, l) => ctx.AffectedMedications.Add(l.MedicationId)),
+
+        // ── custom trackers (the owner's own definitions) ────────────────────
+        // No natural key on purpose. "Walk" on two devices is two DIFFERENT trackers
+        // until one syncs to the other: they were typed independently and may hold
+        // different cadences, units and icons. Converging them on the name would
+        // silently merge one person's history into another's, and there is no rule
+        // that says two things called Walk are the same thing. SyncId decides
+        // identity, as it does for medications (where "Insulin" has the same shape).
+        //
+        // MUST stay ahead of custom_entries in this list: entries resolve their
+        // parent through the cache NoteCustomTracker primes below.
+        new TableSync<CustomTracker>("custom_trackers",
+            toCloud: async (c, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(c.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = c.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["name"] = c.Name,
+                    ["icon"] = c.Icon,
+                    ["color_key"] = c.ColorKey,
+                    ["shape"] = c.Shape.ToString(),
+                    ["unit"] = c.Unit,
+                    ["kind"] = c.Kind.ToString(),
+                    ["per_day_count"] = c.PerDayCount,
+                    ["include_in_report"] = c.IncludeInReport,
+                    ["is_archived"] = c.IsArchived,
+                    ["client_updated_at"] = CloudJson.ToIso(c.UpdatedAtUtc),
+                    ["deleted_at"] = c.IsDeleted ? CloudJson.ToIso(c.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new CustomTracker
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Name = CloudJson.GetString(el, "name"),
+                    Icon = CloudJson.GetString(el, "icon"),
+                    ColorKey = CloudJson.GetString(el, "color_key"),
+                    Shape = Enum.Parse<CustomShape>(CloudJson.GetString(el, "shape")),
+                    Unit = CloudJson.GetString(el, "unit"),
+                    Kind = Enum.Parse<TrackerKind>(CloudJson.GetString(el, "kind")),
+                    PerDayCount = CloudJson.GetInt(el, "per_day_count"),
+                    IncludeInReport = CloudJson.GetBool(el, "include_in_report"),
+                    IsArchived = CloudJson.GetBool(el, "is_archived"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Name = inc.Name; local.Icon = inc.Icon;
+                local.ColorKey = inc.ColorKey; local.Shape = inc.Shape; local.Unit = inc.Unit;
+                local.Kind = inc.Kind; local.PerDayCount = inc.PerDayCount;
+                local.IncludeInReport = inc.IncludeInReport; local.IsArchived = inc.IsArchived;
+            },
+            onApplied: (ctx, c) => ctx.NoteCustomTracker(c.Id, c.SyncId)),
+
+        // ── custom entries (append-only events; keyed by id) ─────────────────
+        // Carries BOTH ids: pet_id is what RLS and the purge select on, custom_tracker_id
+        // is what the entry means. An entry whose tracker hasn't arrived yet resolves to
+        // null and is skipped: the next pull picks it up once the parent exists.
+        new TableSync<CustomEntry>("custom_entries",
+            toCloud: async (e, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(e.PetId);
+                var trackerUuid = await ctx.CustomTrackerUuidAsync(e.CustomTrackerId);
+                if (petUuid == null || trackerUuid == null) return null;
+                return new()
+                {
+                    ["id"] = e.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["custom_tracker_id"] = trackerUuid,
+                    ["entry_date"] = CloudJson.ToDateOnly(e.Date),
+                    ["time_ticks"] = e.Time.Ticks,
+                    ["amount"] = e.Amount,
+                    // The DEFINITION's unit as it stood when the entry was written, so a
+                    // later rename cannot retroactively relabel it. Free text, never
+                    // converted (see CustomEntry.Unit).
+                    ["unit"] = e.Unit,
+                    ["note"] = e.Note,
+                    ["client_updated_at"] = CloudJson.ToIso(e.UpdatedAtUtc),
+                    ["deleted_at"] = e.IsDeleted ? CloudJson.ToIso(e.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                var trackerId = await ctx.CustomTrackerLocalIdAsync(
+                    CloudJson.GetString(el, "custom_tracker_id"));
+                if (petId == null || trackerId == null) return null;
+                return new CustomEntry
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    CustomTrackerId = trackerId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "entry_date")),
+                    Time = CloudJson.GetTicksTime(el, "time_ticks"),
+                    Amount = CloudJson.GetDecimalOrNull(el, "amount"),
+                    Unit = CloudJson.GetStringOrNull(el, "unit"),
+                    Note = CloudJson.GetString(el, "note"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.CustomTrackerId = inc.CustomTrackerId;
+                local.Date = inc.Date; local.Time = inc.Time;
+                local.Amount = inc.Amount; local.Unit = inc.Unit; local.Note = inc.Note;
+            }),
+
+        // ── questions for the vet ────────────────────────────────────────────
+        // Keyed by id: two devices writing "ask about the wobbliness" are two
+        // separate thoughts someone had, and converging them on their text would
+        // silently delete one. Same reasoning as custom trackers and medications.
+        //
+        // The cloud column is question_text, not text: a bare column called `text`
+        // is a type name everywhere else, and push_rows assembles its column list
+        // as SQL text (see migration 0020).
+        new TableSync<VetQuestion>("vet_questions",
+            toCloud: async (q, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(q.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = q.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["question_text"] = q.Text,
+                    ["asked_at"] = CloudJson.ToIso(q.CreatedAtUtc),
+                    // Null IS the value: it means the question is still open, and it
+                    // has to stay distinguishable from every real answer date.
+                    ["answered_at"] = q.AnsweredAtUtc is DateTime a ? CloudJson.ToIso(a) : null,
+                    ["client_updated_at"] = CloudJson.ToIso(q.UpdatedAtUtc),
+                    ["deleted_at"] = q.IsDeleted ? CloudJson.ToIso(q.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                return new VetQuestion
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Text = CloudJson.GetString(el, "question_text"),
+                    CreatedAtUtc = CloudJson.GetIsoDateTime(el, "asked_at"),
+                    AnsweredAtUtc = CloudJson.GetIsoDateTimeOrNull(el, "answered_at"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Text = inc.Text;
+                local.CreatedAtUtc = inc.CreatedAtUtc; local.AnsweredAtUtc = inc.AnsweredAtUtc;
+            }),
+
+        // ── vet visits ───────────────────────────────────────────────────────
+        // Keyed by id. No natural key on (pet, date): two visits on one day is a
+        // real thing (a morning consult and an afternoon scan), and converging them
+        // would silently merge two appointments into one.
+        //
+        // The date travels as a plain date and the time as nullable ticks, never as
+        // one timestamp: an appointment is a WALL-CLOCK thing, and folding an
+        // unknown time into midnight UTC would move half the world's visits across
+        // a day boundary.
+        new TableSync<VetVisit>("vet_visits",
+            toCloud: async (v, ctx) =>
+            {
+                var petUuid = await ctx.PetUuidAsync(v.PetId);
+                if (petUuid == null) return null;
+                return new()
+                {
+                    ["id"] = v.SyncId,
+                    ["pet_id"] = petUuid,
+                    ["visit_date"] = CloudJson.ToDateOnly(v.Date),
+                    // Null IS the value: the owner knew the day and not the slot.
+                    ["time_ticks"] = v.Time is TimeSpan t ? t.Ticks : (long?)null,
+                    ["practice"] = v.Practice,
+                    ["vet_name"] = v.VetName,
+                    ["visit_note"] = v.VisitNote,
+                    ["client_updated_at"] = CloudJson.ToIso(v.UpdatedAtUtc),
+                    ["deleted_at"] = v.IsDeleted ? CloudJson.ToIso(v.UpdatedAtUtc) : null,
+                };
+            },
+            fromCloud: async (el, ctx) =>
+            {
+                var petId = await ctx.PetLocalIdAsync(CloudJson.GetString(el, "pet_id"));
+                if (petId == null) return null;
+                var ticks = CloudJson.GetLongOrNull(el, "time_ticks");
+                return new VetVisit
+                {
+                    SyncId = CloudJson.GetString(el, "id"),
+                    PetId = petId.Value,
+                    Date = CloudJson.ParseDateOnly(CloudJson.GetString(el, "visit_date")),
+                    Time = ticks is long ts ? TimeSpan.FromTicks(ts) : null,
+                    Practice = CloudJson.GetString(el, "practice"),
+                    VetName = CloudJson.GetString(el, "vet_name"),
+                    VisitNote = CloudJson.GetString(el, "visit_note"),
+                    UpdatedAtUtc = CloudJson.GetIsoDateTime(el, "client_updated_at"),
+                    IsDeleted = CloudJson.IsDeleted(el),
+                };
+            },
+            copyPayload: (local, inc) =>
+            {
+                local.PetId = inc.PetId; local.Date = inc.Date; local.Time = inc.Time;
+                local.Practice = inc.Practice; local.VetName = inc.VetName;
+                local.VisitNote = inc.VisitNote;
+            }),
+    };
+}

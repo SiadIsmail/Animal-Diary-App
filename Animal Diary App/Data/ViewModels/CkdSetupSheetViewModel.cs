@@ -90,19 +90,21 @@ public class CkdSetupSheetViewModel : ConditionSetupSheetViewModel
         await Trackers.UpsertAsync(petId, TrackerId.Weight, t => t.Kind = _weightKind);
 
         if (IsAppetiteOn)
-            await Trackers.UpsertAsync(petId, TrackerId.Appetite, t =>
+            await Trackers.UpsertAsync(petId, TrackerId.Appetite, (t, isNew) =>
             {
                 t.Kind = TrackerKind.Daily;
-                t.FromCondition ??= "ckd";
+                if (isNew)
+                    t.FromCondition = "ckd";
             });
         else
             await Trackers.RemoveByTrackerIdAsync(petId, TrackerId.Appetite);
 
         if (IsWaterOn)
-            await Trackers.UpsertAsync(petId, TrackerId.Water, t =>
+            await Trackers.UpsertAsync(petId, TrackerId.Water, (t, isNew) =>
             {
                 t.Kind = TrackerKind.Daily;
-                t.FromCondition ??= "ckd";
+                if (isNew)
+                    t.FromCondition = "ckd";
             });
         else
             await Trackers.RemoveByTrackerIdAsync(petId, TrackerId.Water);

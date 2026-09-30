@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-    CreatePetPage.xaml
+    CreatePetPage.xaml: onboarding step 1 of 2: IDENTITY
     ─────────────────────────────────────────────────────────
-    Used in two contexts:
-      1. First launch — no back/cancel button, full welcoming feel
-      2. Add pet from Pets page — cancel button visible
+    The simple, personal first screen: just the pet's name and a placeholder for
+    the future profile-picture feature. "Next" carries the shared PetVM draft to
+    PetDetailsPage (step 2) where the technical details are collected.
+
+    Used in three contexts (all share this two-page flow):
+      1. First launch, no cancel button, welcoming feel
+      2. Add pet from Pets page: cancel button visible
+      3. Edit pet from Manage: prefilled, cancel button visible
 -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              xmlns:controls="clr-namespace:Animal_Diary_App.Data.View.Controls"
+             xmlns:views="clr-namespace:Animal_Diary_App.Data.View"
              xmlns:vms="clr-namespace:Animal_Diary_App.Data.ViewModels"
              x:DataType="vms:MainViewModel"
-             xmlns:models="clr-namespace:Animal_Diary_App.Data.Models"
              x:Class="Animal_Diary_App.Data.View.CreatePetPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
@@ -21,13 +26,6 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <Style x:Key="CardSurface" TargetType="Border">
-                <Setter Property="BackgroundColor" Value="{StaticResource Glass}"/>
-                <Setter Property="Stroke" Value="{StaticResource GlassLine}"/>
-                <Setter Property="StrokeThickness" Value="1"/>
-                <Setter Property="StrokeShape" Value="RoundRectangle 17,14,15,18"/>
-                <Setter Property="Padding" Value="18"/>
-            </Style>
             <Style x:Key="FieldLabel" TargetType="Label">
                 <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
                 <Setter Property="FontSize" Value="11"/>
@@ -51,173 +49,76 @@
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Water background — bottom layer, spans the whole page -->
+        <!-- Water background: bottom layer, spans the whole page -->
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ══════════ SCROLLABLE CONTENT ══════════ -->
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="22,26,22,24"
-                                 Spacing="20">
+                                 Spacing="22">
 
                 <!-- Header -->
-                <Label Text="{Binding PetVM.PageTitle}"
+                <Label Text="{Binding PetVM.IdentityTitle}"
                        FontFamily="{StaticResource FontSerif}"
                        FontSize="{StaticResource TypeH1}"
                        TextColor="{StaticResource Ink}"
                        HorizontalTextAlignment="Center"/>
 
-                <!-- Welcome subtitle (first launch) -->
-                <Label Text="{loc:Translate CreatePet_Subtitle}"
+                <!-- Subtitle -->
+                <Label Text="{Binding PetVM.IdentitySubtitle}"
                        FontFamily="{StaticResource FontSans}"
                        FontSize="14"
                        TextColor="{StaticResource InkSecondary}"
                        HorizontalTextAlignment="Center"
-                       IsVisible="{Binding PetVM.IsFirstLaunch}"
+                       IsVisible="{Binding PetVM.IdentitySubtitle, Converter={StaticResource StringToBoolConverter}}"
                        Margin="10,0"/>
 
-                <!-- Avatar preview -->
+                <!-- ── Profile photo: tap to add/change/remove ── -->
                 <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                    <Border WidthRequest="100"
-                            HeightRequest="100"
-                            Stroke="{StaticResource GlassLine}"
-                            StrokeThickness="2"
-                            StrokeShape="RoundRectangle 50"
-                            HorizontalOptions="Center">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="{StaticResource SeaHi}" Offset="0"/>
-                                <GradientStop Color="{StaticResource SeaMid}" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Border.Shadow>
-                            <Shadow Brush="#0D3A3C" Offset="0,6" Radius="16" Opacity="0.14"/>
-                        </Border.Shadow>
-                        <Label Text="{Binding PetVM.SelectedTypeEmoji}"
-                               FontSize="52"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center"/>
-                    </Border>
-                    <Label Text="{Binding PetVM.PreviewName}"
-                           FontFamily="{StaticResource FontSerif}"
-                           FontSize="18"
-                           TextColor="{StaticResource Ink}"
-                           HorizontalOptions="Center"/>
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnPhotoTapped"/>
+                    </VerticalStackLayout.GestureRecognizers>
+                    <controls:PetAvatarView Diameter="112"
+                                            FallbackFontSize="40"
+                                            FallbackText="📷"
+                                            PhotoPath="{Binding PetVM.DraftPhotoPath}"
+                                            HorizontalOptions="Center"/>
+                    <Label Text="{loc:Translate CreatePet_PhotoLabel}"
+                           Style="{StaticResource FieldLabel}"
+                           HorizontalTextAlignment="Center"/>
+                    <!-- "Add a photo" until one is set, then "Change photo" -->
+                    <Label Text="{loc:Translate CreatePet_PhotoAdd}"
+                           IsVisible="{Binding PetVM.HasDraftPhoto, Converter={StaticResource InvertedBoolConverter}}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12"
+                           TextColor="{StaticResource TealDeep}"
+                           HorizontalTextAlignment="Center"/>
+                    <Label Text="{loc:Translate CreatePet_PhotoChange}"
+                           IsVisible="{Binding PetVM.HasDraftPhoto}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12"
+                           TextColor="{StaticResource TealDeep}"
+                           HorizontalTextAlignment="Center"/>
                 </VerticalStackLayout>
 
-                <!-- Pet type selector -->
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{loc:Translate CreatePet_WhatAnimal}"
-                           Style="{StaticResource FieldLabel}"
-                           Margin="2,0,0,0"/>
-
-                    <CollectionView ItemsSource="{Binding PetVM.PetTypeOptions}"
-                                    ItemsLayout="HorizontalList"
-                                    SelectionMode="Single"
-                                    SelectedItem="{Binding PetVM.SelectedPetType}"
-                                    HeightRequest="92">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="models:PetTypeOption">
-                                <VerticalStackLayout Padding="5,0" Spacing="6">
-                                    <Border WidthRequest="58"
-                                            HeightRequest="58"
-                                            BackgroundColor="{StaticResource Glass}"
-                                            Stroke="{StaticResource GlassLine}"
-                                            StrokeThickness="1.5"
-                                            StrokeShape="RoundRectangle 16"
-                                            HorizontalOptions="Center">
-                                        <Border.Triggers>
-                                            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
-                                                <Setter Property="Stroke" Value="{StaticResource Teal}"/>
-                                            </DataTrigger>
-                                        </Border.Triggers>
-                                        <Label Text="{Binding Emoji}"
-                                               FontSize="28"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center"/>
-                                    </Border>
-                                    <Label Text="{Binding DisplayName}"
-                                           FontFamily="{StaticResource FontSans}"
-                                           FontSize="10.5"
-                                           FontAttributes="Bold"
-                                           HorizontalTextAlignment="Center"
-                                           TextColor="{StaticResource InkSecondary}"/>
-                                </VerticalStackLayout>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
-
-                <!-- Custom type (Other) -->
-                <VerticalStackLayout Spacing="6"
-                                     IsVisible="{Binding PetVM.ShowCustomPetType}">
-                    <Label Text="{loc:Translate CreatePet_DescribeType}"
-                           Style="{StaticResource FieldLabel}"
-                           Margin="2,0,0,0"/>
+                <!-- Name field -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{loc:Translate CreatePet_NameLabel}"
+                           Style="{StaticResource FieldLabel}"/>
                     <Border Style="{StaticResource FieldBorder}">
-                        <Entry Placeholder="{loc:Translate CreatePet_CustomTypePlaceholder}"
-                               Text="{Binding PetVM.EnteredPetType}"
+                        <Entry Placeholder="{loc:Translate CreatePet_NamePlaceholder}"
+                               Text="{Binding PetVM.EnteredPetName}"
                                FontFamily="{StaticResource FontSans}"
                                FontSize="15"
+                               FontAttributes="Bold"
                                TextColor="{StaticResource Ink}"
                                PlaceholderColor="{StaticResource InkTertiary}"
                                Margin="14,0"/>
                     </Border>
-                    <Label Text="{Binding PetVM.PetTypeError}"
+                    <Label Text="{Binding PetVM.PetNameError}"
                            Style="{StaticResource ErrorLabel}"
-                           IsVisible="{Binding PetVM.PetTypeError, Converter={StaticResource StringToBoolConverter}}"/>
+                           IsVisible="{Binding PetVM.PetNameError, Converter={StaticResource StringToBoolConverter}}"/>
                 </VerticalStackLayout>
-
-                <!-- Generic pet-type validation error -->
-                <Label Text="{Binding PetVM.PetTypeError}"
-                       Style="{StaticResource ErrorLabel}"
-                       IsVisible="{Binding PetVM.PetTypeError, Converter={StaticResource StringToBoolConverter}}"
-                       Margin="2,0,0,0"/>
-
-                <!-- Name + Age card -->
-                <Border Style="{StaticResource CardSurface}">
-                    <VerticalStackLayout Spacing="16">
-
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="{loc:Translate CreatePet_NameLabel}"
-                                   Style="{StaticResource FieldLabel}"/>
-                            <Border Style="{StaticResource FieldBorder}">
-                                <Entry Placeholder="{loc:Translate CreatePet_NamePlaceholder}"
-                                       Text="{Binding PetVM.EnteredPetName}"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="15"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}"
-                                       PlaceholderColor="{StaticResource InkTertiary}"
-                                       Margin="14,0"/>
-                            </Border>
-                            <Label Text="{Binding PetVM.PetNameError}"
-                                   Style="{StaticResource ErrorLabel}"
-                                   IsVisible="{Binding PetVM.PetNameError, Converter={StaticResource StringToBoolConverter}}"/>
-                        </VerticalStackLayout>
-
-                        <BoxView HeightRequest="1" BackgroundColor="{StaticResource GlassLine}"/>
-
-                        <VerticalStackLayout Spacing="6">
-                            <Label Text="{loc:Translate CreatePet_AgeLabel}"
-                                   Style="{StaticResource FieldLabel}"/>
-                            <Border Style="{StaticResource FieldBorder}">
-                                <Entry Placeholder="{loc:Translate CreatePet_AgePlaceholder}"
-                                       Text="{Binding PetVM.EnteredPetAge}"
-                                       Keyboard="Numeric"
-                                       FontFamily="{StaticResource FontSans}"
-                                       FontSize="15"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Ink}"
-                                       PlaceholderColor="{StaticResource InkTertiary}"
-                                       Margin="14,0"/>
-                            </Border>
-                            <Label Text="{Binding PetVM.PetAgeError}"
-                                   Style="{StaticResource ErrorLabel}"
-                                   IsVisible="{Binding PetVM.PetAgeError, Converter={StaticResource StringToBoolConverter}}"/>
-                        </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
 
             </VerticalStackLayout>
         </ScrollView>
@@ -240,7 +141,7 @@
                         StrokeShape="RoundRectangle 14"
                         IsVisible="{Binding PetVM.ShowBackButton}">
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnBackClicked"/>
+                        <TapGestureRecognizer Tapped="OnCancelClicked"/>
                     </Border.GestureRecognizers>
                     <Label Text="{loc:Translate Common_Cancel}"
                            FontFamily="{StaticResource FontSans}"
@@ -251,20 +152,20 @@
                            Padding="0,14"/>
                 </Border>
 
-                <!-- Create / Save -->
+                <!-- Next → details -->
                 <Border Grid.Column="1"
                         BackgroundColor="{StaticResource Teal}"
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 14"
-                        Opacity="{Binding PetVM.CanSavePet, Converter={StaticResource BoolToOpacityConverter}}"
-                        IsEnabled="{Binding PetVM.CanSavePet}">
+                        Opacity="{Binding PetVM.CanContinueIdentity, Converter={StaticResource BoolToOpacityConverter}}"
+                        IsEnabled="{Binding PetVM.CanContinueIdentity}">
                     <Border.Shadow>
                         <Shadow Brush="#149081" Offset="0,4" Radius="12" Opacity="0.3"/>
                     </Border.Shadow>
                     <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnSaveClicked"/>
+                        <TapGestureRecognizer Tapped="OnNextClicked"/>
                     </Border.GestureRecognizers>
-                    <Label Text="{Binding PetVM.SaveButtonLabel}"
+                    <Label Text="{loc:Translate CreatePet_NextButton}"
                            FontFamily="{StaticResource FontSans}"
                            FontSize="15"
                            FontAttributes="Bold"
@@ -274,6 +175,100 @@
                 </Border>
             </Grid>
         </Border>
+
+        <!-- ══════════ PHOTO SOURCE CHOOSER (FelovaBottomSheet) ══════════ -->
+        <!-- Opened from OnPhotoTapped; the buttons call code-behind handlers because
+             the media picker is a device API (pages own device interaction). -->
+        <controls:FelovaBottomSheet x:Name="PhotoChooser"
+                                    Grid.RowSpan="2"
+                                    Title="{loc:Translate CreatePet_PhotoSheetTitle}">
+            <controls:FelovaBottomSheet.SheetContent>
+                <VerticalStackLayout Spacing="12" Padding="0,2,0,0">
+
+                    <Border BackgroundColor="{StaticResource Teal}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnTakePhoto"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CreatePet_PhotoTake}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource White}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnChooseFromLibrary"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CreatePet_PhotoChoose}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <!-- Crop and rotate the photo that is already there: the door back
+                         into the editor for a photo that arrived crooked, so fixing it
+                         never means taking it again. -->
+                    <Border BackgroundColor="{StaticResource TealTint}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 13"
+                            IsVisible="{Binding PetVM.HasDraftPhoto}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnAdjustPhoto"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CreatePet_PhotoAdjust}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TealDeep}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <!-- Remove: only when a photo is set -->
+                    <Border BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 13"
+                            IsVisible="{Binding PetVM.HasDraftPhoto}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnRemovePhoto"/>
+                        </Border.GestureRecognizers>
+                        <Label Text="{loc:Translate CreatePet_PhotoRemove}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Clay}"
+                               HorizontalTextAlignment="Center"
+                               Padding="0,14"/>
+                    </Border>
+
+                    <!-- Permission-denied / picker-failed inline line (never an alert) -->
+                    <Label x:Name="PhotoErrorLabel"
+                           IsVisible="False"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12.5"
+                           TextColor="{StaticResource Clay}"
+                           HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+            </controls:FelovaBottomSheet.SheetContent>
+        </controls:FelovaBottomSheet>
+
+        <!-- ══════════ PHOTO EDITOR (crop + rotate) ══════════ -->
+        <!-- Declared AFTER the chooser so it renders on top: the chooser is what opens
+             it, and last-declared wins for both z-order and Android back (BackDismiss
+             closes the last open overlay). -->
+        <views:PhotoEditorSheetView Grid.RowSpan="2"
+                                    BindingContext="{Binding PhotoEditorVM}"/>
 
     </Grid>
 

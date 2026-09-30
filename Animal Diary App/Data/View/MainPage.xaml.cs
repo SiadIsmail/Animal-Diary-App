@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.View;
 
 using Animal_Diary_App.Data.Models;
+using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Data.ViewModels;
 using Animal_Diary_App.Helpers;
@@ -13,6 +14,21 @@ public partial class MainPage : ContentPage
 {
     private readonly MainViewModel vm;
     private int _toastSeq;
+
+    /// <summary>The overlay sheets are queued for background building once, after the
+    /// first load settles. Re-queuing on every remote-change reload would only enqueue
+    /// no-ops (Realise is idempotent), but the flag keeps the intent obvious.</summary>
+    private bool _sheetsQueued;
+
+    /// <summary>What the last completed load was a load of, and when. Together they
+    /// decide whether an appearance has to hit the database at all.</summary>
+    /// <summary>The data version is read BEFORE the load and stamped AFTER it, never
+    /// re-read at the end. A cloud pull that lands mid-load bumps the version and posts
+    /// its own reload; stamping the post-load value would make that reload look
+    /// redundant and skip it, leaving the page a caregiver's entry behind. Reading it
+    /// first can only cause one extra reload, which is the harmless direction.</summary>
+    private PageLoadKey _loaded;
+    private DateTime _loadedAtUtc = DateTime.MinValue;
 
     public MainPage(MainViewModel mainViewModel)
     {
@@ -29,6 +45,12 @@ public partial class MainPage : ContentPage
     {
         base.OnAppearing();
 
+        // Only the visible tab animates its backdrop: all three pages stay alive for
+        // the Shell's lifetime, so a self-starting background ran three copies forever.
+        Backdrop.Start();
+
+        vm.DevVM.ImportRequested += OnImportRequested;
+
         vm.SettingsVM.ConfirmDeleteAllData = () =>
             DisplayAlert(
                 LocalizationManager.Instance.GetString("Settings_DeleteConfirmTitle"),
@@ -36,38 +58,220 @@ public partial class MainPage : ContentPage
                 LocalizationManager.Instance.GetString("Settings_DeleteConfirmAccept"),
                 LocalizationManager.Instance.GetString("Common_Cancel"));
 
-        vm.SettingsVM.ResetCompleted += OnResetCompleted;
+        // Signed-in reset is a choice: keep the backup or destroy it too. Three outcomes,
+        // so it uses the confirm sheet rather than the native action sheet.
+        vm.SettingsVM.ConfirmDeleteAllDataCloud = () => ResetScopePrompt.AskAsync(vm.ConfirmVM);
 
+        vm.CloudVM.ConfirmDeleteAccount = () =>
+            DisplayAlert(
+                LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmTitle"),
+                LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmMessage"),
+                LocalizationManager.Instance.GetString("Cloud_DeleteAccountConfirmAccept"),
+                LocalizationManager.Instance.GetString("Common_Cancel"));
+
+        // No export sheet on this page, so no "save a copy" option here.
+        vm.CloudVM.ConfirmSignOut = impact => SignOutPrompt.AskAsync(this, impact, null, null);
+        // The backup card's "see the options" line, when backup is part of the paid tier.
+        // Set per host: this page carries the subscribe sheet, so it has somewhere to go.
+        // Onboarding's hosts leave it null, which is what keeps a payment ask out of
+        // onboarding by construction rather than by remembering to.
+        vm.CloudVM.RequestSubscribe = () =>
+        {
+            vm.CloudVM.DismissCommand.Execute(null);
+            vm.SubscribeVM.Open(Animal_Diary_App.Data.Services.Analytics.AnalyticsEvents.SubscribeSourceBackup);
+        };
+
+        vm.CloudVM.SignedOut += OnSignedOut;
+
+        vm.SettingsVM.ResetCompleted += OnResetCompleted;
+        // Another caregiver's changes landing while this page is visible reload
+        // it in place, no tab-switching needed to see them.
+        vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
+        // The owner changed what a stat card shows: re-read both (a pick can swap
+        // the pair, so neither card can be refreshed on its own).
+        vm.TodayCardSheetVM.Changed += OnStatCardsChanged;
+        vm.MainPageVM.AppointmentRequested += OnAppointmentRequested;
+        vm.MainPageVM.VisitNoteRequested += OnVisitNoteRequested;
+        vm.VetVisitSheetVM.Saved += OnVisitSaved;
+
+        await ReloadDataAsync();
+    }
+
+    /// <summary>The page's full data load: runs on every appearance AND when a
+    /// cloud sync applies remote changes while the page is visible.</summary>
+    private async Task ReloadDataAsync()
+    {
         try
         {
+            // Always, however fresh the page is: the reminder health probe is a LIVE
+            // read of an OS permission that can be revoked while the app isn't running,
+            // and a cached answer there is the one failure this product least wants
+            // (see MainPageViewModel). The greeting comes from the clock, not the
+            // database, so it follows the hour rolling past noon or 6pm.
+            vm.MainPageVM.RefreshClockDerived();
+            await vm.MainPageVM.RefreshReminderHealthAsync();
+
+            // Always, for the same reason: "within seven days" moves by itself at
+            // midnight, so a cached answer would leave the band up a day too long or
+            // miss the day it should appear.
+            await vm.MainPageVM.RefreshNearVisitAsync();
+
+            // Nothing has changed since this page last loaded, and that was moments
+            // ago: the queries below would repaint identical pixels. Keyed on the
+            // active pet and the day as well as the data version, because switching
+            // pets writes no row and neither does midnight passing. See DataVersion
+            // for why the freshness window is part of the guard, not a nicety.
+            var version = DataVersion.Current;
+            var key = new PageLoadKey(
+                version, vm.MainPageVM.ActivePet?.Id ?? 0, DateTime.Now.Date);
+            if (key == _loaded && DateTime.UtcNow - _loadedAtUtc < PageLoadKey.Freshness)
+            {
+                // Still re-derive the next-up card: whether its action button is
+                // showing depends on the time of day, not on anything stored.
+                RefreshNextUp();
+                return;
+            }
+
             await vm.LoadAsync();
-            // The charts and the today-care snapshot are independent of each
-            // other; overlap their queries instead of running them back-to-back.
-            // LoadTodayCareAsync drives the care ring (bound) + next-up card and
-            // re-runs on every appearance, so logs made on other tabs are
-            // reflected the moment this page returns.
-            await Task.WhenAll(
-                vm.MainPageVM.LoadWeightChartAsync(),
-                vm.MainPageVM.LoadMoodTimelineAsync(),
-                vm.MainPageVM.LoadLatestMoodAsync(),
-                vm.MainPageVM.LoadTodayCareAsync());
+
+            // One at a time, not Task.WhenAll. These all end in sqlite-net, whose async
+            // API queues each query to the thread pool and then serializes them on the
+            // one shared connection, so fanning out occupied four pooled threads to run
+            // one query and gained nothing. Same wall time, one thread.
+            // One section now, reading the pet's care plan, where two hardcoded
+            // surfaces (a mood ribbon and a weight chart) used to be.
+            await vm.LookBackVM.LoadAsync();
+            // Both customizable stat cards: which records they hold and the
+            // pet's latest value for each.
+            await vm.MainPageVM.LoadStatCardsAsync();
+            // Drives the care ring (bound) + next-up card, so logs made on other tabs
+            // are reflected the moment this page returns.
+            await vm.MainPageVM.LoadTodayCareAsync();
 
             SetAside();
             RefreshNextUp();
+
+            // The pet and the day are re-read (the load can switch the active pet); the
+            // version is the one captured before it started: see the field's note.
+            _loaded = new PageLoadKey(
+                version, vm.MainPageVM.ActivePet?.Id ?? 0, DateTime.Now.Date);
+            _loadedAtUtc = DateTime.UtcNow;
+
+            // The sheets can be built now that the page has its data: deferred to here
+            // deliberately, so their inflation never competes with the load the person
+            // is actually waiting for. See Controls/SheetHost.cs.
+            if (!_sheetsQueued)
+            {
+                _sheetsQueued = true;
+                Controls.SheetHost.PreloadAll(this);
+            }
         }
         catch (Exception ex)
         {
             // A failed load must degrade to an empty page, never crash the app
-            // (async void — an escaping exception here kills the process).
-            System.Diagnostics.Debug.WriteLine($"[MainPage] OnAppearing failed: {ex}");
+            // (async void callers: an escaping exception here kills the process).
+            System.Diagnostics.Debug.WriteLine($"[MainPage] reload failed: {ex}");
+        }
+    }
+
+    // Signing out removed this account's pets from the device. If nothing is left, the app
+    // has nothing to show: route to onboarding exactly as deleting the last pet does.
+    // Otherwise reload in place; local-only pets can still be here.
+    private async void OnSignedOut(bool anyPetsRemain)
+    {
+        try
+        {
+            if (!anyPetsRemain)
+            {
+                (Application.Current as App)?.SwitchToOnboarding();
+                return;
+            }
+            await vm.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Cloud] after-sign-out refresh failed: {ex.Message}");
+        }
+    }
+
+    private void OnRemoteChangesApplied() =>
+        MainThread.BeginInvokeOnMainThread(async () => await ReloadDataAsync());
+
+    private async void OnStatCardsChanged()
+    {
+        try
+        {
+            await vm.MainPageVM.LoadStatCardsAsync();
+        }
+        catch (Exception ex)
+        {
+            // async void: an escaping exception here kills the process.
+            System.Diagnostics.Debug.WriteLine($"[MainPage] stat card reload failed: {ex}");
         }
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        Backdrop.Stop();
         vm.SettingsVM.ConfirmDeleteAllData = null;
+        vm.SettingsVM.ConfirmDeleteAllDataCloud = null;
+        vm.CloudVM.ConfirmDeleteAccount = null;
+        vm.CloudVM.ConfirmSignOut = null;
+        vm.CloudVM.RequestSubscribe = null;
+        vm.CloudVM.SignedOut -= OnSignedOut;
         vm.SettingsVM.ResetCompleted -= OnResetCompleted;
+        vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
+        vm.TodayCardSheetVM.Changed -= OnStatCardsChanged;
+        vm.MainPageVM.AppointmentRequested -= OnAppointmentRequested;
+        vm.MainPageVM.VisitNoteRequested -= OnVisitNoteRequested;
+        vm.VetVisitSheetVM.Saved -= OnVisitSaved;
+        vm.DevVM.ImportRequested -= OnImportRequested;
+    }
+
+    // The band on Today is a door to the appointment page. The VM raises; the page
+    // pushes: the same split every other pushed page here uses.
+    private async void OnAppointmentRequested()
+    {
+        try
+        {
+            await Navigation.PushAsync(new AppointmentPage(vm));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainPage] appointment push failed: {ex}");
+        }
+    }
+
+    // The band is asking for the note. Straight into the sheet, on "what the vet said"
+    // no page transition in front of the one capture that decays by the hour.
+    private void OnVisitNoteRequested(Data.Models.VetVisit visit)
+    {
+        try
+        {
+            var pet = vm.MainPageVM.ActivePet;
+            vm.VetVisitSheetVM
+                .OpenForNoteAsync(pet?.Id ?? 0, pet?.Name ?? string.Empty, visit)
+                .Forget();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainPage] note sheet open failed: {ex}");
+        }
+    }
+
+    // The note was written → the band has nothing left to ask for, so re-read it.
+    private async void OnVisitSaved(string message)
+    {
+        try
+        {
+            await vm.MainPageVM.RefreshNearVisitAsync();
+            ShowToast(message);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainPage] visit save refresh failed: {ex}");
+        }
     }
 
     private void OnResetCompleted(object? sender, EventArgs e)
@@ -75,7 +279,9 @@ public partial class MainPage : ContentPage
         // Clear in-memory form drafts so stale inputs don't survive the wipe
         // (the ViewModels are singletons).
         vm.ResetDrafts();
-        Application.Current!.Windows[0].Page = new NavigationPage(new WelcomePage(vm));
+        // Through App: it records the "no pets" state so an Activity recreation later
+        // rebuilds onboarding rather than the Shell, and it targets the live window.
+        (Application.Current as App)?.SwitchToOnboarding();
     }
 
     // ── Handwritten aside under the greeting (Caveat, rotated per load) ──
@@ -88,7 +294,7 @@ public partial class MainPage : ContentPage
     }
 
     // ── Next-up card: the first thing still to do today ──
-    // Med doses first (soonest due), then care-plan trackers — the same
+    // Med doses first (soonest due), then care-plan trackers: the same
     // PendingEngine order the Journal's chips use (MainPageViewModel supplies it).
     private void RefreshNextUp()
     {
@@ -103,7 +309,7 @@ public partial class MainPage : ContentPage
             NextMedTime.Text = item.DoseTime?.ToString(@"hh\:mm") ?? string.Empty;
             NextMedTime.IsVisible = item.DoseTime.HasValue;
             NextMedAction.Text = loc.GetString("Journal_MarkGiven");
-            // You can't take a dose early — the action appears once it's due.
+            // You can't take a dose early: the action appears once it's due.
             NextMedAction.IsVisible = (item.DoseTime ?? TimeSpan.Zero) <= DateTime.Now.TimeOfDay;
         }
         else if (item is { Kind: PendingKind.Tracker })
@@ -129,17 +335,25 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Same icons + labels as the Journal's chips, so the card reads as the
-    // first chip of the day. (Water never reaches here — filtered with the
-    // same "no sheet yet" rule the Journal applies.)
-    private static (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc) => item.TrackerId switch
+    // Same icons + labels as the Journal's chips (literally the same table) so the
+    // card reads as the first chip of the day. Tapping a tracker card routes to the
+    // Journal, where every tracker (water included) now has its logging sheet.
+    private (string Icon, string Label) TrackerDisplay(PendingItem item, LocalizationManager loc)
     {
-        TrackerId.Glucose => ("🩸", loc.GetString("Journal_GlucoseCheck")),
-        TrackerId.Appetite => ("🍽️", loc.GetString("Journal_Appetite")),
-        TrackerId.Weight => ("⚖️", loc.GetString("Journal_WeighIn")),
-        TrackerId.Seizure => ("⚡", loc.GetString("Journal_Seizure")),
-        _ => ("🙂", loc.GetString("Journal_MoodTitle")),
-    };
+        // An owner-defined tracker's name and emoji are its own row's, resolved by the VM
+        // (this page reads no store). The whole branch is handled here, including the
+        // unresolved case: falling THROUGH to TrackerVisuals would show a walk as "Mood",
+        // because the shared fallback's label key is the mood one.
+        if (item.Tracker is { IsCustom: true })
+        {
+            return vm.MainPageVM.NextUpCustom is { } own
+                ? (CustomTrackerVisuals.For(own).Icon, own.Name)
+                : (CustomTrackerVisuals.DefaultIcon, loc.GetString("Today_CardCustom"));
+        }
+
+        var v = TrackerVisuals.For(item.Tracker);
+        return (v.Icon, loc.GetString(v.LabelKey));
+    }
 
     private async void OnNextUpAction(object? sender, EventArgs e)
     {
@@ -158,13 +372,13 @@ public partial class MainPage : ContentPage
             }
             else if (vm.MainPageVM.NextUpItem is { Kind: PendingKind.Tracker })
             {
-                // Logging sheets live on the Journal — take the person there.
+                // Logging sheets live on the Journal: take the person there.
                 await Shell.Current.GoToAsync("//JournalTab");
             }
         }
         catch (Exception ex)
         {
-            // async void — an escaping exception here kills the process.
+            // async void: an escaping exception here kills the process.
             System.Diagnostics.Debug.WriteLine($"[MainPage] Next-up action failed: {ex}");
         }
     }
@@ -281,4 +495,19 @@ public partial class MainPage : ContentPage
         }
         return new Point(x, y);
     }
+
+    // The dev sheet is a ContentView and cannot navigate, so the hosting page pushes the
+    // importer on its behalf (same shape as the export sheet's ViewRequested below).
+    private async void OnImportRequested()
+    {
+        try
+        {
+            await Navigation.PushAsync(new ImportPage(vm));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Import] push failed: {ex}");
+        }
+    }
+
 }

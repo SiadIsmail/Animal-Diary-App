@@ -17,7 +17,7 @@ public class ConditionOption : BaseViewModel
     public string Name => Condition.Name;
     public string Icon => Condition.Icon;
 
-    /// <summary>The gentle "None / Not sure" sentinel (empty id) — mutually exclusive
+    /// <summary>The gentle "None / Not sure" sentinel (empty id): mutually exclusive
     /// with the real conditions and never removable.</summary>
     public bool IsNone => string.IsNullOrEmpty(Condition.Id);
 
@@ -41,7 +41,7 @@ public class ConditionOption : BaseViewModel
 
 /// <summary>
 /// Backs the condition picker shown right after a pet is created (onboarding, or
-/// "add pet"). Interactive multi-select — NOT a wizard: picking a configurable
+/// "add pet"). Interactive multi-select, NOT a wizard: picking a configurable
 /// condition opens the SAME reusable setup sheet the Manage page uses (the second
 /// "door"), and the row shows a check once it's set up; a condition with no options
 /// just checks immediately. Everything persists to the active pet as you go (via the
@@ -146,12 +146,16 @@ public class ConditionPickerViewModel : BaseViewModel
         await _conditions.AddAsync(petId, conditionId);
         await _trackers.EnsureSeededAsync(petId, System.Array.Empty<string>());
         foreach (var seed in CarePlanCatalog.ForCondition(conditionId))
-            await _trackers.UpsertAsync(petId, seed.TrackerId, t =>
+            // isNew: only a tracker this condition actually created carries its
+            // breadcrumb. One the owner added themselves stays theirs, so removing the
+            // condition later can't take it (and its history) with it.
+            await _trackers.UpsertAsync(petId, seed.TrackerId, (t, isNew) =>
             {
                 t.Kind = seed.Kind;
                 t.PerDayCount = seed.PerDayCount;
                 t.Unit = seed.Unit;
-                t.FromCondition ??= conditionId;
+                if (isNew)
+                    t.FromCondition = conditionId;
             });
     }
 

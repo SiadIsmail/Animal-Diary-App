@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<!-- AppetiteSheetView — five word-tiles with a progressively-filled bowl (no numbers
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- AppetiteSheetView: five word-tiles with a progressively-filled bowl (no numbers
      shown), in the shared FelovaBottomSheet. BindingContext is an AppetiteSheetViewModel. -->
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -18,7 +18,25 @@
         <controls:FelovaBottomSheet.SheetContent>
             <VerticalStackLayout Spacing="16" Padding="0,2,0,0">
 
-                <FlexLayout BindableLayout.ItemsSource="{Binding Options}"
+                <!-- Exact-measurement toggle. Off by default (word-tiles); on swaps in
+                     the grams entry field. -->
+                <Grid ColumnDefinitions="*,Auto" Padding="4,0" VerticalOptions="Center">
+                    <Label Grid.Column="0"
+                           Text="{loc:Translate Journal_AppetiteExactToggle}"
+                           FontFamily="{StaticResource FontSans}"
+                           FontSize="12.5"
+                           TextColor="{StaticResource InkSecondary}"
+                           VerticalOptions="Center"/>
+                    <Switch Grid.Column="1"
+                            IsToggled="{Binding ExactMode}"
+                            OnColor="{StaticResource HoneyWarm}"
+                            Scale="0.8"
+                            HorizontalOptions="End"
+                            VerticalOptions="Center"/>
+                </Grid>
+
+                <FlexLayout IsVisible="{Binding ShowLevels}"
+                            BindableLayout.ItemsSource="{Binding Options}"
                             Wrap="NoWrap"
                             JustifyContent="SpaceBetween">
                     <BindableLayout.ItemTemplate>
@@ -64,12 +82,79 @@
                     </BindableLayout.ItemTemplate>
                 </FlexLayout>
 
+                <!-- Exact mode: an amount, in grams or ounces. NO CUPS: a cup is a volume and
+                     this is a mass, so the factor depends on the food's density (see
+                     AppetiteSheetViewModel). -->
+                <VerticalStackLayout IsVisible="{Binding ShowExact}" Spacing="8">
+                    <Label Text="{Binding AmountLabel}"
+                           FontFamily="{StaticResource FontSans}" FontSize="11" FontAttributes="Bold"
+                           CharacterSpacing="1" TextColor="{StaticResource InkSecondary}"/>
+                    <Border BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                            StrokeShape="RoundRectangle 14" Padding="12,2">
+                        <Grid>
+                            <Entry Text="{Binding GramsText}"
+                                   Keyboard="Numeric"
+                                   Placeholder="{loc:Translate Journal_AppetiteGramsPlaceholder}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="16"
+                                   TextColor="{StaticResource Ink}"
+                                   PlaceholderColor="{StaticResource InkTertiary}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Tapping one re-expresses what is already typed rather than
+                         relabelling it. -->
+                    <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Units}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vms:UnitOption">
+                                <Border BackgroundColor="{StaticResource GlassSoft}"
+                                        Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 12" Padding="0,9" WidthRequest="86">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource TealTint}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource Teal}"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.SelectUnitCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding Label}"
+                                           FontFamily="{StaticResource FontSans}" FontSize="13" FontAttributes="Bold"
+                                           TextColor="{StaticResource TealDeep}"
+                                           HorizontalTextAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Food context (optional, both modes; pre-filled with the last food). -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Translate Journal_FoodLabel}"
+                           FontFamily="{StaticResource FontSans}" FontSize="11" FontAttributes="Bold"
+                           CharacterSpacing="1" TextColor="{StaticResource InkSecondary}"/>
+                    <Border BackgroundColor="{StaticResource Glass}"
+                            Stroke="{StaticResource GlassLine}" StrokeThickness="1"
+                            StrokeShape="RoundRectangle 14" Padding="12,2">
+                        <Entry Text="{Binding Food}"
+                               Placeholder="{loc:Translate Journal_FoodPlaceholder}"
+                               FontFamily="{StaticResource FontSans}"
+                               FontSize="16"
+                               TextColor="{StaticResource Ink}"
+                               PlaceholderColor="{StaticResource InkTertiary}"/>
+                    </Border>
+                </VerticalStackLayout>
+
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,4,0,0">
                     <Border BackgroundColor="{StaticResource TealTint}" StrokeThickness="0" StrokeShape="RoundRectangle 15,13,13,16">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding DismissCommand}"/>
                         </Border.GestureRecognizers>
-                        <Label Text="{loc:Translate Common_NotNow}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
+                        <Label Text="{loc:Translate Common_Cancel}" FontFamily="{StaticResource FontSans}" FontSize="14" FontAttributes="Bold"
                                TextColor="{StaticResource TealDeep}" HorizontalTextAlignment="Center" Padding="0,14"/>
                     </Border>
                     <Border Grid.Column="1" BackgroundColor="{StaticResource Teal}" StrokeThickness="0" StrokeShape="RoundRectangle 13,16,15,14">

@@ -4,7 +4,7 @@ using Animal_Diary_App.Data.Models;
 using SQLite;
 
 /// <summary>Reads and writes <see cref="SeizureEntry"/> rows. Seizures are an Event
-/// tracker — never pending — logged from the "+" sheet. Mirrors the other Journal
+/// tracker (never pending) logged from the "+" sheet. Mirrors the other Journal
 /// entry services.</summary>
 public class SeizureEntryService
 {
@@ -18,19 +18,46 @@ public class SeizureEntryService
     public async Task<int> InsertAsync(SeizureEntry entry)
     {
         entry.Date = entry.Date.Date;
-        await _db.InsertAsync(entry);
+        await _db.InsertAsync(SyncStamp.Touch(entry));
         return entry.Id;
     }
 
-    public Task DeleteAsync(int id) => _db.DeleteAsync<SeizureEntry>(id);
+    /// <summary>Soft delete (the undo path): the row becomes a tombstone so the
+    /// deletion can sync (see <see cref="ISyncable"/>).</summary>
+    public async Task DeleteAsync(int id)
+    {
+        var row = await _db.Table<SeizureEntry>()
+            .Where(s => s.Id == id && s.IsDeleted == false)
+            .FirstOrDefaultAsync();
+        if (row != null)
+            await _db.UpdateAsync(SyncStamp.MarkDeleted(row));
+    }
 
     public async Task<List<SeizureEntry>> GetForDateAsync(int petId, DateTime date)
     {
         var day = date.Date;
         var rows = await _db.Table<SeizureEntry>()
-            .Where(s => s.PetId == petId && s.Date == day)
+            .Where(s => s.PetId == petId && s.Date == day && s.IsDeleted == false)
             .ToListAsync();
         return rows.OrderBy(s => s.Time).ToList();
+    }
+
+    /// <summary>The most recent seizure for a pet (any day), or null if none has ever
+    /// been written down. Feeds the Today card, which states when the last one happened
+    /// a history entry, never a count of days since (see AI/domain.md → Today cards).
+    /// Same shape as <see cref="GlucoseEntryService.GetMostRecentAsync"/>: the ordering
+    /// runs in SQL and only the newest day's few rows are tie-broken in memory.</summary>
+    public async Task<SeizureEntry?> GetMostRecentAsync(int petId)
+    {
+        var rows = await _db.Table<SeizureEntry>()
+            .Where(s => s.PetId == petId && s.IsDeleted == false)
+            .OrderByDescending(s => s.Date)
+            .Take(12)
+            .ToListAsync();
+        return rows
+            .OrderByDescending(s => s.Date)
+            .ThenByDescending(s => s.Time)
+            .FirstOrDefault();
     }
 
     /// <summary>All seizures for a pet within an inclusive date range (for the vet
@@ -40,7 +67,7 @@ public class SeizureEntryService
         var start = startDate.Date;
         var end = endDate.Date;
         return await _db.Table<SeizureEntry>()
-            .Where(s => s.PetId == petId && s.Date >= start && s.Date <= end)
+            .Where(s => s.PetId == petId && s.Date >= start && s.Date <= end && s.IsDeleted == false)
             .ToListAsync();
     }
 }

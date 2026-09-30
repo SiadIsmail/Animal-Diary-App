@@ -5,7 +5,7 @@ using Animal_Diary_App.Data.Services;
 using SQLite;
 
 /// <summary>
-/// Repository for materialized <see cref="ReminderInstance"/> rows — the concrete
+/// Repository for materialized <see cref="ReminderInstance"/> rows: the concrete
 /// reminder occurrences expanded from recurring medication rules.
 /// Filtering by status is done in memory by callers; the table is kept small by
 /// pruning resolved (fired/missed) rows during catch-up.
@@ -40,6 +40,23 @@ public class ReminderInstanceService
                 conn.Update(instance);
             }
         });
+
+    /// <summary>
+    /// Update a batch of instances in ONE transaction. The catch-up resolves every
+    /// past-due occurrence in a single pass and runs inside the boot receiver's very
+    /// limited time budget, so this must not be a round trip per row.
+    /// </summary>
+    public Task UpdateAllAsync(IReadOnlyList<ReminderInstance> instances)
+    {
+        if (instances.Count == 0)
+            return Task.CompletedTask;
+
+        return _db.RunInTransactionAsync(conn =>
+        {
+            foreach (var instance in instances)
+                conn.Update(instance);
+        });
+    }
 
     /// <summary>Delete a batch of instances in one transaction.</summary>
     public Task DeleteAllAsync(IReadOnlyList<ReminderInstance> instances)
