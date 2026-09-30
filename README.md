@@ -1,118 +1,152 @@
-# Felova: Chronic Pet Care Tracker
+# Felova
 
-A .NET MAUI app for owners of pets with chronic conditions (diabetes, kidney
-disease, epilepsy). Log weight, mood, blood glucose, appetite, and seizures;
-manage medications with reliable reminders; review everything on a calendar
-journal; and export a vet-ready PDF for appointments.
+**Android-App für Menschen mit chronisch kranken Haustieren.** Medikation,
+Symptome und Krankheitsverlauf an einem Ort, mit zuverlässigen Erinnerungen und
+einem PDF-Bericht für den Tierarztbesuch.
 
-**Private by default.** The app works fully offline with no account: all data
-stays in a local SQLite database. Cloud backup and multi-caregiver sharing are
-strictly opt-in: nothing leaves the device until the owner creates an account
-*and* explicitly turns backup on.
+[![build](https://github.com/SiadIsmail/Animal-Diary-App/actions/workflows/build.yml/badge.svg)](https://github.com/SiadIsmail/Animal-Diary-App/actions/workflows/build.yml)
 
-## Features
+**[Im Google Play Store](https://play.google.com/store/apps/details?id=com.felova.app)** · **[felova.app](https://felova.app)**
 
-- Pet profiles with multi-condition care plans (persisted, owner-tunable trackers)
-- Medication schedules with exact, reboot-surviving local reminders and durable
-  dose-adherence records
-- Daily journal: one-tap dose logging, per-type input sheets, a single
-  chronological timeline, and a "still to do" chip row
-- Vet PDF export: strictly owner-logged facts, never interpretation
-- Optional cloud: account + backup, multi-device sync, and caregiver sharing
-  via single-use invite codes (Supabase / PostgreSQL, offline-first
-  last-write-wins sync)
-- English + German, switchable live at runtime
+<!-- Screenshots: drei Bilder nach docs/screenshots/ legen und hier einbinden, z. B.
+<img src="docs/screenshots/journal.png" width="240"> -->
 
-## Tech stack
+Entwickelt von **Siad Ismail**, allein, von der ersten Idee bis zur
+Veröffentlichung. Angefangen hat Felova als kleines Werkzeug für den chronisch
+kranken Hund meiner Freundin.
 
-| Layer | Choice |
+## Auf einen Blick
+
+| | |
 |---|---|
-| UI | .NET MAUI 10 (XAML), MVVM, Microsoft DI |
-| Local data | SQLite (`sqlite-net-pcl`): the on-device source of truth |
-| Reminders | `Plugin.LocalNotification`, bounded materialized occurrences |
-| PDF | PDFsharp/MigraDoc (pure managed) + SkiaSharp for chart rasters, **no native libraries** |
-| Cloud (optional) | Supabase (PostgreSQL, GoTrue auth, RLS) over hand-built HTTP, no SDK |
-| Analytics | Privacy-first, anonymous PostHog capture built by hand, no SDK |
+| Plattform | Android (Google Play), gebaut mit .NET MAUI |
+| Sprache | C# (.NET 10) und XAML |
+| Daten | SQLite auf dem Gerät, optional PostgreSQL über Supabase |
+| Tests | 370 Unit-Tests mit xUnit, automatisch bei jedem Push per GitHub Actions |
+| Sprachen der App | Deutsch und Englisch, zur Laufzeit umschaltbar |
+| Zeitraum | seit Februar 2026, über 250 Commits |
 
-## Architecture in one paragraph
+## Was die App kann
 
-UI binds to ViewModels, ViewModels call services, services own SQLite and the
-device APIs: nothing above a service touches the database. Services are grouped
-into subsystems, each behind its own folder and: where it talks to the outside
-world: its own interface: **Data** (repositories), **Notifications** (schedules
-expanded into bounded concrete reminder instances), **Journal** (care plan + pure
-pending engine + typed entry stores), **Reports** (three-layer vet PDF with no MAUI
-dependency in the document layer), **Billing** (the trial + entitlement gate),
-**Analytics** (anonymous product telemetry), and **Cloud** (an optional sync layer behind
-`ICloudSyncService`; when disabled, a null implementation is registered and the
-app carries zero cloud behaviour). Sync is pull→apply→push against Postgres
-with client-generated GUID identities, soft-delete tombstones, and
-last-write-wins conflict resolution; the cloud design is documented in
-[docs/history/CLOUD_SYNC_PLAN.md](docs/history/CLOUD_SYNC_PLAN.md).
+- Tierprofile mit Pflegeplänen für eine oder mehrere Erkrankungen, zum Beispiel
+  Diabetes, Niereninsuffizienz oder Epilepsie
+- Medikamentenpläne mit Erinnerungen, die auch einen Neustart des Handys
+  überstehen, und ein Protokoll jeder Gabe
+- Tagebuch für Gewicht, Stimmung, Blutzucker, Appetit, Wasser, Anfälle und
+  eigene Messwerte, alles auf einer gemeinsamen Zeitachse
+- PDF-Bericht für den Tierarzt: nur das, was der Halter eingetragen hat, ohne
+  Bewertung
+- Optional: Konto, Backup, Synchronisation zwischen Geräten und das Teilen
+  eines Tiers mit weiteren Betreuern per Einladungscode
 
-## Getting started
+## Technische Schwerpunkte
 
-Prerequisites: .NET 10 SDK with the MAUI workload (`dotnet workload install maui`).
+**Local-First und Datenschutz.** Die App funktioniert komplett offline und ohne
+Konto. SQLite auf dem Gerät ist die einzige Quelle der Wahrheit. Die Cloud ist
+ausdrücklich optional: Solange niemand ein Konto anlegt und das Backup
+einschaltet, verlässt kein Datensatz das Gerät.
+
+**Synchronisation.** Im Hintergrund gleicht die App SQLite mit PostgreSQL ab:
+erst holen, dann anwenden, dann hochladen. Datensätze bekommen ihre ID (GUID)
+schon auf dem Gerät, gelöschte Einträge werden als Tombstones markiert statt
+entfernt, und bei Konflikten gewinnt der letzte Schreibzugriff. Wer welche Daten
+sehen darf, erzwingt die Datenbank selbst über Row Level Security.
+
+**Zuverlässige Erinnerungen.** Wiederholungsregeln werden nie an das
+Betriebssystem übergeben. Die App rechnet Medikamentenpläne in eine begrenzte
+Zahl konkreter Termine um und plant sie nach jedem App-Start und jedem Neustart
+des Geräts neu.
+
+**PDF-Bericht ohne native Bibliotheken.** PDFsharp/MigraDoc erzeugt das
+Dokument, SkiaSharp die Diagramme. Die Dokumentschicht hängt nicht von MAUI ab.
+
+**Abo-Modell.** Google Play Billing über RevenueCat. Aufschreiben ist dauerhaft
+kostenlos; bezahlt werden die Funktionen, für die sich die gesammelten Daten
+lohnen: der gestaltete Tierarztbericht, das Backup und weitere Tiere. Ein
+Webhook (Supabase Edge Function in TypeScript) hält den Abo-Status auf dem
+Server aktuell, damit ein Betreuer weiß, ob der Besitzer des Tiers abonniert
+hat.
+
+**Qualität.** 370 Unit-Tests (xUnit) für die Kernlogik, etwa Medikationspläne,
+Abo-Zugang, Datenimport und Tierarztbesuche. Die CI prüft bei jedem Push die
+Tests, den Android-Build (Warnungen gelten als Fehler) und zwei Regeln, die der
+Compiler nicht erzwingt: Jeder Text existiert auf Deutsch und Englisch, und
+keine asynchrone Aufgabe wird unbeobachtet verworfen.
+
+## Ein echter Fehler: verschwundene Tiere nach dem Kontowechsel
+
+Beim Testen mit mehreren Betreuern ist auf einem Gerät Folgendes passiert:
+angemeldet mit Konto X, abgemeldet, mit Konto Y angemeldet, zurück zu X. Die
+Tiere von X waren danach auf dem Gerät verschwunden und kamen nicht wieder.
+
+Die Daten auf dem Server waren nie in Gefahr. Die Ursache waren drei Fehler, die
+nur zusammen auftraten. Die Abmeldung löschte nur die Sitzung, deshalb lief beim
+Anmelden mit Y eine normale Synchronisation statt der Einrichtung. Die
+Synchronisation holt nur Datensätze, die neuer sind als der zuletzt gesehene
+Zeitstempel. Nach dem Abgleich mit Y war dieser Zeitstempel neuer als alle
+Datensätze von X, also fragte das Gerät sie nie wieder ab.
+
+Bei der Analyse kam ein vierter, schlimmerer Fall heraus: Unter bestimmten
+Umständen hätten die Gesundheitsdaten von X still in das Konto von Y kopiert
+werden können. Verhindert hatte das nur die zufällige Reihenfolge zweier
+Abläufe.
+
+Die Lösung war eine klare Regel statt eines Pflasters: Abmelden entfernt die
+Daten des Kontos sofort vom Gerät, das Abschalten des Backups nicht. Beim
+erneuten Anmelden kommt alles zurück. Die vollständige Analyse steht in
+[docs/history/ACCOUNT_LIFECYCLE_PLAN.md](docs/history/ACCOUNT_LIFECYCLE_PLAN.md).
+
+
+## Architektur
+
+Views binden an ViewModels, ViewModels rufen Services auf, und nur Services
+greifen auf SQLite und die Geräte-APIs zu. Die Services sind in Subsysteme mit
+eigenen Schnittstellen aufgeteilt: **Data**, **Notifications**, **Journal**,
+**Reports**, **Billing**, **Analytics** und **Cloud**. Ist die Cloud
+abgeschaltet, wird eine Null-Implementierung registriert, und die App läuft
+vollständig ohne Netzwerk.
+
+| Bereich | Technik |
+|---|---|
+| Oberfläche | .NET MAUI 10 (XAML), MVVM, Microsoft Dependency Injection |
+| Lokale Daten | SQLite (`sqlite-net-pcl`) |
+| Erinnerungen | `Plugin.LocalNotification` |
+| PDF | PDFsharp/MigraDoc, SkiaSharp |
+| Cloud (optional) | Supabase: PostgreSQL, Auth, Row Level Security, Edge Function; eigener HTTP-Client ohne SDK |
+| Abo | RevenueCat, Google Play Billing |
+| Nutzungsanalyse | PostHog, anonym, eigener Client ohne SDK |
+| Tests und CI | xUnit, GitHub Actions |
+
+## Selbst bauen
+
+Voraussetzung: .NET 10 SDK mit dem MAUI-Workload (`dotnet workload install maui`).
 
 ```bash
-git clone <this repo>
+git clone https://github.com/SiadIsmail/Animal-Diary-App.git
 cd Animal-Diary-App
 
-# Fastest compile check (Windows)
+# Unit-Tests (kein MAUI-Workload nötig)
+dotnet test "Animal Diary App.Tests/Animal Diary App.Tests.csproj"
+
+# Schnellster Kompiliertest (Windows)
 dotnet build "Animal Diary App/Animal Diary App.csproj" -f net10.0-windows10.0.19041.0 -c Debug
 
 # Android
 dotnet build "Animal Diary App/Animal Diary App.csproj" -f net10.0-android -c Debug
 ```
 
-The app runs fully without any backend. To develop the optional cloud
-features, create a Supabase project and follow
-[supabase/README.md](supabase/README.md) (run the SQL migrations in order,
-switch the auth email templates to code-based confirmation), then point
-`Data/Services/Cloud/CloudConfig.cs` at your project URL and publishable key.
+Die App läuft vollständig ohne Backend. Für die Cloud-Funktionen braucht es ein
+eigenes Supabase-Projekt, eingerichtet nach [supabase/README.md](supabase/README.md);
+danach `Data/Services/Cloud/CloudConfig.cs` auf die Projekt-URL und den
+Publishable Key setzen.
 
-Release Android builds are signed via an untracked `keystore.props`
-(`Animal Diary App/keystore.props`) providing the keystore passwords; the
-build works without it for debug.
+## Weitere Dokumente
 
-## Rules that keep the app correct
+- [docs/CONVENTIONS.md](docs/CONVENTIONS.md): Regeln, die die App korrekt halten (Englisch)
+- [docs/history/](docs/history/): Designpläne und Audits (Englisch)
+- [supabase/README.md](supabase/README.md): Datenbank, Migrationen und Server
 
-These conventions are load-bearing: breaking one produces a subtly wrong app
-even if it compiles:
+## Kontakt
 
-- **A clean build has 0 errors and ~40 known warnings** (XamlC `XC0025` notes
-  plus two intentional `CS0162` from `const` feature switches). A warning you
-  didn't expect is a signal.
-- **Every in-app input uses the shared `FelovaBottomSheet`**, no dialogs,
-  modals, or hand-rolled popups. Destructive actions use the undo-toast
-  pattern, not confirmation prompts.
-- **Every user-facing string is localized in both** `AppStrings.resx` (EN) and
-  `AppStrings.de.resx` (DE). Stored data is never translated.
-- **Synced entities carry sync columns**: every repository write goes through
-  `SyncStamp.Touch`/`MarkDeleted`, deletes are soft (tombstones), and every
-  read filters `IsDeleted == false`. A new table must be added to
-  `AppDatabase.InitAsync` *and* `AppResetService.ResetDataAsync` in the same
-  change: a data reset must wipe everything.
-- **Never hand recurrence rules to the OS.** Medication schedules are expanded
-  into bounded concrete occurrences and re-armed on launch/boot.
-- **Felova records; it never judges.** No surface rates, flags, colours, or
-  advises on health data: a weight change is a neutral signed fact. The vet
-  report states owner-logged facts only.
-- **Cloud/server failures must name themselves**: server functions raise
-  explicit named errors; never let a write die as a bare RLS denial.
-- **Analytics is anonymous and data-minimized**: event properties describe the
-  event, never the user, and never carry names, notes, or medical detail.
-
-## Contributing
-
-Match the surrounding code: high comment density explaining *why*, smallest
-change over new abstractions, new features as new ViewModels/services rather
-than reshaping existing ones, and every new service/VM registered in
-`MauiProgram`. Verify with the Windows compile check above before submitting;
-if your change touches medication logging or reminders, test the undo paths,
-they are the app's safety net for medical data.
-
-## Status
-
-Actively developed (work in progress). The mobile targets (Android first) are
-the shipping ones; Windows/macOS builds are used for development.
+Siad Ismail · [siadkml2007@gmail.com](mailto:siadkml2007@gmail.com) ·
+[LinkedIn](https://www.linkedin.com/in/siad-ismail-967a423aa/)
