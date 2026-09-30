@@ -63,7 +63,7 @@
         <controls:WaterBackground Grid.RowSpan="6"/>
 
         <!-- ── Header: back + who this is ── -->
-        <Grid Grid.Row="0"
+        <Grid Grid.Row="0" SafeAreaEdges="Container"
               ColumnDefinitions="40,*,40"
               ColumnSpacing="10"
               Padding="22,20,22,12">
@@ -479,7 +479,7 @@
              for a dark sky read out here on the daylight page. Only the kinds actually
              present are listed (the ViewModel filters), so a pet that has never had a
              seizure is never shown a seizure symbol. -->
-        <VerticalStackLayout Grid.Row="5" Padding="16,12,16,14" Spacing="8">
+        <VerticalStackLayout Grid.Row="5" Padding="16,12,16,14" Spacing="8" SafeAreaEdges="Container">
 
             <FlexLayout Wrap="Wrap"
                         JustifyContent="Center"

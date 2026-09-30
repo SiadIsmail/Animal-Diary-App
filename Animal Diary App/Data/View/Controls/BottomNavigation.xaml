@@ -3,11 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Animal_Diary_App.Helpers"
              x:Class="Animal_Diary_App.Data.View.Controls.BottomNavigation"
-             x:Name="Root">
+             x:Name="Root"
+             SafeAreaEdges="Container">
 
     <!-- Floating frosted tab bar shared by Today / Journal / Pets.
          Set ActiveTab ("Main" | "Calendar" | "Pets") to highlight the current
-         page; taps on the other two navigate via the Shell tab routes. -->
+         page; taps on the other two navigate via the Shell tab routes.
+
+         SafeAreaEdges on the root (above): iOS content is edge-to-edge by DEFAULT
+         (SafeAreaRegions.Default == None), so without this the 16pt bottom margin is
+         measured from the physical screen edge and the bar sits under the home
+         indicator. Setting it here rather than on each of the three pages is what keeps
+         it one decision. Ignored on Android and Windows. -->
+    <!-- The bar is deliberately NOT a Shell TabBar: see AppShell.xaml. -->
     <Border Margin="16,0,16,16"
             Padding="7"
             BackgroundColor="{StaticResource Glass}"

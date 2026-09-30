@@ -31,7 +31,7 @@
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ══════════ MAIN CONTENT ══════════ -->
-        <ScrollView Grid.Row="0">
+        <ScrollView Grid.Row="0" SafeAreaEdges="Container">
             <VerticalStackLayout Padding="22,26,22,20"
                                  Spacing="16">
 
@@ -277,7 +277,7 @@
         </ScrollView>
 
         <!-- ══════════ STICKY ADD BUTTON ══════════ -->
-        <Border Grid.Row="1"
+        <Border Grid.Row="1" SafeAreaEdges="Container"
                 Margin="22,0,22,20"
                 BackgroundColor="{StaticResource Teal}"
                 StrokeThickness="0"

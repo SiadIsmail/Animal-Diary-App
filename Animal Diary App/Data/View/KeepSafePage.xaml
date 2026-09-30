@@ -27,7 +27,7 @@
         <controls:WaterBackground Grid.RowSpan="2"/>
 
         <!-- ── MAIN CONTENT: vertically centred ── -->
-        <ScrollView Grid.Row="0">
+        <ScrollView Grid.Row="0" SafeAreaEdges="Container">
             <VerticalStackLayout Padding="30,0"
                                  Spacing="0"
                                  VerticalOptions="Center">
@@ -55,7 +55,7 @@
         </ScrollView>
 
         <!-- ── BOTTOM ACTION ── -->
-        <VerticalStackLayout Grid.Row="1"
+        <VerticalStackLayout Grid.Row="1" SafeAreaEdges="Container"
                              Padding="24,16,24,34"
                              Spacing="12">
 

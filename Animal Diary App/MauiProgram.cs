@@ -144,9 +144,13 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ReportLibraryService>();
 		builder.Services.AddSingleton<IVetReportService, VetReportService>();
 		// Preview rasterizer: each platform uses its OS PDF renderer (no native library).
-		// iOS/macOS fall back to the no-op: the PDF still generates, just without previews.
+		// Only MacCatalyst still falls back to the no-op, and only because Platforms/iOS/
+		// is not compiled into that target: it is a development target that never ships,
+		// and the PDF itself still generates there, just without in-app previews.
 #if ANDROID
 		builder.Services.AddSingleton<IPdfPageRasterizer, AndroidPdfPageRasterizer>();
+#elif IOS
+		builder.Services.AddSingleton<IPdfPageRasterizer, IosPdfPageRasterizer>();
 #elif WINDOWS
 		builder.Services.AddSingleton<IPdfPageRasterizer, WindowsPdfPageRasterizer>();
 #else
@@ -256,7 +260,10 @@ public static class MauiProgram
 		// a no-op that grants full access. Windows/macOS dev always gets the no-op, so no
 		// paid surface is ever withheld there.
 #if ANDROID || IOS
-		if (BillingConfig.Enabled)
+		// IsStoreAvailable, not Enabled: the switch is one const for the whole app but the
+		// keys are per-store, and iOS has the binding and the switch without a key yet.
+		// See BillingConfig.IsStoreAvailable for why a key-less store must be a null store.
+		if (BillingConfig.IsStoreAvailable)
 		{
 			// The RevenueCat binding's own DI (registers IRevenueCatBilling), then our
 			// seam over it and the composed entitlement gate.

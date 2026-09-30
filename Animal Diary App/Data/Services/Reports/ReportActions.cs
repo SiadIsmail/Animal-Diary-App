@@ -1,6 +1,7 @@
 namespace Animal_Diary_App.Data.Services.Reports;
 
 using Animal_Diary_App.Data.Models;
+using Animal_Diary_App.Helpers;
 
 /// <summary>
 /// The two ways a report leaves the app, shared by every surface that offers
@@ -17,7 +18,9 @@ public static class ReportActions
             // The file name is the visible subject line; it's data (pet name +
             // date), not UI copy, so it is deliberately not localized.
             Title = report.FileName,
-            File = new ShareFile(ReportLibraryService.PdfPathFor(report))
+            File = new ShareFile(ReportLibraryService.PdfPathFor(report)),
+            // Required on iPad, ignored everywhere else: see ShareAnchor.
+            PresentationSourceBounds = ShareAnchor.Bounds()
         });
 
     /// <summary>Hand the PDF to the device's default PDF viewer ("Open with…").</summary>
@@ -25,6 +28,7 @@ public static class ReportActions
         Launcher.OpenAsync(new OpenFileRequest
         {
             Title = report.FileName,
-            File = new ReadOnlyFile(ReportLibraryService.PdfPathFor(report))
+            File = new ReadOnlyFile(ReportLibraryService.PdfPathFor(report)),
+            PresentationSourceBounds = ShareAnchor.Bounds()
         });
 }

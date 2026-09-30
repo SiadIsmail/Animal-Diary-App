@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+iOS entitlements.
+
+ONE entry, for one reason: CloudSession persists the Supabase auth session in
+SecureStorage (Data/Services/Cloud/CloudSession.cs), and SecureStorage on this platform
+is the Keychain. Without a keychain access group the store throws on the simulator in
+Debug, which is where the cloud work will be developed, and the failure reads as a
+generic security error rather than as a missing entitlement.
+
+$(AppIdentifierPrefix) is substituted at build time with the team prefix, so this
+resolves to "<TEAMID>.com.felova.app": the app's own default group, shared with nothing.
+Do not add a second group. Nothing in this app shares a keychain item with another app,
+and a group the provisioning profile does not carry fails codesign.
+
+PAIRED REQUIREMENT: the App ID for com.felova.app must have the "Keychain Sharing"
+capability enabled in the Apple Developer portal, and the provisioning profile must be
+regenerated after enabling it. If it is not, codesign fails with a profile/entitlement
+mismatch rather than with anything naming the keychain. See docs/history/IOS_PLAN.md
+Phase 2, steps 2 and 3.
+
+Deliberately NOT here:
+  - aps-environment (push). Every reminder in this app is a LOCAL notification
+    (Plugin.LocalNotification over UNUserNotificationCenter); there is no server that
+    sends anything, so the Push capability is not needed and asking for it would be a
+    question at review with no good answer.
+  - com.apple.developer.applesignin. Sign in with Apple is not in v1: no social login is
+    offered on iOS, so guideline 4.8 is not engaged (IsGoogleAvailable is already
+    Android-only). Add this entitlement in the same change that adds the button, never
+    before. See docs/history/IOS_PLAN.md §5.2.
+  - com.apple.developer.in-app-payments. That is Apple Pay, not StoreKit. Subscriptions
+    through RevenueCat need the In-App Purchase capability on the App ID and no
+    entitlement in this file.
+-->
+<plist version="1.0">
+<dict>
+    <key>keychain-access-groups</key>
+    <array>
+        <string>$(AppIdentifierPrefix)com.felova.app</string>
+    </array>
+</dict>
+</plist>

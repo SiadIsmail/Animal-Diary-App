@@ -744,26 +744,42 @@ public class ImportGuideTests
 {
     private static readonly DateTime Today = new(2026, 8, 18);
 
-    /// <summary>Walk up from the test binary to the repository root.</summary>
-    private static string GuidePath()
+    /// <summary>Walk up from the test binary to the repository root.
+    ///
+    /// <para>Null when that checkout has no AI/ folder at all. AI/ is gitignored
+    /// (private working docs, not part of the public repo), so CI and a public clone
+    /// never have the guide and there is nothing to hold the validator against. An AI/
+    /// folder WITHOUT the guide still throws: that is a guide that moved.</para></summary>
+    private static string? GuidePath()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var candidate = Path.Combine(dir.FullName, "AI", "import-guide.md");
-            if (File.Exists(candidate))
-                return candidate;
+            var ai = Path.Combine(dir.FullName, "AI");
+            if (Directory.Exists(ai))
+            {
+                var candidate = Path.Combine(ai, "import-guide.md");
+                if (File.Exists(candidate))
+                    return candidate;
+                throw new FileNotFoundException("AI/ exists but AI/import-guide.md does not: the guide moved.");
+            }
+
+            // .git is a directory in a clone and a file in a worktree.
+            var git = Path.Combine(dir.FullName, ".git");
+            if (Directory.Exists(git) || File.Exists(git))
+                return null;
+
             dir = dir.Parent;
         }
 
-        throw new FileNotFoundException("AI/import-guide.md was not found above the test binary.");
+        return null;
     }
 
     /// <summary>Every fenced json block in the guide that is a COMPLETE file: the
     /// fragments that illustrate one section are deliberately skipped.</summary>
-    public static IEnumerable<object[]> Examples()
+    private static IEnumerable<(int Index, string Json)> Examples(string guidePath)
     {
-        var text = File.ReadAllText(GuidePath());
+        var text = File.ReadAllText(guidePath);
         var index = 0;
 
         foreach (var block in text.Split("```json").Skip(1))
@@ -774,35 +790,47 @@ public class ImportGuideTests
 
             var json = block[..end].Trim();
             if (json.Contains("felova_import_version"))
-                yield return new object[] { index++, json };
+                yield return (index++, json);
         }
     }
 
-    [Theory]
-    [MemberData(nameof(Examples))]
-    public void EveryCompleteExampleInTheGuide_Validates(int index, string json)
+    // A Fact looping over the examples rather than a MemberData Theory: xUnit 2 fails a
+    // Theory that has no data rows, which is exactly the checkout-without-AI/ case.
+    [Fact]
+    public void EveryCompleteExampleInTheGuide_Validates()
     {
-        Assert.True(ImportFileParser.TryParse(json, out var file, out var parseError),
-            $"Guide example {index} did not parse: {parseError?.Message}");
+        var guide = GuidePath();
+        if (guide is null)
+            return;
 
-        // The examples append to "Charly" and create "Mira"; both are covered by a device
-        // that has Charly on it.
-        var snapshot = new ImportSnapshot { Pets = new[] { new ExistingPet(1, "Charly", "Dog") } };
-        var plan = ImportValidator.Validate(file, snapshot, Today);
+        foreach (var (index, json) in Examples(guide))
+        {
+            Assert.True(ImportFileParser.TryParse(json, out var file, out var parseError),
+                $"Guide example {index} did not parse: {parseError?.Message}");
 
-        Assert.True(plan.IsValid,
-            $"Guide example {index} is no longer valid: {string.Join("; ", plan.Errors.Select(e => e.ToString()))}");
+            // The examples append to "Charly" and create "Mira"; both are covered by a
+            // device that has Charly on it.
+            var snapshot = new ImportSnapshot { Pets = new[] { new ExistingPet(1, "Charly", "Dog") } };
+            var plan = ImportValidator.Validate(file, snapshot, Today);
 
-        // An example that validates but writes nothing would be a broken teaching aid.
-        Assert.True(plan.TotalEntryCount > 0, $"Guide example {index} imports no entries.");
+            Assert.True(plan.IsValid,
+                $"Guide example {index} is no longer valid: {string.Join("; ", plan.Errors.Select(e => e.ToString()))}");
+
+            // An example that validates but writes nothing would be a broken teaching aid.
+            Assert.True(plan.TotalEntryCount > 0, $"Guide example {index} imports no entries.");
+        }
     }
 
     [Fact]
     public void TheGuideIsFound_AndHasExamples()
     {
         // Guards the walk-up above: a guide that moved would otherwise make every test in
-        // this class silently vacuous.
-        Assert.NotEmpty(Examples());
+        // this class silently vacuous. Where AI/ exists, the guide must be found.
+        var guide = GuidePath();
+        if (guide is null)
+            return;
+
+        Assert.NotEmpty(Examples(guide));
     }
 }
 
