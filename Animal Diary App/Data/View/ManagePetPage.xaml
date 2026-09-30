@@ -66,15 +66,28 @@
                         Margin="0,0,8,8">
                     <HorizontalStackLayout Spacing="8"
                                            VerticalOptions="Center">
-                        <Label Text="{Binding Icon}"
-                               FontSize="14"
-                               VerticalOptions="Center"/>
-                        <Label Text="{Binding Name}"
-                               FontFamily="{StaticResource FontSans}"
-                               FontSize="12.5"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource Ink}"
-                               VerticalOptions="Center"/>
+                        <!-- Icon + name reopen the condition's setup; the ✕ beside them
+                             removes it. The tap lives on this inner layout rather than
+                             on the chip so the two can't be confused for each other.
+                             Without it a condition could only be reconfigured through
+                             the tracker row it happened to create, which is not a door
+                             anyone would find. -->
+                        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                            <HorizontalStackLayout.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ManageVM.OpenConditionCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </HorizontalStackLayout.GestureRecognizers>
+                            <Label Text="{Binding Icon}"
+                                   FontSize="14"
+                                   VerticalOptions="Center"/>
+                            <Label Text="{Binding Name}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="12.5"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
                         <Border WidthRequest="20"
                                 HeightRequest="20"
                                 BackgroundColor="{StaticResource Well}"
@@ -177,29 +190,13 @@
                     </Border.GestureRecognizers>
                     <Grid ColumnDefinitions="Auto,*"
                           ColumnSpacing="15">
-                        <Border Grid.Column="0"
-                                WidthRequest="64"
-                                HeightRequest="64"
-                                Stroke="{StaticResource TealLine}"
-                                StrokeThickness="1"
-                                StrokeShape="RoundRectangle 32"
-                                VerticalOptions="Center">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0"
-                                                     EndPoint="1,1">
-                                    <GradientStop Color="{StaticResource SeaHi}"
-                                                  Offset="0"/>
-                                    <GradientStop Color="{StaticResource SeaMid}"
-                                                  Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <Label Text="{Binding ManageVM.PetInitial}"
-                                   FontFamily="{StaticResource FontSerif}"
-                                   FontSize="28"
-                                   TextColor="{StaticResource TealDeep}"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center"/>
-                        </Border>
+                        <!-- Profile photo, or the name initial fallback -->
+                        <controls:PetAvatarView Grid.Column="0"
+                                                Diameter="64"
+                                                FallbackFontSize="28"
+                                                PhotoPath="{Binding PetVM.ActivePet.PhotoFullPath}"
+                                                FallbackText="{Binding ManageVM.PetInitial}"
+                                                VerticalOptions="Center"/>
                         <VerticalStackLayout Grid.Column="1"
                                              Spacing="2"
                                              VerticalOptions="Center">
@@ -320,49 +317,40 @@
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
 
-                <!-- Journal preview -->
-                <Border BackgroundColor="{StaticResource Well}"
-                        Stroke="{StaticResource GlassLine}"
-                        StrokeThickness="1"
-                        StrokeShape="RoundRectangle 16,18,15,17"
-                        Padding="15,13"
-                        Margin="0,4,0,0">
-                    <VerticalStackLayout Spacing="9">
-                        <Label Text="{Binding ManageVM.PreviewLabel}"
-                               FontFamily="{StaticResource FontHand}"
-                               FontSize="16"
-                               TextColor="{StaticResource TealDeep}"/>
-                        <FlexLayout Wrap="Wrap"
-                                    Direction="Row"
-                                    BindableLayout.ItemsSource="{Binding ManageVM.PreviewChips}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="vms:PreviewChip">
-                                    <Border BackgroundColor="{StaticResource GlassSoft}"
-                                            Stroke="{StaticResource TealLine}"
-                                            StrokeThickness="1.5"
-                                            StrokeDashArray="3,2"
-                                            StrokeShape="RoundRectangle 11,10,11,10"
-                                            Padding="10,6"
-                                            Margin="0,0,6,6">
-                                        <HorizontalStackLayout Spacing="5"
-                                                               VerticalOptions="Center">
-                                            <Label Text="{Binding Icon}"
-                                                   FontSize="12"
-                                                   VerticalOptions="Center"/>
-                                            <Label Text="{Binding Text}"
-                                                   FontFamily="{StaticResource FontSans}"
-                                                   FontSize="11"
-                                                   FontAttributes="Bold"
-                                                   TextColor="{StaticResource TealDeep}"
-                                                   VerticalOptions="Center"/>
-                                        </HorizontalStackLayout>
-                                    </Border>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </FlexLayout>
+                        <!-- Add a tracker: the deliberate "keep asking me about this".
+                             Mirrors the Add-medication row below. The Journal's "+"
+                             already lets anything be written down once without joining
+                             the plan, so this row is only about being reminded. -->
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="13"
+                              Padding="12,14"
+                              IsVisible="{Binding ManageVM.CanAddTracker}">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ManageVM.AddTrackerCommand}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Grid.Column="0"
+                                    WidthRequest="38"
+                                    HeightRequest="38"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    VerticalOptions="Center">
+                                <Label Text="＋"
+                                       FontSize="17"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource TealDeep}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                            <Label Grid.Column="1"
+                                   Text="{loc:Translate Manage_AddTracker}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
 
@@ -451,19 +439,185 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <!-- Sharing (visible only with cloud backup active) -->
+                <VerticalStackLayout IsVisible="{Binding SharingVM.IsSharingAvailable}">
+                    <Label Text="{loc:Translate Manage_SharingTitle}"
+                           Style="{StaticResource SectionTitle}"
+                           Margin="2,14,2,2"/>
+
+                    <Border Style="{StaticResource CardSurface}"
+                            Padding="4">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="13"
+                              Padding="12,14">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding SharingVM.OpenCommand}"/>
+                            </Grid.GestureRecognizers>
+                            <Border Grid.Column="0"
+                                    WidthRequest="38"
+                                    HeightRequest="38"
+                                    BackgroundColor="{StaticResource TealTint}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    VerticalOptions="Center">
+                                <Label Text="🤝"
+                                       FontSize="17"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1"
+                                                 Spacing="1"
+                                                 VerticalOptions="Center">
+                                <Label Text="{loc:Translate Cloud_SharingRowTitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Ink}"/>
+                                <Label Text="{loc:Translate Cloud_SharingRowSubtitle}"
+                                       FontFamily="{StaticResource FontSans}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource InkSecondary}"/>
+                            </VerticalStackLayout>
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   FontSize="20"
+                                   TextColor="{StaticResource InkTertiary}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- ── Pausing and removing ──────────────────────────────────────────
+                     Both of these used to be centred grey Labels with a tap recogniser:
+                     the only two actions on the page that didn't look like the card rows
+                     around them, and the two that matter most. §15.1 requires the pause be
+                     "clear, findable, one-tap": grey text under the fold is none of those.
+                     They now use the two idioms this app already has, and the difference in
+                     weight IS the design: the reversible one reads as an ordinary setting,
+                     the irreversible one wears the Clay destructive card (the same one
+                     Settings' delete-all-data uses). -->
+                <Label Text="{loc:Translate Manage_WindDownTitle}"
+                       Style="{StaticResource SectionTitle}"
+                       Margin="2,26,2,2"/>
+
+                <!-- Pause everything (AI/app-voice.md §15): a one-tap, reversible way to
+                     stop every reminder for this pet on this device, keeping the record.
+                     Per-device, so it never touches the other carer's reminders.
+                     The Switch is state, not input: the card owns the tap so there is one
+                     code path, and a two-way binding would be driving async work (cancel
+                     every reminder, re-arm them) from a property setter. InputTransparent
+                     lets a tap on the switch itself fall through to the card. -->
+                <Border Style="{StaticResource CardSurface}"
+                        Padding="12,14">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ManageVM.TogglePauseCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*,Auto"
+                          ColumnSpacing="13">
+                        <Border Grid.Column="0"
+                                WidthRequest="38"
+                                HeightRequest="38"
+                                BackgroundColor="{StaticResource Well}"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                VerticalOptions="Center">
+                            <Label Text="⏸"
+                                   FontSize="16"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="2"
+                                             VerticalOptions="Center">
+                            <Label Text="{Binding ManageVM.PauseRowLabel}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Ink}"/>
+                            <!-- Carries the state in words, paused or not (§15: plain). -->
+                            <Label Text="{Binding ManageVM.PauseRowSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   LineHeight="1.35"
+                                   TextColor="{StaticResource InkSecondary}"/>
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="2"
+                                IsToggled="{Binding ManageVM.IsPaused, Mode=OneWay}"
+                                InputTransparent="True"
+                                OnColor="{StaticResource Teal}"
+                                VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Remove pet: the owner deletes, a caregiver leaves. The Clay card is
+                     louder than the old grey text but still not a red button: deletion is
+                     never casual, never punishing. Both lines branch on the viewer's role. -->
+                <Border BackgroundColor="{StaticResource ClayTint}"
+                        Stroke="#EFD3CE"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="12,14"
+                        Margin="0,10,0,0">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ManageVM.RemovePetCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="13">
+                        <Border Grid.Column="0"
+                                WidthRequest="38"
+                                HeightRequest="38"
+                                BackgroundColor="#F2DAD6"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                VerticalOptions="Center">
+                            <Label Text="🗑️"
+                                   FontSize="17"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="2"
+                                             VerticalOptions="Center">
+                            <Label Text="{Binding ManageVM.RemovePetLabel}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource Clay}"/>
+                            <Label Text="{Binding ManageVM.RemovePetSubtitle}"
+                                   FontFamily="{StaticResource FontSans}"
+                                   FontSize="11.5"
+                                   LineHeight="1.35"
+                                   TextColor="#B07B76"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
             </VerticalStackLayout>
         </ScrollView>
 
         <!-- ── Sheet overlays (last children render on top) ── -->
-        <!-- Reusable condition setup sheets — the SAME instances onboarding uses -->
+        <!-- Reusable condition setup sheets: the SAME instances onboarding uses -->
         <views:DiabetesSetupSheetView BindingContext="{Binding DiabetesSetupVM}"/>
         <views:CkdSetupSheetView BindingContext="{Binding CkdSetupVM}"/>
         <views:EpilepsySetupSheetView BindingContext="{Binding EpilepsySetupVM}"/>
 
         <!-- Manage-owned sheets -->
         <views:AddConditionSheetView BindingContext="{Binding ManageVM}"/>
+        <views:AddTrackerSheetView BindingContext="{Binding ManageVM}"/>
         <views:RemoveConditionSheetView BindingContext="{Binding ManageVM}"/>
         <views:AdjustTrackerSheetView BindingContext="{Binding ManageVM}"/>
+        <!-- The one sheet behind every owner-defined tracker (create and edit). -->
+        <views:CustomTrackerSheetView BindingContext="{Binding CustomTrackerVM}"/>
+        <views:SharingSheetView BindingContext="{Binding SharingVM}"/>
+
+        <!-- Export sheet: opened by the "save a copy first" offer before a delete. -->
+        <views:ExportSheetView BindingContext="{Binding ExportSheetVM}"/>
+
+        <!-- Subscribe sheet: gated edit actions (edit pet / condition setup) route here. -->
+        <views:SubscribeSheetView BindingContext="{Binding SubscribeVM}"/>
+
+        <!-- Confirm sheet last: the remove-pet flow asks over whatever is already open. -->
+        <views:ConfirmSheetView BindingContext="{Binding ConfirmVM}"/>
 
     </Grid>
 

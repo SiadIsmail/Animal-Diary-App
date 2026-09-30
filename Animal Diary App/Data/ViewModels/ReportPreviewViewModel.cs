@@ -7,7 +7,7 @@ using Animal_Diary_App.Data.Services.Reports;
 
 /// <summary>
 /// Backs the in-app report preview page: the report's pre-rendered page PNGs
-/// (saved next to the PDF at generation time — see <see cref="VetReportService"/>)
+/// (saved next to the PDF at generation time: see <see cref="VetReportService"/>)
 /// plus the two ways it leaves the app (share / open externally). Call
 /// <see cref="Open"/> with a library row BEFORE pushing the page.
 /// </summary>
@@ -24,7 +24,7 @@ public class ReportPreviewViewModel : BaseViewModel
     /// <summary>Absolute paths of the page images, in page order.</summary>
     public ObservableCollection<string> PageImages { get; } = new();
 
-    /// <summary>The PDF's file name — shown as the page subtitle (data, not copy).</summary>
+    /// <summary>The PDF's file name: shown as the page subtitle (data, not copy).</summary>
     public string FileName => _report?.FileName ?? string.Empty;
 
     public ICommand ShareCommand { get; }
@@ -42,7 +42,7 @@ public class ReportPreviewViewModel : BaseViewModel
     }
 
     // Handing the PDF to the OS can fail without it being our bug (no share
-    // targets, no PDF viewer installed) — log and stay put, never crash.
+    // targets, no PDF viewer installed): log and stay put, never crash.
     private async Task RunAsync(Func<VetReportFile, Task> action)
     {
         if (_report == null)

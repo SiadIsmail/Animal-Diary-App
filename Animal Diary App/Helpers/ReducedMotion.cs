@@ -5,7 +5,7 @@ namespace Animal_Diary_App.Helpers;
 /// accessibility preference. MAUI has no unified API for this, so each
 /// platform is queried directly. Used to freeze decorative background motion
 /// (e.g. <c>WaterBackground</c>) for users who ask the system to calm things
-/// down. Read once and cached — good enough for decorative animation gating.
+/// down. Read once and cached: good enough for decorative animation gating.
 /// </summary>
 public static class ReducedMotion
 {
@@ -37,7 +37,7 @@ public static class ReducedMotion
         }
         catch
         {
-            // Never let an accessibility probe crash the UI — assume motion on.
+            // Never let an accessibility probe crash the UI: assume motion on.
             return false;
         }
     }

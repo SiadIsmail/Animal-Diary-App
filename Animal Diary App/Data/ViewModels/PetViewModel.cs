@@ -11,7 +11,7 @@ using System.Windows.Input;
 /// <summary>One chip on the Care page's active-pet card: a condition the pet has, or
 /// its medication count. The label is resolved per read (the
 /// <see cref="DaySelectionItem"/> pattern) so a live language switch re-translates
-/// the chips — the owning VM is a singleton, so a name cached at construction would
+/// the chips: the owning VM is a singleton, so a name cached at construction would
 /// stay in the old language.</summary>
 public class PetProfileTag : BaseViewModel
 {
@@ -42,6 +42,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         {
             if (SetProperty(ref enteredPetName, value))
             {
+                OnPropertyChanged(nameof(CanContinueIdentity));
                 OnPropertyChanged(nameof(CanSavePet));
                 OnPropertyChanged(nameof(PreviewName));
                 ValidatePetName();
@@ -64,18 +65,52 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         }
     }
 
-    private string enteredPetAge = string.Empty;
+    // ── Birthday ─────────────────────────────────────────────────────────────────
+    // The pet's birthday, entered as three independent parts. Only the year is
+    // required; owners who only know roughly when their pet was born leave month
+    // and/or day blank. We never fill an unknown part with a placeholder value.
 
-    public string EnteredPetAge
+    private string enteredBirthYear = string.Empty;
+    public string EnteredBirthYear
     {
-        get => enteredPetAge;
+        get => enteredBirthYear;
         set
         {
-            if (SetProperty(ref enteredPetAge, value))
+            if (SetProperty(ref enteredBirthYear, value))
             {
-                OnPropertyChanged(nameof(ParsedPetAge));
+                OnPropertyChanged(nameof(ParsedBirthYear));
                 OnPropertyChanged(nameof(CanSavePet));
-                ValidatePetAge();
+                ValidateBirthday();
+            }
+        }
+    }
+
+    private string enteredBirthMonth = string.Empty;
+    public string EnteredBirthMonth
+    {
+        get => enteredBirthMonth;
+        set
+        {
+            if (SetProperty(ref enteredBirthMonth, value))
+            {
+                OnPropertyChanged(nameof(ParsedBirthMonth));
+                OnPropertyChanged(nameof(CanSavePet));
+                ValidateBirthday();
+            }
+        }
+    }
+
+    private string enteredBirthDay = string.Empty;
+    public string EnteredBirthDay
+    {
+        get => enteredBirthDay;
+        set
+        {
+            if (SetProperty(ref enteredBirthDay, value))
+            {
+                OnPropertyChanged(nameof(ParsedBirthDay));
+                OnPropertyChanged(nameof(CanSavePet));
+                ValidateBirthday();
             }
         }
     }
@@ -111,11 +146,11 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         set => SetProperty(ref petTypeError, value);
     }
 
-    private string petAgeError = string.Empty;
-    public string PetAgeError
+    private string birthdayError = string.Empty;
+    public string BirthdayError
     {
-        get => petAgeError;
-        set => SetProperty(ref petAgeError, value);
+        get => birthdayError;
+        set => SetProperty(ref birthdayError, value);
     }
 
     // Validation logic
@@ -125,9 +160,17 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         !string.IsNullOrWhiteSpace(EnteredPetType) &&
         (SelectedPetType?.Name != "Other" || !string.IsNullOrWhiteSpace(EnteredPetType));
 
-    private bool IsPetAgeValid => ParsedPetAge.HasValue && ParsedPetAge.Value >= 0;
+    /// <summary>The birthday is valid when a plausible year is present and every part
+    /// the owner DID fill in is itself valid and not in the future. Blank month/day are
+    /// fine: they're optional. <see cref="ComputeBirthdayError"/> is the single source
+    /// of truth; this just asks whether it found nothing wrong.</summary>
+    private bool IsBirthdayValid => ComputeBirthdayError() is null;
 
-    public bool CanSavePet => IsPetNameValid && IsPetTypeValid && IsPetAgeValid;
+    /// <summary>Gate for the Identity page (page 1): only the name is entered there.</summary>
+    public bool CanContinueIdentity => IsPetNameValid;
+
+    /// <summary>Gate for the final save (page 2): everything must be valid.</summary>
+    public bool CanSavePet => IsPetNameValid && IsPetTypeValid && IsBirthdayValid;
 
     public ObservableCollection<PetTypeOption> PetTypeOptions { get; set; } = new();
 
@@ -144,8 +187,98 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     private readonly IAnalyticsService _analytics;
     private readonly PetConditionService _conditions;
     private readonly MedicationService _medications;
+    private readonly PetPhotoService _photos;
 
-    public ObservableCollection<Pet> Pets { get; set; } = new ObservableCollection<Pet>();
+    // ── Draft profile photo ──────────────────────────────────────────────────────
+    // The photo picked on the create/edit form, held as a relative file name until the
+    // pet is saved. `_committedPhotoFileName` is the file the pet ALREADY has on disk
+    // (null when creating): kept so we know which files are throwaway drafts to clean
+    // up on replace/cancel and which is the pet's real photo to leave alone until save.
+    private string? _committedPhotoFileName;
+
+    private string? draftPhotoFileName;
+    public string? DraftPhotoFileName
+    {
+        get => draftPhotoFileName;
+        private set
+        {
+            if (SetProperty(ref draftPhotoFileName, value))
+            {
+                OnPropertyChanged(nameof(DraftPhotoPath));
+                OnPropertyChanged(nameof(HasDraftPhoto));
+            }
+        }
+    }
+
+    /// <summary>Absolute path of the draft photo for the form's live preview, or null.</summary>
+    public string? DraftPhotoPath => string.IsNullOrEmpty(DraftPhotoFileName)
+        ? null
+        : System.IO.Path.Combine(PetPhotoService.PhotosDirectory, DraftPhotoFileName);
+
+    public bool HasDraftPhoto => !string.IsNullOrEmpty(DraftPhotoFileName);
+
+    /// <summary>Store a newly picked/captured photo as the draft. Deletes any previous
+    /// throwaway draft first (a picked-then-replaced file that was never the pet's real
+    /// photo) so we don't leak orphans; the pet's committed photo is left untouched
+    /// until save.</summary>
+    public async Task SetDraftPhotoAsync(Stream source)
+    {
+        var newName = await _photos.SaveAsync(source);
+        DeleteThrowawayDraft();
+        DraftPhotoFileName = newName;
+    }
+
+    /// <summary>Stage a newly picked/captured photo for the crop-and-rotate editor. Does
+    /// NOT touch the draft: nothing about the pet's photo changes until the owner is happy
+    /// with what they see, so backing out of the editor leaves the previous photo (or no
+    /// photo) exactly as it was.</summary>
+    public Task<PhotoEditSource> PrepareDraftPhotoAsync(Stream source) =>
+        _photos.PrepareForEditAsync(source);
+
+    /// <summary>The current draft photo as an editor source, so a photo that arrived
+    /// crooked can be fixed without picking it again. Null when there is no photo to
+    /// edit.</summary>
+    public PhotoEditSource? DescribeDraftPhoto() =>
+        DraftPhotoPath is { } path && File.Exists(path) ? _photos.Describe(path) : null;
+
+    /// <summary>Write the edited photo and make it the draft. Same bookkeeping as
+    /// <see cref="SetDraftPhotoAsync"/>: the previous file goes only if it was a
+    /// throwaway, never if it is the photo the pet is currently saved with: plus dropping
+    /// the staged copy the editor was working from.</summary>
+    public async Task ApplyDraftPhotoAsync(PhotoEditSource source, PhotoTransform transform)
+    {
+        var newName = await _photos.ApplyAsync(source, transform);
+        DeleteThrowawayDraft();
+        DraftPhotoFileName = newName;
+
+        // Both deletes happen after the write, never before it: re-cropping an existing
+        // draft reads the very file this bookkeeping is about to remove.
+        _photos.DiscardEditSource(source);
+    }
+
+    /// <summary>Throw away a staged edit the owner backed out of. A no-op for a pet's real
+    /// photo: cancelling a re-crop must leave the avatar untouched.</summary>
+    public void DiscardPhotoEdit(PhotoEditSource? source) => _photos.DiscardEditSource(source);
+
+    /// <summary>Clear the draft photo (the "Remove photo" action). Deletes a throwaway
+    /// draft file; if the draft is the pet's committed photo, only the reference is
+    /// cleared here: the file itself is removed on save.</summary>
+    public void ClearDraftPhoto()
+    {
+        DeleteThrowawayDraft();
+        DraftPhotoFileName = null;
+    }
+
+    // Delete the current draft file only when it is a throwaway: i.e. not the photo the
+    // pet is already persisted with (which must survive until the user actually saves).
+    private void DeleteThrowawayDraft()
+    {
+        if (!string.IsNullOrEmpty(DraftPhotoFileName) && DraftPhotoFileName != _committedPhotoFileName)
+            _photos.Delete(DraftPhotoFileName);
+    }
+
+    /// <summary>Range-batched: see RangeObservableCollection.</summary>
+    public RangeObservableCollection<Pet> Pets { get; } = new();
 
     public Pet ActivePet
     {
@@ -157,9 +290,15 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
     /// <summary>Chips under the active pet's name: one per condition it actually has,
     /// then its medication count. Read-only display of what the condition and
-    /// medication stores already hold — the Care card states, it doesn't edit
+    /// medication stores already hold: the Care card states, it doesn't edit
     /// (Manage owns that).</summary>
-    public ObservableCollection<PetProfileTag> ActivePetTags { get; } = new();
+    /// <summary>Range-batched: see RangeObservableCollection.</summary>
+    public RangeObservableCollection<PetProfileTag> ActivePetTags { get; } = new();
+
+    /// <summary>Which tag load is the current one. Incremented on entry to
+    /// <see cref="LoadActivePetTagsAsync"/>; a load whose generation is stale by the
+    /// time its queries return discards its result instead of writing it.</summary>
+    private int _tagLoadGeneration;
 
     /// <summary>Rebuild <see cref="ActivePetTags"/> from the authoritative stores.
     /// Conditions come from <see cref="PetConditionService"/> (never the legacy
@@ -169,31 +308,82 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     public async Task LoadActivePetTagsAsync()
     {
         var pet = ActivePet;
+        // Bumped on entry so only the newest load may write. Two are in flight often:
+        // the ActivePet PropertyChanged handler starts one fire-and-forget on every
+        // pet load, while the page awaits its own on every appearance.
+        var generation = ++_tagLoadGeneration;
 
-        ActivePetTags.Clear();
         if (pet == null || pet.Id == 0)
+        {
+            ActivePetTags.Clear();
             return;
+        }
 
-        // Gather before touching the observable collection.
+        // Gather before touching the observable collection. Clearing up here instead
+        // left a window across these awaits where an overlapping load cleared between
+        // this one's Clear and its Adds, so both sets of chips landed in the list,
+        // the doubled conditions and doubled medication count on the Care card.
         var conditionIds = await _conditions.GetConditionIdsAsync(pet);
         var medCount = (await _medications.GetMedicationsByPetIdAsync(pet.Id))
             .Count(m => !m.IsArchived);
 
+        // A newer load started while this one was querying. Its results describe the
+        // current pet, so drop these rather than paint the previous pet's chips over
+        // the card (the "sometimes it doesn't load correctly" half of the same race).
+        if (generation != _tagLoadGeneration)
+            return;
+
+        // Everything below is synchronous, so the swap can't be interleaved. The list is
+        // built first and handed over in one notification, so the chip row costs a single
+        // layout pass instead of one per chip.
+        var tags = new List<PetProfileTag>();
+
         foreach (var id in conditionIds)
-            ActivePetTags.Add(new PetProfileTag { ResourceKey = ConditionCatalog.GetCondition(id).NameKey });
+            tags.Add(new PetProfileTag { ResourceKey = ConditionCatalog.GetCondition(id).NameKey });
 
         if (medCount > 0)
-            ActivePetTags.Add(new PetProfileTag
+            tags.Add(new PetProfileTag
             {
                 ResourceKey = medCount == 1 ? "Pets_MedicationCountOne" : "Pets_MedicationCountMany",
                 Count = medCount,
                 IsMedication = true
             });
+
+        ActivePetTags.ReplaceAll(tags);
     }
 
-    public string ActivePetSubtitle => ActivePet == null
-        ? string.Empty
-        : LocalizationManager.Instance.Format("Pet_SubtitleFormat", PetTypeNames.Localize(ActivePet.Type), ActivePet.Age);
+    // Type · age, but the age half is dropped when the pet's age is unknown so we never
+    // render a bare "· yrs". In practice a birthday's year is always known, so the age
+    // form is the norm; the fallback only covers legacy pets with no stored age.
+    public string ActivePetSubtitle
+    {
+        get
+        {
+            if (ActivePet == null)
+                return string.Empty;
+
+            var type = PetTypeNames.Localize(ActivePet.Type);
+            return ActivePet.AgeYears is int years
+                ? LocalizationManager.Instance.Format("Pet_SubtitleFormat", type, years)
+                : type;
+        }
+    }
+
+    /// <summary>Heading over the Care tab's reading surfaces (vet summary, documents,
+    /// constellation). It carries the active pet's name on purpose: every row under it
+    /// follows the pet switcher, and the card itself has no other way to say so.
+    /// Falls back to a nameless form rather than rendering "'s record": a pet with a
+    /// blank name shouldn't produce a broken possessive (AI/app-voice.md §20).</summary>
+    public string RecordSectionTitle
+    {
+        get
+        {
+            var name = ActivePet?.Name;
+            return string.IsNullOrWhiteSpace(name)
+                ? LocalizationManager.Instance.GetString("Care_RecordSectionNoName")
+                : LocalizationManager.Instance.Format("Care_RecordSection", name);
+        }
+    }
 
     /// <summary>Localized "Medications for {pet}" header shown on the Medications page.</summary>
     public string MedicationsHeader =>
@@ -208,7 +398,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     // navigation), so neither needs a command here anymore.
 
     public PetViewModel(PetService petService, ActivePetService activePetService, SettingsService settingsService, IAnalyticsService analytics,
-        PetConditionService conditions, MedicationService medications)
+        PetConditionService conditions, MedicationService medications, PetPhotoService photos)
     {
         _petService = petService;
         _activePetService = activePetService;
@@ -216,6 +406,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         _analytics = analytics;
         _conditions = conditions;
         _medications = medications;
+        _photos = photos;
 
         SelectPetCommand = new Command<Pet>(SelectPet);
         AddPetCommand = new Command(async () => await SavePetAsync());
@@ -230,7 +421,8 @@ public class PetViewModel : BaseViewModel, IResettableDraft
                 OnPropertyChanged(nameof(ActivePet));
                 OnPropertyChanged(nameof(ActivePetEmoji));
                 OnPropertyChanged(nameof(ActivePetSubtitle));
-                // The chips describe the active pet — they have to follow a switch.
+                OnPropertyChanged(nameof(RecordSectionTitle));
+                // The chips describe the active pet: they have to follow a switch.
                 LoadActivePetTagsAsync().Forget();
             }
         };
@@ -240,6 +432,10 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         {
             foreach (var tag in ActivePetTags)
                 tag.RefreshLabel();
+            // Same reason, for the properties that build a sentence out of a resource:
+            // they are resolved per read, so a live language switch needs a nudge.
+            OnPropertyChanged(nameof(ActivePetSubtitle));
+            OnPropertyChanged(nameof(RecordSectionTitle));
         };
     }
 
@@ -274,7 +470,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         // Validate before saving
         ValidatePetName();
         ValidatePetType();
-        ValidatePetAge();
+        ValidateBirthday();
 
         if (!CanSavePet)
             return;
@@ -283,23 +479,33 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         {
             Name = EnteredPetName.Trim(),
             Type = EnteredPetType.Trim(),
-            Age = ParsedPetAge!.Value
+            BirthYear = ParsedBirthYear!.Value,
+            BirthMonth = ParsedBirthMonth,
+            BirthDay = ParsedBirthDay,
+            PhotoFileName = DraftPhotoFileName,
         };
+        // Snapshot the derived age into the legacy column so anything still reading it
+        // stays roughly right; AgeYears remains the live, birthday-derived source.
+        pet.Age = pet.AgeYears ?? 0;
+
+        // The draft photo (if any) is now the pet's real photo: mark it committed so
+        // the reset below won't clean it up as a throwaway.
+        _committedPhotoFileName = DraftPhotoFileName;
 
         await _petService.SavePetAsync(pet);
         Pets.Add(pet);
         SelectPet(pet);
 
         // Product signal: "do users create pets?" and the rough species mix. We send a
-        // COARSE species bucket only — a known type lowercased, or "other" for any
-        // custom free-text — never the raw type string, which a user could make
+        // COARSE species bucket only: a known type lowercased, or "other" for any
+        // custom free-text, never the raw type string, which a user could make
         // identifying.
         _analytics.Track(AnalyticsEvents.PetCreated, new Dictionary<string, object?>
         {
             [AnalyticsEvents.PropSpecies] = NormalizeSpecies(pet.Type),
         });
 
-        // First launch completes when the first pet is actually SAVED — flipping
+        // First launch completes when the first pet is actually SAVED: flipping
         // it on page-view meant killing the app on the form gave a returning-user
         // experience with no pet.
         if (IsFirstLaunch)
@@ -313,7 +519,7 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     }
 
     /// <summary>
-    /// Prefill the create/edit form from the active pet — the edit-pet door from the
+    /// Prefill the create/edit form from the active pet: the edit-pet door from the
     /// Manage page. Matches the stored type to a known option (else "Other" with the
     /// custom text), and clears any residual validation errors.
     /// </summary>
@@ -324,7 +530,25 @@ public class PetViewModel : BaseViewModel, IResettableDraft
             return;
 
         EnteredPetName = pet.Name;
-        EnteredPetAge = pet.Age.ToString();
+
+        // Prefill the birthday from whatever the pet stored. A pet created before the
+        // birthday system has no BirthYear but does have a legacy age: offer a
+        // best-guess year (today − age) as a starting point the owner can correct;
+        // it is only persisted if they save.
+        if (pet.BirthYear > 0)
+            EnteredBirthYear = pet.BirthYear.ToString();
+        else if (pet.Age > 0)
+            EnteredBirthYear = (DateTime.Today.Year - pet.Age).ToString();
+        else
+            EnteredBirthYear = string.Empty;
+
+        EnteredBirthMonth = pet.BirthMonth?.ToString() ?? string.Empty;
+        EnteredBirthDay = pet.BirthDay?.ToString() ?? string.Empty;
+
+        // Start the draft photo from the pet's committed photo so it previews and
+        // survives if the owner doesn't change it.
+        _committedPhotoFileName = pet.PhotoFileName;
+        DraftPhotoFileName = pet.PhotoFileName;
 
         var match = PetTypeOptions.FirstOrDefault(
             o => string.Equals(o.Name, pet.Type, StringComparison.OrdinalIgnoreCase));
@@ -340,24 +564,29 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
         PetNameError = string.Empty;
         PetTypeError = string.Empty;
-        PetAgeError = string.Empty;
+        BirthdayError = string.Empty;
     }
 
-    /// <summary>Set the form's title + button for edit mode ("You're editing {X}").</summary>
+    /// <summary>Set both pages' titles + the final button for edit mode
+    /// ("You're editing {X}"). Both onboarding pages share one edit heading.</summary>
     public void ConfigureForEdit()
     {
-        PageTitle = LocalizationManager.Instance.Format("CreatePet_EditTitle", ActivePet?.Name ?? string.Empty);
+        var editTitle = LocalizationManager.Instance.Format("CreatePet_EditTitle", ActivePet?.Name ?? string.Empty);
+        IdentityTitle = editTitle;
+        DetailsTitle = editTitle;
+        IdentitySubtitle = string.Empty;
+        DetailsSubtitle = string.Empty;
         SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_EditSave");
         ShowBackButton = true;
     }
 
     /// <summary>Save an edit in place: update the active pet's fields and persist. No
-    /// new pet, no condition picker — the Manage page just pops back.</summary>
+    /// new pet, no condition picker: the Manage page just pops back.</summary>
     public async Task<bool> SaveEditedPetAsync()
     {
         ValidatePetName();
         ValidatePetType();
-        ValidatePetAge();
+        ValidateBirthday();
 
         if (!CanSavePet)
             return false;
@@ -368,14 +597,26 @@ public class PetViewModel : BaseViewModel, IResettableDraft
 
         pet.Name = EnteredPetName.Trim();
         pet.Type = EnteredPetType.Trim();
-        pet.Age = ParsedPetAge!.Value;
+        pet.BirthYear = ParsedBirthYear!.Value;
+        pet.BirthMonth = ParsedBirthMonth;
+        pet.BirthDay = ParsedBirthDay;
+        pet.Age = pet.AgeYears ?? 0; // keep the legacy snapshot in step
+
+        // Apply the draft photo. If the pet had a different photo before, delete the old
+        // file now that it's replaced/removed (the row is the only reference).
+        var previousPhoto = _committedPhotoFileName;
+        pet.PhotoFileName = DraftPhotoFileName;
+        if (!string.IsNullOrEmpty(previousPhoto) && previousPhoto != DraftPhotoFileName)
+            _photos.Delete(previousPhoto);
+        _committedPhotoFileName = DraftPhotoFileName;
 
         await _petService.UpdatePetAsync(pet);
 
-        // Refresh anything bound to the active pet (Care card, subtitle, emoji).
+        // Refresh anything bound to the active pet (Care card, subtitle, emoji, photo).
         OnPropertyChanged(nameof(ActivePet));
         OnPropertyChanged(nameof(ActivePetEmoji));
         OnPropertyChanged(nameof(ActivePetSubtitle));
+        OnPropertyChanged(nameof(RecordSectionTitle));
         return true;
     }
 
@@ -389,12 +630,20 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         SelectedPetType = null;
         EnteredPetName = string.Empty;
         EnteredPetType = string.Empty;
-        EnteredPetAge = string.Empty;
+        EnteredBirthYear = string.Empty;
+        EnteredBirthMonth = string.Empty;
+        EnteredBirthDay = string.Empty;
         ShowCustomPetType = false;
+
+        // Drop any throwaway draft photo (a picked-but-never-saved file); a committed
+        // photo belongs to its saved pet and is left on disk.
+        DeleteThrowawayDraft();
+        DraftPhotoFileName = null;
+        _committedPhotoFileName = null;
 
         PetNameError = string.Empty;
         PetTypeError = string.Empty;
-        PetAgeError = string.Empty;
+        BirthdayError = string.Empty;
     }
     private Pet selectedPet = null!;
     public Pet SelectedPet
@@ -411,21 +660,33 @@ public class PetViewModel : BaseViewModel, IResettableDraft
     }
     public async Task LoadPetsAsync()
     {
+        // Read first, then swap the list in one synchronous block (no await between the
+        // Clear and the last Add): overlapping loads would otherwise interleave and
+        // leave the same pet in the list twice. Same reasoning as CalendarViewModel.
         var allPets = await _petService.GetPetsAsync();
+        var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
 
-        Pets.Clear();
-        foreach (var pet in allPets)
-        {
-            Pets.Add(pet);
-        }
+        Pets.ReplaceAll(allPets);
 
         if (Pets.Count > 0)
         {
-            var savedPetId = await _activePetService.GetSavedActivePetIdAsync();
             var petToSelect = Pets.FirstOrDefault(p => p.Id == savedPetId) ?? Pets[0];
             SelectPet(petToSelect);
             SelectedPet = petToSelect;
         }
+    }
+
+    /// <summary>
+    /// The ONE place chip selection is written. A single pass sets exactly one flag and
+    /// clears every other, so no path can leave two chips looking selected. Matching is
+    /// by id, never by reference: the list is rebuilt from fresh SQLite rows on every
+    /// load, so the "same" pet is a different object each time (this also covers the
+    /// medication editor's pet Picker, which can hand back a stale instance).
+    /// </summary>
+    private void ApplySelection(int petId)
+    {
+        foreach (var p in Pets)
+            p.IsSelected = p.Id == petId;
     }
 
     private void SelectPet(Pet pet)
@@ -433,20 +694,25 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         if (pet == null)
             return;
 
-        foreach (var p in Pets)
-            p.IsSelected = false;
-
-        pet.IsSelected = true;
+        ApplySelection(pet.Id);
 
         _activePetService.ActivePet = pet;
 
         OnPropertyChanged(nameof(ActivePet));
         OnPropertyChanged(nameof(ActivePetEmoji));
         OnPropertyChanged(nameof(ActivePetSubtitle));
+        OnPropertyChanged(nameof(RecordSectionTitle));
     }
 
-    public int? ParsedPetAge =>
-        int.TryParse(EnteredPetAge, out var age) ? age : null;
+    // Parsed birthday parts: null when the field is blank OR unparseable. Blank month
+    // and day are legitimate ("unknown"); the year is the only required part, enforced
+    // by validation rather than here.
+    public int? ParsedBirthYear =>
+        int.TryParse(EnteredBirthYear, out var y) ? y : null;
+    public int? ParsedBirthMonth =>
+        int.TryParse(EnteredBirthMonth, out var m) ? m : null;
+    public int? ParsedBirthDay =>
+        int.TryParse(EnteredBirthDay, out var d) ? d : null;
 
     /// <summary>Map a pet's stored type to a coarse, non-identifying species bucket for
     /// analytics. Only the fixed known types pass through; any custom/free-text type
@@ -487,17 +753,41 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         await _SettingsService.SetIsFirstLaunchAsync(false);
     }
     private string saveButtonLabel = string.Empty;
+    /// <summary>Label on the final (Details page) save/create button.</summary>
     public string SaveButtonLabel
     {
         get => saveButtonLabel;
         set => SetProperty(ref saveButtonLabel, value);
     }
 
-    private string pageTitle = string.Empty;
-    public string PageTitle
+    // The onboarding form is split across two pages (Identity → Details); each has its
+    // own heading and optional subtitle, set together in the configure methods below.
+    private string identityTitle = string.Empty;
+    public string IdentityTitle
     {
-        get => pageTitle;
-        set => SetProperty(ref pageTitle, value);
+        get => identityTitle;
+        set => SetProperty(ref identityTitle, value);
+    }
+
+    private string identitySubtitle = string.Empty;
+    public string IdentitySubtitle
+    {
+        get => identitySubtitle;
+        set => SetProperty(ref identitySubtitle, value);
+    }
+
+    private string detailsTitle = string.Empty;
+    public string DetailsTitle
+    {
+        get => detailsTitle;
+        set => SetProperty(ref detailsTitle, value);
+    }
+
+    private string detailsSubtitle = string.Empty;
+    public string DetailsSubtitle
+    {
+        get => detailsSubtitle;
+        set => SetProperty(ref detailsSubtitle, value);
     }
 
     private bool showBackButton;
@@ -524,17 +814,24 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         bool isFirstLaunchValue = await IsFirstLaunchAsync();
         IsFirstLaunch = isFirstLaunchValue;
 
+        var loc = LocalizationManager.Instance;
         if (isFirstLaunchValue)
         {
-            SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_FirstLaunchSave");
-            PageTitle = LocalizationManager.Instance.GetString("CreatePet_FirstLaunchTitle");
+            IdentityTitle = loc.GetString("CreatePet_Identity_FirstLaunchTitle");
+            IdentitySubtitle = loc.GetString("CreatePet_Identity_Subtitle");
+            DetailsTitle = loc.GetString("CreatePet_Details_FirstLaunchTitle");
+            DetailsSubtitle = loc.GetString("CreatePet_Details_Subtitle");
+            SaveButtonLabel = loc.GetString("CreatePet_FirstLaunchSave");
             ShowBackButton = false;
             // The flag is cleared in SavePetAsync, once the first pet is saved.
         }
         else
         {
-            SaveButtonLabel = LocalizationManager.Instance.GetString("CreatePet_AddSave");
-            PageTitle = LocalizationManager.Instance.GetString("CreatePet_AddTitle");
+            IdentityTitle = loc.GetString("CreatePet_Identity_AddTitle");
+            IdentitySubtitle = loc.GetString("CreatePet_Identity_Subtitle");
+            DetailsTitle = loc.GetString("CreatePet_Details_AddTitle");
+            DetailsSubtitle = loc.GetString("CreatePet_Details_Subtitle");
+            SaveButtonLabel = loc.GetString("CreatePet_AddSave");
             ShowBackButton = true;
         }
     }
@@ -562,21 +859,50 @@ public class PetViewModel : BaseViewModel, IResettableDraft
         }
     }
 
-    private void ValidatePetAge()
+    private void ValidateBirthday()
     {
-        if (string.IsNullOrWhiteSpace(EnteredPetAge))
-        {
-            PetAgeError = LocalizationManager.Instance.GetString("Validation_PetAgeRequired");
-        }
-        else if (!int.TryParse(EnteredPetAge, out var age) || age < 0)
-        {
-            PetAgeError = LocalizationManager.Instance.GetString("Validation_PetAgeInvalid");
-        }
-        else
-        {
-            PetAgeError = string.Empty;
-        }
+        var key = ComputeBirthdayError();
+        BirthdayError = key is null ? string.Empty : LocalizationManager.Instance.GetString(key);
     }
 
+    /// <summary>The single rule set for the birthday. Returns the resource key of the
+    /// first problem found, or null when the birthday is acceptable. Enforces: a
+    /// required, plausible year; an optional month in 1–12; an optional day that needs
+    /// a month, must exist in that month, and (with the whole date known) must not be
+    /// in the future. A year-only or year+month birthday is always allowed.</summary>
+    private string? ComputeBirthdayError()
+    {
+        // Year: required.
+        if (string.IsNullOrWhiteSpace(EnteredBirthYear))
+            return "Validation_BirthYearRequired";
 
+        var thisYear = DateTime.Today.Year;
+        // Lower bound is generous (no pet outlives it) but rules out typos like "202".
+        if (ParsedBirthYear is not int year || year < 1900 || year > thisYear)
+            return "Validation_BirthYearInvalid";
+
+        // Month: optional, but if given must be a real month.
+        int? month = null;
+        if (!string.IsNullOrWhiteSpace(EnteredBirthMonth))
+        {
+            if (ParsedBirthMonth is not int m || m < 1 || m > 12)
+                return "Validation_BirthMonthInvalid";
+            month = m;
+        }
+
+        // Day: optional; only meaningful with a month, and must exist in it.
+        if (!string.IsNullOrWhiteSpace(EnteredBirthDay))
+        {
+            if (month is null)
+                return "Validation_BirthDayNeedsMonth";
+            if (ParsedBirthDay is not int day || day < 1 || day > DateTime.DaysInMonth(year, month.Value))
+                return "Validation_BirthDayInvalid";
+
+            // A fully known birthday can't be in the future.
+            if (new DateTime(year, month.Value, day) > DateTime.Today)
+                return "Validation_BirthdayFuture";
+        }
+
+        return null;
+    }
 }

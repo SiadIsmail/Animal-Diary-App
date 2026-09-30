@@ -1,8 +1,9 @@
-namespace Animal_Diary_App.Data.Services.Reports;
+﻿namespace Animal_Diary_App.Data.Services.Reports;
 
 using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Journal;
+using Animal_Diary_App.Data.Services.Reports.Document;
 using Animal_Diary_App.Helpers;
 
 /// <summary>
@@ -20,8 +21,11 @@ public class VetReportDataBuilder
     private readonly GlucoseEntryService _glucose;
     private readonly AppetiteEntryService _appetite;
     private readonly SeizureEntryService _seizures;
-    private readonly TrackingEntryService _tracking;
+    private readonly WaterEntryService _water;
     private readonly TrackerService _trackers;
+    private readonly CustomTrackerService _custom;
+    private readonly ConstellationService _everything;
+    private readonly DisplayUnitService _displayUnits;
 
     public VetReportDataBuilder(
         PetService pets,
@@ -32,8 +36,11 @@ public class VetReportDataBuilder
         GlucoseEntryService glucose,
         AppetiteEntryService appetite,
         SeizureEntryService seizures,
-        TrackingEntryService tracking,
-        TrackerService trackers)
+        WaterEntryService water,
+        TrackerService trackers,
+        CustomTrackerService custom,
+        ConstellationService everything,
+        DisplayUnitService displayUnits)
     {
         _pets = pets;
         _conditions = conditions;
@@ -43,13 +50,81 @@ public class VetReportDataBuilder
         _glucose = glucose;
         _appetite = appetite;
         _seizures = seizures;
-        _tracking = tracking;
+        _water = water;
         _trackers = trackers;
+        _custom = custom;
+        _everything = everything;
+        _displayUnits = displayUnits;
+    }
+
+    /// <summary>
+    /// Snapshot for the PLAIN export: everything the owner wrote down in the range, in
+    /// time order, and nothing else. Free forever on every tier: this is the promise
+    /// that you can always take your data out (AI/domain.md).
+    ///
+    /// <para>It reuses <see cref="ConstellationService.GetRangeAsync"/> rather than
+    /// flattening the stores a second time. That service already exists to answer exactly
+    /// this question: "everything for one pet over a stretch, sorted purely by time",
+    /// and it reads every store in one pass. A second flattener here would be ~150 lines
+    /// that drift apart the first time a tracker is added, and a new tracker would then
+    /// be logged, stored, and silently missing from the one export that promises
+    /// completeness.</para>
+    ///
+    /// <para>It inherits that service's one deliberate exclusion, and the exclusion is
+    /// right here too: an automatically-stamped <c>Missed</c> dose is not a star and is
+    /// not a line, because nobody wrote it down. The plain export prints the owner's
+    /// record. The designed report is where a missed dose is counted, in words.</para>
+    /// </summary>
+    public async Task<VetReportData> BuildPlainAsync(int petId, DateTime from, DateTime to)
+    {
+        from = from.Date;
+        to = to.Date;
+
+        var pet = await _pets.GetPetByIdAsync(petId)
+            ?? throw new InvalidOperationException($"Pet {petId} not found.");
+
+        var conditionIds = await _conditions.GetConditionIdsAsync(pet);
+        var events = await _everything.GetRangeAsync(petId, from, to);
+
+        return new VetReportData
+        {
+            Style = ReportStyle.Plain,
+            // No photo: the plain export is the portable copy of a record, not a document
+            // designed to be handed over, and a face on it buys nothing.
+            // The header prints the pet's current weight, so the plain export resolves the
+            // unit exactly as the designed one does: "everything you wrote down" must not
+            // be the one document that states a number in a unit the owner never used.
+            Pet = await BuildPetInfoAsync(
+                pet, conditionIds, weightPoints: new List<ReportPoint>(),
+                weightUnit: await _displayUnits.ResolveAsync(petId, UnitFamily.Weight),
+                includePhoto: false),
+            From = from,
+            To = to,
+            GeneratedAt = DateTime.Now,
+            PlainLog = events.Select(e => new ReportLogLine(
+                e.When,
+                // A legacy mood/weight row saved before per-entry times existed sits at
+                // the start of its day, so midnight here means "no time was recorded" and
+                // the export prints the date alone. It costs a genuine 00:00 entry its
+                // clock time, which is the harmless direction: understating what was
+                // recorded beats inventing a moment the owner never gave us.
+                HasTime: e.When.TimeOfDay != TimeSpan.Zero,
+                e.Title,
+                e.Detail)).ToList(),
+        };
     }
 
     /// <summary>Snapshot everything the report might show for the pet in
     /// [<paramref name="from"/> .. <paramref name="to"/>] (inclusive, date-only).</summary>
-    public async Task<VetReportData> BuildAsync(int petId, DateTime from, DateTime to)
+    public async Task<VetReportData> BuildAsync(
+        int petId, DateTime from, DateTime to,
+        bool includePhoto = false,
+        bool includeWaterMeasured = true,
+        bool includeWaterObservations = true,
+        bool includeAppetiteMeasured = true,
+        bool includeAppetiteObservations = true,
+        bool includeMood = true,
+        bool includeCustom = true)
     {
         from = from.Date;
         to = to.Date;
@@ -62,7 +137,6 @@ public class VetReportDataBuilder
         var glucoseEntries = await _glucose.GetForRangeAsync(petId, from, to);
         var appetiteEntries = await _appetite.GetForRangeAsync(petId, from, to);
         var seizureEntries = await _seizures.GetForRangeAsync(petId, from, to);
-        var trackingEntries = await _tracking.GetForRangeAsync(petId, from, to);
 
         var weightPoints = petEntries
             .Where(e => e.Weight > 0)
@@ -70,16 +144,27 @@ public class VetReportDataBuilder
             .Select(e => new ReportPoint(e.Date, e.Weight))
             .ToList();
 
-        var events = BuildEvents(seizureEntries, appetiteEntries, trackingEntries);
+        // Resolved once and handed to every seizure row: the report must not state one
+        // occurrence in seconds and the next in minutes.
+        var durationUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Duration);
+        var events = BuildEvents(seizureEntries, durationUnit);
+
+        // The unit this pet's weights read in on this document: the majority of what the
+        // owner typed, over their whole history so it does not change with the range.
+        var weightUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Weight);
 
         return new VetReportData
         {
-            Pet = await BuildPetInfoAsync(pet, conditionIds, weightPoints),
+            Pet = await BuildPetInfoAsync(pet, conditionIds, weightPoints, weightUnit, includePhoto),
             From = from,
             To = to,
             GeneratedAt = DateTime.Now,
             Medications = await BuildMedicationsAsync(petId, from, to),
-            Trends = await BuildTrendsAsync(petId, weightPoints, glucoseEntries, events, from, to),
+            Trends = await BuildTrendsAsync(petId, weightPoints, weightUnit, glucoseEntries, events, from, to),
+            Water = await BuildWaterAsync(petId, from, to, includeWaterMeasured, includeWaterObservations),
+            Appetite = await BuildAppetiteAsync(petId, appetiteEntries, from, to, includeAppetiteMeasured, includeAppetiteObservations),
+            Mood = includeMood ? BuildMood(petEntries) : new ReportMood(),
+            Custom = includeCustom ? await BuildCustomAsync(petId, from, to) : new ReportCustom(),
             Events = events,
             // Only notes the owner explicitly opted into appear here; every other
             // note stays stored but private. Legacy entries default to false.
@@ -87,16 +172,67 @@ public class VetReportDataBuilder
                 .Where(e => e.IncludeInVetReport && !string.IsNullOrWhiteSpace(e.MoodNote))
                 .OrderByDescending(e => e.Date)
                 .Select(e => new ReportNote(e.Date, e.MoodNote.Trim()))
-                .ToList()
+                .ToList(),
+            UnitNotes = await BuildUnitNotesAsync(petId, from, to, weightUnit)
         };
     }
 
+    /// <summary>
+    /// The report's "some values were converted" footnotes: one per record whose entries
+    /// in this range were not all written in the unit the document shows.
+    ///
+    /// <para>Only stated when a conversion actually happened. Nothing here interprets: it
+    /// says what the record contains, which is the same standing every other line in the
+    /// document has.</para>
+    /// </summary>
+    private async Task<IReadOnlyList<string>> BuildUnitNotesAsync(
+        int petId, DateTime from, DateTime to, UnitDef weightUnit)
+    {
+        var notes = new List<string>();
+        await AddUnitNoteAsync(notes, petId, UnitFamily.Weight, weightUnit,
+            VetReportStrings.SeriesWeight, from, to);
+        await AddUnitNoteAsync(
+            notes, petId, UnitFamily.Glucose,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.Glucose),
+            VetReportStrings.SeriesGlucose, from, to);
+        await AddUnitNoteAsync(
+            notes, petId, UnitFamily.Volume,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.Volume),
+            VetReportStrings.SectionWater, from, to);
+        await AddUnitNoteAsync(
+            notes, petId, UnitFamily.FoodMass,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.FoodMass),
+            VetReportStrings.SectionAppetite, from, to);
+        await AddUnitNoteAsync(
+            notes, petId, UnitFamily.Duration,
+            await _displayUnits.ResolveAsync(petId, UnitFamily.Duration),
+            VetReportStrings.SectionEvents, from, to);
+        return notes;
+    }
+
+    /// <summary>One record's note, or nothing at all. Shared so each record added in a
+    /// later phase is one call rather than a copy of this reasoning.</summary>
+    private async Task AddUnitNoteAsync(
+        List<string> notes, int petId, UnitFamily family, UnitDef shownIn,
+        string recordName, DateTime from, DateTime to)
+    {
+        var others = await _displayUnits.OtherUnitsInRangeAsync(petId, family, shownIn, from, to);
+        if (others.Count == 0)
+            return;
+
+        notes.Add(VetReportStrings.UnitConverted(
+            recordName,
+            string.Join(", ", others.Select(u => u.Label)),
+            shownIn.Label));
+    }
+
     private async Task<ReportPetInfo> BuildPetInfoAsync(
-        Pet pet, IReadOnlyList<string> conditionIds, List<ReportPoint> weightPoints)
+        Pet pet, IReadOnlyList<string> conditionIds, List<ReportPoint> weightPoints,
+        UnitDef weightUnit, bool includePhoto)
     {
         // Current weight: last reading in range, else the pet's latest ever (so the
         // header still identifies the pet). Change is only stated when the range
-        // itself contains at least two readings — never inferred across gaps.
+        // itself contains at least two readings, never inferred across gaps.
         decimal? currentWeight = weightPoints.Count > 0 ? weightPoints[^1].Value : null;
         if (currentWeight == null)
             currentWeight = (await _petEntries.GetLatestWeightEntryAsync(pet.Id))?.Weight;
@@ -105,27 +241,35 @@ public class VetReportDataBuilder
         {
             Name = pet.Name,
             Species = PetTypeNames.Localize(pet.Type),
-            AgeYears = pet.Age > 0 ? pet.Age : null,
+            AgeYears = pet.AgeYears,
             Conditions = conditionIds
                 .Select(id => ConditionCatalog.GetCondition(id).Name)
                 .ToList(),
             CurrentWeightKg = currentWeight,
             WeightChangeKg = weightPoints.Count >= 2
                 ? weightPoints[^1].Value - weightPoints[0].Value
-                : null
+                : null,
+            WeightUnit = weightUnit,
+            // Opt-in only, and only when the file is actually present on this device.
+            PhotoPath = includePhoto && pet.PhotoFullPath is { } p && File.Exists(p) ? p : null,
         };
     }
 
     private async Task<List<ReportMedication>> BuildMedicationsAsync(int petId, DateTime from, DateTime to)
     {
         // Archived medications are included on purpose when they were still dosed in
-        // the period — a vet reading 90 days of history needs the whole picture.
+        // the period: a vet reading 90 days of history needs the whole picture.
         var meds = await _medications.GetMedicationsByPetIdAsync(petId);
         var medIds = meds.Select(m => m.Id).ToList();
         var schedules = (await _medications.GetSchedulesForMedicationsAsync(medIds))
             .ToLookup(s => s.MedicationId);
         var logs = (await _doseLogs.GetByMedicationsAndRangeAsync(medIds, from, to))
             .ToLookup(l => l.MedicationId);
+
+        // The pet's treatment ledger up to the end of the period. One read for every
+        // medication: it is scoped by pet, which is the whole point of the table.
+        var ledger = await _medications.GetChangesForRangeAsync(
+            petId, DateTime.MinValue, to.Date.AddDays(1).ToUniversalTime());
 
         var result = new List<ReportMedication>();
         foreach (var med in meds)
@@ -134,8 +278,8 @@ public class VetReportDataBuilder
             var medLogs = logs[med.Id].ToList();
 
             // Scheduled doses that actually fell inside the period. The schedule rows
-            // only describe the CURRENT rules — an edited schedule would silently
-            // rewrite history — so the count is the UNION of (a) the current rules
+            // only describe the CURRENT rules: an edited schedule would silently
+            // rewrite history, so the count is the UNION of (a) the current rules
             // walked over the period and (b) every dose log in the period (each log
             // row proves a dose was scheduled then, whatever the rules said at the
             // time). Bounded below by the medication's creation date and above by
@@ -162,6 +306,9 @@ public class VetReportDataBuilder
                 Name = med.Name,
                 Dose = med.Dosage,
                 Unit = med.Unit,
+                DoseText = MedicationLedger.DoseOverPeriod(
+                    ledger, med.Id,
+                    start.Date.ToUniversalTime(), end.Date.AddDays(1).ToUniversalTime()),
                 DaysPerWeek = medSchedules.Select(s => s.Day).Distinct().Count(),
                 TimesOfDay = medSchedules.Select(s => s.Time).Distinct().OrderBy(t => t).ToList(),
                 ScheduledCount = scheduled,
@@ -173,9 +320,25 @@ public class VetReportDataBuilder
         return result;
     }
 
+    /// <summary>
+    /// The day's mood readings as qualitative observations. The stored level is 1–5
+    /// (see <c>MoodLevel</c>) which is exactly what <see cref="ReportObservation"/>
+    /// wants: a row index, never a value to be averaged or trended. Days with no mood
+    /// recorded are absent rather than zero: a gap is a gap, not a bad day.
+    /// </summary>
+    private static ReportMood BuildMood(IReadOnlyList<PetEntry> petEntries) => new()
+    {
+        Observations = petEntries
+            .Where(e => e.MoodLevel > 0)
+            .OrderBy(e => e.Date)
+            .Select(e => new ReportObservation(e.Date, e.MoodLevel))
+            .ToList()
+    };
+
     private async Task<List<ReportSeries>> BuildTrendsAsync(
         int petId,
         List<ReportPoint> weightPoints,
+        UnitDef weightUnit,
         List<GlucoseEntry> glucoseEntries,
         List<ReportEvent> events,
         DateTime from,
@@ -183,20 +346,40 @@ public class VetReportDataBuilder
     {
         var trends = new List<ReportSeries>();
 
-        if (weightPoints.Count >= 2)
-            trends.Add(new ReportSeries { Label = "Weight", Unit = "kg", Points = weightPoints });
-
-        if (glucoseEntries.Count >= 2)
-        {
-            // The unit lives on the pet's glucose tracker ("mmol/L" today).
-            var tracker = await _trackers.GetByTrackerIdAsync(petId, TrackerId.Glucose);
+        // One reading is enough to be worth stating. It can't be plotted: a one-point
+        // line says nothing, so TrendsSection prints it as a dated value instead. The
+        // old >= 2 threshold dropped it entirely, which is how an owner with a single
+        // weigh-in was told nothing had been written down.
+        // Series labels are printed on the page, so they are localized here: the same
+        // place Species and the condition names are already resolved to display words.
+        if (weightPoints.Count >= 1)
             trends.Add(new ReportSeries
             {
-                Label = "Blood glucose",
-                Unit = string.IsNullOrEmpty(tracker?.Unit) ? "mmol/L" : tracker!.Unit,
+                Label = VetReportStrings.SeriesWeight,
+                // ReportSeries.Points are stated in ReportSeries.Unit (see that type): a
+                // chart's axis labels are numbers drawn from the points, so the conversion
+                // has to happen before the renderer sees them, not in the caption.
+                Unit = weightUnit.Label,
+                Points = weightPoints
+                    .Select(p => new ReportPoint(p.Date, UnitCatalog.Display(p.Value, weightUnit)))
+                    .ToList(),
+            });
+
+        if (glucoseEntries.Count >= 1)
+        {
+            // The unit the OWNER'S OWN READINGS resolved to, not the one their target band
+            // happens to be stored in. Tracker.Unit is the band's unit and nothing else;
+            // reading it as the series unit is how a chart of mmol/L numbers came to be
+            // captioned mg/dL, which is a factor of eighteen wrong in a medical document.
+            var glucoseUnit = await _displayUnits.ResolveAsync(petId, UnitFamily.Glucose);
+            trends.Add(new ReportSeries
+            {
+                Label = VetReportStrings.SeriesGlucose,
+                Unit = glucoseUnit.Label,
                 Points = glucoseEntries
                     .OrderBy(g => g.Date).ThenBy(g => g.Time)
-                    .Select(g => new ReportPoint(g.Date + g.Time, g.Value))
+                    .Select(g => new ReportPoint(
+                        g.Date + g.Time, UnitCatalog.Display(g.Value, glucoseUnit)))
                     .ToList()
             });
         }
@@ -205,64 +388,230 @@ public class VetReportDataBuilder
         if (seizureDates.Count > 0)
             trends.Add(new ReportSeries
             {
-                Label = "Seizures per week",
-                Points = VetReportSampleData.BuildWeeklyCounts(seizureDates, from, to)
+                Label = VetReportStrings.SeriesSeizuresPerWeek,
+                Points = BuildWeeklyCounts(seizureDates, from, to)
             });
 
         return trends;
     }
 
+    /// <summary>Occurrences bucketed into calendar weeks (points dated at each week's
+    /// start).
+    ///
+    /// <para>Lived in <c>VetReportSampleData</c> until the demo pets replaced that
+    /// fixture's larger half: an odd home for it, since the REAL report was always its
+    /// only caller.</para></summary>
+    private static IReadOnlyList<ReportPoint> BuildWeeklyCounts(
+        IEnumerable<DateTime> occurrences, DateTime from, DateTime to)
+    {
+        var dates = occurrences.Select(d => d.Date).ToList();
+        var points = new List<ReportPoint>();
+        for (var weekStart = from.Date; weekStart <= to.Date; weekStart = weekStart.AddDays(7))
+        {
+            var weekEnd = weekStart.AddDays(6);
+            points.Add(new ReportPoint(weekStart, dates.Count(d => d >= weekStart && d <= weekEnd)));
+        }
+        return points;
+    }
+
+    // Water intake, kept as two DISTINCT data types (see ReportWater). The report is
+    // a communication layer, not an interpretation one: measured millilitres and
+    // subjective observations are built independently, never merged, and no trend or
+    // verdict is derived from either. Each type is included only when the owner left
+    // its export toggle on (both default on).
+    private async Task<ReportWater> BuildWaterAsync(
+        int petId, DateTime from, DateTime to, bool includeMeasured, bool includeObservations)
+    {
+        ReportSeries? measured = null;
+        if (includeMeasured)
+        {
+            // Objective measurements. Exact readings are additive, so a day's value is
+            // the SUM of that day's readings (four 100 mL logs and one 400 mL log both
+            // read 400 mL for the day): one point per day. This is aggregation of like
+            // measurements, not a trend or a judgement.
+            var points = (await _water.GetAmountsForRangeAsync(petId, from, to))
+                .Where(w => w.AmountMl > 0)
+                .GroupBy(w => w.Date.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new ReportPoint(g.Key, g.Sum(w => w.AmountMl)))
+                .ToList();
+            if (points.Count > 0)
+            {
+                // Summed in canonical ml, then converted ONCE for the chart: converting
+                // each reading first and summing the rounded results would drift the
+                // daily total by a little more for every extra drink logged.
+                var unit = await _displayUnits.ResolveAsync(petId, UnitFamily.Volume);
+                measured = new ReportSeries
+                {
+                    Label = "Measured",
+                    Unit = unit.Label,
+                    Points = points
+                        .Select(pt => new ReportPoint(pt.Date, UnitCatalog.Display(pt.Value, unit)))
+                        .ToList(),
+                };
+            }
+        }
+
+        IReadOnlyList<ReportObservation> observations = Array.Empty<ReportObservation>();
+        if (includeObservations)
+        {
+            // Subjective owner observations: the relative reading as-logged. Passed
+            // through verbatim (date + level); the document renders them on a word
+            // axis. Never converted to a number, never averaged, never trended.
+            observations = (await _water.GetLevelsForRangeAsync(petId, from, to))
+                .Where(w => w.Level is >= 1 and <= 5)
+                .OrderBy(w => w.Date).ThenBy(w => w.Time)
+                .Select(w => new ReportObservation(w.Date, w.Level))
+                .ToList();
+        }
+
+        return new ReportWater { Measured = measured, Observations = observations };
+    }
+
+    // Appetite: the same communication-not-interpretation stance as water, plus the
+    // diet list. Measured grams, qualitative observations and the recorded foods are
+    // built independently; nothing is merged, numbered from a word, or trended.
+    // <paramref name="levelEntries"/> is the already-fetched qualitative range.
+    private async Task<ReportAppetite> BuildAppetiteAsync(
+        int petId, List<AppetiteEntry> levelEntries, DateTime from, DateTime to,
+        bool includeMeasured, bool includeObservations)
+    {
+        var amountEntries = await _appetite.GetAmountsForRangeAsync(petId, from, to);
+
+        ReportSeries? measured = null;
+        if (includeMeasured)
+        {
+            // Objective grams. Additive, so a day's value is the SUM of that day's
+            // measured meals: one point per day. Aggregation, not a trend.
+            var points = amountEntries
+                .Where(a => a.Grams > 0)
+                .GroupBy(a => a.Date.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new ReportPoint(g.Key, g.Sum(a => a.Grams)))
+                .ToList();
+            if (points.Count > 0)
+            {
+                // Summed in canonical grams, then converted once: see BuildWaterAsync.
+                var unit = await _displayUnits.ResolveAsync(petId, UnitFamily.FoodMass);
+                measured = new ReportSeries
+                {
+                    Label = "Measured",
+                    Unit = unit.Label,
+                    Points = points
+                        .Select(pt => new ReportPoint(pt.Date, UnitCatalog.Display(pt.Value, unit)))
+                        .ToList(),
+                };
+            }
+        }
+
+        IReadOnlyList<ReportObservation> observations = Array.Empty<ReportObservation>();
+        if (includeObservations)
+        {
+            observations = levelEntries
+                .Where(a => a.Level is >= 1 and <= 5)
+                .OrderBy(a => a.Date).ThenBy(a => a.Time)
+                .Select(a => new ReportObservation(a.Date, a.Level))
+                .ToList();
+        }
+
+        // Diet list: the distinct foods recorded across both stores in the range,
+        // most-recent first. A plain factual list: the range is the only context.
+        var foods = levelEntries.Select(a => new { a.Food, a.Date, a.Time })
+            .Concat(amountEntries.Select(a => new { a.Food, a.Date, a.Time }))
+            .Where(x => !string.IsNullOrWhiteSpace(x.Food))
+            .OrderByDescending(x => x.Date).ThenByDescending(x => x.Time)
+            .Select(x => x.Food.Trim())
+            .Distinct(StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        return new ReportAppetite { Measured = measured, Observations = observations, Foods = foods };
+    }
+
     private static List<ReportEvent> BuildEvents(
-        List<SeizureEntry> seizureEntries,
-        List<AppetiteEntry> appetiteEntries,
-        List<TrackingEntry> trackingEntries)
+        List<SeizureEntry> seizureEntries, UnitDef durationUnit)
     {
         var events = new List<ReportEvent>();
 
-        // Seizures live in the typed Journal store…
         events.AddRange(seizureEntries.Select(s => new ReportEvent
         {
             Kind = ReportEventKind.Seizure,
             Date = s.Date,
             Time = s.Time,
-            DurationMinutes = s.DurationMinutes,
+            DurationSeconds = s.DurationSeconds,
+            DurationUnit = durationUnit,
+            SeizureType = s.Type,
             Note = string.IsNullOrWhiteSpace(s.Note) ? null : s.Note.Trim()
         }));
 
-        // …but the Calendar's older dynamic tracker wrote them to TrackingEntry, so
-        // both stores are read until that data is migrated.
-        events.AddRange(trackingEntries
-            .Where(t => t.ItemId == "seizure" && (t.Flag == true || t.DurationSeconds.HasValue || t.TimeTicks.HasValue))
-            .Select(t => new ReportEvent
-            {
-                Kind = ReportEventKind.Seizure,
-                Date = t.Date,
-                Time = t.TimeTicks.HasValue ? new TimeSpan(t.TimeTicks.Value) : null,
-                DurationMinutes = t.DurationSeconds.HasValue
-                    ? (int)Math.Round(t.DurationSeconds.Value / 60.0, MidpointRounding.AwayFromZero)
-                    : null,
-                Note = string.IsNullOrWhiteSpace(t.Text) ? null : t.Text!.Trim()
-            }));
-
-        events.AddRange(trackingEntries
-            .Where(t => t.ItemId == "vomiting" && t.Flag == true)
-            .Select(t => new ReportEvent { Kind = ReportEventKind.Vomiting, Date = t.Date }));
-
-        // "Ate nothing / barely anything" readings, reported as the owner's own
-        // logged level — a fact, not an assessment.
-        events.AddRange(appetiteEntries
-            .Where(a => a.Level <= (int)AppetiteLevel.Barely)
-            .Select(a => new ReportEvent
-            {
-                Kind = ReportEventKind.LowAppetite,
-                Date = a.Date,
-                Time = a.Time,
-                Value = a.Level
-            }));
+        // Vomiting has no logging UI right now, so no producer adds
+        // ReportEventKind.Vomiting here: the kind stays (rendered by
+        // EventsSection, used by the sample harness) for when a sheet exists.
+        //
+        // Appetite is NO LONGER surfaced as "low appetite" events. It now has its own
+        // measured-vs-observed section (BuildAppetiteAsync / AppetiteSection): the
+        // qualitative reading is shown as-logged on its own graph, not re-labelled
+        // "low": the report records, it does not flag. ReportEventKind.LowAppetite
+        // stays for the sample harness / back-compat but has no real producer.
 
         return events
             .OrderByDescending(e => e.Date)
             .ThenByDescending(e => e.Time ?? TimeSpan.Zero)
             .ToList();
+    }
+
+    // ── Owner-defined trackers ──────────────────────────────────────────────────
+    //
+    // Only trackers whose IncludeInReport switch is on, because only the owner can know
+    // whether a thing is clinical: a walk is noise for one household and the whole point
+    // for another whose dog has a limp. Filtering HERE means nothing downstream has to
+    // remember to: a tracker that is off simply never reaches VetReportData.
+    //
+    // ARCHIVED trackers are included. Retiring one means "stop asking me", not "pretend
+    // the last three months didn't happen", and an owner who stopped recording something
+    // in April still needs April in front of their vet.
+    //
+    // Everything here is a fact: entries as they were written, and a count of them. No
+    // totals across the range, no rate, no trend, no verdict.
+    private async Task<ReportCustom> BuildCustomAsync(int petId, DateTime from, DateTime to)
+    {
+        var definitions = (await _custom.GetAllForPetAsync(petId))
+            .Where(c => c.IncludeInReport)
+            .ToDictionary(c => c.Id);
+        if (definitions.Count == 0)
+            return new ReportCustom();
+
+        var rows = (await _custom.GetForRangeAsync(petId, from, to))
+            .Where(e => definitions.ContainsKey(e.CustomTrackerId))
+            .ToList();
+        if (rows.Count == 0)
+            return new ReportCustom();
+
+        var entries = rows
+            .OrderByDescending(e => e.Date)
+            .ThenByDescending(e => e.Time)
+            .Select(e =>
+            {
+                var def = definitions[e.CustomTrackerId];
+                return new ReportCustomEntry(
+                    def.Name,
+                    // The unit the entry was written in. A report is read months later,
+                    // which is exactly when a since-renamed unit does the damage.
+                    e.UnitFor(def),
+                    e.Date,
+                    e.Time,
+                    e.Amount,
+                    string.IsNullOrWhiteSpace(e.Note) ? null : e.Note.Trim());
+            })
+            .ToList();
+
+        // One summary line per tracker that actually has entries, in care-plan order.
+        var counts = rows.GroupBy(e => e.CustomTrackerId).ToDictionary(g => g.Key, g => g.Count());
+        var trackers = definitions.Values
+            .Where(d => counts.ContainsKey(d.Id))
+            .OrderBy(d => d.Id)
+            .Select(d => new ReportCustomTracker(d.Name, d.Unit, counts[d.Id]))
+            .ToList();
+
+        return new ReportCustom { Trackers = trackers, Entries = entries };
     }
 }

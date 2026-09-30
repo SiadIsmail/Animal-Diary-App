@@ -1,82 +1,110 @@
-namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
+﻿namespace Animal_Diary_App.Data.Services.Reports.Document.Sections;
 
-using QuestPDF.Fluent;
-using QuestPDF.Infrastructure;
+using Animal_Diary_App.Helpers;
+using MigraDoc.DocumentObjectModel;
 
 /// <summary>
 /// Identification block: who the pet is, what it has, what period this covers.
-/// Two columns — pet facts left, report metadata right — over a rule line.
-/// The optional photo renders only when the DTO carries a path (it never does
-/// today; delete the QR-sized Image block below to drop the idea entirely).
+/// Two columns (pet facts left, report metadata right) over a rule line.
+/// The optional photo renders only when the DTO carries a path (it never does today).
 /// </summary>
 public class HeaderSection : IVetReportSection
 {
     public bool HasContent(VetReportData data) => true;
 
-    public void Compose(IContainer container, VetReportData data)
+    public void Compose(Section section, VetReportData data, ReportContext ctx)
     {
-        container
-            .BorderBottom(1).BorderColor(VetReportStyles.RuleLine)
-            .PaddingBottom(6)
-            .Row(row =>
+        var pet = data.Pet;
+        var hasPhoto = pet.PhotoPath != null && File.Exists(pet.PhotoPath);
+
+        var table = section.AddTable();
+        table.Borders.Width = 0;
+
+        const double photoWidth = 50;
+        const double metaWidth = 150;
+        var leftWidth = ctx.ContentWidthPt - metaWidth - (hasPhoto ? photoWidth : 0);
+
+        if (hasPhoto) table.AddColumn(Unit.FromPoint(photoWidth));
+        table.AddColumn(Unit.FromPoint(leftWidth));
+        table.AddColumn(Unit.FromPoint(metaWidth));
+
+        var row = table.AddRow();
+        row.Borders.Bottom.Width = 1;
+        row.Borders.Bottom.Color = SectionChrome.Hex(VetReportStyles.RuleLine);
+
+        var col = 0;
+        if (hasPhoto)
+        {
+            var img = row.Cells[col++].AddParagraph().AddImage(pet.PhotoPath!);
+            img.LockAspectRatio = true;
+            img.Width = Unit.FromPoint(42);
+        }
+
+        // ── Left: pet facts ────────────────────────────────────────────────
+        var left = row.Cells[col++];
+        left.Format.SpaceAfter = 6;
+
+        var namePara = left.AddParagraph();
+        var name = namePara.AddFormattedText(pet.Name, TextFormat.Bold);
+        name.Size = VetReportStyles.TitleSize;
+        var sig = namePara.AddFormattedText("  " + Signalment(pet));
+        sig.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
+
+        if (pet.Conditions.Count > 0)
+        {
+            var p = left.AddParagraph();
+            p.AddFormattedText(VetReportStrings.Conditions + " ", TextFormat.Bold);
+            p.AddText(string.Join(", ", pet.Conditions));
+        }
+
+        if (pet.CurrentWeightKg is decimal w)
+        {
+            var p = left.AddParagraph();
+            p.AddFormattedText(VetReportStrings.Weight + " ", TextFormat.Bold);
+            // The one formatter, same as every other surface, converted into the unit the
+            // owner's own weigh-ins resolved to (Helpers/UnitText.cs). The unit is always
+            // printed: with units chosen per entry a bare number is genuinely ambiguous,
+            // and this document is read by someone who was not there when it was typed.
+            p.AddText(UnitText.WithUnit(w, pet.WeightUnit));
+            if (pet.WeightChangeKg is decimal change)
             {
-                // Optional passport-style photo, identification only.
-                if (data.Pet.PhotoPath != null && File.Exists(data.Pet.PhotoPath))
-                    row.ConstantItem(42).PaddingRight(8).Image(data.Pet.PhotoPath).FitArea();
+                var c = p.AddFormattedText(
+                    "  " + VetReportStrings.WeightChange(UnitText.Change(change, pet.WeightUnit)));
+                c.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
+            }
+        }
 
-                row.RelativeItem().Column(col =>
-                {
-                    col.Item().Text(text =>
-                    {
-                        text.Span(data.Pet.Name).FontSize(VetReportStyles.TitleSize).Bold();
-                        text.Span("  " + Signalment(data.Pet)).FontColor(VetReportStyles.InkSecondary);
-                    });
+        if (pet.OwnerName != null)
+        {
+            var p = left.AddParagraph();
+            p.AddFormattedText(VetReportStrings.Owner + " ", TextFormat.Bold);
+            p.AddText(pet.OwnerName);
+        }
 
-                    if (data.Pet.Conditions.Count > 0)
-                        col.Item().Text(t =>
-                        {
-                            t.Span("Conditions: ").SemiBold();
-                            t.Span(string.Join(", ", data.Pet.Conditions));
-                        });
+        // ── Right: report metadata ─────────────────────────────────────────
+        var meta = row.Cells[col];
+        meta.Format.Alignment = ParagraphAlignment.Right;
+        meta.Format.SpaceAfter = 6;
 
-                    if (data.Pet.CurrentWeightKg is decimal w)
-                        col.Item().Text(t =>
-                        {
-                            t.Span("Weight: ").SemiBold();
-                            t.Span($"{w:0.0} kg");
-                            if (data.Pet.WeightChangeKg is decimal change)
-                                t.Span($"  ({FormatChange(change)} kg over period)").FontColor(VetReportStyles.InkSecondary);
-                        });
-
-                    if (data.Pet.OwnerName != null)
-                        col.Item().Text(t =>
-                        {
-                            t.Span("Owner: ").SemiBold();
-                            t.Span(data.Pet.OwnerName);
-                        });
-                });
-
-                row.ConstantItem(150).AlignRight().Column(col =>
-                {
-                    col.Item().AlignRight().Text(
-                        $"{data.From.ToString(VetReportStyles.DateFormat)} – {data.To.ToString(VetReportStyles.DateFormat)}").SemiBold();
-                    col.Item().AlignRight().Text($"Generated {data.GeneratedAt.ToString(VetReportStyles.DateFormat)}")
-                        .FontColor(VetReportStyles.InkSecondary);
-                });
-            });
+        meta.AddParagraph().AddFormattedText(
+            $"{data.From.ToString(VetReportStyles.DateFormat)}: {data.To.ToString(VetReportStyles.DateFormat)}",
+            TextFormat.Bold);
+        var gen = meta.AddParagraph().AddFormattedText(
+            VetReportStrings.Generated(data.GeneratedAt.ToString(VetReportStyles.DateFormat)));
+        gen.Color = SectionChrome.Hex(VetReportStyles.InkSecondary);
     }
 
-    /// <summary>"— Dog, 7 y" plus breed/sex when the app models them one day.</summary>
+    /// <summary>"· Dog, 7 y" plus breed/sex when the app models them one day. Species
+    /// arrives already localized from the builder (PetTypeNames.Localize). The separator
+    /// is the middot the rest of the report uses, not a dash: AI/app-voice.md §5.1 bans
+    /// the em dash everywhere a person reads, and this line sits under the vet's eye.</summary>
     private static string Signalment(ReportPetInfo pet)
     {
         var parts = new List<string> { pet.Species };
         if (pet.Breed != null) parts.Add(pet.Breed);
         if (pet.Sex != null) parts.Add(pet.Sex);
-        if (pet.AgeYears is int age) parts.Add($"{age} y");
-        return "— " + string.Join(", ", parts);
+        if (pet.AgeYears is int age) parts.Add(VetReportStrings.AgeYears(age));
+        return "· " + string.Join(", ", parts);
     }
 
-    /// <summary>Explicit sign so gain and loss read unambiguously: "+0.4" / "−1.4".</summary>
-    private static string FormatChange(decimal change) =>
-        change < 0 ? $"−{Math.Abs(change):0.0}" : $"+{change:0.0}";
 }

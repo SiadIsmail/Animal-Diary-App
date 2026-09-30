@@ -79,10 +79,29 @@ public partial class ConditionPickerPage : ContentPage
             // Finishing first-launch onboarding: this branch runs only when there is no
             // Shell yet (adding a pet from the Pets tab takes the branch above), so it
             // marks the true end of the onboarding funnel.
-            vm.Analytics.Track(AnalyticsEvents.OnboardingCompleted);
 
-            // Hand off to the tabbed app.
-            (Application.Current as App)?.SwitchToMainApp();
+            // Did the user actually set up a condition, or continue past it? The row
+            // states are current (SyncAsync ran on appear and after every sheet save).
+            // We record only whether setup happened, never which condition.
+            var configuredCondition = vm.ConditionVM.Conditions.Any(c => c.IsSelected && !c.IsNone);
+            vm.Analytics.Track(configuredCondition
+                ? AnalyticsEvents.ConditionSetupCompleted
+                : AnalyticsEvents.ConditionSetupSkipped);
+
+            // Now that the pet exists, offer backup + sharing once at this concrete-value
+            // moment, unless the owner already turned backup on (e.g. via the Welcome
+            // account door), in which case there's nothing to offer and we go straight in.
+            // KeepSafePage fires OnboardingCompleted at its own handoff, so the funnel
+            // still closes exactly once, on entering the app.
+            if (vm.CloudSync.IsBackupEnabled)
+            {
+                vm.Analytics.Track(AnalyticsEvents.OnboardingCompleted);
+                (Application.Current as App)?.SwitchToMainApp();
+            }
+            else
+            {
+                await Navigation.PushAsync(new KeepSafePage(vm));
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
-namespace Animal_Diary_App.Data.Models;
+﻿namespace Animal_Diary_App.Data.Models;
 
 /// <summary>
 /// Builds the DEFAULT care plan for a pet: the always-on trackers every pet starts
-/// with, plus the extra trackers a condition introduces. This is the seed only —
+/// with, plus the extra trackers a condition introduces. This is the seed only,
 /// once persisted, a pet's <see cref="Tracker"/> rows are the source of truth and
 /// the (later) pet page tunes them.
 ///
@@ -69,6 +69,28 @@ public static class CarePlanCatalog
         return plan;
     }
 
+    /// <summary>
+    /// The sensible starting shape for a tracker added on its own, with no condition
+    /// behind it: the owner who just wants to keep an eye on water without claiming
+    /// their pet has kidney disease.
+    ///
+    /// Deliberately the SAME cadences the conditions seed above, so a tracker added by
+    /// hand and the same tracker seeded by a condition are indistinguishable once they
+    /// exist. <see cref="Tracker.FromCondition"/> stays null here: that breadcrumb is
+    /// what condition removal keys on, and an owner's own choice must survive dropping
+    /// a condition.
+    /// </summary>
+    public static Tracker DefaultFor(TrackerId id) => id switch
+    {
+        TrackerId.Glucose => Glucose(perDayCount: 3, fromCondition: null),
+        TrackerId.Mood => Simple(TrackerId.Mood, TrackerKind.Daily),
+        TrackerId.Appetite => Simple(TrackerId.Appetite, TrackerKind.Daily),
+        TrackerId.Weight => Simple(TrackerId.Weight, TrackerKind.Weekly),
+        TrackerId.Water => Simple(TrackerId.Water, TrackerKind.Daily),
+        TrackerId.Seizure => Simple(TrackerId.Seizure, TrackerKind.Event),
+        _ => Simple(id, TrackerKind.AsNeeded),
+    };
+
     // ── Factories ─────────────────────────────────────────────────────────────
     private static Tracker Simple(TrackerId id, TrackerKind kind, string? fromCondition = null) => new()
     {
@@ -82,7 +104,10 @@ public static class CarePlanCatalog
         TrackerId = TrackerId.Glucose,
         Kind = TrackerKind.PerDay,
         PerDayCount = perDayCount,
-        Unit = "mmol/L",
+        // The unit a TARGET BAND would be entered in, seeded to the canonical one. The
+        // seed carries no band at all (TargetLo/Hi stay null), so this only decides which
+        // unit the setup sheet opens on before the owner has said anything.
+        Unit = UnitCatalog.MmolPerLitre,
         FromCondition = fromCondition
     };
 }

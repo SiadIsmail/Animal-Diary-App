@@ -11,8 +11,8 @@ using View = Microsoft.Maui.Controls.View;
 /// scrim + slide/fade motion and hosts arbitrary <see cref="SheetContent"/>.
 /// Used by both the medication add/edit form and the Journal input sheets so the
 /// person never feels they "left" the page to log something.
-/// Hidden sheets stay in the visual tree — translated below the screen and
-/// InputTransparent, never IsVisible=false — so Android keeps the body realised;
+/// Hidden sheets stay in the visual tree: translated below the screen and
+/// InputTransparent, never IsVisible=false, so Android keeps the body realised;
 /// collapsing it left on-open-populated content empty on first show.
 /// </summary>
 public partial class FelovaBottomSheet : ContentView
@@ -32,6 +32,15 @@ public partial class FelovaBottomSheet : ContentView
     // Hidden = the container translated just past the bottom edge, with a little
     // extra so its upward shadow can't peek above the edge either.
     private const double HiddenShadowBuffer = 40;
+
+    // How much of the screen the sheet may occupy before its body has to scroll.
+    private const double MaxHeightFraction = 0.9;
+    // Everything inside that cap which is NOT body: the header (handle, title,
+    // subtitle), the row spacing under it, and the container's bottom padding.
+    private const double ChromeHeight = 130;
+    // Below this a "scrollable" body is more cramped than useful, so let the sheet
+    // overflow the cap instead: only reachable on a very short screen.
+    private const double MinBodyHeight = 220;
 
     private bool isAnimating;
 
@@ -112,11 +121,76 @@ public partial class FelovaBottomSheet : ContentView
 
     private static async void OnIsPresentedChanged(BindableObject bindable, object oldValue, object newValue)
     {
-        var sheet = (FelovaBottomSheet)bindable;
-        if ((bool)newValue)
-            await sheet.ShowAsync();
-        else
-            await sheet.HideAsync();
+        // async void: an escaping exception here kills the process, so it never escapes
+        // (coding-standards.md, "Async safety"). A sheet that fails to animate must
+        // still end up in a consistent state, which the finally in RunToTargetAsync does.
+        try
+        {
+            await ((FelovaBottomSheet)bindable).RunToTargetAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Sheet] animation failed: {ex}");
+        }
+    }
+
+    /// <summary>
+    /// Animate until the sheet matches <see cref="IsPresented"/>, then pin it there.
+    /// </summary>
+    /// <remarks>
+    /// This loops rather than running one animation because the flag can flip *during*
+    /// an animation: a dismiss tapped inside the 420ms open slide, an Android back
+    /// press, or one sheet closing as another opens. The old code returned early in
+    /// that case and the new state was simply dropped, which desynchronized the two
+    /// halves of "open":
+    ///
+    ///   • input: the host ContentView's InputTransparent is bound to the inverse of
+    ///     the same VM flag, so it follows the flip immediately and unconditionally;
+    ///   • visual: TranslationY and the scrim only move if an animation actually runs.
+    ///
+    /// Dropping the transition left those permanently disagreeing: a sheet fully
+    /// visible and dimming the screen while every touch passed through to the page
+    /// behind it, with nothing to re-reconcile it short of a restart. Re-reading the
+    /// flag after each animation is what makes a mid-flight change land instead.
+    /// </remarks>
+    private async Task RunToTargetAsync()
+    {
+        // Still the overlap guard: a second call while animating returns, because the
+        // loop below already owns the reconciliation and will pick up the new target.
+        if (isAnimating)
+            return;
+
+        isAnimating = true;
+        try
+        {
+            bool target;
+            do
+            {
+                target = IsPresented;
+                if (target)
+                    await ShowAsync();
+                else
+                    await HideAsync();
+            }
+            while (target != IsPresented);
+        }
+        finally
+        {
+            // An animation can also be cancelled outright (a competing animation on the
+            // same element, the view detaching mid-slide), which returns without having
+            // reached the end value and would park the sheet half-way. Snapping makes
+            // the end state depend on the flag alone, never on the tween finishing.
+            ApplyFinalState(IsPresented);
+            isAnimating = false;
+        }
+    }
+
+    /// <summary>Pin every visual and input property to the given state, no animation.</summary>
+    private void ApplyFinalState(bool presented)
+    {
+        SheetContainer.TranslationY = presented ? 0 : HiddenOffset;
+        Scrim.Opacity = presented ? 1 : 0;
+        InputTransparent = !presented;
     }
 
     // ── Layout + motion ────────────────────────────────────────────────────────
@@ -128,16 +202,41 @@ public partial class FelovaBottomSheet : ContentView
         // Cap the sheet to most of the screen so a tall body scrolls its content
         // instead of pushing actions off-screen.
         if (height > 0)
-            SheetContainer.MaximumHeightRequest = height * 0.9;
+            SheetContainer.MaximumHeightRequest = height * MaxHeightFraction;
     }
+
+    /// <summary>
+    /// The tallest a body may be inside this sheet on a screen of <paramref name="screenHeight"/>,
+    /// i.e. the cap above minus the sheet's own chrome.
+    /// </summary>
+    /// <remarks>
+    /// For the bodies that are a plain list rather than a form with pinned actions,
+    /// the Journal's "+" sheet, Manage's "add a tracker", whose length the owner
+    /// controls and so can outgrow the cap. Those set it as the MaximumHeightRequest
+    /// of a <c>VerticalOptions="Start"</c> ScrollView: hugging when the list is short,
+    /// scrolling once it isn't. They can't just let the ScrollView fill, which is the
+    /// stretch the XAML header warns about, and the cap alone only clips. Lives here so
+    /// the fraction stays defined once, beside the cap it has to agree with.
+    /// </remarks>
+    public static double MaxBodyHeight(double screenHeight) =>
+        Math.Max(MinBodyHeight, screenHeight * MaxHeightFraction - ChromeHeight);
+
+    // Both halves are plain animations now: the overlap guard, the loop that reacts to
+    // a flag flipped mid-slide, and the final pinning all live in RunToTargetAsync.
 
     private async Task ShowAsync()
     {
-        if (isAnimating)
-            return;
-        isAnimating = true;
-
         var reduce = ReducedMotion.IsEnabled;
+
+        // A sheet built on demand has never been laid out, so the container's height,
+        // and with it HiddenOffset, i.e. where "just below the screen" actually is: is
+        // not known yet, and the slide would start from the 2000 fallback and whip in
+        // faster than every later open. Give Android one layout pass first. Same beat,
+        // for the same reason, as SettingsPanelView takes before its panel slides.
+        // Only ever hit on a sheet's FIRST presentation (see Controls/SheetHost.cs);
+        // once realised, a sheet stays laid out for the life of the page.
+        if (SheetContainer.Height <= 0)
+            await Task.Delay(16);
 
         // Start just below the screen and transparent, then slide up + fade the scrim
         // in. No forced remeasures here: the body is already laid out (hidden sheets
@@ -145,29 +244,22 @@ public partial class FelovaBottomSheet : ContentView
         // Android snap the container to its untransformed spot before sliding.
         SheetContainer.TranslationY = HiddenOffset;
         Scrim.Opacity = 0;
+        // Set up front, not on completion, so the sheet takes touches for the whole
+        // slide-in rather than letting them fall through to the page for 420ms.
         InputTransparent = false;
 
         await Task.WhenAll(
             Scrim.FadeTo(1, reduce ? ReducedMs : ScrimInMs, Easing.CubicOut),
             SheetContainer.TranslateTo(0, 0, reduce ? ReducedMs : SlideInMs, SheetEasing));
-
-        isAnimating = false;
     }
 
     private async Task HideAsync()
     {
-        if (isAnimating)
-            return;
-        isAnimating = true;
-
         var reduce = ReducedMotion.IsEnabled;
 
         await Task.WhenAll(
             Scrim.FadeTo(0, reduce ? ReducedMs : ScrimOutMs, Easing.CubicIn),
             SheetContainer.TranslateTo(0, HiddenOffset, reduce ? ReducedMs : SlideOutMs, SheetEasing));
-
-        InputTransparent = true;
-        isAnimating = false;
     }
 
     private void OnScrimTapped(object? sender, TappedEventArgs e)

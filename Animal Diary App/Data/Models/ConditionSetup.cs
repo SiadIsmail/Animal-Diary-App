@@ -1,7 +1,7 @@
 namespace Animal_Diary_App.Data.Models;
 
 /// <summary>
-/// Which conditions have a reusable setup sheet (the "menu" behind both doors —
+/// Which conditions have a reusable setup sheet (the "menu" behind both doors,
 /// onboarding and Manage Pet). Conditions without one are simply added with the
 /// trackers <see cref="CarePlanCatalog.ForCondition"/> gives them; conditions with
 /// one open that sheet so the owner can tune it.

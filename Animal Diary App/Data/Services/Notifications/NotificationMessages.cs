@@ -5,10 +5,10 @@ using Animal_Diary_App.Helpers;
 /// <summary>
 /// Central home for every piece of notification copy.
 ///
-/// Tone guide: warm, supportive and personal — we speak directly to the carer
-/// and always name the pet. Notifications should feel like a gentle nudge from
-/// a friend, never a robotic system alert. Keep one emoji at most so the
-/// message stays calm.
+/// Tone guide (see AI/app-voice.md §8): a notification states the fact and nothing
+/// else. Pet name, what, when. No emoji, no exclamation points, no urgency or alarm
+/// words ("overdue", "don't forget"), no guilt, no evaluation of a health number,
+/// and never a re-engagement ping. A reminder is not an emergency.
 ///
 /// All copy is pulled from the localized resources via <see cref="LocalizationManager"/>,
 /// so a notification is rendered in whatever language the user has chosen.
@@ -18,7 +18,7 @@ public static class NotificationMessages
 {
     private static LocalizationManager L => LocalizationManager.Instance;
 
-    /// <summary>Title shown on a medication reminder, e.g. "Time for Bella's medication ❤️".</summary>
+    /// <summary>Title shown on a medication reminder, e.g. "Bella's dose".</summary>
     public static string MedicationTitle(string petName)
         => L.Format("Notif_MedicationTitle", SafePet(petName));
 
@@ -50,7 +50,7 @@ public static class NotificationMessages
         => L.Format("Notif_MissedTitle", SafePet(petName));
 
     /// <summary>
-    /// Body for a missed-dose catch-up. Kept gentle and reassuring — the goal is
+    /// Body for a missed-dose catch-up. Kept gentle and reassuring: the goal is
     /// to surface a missed medication without alarming the carer.
     /// </summary>
     public static string MedicationMissedBody(string petName, string medicationName, int count)
@@ -63,6 +63,19 @@ public static class NotificationMessages
             : L.Format("Notif_MissedBodyMany", pet, count, med);
     }
 
+    /// <summary>Title for the once-a-day care reminder, e.g. "Charly's care today".</summary>
+    public static string DailyCareTitle(string petName)
+        => L.Format("Notif_DailyCareTitle", SafePet(petName));
+
+    /// <summary>
+    /// Body for the daily care reminder. Deliberately carries NO count of what's
+    /// pending: a number set when the notification is armed (often hours before it
+    /// fires) can be stale by the time it shows, and a stale number reads as wrong.
+    /// A plain, always-true line can't be. States a fact, never a nudge (§8).
+    /// </summary>
+    public static string DailyCareBody(string petName)
+        => L.Format("Notif_DailyCareBody", SafePet(petName));
+
     // ── Reserved for future reminder types ───────────────────────────────
 
     public static string MoodCheckInTitle(string petName) => L.Format("Notif_MoodCheckInTitle", SafePet(petName));
@@ -71,8 +84,23 @@ public static class NotificationMessages
     public static string WeightCheckInTitle(string petName) => L.Format("Notif_WeightCheckInTitle", SafePet(petName));
     public static string WeightCheckInBody(string petName) => L.Format("Notif_WeightCheckInBody", SafePet(petName));
 
-    public static string AppointmentTitle(string petName) => L.Format("Notif_AppointmentTitle", SafePet(petName));
-    public static string AppointmentBody(string petName, string what) => L.Format("Notif_AppointmentBody", SafePet(petName), what);
+    // ── The one reminder before a vet visit ──────────────────────────────
+    //
+    // Verbatim the approved pattern in AI/app-voice.md §8: it names the day, the pet
+    // and the time, says the summary is ready, and stops. No urgency word, nothing
+    // about the animal's condition, and no count of anything.
+
+    /// <summary>"Vet visit tomorrow". No pet name: the body carries it, and a title
+    /// that reads as a fact about the day is calmer on a lock screen than one that
+    /// opens with a name.</summary>
+    public static string AppointmentTitle() => L.GetString("Notif_AppointmentTitle");
+
+    /// <summary>"Charly, 9:30. Your summary is ready.", or without the time when the
+    /// owner only knew the day. The app never fabricates the missing half.</summary>
+    public static string AppointmentBody(string petName, TimeSpan? time)
+        => time is TimeSpan t
+            ? L.Format("Notif_AppointmentBody", SafePet(petName), t.ToString(@"hh\:mm"))
+            : L.Format("Notif_AppointmentBodyNoTime", SafePet(petName));
 
     private static string SafePet(string petName)
         => string.IsNullOrWhiteSpace(petName) ? L.GetString("Notif_SafePet") : petName.Trim();

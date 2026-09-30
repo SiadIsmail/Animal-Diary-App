@@ -5,7 +5,7 @@ namespace Animal_Diary_App.Data.Services.Notifications;
 ///
 /// Plugin.LocalNotification identifies every scheduled notification by a single
 /// <c>int</c>. To schedule, update and cancel reliably we need the ID for a
-/// given reminder to be reproducible from its owning entity — never random.
+/// given reminder to be reproducible from its owning entity, never random.
 ///
 /// Each notification type owns a numeric range so IDs can never collide across
 /// types. Within a range every entity (e.g. a medication) gets a block of
@@ -23,6 +23,7 @@ public static class NotificationIds
     private const int MoodCheckInBase = 2_000_000;
     private const int WeightCheckInBase = 3_000_000;
     private const int AppointmentBase = 4_000_000;
+    private const int DailyCareBase = 5_000_000;
 
     // Instance-based scheduling: each materialized ReminderInstance gets a unique
     // OS notification id derived from its database id. Missed-dose catch-up
@@ -47,8 +48,19 @@ public static class NotificationIds
     /// <summary>Notification id for a medication's coalesced "missed dose" catch-up.</summary>
     public static int MissedDose(int medicationId) => MissedDoseBase + medicationId;
 
+    /// <summary>The single daily-care reminder id for a pet (one per pet per day).</summary>
+    public static int DailyCare(int petId) => DailyCareBase + petId;
+
+    /// <summary>The single reminder for one vet visit: the evening before.
+    ///
+    /// <para><b>Not</b> multiplied by <see cref="SlotsPerEntity"/>, unlike the
+    /// medication ids above: a visit has exactly one reminder and always will (one, not
+    /// a series: see <c>AppointmentReminderScheduler</c>). Reserving ten slots each
+    /// would spend the range ten times faster and let visit id 100,000 land on top of
+    /// the daily-care block, for headroom nothing can ever use.</para></summary>
+    public static int Appointment(int visitId) => AppointmentBase + visitId;
+
     // ── Reserved for future reminder types ───────────────────────────────
     public static int MoodCheckIn(int petId) => MoodCheckInBase + petId * SlotsPerEntity;
     public static int WeightCheckIn(int petId) => WeightCheckInBase + petId * SlotsPerEntity;
-    public static int Appointment(int appointmentId) => AppointmentBase + appointmentId * SlotsPerEntity;
 }

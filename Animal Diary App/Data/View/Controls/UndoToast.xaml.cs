@@ -5,10 +5,10 @@ using Animal_Diary_App.Helpers;
 /// <summary>
 /// Code-behind for the shared confirmation/undo pill (behaviour ported verbatim
 /// from CalendarPage's original private toast). One toast at a time: a newer
-/// <see cref="Show"/> supersedes the pending auto-hide via a sequence counter.
+/// <c>Show</c> supersedes the pending auto-hide via a sequence counter.
 ///
 /// Semantics: <c>undoAsync</c> runs only when the user taps Undo;
-/// <c>expiredAsync</c> runs only when the toast times out WITHOUT an undo — the
+/// <c>expiredAsync</c> runs only when the toast times out WITHOUT an undo: the
 /// hook deferred deletions use to commit. A superseded toast calls neither
 /// (the caller staged the new state itself; callbacks must stay idempotent).
 /// </summary>
@@ -67,7 +67,7 @@ public partial class UndoToast : ContentView
         }
         catch (Exception ex)
         {
-            // async void entry point — an escaping exception would kill the process.
+            // async void entry point: an escaping exception would kill the process.
             System.Diagnostics.Debug.WriteLine($"[UndoToast] show failed: {ex}");
         }
     }

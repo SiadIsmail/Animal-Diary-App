@@ -1,7 +1,9 @@
 namespace Animal_Diary_App.Data.View;
 
 using System.ComponentModel;
+using Animal_Diary_App.Data.Models;
 using Animal_Diary_App.Data.ViewModels;
+using Animal_Diary_App.Data.Services;
 using Animal_Diary_App.Data.Services.Analytics;
 using Animal_Diary_App.Data.Services.Journal;
 using Animal_Diary_App.Helpers;
@@ -25,11 +27,47 @@ public partial class CalendarPage : ContentPage
 	// journal_entry_created with the right entry_type. Undo does not pass through here.
 	private JournalChipKind? _lastOpenedSheetKind;
 
-	public CalendarPage(MainViewModel mainViewModel)
+	private readonly SettingsService _settings;
+
+	/// <summary>The overlay sheets are queued for background building once, after the
+	/// first load settles. Re-queuing on every remote-change reload would only enqueue
+	/// no-ops (Realise is idempotent), but the flag keeps the intent obvious.</summary>
+	private bool _sheetsQueued;
+
+	/// <summary>What the last completed load was a load of, and when. Together they
+	/// decide whether an appearance has to hit the database at all.</summary>
+	/// <summary>The data version is read BEFORE the load and stamped AFTER it, never
+	/// re-read at the end. A cloud pull that lands mid-load bumps the version and posts
+	/// its own reload; stamping the post-load value would make that reload look
+	/// redundant and skip it, leaving the page a caregiver's entry behind. Reading it
+	/// first can only cause one extra reload, which is the harmless direction.</summary>
+	private PageLoadKey _loaded;
+	private DateTime _loadedAtUtc = DateTime.MinValue;
+
+	public CalendarPage(MainViewModel mainViewModel, SettingsService settings)
 	{
 		InitializeComponent();
 		vm = mainViewModel;
+		_settings = settings;
 		BindingContext = vm;
+	}
+
+	/// <summary>First real log (dose or journal entry): record the milestone once.
+	/// Never blocks the log, and nothing on this path may ever ask for money: see
+	/// the note above <see cref="OpenSheetForKindAsync"/>.</summary>
+	private async Task MaybeHandleFirstLogAsync()
+	{
+		try
+		{
+			if (await _settings.GetFlagAsync(SettingsFlags.FirstLogDone))
+				return;
+			await _settings.SetFlagAsync(SettingsFlags.FirstLogDone, true);
+			vm.Analytics.Track(AnalyticsEvents.FirstLogCompleted);
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[Journal] first-log handling failed: {ex.Message}");
+		}
 	}
 
 	// Android back closes an open sheet (or the settings panel) before it navigates.
@@ -40,6 +78,9 @@ public partial class CalendarPage : ContentPage
 	{
 		base.OnAppearing();
 
+		// Only the visible tab animates its backdrop: see MainPage for why.
+		Backdrop.Start();
+
 		// Engagement signal: the Journal tab was opened.
 		vm.Analytics.Track(AnalyticsEvents.CalendarOpened);
 
@@ -47,15 +88,42 @@ public partial class CalendarPage : ContentPage
 		vm.JournalVM.PropertyChanged += OnJournalVmPropertyChanged;
 		vm.JournalVM.RequestOpenSheet += OnRequestOpenSheet;
 		vm.JournalVM.ItemDeleted += OnItemDeleted;
+		vm.JournalVM.AskAboutRequested += OnAskAboutRequested;
 		vm.GlucoseSheetVM.Saved += OnSheetSaved;
 		vm.MoodSheetVM.Saved += OnSheetSaved;
 		vm.WeightSheetVM.Saved += OnSheetSaved;
 		vm.AppetiteSheetVM.Saved += OnSheetSaved;
 		vm.SeizureSheetVM.Saved += OnSheetSaved;
+		vm.VetQuestionSheetVM.Saved += OnVetQuestionSaved;
+		vm.WaterSheetVM.Saved += OnSheetSaved;
+		vm.CustomEntrySheetVM.Saved += OnSheetSaved;
 
+		// Another caregiver's changes landing while the Journal is visible reload
+		// it in place: same stale-context path an appearance uses.
+		vm.CloudSync.RemoteChangesApplied += OnRemoteChangesApplied;
+
+		await ReloadDataAsync();
+	}
+
+	/// <summary>The Journal's full stale-context reload: runs on every appearance
+	/// AND when a cloud sync applies remote changes while the page is visible.
+	/// Routes through the (pet, date) marker so it stays deduped.</summary>
+	private async Task ReloadDataAsync()
+	{
 		try
 		{
-			// Data may have changed on other tabs while we were away — mark the
+			// Nothing has changed since this page last loaded, and that was moments ago:
+			// the ~30 queries below would repaint identical pixels. Keyed on the active
+			// pet and the day as well as the data version, because switching pets writes
+			// no row and neither does midnight passing. See DataVersion for why the
+			// freshness window is part of the guard rather than a nicety.
+			var version = DataVersion.Current;
+			var key = new PageLoadKey(
+				version, vm.CalendarVM.CurrentPetId, vm.CalendarVM.CurrentSelectedDate);
+			if (key == _loaded && DateTime.UtcNow - _loadedAtUtc < PageLoadKey.Freshness)
+				return;
+
+			// Data may have changed on other tabs while we were away: mark the
 			// Journal context stale so exactly one reload runs for this appearance
 			// (usually via the property-changed handler as PrepareDataAsync loads).
 			_lastJournalPetId = -1;
@@ -73,29 +141,72 @@ public partial class CalendarPage : ContentPage
 				await vm.JournalVM.ReloadAsync(_lastJournalDate);
 			}
 
+			// Arriving on a day that was ALREADY finished is not an achievement to
+			// replay: snap the paws on. The staggered fade belongs to the moment the
+			// day becomes done, which OnJournalVmPropertyChanged owns. It also used to
+			// hold this reload open for 720ms of Task.Delay on every appearance.
 			if (vm.JournalVM.ShowAllDone)
-				await AnimatePawsAsync();
+				ShowPaws();
+
+			// The sheets can be built now that the page has its data: deferred to here
+			// deliberately, so their inflation never competes with the load the person
+			// is actually waiting for. See Controls/SheetHost.cs.
+			if (!_sheetsQueued)
+			{
+				_sheetsQueued = true;
+				Controls.SheetHost.PreloadAll(this);
+			}
+
+			StampLoaded(version);
 		}
 		catch (Exception ex)
 		{
 			// A failed load must degrade to an empty page, never crash the app
-			// (async void — an escaping exception here kills the process).
-			System.Diagnostics.Debug.WriteLine($"[CalendarPage] OnAppearing failed: {ex}");
+			// (async void callers: an escaping exception here kills the process).
+			System.Diagnostics.Debug.WriteLine($"[CalendarPage] reload failed: {ex}");
 		}
 	}
+
+	private void OnRemoteChangesApplied() =>
+		MainThread.BeginInvokeOnMainThread(async () => await ReloadDataAsync());
 
 	protected override void OnDisappearing()
 	{
 		base.OnDisappearing();
+		Backdrop.Stop();
+		vm.CloudSync.RemoteChangesApplied -= OnRemoteChangesApplied;
 		vm.CalendarVM.PropertyChanged -= OnCalendarVmPropertyChanged;
 		vm.JournalVM.PropertyChanged -= OnJournalVmPropertyChanged;
 		vm.JournalVM.RequestOpenSheet -= OnRequestOpenSheet;
 		vm.JournalVM.ItemDeleted -= OnItemDeleted;
+		vm.JournalVM.AskAboutRequested -= OnAskAboutRequested;
 		vm.GlucoseSheetVM.Saved -= OnSheetSaved;
 		vm.MoodSheetVM.Saved -= OnSheetSaved;
 		vm.WeightSheetVM.Saved -= OnSheetSaved;
 		vm.AppetiteSheetVM.Saved -= OnSheetSaved;
 		vm.SeizureSheetVM.Saved -= OnSheetSaved;
+		vm.VetQuestionSheetVM.Saved -= OnVetQuestionSaved;
+		vm.WaterSheetVM.Saved -= OnSheetSaved;
+		vm.CustomEntrySheetVM.Saved -= OnSheetSaved;
+	}
+
+	// A timeline row was swiped for "ask about this". The question sheet is already
+	// hosted here, so it opens in place, pre-filled with the entry's kind and date as
+	// ordinary editable text. Free on every tier, like everything else on this page.
+	private async void OnAskAboutRequested(string prefill)
+	{
+		try
+		{
+			await vm.VetQuestionSheetVM.OpenAsync(
+				vm.CalendarVM.CurrentPetId,
+				vm.CalendarVM.ActivePetName,
+				vm.CalendarVM.CurrentSelectedDate,
+				prefill);
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[Journal] ask-about open failed: {ex}");
+		}
 	}
 
 	/// <summary>Jump-to-today: snap the selection back to the current date.</summary>
@@ -121,10 +232,11 @@ public partial class CalendarPage : ContentPage
 					vm.JournalVM.OpenAddSheetCommand.Execute(null);
 					break;
 				case JournalChipKind.Medication:
+					// The dose loop. Never blocked, in any state: a P0 invariant with a test.
 					await LogDoseFlowAsync(chip, v);
 					break;
 				default:
-					await OpenSheetForKindAsync(chip.Kind);
+					await OpenSheetForKindAsync(chip.Kind, chip.Tracker);
 					break;
 			}
 		}
@@ -139,13 +251,14 @@ public partial class CalendarPage : ContentPage
 	private async Task LogDoseFlowAsync(JournalChip chip, View anchor)
 	{
 		var result = await vm.JournalVM.LogDoseAsync(chip);
-		_ = BurstBubblesAsync(anchor);
+		BurstBubblesAsync(anchor).Forget();
 		await ReloadJournalAsync();
 		ShowUndoToast(result);
+		await MaybeHandleFirstLogAsync();
 	}
 
 	// Emit journal_entry_created for the sheet that just saved. Only the coarse entry
-	// kind is sent — never the logged value, note, or the pet.
+	// kind is sent, never the logged value, note, or the pet.
 	private void TrackJournalEntry()
 	{
 		var entryType = _lastOpenedSheetKind switch
@@ -155,6 +268,8 @@ public partial class CalendarPage : ContentPage
 			JournalChipKind.Glucose => AnalyticsEvents.EntryTypeGlucose,
 			JournalChipKind.Appetite => AnalyticsEvents.EntryTypeAppetite,
 			JournalChipKind.Seizure => AnalyticsEvents.EntryTypeSeizure,
+			JournalChipKind.Water => AnalyticsEvents.EntryTypeWater,
+			JournalChipKind.Custom => AnalyticsEvents.EntryTypeCustom,
 			_ => null,
 		};
 		if (entryType is null)
@@ -166,17 +281,27 @@ public partial class CalendarPage : ContentPage
 		});
 	}
 
-	private void OnRequestOpenSheet(JournalChipKind kind) => _ = OpenAfterAddSheetAsync(kind);
+	private void OnRequestOpenSheet(JournalChipKind kind, TrackerKey tracker) =>
+		OpenAfterAddSheetAsync(kind, tracker).Forget();
 
 	// Let the "+" sheet finish sliding out before the chosen sheet slides in.
-	private async Task OpenAfterAddSheetAsync(JournalChipKind kind)
+	private async Task OpenAfterAddSheetAsync(JournalChipKind kind, TrackerKey tracker)
 	{
 		await Task.Delay(ReducedMotion.IsEnabled ? 60 : 220);
-		await OpenSheetForKindAsync(kind);
+		await OpenSheetForKindAsync(kind, tracker);
 	}
 
-	private async Task OpenSheetForKindAsync(JournalChipKind kind)
+	// `tracker` identifies WHICH tracker for the custom kind, where the kind alone can't
+	// (every owner-defined tracker shares JournalChipKind.Custom). Unused otherwise.
+	private async Task OpenSheetForKindAsync(JournalChipKind kind, TrackerKey tracker)
 	{
+		// ── The paywall NEVER appears on this path. ───────────────────────────────
+		// Writing things down is free forever, on every tier. This funnel used to hold
+		// the read-only gate for new journal/symptom entries, and that gate is exactly
+		// what the monetization boundary was inverted to remove: logging is unpaid
+		// labour the owner performs, often at 2am about a sick animal, not a benefit the
+		// app grants. Nothing here may consult IEntitlementService, and nothing may open
+		// the subscribe sheet: see AI/README.md, which carries this as a rule.
 		int petId = vm.CalendarVM.CurrentPetId;
 		string name = vm.CalendarVM.ActivePetName;
 		var date = vm.CalendarVM.CurrentSelectedDate;
@@ -191,6 +316,15 @@ public partial class CalendarPage : ContentPage
 			case JournalChipKind.Weight: await vm.WeightSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Appetite: await vm.AppetiteSheetVM.OpenAsync(petId, name, date); break;
 			case JournalChipKind.Seizure: await vm.SeizureSheetVM.OpenAsync(petId, name, date); break;
+			// Not a log type: the date is ignored, and nothing about it reaches the
+			// timeline or the chips. It rides this funnel for the paywall gate and the
+			// close-then-open handoff, which are the same for any sheet.
+			case JournalChipKind.VetQuestion: await vm.VetQuestionSheetVM.OpenAsync(petId, name, date); break;
+			case JournalChipKind.Water: await vm.WaterSheetVM.OpenAsync(petId, name, date); break;
+			// One sheet for every owner-defined tracker; the key says which.
+			case JournalChipKind.Custom:
+				await vm.CustomEntrySheetVM.OpenAsync(petId, date, tracker.CustomId);
+				break;
 		}
 	}
 
@@ -199,20 +333,31 @@ public partial class CalendarPage : ContentPage
 	{
 		try
 		{
-			// "Which logging features are actually used?" — one event per sheet save,
+			// "Which logging features are actually used?": one event per sheet save,
 			// tagged with the kind. This funnel is the forward save path only; undo
 			// runs through the toast callback, so undone saves aren't counted.
 			TrackJournalEntry();
 
-			_ = BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62));
+			BurstBubblesAtAsync(new Point(Width / 2, Height * 0.62)).Forget();
 			await ReloadJournalAsync();
 			ShowUndoToast(result);
+			await MaybeHandleFirstLogAsync();
 		}
 		catch (Exception ex)
 		{
 			System.Diagnostics.Debug.WriteLine($"[CalendarPage] OnSheetSaved failed: {ex}");
 		}
 	}
+
+	// A question for the vet was written down → toast with its undo, and nothing else.
+	//
+	// Deliberately NOT OnSheetSaved: no bubble-pop, because bubbles rising off a
+	// question would be the app congratulating someone for worrying; no journal reload,
+	// because a question is not in the timeline and not a chip; and no entry_type event,
+	// because it is not a journal entry (TrackJournalEntry maps this kind to null too,
+	// so neither path can emit one).
+	private void OnVetQuestionSaved(JournalSaveResult result) => Toast.Show(result.Message,
+		async () => await result.UndoAsync());
 
 	// A timeline entry was deleted → refresh, then a 6-second undo-toast that restores
 	// it. No bubble-pop: a deletion isn't a "logged something" celebration.
@@ -234,10 +379,24 @@ public partial class CalendarPage : ContentPage
 	// notifications don't bounce back through the handler below.
 	private async Task ReloadJournalAsync()
 	{
+		var version = DataVersion.Current;
 		_lastJournalPetId = vm.CalendarVM.CurrentPetId;
 		_lastJournalDate = vm.CalendarVM.CurrentSelectedDate;
 		await vm.JournalVM.ReloadAsync(_lastJournalDate);
 		await vm.CalendarVM.RefreshEntriesAsync();
+		// The page is current as of the write that got us here, so leaving and coming
+		// straight back doesn't have to re-read it all.
+		StampLoaded(version);
+	}
+
+	/// <summary>Record what the page is now showing, for the appearance guard above.
+	/// The pet and the date are re-read (a load can switch the active pet); the version
+	/// is the caller's, captured before its load: see the field's note.</summary>
+	private void StampLoaded(int version)
+	{
+		_loaded = new PageLoadKey(
+			version, vm.CalendarVM.CurrentPetId, vm.CalendarVM.CurrentSelectedDate);
+		_loadedAtUtc = DateTime.UtcNow;
 	}
 
 	private async void OnCalendarVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -246,7 +405,7 @@ public partial class CalendarPage : ContentPage
 			return;
 
 		// ActivePetName is raised by every NotifyDerived, not just real pet
-		// switches — only reload when the (pet, date) context actually changed.
+		// switches: only reload when the (pet, date) context actually changed.
 		var petId = vm.CalendarVM.CurrentPetId;
 		var date = vm.CalendarVM.CurrentSelectedDate;
 		if (petId == _lastJournalPetId && date == _lastJournalDate)
@@ -366,16 +525,25 @@ public partial class CalendarPage : ContentPage
 		return new Point(x, y);
 	}
 
+	/// <summary>The four paw glyphs at rest. They start at Opacity 0 in XAML so the
+	/// staggered fade has somewhere to come from; this is how they get there when there
+	/// is nothing to celebrate: a revisit to a day that was already finished.</summary>
+	private void ShowPaws()
+	{
+		foreach (var paw in new[] { Paw1, Paw2, Paw3, Paw4 })
+			paw.Opacity = 0.85;
+	}
+
 	/// <summary>Fade the four paw glyphs in with a staggered delay (skipped when the
-	/// OS asks for reduced motion — they simply appear at full opacity).</summary>
+	/// OS asks for reduced motion: they simply appear at full opacity). Called only on
+	/// the TRANSITION into an all-done day, never on an appearance that finds one.</summary>
 	private async Task AnimatePawsAsync()
 	{
 		var paws = new[] { Paw1, Paw2, Paw3, Paw4 };
 
 		if (ReducedMotion.IsEnabled)
 		{
-			foreach (var paw in paws)
-				paw.Opacity = 0.85;
+			ShowPaws();
 			return;
 		}
 
@@ -385,7 +553,7 @@ public partial class CalendarPage : ContentPage
 		for (int i = 0; i < paws.Length; i++)
 		{
 			await Task.Delay(180);
-			_ = paws[i].FadeTo(0.85, 500, Easing.CubicOut);
+			paws[i].FadeTo(0.85, 500, Easing.CubicOut).Forget();
 		}
 	}
 }
